@@ -23,6 +23,7 @@ import {
   type TemplateBinding,
 } from "./template-binding";
 import { deriveTemplateContract } from "./template-contract";
+import { erroDaRespostaDaGraph, type ErroMetaClassificado } from "./erros";
 import { graphBaseUrl } from "./graph-base";
 
 export interface SendTemplateInput {
@@ -47,7 +48,17 @@ export type SendTemplateResult =
   // por construção, em vez de exigir um `default` que engoliria caso novo em silêncio.
   | { sent: false; reason: Exclude<BindingState, "ok"> }
   | { sent: false; reason: "missing_values"; missing: string[] }
-  | { sent: false; reason: "api_error"; code: number | null; message: string };
+  | {
+      sent: false;
+      reason: "api_error";
+      code: number | null;
+      message: string;
+      /**
+       * A recusa da Graph já classificada pelo mapa de erros. Ausente só quando a
+       * falha é NOSSA (derivação do contrato), antes de qualquer chamada.
+       */
+      falha?: ErroMetaClassificado;
+    };
 
 interface GraphResponse {
   messages?: { id?: string }[];
@@ -114,7 +125,8 @@ export async function sendTemplate(input: SendTemplateInput): Promise<SendTempla
   });
 
   const body = (await res.json().catch(() => ({}))) as GraphResponse;
-  if (!res.ok || body.error) {
+  const falha = erroDaRespostaDaGraph(body, res.status);
+  if (falha) {
     return {
       sent: false,
       reason: "api_error",
@@ -122,6 +134,7 @@ export async function sendTemplate(input: SendTemplateInput): Promise<SendTempla
       // O `details` da Meta é o que diz QUAL parâmetro divergiu; sem ele o operador
       // recebe "Parameter format does not match" e nenhuma pista.
       message: body.error?.error_data?.details ?? body.error?.message ?? `http_${res.status}`,
+      falha,
     };
   }
 

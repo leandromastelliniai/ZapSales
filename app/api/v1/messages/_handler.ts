@@ -31,6 +31,7 @@ import { assertOrgOperante } from "@/lib/organizacao/operante";
 import {
   CHANNEL_SESSION_REF_COLUMNS,
   DEFAULT_CHANNEL_PROVIDER,
+  falhaDoCanalDe,
   getAdapter,
   resolveSessionRef,
   type ChannelSessionRef,
@@ -1127,12 +1128,17 @@ export async function sendMessageHandler(
         return message;
       }
 
+      // Falha que o adapter CLASSIFICOU (`falhaDoCanalDe`) grava o código da
+      // plataforma e o motivo legível — o mesmo par que o webhook de status grava
+      // quando a recusa chega depois. Sem classificação, o rótulo genérico do canal
+      // e o texto do erro, como sempre.
+      const falhaClassificada = falhaDoCanalDe(err);
       const { data: updated } = await supabase
         .from("messages")
         .update({
           status: "failed",
-          error_code: code,
-          error_message: msg,
+          error_code: falhaClassificada?.codigo ?? code,
+          error_message: falhaClassificada?.motivo ?? msg,
         })
         .eq("id", message.id)
         .select(MSG_COLS)

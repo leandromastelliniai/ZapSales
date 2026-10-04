@@ -82,6 +82,40 @@ export interface RecipientInput {
   waLid?: string | null | undefined;
 }
 
+/**
+ * Uma falha de envio que o adapter já CLASSIFICOU — o que quem chama grava e decide.
+ *
+ * Genérica de propósito: o handler de mensagens não pode nomear o provider
+ * (invariante 1 da restrição de canal), mas precisa gravar o código e o motivo
+ * legível em vez de `"<canal>_error"` e o texto cru. O adapter lança um erro que
+ * carrega `falhaDoCanal`; `falhaDoCanalDe` é a única pergunta que o chamador faz.
+ */
+export interface FalhaDoCanal {
+  /** Código da plataforma como texto (`"131049"`) — o mesmo que o webhook de status grava. */
+  codigo: string;
+  /** Categoria estável, usada para decidir (fila, opt-out, pausa). */
+  categoria: string;
+  /** `true` = tentar de novo depois de esperar; `false` = desfecho definitivo. */
+  temporario: boolean;
+  /** Frase para o operador, já sem o texto cru da plataforma. */
+  motivo: string;
+}
+
+/** A falha classificada que um erro lançado pelo adapter carrega, se carregar. */
+export function falhaDoCanalDe(err: unknown): FalhaDoCanal | null {
+  if (!err || typeof err !== "object" || !("falhaDoCanal" in err)) return null;
+  const falha = (err as { falhaDoCanal?: unknown }).falhaDoCanal;
+  if (!falha || typeof falha !== "object") return null;
+  const f = falha as Partial<FalhaDoCanal>;
+  if (typeof f.codigo !== "string" || typeof f.motivo !== "string") return null;
+  return {
+    codigo: f.codigo,
+    categoria: typeof f.categoria === "string" ? f.categoria : "desconhecido",
+    temporario: f.temporario === true,
+    motivo: f.motivo,
+  };
+}
+
 /** Contato compartilhado (vcard) — só `kind: "contact"`. */
 export interface OutboundContact {
   fullName: string;

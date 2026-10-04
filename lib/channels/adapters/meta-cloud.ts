@@ -21,6 +21,7 @@
  */
 import { createAdminClient } from "@/lib/supabase/admin";
 import { metaContactsPayload } from "@/lib/channels/meta/contact-card";
+import { ErroDaMeta, erroDaRespostaDaGraph } from "@/lib/channels/meta/erros";
 import { graphBaseUrl } from "@/lib/channels/meta/graph-base";
 import { resolveMetaCreds } from "../meta/credentials";
 import type {
@@ -309,12 +310,8 @@ export const metaCloudAdapter: ChannelAdapter = {
       // do indicador, que é decoração.
       signal: AbortSignal.timeout(5_000),
     });
-    const body = (await res.json().catch(() => ({}))) as {
-      error?: { code?: number; message?: string };
-    };
-    if (!res.ok || body.error) {
-      throw new Error(`meta_${body.error?.code ?? res.status}: ${body.error?.message ?? `http_${res.status}`}`);
-    }
+    const recusa = erroDaRespostaDaGraph(await res.json().catch(() => ({})), res.status);
+    if (recusa) throw new ErroDaMeta(recusa);
   },
 
   async send(envelope: OutboundEnvelope): Promise<{ externalId: string | null }> {
@@ -360,15 +357,14 @@ export const metaCloudAdapter: ChannelAdapter = {
 
     const body = (await res.json().catch(() => ({}))) as {
       messages?: { id?: string }[];
-      error?: { code?: number; message?: string; error_data?: { details?: string } };
     };
 
-    if (!res.ok || body.error) {
-      // `details` é o campo que diz QUAL parâmetro divergiu; sem ele o operador lê
-      // "Parameter format does not match" e não tem pista nenhuma.
-      const detalhe = body.error?.error_data?.details ?? body.error?.message ?? `http_${res.status}`;
-      throw new Error(`meta_${body.error?.code ?? res.status}: ${detalhe}`);
-    }
+    // A recusa sai CLASSIFICADA (`../meta/erros.ts`): código, categoria,
+    // temporário ou definitivo, e o motivo legível que o handler grava. A
+    // mensagem mantém o prefixo `meta_<código>:` e o `details` da Meta — é ele
+    // que diz QUAL parâmetro divergiu.
+    const recusa = erroDaRespostaDaGraph(body, res.status);
+    if (recusa) throw new ErroDaMeta(recusa);
 
     return { externalId: body.messages?.[0]?.id ?? null };
   },

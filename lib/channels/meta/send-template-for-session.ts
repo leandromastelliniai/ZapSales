@@ -20,6 +20,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { linhaDoEspelho } from "../linha-do-espelho";
 
 import { resolveMetaCreds } from "./credentials";
+import { ErroDaMeta } from "./erros";
 import { sendTemplate } from "./send-template";
 
 export interface SendTemplateForSessionInput {
@@ -139,6 +140,9 @@ export async function sendTemplateForSession(
     case "missing_values":
       throw new Error(`template_missing_values: ${resultado.missing.join(", ")}`);
     case "api_error":
+      // Recusa da Graph sai CLASSIFICADA, como no envio de texto: o handler grava o
+      // código e o motivo legível do mapa de erros, não o texto cru.
+      if (resultado.falha) throw new ErroDaMeta(resultado.falha);
       throw new Error(`meta_${resultado.code ?? "erro"}: ${resultado.message}`);
   }
 }

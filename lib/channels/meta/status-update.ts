@@ -18,6 +18,7 @@
  * `status` continua colapsado em `sent | failed` de propósito: é o domínio que
  * o resto do produto lê. A informação fina vai para as colunas que já existem.
  */
+import { classificarErroMeta } from "./erros";
 import type { MessageStatusEvent } from "./webhook";
 
 export function statusUpdate(e: MessageStatusEvent, now: string): Record<string, unknown> {
@@ -33,7 +34,11 @@ export function statusUpdate(e: MessageStatusEvent, now: string): Record<string,
   if (e.status === "failed") {
     // `error_code` é texto no banco (o canal não-oficial grava rótulos ali).
     update.error_code = e.errorCode === null ? null : String(e.errorCode);
-    update.error_message = e.errorTitle;
+    // O motivo é o do MAPA DE ERROS (`./erros.ts`), o mesmo que o envio grava
+    // quando a Graph recusa na hora: a tela lê uma frase só por código, venha a
+    // recusa no 4xx da chamada ou depois, pelo webhook. Sem código, o título cru.
+    update.error_message =
+      e.errorCode === null ? e.errorTitle : classificarErroMeta({ code: e.errorCode }).motivo;
   }
 
   return update;
