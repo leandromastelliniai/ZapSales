@@ -227,13 +227,19 @@ jobs:
         if: matrix.parte == 3
         run: pnpm cercas
 
+      # O limite padrão de memória do Node (~2 GB) estoura no tsc deste
+      # repositório nas máquinas do GitHub (16 GB).
       - name: Typecheck
         if: matrix.parte == 1
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         run: pnpm typecheck
 
       # Na parte 2, não na 1: o porquê e a conta estão no cabeçalho do job.
       - name: Lint
         if: matrix.parte == 2
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         run: pnpm lint
 
       # Invariante 1 de docs/doctrine/restricao-de-canal.md: nenhuma feature

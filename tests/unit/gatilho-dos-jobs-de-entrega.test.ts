@@ -66,13 +66,14 @@ const DIR = join(process.cwd(), ".github/workflows");
 const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string }> = {
   // --- a cadeia que leva o conserto até a VPS ---------------------------------
   "release.yml::abrir-pr-de-release": {
-    condicao: "github.event_name == 'workflow_dispatch'",
+    condicao: "github.event_name == 'workflow_dispatch' && vars.RELEASE_APP_CONFIGURADO == 'sim'",
     efeito:
       "Este job é quem monta o PR de release a partir dos fragmentos de `.changes/`. " +
       "Desligá-lo faz nenhuma versão ser fechada — sem erro em lugar nenhum.",
   },
   "release.yml::cortar-tag": {
-    condicao: "github.event_name == 'push'",
+    condicao: "github.event_name == 'push' && vars.RELEASE_APP_CONFIGURADO == 'sim'",
+    // Fica desligado até existir o App de release (RELEASE_APP_CONFIGURADO=sim).
     efeito:
       "Este job é quem CRIA E EMPURRA a tag `vX.Y.Z`, que é o gatilho da atualização " +
       "do parque instalado inteiro. Desligá-lo faz a release parar em silêncio: nenhuma " +

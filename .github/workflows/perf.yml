@@ -36,6 +36,8 @@ jobs:
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
+          # O build do Next checa tipos e estoura o heap padrão do Node (~2 GB).
+          NODE_OPTIONS: --max-old-space-size=8192
           # "off", não vazio: vazio seleciona o Sentry DA COMUNIDADE
           # (lib/sentry/dsn.ts:8-10). A intenção aqui sempre foi desligar, e
           # com aspas vazias ela não era alcançada — o build seguia com o DSN

@@ -15,6 +15,11 @@ name: release
 # erro, e NENHUMA VPS receberia a atualização. Falha silenciosa, descoberta só
 # quando um cliente tentasse atualizar.
 #
+# Os dois jobs só rodam quando a variável de repositório RELEASE_APP_CONFIGURADO
+# vale `sim` — ligue-a depois de criar o App e gravar RELEASE_APP_ID e
+# RELEASE_APP_PRIVATE_KEY nos secrets. Sem o App, o workflow fica pulado em vez
+# de falhar a cada push.
+#
 # Por isso o ato 2 não confia: ele espera a publicação e CONFERE as três imagens
 # no registro, falhando alto se não aparecerem.
 
@@ -30,7 +35,7 @@ permissions:
 
 jobs:
   abrir-pr-de-release:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && vars.RELEASE_APP_CONFIGURADO == 'sim'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -87,7 +92,7 @@ jobs:
             --title "Release ${VERSAO}" --body-file /tmp/corpo.md
 
   cortar-tag:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && vars.RELEASE_APP_CONFIGURADO == 'sim'
     runs-on: ubuntu-latest
     permissions:
       contents: read
