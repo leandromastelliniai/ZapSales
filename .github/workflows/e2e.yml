@@ -1645,7 +1645,9 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: "1"
           # O build do Next checa tipos e estoura o heap padrão do Node (~2 GB).
-          NODE_OPTIONS: --max-old-space-size=8192
+          # 4 GB, como o Dockerfile: a máquina de repo privado tem 7 GB no total,
+          # e um heap maior derruba o runner inteiro ("shutdown signal").
+          NODE_OPTIONS: --max-old-space-size=4096
           # `off`, NÃO vazio. Vazio seleciona o Sentry DA COMUNIDADE — está
           # escrito em lib/sentry/dsn.ts:8-10, e é o default de propósito num
           # produto self-host. Só "off" desliga.

@@ -127,6 +127,11 @@ jobs:
   # `--shard` corta por contagem, e o terço de cada um só se sabe rodando. O
   # custo é um job a mais por rodada na fila de runners (~25 s de preâmbulo), NÃO
   # MEDIDO quanto à espera.
+  # OITO PARTES DESDE 04/10/2026 (ZapSales). O repositório é privado e roda nas
+  # máquinas do GitHub para repo privado (2 vCPU, 7 GB): medido no primeiro
+  # push, `Unit tests` levou 540 s na parte 1/3 e passou de 680-770 s nas
+  # outras duas, cortadas pelo teto de 15 min. Com oito partes cada fatia fica
+  # perto de 5 min, e o orçamento de 12 min volta a valer.
   verify-parte:
     # Guarda de travamento. O DETECTOR de crescimento é o passo `Orçamento de
     # tempo` no fim de cada parte; a medição que justifica o número está em
@@ -140,7 +145,7 @@ jobs:
       # Sem fail-fast: um vermelho numa parte não esconde o da outra.
       fail-fast: false
       matrix:
-        parte: [1, 2, 3]
+        parte: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@v7
 
@@ -228,18 +233,19 @@ jobs:
         run: pnpm cercas
 
       # O limite padrão de memória do Node (~2 GB) estoura no tsc deste
-      # repositório nas máquinas do GitHub (16 GB).
+      # repositório. Repositório privado roda em máquina de 2 vCPU e 7 GB: 6 GB
+      # para o heap ainda deixa o sistema de pé.
       - name: Typecheck
         if: matrix.parte == 1
         env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          NODE_OPTIONS: --max-old-space-size=6144
         run: pnpm typecheck
 
       # Na parte 2, não na 1: o porquê e a conta estão no cabeçalho do job.
       - name: Lint
         if: matrix.parte == 2
         env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          NODE_OPTIONS: --max-old-space-size=6144
         run: pnpm lint
 
       # Invariante 1 de docs/doctrine/restricao-de-canal.md: nenhuma feature
@@ -322,11 +328,11 @@ jobs:
           echo "OK — ${total} migrations na árvore, nenhum NNNN nem timestamp repetido."
 
       # `--project produto` é o `pnpm test:unit` MENOS as cercas, que já
-      # rodaram acima; `--shard` divide os arquivos entre as três partes. Juntos
+      # rodaram acima; `--shard` divide os arquivos entre as oito partes. Juntos
       # são a suíte inteira, uma vez só. Localmente o comando continua sendo
       # `pnpm test:unit`, sem recorte.
-      - name: Unit tests (parte ${{ matrix.parte }}/3)
-        run: pnpm test:unit --project produto --shard=${{ matrix.parte }}/3
+      - name: Unit tests (parte ${{ matrix.parte }}/8)
+        run: pnpm test:unit --project produto --shard=${{ matrix.parte }}/8
 
       # Testes dos scripts bash do repositório (scheduler, test-db, stack local,
       # build do e2e), com docker e afins dublados.
@@ -400,11 +406,11 @@ jobs:
             exit 0
           fi
           decorrido=$(( ($(date +%s) - VERIFY_INICIO) / 60 ))
-          echo "verify parte ${{ matrix.parte }}/3: ${decorrido} min (orçamento ${ORCAMENTO_MIN} min, teto de travamento 15 min)"
+          echo "verify parte ${{ matrix.parte }}/8: ${decorrido} min (orçamento ${ORCAMENTO_MIN} min, teto de travamento 15 min)"
           if [ "$decorrido" -le "${ORCAMENTO_MIN}" ]; then
             exit 0
           fi
-          echo "::error::A parte ${{ matrix.parte }}/3 do verify levou ${decorrido} min contra um orçamento de ${ORCAMENTO_MIN} min."
+          echo "::error::A parte ${{ matrix.parte }}/8 do verify levou ${decorrido} min contra um orçamento de ${ORCAMENTO_MIN} min."
           echo "::error::Isto NÃO é defeito do seu PR: a suíte unitária cresceu. Em 18/09/2026, \`Unit tests\` já era 10,3 dos 13,2 min do job."
           echo "::error::O conserto é mais uma parte em \`verify-parte\` (matrix + --shard), não subir este número."
           exit 1
