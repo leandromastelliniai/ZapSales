@@ -249,8 +249,12 @@ serviço construído na VPS.
 
 Depois de qualquer deploy, confirme que o domínio responde **307** (redireciona
 pro login) e não 404. Verificações e o caso de build local em
-`docs/runbooks/deploy.md`. O kit de instalação na VPS Hostinger (convivendo com
-outros apps atrás do proxy existente, ou numa VPS limpa) é o das issues #3 e #12.
+`docs/runbooks/deploy.md`. O kit de instalação na VPS é o `kit/instalar.sh` — instala E
+atualiza (rodar de novo é a atualização) — no modo "convivendo com outros apps atrás do
+proxy existente" (issue #3, runbook `docs/runbooks/instalacao-vps-convivio.md`); o modo
+"VPS limpa" é a issue #12. Onde este arquivo diz `install.sh`/`update.sh`, leia
+`kit/instalar.sh`. Backup e restauração: `kit/backup.sh` e `kit/restaurar.sh`
+(`docs/runbooks/backup-e-restauracao.md`).
 
 ---
 
@@ -582,7 +586,7 @@ Processo padrão (siga sempre):
 3. **Portável em `psql` puro** (clones podem não usar o MCP/CLI Supabase): **sem** `create temporary table ... on commit drop` fora de transação explícita; **sem** `BEGIN`/`COMMIT` explícito (o runner já envolve em transação, como as demais migrations). Prefira CTEs, subqueries de janela e colunas-mapa (ex.: `is_merged_into`) a temp tables.
 4. **Data migrations genéricas**: se a migration corrige/deduplica dados, escreva pensando em QUALQUER banco de clone (não hardcode IDs do seu tenant). Repointe FKs conferindo o catálogo (`information_schema` FK map) para não perder histórico.
 5. **Descreva no próprio arquivo — NÃO no MANIFEST**: o `.sql` leva uma linha `-- manifest: <o QUÊ e o PORQUÊ, numa linha>` no cabeçalho. Versão e nome saem do nome do arquivo. O `supabase/migrations/MANIFEST.md` é **histórico** e não recebe linha nova: todo PR com migration acrescentava uma linha no FIM dele, o `merge=union` do `.gitattributes` só vale no git local, e o GitHub ignora driver de merge — cada migration que entrava deixava todos os outros PRs com migration CONFLICTING (medido em 02/10/2026: #2009, #2049, #2078, #2080, #2091, #2137, várias vezes cada). Um arquivo por migration não tem com quem conflitar. O registro inteiro é o MANIFEST.md **mais** `grep -m1 '^-- manifest:' supabase/migrations/*.sql`. Quem cobra: `tests/unit/manifest-x-migrations.test.ts` (sem descrição, número ou carimbo repetido, ou descrita nos dois lugares, reprova) e o pre-commit `check-migration-triple.sh`.
-6. **Reflita no `supabase/baseline.sql` (OBRIGATÓRIO — é o que a instalação aplica).** O baseline é um dump `--schema-only` + um **apêndice idempotente** no fim do arquivo (blocos rotulados `-- ---- <coisa> (migration NNNN) ----`). A instalação aplica **só o baseline.sql**, tanto no `install.sh` (banco novo, `ON_ERROR_STOP=1`) quanto no `update.sh` (re-aplica em banco existente, **sem** `ON_ERROR_STOP`). Então toda mudança de schema pós-snapshot DEVE ser acrescentada ao apêndice, **idempotente e auto-curativa**: `add column if not exists`, `create ... if not exists`, `create or replace function`, e — se a mudança adiciona constraint — **deduplicar/corrigir os dados ANTES** de criar a constraint (senão o `update.sh` de um clone bugado quebra). Sem isto, clones não recebem a mudança (ou quebram ao atualizar). Migração adicionada só em `migrations/` mas não no baseline **não chega aos self-hosters**.
+6. **Reflita no `supabase/baseline.sql` (OBRIGATÓRIO — é o que a instalação aplica).** O baseline é um dump `--schema-only` + um **apêndice idempotente** no fim do arquivo (blocos rotulados `-- ---- <coisa> (migration NNNN) ----`). A instalação aplica **só o baseline.sql**, e o `kit/instalar.sh` o aplica do mesmo jeito em banco novo e em banco existente (re-aplicação na atualização), sempre com `ON_ERROR_STOP=1` — o CI prova as duas passadas com a flag. Para conferir sem acreditar nesta linha: `grep -n "ON_ERROR_STOP" kit/lib/stack.sh`. Então toda mudança de schema pós-snapshot DEVE ser acrescentada ao apêndice, **idempotente e auto-curativa**: `add column if not exists`, `create ... if not exists`, `create or replace function`, e — se a mudança adiciona constraint — **deduplicar/corrigir os dados ANTES** de criar a constraint (senão o `update.sh` de um clone bugado quebra). Sem isto, clones não recebem a mudança (ou quebram ao atualizar). Migração adicionada só em `migrations/` mas não no baseline **não chega aos self-hosters**.
 7. **Aplique e prove**: aplique via `mcp__plugin_supabase_supabase__apply_migration` (ou `supabase db push`), capture o estado ANTES/DEPOIS e prove invariantes (ex.: contagem de linhas que não pode mudar). Se mexeu em contrato, regenere `lib/database.types.ts`. Para mudanças de schema no kit, valide o baseline num Postgres descartável (`pgvector/pgvector:pg15` + extensões) aplicando `install` (fresh, `ON_ERROR_STOP=1`) e `update` (re-aplicar, sem a flag) — ambos têm que passar.
 8. **Backfill de dados quebrados existentes**: constraint nova falha se os dados atuais a violam — a migration (e o apêndice do baseline) deve deduplicar/corrigir ANTES de criar a constraint.
 9. **Função nova em `public` nasce EXPOSTA — revogue as DUAS origens.** Toda `create function` no schema `public` termina com:
@@ -684,7 +688,7 @@ Antes de declarar uma task pronta:
     ```bash
     grep -c 'href:' lib/navigation/catalogo.ts lib/navigation/registry.ts
     ```
-15. **Se tocou Dockerfile, compose ou setup kit: a mudança chega a quem já instalou** (lei em `docs/doctrine/packaging.md`) — nenhum serviço de produção ficou `build:`-only; variável nova tem default que não quebra `.env` antigo; a atualização não pede edição manual de arquivo; e, se mudou o que a imagem contém, o `update.sh` alcança essa peça. Quando o kit de instalação existir (issues #3/#12), rode também os testes de shell dele
+15. **Se tocou Dockerfile, compose ou setup kit: a mudança chega a quem já instalou** (lei em `docs/doctrine/packaging.md`) — nenhum serviço de produção ficou `build:`-only; variável nova tem default que não quebra `.env` antigo; a atualização não pede edição manual de arquivo; e, se mudou o que a imagem contém, o `kit/instalar.sh` (que é a atualização) alcança essa peça. Rode também os testes de shell do kit (`bash tests/shell/kit-funcoes.test.sh`, parte do `pnpm test:shell`)
 16. **Se o PR muda comportamento, procure a afirmação de estado sobre esse comportamento.** Só
     sobre o que você mudou, e só nos documentos de autoridade — não saia caçando pelo repo. A
     documentação afirma como o mundo *está*, e afirmação de estado desatualiza em silêncio.

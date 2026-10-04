@@ -122,4 +122,23 @@ describe("todo serviço que recebe o .env neutraliza a conexão do dono", () => 
       .map(([nome]) => nome);
     expect(semNeutralizar, 'serviço com env_file: .env sem `SUPABASE_DB_ADMIN_URL: ""` no environment').toEqual([]);
   });
+
+  /*
+   * Com o Supabase self-hosted (issue #3) o MESMO `.env` guarda os segredos
+   * do próprio Supabase: a senha do superusuário do banco, o JWT_SECRET que
+   * assina qualquer token (inclusive de service_role) e as chaves do Realtime.
+   * Nenhum código do app os lê — quem os consome são os contêineres do
+   * docker-compose.supabase.yml, por interpolação. Entregá-los ao `app` pelo
+   * `env_file` seria a mesma falha da conexão do dono, por outra chave.
+   */
+  it.each(["POSTGRES_PASSWORD", "JWT_SECRET", "REALTIME_DB_ENC_KEY", "REALTIME_SECRET_KEY_BASE"])(
+    "cada um sobrescreve %s com vazio no environment",
+    (chave) => {
+      const linha = new RegExp(`^ {6}${chave}: ""\\s*$`);
+      const semNeutralizar = recebemEnv
+        .filter(([, bloco]) => !linhasDoEnvironment(bloco).some((l) => linha.test(l)))
+        .map(([nome]) => nome);
+      expect(semNeutralizar, `serviço com env_file: .env sem \`${chave}: ""\` no environment`).toEqual([]);
+    },
+  );
 });

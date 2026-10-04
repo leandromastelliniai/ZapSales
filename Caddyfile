@@ -1,11 +1,97 @@
-# Caddy — reverse proxy + HTTPS automático (Let's Encrypt) para o ZapSales.
-# HTTP→HTTPS e emissão/renovação de certificado são automáticos.
-
+# Caddy — o proxy da stack do ZapSales.
+#
+# Dois papéis:
+#
+# 1. Site público ({$CADDY_SITE}). No modo VPS limpa é o domínio, com HTTPS
+#    automático (Let's Encrypt). No modo "convivendo com outros apps"
+#    (docker-compose.convivio.yml) é `:80`: HTTP puro numa porta do loopback,
+#    atrás do proxy do sistema, que termina o HTTPS.
+# 2. Gateway do Supabase self-hosted — o papel do Kong/Envoy no compose
+#    oficial. O navegador fala com o Supabase pelo MESMO domínio do app
+#    (/auth/v1, /rest/v1, /realtime/v1, /storage/v1): um DNS só, sem CORS. O
+#    servidor fala pelo site interno `:8000` (SUPABASE_SERVER_URL), que não tem
+#    porta publicada.
 {
 	email {$ACME_EMAIL}
+	servers {
+		# No modo convivendo quem conecta aqui é o proxy do sistema (pela ponte
+		# do Docker). Sem confiar nele, o X-Forwarded-Proto: https que ele manda
+		# seria descartado e o app acharia que a requisição chegou em HTTP. Só
+		# esse modo liga `private_ranges` (docker-compose.convivio.yml): no modo
+		# VPS limpa o Caddy É a borda, e um cliente de fora pode aparecer com
+		# endereço da ponte do Docker — confiar nele tornaria o X-Forwarded-For
+		# falsificável.
+		trusted_proxies static {$CADDY_PROXIES_CONFIAVEIS}
+	}
 }
 
-{$DOMAIN} {
+# As rotas do Supabase, espelhando o kong.yml do compose oficial do Supabase
+# (supabase/supabase, docker/volumes/api/kong.yml) para as chaves JWT legadas
+# que esta instalação usa.
+(supabase) {
+	# Rotas abertas do Auth — as que o Kong oficial deixa sem chave: o link de
+	# confirmação de e-mail e o retorno de login social chegam sem `apikey`.
+	@auth_aberto path /auth/v1/verify /auth/v1/callback /auth/v1/authorize /auth/v1/.well-known/jwks.json /auth/v1/sso/saml/acs /auth/v1/sso/saml/metadata
+	handle @auth_aberto {
+		uri strip_prefix /auth/v1
+		reverse_proxy auth:9999
+	}
+
+	# O `key-auth` do Kong: sem uma das duas chaves da instalação, 401. A
+	# chave anon é pública (vai para o navegador), então isto não é a
+	# autorização — essa é do PostgREST/RLS. É o que impede um varredor
+	# qualquer de ler o catálogo do PostgREST sem nem ter a chave.
+	@supabase_sem_chave {
+		path /auth/v1/* /rest/v1/* /realtime/v1/*
+		not header apikey {$SUPABASE_ANON_KEY}
+		not header apikey {$SUPABASE_SERVICE_ROLE_KEY}
+		# Na query string, SÓ a chave anon: é como o supabase-js abre o WebSocket
+		# do Realtime, e ela é pública. A service_role na query string acabaria
+		# em log de proxy (CLAUDE.md, anti-pattern 12) — nenhum servidor nosso
+		# assina Realtime, então não há quem precise dela ali.
+		not query apikey={$SUPABASE_ANON_KEY}
+	}
+	respond @supabase_sem_chave `{"message":"No API key found in request"}` 401
+
+	# Kong: Authorization ausente vira a própria chave (LUA_AUTH_EXPR).
+	@sem_authorization {
+		path /auth/v1/* /rest/v1/* /storage/v1/*
+		not header Authorization *
+		header apikey *
+	}
+	request_header @sem_authorization Authorization "Bearer {http.request.header.apikey}"
+
+	handle_path /auth/v1/* {
+		reverse_proxy auth:9999
+	}
+	handle_path /rest/v1/* {
+		reverse_proxy rest:3000
+	}
+	# O Kong bloqueia a administração de tenants do Realtime e a OpenAPI dele.
+	@realtime_admin path /realtime/v1/api/tenants* /realtime/v1/api/openapi*
+	respond @realtime_admin 403
+	# O Realtime tira o tenant do subdomínio do Host — `realtime-dev` é o que o
+	# SEED_SELF_HOST cria (docker-compose.supabase.yml).
+	handle_path /realtime/v1/api/* {
+		rewrite * /api{path}
+		reverse_proxy realtime:4000 {
+			header_up Host realtime-dev.supabase-realtime
+		}
+	}
+	handle_path /realtime/v1/* {
+		rewrite * /socket{path}
+		reverse_proxy realtime:4000 {
+			header_up Host realtime-dev.supabase-realtime
+		}
+	}
+	handle_path /storage/v1/* {
+		reverse_proxy storage:5000 {
+			header_up X-Forwarded-Prefix /storage/v1
+		}
+	}
+}
+
+{$CADDY_SITE} {
 	encode gzip
 
 	# `route` é obrigatório aqui: fora dele o Caddy reordena as diretivas pela
@@ -29,6 +115,8 @@
 		@waha_global path /api/v1/webhooks/waha
 		respond @waha_global 403
 
+		import supabase
+
 		# O runner de agente de IA (ToolLoop) pode levar até ~5min por requisição.
 		# Timeout estendido só nessa rota pra o proxy não cortar a resposta longa.
 		@agentrun path /api/internal/agents/run*
@@ -41,5 +129,14 @@
 
 		# Todo o resto do app.
 		reverse_proxy app:3000
+	}
+}
+
+# Gateway interno do Supabase para o servidor (SUPABASE_SERVER_URL=http://caddy:8000).
+# Sem porta publicada: só app, worker e scheduler, na rede interna, o alcançam.
+:8000 {
+	route {
+		import supabase
+		respond 404
 	}
 }

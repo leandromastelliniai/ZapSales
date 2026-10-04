@@ -116,7 +116,7 @@ Contrato completo em [`docs/specs/07-spec-events-workers.md`](docs/specs/07-spec
 | `workers/`              | Workers de `event_log` + crons                                                                                  |
 | `components/`, `hooks/` | React compartilhado; convenções nos README de cada pasta                                                        |
 | `supabase/migrations/`  | Schema versionado (`MANIFEST.md` = histórico); `supabase/baseline.sql` é o que o self-host aplica              |
-| `kit/`                  | Kit de instalação/atualização da VPS Hostinger — **ainda não existe**, nasce nas issues #3 e #12                |
+| `kit/`                  | Kit da VPS: `instalar.sh` (instala e atualiza), `backup.sh`, `restaurar.sh` — modo convivendo (#3); VPS limpa é a #12 |
 | `scripts/`              | CLIs de operação e QA — ver `scripts/README.md`                                                                 |
 | `tests/`                | `unit/`, `invariants/`, `e2e/`, `shell/`, `journeys/`, `fixtures/`                                              |
 | `docs/`                 | Doutrina, PRDs, specs, regras de negócio, runbooks, design system — entrada em `docs/index.md`                  |
@@ -241,7 +241,7 @@ no `.env` são semente e piso de rollback. Fora do DOM (e-mail, ícone, `issuer`
 `app/layout.tsx` e um throw ali é 500 em todas as telas. O PDF de LGPD não leva marca: ele nomeia
 o controlador (`organizations.legal_name`) e o DPO.
 
-- **`supabase/baseline.sql`** — é o que o `install.sh`/`update.sh` do self-host aplicam.
+- **`supabase/baseline.sql`** — é o que o `kit/instalar.sh` do self-host aplica (na instalação e em toda atualização).
   Toda mudança de schema tem que aparecer aqui **como apêndice idempotente**, senão
   não chega em quem instalou. Ver doutrina de Migrations em `CLAUDE.md`.
 - **`supabase/migrations/*.sql` já aplicadas** — nunca edite. Corrija com migration nova.
@@ -274,7 +274,7 @@ server; segredo em query string; `throw` cru na borda da API.
 | `lib/logger.ts`, `lib/env.ts`              | Log estruturado; contrato de env vars validado por Zod                       |
 | `lib/audit/index.ts`                       | `audit()` — trilha de auditoria                                              |
 | `lib/database.types.ts`                    | **Gerado** do schema — não edite à mão                                       |
-| `supabase/baseline.sql`                    | O que o `install.sh`/`update.sh` aplicam — toda mudança de schema entra aqui |
+| `supabase/baseline.sql`                    | O que o `kit/instalar.sh` aplica — toda mudança de schema entra aqui |
 | `workers/agent-worker/main.ts`             | Entry point do worker de agente                                              |
 | `docker-compose.prod.yml`                  | Topologia de produção (imagens publicadas)                                   |
 | `instrumentation.ts`, `sentry.*.config.ts` | Boot de observabilidade                                                      |
@@ -301,8 +301,9 @@ server; segredo em query string; `throw` cru na borda da API.
   edição manual de arquivo na VPS.
 - **Deploy em VPS com proxy próprio** — o roteamento do proxy acompanha **todo** `up -d`.
   Subir sem ele recria o contêiner sem labels: o domínio inteiro responde `404` com o
-  contêiner `healthy` (o healthcheck é um probe TCP interno). O kit da VPS Hostinger está
-  sendo refeito (issues #3 e #12). Runbook: [`docs/runbooks/deploy.md`](docs/runbooks/deploy.md).
+  contêiner `healthy` (o healthcheck é um probe TCP interno). O `kit/instalar.sh` grava o
+  `COMPOSE_FILE` no `.env` para todo `up -d` subir o mesmo conjunto. Runbook:
+  [`docs/runbooks/deploy.md`](docs/runbooks/deploy.md).
 - **Env vars** — nova variável entra em `.env.example` **e** em `lib/env.ts`. Nunca leia nem logue
   valor de `.env*`; só `.env.example` é template. Segredo/token só em header, nunca em query string.
 - **Gerados — não edite** — `lib/database.types.ts`, `graphify-out/`, `pnpm-lock.yaml`, `.next/`.
@@ -467,8 +468,8 @@ Lei completa em [`docs/doctrine/packaging.md`](docs/doctrine/packaging.md). O n�
 - **Dependência upstream é referenciada com tag fixa, nunca republicada** (WAHA é licenciado).
 - **Bump de versão não pode exigir que o operador da VPS edite arquivo à mão.**
 
-O kit novo (issues #3 e #12) ainda não tem gate próprio; `pnpm test:shell` cobre os entrypoints
-das imagens. Rode-o.
+`pnpm test:shell` cobre os entrypoints das imagens e as funções do kit (`tests/shell/kit-funcoes.test.sh`).
+Rode-o.
 
 ## Extensões — se sua mudança muda comportamento
 
@@ -509,7 +510,7 @@ que é `INFERIDO`.
 `.changes/` declarando o **efeito no operador** (`nada_mudou` / `capacidade_nova` / `exige_acao`),
 nunca o número. O número é calculado a partir do conjunto; confira com `pnpm release:conferir` e
 corte com `pnpm release:cortar`. Régua e porquê: [`docs/doctrine/versionamento.md`](docs/doctrine/versionamento.md).
-Quem instalou lê o [`CHANGELOG.md`](CHANGELOG.md) antes de rodar `update.sh` — mudança que exige
+Quem instalou lê o [`CHANGELOG.md`](CHANGELOG.md) antes de rodar o `kit/instalar.sh` — mudança que exige
 ação manual aparece sob "⚠️ Requer atenção".
 Toda versão publicada aparece também em [zapsales.futuristas.app/changelog](https://zapsales.futuristas.app/changelog)
 (pt-BR, en, es): a LP lê o `CHANGELOG.md` da `main`, ninguém escreve release no site, e o último
