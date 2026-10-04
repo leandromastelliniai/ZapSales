@@ -3182,3 +3182,29 @@ Spec: `tests/e2e/mapas-em-provedores.spec.ts`.
 | J40.5 | A tabela não é servida pelo PostgREST | `anon`/`authenticated` sem privilégio, `permission denied`, RLS ligada sem policy | **PASS (invariante)** — `tests/invariants/credencial-de-mapas-e-server-side.test.ts` |
 | J40.6 | O que o Google diz × o endereço anotado em 8 pedidos confirmados (28/09/2026, numa instalação real) | município 8/8, região 8/8, localidade 7/8 (na zona rural virou o povoado), rua 3/5, bairro 1/8, número interpolado → a cidade é o MUNICÍPIO; bairro e número não saem | **MEDIDO em produção** (fora deste repositório); regra em `tests/unit/mapas-pino-com-endereco.test.ts` |
 | J40.7 | O pino com endereço aproximado, aberto na conversa pela equipe | o cartão do pino mostra «Rua, Cidade, Estado (aprox.)», com o texto inteiro no `title` (o cartão corta com …) e o toque abre as COORDENADAS no mapa | **PASS pela tela** |
+
+## J41 — Canal oficial na Graph v26: conectar, enviar modelo, status, erros e BSUID `[P0]` (2026-10-04)
+
+Contexto: issue #4. A fronteira de teste aprovada na spec (issue #1) é a fronteira
+com a Meta: o falso Graph (`tests/support/falso-graph.ts`, servidor HTTP real
+apontado por `META_GRAPH_BASE_URL`) na saída, e o webhook assinado com o App
+Secret postado na rota real (`tests/support/webhook-meta-assinado.ts`) na entrada.
+O sistema é dirigido pelas rotas do app sobre o baseline aplicado; só a identidade
+da sessão é dublê.
+
+Spec: `tests/invariants/canal-oficial-ponta-a-ponta.test.ts`.
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J41.1 | Conectar número pela API com conta de mensagens | credencial validada no falso Graph, webhook registrado, `messagingAccountId` no GET; token só no cabeçalho | **PASS (invariante)** |
+| J41.2 | Cliente escreve (webhook assinado), operador envia modelo aprovado | o falso Graph recebe `POST /v26.0/{número}/messages` com `messaging_account_id`, `to` e os parâmetros; a mensagem fica `sent` com o `wamid` | **PASS (invariante)** |
+| J41.3 | Status `delivered` e `read` assinados | `delivered_at` e `read_at` preenchidos, conferidos pela listagem da conversa | **PASS (invariante)** |
+| J41.4 | Assinatura com segredo errado, vazia ou adulterada | 401 e nenhuma linha escrita | **PASS (invariante)** |
+| J41.5 | 130429, 131049, 131050, 131026, 132001, 131042 programados no falso Graph | mensagem `failed` com o código da Meta, a categoria certa e o motivo do mapa (`lib/channels/meta/erros.ts`), nunca o texto cru | **PASS (invariante)**; tabela completa em `tests/unit/meta-mapa-de-erros.test.ts` |
+| J41.6 | Mensagem só com BSUID, de novo só com BSUID, resposta a ela, depois BSUID + telefone | cria a ficha sem telefone, reencontra a mesma, a resposta sai em `recipient` sem `to`, e o telefone entra na mesma ficha | **PASS (invariante)** |
+| J41.7 | A outra organização | não vê o canal nem as mensagens; token do webhook de A não escreve em B | **PASS (invariante)** |
+| J41.8 | Campo «ID da conta de mensagens» na tela de conexão | campo opcional, vazio não apaga o valor guardado, valor aparece no cartão do canal e em «Para integrar» | **PENDENTE pela tela** — sem Docker na máquina desta sessão; falta a prova em ambiente fresco (DoD 12) |
+
+Sabotagem medida: tirar `messaging_account_id`, `recipient` ou o `read_at` do
+código derruba J41.2/J41.3/J41.6; ignorar a falha classificada no handler derruba
+os seis casos de J41.5; voltar o parser a exigir telefone derruba J41.6.
