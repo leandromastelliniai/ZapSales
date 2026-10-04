@@ -10,11 +10,13 @@ Esta é a **lei**. O procedimento operacional de deploy vive em
 recusado, em [`../adr/0001-packaging-e-distribuicao.md`](../adr/0001-packaging-e-distribuicao.md).
 Ao mudar um invariante aqui, atualize os dois na mesma sessão.
 
-> **O kit de instalação está sendo refeito.** O kit herdado da origem (`install.sh`,
-> `update.sh`, `agent.sh` e os testes de shell que o exercitavam) foi removido; o kit para a
-> VPS Hostinger está sendo escrito nas issues #3 e #12 e vai morar em `kit/`. Onde esta lei
-> fala em `install.sh` e `update.sh`, leia como o papel que o kit novo tem de cumprir — os
-> invariantes valem para ele integralmente.
+> **O kit de instalação mora em `kit/`.** O kit herdado da origem (`install.sh`,
+> `update.sh`, `agent.sh`) foi removido. O novo é `kit/instalar.sh`, que instala E atualiza
+> (rodar de novo é a atualização), no modo "convivendo com outros apps" (issue #3); o modo
+> "VPS limpa" é a issue #12. Onde esta lei fala em `install.sh` e `update.sh`, leia
+> `kit/instalar.sh` — os invariantes valem para ele integralmente. Ele grava tag de versão
+> quando puxa do registro; `ZAPSALES_IMAGENS=construir` é a exceção de
+> [`deploy.md` §4](../runbooks/deploy.md), usada enquanto as imagens são privadas.
 
 | Se você quer… | Vá para |
 |---|---|

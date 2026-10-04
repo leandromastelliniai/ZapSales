@@ -1,0 +1,240 @@
+# ZapSales — Supabase self-hosted, na mesma rede interna da stack de produção.
+#
+# Usado JUNTO com o docker-compose.prod.yml: o kit grava no .env
+#   COMPOSE_FILE=docker-compose.prod.yml:docker-compose.supabase.yml
+# e daí em diante todo `docker compose ...` na pasta da instalação enxerga os
+# dois arquivos — inclusive o `up -d` que alguém digitar à mão.
+#
+# ═══ SÓ O QUE O ZAPSALES USA ═══
+#
+# O compose oficial do Supabase (supabase/supabase, pasta docker/) sobe 13
+# contêineres. O ZapSales fala com cinco: Postgres, Auth (login), PostgREST
+# (/rest/v1), Realtime (tempo real) e Storage (mídias). Ficam de fora o Studio
+# e o postgres-meta (painel de administração — porta de entrada que ninguém
+# vai vigiar), o Kong/Envoy (o roteamento por caminho mora no Caddy da stack,
+# ver Caddyfile), analytics, vector, edge functions, imgproxy (o produto não
+# transforma imagem) e o supavisor (nada aqui precisa de pool externo).
+#
+# As versões são as do compose oficial em 2026-10-04, pinadas por tag exata
+# (doutrina de packaging, invariante 4). Bumpar é decisão de release.
+#
+# ═══ NENHUMA PORTA PUBLICADA ═══
+#
+# Nenhum serviço deste arquivo declara `ports:`. O navegador chega ao Supabase
+# pelo Caddy da stack (/auth/v1, /rest/v1, /realtime/v1, /storage/v1), e o kit
+# fala com o banco por `docker compose exec db`. Vigiado por
+# tests/unit/portas-do-compose.test.ts.
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  db:
+    image: ${SUPABASE_DB_IMAGE:-supabase/postgres:17.6.1.136}
+    restart: unless-stopped
+    mem_limit: 2g
+    cpus: 2
+    # Sem isto o Docker dá 64 MB de /dev/shm e o Postgres falha em consulta
+    # paralela grande com "could not resize shared memory segment".
+    shm_size: 256m
+    volumes:
+      # Scripts de primeiro boot, copiados do compose oficial (ver cabeçalho de cada um).
+      - ./docker/supabase/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:ro
+      - ./docker/supabase/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:ro
+      - ./docker/supabase/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:ro
+      - supabase-db-data:/var/lib/postgresql/data
+      - supabase-db-config:/etc/postgresql-custom
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    environment:
+      POSTGRES_HOST: /var/run/postgresql
+      PGPORT: 5432
+      POSTGRES_PORT: 5432
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: postgres
+      POSTGRES_DB: postgres
+      JWT_EXP: ${JWT_EXPIRY:-3600}
+    command:
+      [
+        "postgres",
+        "-c", "config_file=/etc/postgresql/postgresql.conf",
+        "-c", "log_min_messages=fatal",
+      ]
+    logging: *default-logging
+    networks: [internal]
+
+  auth:
+    image: ${SUPABASE_AUTH_IMAGE:-supabase/gotrue:v2.196.0}
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: ${NEXT_PUBLIC_SUPABASE_URL}/auth/v1
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@db:5432/postgres
+      GOTRUE_SITE_URL: ${NEXT_PUBLIC_APP_URL}
+      GOTRUE_URI_ALLOW_LIST: ${NEXT_PUBLIC_APP_URL}/auth/callback,${NEXT_PUBLIC_APP_URL}/auth/confirm,${NEXT_PUBLIC_APP_URL}/**
+      # Cadastro público FECHADO no GoTrue: o app não tem tela de cadastro aberto
+      # por padrão, e convite passa por `auth.admin.createUser`, que o
+      # disable_signup não bloqueia (lib/auth/convite-no-gotrue.ts). Aberto, a
+      # chave anon — que é pública — criaria contas direto em /auth/v1/signup.
+      GOTRUE_DISABLE_SIGNUP: ${GOTRUE_DISABLE_SIGNUP:-true}
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: ${JWT_EXPIRY:-3600}
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_JWT_ISSUER: ${NEXT_PUBLIC_SUPABASE_URL}/auth/v1
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: "false"
+      GOTRUE_MAILER_AUTOCONFIRM: ${GOTRUE_MAILER_AUTOCONFIRM:-false}
+      GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_FROM_EMAIL:-}
+      GOTRUE_SMTP_HOST: ${SMTP_HOST:-}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT:-587}
+      GOTRUE_SMTP_USER: ${SMTP_USERNAME:-}
+      GOTRUE_SMTP_PASS: ${SMTP_PASSWORD:-}
+      GOTRUE_SMTP_SENDER_NAME: ${SMTP_FROM_NAME:-}
+      # Caminhos dos links de e-mail do próprio GoTrue — os mesmos do compose
+      # oficial. Os e-mails do produto (convite, LGPD) saem pelo app, não daqui.
+      GOTRUE_MAILER_URLPATHS_INVITE: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+      GOTRUE_SECURITY_REFRESH_TOKEN_ROTATION_ENABLED: "true"
+      GOTRUE_SECURITY_REFRESH_TOKEN_REUSE_INTERVAL: "10"
+      # Verificação em duas etapas por app autenticador: OPCIONAL no produto
+      # (lib/auth/politica-mfa.ts), mas o GoTrue precisa permitir o cadastro.
+      GOTRUE_MFA_TOTP_ENROLL_ENABLED: "true"
+      GOTRUE_MFA_TOTP_VERIFY_ENABLED: "true"
+      GOTRUE_MFA_MAX_ENROLLED_FACTORS: "10"
+    logging: *default-logging
+    networks: [internal]
+
+  rest:
+    image: ${SUPABASE_REST_IMAGE:-postgrest/postgrest:v14.17}
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "postgrest", "--ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public,graphql_public
+      PGRST_DB_MAX_ROWS: 1000
+      PGRST_DB_EXTRA_SEARCH_PATH: public,extensions
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_ADMIN_SERVER_PORT: 3001
+      PGRST_ADMIN_SERVER_HOST: localhost
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_EXP: ${JWT_EXPIRY:-3600}
+    command: ["postgrest"]
+    logging: *default-logging
+    networks: [internal]
+
+  realtime:
+    image: ${SUPABASE_REALTIME_IMAGE:-supabase/realtime:v2.134.10}
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # O Realtime tira o "tenant" do subdomínio do Host. O Caddy manda
+      # `Host: realtime-dev.supabase-realtime` (ver Caddyfile), e é esse o
+      # tenant que o SEED_SELF_HOST cria — o mesmo nome do compose oficial.
+      test: ["CMD-SHELL", "curl -sSfL --head -o /dev/null -H \"Authorization: Bearer ${NEXT_PUBLIC_SUPABASE_ANON_KEY}\" http://localhost:4000/api/tenants/realtime-dev/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    environment:
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: supabase_admin
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: postgres
+      DB_AFTER_CONNECT_QUERY: "SET search_path TO _realtime"
+      DB_ENC_KEY: ${REALTIME_DB_ENC_KEY}
+      API_JWT_SECRET: ${JWT_SECRET}
+      SECRET_KEY_BASE: ${REALTIME_SECRET_KEY_BASE}
+      METRICS_JWT_SECRET: ${JWT_SECRET}
+      ERL_AFLAGS: -proto_dist inet_tcp
+      DNS_NODES: "''"
+      RLIMIT_NOFILE: "10000"
+      APP_NAME: realtime
+      SEED_SELF_HOST: "true"
+      RUN_JANITOR: "true"
+      DISABLE_HEALTHCHECK_LOGGING: "true"
+    logging: *default-logging
+    networks: [internal]
+
+  storage:
+    image: ${SUPABASE_STORAGE_IMAGE:-supabase/storage-api:v1.74.0}
+    restart: unless-stopped
+    mem_limit: 384m
+    cpus: 0.5
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    environment:
+      ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SERVICE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://rest:3000
+      AUTH_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${POSTGRES_PASSWORD}@db:5432/postgres
+      STORAGE_PUBLIC_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      REQUEST_ALLOW_X_FORWARDED_PATH: "true"
+      # 50 MB — o mesmo teto do maior bucket do baseline (`whatsapp-media`,
+      # file_size_limit 52428800). O limite global vale ACIMA do de cada bucket.
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_BACKEND: file
+      GLOBAL_S3_BUCKET: stub
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: stub
+      ENABLE_IMAGE_TRANSFORMATION: "false"
+    volumes:
+      # As mídias do WhatsApp e os arquivos do produto — entra no backup semanal.
+      - supabase-storage:/var/lib/storage
+    logging: *default-logging
+    networks: [internal]
+
+volumes:
+  supabase-db-data:
+  supabase-db-config:
+  supabase-storage:

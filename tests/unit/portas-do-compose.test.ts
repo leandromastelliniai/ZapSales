@@ -129,7 +129,12 @@ function semComentarios(bloco: string): string {
     .join("\n");
 }
 
-const ARQUIVOS = ["docker-compose.prod.yml"] as const;
+/*
+ * `docker-compose.supabase.yml` entra porque sobe junto (o kit grava
+ * `COMPOSE_FILE` com os dois): Postgres, Auth e Storage do Supabase são
+ * exatamente o tipo de serviço que nunca pode ganhar porta no host.
+ */
+const ARQUIVOS = ["docker-compose.prod.yml", "docker-compose.supabase.yml"] as const;
 
 const SERVICOS = new Map<string, Map<string, string>>(
   ARQUIVOS.map((f) => [f, lerServicos(fs.readFileSync(path.join(RAIZ, f), "utf8"))]),
@@ -209,6 +214,37 @@ describe("a fronteira de rede do que o cliente instala", () => {
         `Se um serviço precisar MESMO de UDP (mídia WebRTC), publique só o UDP e ponha\n` +
         `o motivo aqui, com o nome do serviço — nunca o TCP da API.`,
     ).toEqual([]);
+  });
+
+  it("o Supabase self-hosted sobe sem porta nenhuma e na rede interna", () => {
+    // Guarda do instrumento para o arquivo novo: se o parser não o enxergar, o
+    // caso acima fica verde sem ter olhado para o banco.
+    const supabase = SERVICOS.get("docker-compose.supabase.yml")!;
+    expect([...supabase.keys()].sort()).toEqual(["auth", "db", "realtime", "rest", "storage"]);
+    for (const [nome, bloco] of supabase) {
+      expect(semComentarios(bloco), `'${nome}' fora da rede interna`).toMatch(
+        /^\s{4}networks:\s*\[internal\]/m,
+      );
+    }
+  });
+
+  it("no modo convivendo, o proxy da stack só escuta no loopback", () => {
+    // Modo "convivendo com outros apps" (issue #3): as portas 80/443 são do
+    // proxy que já serve os outros sites. O override troca as portas do
+    // `caddy` por UMA porta em 127.0.0.1, que só o proxy do sistema alcança.
+    // `!override` e não a lista comum: o Compose SOMA listas de `ports:` entre
+    // arquivos, e sem a tag a 80/443 públicas continuariam lá, ao lado.
+    const yaml = fs.readFileSync(path.join(RAIZ, "docker-compose.convivio.yml"), "utf8");
+    const servicos = lerServicos(yaml);
+    expect([...servicos.keys()], "o override só mexe no proxy").toEqual(["caddy"]);
+
+    const caddy = semComentarios(servicos.get("caddy")!);
+    expect(caddy).toMatch(/^\s{4}ports:\s*!override\s*$/m);
+    const portas = [...caddy.matchAll(/^\s{6}-\s*"?([^"\n]+)"?\s*$/gm)].map((m) => m[1]!.trim());
+    expect(portas.length, "o proxy precisa de uma porta para o sistema alcançá-lo").toBeGreaterThan(0);
+    for (const porta of portas) {
+      expect(porta, `porta "${porta}" não está presa ao 127.0.0.1`).toMatch(/^127\.0\.0\.1:/);
+    }
   });
 
   it("nenhum serviço usa network_mode: host", () => {

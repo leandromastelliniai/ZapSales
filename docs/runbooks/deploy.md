@@ -8,44 +8,39 @@ está documentado no fim.
 
 ## 1. O comando
 
-O kit de instalação e atualização da VPS Hostinger está sendo refeito (issues #3 e #12)
-e vai morar em `kit/`; o comando de deploy é o dele. O kit da origem, e o arquivo de
-compose que ele usava para o roteamento, foram removidos.
+O kit da VPS mora em `kit/`. Instalar e atualizar são o MESMO comando — rodar de novo é
+como se atualiza (segredos ficam, o `baseline.sql` é reaplicado, o bloco do proxy é
+substituído):
+
+```bash
+cd /opt/zapsales && sudo kit/instalar.sh
+```
+
+Passo a passo completo, com o que cada etapa faz e como conferir:
+[`instalacao-vps-convivio.md`](./instalacao-vps-convivio.md). Backup e restauração:
+[`backup-e-restauracao.md`](./backup-e-restauracao.md).
 
 ### O roteamento faz parte de todo `up -d`
 
-Esta é a pegadinha que já derrubou o site inteiro em produção (2026-08-05).
-
-Na VPS Hostinger um **Traefik próprio** ocupa as portas 80/443. O que coloca no
-contêiner `app` as labels de roteamento (`traefik.http.routers.<nome>.rule=Host(...)`)
-e o associa à rede que o Traefik enxerga tem de acompanhar **todo** `up -d`.
-
-Subir sem isso recria o contêiner **sem labels nenhuma**. O Traefik deixa de
-enxergá-lo e o domínio inteiro passa a responder `404 page not found` — não é erro
-do Next, é o 404 genérico do Traefik. A app está no ar, saudável, e inalcançável.
-
----
+O kit grava no `.env` o `COMPOSE_FILE` com os três arquivos
+(`docker-compose.prod.yml`, `docker-compose.supabase.yml` e, no modo "convivendo com outros
+apps", `docker-compose.convivio.yml`). Por isso um `docker compose up -d` digitado à mão na
+pasta da instalação sobe o mesmo conjunto. Subir **sem** o override do modo convivendo
+(`-f docker-compose.prod.yml` explícito) faria o Caddy da stack disputar as portas 80/443
+com o proxy do sistema — o `up -d` falha, ou, pior, o proxy dos outros apps perde a porta.
 
 ## 2. Verificação pós-deploy (não pule)
 
 `healthy` no `docker ps` **não prova que o site está acessível** — o healthcheck
-é um probe TCP interno e passa mesmo com o roteamento quebrado. Verifique as
-duas coisas:
+é um probe TCP interno e passa mesmo com o roteamento quebrado. Verifique pelo
+domínio (o `kit/instalar.sh` faz esta mesma prova no fim):
 
 ```bash
-# 1) as labels do Traefik existem?
-#    O nome do contêiner é <pasta-do-projeto>-app-1, então pergunte ao compose
-#    em vez de chutar. Aqui um -f só basta: o `ps -q` resolve pelo nome do
-#    projeto + serviço, não pelo conteúdo do arquivo (medido: com um -f ou com
-#    os dois, devolve o MESMO contêiner). Quem precisa dos dois é o `up -d`.
-docker inspect "$(docker compose -f docker-compose.prod.yml ps -q app)" \
-  --format '{{.Config.Labels}}' | grep -o 'traefik.enable:[^ ]*'
-# esperado: traefik.enable:true   (vazio = roteamento quebrado)
-
-# 2) o domínio responde?
+# o domínio responde?
 curl -s -o /dev/null -w "%{http_code}\n" https://<DOMAIN>/
 # esperado: 307 (redireciona pro login)
-# 404      = labels perdidas, refaça o deploy com o roteamento junto
+# 502      = o proxy do sistema não alcança a stack: confira `docker compose ps`
+#            e a porta ZAPSALES_PORTA_LOCAL do .env contra o bloco do proxy
 ```
 
 ---
@@ -63,10 +58,9 @@ commit → push → PR → merge na main → CI publica imagem → VPS puxa
    tag `v*`) e publica **três** imagens — `zapsales`, `zapsales-worker` e
    `zapsales-scheduler` — sempre na mesma versão. O build pesado roda nos
    runners do GitHub, nunca na VPS do usuário.
-3. **Deploy na VPS.** Numa instalação real isto é o `update.sh` do kit (em
-   reconstrução, issues #3 e #12), não um `up -d` na mão: ele tem de puxar a tag
-   publicada, re-aplicar o `baseline.sql`, fazer backup antes e gravar as três
-   imagens no `.env`.
+3. **Deploy na VPS.** É o `kit/instalar.sh` rodado de novo, não um `up -d` na
+   mão: ele grava as três imagens no `.env`, puxa (ou constrói) e reaplica o
+   `baseline.sql` antes de recriar o app.
 
 > **`latest` não é a última release.** Ele é publicado a partir da branch default, então
 > segue o **topo da `main`** — código ainda não lançado. Quem quer a última release usa

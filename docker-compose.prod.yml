@@ -24,6 +24,12 @@ services:
     # inteira. Estourá-lo mata só quem estourou, e o `restart: unless-stopped`
     # o traz de volta — falha isolada em vez de queda geral.
     mem_limit: 768m
+    # Teto de CPU, pelo mesmo motivo do de memória e mais um: a VPS pode
+    # hospedar OUTROS apps (modo "convivendo", issue #3), e um laço quente
+    # aqui sem teto travaria o proxy que atende os sites deles. Todo serviço
+    # deste arquivo e do docker-compose.supabase.yml declara os dois tetos —
+    # vigiado por tests/unit/limites-de-recurso-do-compose.test.ts.
+    cpus: 2
     # Imagem GENÉRICA pré-buildada: o leigo só puxa (sobe em ~2min, roda em 2GB).
     # Os NEXT_PUBLIC_* reais vêm em RUNTIME (env_file abaixo) — o browser lê via
     # <PublicEnvScript/> e o servidor via lib/env.ts. Não precisa buildar no VPS.
@@ -38,6 +44,12 @@ services:
     env_file: .env
     environment:
       SUPABASE_DB_ADMIN_URL: ""
+      # Segredos do Supabase self-hosted que moram no mesmo .env e que nenhum
+      # código do app lê (tests/unit/env-ddl-fora-do-app.test.ts).
+      POSTGRES_PASSWORD: ""
+      JWT_SECRET: ""
+      REALTIME_DB_ENC_KEY: ""
+      REALTIME_SECRET_KEY_BASE: ""
     depends_on:
       srh:
         condition: service_started
@@ -70,6 +82,7 @@ services:
     # inteira. Estourá-lo mata só quem estourou, e o `restart: unless-stopped`
     # o traz de volta — falha isolada em vez de queda geral.
     mem_limit: 512m
+    cpus: 1
     # Imagem publicada — e não mais `build:` sozinho. O motivo é o modo de falha
     # que isso escondia: serviço build-only é PULADO por `docker compose pull`
     # ("Skipped - No image to be pulled") e imune a `up -d` sem `--build`. Ele era
@@ -102,6 +115,12 @@ services:
       # dentro da rede do compose, o WAHA é o serviço 'waha' na porta interna 3000
       WAHA_API_BASE_URL: http://waha:3000
       SUPABASE_DB_ADMIN_URL: ""
+      # Segredos do Supabase self-hosted que moram no mesmo .env e que nenhum
+      # código do app lê (tests/unit/env-ddl-fora-do-app.test.ts).
+      POSTGRES_PASSWORD: ""
+      JWT_SECRET: ""
+      REALTIME_DB_ENC_KEY: ""
+      REALTIME_SECRET_KEY_BASE: ""
     networks:
       - internal
     healthcheck:
@@ -123,6 +142,7 @@ services:
     # inteira. Estourá-lo mata só quem estourou, e o `restart: unless-stopped`
     # o traz de volta — falha isolada em vez de queda geral.
     mem_limit: 1280m
+    cpus: 1
     # Core grátis por padrão; troque para devlikeapro/waha-plus via WAHA_IMAGE se
     # precisar de multi-número/retry/S3 (licença paga).
     #
@@ -169,6 +189,10 @@ services:
 
   redis:
     image: redis:7-alpine
+    # Efêmero (rate limit, debounce): 256 MB sobram — o Redis aqui não guarda
+    # nada que precise sobreviver a um restart.
+    mem_limit: 256m
+    cpus: 0.5
     restart: unless-stopped
     command: ["redis-server", "--save", "", "--appendonly", "no"]  # efêmero (rate-limit/debounce)
     healthcheck:
@@ -191,6 +215,8 @@ services:
     # e o `:latest` deixa de poder mudar sozinho debaixo de todo mundo.
     # Quando a T6 for validada, isto vira `:0.0.10` e o comentário sai.
     image: hiett/serverless-redis-http@sha256:5b0bb9239fce53abf87b2018a7a0deb9ec7bd900c5360738fe5fbeeb426f9150
+    mem_limit: 128m
+    cpus: 0.25
     restart: unless-stopped
     environment:
       SRH_MODE: env
@@ -213,6 +239,8 @@ services:
     # voltava se a VPS tivesse internet e o mirror do Alpine estivesse de pé,
     # justamente no momento em que a máquina está se recuperando de algo.
     image: ${SCHEDULER_IMAGE:-ghcr.io/leandromastelliniai/zapsales-scheduler:stable}
+    mem_limit: 64m
+    cpus: 0.25
     pull_policy: ${SCHEDULER_PULL_POLICY:-always}
     build:
       context: .
@@ -272,6 +300,7 @@ services:
   wacalls:
     profiles: ["voz"]
     mem_limit: 256m
+    cpus: 0.5
     image: ${WACALLS_IMAGE:-ghcr.io/jotadev66/wacalls@sha256:9ff52ef9455cf42125a911c38bb8c855f0cc205516cada2054e5c05546909022}
     pull_policy: ${WACALLS_PULL_POLICY:-missing}
     restart: unless-stopped
@@ -342,6 +371,7 @@ services:
   asterisk:
     profiles: ["telefonia"]
     mem_limit: 256m
+    cpus: 0.5
     image: ${ASTERISK_IMAGE:-andrius/asterisk@sha256:927d4c98777149c3380c4f8d0e82b1b1ba9e7b38528f86c1e1593d5a25032f27}
     pull_policy: ${ASTERISK_PULL_POLICY:-missing}
     restart: unless-stopped
@@ -379,6 +409,7 @@ services:
   voice-agent:
     profiles: ["telefonia"]
     mem_limit: 512m
+    cpus: 1
     image: ${VOICE_AGENT_IMAGE:-ghcr.io/leandromastelliniai/zapsales-voice-agent:stable}
     pull_policy: ${VOICE_AGENT_PULL_POLICY:-always}
     build:
@@ -398,11 +429,19 @@ services:
       # Como no app e no worker: a conexão do dono do banco fica no .env só
       # para o kit no host (update.sh do cron); nenhum código de workers/ a lê.
       SUPABASE_DB_ADMIN_URL: ""
+      # Segredos do Supabase self-hosted que moram no mesmo .env e que nenhum
+      # código do app lê (tests/unit/env-ddl-fora-do-app.test.ts).
+      POSTGRES_PASSWORD: ""
+      JWT_SECRET: ""
+      REALTIME_DB_ENC_KEY: ""
+      REALTIME_SECRET_KEY_BASE: ""
     logging: *default-logging
     networks: [internal]
 
   caddy:
     image: caddy:2-alpine
+    mem_limit: 256m
+    cpus: 1
     restart: unless-stopped
     ports:
       - "80:80"
@@ -410,6 +449,22 @@ services:
     environment:
       DOMAIN: ${DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
+      # O endereço do site público no Caddyfile. Vazio = o domínio, com HTTPS
+      # automático (modo VPS limpa). O modo "convivendo" grava `:80` no
+      # docker-compose.convivio.yml: HTTP puro, atrás do proxy do sistema, que
+      # é quem termina o TLS.
+      CADDY_SITE: ${CADDY_SITE:-${DOMAIN}}
+      # De quem o Caddy aceita X-Forwarded-*: só do loopback, por padrão. O modo
+      # convivendo troca por `private_ranges` (o proxy do sistema chega pela
+      # ponte do Docker) — ver Caddyfile.
+      CADDY_PROXIES_CONFIAVEIS: ${CADDY_PROXIES_CONFIAVEIS:-127.0.0.1/32}
+      # O Caddy é também o gateway do Supabase self-hosted (/auth/v1, /rest/v1,
+      # /realtime/v1, /storage/v1) e recusa, como o Kong oficial, a requisição
+      # que chega sem uma das duas chaves de API da instalação. O valor padrão
+      # NÃO pode ser vazio: o matcher `header apikey <vazio>` não compila, e um
+      # Caddy que não sobe é o site inteiro fora do ar (medido com caddy adapt).
+      SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-chave-anon-ausente}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-chave-service-ausente}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data           # certificados Let's Encrypt (persistir!)

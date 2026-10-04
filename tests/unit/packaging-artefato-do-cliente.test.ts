@@ -336,3 +336,28 @@ describe("packaging — a versão que roda é observável de fora", () => {
     );
   });
 });
+
+describe("packaging — o Supabase self-hosted que sobe junto", () => {
+  // `docker-compose.supabase.yml` é inteiro upstream (Supabase, PostgREST): a
+  // doutrina manda referenciar com tag EXATA, nunca republicar e nunca deixar
+  // flutuar. Um `supabase/postgres` sem tag entregaria ao cliente, no meio de
+  // uma atualização, uma major de Postgres que o baseline nunca viu.
+  const supabase = lerServicos(fs.readFileSync(path.join(RAIZ, "docker-compose.supabase.yml"), "utf8"));
+
+  it("o parser enxerga os cinco serviços do Supabase", () => {
+    expect([...supabase.keys()].sort()).toEqual(["auth", "db", "realtime", "rest", "storage"]);
+  });
+
+  it.each(["auth", "db", "realtime", "rest", "storage"])("'%s' aponta para uma versão exata", (nome) => {
+    const imagem = supabase.get(nome)!.match(/^\s{4}image:\s*(\S+)/m)?.[1] ?? "";
+    const ref = imagem.replace(/^\$\{[A-Z_]+:-(.+)\}$/, "$1");
+    const tag = ref.includes(":") ? ref.split(":").pop()! : "";
+    expect(tag, `'${nome}' sem tag (= latest): ${ref}`).not.toBe("");
+    expect(tag, `'${nome}' em tag móvel: ${ref}`).toMatch(/^v?\d+\.\d+/);
+  });
+
+  it("nenhum serviço do Supabase é construído na VPS", () => {
+    const comBuild = [...supabase.entries()].filter(([, b]) => /^\s{4}build:/m.test(b)).map(([n]) => n);
+    expect(comBuild).toEqual([]);
+  });
+});

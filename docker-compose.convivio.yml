@@ -1,0 +1,28 @@
+# ZapSales — modo "convivendo com outros apps" (issue #3).
+#
+# A VPS já tem um proxy (Caddy ou Nginx) nas portas 80/443 servindo outros
+# sites. Este override tira o Caddy da stack dessas portas e o põe numa porta
+# do LOOPBACK, que só a própria máquina alcança. O proxy do sistema ganha um
+# bloco (escrito pelo kit, entre marcadores) que repassa o domínio do ZapSales
+# para essa porta e termina o HTTPS.
+#
+# O kit grava no .env:
+#   COMPOSE_FILE=docker-compose.prod.yml:docker-compose.supabase.yml:docker-compose.convivio.yml
+#   ZAPSALES_PORTA_LOCAL=<porta livre escolhida na instalação>
+#
+# `!override` (Compose ≥ 2.24) e não a lista comum: o Compose SOMA as listas de
+# `ports:` entre arquivos, e sem a tag as 80/443 públicas do arquivo base
+# continuariam publicadas ao lado — o proxy da stack brigaria com o dos outros
+# apps pela porta, e o `up -d` falharia (ou pior, ganharia). Vigiado por
+# tests/unit/portas-do-compose.test.ts.
+
+services:
+  caddy:
+    ports: !override
+      - "127.0.0.1:${ZAPSALES_PORTA_LOCAL:-8088}:80"
+    environment:
+      # HTTP puro: quem fala HTTPS com o navegador é o proxy do sistema.
+      CADDY_SITE: ":80"
+      # O proxy do sistema conecta pela ponte do Docker (172.x): confiar nele é o
+      # que faz o X-Forwarded-Proto: https chegar ao app.
+      CADDY_PROXIES_CONFIAVEIS: private_ranges
