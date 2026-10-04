@@ -1,20 +1,20 @@
 /**
- * DSN do Sentry com opt-out em runtime — modelo "telemetria de comunidade".
+ * DSN do Sentry, decidido em runtime pelo `.env` (SEM rebuild da imagem):
  *
- * Por padrão, erros vão pro Sentry do projeto (DEFAULT_SENTRY_DSN): num open source
- * self-host, é o que dá visibilidade pra corrigir bugs que afetam todo mundo. Quem
- * hospeda controla isso pelo `.env`, SEM rebuild da imagem:
- *
- *   SENTRY_DSN=off           → desliga toda a telemetria (nada é enviado)
  *   SENTRY_DSN=<seu-dsn>     → manda os erros pro SEU Sentry
- *   SENTRY_DSN=  (vazio)     → usa o Sentry da comunidade (padrão)
+ *   SENTRY_DSN=off ou vazio  → desliga toda a telemetria (nada é enviado)
+ *
+ * O ZapSales não tem "Sentry da comunidade": `DEFAULT_SENTRY_DSN` é `undefined`, e
+ * nenhuma instalação manda erro para servidor de terceiro sem o dono configurar.
+ * (O código herdado apontava o vazio para o Sentry do projeto de origem.) Se um dia
+ * houver um Sentry do produto para telemetria opt-in, ele entra aqui, e a lógica de
+ * `isCommunityDsn` — só erro, sem trace nem replay — volta a valer para ele.
  *
  * Vale para servidor (process.env) e navegador (window.__PUBLIC_ENV__.SENTRY_DSN,
  * injetado em runtime pelo <PublicEnvScript/>). O DSN não é segredo — DSNs do Sentry
  * são públicos por design.
  */
-export const DEFAULT_SENTRY_DSN =
-  "https://58fabf8ad54504863d404a3647ef3714@o4509908078559232.ingest.us.sentry.io/4509908083212288";
+export const DEFAULT_SENTRY_DSN: string | undefined = undefined;
 
 export function resolveSentryDsn(value: string | undefined | null): string | undefined {
   const v = (value ?? "").trim().toLowerCase() === "off" ? "off" : (value ?? "").trim();
@@ -32,7 +32,7 @@ export function resolveSentryDsn(value: string | undefined | null): string | und
  * porque aí o dado não sai da infraestrutura de quem é dono dele.
  */
 export function isCommunityDsn(dsn: string | undefined): boolean {
-  return dsn === DEFAULT_SENTRY_DSN;
+  return DEFAULT_SENTRY_DSN !== undefined && dsn === DEFAULT_SENTRY_DSN;
 }
 
 /** Integração default do SDK que emite as sessões de release health do browser. */

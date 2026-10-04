@@ -650,7 +650,7 @@ describe("catraca de marca hardcoded", () => {
  */
 const ORIGEM_TRECHOS = [
   "ZGVza2NvbW0=", "bWVsZ2FyYWZhZWw=", "bWVsZ2Fjbw==", "bWVsZ2HDp28=", "Y2hhdGJvdHg=", "dmVuZGF2YWw=",
-  "bWF1ZGlicmFzaWw=", "OTg5NjYzOTg=",
+  "bWF1ZGlicmFzaWw=", "OTg5NjYzOTg=", "NDUwOTkwODA3ODU1OTIzMg==", "YXV0b21hdGlrLWxhYnM=",
 ].map((b) => Buffer.from(b, "base64").toString("utf8"));
 const ORIGEM_PALAVRAS = [
   "YWhhY2hhdA==", "d2VidGVjbmljYQ==", "am1wbw==", "cGF1bG9saW1hanI3Nw==", "am93YW5pb3JhbnRlcw==",

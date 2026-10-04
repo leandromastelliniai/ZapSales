@@ -226,9 +226,9 @@ OWNER_PASSWORD=QaVps!2026#Dono
 OWNER_ORG_NAME=Loja-QA-VPS
 
 NEXT_TELEMETRY_DISABLED=1
-# Telemetria DESLIGADA na suíte, e não é preferência: sem isto o SDK do browser
-# assume o DSN da comunidade (\`lib/sentry/dsn.ts\` → DEFAULT_SENTRY_DSN) e a suíte
-# MANDA DADO para o Sentry de produção do projeto — mesma família do e2e que
+# Telemetria DESLIGADA na suíte, e explícita: hoje o vazio já desliga
+# (\`lib/sentry/dsn.ts\` não tem DSN padrão), mas se um DSN do produto voltar a
+# existir a suíte não pode MANDAR DADO para ele — mesma família do e2e que
 # escrevia no banco de produção. E o inverso morde igual: em 2026-08-10 a
 # organização do Sentry estava suspensa por cota, o ingest respondeu 429 a tudo, o
 # SDK cuspiu erro de console em toda tela e \`olhar-telas-do-epico\` reprovou. A cor

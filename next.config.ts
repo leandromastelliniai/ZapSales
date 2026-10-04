@@ -74,6 +74,11 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: true,
   poweredByHeader: false,
+  // O build do e2e no CI pula a checagem de tipos (NEXT_BUILD_SEM_TIPOS=1): o job
+  // `verify` já roda o `tsc` inteiro, e na máquina de repositório privado (7 GB)
+  // a checagem dentro do `next build`, somada ao Supabase local de pé, derruba o
+  // runner. Todo outro build (imagens, perf, local) continua checando.
+  typescript: { ignoreBuildErrors: process.env.NEXT_BUILD_SEM_TIPOS === "1" },
   // typedRoutes moved out of experimental in Next 15.5+
   typedRoutes: true,
   experimental: {
@@ -123,9 +128,11 @@ export default withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  org: "automatik-labs",
+  // Envio de source maps só acontece com SENTRY_AUTH_TOKEN; organização e projeto
+  // vêm do ambiente de quem publica, nunca fixos no código.
+  org: process.env.SENTRY_ORG,
 
-  project: "javascript-nextjs",
+  project: process.env.SENTRY_PROJECT,
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,

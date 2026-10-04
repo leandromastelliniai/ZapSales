@@ -233,7 +233,16 @@ describe("o ambiente da suíte desliga a telemetria", () => {
 
   it("e `off` de fato desliga — a guarda acima não vale nada se o valor não desligasse", () => {
     expect(resolveSentryDsn("off")).toBeUndefined();
-    // Controle: o vazio NÃO desliga, e é por isso que a linha acima é obrigatória.
-    expect(isCommunityDsn(resolveSentryDsn(""))).toBe(true);
+  });
+
+  it("sem SENTRY_DSN nada é enviado: o ZapSales não manda erro para Sentry de terceiro", () => {
+    // O padrão herdado mandava toda instalação sem a chave para o Sentry do
+    // projeto de origem. O ZapSales não tem Sentry de comunidade: vazio desliga,
+    // e só quem configura o PRÓPRIO DSN envia alguma coisa.
+    expect(resolveSentryDsn("")).toBeUndefined();
+    expect(resolveSentryDsn(undefined)).toBeUndefined();
+    expect(resolveSentryDsn("   ")).toBeUndefined();
+    expect(isCommunityDsn(resolveSentryDsn(""))).toBe(false);
+    expect(resolveSentryDsn("https://chave@o1.ingest.sentry.io/2")).toBe("https://chave@o1.ingest.sentry.io/2");
   });
 });
