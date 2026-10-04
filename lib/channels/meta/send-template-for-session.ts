@@ -108,6 +108,7 @@ export async function sendTemplateForSession(
     phoneNumberId: creds.phoneNumberId,
     token: creds.token,
     graphVersion: creds.graphVersion,
+    messagingAccountId: creds.messagingAccountId,
     to: input.to,
     binding: {
       name: input.name,

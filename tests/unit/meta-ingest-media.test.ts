@@ -49,7 +49,7 @@ function adminFalso(): SupabaseClient {
 
   const rpc = async (name: string, args: Record<string, unknown>) => {
     estado.rpcs.push({ name, args });
-    if (name === "fn_upsert_wa_contact") return { data: "contact-1", error: null };
+    if (name === "fn_upsert_meta_contact") return { data: "contact-1", error: null };
     if (name === "fn_upsert_wa_conversation") {
       return { data: "conversation-1", error: null };
     }

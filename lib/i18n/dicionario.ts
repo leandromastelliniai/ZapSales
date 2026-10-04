@@ -5623,6 +5623,11 @@ export const DICIONARIO: Traducoes = {
   },
   "ID do número de telefone": { es: "ID del número de teléfono" },
   "ID da conta do WhatsApp Business": { es: "ID de la cuenta de WhatsApp Business" },
+  "ID da conta de mensagens": { es: "ID de la cuenta de mensajería" },
+  "conta de mensagens": { es: "cuenta de mensajería" },
+  "Aparece na Configuração da API da Meta. Só é obrigatório quando o seu token alcança mais de uma conta de mensagens neste número — sem ele, a Meta escolhe a única que houver.": {
+    es: "Aparece en la Configuración de la API de Meta. Solo es obligatorio cuando tu token alcanza más de una cuenta de mensajería en este número; sin él, Meta elige la única que exista.",
+  },
   "Token de acesso": { es: "Token de acceso" },
   "•••• (já guardado — preencha para trocar)": {
     es: "•••• (ya guardado; escribe uno nuevo para reemplazarlo)",

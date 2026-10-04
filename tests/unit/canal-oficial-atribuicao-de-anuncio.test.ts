@@ -116,7 +116,7 @@ function adminFalso(): SupabaseClient {
   const rpc = async (name: string, args: Record<string, unknown>) => {
     estado.rpcs.push({ name, args });
     estado.ordem.push(name);
-    if (name === "fn_upsert_wa_contact") return { data: "contact-1", error: null };
+    if (name === "fn_upsert_meta_contact") return { data: "contact-1", error: null };
     if (name === "fn_upsert_wa_conversation") return { data: "conversation-1", error: null };
     return { data: null, error: null };
   };
@@ -176,7 +176,7 @@ describe("ingestão oficial — atribuição de anúncio no contato", () => {
     });
 
     const estampa = estado.ordem.indexOf("fn_estampar_atribuicao_de_anuncio");
-    expect(estampa).toBeGreaterThan(estado.ordem.indexOf("fn_upsert_wa_contact"));
+    expect(estampa).toBeGreaterThan(estado.ordem.indexOf("fn_upsert_meta_contact"));
     expect(estampa).toBeLessThan(estado.ordem.indexOf("pos_entrada"));
   });
 

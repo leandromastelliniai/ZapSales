@@ -80,6 +80,11 @@ export interface RecipientInput {
    * `waIdentity.startsWith("lid:")` — justo o caso que a regra protege.
    */
   waLid?: string | null | undefined;
+  /**
+   * `contacts.wa_bsuid` (0535): o BSUID do canal oficial. É o endereço de quem
+   * só chegou por nome de usuário, sem telefone. Canal que não o conhece ignora.
+   */
+  waBsuid?: string | null | undefined;
 }
 
 /**

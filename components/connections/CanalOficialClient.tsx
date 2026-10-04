@@ -67,13 +67,23 @@ export function CanalOficialClient() {
   const { data, isPending } = useOfficialChannel();
   const conectar = useConnectOfficialChannel();
   const registrarWebhook = useRegistrarWebhookOficial();
-  const [form, setForm] = useState({ phone_number_id: "", waba_id: "", token: "" });
+  const [form, setForm] = useState({
+    phone_number_id: "",
+    waba_id: "",
+    messaging_account_id: "",
+    token: "",
+  });
 
   const estado = data?.data;
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
-    const r = await conectar.mutateAsync(form);
+    // Trocar só o token não pode apagar a conta de mensagens já guardada: campo
+    // vazio reenvia a que está gravada (o placeholder a mostra).
+    const r = await conectar.mutateAsync({
+      ...form,
+      messaging_account_id: form.messaging_account_id.trim() || estado?.messagingAccountId || "",
+    });
     toast.success(`${t("Conectado:")} ${r.data.displayName} ${r.data.phoneNumber ?? ""}`.trim());
     // O token some do formulário assim que grava — deixá-lo na tela seria mantê-lo
     // em memória do navegador sem motivo, e ele não volta em nenhum GET.
@@ -102,6 +112,13 @@ export function CanalOficialClient() {
           <p className="mt-1 text-xs text-muted-foreground">
             WABA <span className="font-mono">{estado.wabaId}</span> · {t("número")}{" "}
             <span className="font-mono">{estado.phoneNumberId}</span>
+            {estado.messagingAccountId ? (
+              <>
+                {" "}
+                · {t("conta de mensagens")}{" "}
+                <span className="font-mono">{estado.messagingAccountId}</span>
+              </>
+            ) : null}
           </p>
         </Card>
       ) : null}
@@ -212,6 +229,7 @@ export function CanalOficialClient() {
             { rotulo: t("Endpoint da API"), valor: estado.endpoint ?? null },
             { rotulo: t("ID do número de telefone"), valor: estado.phoneNumberId ?? null },
             { rotulo: t("ID da conta do WhatsApp Business"), valor: estado.wabaId ?? null },
+            { rotulo: t("ID da conta de mensagens"), valor: estado.messagingAccountId ?? null },
           ]}
           ajuda={
             <div className="space-y-1.5">
@@ -267,6 +285,23 @@ export function CanalOficialClient() {
               placeholder="2434045433735175"
               required
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="conta-de-mensagens">
+              {t("ID da conta de mensagens")}{" "}
+              <span className="font-normal text-muted-foreground">({t("opcional")})</span>
+            </Label>
+            <Input
+              id="conta-de-mensagens"
+              value={form.messaging_account_id}
+              onChange={(e) => setForm((f) => ({ ...f, messaging_account_id: e.target.value }))}
+              placeholder={estado?.messagingAccountId ?? "1234567890123456"}
+            />
+            <span className="text-xs text-muted-foreground">
+              {t(
+                "Aparece na Configuração da API da Meta. Só é obrigatório quando o seu token alcança mais de uma conta de mensagens neste número — sem ele, a Meta escolhe a única que houver.",
+              )}
+            </span>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="tok">{t("Token de acesso")}</Label>

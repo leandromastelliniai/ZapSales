@@ -37,7 +37,7 @@ import path from "node:path";
 import ts from "typescript";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { VERSAO_PADRAO_DA_GRAPH, graphVersion } from "@/lib/graph-version";
+import { VERSAO_DA_GRAPH_DE_ANUNCIO, VERSAO_PADRAO_DA_GRAPH, graphVersion } from "@/lib/graph-version";
 
 const RAIZ = path.join(__dirname, "..", "..");
 
@@ -205,7 +205,12 @@ describe("a versão da Graph tem um lugar só", () => {
       (linha) => linha.match(LITERAL_DE_VERSAO)![0],
     );
 
-    expect(literais).toEqual([VERSAO_PADRAO_DA_GRAPH]);
+    // Duas: a do canal e a do eixo de anúncio (ver o cabeçalho do módulo).
+    expect(literais).toEqual([VERSAO_PADRAO_DA_GRAPH, VERSAO_DA_GRAPH_DE_ANUNCIO]);
+  });
+
+  it("o canal oficial fala a v26.0 — a versão do modelo novo de contas e do BSUID (issue #4)", () => {
+    expect(VERSAO_PADRAO_DA_GRAPH).toBe("v26.0");
   });
 
   it("a catraca reconhece a versão no meio do endereço, e não confunde versão de outra coisa", () => {

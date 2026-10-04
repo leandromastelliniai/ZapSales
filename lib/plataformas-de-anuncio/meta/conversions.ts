@@ -46,7 +46,7 @@
  */
 import { createHash } from "node:crypto";
 
-import { VERSAO_PADRAO_DA_GRAPH } from "@/lib/graph-version";
+import { VERSAO_DA_GRAPH_DE_ANUNCIO } from "@/lib/graph-version";
 import { logger } from "@/lib/logger";
 
 import { baseDaGraphDeAnuncio } from "./graph-base";
@@ -64,7 +64,7 @@ import type {
  * (`lib/graph-version.ts`) em vez de copiá-lo: o eixo de anúncio usa a MESMA
  * versão do transporte de mensagens, mas não a variável dele.
  */
-const VERSAO_DA_API = VERSAO_PADRAO_DA_GRAPH;
+const VERSAO_DA_API = VERSAO_DA_GRAPH_DE_ANUNCIO;
 
 /** O teto da plataforma. Evento mais velho que isto é recusado. */
 const IDADE_MAXIMA_MS = 7 * 24 * 60 * 60 * 1000;

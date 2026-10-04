@@ -11,26 +11,31 @@
  * `tests/unit/versao-da-graph-num-lugar-so.test.ts`: literal de versão da Graph
  * fora deste arquivo reprova a suíte.
  *
- * NÃO SUBIU DE VERSÃO AQUI — de propósito. A v26.0 saiu em 29/07/2026, e subir
- * é decisão de manutenção, com reconferência de campo a campo antes (a lição
- * medida em `lib/plataformas-de-anuncio/meta/insights.ts`: campo válido some
- * entre versões, sem aviso). Esta mudança só diz ONDE o número mora; o número
- * continua o mesmo de hoje.
+ * O CANAL SUBIU PARA A v26.0 (issue #4), o ANÚNCIO NÃO. A v26.0 saiu em
+ * 29/07/2026 e é a versão em que a Meta documenta o modelo novo de contas
+ * (`messaging_account_id` ao lado da WABA) e o BSUID — as duas coisas que o canal
+ * oficial passou a usar. O eixo de anúncio continua na versão anterior porque
+ * subir ali exige reconferir campo a campo (a lição medida em
+ * `lib/plataformas-de-anuncio/meta/insights.ts`: campo válido some entre versões,
+ * sem aviso), e essa reconferência não fez parte da mudança do canal.
  *
- * Dois eixos, um número só:
+ * Dois eixos, duas constantes, um arquivo:
  * - `graphVersion()` — canais de mensagem (`lib/channels/**`,
  *   `app/api/v1/channels/**`, `scripts/spike-*`) e honra `META_GRAPH_VERSION`,
- *   como o `.env.example` já documenta. Sem a variável, cai no default.
- * - `VERSAO_PADRAO_DA_GRAPH` — o eixo de anúncio
- *   (`lib/plataformas-de-anuncio/meta/**`), que usa o MESMO número de
- *   propósito (a instalação não deve conviver com duas versões da plataforma),
- *   mas NÃO herda a variável do canal de mensagem: são credenciais e ciclos de
- *   vida diferentes. É por isso que o override vive na função, e não na
- *   constante.
+ *   como o `.env.example` já documenta. Sem a variável, cai em
+ *   `VERSAO_PADRAO_DA_GRAPH`.
+ * - `VERSAO_DA_GRAPH_DE_ANUNCIO` — o eixo de anúncio
+ *   (`lib/plataformas-de-anuncio/meta/**`), que NÃO herda a variável do canal de
+ *   mensagem: são credenciais e ciclos de vida diferentes. Conviver com duas
+ *   versões é dívida declarada aqui, não acidente — o bump do anúncio é a
+ *   reconferência de campos dele.
  */
 
 /** O default da instalação. `bump` aqui é mudança deliberada, não deriva. */
-export const VERSAO_PADRAO_DA_GRAPH = "v22.0";
+export const VERSAO_PADRAO_DA_GRAPH = "v26.0";
+
+/** A versão do eixo de anúncio. Ver o cabeçalho: sobe com a reconferência dos campos dele. */
+export const VERSAO_DA_GRAPH_DE_ANUNCIO = "v22.0";
 
 /**
  * A versão com que a Graph API é chamada hoje.

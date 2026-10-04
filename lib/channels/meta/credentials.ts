@@ -48,6 +48,11 @@ export interface MetaCredentials {
   phoneNumberId: string;
   token: string;
   graphVersion: string;
+  /**
+   * Conta de mensagens (Graph v26, modelo novo de contas): o `messaging_account_id`
+   * de toda chamada à API de mensagens. `null` = a Meta resolve sozinha.
+   */
+  messagingAccountId: string | null;
   /** De onde veio — aparece no log de diagnóstico, nunca no payload. */
   source: "session" | "env";
 }
@@ -83,7 +88,14 @@ export function metaCredsFromEnv(): MetaCredentials | null {
   const phoneNumberId = process.env.META_PHONE_NUMBER_ID;
   const token = process.env.META_SYSTEM_USER_TOKEN;
   if (!phoneNumberId || !token) return null;
-  return { phoneNumberId, token, graphVersion: graphVersion(), source: "env" };
+  return {
+    phoneNumberId,
+    token,
+    graphVersion: graphVersion(),
+    // Vazia conta como ausente — é o estado de quem copiou o `.env.example`.
+    messagingAccountId: process.env.META_MESSAGING_ACCOUNT_ID?.trim() || null,
+    source: "env",
+  };
 }
 
 /**
@@ -114,7 +126,7 @@ export async function metaCredsForPhoneNumberId(
   const base = () =>
     admin
       .from("channel_sessions")
-      .select("meta_phone_number_id, meta_token_encrypted")
+      .select("meta_phone_number_id, meta_token_encrypted, meta_messaging_account_id")
       .eq("organization_id", organizationId)
       .eq("meta_phone_number_id", phoneNumberId);
   const { data, error } = await queryTolerantToMissingArchived(
@@ -140,6 +152,8 @@ export async function metaCredsForPhoneNumberId(
     phoneNumberId: data.meta_phone_number_id as string,
     token,
     graphVersion: graphVersion(),
+    messagingAccountId:
+      ((data as { meta_messaging_account_id?: string | null }).meta_messaging_account_id ?? "").trim() || null,
     source: "session",
   };
 }

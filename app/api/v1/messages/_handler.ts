@@ -398,7 +398,7 @@ export async function sendMessageHandler(
   // envio com 42703. Sem a coluna, nada está arquivado — e a consulta sem ela é a
   // consulta certa (ver lib/channels/archived).
   const convSelect = (comArchived: boolean) =>
-    `id, organization_id, contact_id, channel_session_id, is_group, group_chat_id, bot_silenced_until, last_inbound_at, contacts:contact_id(phone_number, wa_identity, wa_lid, is_blocked), channel_sessions:channel_session_id(${CHANNEL_SESSION_REF_COLUMNS}, status${comArchived ? `, ${ARCHIVED_AT}` : ""})`;
+    `id, organization_id, contact_id, channel_session_id, is_group, group_chat_id, bot_silenced_until, last_inbound_at, contacts:contact_id(phone_number, wa_identity, wa_lid, wa_bsuid, is_blocked), channel_sessions:channel_session_id(${CHANNEL_SESSION_REF_COLUMNS}, status${comArchived ? `, ${ARCHIVED_AT}` : ""})`;
   //
   // O filtro por `organization_id` NÃO é redundância com a RLS — é a única
   // proteção que existe na metade dos chamadores. Este handler é a porta de
@@ -463,6 +463,8 @@ export async function sendMessageHandler(
       phone_number: string | null;
       wa_identity: string | null;
       wa_lid: string | null;
+      /** BSUID (0535) — o endereço de quem só chegou por nome de usuário. */
+      wa_bsuid?: string | null;
       is_blocked: boolean;
     } | null;
     channel_sessions: (ChannelSessionRef & { status: string; archived_at?: string | null }) | null;
@@ -825,6 +827,7 @@ export async function sendMessageHandler(
     phoneNumber: c.contacts?.phone_number,
     waIdentity: c.contacts?.wa_identity,
     waLid: c.contacts?.wa_lid,
+    waBsuid: c.contacts?.wa_bsuid,
   });
 
   // Releitura no sink: o operador pode ter fechado o canal enquanto o modelo

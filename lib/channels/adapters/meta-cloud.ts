@@ -21,6 +21,11 @@
  */
 import { createAdminClient } from "@/lib/supabase/admin";
 import { metaContactsPayload } from "@/lib/channels/meta/contact-card";
+import {
+  campoDaContaDeMensagens,
+  campoDoDestinatario,
+  ehBsuid,
+} from "@/lib/channels/meta/destinatario";
 import { ErroDaMeta, erroDaRespostaDaGraph } from "@/lib/channels/meta/erros";
 import { graphBaseUrl } from "@/lib/channels/meta/graph-base";
 import { resolveMetaCreds } from "../meta/credentials";
@@ -98,9 +103,12 @@ export const metaCloudAdapter: ChannelAdapter = {
     // Devolver null é honesto — o chamador grava `missing_phone_number` em vez de
     // montar um endereço que a Meta recusaria.
     if (input.isGroup) return null;
-    if (!input.phoneNumber) return null;
-    const digits = toE164Digits(input.phoneNumber);
-    return digits.length > 0 ? digits : null;
+    // Telefone primeiro: a Meta dá precedência a ele quando os dois existem. Sem
+    // telefone, o BSUID (quem só chegou por nome de usuário) — e é o `send` que
+    // o põe em `recipient` em vez de `to` (`campoDoDestinatario`).
+    const digits = input.phoneNumber ? toE164Digits(input.phoneNumber) : "";
+    if (digits.length > 0) return digits;
+    return ehBsuid(input.waBsuid) ? input.waBsuid : null;
   },
 
   /**
@@ -300,6 +308,7 @@ export const metaCloudAdapter: ChannelAdapter = {
       },
       body: JSON.stringify({
         messaging_product: "whatsapp",
+        ...campoDaContaDeMensagens(creds.messagingAccountId),
         status: "read",
         message_id: input.inboundExternalId,
         typing_indicator: { type: "text" },
@@ -348,8 +357,9 @@ export const metaCloudAdapter: ChannelAdapter = {
         },
         body: JSON.stringify({
           messaging_product: "whatsapp",
+          ...campoDaContaDeMensagens(creds.messagingAccountId),
           recipient_type: "individual",
-          to: envelope.to,
+          ...campoDoDestinatario(envelope.to),
           ...corpo,
         }),
       },

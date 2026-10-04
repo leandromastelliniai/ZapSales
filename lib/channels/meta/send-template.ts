@@ -23,6 +23,7 @@ import {
   type TemplateBinding,
 } from "./template-binding";
 import { deriveTemplateContract } from "./template-contract";
+import { campoDaContaDeMensagens, campoDoDestinatario } from "./destinatario";
 import { erroDaRespostaDaGraph, type ErroMetaClassificado } from "./erros";
 import { graphBaseUrl } from "./graph-base";
 
@@ -30,7 +31,12 @@ export interface SendTemplateInput {
   phoneNumberId: string;
   token: string;
   graphVersion: string;
-  /** Destinatário em dígitos E.164, sem `+` — é o que a Graph API aceita. */
+  /** Conta de mensagens (Graph v26): vai como `messaging_account_id` quando existe. */
+  messagingAccountId?: string | null;
+  /**
+   * Destinatário: dígitos E.164 sem `+`, ou o BSUID de quem só tem nome de
+   * usuário — `campoDoDestinatario` escolhe entre `to` e `recipient`.
+   */
   to: string;
   binding: TemplateBinding;
   /** A linha do espelho local. `null` = template não existe mais na Meta. */
@@ -112,7 +118,8 @@ export async function sendTemplate(input: SendTemplateInput): Promise<SendTempla
     },
     body: JSON.stringify({
       messaging_product: "whatsapp",
-      to: input.to,
+      ...campoDaContaDeMensagens(input.messagingAccountId),
+      ...campoDoDestinatario(input.to),
       type: "template",
       template: {
         name: input.binding.name,
