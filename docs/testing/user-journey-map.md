@@ -35,8 +35,8 @@ outros sites), `kit/instalar.sh` com `ZAPSALES_IMAGENS=construir`. Passo a passo
 | J0.2 | Sites vizinhos durante a instalação | sondados a cada 5 s, antes/durante/depois · **PASS**: 4 domínios, 76 sondagens, 0 falhas |
 | J0.3 | Nada exposto fora do proxy | só `127.0.0.1:<porta>` publicado; portas 3000/5432/8000/8088… recusadas de fora · **PASS** |
 | J0.4 | Rodar o kit de novo | `.env` idêntico, Caddyfile do sistema com o mesmo hash (não tocado), senha do administrador intacta, vizinhos 0 falhas · **PASS** |
-| J0.5 | Reiniciar o Docker | os 12 contêineres voltam sozinhos, domínio 307 em ~3 s, `NanoCpus`/`Memory` aplicados · **PASS**. Reboot da VPS inteira **não** foi feito: derrubaria os outros apps da máquina |
-| J0.6 | Backup e ensaio de restauração | ver o registro em [`backup-e-restauracao.md`](../runbooks/backup-e-restauracao.md) · **PASS** com repositório restic local; a cópia para o R2 aguarda as credenciais do dono |
+| J0.5 | Reiniciar a VPS | reboot completo autorizado pelo dono em 2026-10-04: os 12 contêineres subiram sozinhos ~20 s após o boot, todos saudáveis em 34 s, domínio 307 de fora, login 200, os 4 sites vizinhos de volta · **PASS**. Antes, `systemctl restart docker`: de volta em ~3 s, com `NanoCpus`/`Memory` aplicados |
+| J0.6 | Backup e ensaio de restauração | ver o registro em [`backup-e-restauracao.md`](../runbooks/backup-e-restauracao.md) · **PASS** com repositório restic local; a cópia para o R2 foi adiada pelo dono (2026-10-04) — o cron semanal falha até `kit/backup.sh configurar-r2` |
 
 **Achado de campo:** o primeiro clique em "Entrar" logo após abrir a página limpou os campos sem
 entrar — o formulário foi enviado antes da hidratação, porque um pedaço do JS falhou por
