@@ -1,0 +1,31 @@
+{
+  "zapsales/retorno-de-paciente": {
+    "publisher_label": "ZapSales",
+    "repository": "https://github.com/leandromastelliniai/ZapSales",
+    "tags": [
+      "clinica",
+      "retorno",
+      "agenda"
+    ],
+    "published_at": "2026-09-18"
+  },
+  "zapsales/carrinho-abandonado": {
+    "publisher_label": "ZapSales",
+    "repository": "https://github.com/leandromastelliniai/ZapSales",
+    "tags": [
+      "ecommerce",
+      "vendas",
+      "recuperacao"
+    ],
+    "published_at": "2026-09-18"
+  },
+  "zapsales/primeira-semana": {
+    "publisher_label": "ZapSales",
+    "repository": "https://github.com/leandromastelliniai/ZapSales",
+    "tags": [
+      "equipe",
+      "treinamento"
+    ],
+    "published_at": "2026-09-18"
+  }
+}

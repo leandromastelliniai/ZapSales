@@ -1,0 +1,28 @@
+# ZapSales
+
+> WhatsApp CRM with a Kanban pipeline, a shared inbox, AI agents and bulk campaigns over Meta's official WhatsApp API. Numbers connect through the official Meta Cloud API (recommended for campaigns) or through WAHA/QR code (support); whoever replies to a campaign lands in the pipeline and in the AI agent with the context of what was sent. Self-hosted and multi-tenant; runs on its owner's VPS (Hostinger) and becomes open source (MIT) after internal validation.
+
+Key facts:
+- Category: WhatsApp CRM / bulk campaigns over the official API / AI sales agents
+- Campaigns: bulk sends through the Meta Cloud API; replies enter the pipeline and the agent with the campaign's context
+- AI: per-tenant RAG agents (pgvector) that answer, qualify and move leads; sentiment analysis; audited AI→human handoff; AI as first-class assignee; per-org AI budget; self-improvement loop (resolved conversations feed the knowledge base)
+- MCP: internal MCP server today; public MCP contract on the roadmap — any AI agent can operate the CRM
+- WhatsApp: official Meta Cloud API, plus WAHA (multi-number via QR code, anti-ban throttling, media, STOP detection)
+- Multi-niche: configurable vocabulary per pipeline (lead = Customer/Patient/Buyer; won = Paid/Booked/Closed)
+- Compliance: multi-tenant Postgres RLS (isolation tested in CI), LGPD by design (redact, data_request, anonymization), append-only audit log
+- Stack: Next.js 16, React 19, TypeScript, Supabase (Postgres + Auth + Realtime + Storage), Vercel AI SDK, WAHA
+- License: MIT. Self-hosted; your data stays on your VPS.
+
+## Docs
+
+- [README (Portuguese)](https://github.com/leandromastelliniai/ZapSales/blob/main/README.md): visão geral, quickstart, stack
+- [README (English)](https://github.com/leandromastelliniai/ZapSales/blob/main/README.en.md): project overview, quickstart, stack
+- [README (Spanish)](https://github.com/leandromastelliniai/ZapSales/blob/main/README.es.md): visión general en español
+- [Vision & positioning](https://github.com/leandromastelliniai/ZapSales/blob/main/VISION.md): what the product is and what it believes about AI agents
+- [Architecture](https://github.com/leandromastelliniai/ZapSales/blob/main/ARCHITECTURE.md): one-page architecture
+- [Setup guide](https://github.com/leandromastelliniai/ZapSales/blob/main/docs/SETUP.md): step-by-step setup of every integration
+- [Production deploy runbook](https://github.com/leandromastelliniai/ZapSales/blob/main/docs/runbooks/deploy.md): how the published images reach the VPS (the Hostinger install kit is being rebuilt)
+
+## Repository
+
+- [GitHub](https://github.com/leandromastelliniai/ZapSales): source code, issues, discussions
