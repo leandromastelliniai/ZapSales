@@ -9,7 +9,7 @@ confidence: alta (inventário de arquivos é CONFIRMADO; agrupamento temático �
 
 # Índice da documentação — ZapSales
 
-Mapa dos **121** arquivos `.md` de `docs/`, em **16** subpastas que têm `.md` (mais
+Mapa dos **122** arquivos `.md` de `docs/`, em **16** subpastas que têm `.md` (mais
 `docs/diagrams/`, que só tem HTML e JSON) — medido em 2026-10-04, depois da limpeza do fork.
 Recontar em vez de confiar: `git ls-files 'docs/*.md' | wc -l` e
 `git ls-files 'docs/*.md' | awk -F/ 'NF>2{print $2}' | sort -u | wc -l`. Existe porque a documentação
@@ -135,6 +135,7 @@ e vai morar em `kit/`; o kit herdado da origem e os guias dele foram removidos.
 | Doc | Conteúdo |
 |---|---|
 | [`SETUP.md`](SETUP.md) | Guia completo de env vars e setup local |
+| [`runbooks/banco-e-papel-do-worker.md`](runbooks/banco-e-papel-do-worker.md) | **Aplicar o schema e criar o papel do worker** — receita que todo kit de instalação cumpre |
 | [`runbooks/deploy.md`](runbooks/deploy.md) | **Deploy em produção — o roteamento em todo `up -d`, verificação pós-deploy, build de emergência** |
 | [`runbooks/custo-e-cota-do-supabase.md`](runbooks/custo-e-cota-do-supabase.md) | **“Meu Supabase estourou a cota”** — como medir a origem do consumo, os dois intervalos da fila e as duas tabelas que só crescem |
 | [`runbooks/postgrest-replay-do-gateway.md`](runbooks/postgrest-replay-do-gateway.md) | PostgREST em 503 `PGRST002` com o banco saudável — replay do gateway do Supabase |

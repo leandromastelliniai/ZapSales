@@ -7,7 +7,7 @@
  * PARCIAL de idempotência que parou no meio: as 38 tabelas viraram
  * `CREATE TABLE IF NOT EXISTS`, mas índices, constraints e policies ficaram como o
  * dump os emitiu. Re-aplicar produzia **301 erros** e, com `ON_ERROR_STOP=1` — que é
- * o que o README, o `docs/SETUP.md` e o `deploy-selfhost` mandam usar —, parava na
+ * o que o README, o `docs/SETUP.md` e o guia de instalação mandavam usar —, parava na
  * linha 1918 com `multiple primary keys for table "ai_agent_runs"`.
  *
  * ## O dano real não era o ruído; era uma mudança de RLS que não chegava

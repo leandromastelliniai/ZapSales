@@ -16,8 +16,8 @@ import { motivoDoErro, sql } from "./psql-transporte";
  *
  * Dois caminhos, as duas pontas medidas aqui:
  *
- * 1. a RECEITA do guia, LIDA de `docs/deploy-selfhost/README.md` — o texto que o
- *    operador copia, não uma cópia dele;
+ * 1. a RECEITA do runbook, LIDA de `docs/runbooks/banco-e-papel-do-worker.md` — o
+ *    texto que o operador (e o kit de instalação) copia, não uma cópia dele;
  * 2. a instalação que já seguiu a receita antiga e só roda o `update.sh`: o bloco
  *    da 0525, LIDO do `supabase/baseline.sql` pelo rótulo, tem de curá-la com
  *    qualquer nome de papel.
@@ -27,7 +27,7 @@ import { motivoDoErro, sql } from "./psql-transporte";
 
 const RAIZ = process.cwd();
 const BASELINE = readFileSync(join(RAIZ, "supabase", "baseline.sql"), "utf8");
-const GUIA = readFileSync(join(RAIZ, "docs", "deploy-selfhost", "README.md"), "utf8");
+const GUIA = readFileSync(join(RAIZ, "docs", "runbooks", "banco-e-papel-do-worker.md"), "utf8");
 
 const ROTULO_0525 =
   "-- ---- o audit log é só-inclusão para TODO papel que não seja o dono (migration 0525) ----";

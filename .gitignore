@@ -106,16 +106,10 @@ playwright-report/
 .vercel
 zapsales-setup-kit.zip
 
-# gov-loop — estado operacional fica FORA do git (a resposta do humano na inbox
-# e a linha 'started' do sessions.log não podem sujar o working tree; a guarda de
-# chão limpo do LOOP.md os stasharia). loop/checkpoints/evidence/ NÃO é ignorado:
-# screenshot de checkpoint é evidência versionada.
-loop/inbox.items.md
-loop/sessions.log
-loop/logs/
-loop/locks/
-loop/STOP
-loop/run-session.sh
+# Saída gerada pelos testes e2e (capturas de tela e traces). A prova visual
+# vai anexada ao PR ou à issue, nunca versionada no repositório.
+evidence/
+loop/
 .superpowers/
 
 # graphify (análise local de knowledge graph)
@@ -136,8 +130,6 @@ yarn.lock
 .e2e-invite.json
 .e2e-owner.json
 .e2e-invite-url.json
-.superpowers/evidence/
-evidence/.sonda-score-residuo.json
 
 # sessão reusada pelas jornadas (contém tokens)
 .auth/
