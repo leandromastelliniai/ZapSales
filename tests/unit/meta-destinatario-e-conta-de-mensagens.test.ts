@@ -164,3 +164,22 @@ describe("sendTemplate — modelo para BSUID, com a conta de mensagens", () => {
     expect(String(spy.mock.calls[0]![0])).toContain("/v26.0/PN1/messages");
   });
 });
+
+describe("o formato do BSUID é o MESMO no código e no banco", () => {
+  it("a regex de `ehBsuid` é a do CHECK e da RPC da migration 0535", async () => {
+    // Quatro cópias de uma regra (CHECK, limpeza, guarda da RPC e o TypeScript):
+    // se uma divergir, o banco recusa o que o código aceita, ou o contrário.
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const raiz = path.join(__dirname, "..", "..");
+    const migration = fs
+      .readdirSync(path.join(raiz, "supabase", "migrations"))
+      .find((f) => f.includes("_0535_"))!;
+    const sql = fs.readFileSync(path.join(raiz, "supabase", "migrations", migration), "utf8");
+    const noSql = [...sql.matchAll(/'(\^\[A-Z\]\{2\}[^']*)'/g)].map((m) => m[1]);
+    expect(noSql.length).toBeGreaterThanOrEqual(3);
+    const fonte = fs.readFileSync(path.join(raiz, "lib", "channels", "meta", "destinatario.ts"), "utf8");
+    const noTs = /const FORMATO_DO_BSUID = \/(.+)\/;/.exec(fonte)![1];
+    for (const r of noSql) expect(r).toBe(noTs);
+  });
+});

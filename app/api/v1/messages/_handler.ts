@@ -1142,6 +1142,19 @@ export async function sendMessageHandler(
           status: "failed",
           error_code: falhaClassificada?.codigo ?? code,
           error_message: falhaClassificada?.motivo ?? msg,
+          // A categoria e a natureza vão junto: é por elas que quem consome a
+          // falha (inbox, motor de campanhas) decide — fila, opt-out, pausa.
+          ...(falhaClassificada
+            ? {
+                metadata: {
+                  ...(message.metadata ?? {}),
+                  falha_do_canal: {
+                    categoria: falhaClassificada.categoria,
+                    temporario: falhaClassificada.temporario,
+                  },
+                },
+              }
+            : {}),
         })
         .eq("id", message.id)
         .select(MSG_COLS)

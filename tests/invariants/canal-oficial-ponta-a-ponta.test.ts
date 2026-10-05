@@ -158,6 +158,7 @@ interface MensagemDaApi {
   error_message: string | null;
   delivered_at: string | null;
   read_at: string | null;
+  metadata: Record<string, unknown> | null;
 }
 
 async function conectar(corpo: Record<string, unknown>): Promise<Response> {
@@ -419,7 +420,11 @@ describe("4 · cada erro programado no falso Graph vira categoria certa e motivo
     );
     expect(falhada, `mensagem com ${codigo}`).toBeDefined();
     const esperado = classificarErroMeta({ code: codigo });
-    expect(esperado.categoria).toBe(categoria);
+    // A categoria e a natureza chegam pela API, gravadas pelo próprio envio.
+    expect(falhada!.metadata?.falha_do_canal).toEqual({
+      categoria,
+      temporario: esperado.temporario,
+    });
     // O motivo gravado é a frase do mapa — não o texto cru que o falso Graph mandou.
     expect(falhada!.error_message).toBe(esperado.motivo);
     expect(falhada!.error_message).not.toContain("erro programado pelo teste");

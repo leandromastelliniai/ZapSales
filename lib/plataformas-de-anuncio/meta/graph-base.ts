@@ -5,8 +5,9 @@
  *
  * O canal de mensagem e a conta de anúncios são duas credenciais com ciclos de
  * vida diferentes, falando com a mesma plataforma. `lib/graph-version.ts` já
- * registra essa decisão: os dois eixos usam a MESMA versão, de propósito, mas
- * NENHUM herda a variável do outro. Aqui é igual, e por três razões medidas:
+ * registra essa decisão: cada eixo tem a SUA constante de versão (desde a issue
+ * #4 o canal está na v26.0 e o anúncio na anterior), e NENHUM herda a variável
+ * do outro. Aqui é igual, e por três razões medidas:
  *
  * 1. **A fronteira.** `scripts/lint-channels.ts` só libera nome de provider
  *    dentro de `lib/channels/` e `lib/plataformas-de-anuncio/`. Um util na raiz
