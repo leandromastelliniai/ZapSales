@@ -9,8 +9,9 @@
  *    que prova o que chegou à "Meta", pelo fio, sem dublê de `fetch`.
  * 2. **Responde como a Graph responde**: sucesso realista por rota (validar o
  *    número, listar os números da WABA, assinar o app, apontar o webhook, enviar
- *    mensagem, listar e criar modelos) ou o erro PROGRAMADO pelo teste, com o corpo de
- *    erro no formato da Graph (`erroDaGraph`).
+ *    mensagem, listar e criar modelos, subir mídia pela API de upload retomável)
+ *    ou o erro PROGRAMADO pelo teste, com o corpo de erro no formato da Graph
+ *    (`erroDaGraph`).
  *
  * O que ele NÃO é: um simulador de regra de negócio da Meta. Janela de 24h,
  * qualidade e limite de portfólio são decididos pelo teste, programando a
@@ -28,6 +29,10 @@ export interface ChamadaAoGraph {
   caminho: string;
   busca: string;
   corpo: Record<string, unknown> | null;
+  /** Os bytes crus do corpo — o arquivo, no segundo passo do upload. */
+  bytes: Buffer;
+  /** O `file_offset` do upload retomável (cabeçalho), quando veio. */
+  fileOffset: string | undefined;
   authorization: string | undefined;
 }
 
@@ -83,6 +88,8 @@ export interface FalsoGraph {
   envios(): ChamadaAoGraph[];
   /** As criações de modelo (`POST /{waba}/message_templates`). */
   modelosCriados(): ChamadaAoGraph[];
+  /** O segundo passo do upload retomável (`POST /upload:…`), com o arquivo. */
+  arquivosEnviados(): ChamadaAoGraph[];
   limpar(): void;
   fechar(): Promise<void>;
 }
@@ -126,6 +133,9 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
   const programadas: Array<{ casamento: CasamentoDeChamada; resposta: RespostaDoGraph }> = [];
   let contadorDeMensagens = 0;
   let contadorDeModelos = 0;
+  let contadorDeUploads = 0;
+  /** As sessões de upload abertas, com o tamanho declarado no primeiro passo. */
+  const sessoesDeUpload = new Map<string, { tamanho: number; tipo: string }>();
 
   function respostaPadrao(c: ChamadaAoGraph): RespostaDoGraph {
     const { phoneNumberId, wabaId } = opcoes;
@@ -262,6 +272,35 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
     if (c.metodo === "GET" && c.caminho === `/${wabaId}/message_templates`) {
       return { status: 200, corpo: { data: [], paging: {} } };
     }
+    if (c.metodo === "POST" && c.caminho === `/${appId}/uploads`) {
+      // API de upload retomável, passo 1: abre a sessão e devolve o id dela. O
+      // id da Graph real traz `?sig=` — quem o usa tem de colá-lo na URL como
+      // veio, e o falso reproduz isso para o erro de codificação aparecer aqui.
+      const tamanho = Number(busca.get("file_length"));
+      const tipo = busca.get("file_type") ?? "";
+      if (!Number.isInteger(tamanho) || tamanho <= 0 || !tipo) {
+        return erroDaGraph(100, { message: "(#100) file_length e file_type são obrigatórios" });
+      }
+      contadorDeUploads += 1;
+      const sessao = `upload:FALSO_${contadorDeUploads}`;
+      sessoesDeUpload.set(sessao, { tamanho, tipo });
+      return { status: 200, corpo: { id: `${sessao}?sig=ASSINATURA_${contadorDeUploads}` } };
+    }
+    if (c.metodo === "POST" && c.caminho.startsWith("/upload:")) {
+      // Passo 2: o arquivo inteiro a partir do `file_offset`, autenticado por
+      // `OAuth <token>`. Devolve o handle que vai em `example.header_handle`.
+      const sessao = sessoesDeUpload.get(c.caminho.slice(1));
+      if (!sessao || !/^sig=ASSINATURA_\d+$/.test(c.busca.replace(/^\?/, ""))) {
+        return erroDaGraph(100, { message: "(#100) sessão de upload desconhecida" });
+      }
+      if (!/^OAuth \S+/.test(c.authorization ?? "") || c.fileOffset !== "0") {
+        return erroDaGraph(190, { status: 401, message: "(#190) OAuth e file_offset são obrigatórios" });
+      }
+      if (c.bytes.length !== sessao.tamanho) {
+        return erroDaGraph(100, { message: "(#100) o arquivo não tem o tamanho declarado" });
+      }
+      return { status: 200, corpo: { h: `4::FALSO_HANDLE_${c.caminho.slice("/upload:FALSO_".length)}` } };
+    }
     if (c.metodo === "POST" && c.caminho === `/${wabaId}/message_templates`) {
       // Criação de modelo (issue #6): a Meta devolve o id, o status inicial e a
       // categoria que ELA atribuiu — que pode não ser a pedida.
@@ -280,8 +319,13 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
   }
 
   const server: Server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    let bruto = "";
-    for await (const pedaco of req) bruto += String(pedaco);
+    const pedacos: Buffer[] = [];
+    for await (const pedaco of req) pedacos.push(Buffer.from(pedaco as Uint8Array));
+    const bytes = Buffer.concat(pedacos);
+    // Arquivo (upload retomável) chega como octet-stream e não é JSON; o resto
+    // é lido como texto, como antes — há quem mande JSON sem `content-type`.
+    const binario = /octet-stream/i.test(req.headers["content-type"] ?? "");
+    const bruto = binario ? "" : bytes.toString("utf8");
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     const [, versao = "", ...resto] = url.pathname.split("/");
     let corpo: Record<string, unknown> | null = null;
@@ -296,6 +340,8 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
       caminho: `/${resto.join("/")}`,
       busca: url.search,
       corpo,
+      bytes,
+      fileOffset: typeof req.headers.file_offset === "string" ? req.headers.file_offset : undefined,
       authorization: req.headers.authorization,
     };
     chamadas.push(chamada);
@@ -317,9 +363,12 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
       chamadas.filter((c) => c.metodo === "POST" && c.caminho === `/${opcoes.phoneNumberId}/messages`),
     modelosCriados: () =>
       chamadas.filter((c) => c.metodo === "POST" && c.caminho === `/${opcoes.wabaId}/message_templates`),
+    arquivosEnviados: () => chamadas.filter((c) => c.metodo === "POST" && c.caminho.startsWith("/upload:")),
     limpar: () => {
       chamadas.length = 0;
       programadas.length = 0;
+      sessoesDeUpload.clear();
+      contadorDeUploads = 0;
     },
     fechar: () => new Promise<void>((resolve, reject) => server.close((e) => (e ? reject(e) : resolve()))),
   };

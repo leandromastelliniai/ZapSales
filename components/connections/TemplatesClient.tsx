@@ -92,6 +92,7 @@ function LinkDaMidia({ tpl, slot }: { tpl: TemplateView; slot: TemplateSlotView 
   const t = useT();
   const salvar = useSaveTemplateValues();
   const salvo = tpl.savedValues[slot.valueKey] ?? "";
+  const guardado = tpl.storedMedia?.[slot.valueKey];
   const [valor, setValor] = useState(salvo);
   const limpo = valor.trim();
   // A plataforma só baixa `https://` com host; a rota recusa o resto com um
@@ -148,6 +149,20 @@ function LinkDaMidia({ tpl, slot }: { tpl: TemplateView; slot: TemplateSlotView 
             : t("Link público (https) do arquivo. Salvo aqui, o painel do modelo na conversa já vem preenchido.")}
         </span>
       )}
+      {guardado ? (
+        // A cópia que o editor guardou ao criar o modelo (issue #7). O link é
+        // assinado e curto: serve para conferir o arquivo, não para colar acima.
+        <span className="text-xs text-muted-foreground" data-testid="template-midia-guardada">
+          {t("Arquivo enviado na criação do modelo:")}{" "}
+          {guardado.url ? (
+            <a href={guardado.url} target="_blank" rel="noreferrer" className="underline">
+              {guardado.fileName}
+            </a>
+          ) : (
+            guardado.fileName
+          )}
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -30,12 +30,16 @@ let falso: FalsoGraph;
 let tabelas: Record<string, Array<Record<string, unknown>>>;
 
 const MODELO: NovoModelo = {
+  kind: "STANDARD",
   name: "oferta_de_outubro",
   language: "pt_BR",
   category: "MARKETING",
   parameter_format: "NAMED",
   body: "Olá {{nome}}, seu cupom de {{mes}} chegou.",
   examples: { nome: "Ana", mes: "outubro" },
+  header: null,
+  offer: null,
+  cards: [],
   footer: "Loja de Teste",
   buttons: [
     { type: "QUICK_REPLY", text: "Quero" },
@@ -132,6 +136,32 @@ describe("submeterModelo", () => {
     );
     expect(String(linha.contract_hash)).toMatch(/^[0-9a-f]{64}$/);
     expect(String(linha.id)).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it("modelo com cabeçalho de mídia: o handle vai à Meta, e o espelho guarda onde está a cópia (issue #7)", async () => {
+    const path = `${ORG}/templates/0d0e0007-0000-4000-8000-0000000000aa.jpg`;
+    const r = await submeter({
+      ...MODELO,
+      header: {
+        format: "IMAGE",
+        media: { handle: "4::HANDLE_X", path, mime_type: "image/jpeg", file_name: "vitrine.jpg" },
+      },
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const corpo = falso.modelosCriados()[0]!.corpo as { components: unknown[] };
+    expect(corpo.components[0]).toEqual({
+      type: "HEADER",
+      format: "IMAGE",
+      example: { header_handle: ["4::HANDLE_X"] },
+    });
+    expect(tabelas.meta_templates![0]!.header_media).toEqual({
+      "header:1": { path, mime_type: "image/jpeg", file_name: "vitrine.jpg" },
+    });
+  });
+
+  it("modelo sem mídia grava o registro vazio, não nulo (a coluna é objeto)", async () => {
+    await submeter();
+    expect(tabelas.meta_templates![0]!.header_media).toEqual({});
   });
 
   it("modelo que já está no espelho não vai à Meta de novo", async () => {

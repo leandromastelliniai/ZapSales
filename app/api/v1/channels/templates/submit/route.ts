@@ -3,9 +3,14 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
  * POST /api/v1/channels/templates/submit — cria um modelo no editor e o envia à
  * Meta para aprovação (issue #6).
  *
- * O corpo é o do editor básico (`novoModeloSchema`): nome, idioma, categoria,
- * formato das variáveis, corpo com exemplos, rodapé e botões. O que a Meta
- * recusaria por regra conhecida volta 422 aqui, campo a campo, sem ida à Meta.
+ * O corpo é o do editor (`novoModeloSchema`): tipo (padrão, carrossel ou oferta
+ * por tempo limitado), nome, idioma, categoria, formato das variáveis, cabeçalho
+ * de mídia, corpo com exemplos, rodapé, botões e cards. O que a Meta recusaria
+ * por regra conhecida volta 422 aqui, campo a campo, sem ida à Meta.
+ *
+ * A mídia chega já enviada pela rota irmã (`../media`, issue #7): o `handle` da
+ * Meta e o caminho da cópia no storage. O caminho vem do corpo, então é
+ * conferido contra a organização da SESSÃO antes de ir para o espelho.
  * O que só a Meta sabe recusar volta 422 `meta_template_refused` com a frase dela.
  *
  * Mesmo papel e mesma trava de suporte das irmãs (`../route.ts`): modelo é
@@ -24,7 +29,8 @@ import { fail, ok } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { resolveMetaCreds } from "@/lib/channels/meta/credentials";
-import { novoModeloSchema } from "@/lib/channels/meta/novo-modelo";
+import { caminhoEhDaOrganizacao } from "@/lib/channels/meta/midia-de-modelo";
+import { novoModeloSchema, type NovoModelo } from "@/lib/channels/meta/novo-modelo";
 import { metaSessionForOrg } from "@/lib/channels/meta/session";
 import {
   submeterModelo,
@@ -39,6 +45,19 @@ export const runtime = "nodejs";
 
 /** Tag do endpoint no recibo de idempotência. */
 const ENDPOINT = "/api/v1/channels/templates/submit";
+
+/**
+ * Os campos de mídia cujo caminho não é desta organização. A rota de upload
+ * gera o caminho; um que volta com outra organização (ou fora de `templates/`)
+ * foi forjado, e gravá-lo poria no espelho daqui o arquivo de outra empresa.
+ */
+function midiasAlheias(m: NovoModelo, orgId: string): string[] {
+  const campos: Array<[string, string | undefined]> = [
+    ["header.media", m.header?.media?.path],
+    ...m.cards.map((c, i): [string, string | undefined] => [`cards.${i}.header.media`, c.header.media?.path]),
+  ];
+  return campos.filter(([, path]) => path && !caminhoEhDaOrganizacao(path, orgId)).map(([campo]) => campo);
+}
 
 /** A recusa atravessa o `comIdempotencia` como exceção — assim ela não vira recibo. */
 class SubmissaoRecusada extends Error {
@@ -91,6 +110,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       details: {
         problemas: parsed.error.issues.map((i) => ({ campo: i.path.join("."), motivo: i.message })),
       },
+    });
+  }
+
+  const alheias = midiasAlheias(parsed.data, orgId);
+  if (alheias.length > 0) {
+    return fail("validation_failed", "O modelo tem campos a corrigir.", 422, {
+      requestId,
+      details: { problemas: alheias.map((campo) => ({ campo, motivo: "midia_de_outra_organizacao" })) },
     });
   }
 

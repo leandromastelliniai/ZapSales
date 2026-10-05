@@ -7725,6 +7725,7 @@ export type Database = {
           components: Json
           contract_hash: string
           created_at: string
+          header_media: Json
           id: string
           language: string
           name: string
@@ -7744,6 +7745,7 @@ export type Database = {
           components: Json
           contract_hash: string
           created_at?: string
+          header_media?: Json
           id?: string
           language: string
           name: string
@@ -7763,6 +7765,7 @@ export type Database = {
           components?: Json
           contract_hash?: string
           created_at?: string
+          header_media?: Json
           id?: string
           language?: string
           name?: string

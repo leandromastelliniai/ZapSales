@@ -46893,3 +46893,18 @@ comment on column public.platform_meta_app.embedded_signup_ligado is
   'Chave da instalação: o botão Conectar com Facebook só aparece com ela ligada (e com app_id + config_id + App Secret). Default desligado até haver app Tech Provider aprovado.';
 
 notify pgrst, 'reload schema';
+
+-- ---- cópia da mídia do cabeçalho de modelo (migration 0537) ----
+-- Espelho idempotente. Racional completo no arquivo da migration: o caminho da
+-- cópia no storage por slot do envio, separado dos links de `saved_values`.
+alter table public.meta_templates
+  add column if not exists header_media jsonb not null default '{}'::jsonb;
+alter table public.meta_templates
+  drop constraint if exists meta_templates_header_media_objeto;
+alter table public.meta_templates
+  add constraint meta_templates_header_media_objeto
+  check (jsonb_typeof(header_media) = 'object');
+comment on column public.meta_templates.header_media is
+  'Cópia, no bucket whatsapp-media (<org>/templates/<uuid>.<ext>), de cada mídia de cabeçalho do modelo criado no editor, pela chave do slot do envio (header:1, card0:header:1) → { path, mime_type, file_name }. Montado por midiasDoModelo (lib/channels/meta/novo-modelo.ts). Sobrevive à sincronização, que não lista esta coluna no upsert.';
+
+notify pgrst, 'reload schema';

@@ -1018,6 +1018,10 @@ export const AUDIT_ACTIONS = [
   // que são as respostas rápidas (`message_templates`).
   "meta_template.submitted",
   "meta_template.synced",
+  // A mídia do cabeçalho de modelo (issue #7) foi à API de upload da Meta e a
+  // cópia ficou no storage. Ocupa a cota do bucket e vira amostra de revisão:
+  // precisa de dono, mesmo que o modelo nunca chegue a ser enviado.
+  "meta_template.media_uploaded",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */

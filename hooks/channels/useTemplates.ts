@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { apiClient } from "@/lib/api/client";
-import type { NovoModelo } from "@/lib/channels/meta/novo-modelo";
+import { ApiError, type ApiErrorBody } from "@/lib/api/types";
+import type { MidiaEnviadaView } from "@/app/api/v1/channels/templates/media/route";
+import type { FormatoDeMidia, NovoModelo } from "@/lib/channels/meta/novo-modelo";
 
 export interface TemplateSlotView {
   key: string;
@@ -35,6 +37,12 @@ export interface TemplateView {
   previews: TemplatePreview[];
   /** Links de mídia salvos no modelo — o painel da janela fechada pré-preenche com eles. */
   savedValues: Record<string, string>;
+  /**
+   * O arquivo que o editor guardou ao criar o modelo, por slot de mídia (issue
+   * #7). `url` é um link assinado de 1 hora; opcional para a tela não quebrar
+   * com resposta de uma versão anterior da rota.
+   */
+  storedMedia?: Record<string, { fileName: string; mimeType: string; url: string | null }>;
 }
 
 export interface TemplatesPayload {
@@ -116,5 +124,32 @@ export function useSubmitTemplate() {
       qc.invalidateQueries({ queryKey: ["channel-templates"] });
       qc.invalidateQueries({ queryKey: ["templates-da-conversa"] });
     },
+  });
+}
+
+export type { MidiaEnviadaView };
+
+/**
+ * Sobe a mídia do cabeçalho de um modelo (issue #7): a rota manda o arquivo à
+ * API de upload da Meta e guarda a cópia no storage. Multipart, então fala
+ * `fetch` direto, como o upload da conversa (`useUploadMedia`).
+ */
+export function useUploadTemplateMedia() {
+  return useMutation({
+    mutationFn: async (args: { file: File; format: FormatoDeMidia }) => {
+      const form = new FormData();
+      form.append("file", args.file, args.file.name);
+      form.append("format", args.format);
+      const res = await fetch("/api/v1/channels/templates/media", { method: "POST", body: form });
+      const json = (await res.json().catch(() => ({}))) as Partial<ApiErrorBody> & {
+        data?: MidiaEnviadaView;
+      };
+      if (!res.ok || !json.data) {
+        const e = json.error;
+        throw new ApiError(res.status, e?.code ?? "upload_failed", e?.details, e?.request_id ?? "", e?.message);
+      }
+      return json.data;
+    },
+    onError: (err) => showApiError(err),
   });
 }

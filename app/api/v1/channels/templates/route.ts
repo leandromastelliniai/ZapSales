@@ -24,6 +24,11 @@ import { deriveTemplateContract, describeAddress } from "@/lib/channels/meta/tem
 import { slotKey } from "@/lib/channels/meta/build-components";
 import { syncTemplates } from "@/lib/channels/meta/template-sync";
 import { mesclarValoresSalvos } from "@/lib/channels/meta/valores-salvos";
+import {
+  BUCKET_DA_MIDIA_DE_MODELO,
+  caminhoEhDaOrganizacao,
+} from "@/lib/channels/meta/midia-de-modelo";
+import { lerMidiasGuardadas } from "@/lib/channels/meta/novo-modelo";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -69,7 +74,17 @@ export interface TemplateView {
    * `template_values`. O painel da janela fechada pré-preenche com eles.
    */
   savedValues: Record<string, string>;
+  /**
+   * A cópia, no storage do ZapSales, da mídia de cada cabeçalho do modelo
+   * criado no editor (issue #7), na chave de `template_values`. `url` é um link
+   * assinado de 1 hora, só para o operador conferir o arquivo; `null` quando a
+   * assinatura falhou — a lista não cai por isso.
+   */
+  storedMedia: Record<string, { fileName: string; mimeType: string; url: string | null }>;
 }
+
+/** Validade do link do arquivo guardado, na lista. */
+const VALIDADE_DO_LINK_S = 60 * 60;
 
 /** Textos com placeholder, achatados (inclui os de dentro de card de carrossel). */
 function textPreviews(components: unknown): Array<{ onde: string; text: string }> {
@@ -113,13 +128,33 @@ export async function GET(): Promise<NextResponse> {
   const { data, error } = await admin
     .from("meta_templates")
     .select(
-      "name, language, status, category, rejected_reason, quality_score, parameter_format, contract_hash, components, synced_at, saved_values",
+      "name, language, status, category, rejected_reason, quality_score, parameter_format, contract_hash, components, synced_at, saved_values, header_media",
     )
     .eq("organization_id", r.orgId)
     .order("status")
     .order("name");
 
   if (error) return fail("internal_error", error.message, 500, { requestId });
+
+  // As cópias guardadas, assinadas de uma vez só. Só caminho DESTA organização
+  // entra na assinatura — o service role assinaria qualquer um.
+  const guardadas = new Map(
+    (data ?? []).map((row) => [row, lerMidiasGuardadas(row.header_media)] as const),
+  );
+  const caminhos = [
+    ...new Set(
+      [...guardadas.values()]
+        .flatMap((m) => Object.values(m).map((g) => g.path))
+        .filter((p) => caminhoEhDaOrganizacao(p, r.orgId)),
+    ),
+  ];
+  const links = new Map<string, string>();
+  if (caminhos.length > 0) {
+    const { data: assinados } = await admin.storage
+      .from(BUCKET_DA_MIDIA_DE_MODELO)
+      .createSignedUrls(caminhos, VALIDADE_DO_LINK_S);
+    for (const a of assinados ?? []) if (a.path && a.signedUrl) links.set(a.path, a.signedUrl);
+  }
 
   const templates: TemplateView[] = (data ?? []).map((row) => {
     const contrato = deriveTemplateContract({
@@ -161,6 +196,21 @@ export async function GET(): Promise<NextResponse> {
       savedValues: (() => {
         const r = mesclarValoresSalvos(contrato, (row.saved_values ?? {}) as Record<string, unknown>, {});
         return r.ok ? r.valores : {};
+      })(),
+      // Filtrado pelo contrato de HOJE, como o link salvo: um slot que deixou
+      // de ser mídia não mostra arquivo.
+      storedMedia: (() => {
+        const deMidia = new Set(
+          contrato.slots
+            .filter((s) => s.expects === "image" || s.expects === "video" || s.expects === "document")
+            .map((s) => slotKey(s.address, s.key)),
+        );
+        const out: TemplateView["storedMedia"] = {};
+        for (const [chave, g] of Object.entries(guardadas.get(row) ?? {})) {
+          if (!deMidia.has(chave) || !caminhoEhDaOrganizacao(g.path, r.orgId)) continue;
+          out[chave] = { fileName: g.file_name, mimeType: g.mime_type, url: links.get(g.path) ?? null };
+        }
+        return out;
       })(),
     };
   });
