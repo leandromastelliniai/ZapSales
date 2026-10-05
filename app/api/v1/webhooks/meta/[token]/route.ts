@@ -30,11 +30,12 @@ import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { fail } from "@/lib/api/wrappers";
-import { appDaMeta } from "@/lib/channels/meta/app";
+import { appDaMetaDoNumero } from "@/lib/channels/meta/app-da-sessao";
 import { aplicarEventoDeModelo, ehEventoDeModelo } from "@/lib/channels/meta/eventos-de-modelo";
 import { lerEnvelopeMeta } from "@/lib/channels/meta/envelope";
 import { parseMetaWebhook, verificationChallenge, verifyMetaSignature } from "@/lib/channels/meta/webhook";
 import { statusUpdate } from "@/lib/channels/meta/status-update";
+import { aplicarEventoDeSaude } from "@/lib/channels/meta/saude-do-numero";
 import { ingestMetaEcho, ingestMetaInbound } from "@/lib/channels/meta/ingest";
 import { metaSessionByWebhookToken } from "@/lib/channels/meta/session";
 import { logger } from "@/lib/logger";
@@ -46,6 +47,9 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
+
+/** Sessão sem app próprio (ou banco sem a 0536): vale o app da instalação. */
+const SEM_PAR = { appSecretCifrado: null, verifyTokenCifrado: null } as const;
 export const runtime = "nodejs";
 
 interface RouteCtx {
@@ -57,11 +61,10 @@ export async function GET(req: NextRequest, ctx: RouteCtx): Promise<NextResponse
   const session = await metaSessionByWebhookToken(token);
   if (!session) return new NextResponse("not found", { status: 404 });
 
-  // Do BANCO (platform_meta_app, migration 0257), com o `.env` como piso: é a
-  // credencial da INSTALAÇÃO inteira, não da organização — e um clone que ainda
-  // não aplicou a migration continua verificado pelo ambiente. Não lança nunca;
-  // a precedência e o porquê estão em `lib/channels/meta/app.ts`.
-  const { verifyToken } = await appDaMeta();
+  // O par do NÚMERO quando o administrador trouxe o app próprio pelo assistente
+  // (issue #5); senão o da INSTALAÇÃO (platform_meta_app, 0257, com o `.env` de
+  // piso). Nunca mistura as fontes e não lança — ver `app-da-sessao.ts`.
+  const { verifyToken } = await appDaMetaDoNumero(createAdminClient(), session.par ?? SEM_PAR);
   const challenge = verificationChallenge(req.nextUrl.searchParams, verifyToken ?? "");
   if (challenge === null) return new NextResponse("forbidden", { status: 403 });
 
@@ -80,10 +83,11 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
   if (!session) return fail("not_found", "unknown webhook token", 404, { requestId });
 
   const rawBody = await req.text();
-  // Do mesmo lugar que o handshake: BANCO primeiro, `.env` como piso (0257). Sem
-  // segredo nenhum configurado a verificação devolve `false` e a entrega morre em
-  // 401 — que é o desfecho de hoje, e não um 500.
-  const { appSecret } = await appDaMeta();
+  // Do mesmo lugar que o handshake: o app do NÚMERO, ou o da instalação. A Meta
+  // assina com o segredo do app inscrito na WABA — se o administrador trouxe o
+  // dele, é o dele que confere. Sem segredo nenhum a verificação devolve `false`
+  // e a entrega morre em 401, e não num 500.
+  const { appSecret } = await appDaMetaDoNumero(createAdminClient(), session.par ?? SEM_PAR);
   if (!verifyMetaSignature(rawBody, req.headers.get("x-hub-signature-256"), appSecret ?? "")) {
     return fail("unauthorized", "invalid_signature", 401, { requestId });
   }
@@ -179,6 +183,18 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
           phone_number_id: e.phoneNumberId,
         });
       }
+      continue;
+    }
+
+    if (e.kind === "number_quality" || e.kind === "business_capability") {
+      // Saúde do número (issue #5): o painel do número e, na queda, a Central.
+      // A sessão é a do TOKEN DO CAMINHO; o corpo só diz o que mudou.
+      const r = await aplicarEventoDeSaude(
+        admin,
+        { organizationId: session.organizationId, channelSessionId: session.id },
+        e,
+      );
+      desfechos.push(`saude:${r}`);
       continue;
     }
 

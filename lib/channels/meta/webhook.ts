@@ -20,6 +20,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { parseMetaInboundContact } from "@/lib/channels/meta/contact-card";
 import type { SharedContact } from "@/lib/messaging/contact-card";
 import type { MetaWebhookEnvelope } from "./envelope";
+import { limiteDoPortfolio } from "./saude";
 
 /** Assinatura da Meta: `sha256=<hex>` no header `X-Hub-Signature-256`. */
 /**
@@ -219,7 +220,38 @@ export interface OutboundEchoEvent {
   } | null;
 }
 
+/**
+ * A Meta mudou a saúde de um NÚMERO (`phone_number_quality_update`, issue #5).
+ *
+ * O payload traz o número EXIBIDO (não o id) e o evento; a qualidade em si NÃO
+ * vem — quem aplica pergunta à Graph. O limite vem em `current_limit`
+ * (descontinuado em fev/2026) ou `max_daily_conversations_per_business`.
+ * Só chega na URL do APP: este campo não aceita override por número.
+ */
+export interface NumberQualityEvent {
+  kind: "number_quality";
+  wabaId: string;
+  /** Só dígitos ou formatado — quem casa com a sessão compara dígitos. */
+  displayPhoneNumber: string | null;
+  /** `FLAGGED` | `UNFLAGGED` | `UPGRADE` | `DOWNGRADE` | `ONBOARDING` | `THROUGHPUT_UPGRADE` … */
+  event: string | null;
+  /** O limite do portfólio já em faixa (`TIER_2K`). */
+  limite: string | null;
+}
+
+/**
+ * O limite do PORTFÓLIO mudou (`business_capability_update`). Desde 2025 o limite
+ * é do portfólio, compartilhado por todos os números dele.
+ */
+export interface BusinessCapabilityEvent {
+  kind: "business_capability";
+  wabaId: string;
+  limite: string;
+}
+
 export type MetaWebhookEvent =
+  | NumberQualityEvent
+  | BusinessCapabilityEvent
   | TemplateStatusEvent
   | TemplateQualityEvent
   | TemplateCategoryEvent
@@ -315,6 +347,30 @@ export function parseMetaWebhook(envelope: MetaWebhookEnvelope): MetaWebhookEven
           category: (nova ?? correta)!,
           efetiva: nova !== null,
         });
+        continue;
+      }
+
+      if (change.field === "phone_number_quality_update") {
+        const evento = str(v.event);
+        const limite = limiteDoPortfolio(v.max_daily_conversations_per_business ?? v.current_limit);
+        if (!evento && !limite) continue; // payload capenga não vira linha meia-boca
+        out.push({
+          kind: "number_quality",
+          wabaId,
+          displayPhoneNumber: str(v.display_phone_number),
+          event: evento ? evento.toUpperCase() : null,
+          limite,
+        });
+        continue;
+      }
+
+      if (change.field === "business_capability_update") {
+        // `max_daily_conversation_per_phone` é o nome antigo (até fev/2026).
+        const limite = limiteDoPortfolio(
+          v.max_daily_conversations_per_business ?? v.max_daily_conversation_per_phone,
+        );
+        if (!limite) continue;
+        out.push({ kind: "business_capability", wabaId, limite });
         continue;
       }
 

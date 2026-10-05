@@ -4202,9 +4202,16 @@ export type Database = {
           is_warmup_complete: boolean | null
           last_health_check_at: string | null
           last_status_change_at: string
+          meta_app_secret_encrypted: string | null
+          meta_limite_de_mensagens: string | null
           meta_messaging_account_id: string | null
+          meta_numero_registrado_em: string | null
           meta_phone_number_id: string | null
+          meta_qualidade: string | null
+          meta_saude_em: string | null
+          meta_saude_evento: string | null
           meta_token_encrypted: string | null
+          meta_verify_token_encrypted: string | null
           meta_waba_id: string | null
           meta_webhook_override_em: string | null
           meta_webhook_override_erro: string | null
@@ -4216,6 +4223,7 @@ export type Database = {
           status: string
           status_reason: string | null
           updated_at: string
+          uso_declarado: string | null
           wacalls_jid: string | null
           wacalls_paired_at: string | null
           wacalls_session_id: string | null
@@ -4237,9 +4245,16 @@ export type Database = {
           is_warmup_complete?: boolean | null
           last_health_check_at?: string | null
           last_status_change_at?: string
+          meta_app_secret_encrypted?: string | null
+          meta_limite_de_mensagens?: string | null
           meta_messaging_account_id?: string | null
+          meta_numero_registrado_em?: string | null
           meta_phone_number_id?: string | null
+          meta_qualidade?: string | null
+          meta_saude_em?: string | null
+          meta_saude_evento?: string | null
           meta_token_encrypted?: string | null
+          meta_verify_token_encrypted?: string | null
           meta_waba_id?: string | null
           meta_webhook_override_em?: string | null
           meta_webhook_override_erro?: string | null
@@ -4251,6 +4266,7 @@ export type Database = {
           status?: string
           status_reason?: string | null
           updated_at?: string
+          uso_declarado?: string | null
           wacalls_jid?: string | null
           wacalls_paired_at?: string | null
           wacalls_session_id?: string | null
@@ -4272,9 +4288,16 @@ export type Database = {
           is_warmup_complete?: boolean | null
           last_health_check_at?: string | null
           last_status_change_at?: string
+          meta_app_secret_encrypted?: string | null
+          meta_limite_de_mensagens?: string | null
           meta_messaging_account_id?: string | null
+          meta_numero_registrado_em?: string | null
           meta_phone_number_id?: string | null
+          meta_qualidade?: string | null
+          meta_saude_em?: string | null
+          meta_saude_evento?: string | null
           meta_token_encrypted?: string | null
+          meta_verify_token_encrypted?: string | null
           meta_waba_id?: string | null
           meta_webhook_override_em?: string | null
           meta_webhook_override_erro?: string | null
@@ -4286,6 +4309,7 @@ export type Database = {
           status?: string
           status_reason?: string | null
           updated_at?: string
+          uso_declarado?: string | null
           wacalls_jid?: string | null
           wacalls_paired_at?: string | null
           wacalls_session_id?: string | null
@@ -8442,7 +8466,10 @@ export type Database = {
       }
       platform_meta_app: {
         Row: {
+          app_id: string | null
           app_secret_encrypted: string | null
+          embedded_signup_config_id: string | null
+          embedded_signup_ligado: boolean
           id: number
           updated_at: string
           updated_by: string | null
@@ -8450,7 +8477,10 @@ export type Database = {
           verify_token_encrypted: string | null
         }
         Insert: {
+          app_id?: string | null
           app_secret_encrypted?: string | null
+          embedded_signup_config_id?: string | null
+          embedded_signup_ligado?: boolean
           id?: number
           updated_at?: string
           updated_by?: string | null
@@ -8458,7 +8488,10 @@ export type Database = {
           verify_token_encrypted?: string | null
         }
         Update: {
+          app_id?: string | null
           app_secret_encrypted?: string | null
+          embedded_signup_config_id?: string | null
+          embedded_signup_ligado?: boolean
           id?: number
           updated_at?: string
           updated_by?: string | null

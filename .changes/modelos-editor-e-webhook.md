@@ -17,8 +17,9 @@ deixa a qualidade dele vermelha ou muda a categoria dele, um aviso abre na Centr
 categoria muda o custo: um modelo de utilidade que passa a marketing custa como marketing a cada
 envio. Cada mudança gera um aviso só, mesmo quando a Meta reentrega o evento.
 
-Para receber a qualidade e a categoria, assine também os campos
-`message_template_quality_update` e `template_category_update` no webhook do app da Meta. A tela
+Quando a conexão é feita pelo assistente com o app próprio da empresa, os campos de qualidade e
+de categoria do modelo são assinados sozinhos. Se o webhook do app foi configurado à mão no painel
+da Meta, assine também `message_template_quality_update` e `template_category_update`. A tela
 de conexão lista os campos a assinar. Sem eles, o status continua chegando pelo webhook, e a
 qualidade e a categoria chegam só ao clicar em **Sincronizar com a Meta**.
 

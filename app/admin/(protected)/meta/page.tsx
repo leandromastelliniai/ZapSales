@@ -49,7 +49,9 @@ export default async function Page() {
   // anon/authenticated): o admin client é o único caminho.
   const { data, error } = await createAdminClient()
     .from("platform_meta_app")
-    .select("app_secret_encrypted, verify_token_encrypted, verify_token_created_at, updated_at")
+    .select(
+      "app_secret_encrypted, verify_token_encrypted, verify_token_created_at, updated_at, app_id, embedded_signup_config_id, embedded_signup_ligado",
+    )
     .eq("id", 1)
     .maybeSingle();
 
@@ -59,6 +61,9 @@ export default async function Page() {
         verify_token_encrypted: string | null;
         verify_token_created_at: string | null;
         updated_at: string | null;
+        app_id?: string | null;
+        embedded_signup_config_id?: string | null;
+        embedded_signup_ligado?: boolean | null;
       }
     | null;
 
@@ -77,6 +82,13 @@ export default async function Page() {
       // Leitura que falhou não pode virar "nunca configurado": essa frase
       // levaria o dono a gerar um token por cima do que já está colado na Meta.
       leituraFalhou={Boolean(error)}
+      // Ids PÚBLICOS do Embedded Signup (issue #5): o SDK da Meta os exige no
+      // navegador, então mostrá-los aqui não expõe nada.
+      embeddedSignup={{
+        ligado: linha?.embedded_signup_ligado === true,
+        appId: linha?.app_id ?? null,
+        configId: linha?.embedded_signup_config_id ?? null,
+      }}
     />
   );
 }

@@ -20,6 +20,11 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
  *
  * O token é cifrado pelas MESMAS RPCs do resto do repo (`lib/webhooks/secrets.ts`) e
  * **nunca volta** num GET: uma vez gravado, a tela mostra que existe, não qual é.
+ *
+ * Desde a issue #5 o `POST` é também a porta do ASSISTENTE: com App Secret, PIN e
+ * uso declarado ele confere o segredo, registra o número e assina os campos do
+ * webhook no app. A ordem dos passos mora em `lib/channels/meta/conectar-numero.ts`,
+ * que o Embedded Signup também usa.
  */
 import { randomUUID } from "node:crypto";
 import type { NextRequest, NextResponse } from "next/server";
@@ -31,17 +36,14 @@ import { ARCHIVED_AT, queryTolerantToMissingArchived } from "@/lib/channels/arch
 import { CHANNEL_PROVIDER_META } from "@/lib/channels/capabilities";
 import { appDaMeta, appDaMetaDoAmbiente } from "@/lib/channels/meta/app";
 import { metaGraphBase } from "@/lib/channels/meta/credentials";
-import { validateMetaCredentials } from "@/lib/channels/meta/validate-credentials";
-import {
-  COLUNAS_DO_DESFECHO_DO_WEBHOOK,
-  registrarWebhookDaSessao,
-} from "@/lib/channels/meta/webhook-da-sessao";
-import { reactivateChannelSession } from "@/lib/channels/reactivate";
+import { COLUNAS_DO_DESFECHO_DO_WEBHOOK } from "@/lib/channels/meta/webhook-da-sessao";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { metadataInicialDoCanal } from "@/lib/ai/elegibilidade/pre-go-live";
-import { encryptWebhookSecret } from "@/lib/webhooks/secrets";
 import { basePublicaDoWebhookMeta } from "@/lib/webhooks/url-publica";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { lerUsoDoNumero, usoDoNumeroSchema } from "@/lib/channels/uso";
+import { conectarNumeroOficial } from "@/lib/channels/meta/conectar-numero";
+import { CAMPOS_DO_WEBHOOK_DO_APP } from "@/lib/channels/meta/conexao-guiada";
+import { embeddedSignupParaATela } from "@/lib/channels/meta/embedded-signup";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -62,6 +64,25 @@ const conectarSchema = z.object({
     .regex(/^[A-Za-z0-9_-]*$/)
     .optional()
     .transform((v) => (v ? v : null)),
+  /**
+   * Os campos do ASSISTENTE (issue #5). Todos opcionais: o formulário manual de
+   * sempre continua conectando só com número, conta e token.
+   *
+   * App Secret: 32 hexadecimais na Meta; o piso de 16 é o mesmo da tela da
+   * instalação (`updateMetaApp.ts`).
+   */
+  app_secret: z.string().trim().min(16).max(300).optional(),
+  /** Verify token do app próprio. Vazio com App Secret = o servidor gera um forte. */
+  verify_token: z
+    .string()
+    .trim()
+    .max(200)
+    .regex(/^[A-Za-z0-9._~-]*$/)
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+  /** PIN de confirmação em duas etapas: com ele, o número é registrado na Cloud API. */
+  pin: z.string().regex(/^\d{6}$/).optional(),
+  uso: usoDoNumeroSchema.optional(),
 });
 
 interface DesfechoGravado {
@@ -89,6 +110,34 @@ async function lerDesfechoDoWebhook(
     .maybeSingle();
   if (error) return null;
   return data as DesfechoGravado | null;
+}
+
+/** O que a 0536 acrescenta à conexão, lido em consulta PRÓPRIA (mesma razão da 0311). */
+interface ExtrasDaConexao {
+  uso_declarado: string | null;
+  meta_qualidade: string | null;
+  meta_limite_de_mensagens: string | null;
+  meta_saude_evento: string | null;
+  meta_saude_em: string | null;
+  meta_numero_registrado_em: string | null;
+  meta_app_secret_encrypted: string | null;
+}
+
+async function lerExtrasDaConexao(
+  admin: ReturnType<typeof createAdminClient>,
+  orgId: string,
+  channelSessionId: string,
+): Promise<ExtrasDaConexao | null> {
+  const { data, error } = await admin
+    .from("channel_sessions")
+    .select(
+      "uso_declarado, meta_qualidade, meta_limite_de_mensagens, meta_saude_evento, meta_saude_em, meta_numero_registrado_em, meta_app_secret_encrypted",
+    )
+    .eq("organization_id", orgId)
+    .eq("id", channelSessionId)
+    .maybeSingle();
+  if (error) return null;
+  return data as ExtrasDaConexao | null;
 }
 
 /**
@@ -153,6 +202,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const base = basePublicaDoWebhookMeta(req);
   const desfecho = data?.id ? await lerDesfechoDoWebhook(admin, data.id) : null;
+  const extras = data?.id ? await lerExtrasDaConexao(admin, orgId, data.id) : null;
+  const appProprio = Boolean(extras?.meta_app_secret_encrypted);
   return ok({
     connected: Boolean(data),
     channel_session_id: data?.id ?? null,
@@ -173,26 +224,50 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     webhook: data
       ? {
           callbackUrl: `${base}/api/v1/webhooks/meta/${data.webhook_path_token}`,
-          ...(await tokenDeVerificacaoParaATela()),
+          // Com app próprio, o token de verificação é o do NÚMERO: ele foi
+          // informado (ou gerado) no assistente e não volta num GET.
+          ...(appProprio
+            ? { verifyToken: null, verifyTokenOrigem: "numero" as const }
+            : await tokenDeVerificacaoParaATela()),
           // A porta para quem PODE abrir a tela da instalação — mesma regra do
           // link de `/admin/google` na Agenda. Para o admin de um tenant qualquer
           // o link seria um 404; a tela diz a ele quem procurar.
           configurarEm: authz.user.is_platform_admin && !authz.user.support ? "/admin/meta" : null,
           // `smb_message_echoes`: o que a empresa manda pelo app WhatsApp Business
           // num número em coexistência. Sem coexistência a Meta não o envia, então
-          // assinar é inofensivo para quem não usa.
-          // Os três campos de modelo (issue #6): status, qualidade e categoria.
-          // Sem `template_category_update` a recategorização — que muda o custo —
-          // só apareceria na próxima sincronização manual.
-          fields: [
-            "messages",
-            "message_template_status_update",
-            "message_template_quality_update",
-            "template_category_update",
-            "smb_message_echoes",
-          ],
+          // assinar é inofensivo para quem não usa. Qualidade e limite do portfólio
+          // (issue #5) e qualidade e categoria do modelo (issue #6) só chegam pela
+          // URL do APP — por isso entram na lista que a tela manda assinar quando o
+          // webhook é configurado à mão.
+          fields: [...CAMPOS_DO_WEBHOOK_DO_APP],
         }
       : null,
+    /** Para que o administrador declarou o número (issue #5). Nulo = não declarado. */
+    uso: lerUsoDoNumero(extras?.uso_declarado),
+    /**
+     * A saúde do número que a Meta informa — na conexão e pelo webhook
+     * `phone_number_quality_update`. Nulo = banco sem a 0536 ou nada informado.
+     */
+    saude: data
+      ? {
+          qualidade: extras?.meta_qualidade ?? null,
+          limite: extras?.meta_limite_de_mensagens ?? null,
+          evento: extras?.meta_saude_evento ?? null,
+          em: extras?.meta_saude_em ?? null,
+        }
+      : null,
+    /** Quando o assistente registrou o número na Cloud API (PIN). */
+    numeroRegistradoEm: extras?.meta_numero_registrado_em ?? null,
+    /**
+     * O número usa o app PRÓPRIO (segredo trazido pelo assistente) ou o da
+     * instalação? SE existe, nunca QUAL — o segredo não volta para a tela.
+     */
+    appProprio,
+    /**
+     * O "Conectar com Facebook" (Embedded Signup v4): só com a chave da instalação
+     * ligada. Nulo = a tela não mostra o botão. Só ids públicos atravessam.
+     */
+    embeddedSignup: await embeddedSignupParaATela(),
     /**
      * E o que a instalação já fez SOZINHA (fatia F1): o webhook deste número está
      * registrado na Meta ou ainda não? `registrado: false` com `erro` é estado
@@ -228,156 +303,49 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       requestId,
     });
   }
-  const { phone_number_id, waba_id, token, messaging_account_id } = parsed.data;
+  const d = parsed.data;
 
-  // VALIDA ANTES DE GRAVAR — a rota não sabe com quem fala; ela pergunta se a
-  // credencial presta e o canal responde.
-  //
-  // `wabaId` junto desde a fatia F1: a checagem do número sozinha aceita o par
-  // trocado (número de uma conta, id de outra), e o registro do webhook logo abaixo
-  // apontaria o override de um número que esta instalação não controla.
-  const validacao = await validateMetaCredentials({
-    phoneNumberId: phone_number_id,
-    token,
-    wabaId: waba_id,
+  const resultado = await conectarNumeroOficial({
+    admin: createAdminClient(),
+    organizationId: orgId,
+    userId,
+    requestId,
+    base: basePublicaDoWebhookMeta(req),
+    // Com App Secret ou PIN a chamada veio do assistente; sem, do formulário manual.
+    origem: d.app_secret || d.pin ? "assistente" : "manual",
+    entrada: {
+      phoneNumberId: d.phone_number_id,
+      wabaId: d.waba_id,
+      token: d.token,
+      messagingAccountId: d.messaging_account_id,
+      appSecret: d.app_secret ?? null,
+      verifyToken: d.verify_token ?? null,
+      pin: d.pin ?? null,
+      uso: d.uso ?? null,
+    },
   });
-  if (!validacao.ok) {
-    return fail("invalid_request", validacao.motivo, 422, { requestId });
-  }
-
-  const admin = createAdminClient();
-  const cifrado = await encryptWebhookSecret(admin, token);
-  if (!cifrado) {
-    // Sem a GUC de cifra configurada, gravar o token em claro seria pior que
-    // recusar. O operador precisa saber que falta uma configuração de servidor.
-    return fail(
-      "invalid_request",
-      t("cifra indisponível nesta instalação (GUC app.integrations_oauth_key ausente) — o token não foi gravado"),
-      422,
-      { requestId },
-    );
-  }
-
-  // A busca NÃO filtra `archived_at`: um canal oficial excluído é exatamente o
-  // que este POST precisa achar para trazer de volta. Ignorá-lo criaria uma
-  // SEGUNDA linha oficial na org — e a linha velha continuaria segurando o par
-  // (org, número) na trava da 0106.
-  const buscarExistente = (colunas: string) =>
-    admin
-      .from("channel_sessions")
-      .select(colunas)
-      .eq("organization_id", orgId)
-      .eq("provider", CHANNEL_PROVIDER_META)
-      .maybeSingle();
-  const { data: existenteRaw } = await queryTolerantToMissingArchived(
-    () => buscarExistente(`id, ${ARCHIVED_AT}, webhook_path_token`),
-    () => buscarExistente("id, webhook_path_token"),
-  );
-  const existente = existenteRaw as {
-    id: string;
-    archived_at?: string | null;
-    webhook_path_token?: string | null;
-  } | null;
-
-  const linha = {
-    organization_id: orgId,
-    provider: CHANNEL_PROVIDER_META,
-    meta_phone_number_id: phone_number_id,
-    meta_waba_id: waba_id,
-    meta_messaging_account_id: messaging_account_id,
-    meta_token_encrypted: cifrado,
-    phone_number: validacao.displayPhoneNumber ? `+${validacao.displayPhoneNumber.replace(/\D/g, "")}` : null,
-    display_name: validacao.verifiedName ?? "Canal oficial",
-    status: "WORKING",
-  };
-
-  // `update` quando já existe em vez de upsert: a trava única de (org,
-  // phone_number) não serve de árbitro de `ON CONFLICT` aqui. Era DEFERRABLE
-  // (medido ao criar a sessão de teste da Fase 3b, e o Postgres recusa
-  // constraint deferível na inferência); a migration 0107 a trocou por um índice
-  // único PARCIAL (`where archived_at is null`), que só seria inferível se a
-  // cláusula repetisse o predicado — e o cliente do PostgREST não expõe isso.
-  // Mudou a razão, não a escolha.
-  //
-  // O update passa por `reactivateChannelSession` porque reconectar é
-  // ressuscitar: o mesmo patch que devolve status, credencial e número tem que
-  // devolver a linha à vida, ou o canal fica "conectado" na tela e excluído para
-  // todo o resto do sistema. Para o canal que já estava ativo é um no-op — e a
-  // auditoria de volta sai de lá, junto da ressurreição, não daqui.
-  let idDaSessao: string | null = existente?.id ?? null;
-  let webhookPathToken: string | null = existente?.webhook_path_token ?? null;
-  let error: { message?: string | null } | null = null;
-
-  if (existente) {
-    ({ error } = await reactivateChannelSession(
-      admin,
-      {
-        organizationId: orgId,
-        channelSessionId: existente.id,
-        archivedAt: existente.archived_at ?? null,
-      },
-      linha,
-      {
-        userId: userId,
-        requestId,
-        metadata: { provider: CHANNEL_PROVIDER_META, phone_number: linha.phone_number },
-      },
-    ));
-  } else {
-    // `select("id, webhook_path_token")` porque o registro do webhook logo abaixo
-    // precisa dos DOIS: o id para gravar o desfecho na mesma linha, e o token porque
-    // é ele que compõe a URL que a Meta vai chamar. O INSERT não os devolve sozinho,
-    // e reler a linha por (org, provider) seria uma segunda ida ao banco pelo dado
-    // que este INSERT acabou de criar.
-    const inserida = await admin
-      .from("channel_sessions")
-      .insert({
-        ...linha,
-        webhook_secret_encrypted: cifrado,
-        metadata: metadataInicialDoCanal(),
-      })
-      .select("id, webhook_path_token")
-      .maybeSingle();
-    error = inserida.error;
-    idDaSessao = inserida.data?.id ?? null;
-    webhookPathToken = inserida.data?.webhook_path_token ?? null;
-  }
-
-  if (error) {
-    return fail("internal_error", error.message ?? "channel_session_write_failed", 500, {
+  if (!resultado.ok) {
+    return fail(resultado.code, t(resultado.mensagem), resultado.status, {
       requestId,
+      details: { etapa: resultado.etapa },
     });
   }
 
-  // ─── O webhook DESTE número, registrado pela própria instalação (fatia F1) ──
-  // DEPOIS de gravar, nunca antes: o GET de verificação da Meta chega no instante
-  // em que o override é registrado e procura a sessão pelo `webhook_path_token` —
-  // registrar antes de a linha existir devolveria 404 e a Meta marcaria o webhook
-  // como inválido, que é pior que não registrar.
-  //
-  // E o desfecho volta na RESPOSTA, não só no log: quem colou as credenciais precisa
-  // saber que o canal envia mas ainda não entrega, com o motivo em mãos.
-  const webhook =
-    idDaSessao && webhookPathToken
-      ? await registrarWebhookDaSessao({
-          admin,
-          channelSessionId: idDaSessao,
-          phoneNumberId: phone_number_id,
-          wabaId: waba_id,
-          tokenCifrado: cifrado,
-          webhookPathToken,
-          base: basePublicaDoWebhookMeta(req),
-          requestId,
-        })
-      : null;
-
   return ok({
     connected: true,
-    displayName: linha.display_name,
-    phoneNumber: linha.phone_number,
+    channel_session_id: resultado.channelSessionId,
+    displayName: resultado.displayName,
+    phoneNumber: resultado.phoneNumber,
     /** `registrado: false` NÃO desfaz a conexão — o canal envia; falta a entrega. */
-    webhookRegistro: webhook
-      ? { registrado: webhook.registrado, url: webhook.url, erro: webhook.erro, em: webhook.em }
+    webhookRegistro: resultado.webhookRegistro
+      ? {
+          registrado: resultado.webhookRegistro.registrado,
+          url: resultado.webhookRegistro.url,
+          erro: resultado.webhookRegistro.erro,
+          em: resultado.webhookRegistro.em,
+        }
       : null,
+    numeroRegistrado: resultado.numeroRegistrado,
+    webhookDoApp: resultado.webhookDoApp,
   });
 }

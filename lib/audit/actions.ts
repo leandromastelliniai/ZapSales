@@ -234,6 +234,9 @@ export const AUDIT_ACTIONS = [
   "channel.pairing_code_requested",
   "channel.social_configured",
   "channel.ai_access_updated",
+  // O administrador declarou para que serve o número (issue #5): atendimento,
+  // campanha ou ambos. O motor de campanhas lê a declaração.
+  "channel.usage_declared",
   "channel.reconnected",
   // Duas ações distintas de propósito: `deleted` apagou a linha (canal virgem),
   // `archived` só a escondeu porque conversas/mensagens ainda a referenciam.
@@ -444,6 +447,9 @@ export const AUDIT_ACTIONS = [
   // verificação de URL que estava valendo até alguém colar o valor novo na Meta.
   "platform_meta_app.updated",
   "platform_meta_app.verify_token_rotated",
+  // A chave do Embedded Signup (issue #5): ligar/desligar o "Conectar com
+  // Facebook" e os ids públicos do app. Da instalação, como as duas de cima.
+  "platform_meta_app.embedded_signup_updated",
   // A conexão da ORGANIZAÇÃO com a conta de anúncios (migration 0213).
   // Auditável porque o token gravado aqui escreve conversões na conta de
   // mídia do cliente: "quem apontou minhas vendas para este destino?" só tem

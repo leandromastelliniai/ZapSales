@@ -3209,7 +3209,66 @@ Sabotagem medida: tirar `messaging_account_id`, `recipient` ou o `read_at` do
 código derruba J41.2/J41.3/J41.6; ignorar a falha classificada no handler derruba
 os seis casos de J41.5; voltar o parser a exigir telefone derruba J41.6.
 
-## J42 — Criar e acompanhar modelos da API Oficial `[P1]` (2026-10-05, issue #6)
+## J42 — Conexão guiada e saúde do número oficial `[P0]` (2026-10-05)
+
+Contexto: issue #5. A mesma fronteira da J41 (falso Graph na saída, webhook
+assinado na rota real na entrada), agora pelo assistente de conexão, pela
+saúde que a Meta empurra e pelo Embedded Signup atrás da chave da instalação.
+Conectar o número oficial é primeira impressão: é o passo em que quem não
+programa desiste quando a tela diz só "não deu".
+
+Specs: `tests/invariants/conexao-guiada-ponta-a-ponta.test.ts` (API + banco),
+`tests/e2e/conexao-oficial-assistente.spec.ts` (pela tela, com o falso Graph
+na porta do `.env.e2e`), `tests/unit/meta-conexao-guiada.test.ts`,
+`tests/unit/meta-saude-do-numero.test.ts`,
+`tests/unit/embedded-signup-chave-da-instalacao.test.ts`,
+`tests/unit/webhook-meta-segredo-do-numero.test.ts`.
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J42.1 | Token expirado (190/463), sem `whatsapp_business_messaging`, app em desenvolvimento (entidade APP do `health_status` limitada), chave secreta de outro app, token sem conta | uma frase específica por problema, com o que fazer; nada gravado | **PASS (unit, falso Graph)**; **PASS (invariante + tela, CI do PR #18)** |
+| J42.2 | Credencial boa | lista as contas e os números da Meta; checklist (Live, pagamento, empresa verificada); número único já vem escolhido | **PASS (unit)**; **PASS (invariante + tela, CI do PR #18)** |
+| J42.3 | Conectar escolhendo da lista, com PIN e uso | `POST /{número}/register` com o PIN, `subscribed_apps`, override do número com o verify token DO NÚMERO, `/{app}/subscriptions` com os campos de saúde e modelos | **PASS (invariante + tela, CI do PR #18)** |
+| J42.4 | Segredos | token, App Secret e verify token cifrados (`fn_encrypt_oauth`); nenhum volta no GET nem no HTML | **PASS (invariante + tela, CI do PR #18)** |
+| J42.5 | Webhook do número com app próprio | aceita assinado com o segredo do app do cliente, recusa o da instalação; sem par próprio vale a instalação | **PASS (unit)** |
+| J42.6 | Uso declarado | gravado na conexão, visível no cartão, trocado pela tela (`PATCH …/uso`); outra organização recebe 404 | **PASS (unit)**; **PASS (invariante + tela, CI do PR #18)** |
+| J42.7 | `phone_number_quality_update` (FLAGGED) com a Graph dizendo RED | painel vermelho, aviso crítico na Central, reentrega não repete o aviso; evento de outro número não mexe neste | **PASS (unit, regra e parser)**; **PASS (invariante + tela, CI do PR #18)** |
+| J42.8 | `business_capability_update` com 250 (número ou `TIER_250`) | limite do portfólio atualizado e aviso de queda | **PASS (unit)**; **PASS (invariante, CI do PR #18)** |
+| J42.9 | Embedded Signup desligado (padrão) | o botão não aparece e a rota é 404 sem chamar a Meta | **PASS (unit)**; **PASS (invariante + tela, CI do PR #18)** |
+| J42.10 | Embedded Signup ligado | o botão aparece; a janela (SDK substituído na rede) anuncia WABA e número; o código é trocado no servidor com o App Secret da instalação e o número conecta pelo token de negócio | **PASS (unit, troca e chave)**; **PASS (invariante + tela, CI do PR #18)** |
+
+Achados da pesquisa na documentação da Meta (05/10/2026), que viraram decisão:
+o nó `Application` não expõe modo Dev/Live — o sinal usado é a entidade APP do
+`health_status`; `phone_number_quality_update` e `business_capability_update`
+**não** seguem override de número nem de WABA, só a URL do app — por isso o
+assistente assina os campos no app quando o administrador traz o app próprio;
+`messaging_limit_tier` foi descontinuado em favor de
+`whatsapp_business_manager_messaging_limit` (limite do portfólio).
+
+Limites conhecidos (revisão de 2026-10-05), deixados escritos em vez de
+implícitos:
+
+- **Saúde automática só com app próprio.** Qualidade e limite só chegam pela
+  URL do APP; o assistente aponta a do app do cliente para o número. Número no
+  app da INSTALAÇÃO (Embedded Signup, formulário manual) recebe a primeira
+  leitura na conexão e, depois, só se quem administra apontar a URL do app à
+  mão — a tela agora lista `phone_number_quality_update` e
+  `business_capability_update` nos campos a assinar. Rotear a URL única de um
+  app Tech Provider para N organizações é trabalho do Tech Provider (fora do
+  escopo da spec).
+- **Modo de desenvolvimento é inferido.** A Meta não expõe o modo do app; a
+  entidade APP do `health_status` limitada vira o problema, com o motivo da
+  Meta junto. Sem a entidade, o item fica "não deu para conferir", sem bloquear.
+- **Um número oficial por organização.** Escolher outro número no assistente
+  substitui o atual, e a tela diz isso. Vários números oficiais por empresa é
+  a próxima fatia (campanhas com rodízio, Fase 3).
+- **Credencial em URL para a Meta, por contrato dela:** `debug_token` leva o
+  `input_token` e a troca do código do Embedded Signup leva o `client_secret`
+  na busca, como a documentação define. As duas saem do servidor para a Meta
+  por TLS; a CONEXÃO em si põe o token só no cabeçalho (`GET /app` com
+  `appsecret_proof`) e o invariante J42.3 cobra isso.
+
+## J43 — Criar e acompanhar modelos da API Oficial `[P1]` (2026-10-05, issue #6)
 
 Mesma fronteira da J41: o falso Graph (`tests/support/falso-graph.ts`) na saída, o
 webhook assinado na rota real na entrada, o baseline aplicado e as rotas do app.
@@ -3219,14 +3278,14 @@ Spec: `tests/invariants/modelos-do-canal-oficial.test.ts`; editor e preview em
 
 | # | Caso | Expectativa | Resultado |
 |---|------|-------------|-----------|
-| J42.1 | Sincronizar com duas páginas na conta | segue o cursor; grava componentes, categoria, qualidade (`{score}` → `GREEN`) e motivo de recusa (`NONE` → vazio) | **PASS (invariante)** |
-| J42.2 | Criar no editor: posicional, rodapé, resposta rápida, link com `{{1}}`, copiar código | o falso Graph recebe `POST /v26.0/{waba}/message_templates` com `body_text` e o `example` da URL inteira; a lista mostra o modelo pendente; audit `meta_template.submitted` | **PASS (invariante)** |
-| J42.3 | Modelo com variável sem exemplo, ou nome repetido | 422 no campo / 409, sem ida à Meta | **PASS (invariante)** |
-| J42.4 | Preview enquanto edita | corpo com os exemplos e a formatação do WhatsApp, rodapé e botões (mais de 3 viram 2 + "Ver todas as opções"); o que a Meta recusaria aparece no campo e nada é enviado | **PASS (jsdom)** |
-| J42.5 | Webhook APPROVED, REJECTED, PAUSED, DISABLED | status atualizado sem sincronizar; os três últimos abrem um aviso na Central, uma vez só na reentrega. `REINSTATED` volta a `APPROVED` e `DELETED` vira `DISABLED` (`tests/unit/meta-eventos-de-modelo.test.ts`) | **PASS (invariante)** |
-| J42.6 | Webhook de categoria (utilidade → marketing) e de qualidade vermelha | categoria e qualidade atualizadas; aviso de custo nomeando o modelo | **PASS (invariante)** |
-| J42.7 | A outra organização, com modelo de mesmo nome, conta e idioma | não vê os modelos nem os avisos de A; os webhooks de A não tocam a linha dela | **PASS (invariante)** |
-| J42.8 | O editor pela tela, como um leigo | abrir "Novo modelo", preencher, ver o preview e enviar numa instalação fresca | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
+| J43.1 | Sincronizar com duas páginas na conta | segue o cursor; grava componentes, categoria, qualidade (`{score}` → `GREEN`) e motivo de recusa (`NONE` → vazio) | **PASS (invariante)** |
+| J43.2 | Criar no editor: posicional, rodapé, resposta rápida, link com `{{1}}`, copiar código | o falso Graph recebe `POST /v26.0/{waba}/message_templates` com `body_text` e o `example` da URL inteira; a lista mostra o modelo pendente; audit `meta_template.submitted` | **PASS (invariante)** |
+| J43.3 | Modelo com variável sem exemplo, ou nome repetido | 422 no campo / 409, sem ida à Meta | **PASS (invariante)** |
+| J43.4 | Preview enquanto edita | corpo com os exemplos e a formatação do WhatsApp, rodapé e botões (mais de 3 viram 2 + "Ver todas as opções"); o que a Meta recusaria aparece no campo e nada é enviado | **PASS (jsdom)** |
+| J43.5 | Webhook APPROVED, REJECTED, PAUSED, DISABLED | status atualizado sem sincronizar; os três últimos abrem um aviso na Central, uma vez só na reentrega. `REINSTATED` volta a `APPROVED` e `DELETED` vira `DISABLED` (`tests/unit/meta-eventos-de-modelo.test.ts`) | **PASS (invariante)** |
+| J43.6 | Webhook de categoria (utilidade → marketing) e de qualidade vermelha | categoria e qualidade atualizadas; aviso de custo nomeando o modelo | **PASS (invariante)** |
+| J43.7 | A outra organização, com modelo de mesmo nome, conta e idioma | não vê os modelos nem os avisos de A; os webhooks de A não tocam a linha dela | **PASS (invariante)** |
+| J43.8 | O editor pela tela, como um leigo | abrir "Novo modelo", preencher, ver o preview e enviar numa instalação fresca | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
 
 Sabotagem medida: tirar o aviso da Central e a escrita da categoria derruba seis
-casos da J42 (J42.5, J42.6 e a parte de isolamento que depende da recategorização).
+casos da J43 (J43.5, J43.6 e a parte de isolamento que depende da recategorização).
