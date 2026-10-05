@@ -436,6 +436,23 @@ describe("6 · webhook de qualidade e de limite atualiza o painel e alerta na qu
     expect((await res.json()).outcomes).toEqual(["saude:outro_numero"]);
   });
 
+  it("a qualidade volta ao verde: o aviso de qualidade fecha, o de limite continua", async () => {
+    falso.programar(
+      { metodo: "GET", terminaCom: `/${NUMERO}` },
+      { status: 200, corpo: { id: NUMERO, quality_rating: "GREEN", whatsapp_business_manager_messaging_limit: "TIER_250" } },
+    );
+    const corpo = webhookDeSaude("phone_number_quality_update", {
+      display_phone_number: "5531900001111",
+      event: "UNFLAGGED",
+    });
+    const res = await postarWebhookMeta({ token: tokenDoWebhook, appSecret: SEGREDO_DO_APP, corpo });
+    expect((await res.json()).outcomes).toEqual(["saude:atualizado"]);
+    expect((await estado()).saude).toMatchObject({ qualidade: "GREEN" });
+    const abertos = await avisosAbertos(ORG_A);
+    expect(abertos).toHaveLength(1);
+    expect(abertos[0]!.title).toMatch(/limite/);
+  });
+
   it("a outra organização não vê o aviso nem a saúde", async () => {
     expect(await avisosAbertos(ORG_B)).toEqual([]);
     como(ORG_B, USER_B);

@@ -92,6 +92,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       messagingAccountId: null,
       pin: d.pin,
       uso: d.uso,
+      limparAppProprio: true,
     },
   });
   if (!resultado.ok) {

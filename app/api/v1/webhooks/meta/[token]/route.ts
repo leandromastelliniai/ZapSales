@@ -46,6 +46,9 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
+
+/** Sessão sem app próprio (ou banco sem a 0536): vale o app da instalação. */
+const SEM_PAR = { appSecretCifrado: null, verifyTokenCifrado: null } as const;
 export const runtime = "nodejs";
 
 interface RouteCtx {
@@ -60,10 +63,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx): Promise<NextResponse
   // O par do NÚMERO quando o administrador trouxe o app próprio pelo assistente
   // (issue #5); senão o da INSTALAÇÃO (platform_meta_app, 0257, com o `.env` de
   // piso). Nunca mistura as fontes e não lança — ver `app-da-sessao.ts`.
-  const { verifyToken } = await appDaMetaDoNumero(createAdminClient(), {
-    appSecretCifrado: session.appSecretCifrado ?? null,
-    verifyTokenCifrado: session.verifyTokenCifrado ?? null,
-  });
+  const { verifyToken } = await appDaMetaDoNumero(createAdminClient(), session.par ?? SEM_PAR);
   const challenge = verificationChallenge(req.nextUrl.searchParams, verifyToken ?? "");
   if (challenge === null) return new NextResponse("forbidden", { status: 403 });
 
@@ -86,10 +86,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
   // assina com o segredo do app inscrito na WABA — se o administrador trouxe o
   // dele, é o dele que confere. Sem segredo nenhum a verificação devolve `false`
   // e a entrega morre em 401, e não num 500.
-  const { appSecret } = await appDaMetaDoNumero(createAdminClient(), {
-    appSecretCifrado: session.appSecretCifrado ?? null,
-    verifyTokenCifrado: session.verifyTokenCifrado ?? null,
-  });
+  const { appSecret } = await appDaMetaDoNumero(createAdminClient(), session.par ?? SEM_PAR);
   if (!verifyMetaSignature(rawBody, req.headers.get("x-hub-signature-256"), appSecret ?? "")) {
     return fail("unauthorized", "invalid_signature", 401, { requestId });
   }

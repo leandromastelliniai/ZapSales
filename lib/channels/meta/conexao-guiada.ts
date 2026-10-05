@@ -174,7 +174,7 @@ const MENSAGEM: Record<CodigoDoProblema, string> = {
   sem_permissao:
     "O token não tem as permissões do WhatsApp. Gere o token de novo marcando whatsapp_business_management e whatsapp_business_messaging.",
   app_em_desenvolvimento:
-    "O app da Meta está em modo de desenvolvimento. Coloque-o em Live no painel de apps da Meta — em desenvolvimento a Meta não entrega as mensagens dos clientes.",
+    "O app da Meta não está liberado para produção — em geral porque está em modo de desenvolvimento. Coloque-o em Live no painel de apps da Meta; em desenvolvimento a Meta não entrega as mensagens dos clientes. O motivo que a Meta informou aparece abaixo.",
   segredo_nao_confere:
     "A chave secreta não é do mesmo app do token. Copie a chave secreta do app em Configurações do app › Básico, no app em que o token foi gerado.",
   sem_conta:

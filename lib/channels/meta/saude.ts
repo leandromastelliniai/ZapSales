@@ -61,6 +61,14 @@ export interface EstadoDeSaude {
   limite: string | null;
 }
 
+/**
+ * O começo do título do aviso de QUALIDADE. `agent_inbox_items` não tem coluna
+ * de subtipo, e o `kind` (`channel_number_alert`) é o mesmo dos avisos de
+ * conexão: quem fecha o aviso quando a qualidade volta precisa achar só os
+ * de qualidade, e acha por este prefixo — a mesma constante de quem abre.
+ */
+export const PREFIXO_DO_AVISO_DE_QUALIDADE = "A qualidade do número ";
+
 export interface AvisoDeSaude {
   severity: "warn" | "critical";
   title: string;
@@ -82,7 +90,7 @@ export function avisoDeSaude(antes: EstadoDeSaude, depois: EstadoDeSaude, apelid
     const vermelha = qDepois === 1;
     return {
       severity: vermelha ? "critical" : "warn",
-      title: `A qualidade do número ${apelido} caiu para ${vermelha ? "vermelha" : "amarela"}`,
+      title: `${PREFIXO_DO_AVISO_DE_QUALIDADE}${apelido} caiu para ${vermelha ? "vermelha" : "amarela"}`,
       body: vermelha
         ? "A Meta está recebendo bloqueios e denúncias deste número. Pause disparos de marketing e revise o conteúdo e o público — se a qualidade continuar baixa, a Meta reduz o limite ou restringe o número."
         : "Os clientes começaram a bloquear ou denunciar as mensagens deste número. Revise o conteúdo e o público dos disparos antes que a qualidade fique vermelha.",

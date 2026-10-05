@@ -3244,3 +3244,26 @@ o nó `Application` não expõe modo Dev/Live — o sinal usado é a entidade AP
 assistente assina os campos no app quando o administrador traz o app próprio;
 `messaging_limit_tier` foi descontinuado em favor de
 `whatsapp_business_manager_messaging_limit` (limite do portfólio).
+
+Limites conhecidos (revisão de 2026-10-05), deixados escritos em vez de
+implícitos:
+
+- **Saúde automática só com app próprio.** Qualidade e limite só chegam pela
+  URL do APP; o assistente aponta a do app do cliente para o número. Número no
+  app da INSTALAÇÃO (Embedded Signup, formulário manual) recebe a primeira
+  leitura na conexão e, depois, só se quem administra apontar a URL do app à
+  mão — a tela agora lista `phone_number_quality_update` e
+  `business_capability_update` nos campos a assinar. Rotear a URL única de um
+  app Tech Provider para N organizações é trabalho do Tech Provider (fora do
+  escopo da spec).
+- **Modo de desenvolvimento é inferido.** A Meta não expõe o modo do app; a
+  entidade APP do `health_status` limitada vira o problema, com o motivo da
+  Meta junto. Sem a entidade, o item fica "não deu para conferir", sem bloquear.
+- **Um número oficial por organização.** Escolher outro número no assistente
+  substitui o atual, e a tela diz isso. Vários números oficiais por empresa é
+  a próxima fatia (campanhas com rodízio, Fase 3).
+- **Credencial em URL para a Meta, por contrato dela:** `debug_token` leva o
+  `input_token` e a troca do código do Embedded Signup leva o `client_secret`
+  na busca, como a documentação define. As duas saem do servidor para a Meta
+  por TLS; a CONEXÃO em si põe o token só no cabeçalho (`GET /app` com
+  `appsecret_proof`) e o invariante J42.3 cobra isso.

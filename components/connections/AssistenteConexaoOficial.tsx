@@ -110,11 +110,16 @@ export function AssistenteConexaoOficial({ jaConectado }: { jaConectado: boolean
     <Card className="flex flex-col gap-5 p-4" data-testid="assistente-oficial">
       <div>
         <h2 className="font-medium">
-          {jaConectado ? t("Conectar outro número ou trocar a credencial") : t("Conectar número oficial")}
+          {jaConectado ? t("Trocar o número ou a credencial") : t("Conectar número oficial")}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("O assistente testa a credencial com a Meta, mostra os números da sua conta e faz o registro e o webhook sozinho. Nada é gravado até o último passo.")}
         </p>
+        {jaConectado ? (
+          <p className="mt-1 text-sm text-warning-fg" data-testid="assistente-substitui">
+            {t("Cada empresa tem um número oficial. Escolher outro número aqui substitui o atual.")}
+          </p>
+        ) : null}
       </div>
 
       {/* ─── Passo 1 — credenciais ─────────────────────────────────────── */}
@@ -147,7 +152,8 @@ export function AssistenteConexaoOficial({ jaConectado }: { jaConectado: boolean
             required
           />
           <span className="text-xs text-muted-foreground">
-            {t("Configurações do app › Básico. É com ela que o sistema confere que cada mensagem recebida veio mesmo da Meta.")}
+            {t("Configurações do app › Básico. É com ela que o sistema confere que cada mensagem recebida veio mesmo da Meta.")}{" "}
+            {t("Use um app só desta empresa: o sistema aponta o webhook do app inteiro para este número, para receber a qualidade e o limite.")}
           </span>
         </div>
         <div className="flex flex-col gap-1.5">

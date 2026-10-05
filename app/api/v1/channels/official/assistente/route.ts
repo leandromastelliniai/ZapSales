@@ -47,9 +47,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const d = await diagnosticarCredencial({ token: parsed.data.token, appSecret: parsed.data.app_secret ?? null });
 
+  // Projeção EXPLÍCITA: campo novo no diagnóstico não vai à tela sem alguém
+  // decidir que pode ir.
   return ok(
     {
-      ...d,
+      ok: d.ok,
+      appId: d.appId,
+      permissoes: d.permissoes,
       problemas: d.problemas.map((p) => ({ ...p, mensagem: t(p.mensagem) })),
       avisos: d.avisos.map((a) => ({ ...a, mensagem: t(a.mensagem) })),
       contas: d.contas.map((c) => ({

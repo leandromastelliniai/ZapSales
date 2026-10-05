@@ -99,8 +99,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     webhookPathToken: sessao.webhook_path_token,
     base: basePublicaDoWebhookMeta(req),
     requestId,
-    appSecretCifrado: parDoNumero?.meta_app_secret_encrypted ?? null,
-    verifyTokenCifrado: parDoNumero?.meta_verify_token_encrypted ?? null,
+    par: {
+      appSecretCifrado: parDoNumero?.meta_app_secret_encrypted ?? null,
+      verifyTokenCifrado: parDoNumero?.meta_verify_token_encrypted ?? null,
+    },
   });
 
   // 200 mesmo quando a Meta recusou: a TENTATIVA foi feita e o desfecho é um estado

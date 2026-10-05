@@ -62,6 +62,13 @@ export interface EntradaDaConexao {
   /** PIN de 6 dígitos: com ele o número é registrado na Cloud API. */
   pin?: string | null;
   uso?: UsoDoNumero | null;
+  /**
+   * Apaga o par do app PRÓPRIO que sobrou de uma conexão anterior. O Embedded
+   * Signup liga o número ao app da INSTALAÇÃO, e um par velho faria o webhook
+   * conferir a entrega com o segredo do app errado — toda mensagem morreria em
+   * 401. O formulário manual ("trocar credencial") não apaga: troca só o token.
+   */
+  limparAppProprio?: boolean;
 }
 
 export type OrigemDaConexao = "manual" | "assistente" | "embedded_signup";
@@ -150,22 +157,31 @@ export async function conectarNumeroOficial(input: {
 
   // ─── 4. Gravar, cifrado ───────────────────────────────────────────────────
   // Sem a GUC de cifra, gravar o token em claro seria pior que recusar.
-  const semCifra = (o_que: string): ResultadoDaConexao => ({
+  // Frases inteiras, e não montadas: são chave de dicionário na rota.
+  const semCifra = (mensagem: string): ResultadoDaConexao => ({
     ok: false,
     status: 422,
     code: "invalid_request",
-    mensagem: `cifra indisponível nesta instalação (GUC app.integrations_oauth_key ausente) — ${o_que} não foi gravado`,
+    mensagem,
     etapa: "cifra",
   });
   const cifrado = await encryptWebhookSecret(admin, entrada.token);
-  if (!cifrado) return semCifra("o token");
+  if (!cifrado) {
+    return semCifra(
+      "cifra indisponível nesta instalação (GUC app.integrations_oauth_key ausente) — o token não foi gravado",
+    );
+  }
 
   const verifyToken = appSecret ? entrada.verifyToken?.trim() || gerarVerifyToken() : null;
   let parCifrado: { meta_app_secret_encrypted: string; meta_verify_token_encrypted: string } | null = null;
   if (appSecret && verifyToken) {
     const segredoCifrado = await encryptWebhookSecret(admin, appSecret);
     const verifyCifrado = await encryptWebhookSecret(admin, verifyToken);
-    if (!segredoCifrado || !verifyCifrado) return semCifra("a chave secreta do app");
+    if (!segredoCifrado || !verifyCifrado) {
+      return semCifra(
+        "cifra indisponível nesta instalação (GUC app.integrations_oauth_key ausente) — a chave secreta do app não foi gravada",
+      );
+    }
     parCifrado = { meta_app_secret_encrypted: segredoCifrado, meta_verify_token_encrypted: verifyCifrado };
   }
 
@@ -205,11 +221,7 @@ export async function conectarNumeroOficial(input: {
     // sempre não passa a escrever nelas, e um banco sem a migration continua
     // conectando pelo formulário antigo.
     ...(parCifrado ?? {}),
-    // Pelo Embedded Signup o número passa a ser do app da INSTALAÇÃO: um par
-    // próprio que sobrasse de uma conexão anterior faria o webhook conferir a
-    // entrega com o segredo do app ERRADO — e toda mensagem morreria em 401. O
-    // formulário manual ("trocar credencial") mantém o par: troca só o token.
-    ...(input.origem === "embedded_signup"
+    ...(entrada.limparAppProprio && !parCifrado
       ? { meta_app_secret_encrypted: null, meta_verify_token_encrypted: null }
       : {}),
     ...(entrada.uso ? { uso_declarado: entrada.uso } : {}),
@@ -284,8 +296,12 @@ export async function conectarNumeroOficial(input: {
           webhookPathToken,
           base: input.base,
           requestId: input.requestId,
-          appSecretCifrado: parCifrado?.meta_app_secret_encrypted ?? null,
-          verifyTokenCifrado: parCifrado?.meta_verify_token_encrypted ?? null,
+          par: parCifrado
+            ? {
+                appSecretCifrado: parCifrado.meta_app_secret_encrypted,
+                verifyTokenCifrado: parCifrado.meta_verify_token_encrypted,
+              }
+            : null,
         })
       : null;
 

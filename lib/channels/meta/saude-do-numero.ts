@@ -28,7 +28,7 @@ import { logger } from "@/lib/logger";
 import { REF_KIND_SESSAO } from "../health";
 import { resolveMetaCreds } from "./credentials";
 import { graphBaseUrl } from "./graph-base";
-import { avisoDeSaude, type EstadoDeSaude } from "./saude";
+import { avisoDeSaude, PREFIXO_DO_AVISO_DE_QUALIDADE, type EstadoDeSaude } from "./saude";
 import type { BusinessCapabilityEvent, NumberQualityEvent } from "./webhook";
 
 export { avisoDeSaude, limiteDoPortfolio, tamanhoDoLimite, type EstadoDeSaude } from "./saude";
@@ -48,7 +48,9 @@ export async function lerSaudeNaMeta(input: {
   try {
     const res = await fetch(
       `${graphBaseUrl(input.graphVersion)}/${input.phoneNumberId}?fields=quality_rating,whatsapp_business_manager_messaging_limit`,
-      { headers: { Authorization: `Bearer ${input.token}` } },
+      // Roda dentro da rota do webhook: a Meta espera resposta rápida, e uma Graph
+      // lenta não pode segurar a entrega. Sem resposta em 5 s, vale o evento.
+      { headers: { Authorization: `Bearer ${input.token}` }, signal: AbortSignal.timeout(5_000) },
     );
     if (!res.ok) return null;
     const corpo = (await res.json().catch(() => ({}))) as {
@@ -142,6 +144,12 @@ export async function aplicarEventoDeSaude(
       return "falhou";
     }
 
+    // A qualidade VOLTOU ao verde: o aviso de queda que estava aberto deixa de ser
+    // verdade, e aviso que não fecha sozinho ensina a ignorar a Central.
+    if ((depois.qualidade ?? "").toUpperCase() === "GREEN" && (antes.qualidade ?? "").toUpperCase() !== "GREEN") {
+      await fecharAvisosDeQualidade(admin, sessao);
+    }
+
     const apelido = [sessao.display_name, sessao.phone_number].filter(Boolean).join(" ") || "oficial";
     const aviso = avisoDeSaude(antes, depois, apelido);
     if (!aviso) return "atualizado";
@@ -171,6 +179,34 @@ export async function aplicarEventoDeSaude(
       sessao: alvo.channelSessionId,
     });
     return "falhou";
+  }
+}
+
+/** Fecha só os avisos de QUALIDADE abertos desta sessão — os de conexão ficam. */
+async function fecharAvisosDeQualidade(admin: SupabaseClient, sessao: LinhaDaSessao): Promise<void> {
+  const { data, error } = await admin
+    .from("agent_inbox_items")
+    .select("id, title")
+    .eq("organization_id", sessao.organization_id)
+    .eq("kind", "channel_number_alert")
+    .eq("ref_kind", REF_KIND_SESSAO)
+    .eq("ref_id", sessao.id)
+    .eq("status", "open");
+  if (error) {
+    logger.warn("[meta.saude] não deu para ler os avisos de qualidade abertos", { codigo: error.code });
+    return;
+  }
+  const ids = ((data ?? []) as Array<{ id: string; title: string }>)
+    .filter((a) => a.title.startsWith(PREFIXO_DO_AVISO_DE_QUALIDADE))
+    .map((a) => a.id);
+  if (ids.length === 0) return;
+  const { error: erroUpdate } = await admin
+    .from("agent_inbox_items")
+    .update({ status: "resolved" })
+    .eq("organization_id", sessao.organization_id)
+    .in("id", ids);
+  if (erroUpdate) {
+    logger.warn("[meta.saude] não deu para fechar os avisos de qualidade", { codigo: erroUpdate.code });
   }
 }
 

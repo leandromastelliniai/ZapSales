@@ -12,6 +12,7 @@
  * regra valendo de verdade — a rota vira transporte puro e não sabe com quem fala.
  */
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { ParCifradoDaSessao } from "./app-da-sessao";
 import { ARCHIVED_AT, queryTolerantToMissingArchived } from "../archived";
 import { CHANNEL_PROVIDER_META } from "../capabilities";
 
@@ -24,8 +25,7 @@ export interface MetaWebhookSession {
    * Ausente/nulo = o número usa o app da instalação. Quem decifra e decide é
    * `appDaMetaDoNumero` — a sessão só carrega as colunas.
    */
-  appSecretCifrado?: string | null;
-  verifyTokenCifrado?: string | null;
+  par?: ParCifradoDaSessao;
 }
 
 /**
@@ -97,8 +97,10 @@ export async function metaSessionByWebhookToken(
     id: linha.id,
     organizationId: linha.organization_id,
     wabaId: linha.meta_waba_id ?? null,
-    appSecretCifrado: linha.meta_app_secret_encrypted ?? null,
-    verifyTokenCifrado: linha.meta_verify_token_encrypted ?? null,
+    par: {
+      appSecretCifrado: linha.meta_app_secret_encrypted ?? null,
+      verifyTokenCifrado: linha.meta_verify_token_encrypted ?? null,
+    },
   };
 }
 

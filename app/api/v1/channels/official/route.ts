@@ -42,6 +42,7 @@ import { basePublicaDoWebhookMeta } from "@/lib/webhooks/url-publica";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { lerUsoDoNumero, usoDoNumeroSchema } from "@/lib/channels/uso";
 import { conectarNumeroOficial } from "@/lib/channels/meta/conectar-numero";
+import { CAMPOS_DO_WEBHOOK_DO_APP } from "@/lib/channels/meta/conexao-guiada";
 import { embeddedSignupParaATela } from "@/lib/channels/meta/embedded-signup";
 
 export const dynamic = "force-dynamic";
@@ -234,8 +235,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           configurarEm: authz.user.is_platform_admin && !authz.user.support ? "/admin/meta" : null,
           // `smb_message_echoes`: o que a empresa manda pelo app WhatsApp Business
           // num número em coexistência. Sem coexistência a Meta não o envia, então
-          // assinar é inofensivo para quem não usa.
-          fields: ["messages", "message_template_status_update", "smb_message_echoes"],
+          // assinar é inofensivo para quem não usa. Qualidade e limite do portfólio
+          // (issue #5) só chegam pela URL do APP — por isso entram na lista que a
+          // tela manda assinar quando o webhook é configurado à mão.
+          fields: [...CAMPOS_DO_WEBHOOK_DO_APP],
         }
       : null,
     /** Para que o administrador declarou o número (issue #5). Nulo = não declarado. */

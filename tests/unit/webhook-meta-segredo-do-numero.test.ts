@@ -66,7 +66,7 @@ beforeEach(() => {
 
 describe("número com o app próprio (par cifrado na sessão)", () => {
   beforeEach(() => {
-    sessao = { ...sessao, appSecretCifrado: "\\xSEGREDO", verifyTokenCifrado: "\\xTOKEN" };
+    sessao = { ...sessao, par: { appSecretCifrado: "\\xSEGREDO", verifyTokenCifrado: "\\xTOKEN" } };
   });
 
   it("aceita a entrega assinada com o segredo DO NÚMERO", async () => {
@@ -91,7 +91,7 @@ describe("número sem app próprio", () => {
   });
 
   it("par do número que não decifra cai INTEIRO para a instalação", async () => {
-    sessao = { ...sessao, appSecretCifrado: "\\xSEGREDO", verifyTokenCifrado: "\\xQUEBRADO" };
+    sessao = { ...sessao, par: { appSecretCifrado: "\\xSEGREDO", verifyTokenCifrado: "\\xQUEBRADO" } };
     expect((await POST(entrega(SEGREDO_DA_INSTALACAO), ctx)).status).toBe(200);
   });
 });
