@@ -76,10 +76,21 @@ describe("0087 · o canal da sessão chega ao clone", () => {
     // continua valendo — ela existe para pegar coluna que entrou SEM querer.
     // `meta_messaging_account_id` (migration 0535, issue #4) também é de propósito:
     // a conta de mensagens do modelo novo de contas da Meta (Graph v26).
+    // As da migration 0536 (issue #5) também: o par cifrado do app PRÓPRIO do
+    // número (`meta_app_secret_encrypted`, `meta_verify_token_encrypted`), a saúde
+    // que a Meta empurra (`meta_qualidade`, `meta_limite_de_mensagens`,
+    // `meta_saude_*`) e quando o assistente registrou o número.
     expect(cols).toEqual([
+      "meta_app_secret_encrypted",
+      "meta_limite_de_mensagens",
       "meta_messaging_account_id",
+      "meta_numero_registrado_em",
       "meta_phone_number_id",
+      "meta_qualidade",
+      "meta_saude_em",
+      "meta_saude_evento",
       "meta_token_encrypted",
+      "meta_verify_token_encrypted",
       "meta_waba_id",
       "meta_webhook_override_em",
       "meta_webhook_override_erro",

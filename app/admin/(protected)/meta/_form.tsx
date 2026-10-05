@@ -10,6 +10,7 @@ import {
   updateMetaApp,
   type UpdateMetaAppResult,
 } from "@/app/actions/settings/updateMetaApp";
+import { updateEmbeddedSignup } from "@/app/actions/settings/updateEmbeddedSignup";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,8 @@ interface Props {
   /** O par está no `.env` desta instalação (o piso de rollback). */
   readonly temNoAmbiente: boolean;
   readonly leituraFalhou: boolean;
+  /** A chave do Embedded Signup e os ids públicos (issue #5). */
+  readonly embeddedSignup: { ligado: boolean; appId: string | null; configId: string | null };
 }
 
 /** O piso do schema da action. Abaixo disso o Zod recusa e a tela culparia o dono. */
@@ -53,6 +56,7 @@ export function FormularioDaMeta({
   atualizadoEm,
   temNoAmbiente,
   leituraFalhou,
+  embeddedSignup,
 }: Props) {
   const t = useT();
   const router = useRouter();
@@ -247,6 +251,8 @@ export function FormularioDaMeta({
         ) : null}
       </Card>
 
+      <CartaoDoEmbeddedSignup inicial={embeddedSignup} temSegredo={temSegredoSalvo || temNoAmbiente} />
+
       <AlertDialog open={confirmandoTroca} onOpenChange={setConfirmandoTroca}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -264,5 +270,111 @@ export function FormularioDaMeta({
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+/**
+ * O "Conectar com Facebook" (Embedded Signup v4). Desligado por padrão: só faz
+ * sentido com um app Tech Provider aprovado pela Meta — antes disso o botão
+ * abriria o login e morreria. Ligado, ele aparece em Conexões › API Oficial para
+ * as empresas desta instalação.
+ */
+function CartaoDoEmbeddedSignup({
+  inicial,
+  temSegredo,
+}: {
+  inicial: { ligado: boolean; appId: string | null; configId: string | null };
+  temSegredo: boolean;
+}) {
+  const t = useT();
+  const router = useRouter();
+  const [appId, setAppId] = useState(inicial.appId ?? "");
+  const [configId, setConfigId] = useState(inicial.configId ?? "");
+  const [ocupado, iniciar] = useTransition();
+
+  function motivo(erro: string): string {
+    if (ehRecusaDeEscrita(erro)) return t(MENSAGEM_DA_RECUSA_DE_ESCRITA[erro]);
+    switch (erro) {
+      case "ids_obrigatorios":
+        return t("Preencha o ID do app e o ID da configuração antes de ligar.");
+      case "app_secret_obrigatorio":
+        return t("Cadastre a chave secreta do aplicativo primeiro. Sem ela o código do login não pode ser trocado.");
+      case "invalid_input":
+        return t("Os IDs da Meta têm só números. Confira o que foi colado.");
+      default:
+        // O texto do servidor (cifra, banco) vai cru: é diagnóstico, não frase de tela.
+        return `${t("Não deu para salvar, e nada foi gravado.")} ${erro}`;
+    }
+  }
+
+  function salvar(ligado: boolean) {
+    iniciar(async () => {
+      const r = await updateEmbeddedSignup({ ligado, app_id: appId.trim(), config_id: configId.trim() });
+      if (!r.ok) {
+        toast.error(motivo(r.error));
+        return;
+      }
+      toast.success(ligado ? t("Conectar com Facebook ligado.") : t("Conectar com Facebook desligado."));
+      router.refresh();
+    });
+  }
+
+  return (
+    <Card className="flex flex-col gap-4 p-4" data-testid="meta-embedded-signup">
+      <div className="flex flex-col gap-1">
+        <h2 className="font-medium">{t("Conectar com Facebook (Embedded Signup)")}</h2>
+        <p className="text-sm text-muted-foreground" data-testid="meta-embedded-signup-estado">
+          {inicial.ligado
+            ? t("Ligado: as empresas desta instalação veem o botão Conectar com Facebook em Conexões › API Oficial.")
+            : t("Desligado. Ligue só depois que o seu app for aprovado como Tech Provider pela Meta — antes disso o login da Meta não conclui.")}
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="meta-es-app-id">{t("ID do app")}</Label>
+          <Input
+            id="meta-es-app-id"
+            inputMode="numeric"
+            autoComplete="off"
+            value={appId}
+            onChange={(e) => setAppId(e.target.value)}
+            placeholder="1234567890"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="meta-es-config-id">{t("ID da configuração de login")}</Label>
+          <Input
+            id="meta-es-config-id"
+            inputMode="numeric"
+            autoComplete="off"
+            value={configId}
+            onChange={(e) => setConfigId(e.target.value)}
+            placeholder="9876543210"
+          />
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {t("Os dois ficam no painel da Meta: o ID do app em Configurações do app › Básico; o ID da configuração em Facebook Login for Business › Configurações, na configuração do WhatsApp Embedded Signup.")}
+      </p>
+      {!temSegredo ? (
+        <p className="text-xs text-destructive">
+          {t("Cadastre a chave secreta do aplicativo acima antes de ligar.")}
+        </p>
+      ) : null}
+      <div className="flex justify-end gap-2">
+        {inicial.ligado ? (
+          <Button variant="outline" disabled={ocupado} onClick={() => salvar(false)} data-testid="meta-es-desligar">
+            {t("Desligar")}
+          </Button>
+        ) : null}
+        <Button
+          disabled={ocupado || !temSegredo || !appId.trim() || !configId.trim()}
+          onClick={() => salvar(true)}
+          data-testid="meta-es-ligar"
+        >
+          {inicial.ligado ? t("Salvar") : t("Ligar")}
+        </Button>
+      </div>
+    </Card>
   );
 }

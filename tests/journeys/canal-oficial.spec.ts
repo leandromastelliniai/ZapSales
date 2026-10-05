@@ -60,6 +60,9 @@ test("credencial errada é RECUSADA com o motivo da Meta, e nada é gravado", as
   await page.goto("/app/connections?aba=oficial");
   await expect(page.getByTestId("canal-oficial-root")).toBeVisible({ timeout: 20_000 });
 
+  // O formulário de ids à mão fica atrás de um clique desde a issue #5 (o padrão
+  // é o assistente). Esta jornada mede o caminho manual com a Graph REAL.
+  await page.getByTestId("abrir-conexao-manual").click();
   await page.locator("#pnid").fill("000000000000000");
   await page.locator("#waba").fill("000000000000000");
   await page.locator("#tok").fill("EAAtoken-invalido-de-proposito-para-o-teste");
@@ -95,6 +98,9 @@ test("credencial real conecta e a tela mostra o que colar na Meta", async ({ pag
   await page.goto("/app/connections?aba=oficial");
   await expect(page.getByTestId("canal-oficial-root")).toBeVisible({ timeout: 20_000 });
 
+  // O formulário de ids à mão fica atrás de um clique desde a issue #5 (o padrão
+  // é o assistente). Esta jornada mede o caminho manual com a Graph REAL.
+  await page.getByTestId("abrir-conexao-manual").click();
   await page.locator("#pnid").fill(REAL.phoneNumberId);
   await page.locator("#waba").fill(REAL.wabaId);
   await page.locator("#tok").fill(REAL.token);

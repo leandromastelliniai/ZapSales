@@ -15,8 +15,12 @@ import {
 } from "@/hooks/channels/useOfficialChannel";
 import { copyToClipboard } from "@/lib/clipboard";
 import { useT } from "@/hooks/i18n/useT";
+import { AssistenteConexaoOficial } from "./AssistenteConexaoOficial";
 import { ChannelAiAccess } from "./ChannelAiAccess";
+import { EmbeddedSignupOficial } from "./EmbeddedSignupOficial";
 import { ParaIntegrar } from "./ParaIntegrar";
+import { rotuloDoUso } from "./rotulos-do-numero";
+import { SaudeDoNumeroOficial } from "./SaudeDoNumeroOficial";
 
 /** Campo somente-leitura com botão de copiar — o que o operador cola na Meta. */
 function ParaColar({
@@ -67,6 +71,9 @@ export function CanalOficialClient() {
   const { data, isPending } = useOfficialChannel();
   const conectar = useConnectOfficialChannel();
   const registrarWebhook = useRegistrarWebhookOficial();
+  // O formulário de ids à mão fica atrás de um clique: o caminho padrão é o
+  // assistente, que lista os números da conta (issue #5).
+  const [manual, setManual] = useState(false);
   const [form, setForm] = useState({
     phone_number_id: "",
     waba_id: "",
@@ -108,6 +115,12 @@ export function CanalOficialClient() {
             <Badge variant={estado.hasToken ? "outline" : "destructive"}>
               {estado.hasToken ? t("credencial guardada") : t("sem credencial")}
             </Badge>
+            <Badge variant="outline" data-testid="canal-app">
+              {estado.appProprio ? t("app próprio") : t("app da instalação")}
+            </Badge>
+            <Badge variant="outline" data-testid="canal-uso">
+              {t("uso:")} {rotuloDoUso(estado.uso, t)}
+            </Badge>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             WABA <span className="font-mono">{estado.wabaId}</span> · {t("número")}{" "}
@@ -121,6 +134,9 @@ export function CanalOficialClient() {
             ) : null}
           </p>
         </Card>
+      ) : null}
+      {estado?.connected && estado.channel_session_id ? (
+        <SaudeDoNumeroOficial channelSessionId={estado.channel_session_id} saude={estado.saude} uso={estado.uso} />
       ) : null}
       {estado?.channel_session_id && <ChannelAiAccess channelId={estado.channel_session_id} />}
 
@@ -187,7 +203,11 @@ export function CanalOficialClient() {
               // arquivo que ele não precisa abrir — e o valor do arquivo nem é
               // mais o que a Meta precisa receber.
               <span className="flex flex-col items-start gap-1">
-                {estado.webhook.verifyTokenOrigem === "instalacao" ? (
+                {estado.webhook.verifyTokenOrigem === "numero" ? (
+                  <span className="text-sm text-muted-foreground" data-testid="token-do-numero">
+                    {t("Definido no assistente e enviado à Meta pelo sistema junto do endereço. Por segurança, não aparece de novo.")}
+                  </span>
+                ) : estado.webhook.verifyTokenOrigem === "instalacao" ? (
                   <span className="text-sm text-muted-foreground" data-testid="token-na-instalacao">
                     {t("Já cadastrado na administração da instalação. Ele aparece uma vez só, quando é gerado — se não foi guardado, quem administra a instalação gera outro em Admin › API Oficial (Meta).")}
                   </span>
@@ -254,6 +274,25 @@ export function CanalOficialClient() {
         />
       ) : null}
 
+      {estado?.embeddedSignup ? (
+        <EmbeddedSignupOficial appId={estado.embeddedSignup.appId} configId={estado.embeddedSignup.configId} />
+      ) : null}
+
+      <AssistenteConexaoOficial jaConectado={Boolean(estado?.connected)} />
+
+      <div>
+        <Button
+          type="button"
+          variant="link"
+          className="h-auto px-0 text-xs text-muted-foreground"
+          onClick={() => setManual((m) => !m)}
+          data-testid="abrir-conexao-manual"
+        >
+          {manual ? t("Esconder o preenchimento manual") : t("Prefiro informar os IDs manualmente")}
+        </Button>
+      </div>
+
+      {manual ? (
       <Card className="p-4">
         <h2 className="font-medium">
           {estado?.connected ? t("Trocar credencial") : t("Conectar canal oficial")}
@@ -265,7 +304,7 @@ export function CanalOficialClient() {
           {t(" — se o número não responder, nada é salvo.")}
         </p>
 
-        <form onSubmit={enviar} className="mt-4 flex flex-col gap-3">
+        <form method="post" onSubmit={enviar} className="mt-4 flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="pnid">{t("ID do número de telefone")}</Label>
             <Input
@@ -324,6 +363,7 @@ export function CanalOficialClient() {
           </Button>
         </form>
       </Card>
+      ) : null}
     </div>
   );
 }
