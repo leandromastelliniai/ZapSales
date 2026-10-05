@@ -3286,6 +3286,19 @@ Spec: `tests/invariants/modelos-do-canal-oficial.test.ts`; editor e preview em
 | J43.6 | Webhook de categoria (utilidade → marketing) e de qualidade vermelha | categoria e qualidade atualizadas; aviso de custo nomeando o modelo | **PASS (invariante)** |
 | J43.7 | A outra organização, com modelo de mesmo nome, conta e idioma | não vê os modelos nem os avisos de A; os webhooks de A não tocam a linha dela | **PASS (invariante)** |
 | J43.8 | O editor pela tela, como um leigo | abrir "Novo modelo", preencher, ver o preview e enviar numa instalação fresca | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
+| J43.9 | Cabeçalho de imagem, vídeo e documento (issue #7) | escolher o arquivo já o envia: `GET /app` → `POST /{app}/uploads` (tamanho e tipo) → `POST /upload:…` com os bytes, `file_offset: 0` e `OAuth`; a cópia vai para `whatsapp-media/<org>/templates/`; o modelo chega ao falso Graph com `example.header_handle`, e `meta_templates.header_media` guarda o caminho por slot (`header:1`) | **PASS (unit, pelo fio)** — `tests/unit/meta-midia-de-modelo.test.ts`, `tests/unit/meta-midia-de-modelo-rota.test.ts`; **invariante escrito, não rodado nesta máquina** (sem Docker) — roda no `test:db` do CI |
+| J43.10 | Arquivo que não serve (GIF), de outro formato que o escolhido, ou acima do teto | 415/413 sem ida à Meta nem ao storage; a Meta recusando, nada fica guardado | **PASS (unit)**; GIF também no invariante |
+| J43.11 | Carrossel com 2 cards | `BODY` + `CAROUSEL` com cabeçalho, corpo e botões de cada card; o card novo nasce com os botões do anterior; mídia e botões diferentes entre cards são recusados no campo | **PASS (unit + jsdom)** — `tests/unit/meta-novo-modelo-avancado.test.ts`, `EditorDeModelo.test.tsx`; invariante escrito (CI) |
+| J43.12 | Oferta por tempo limitado | só marketing; `LIMITED_TIME_OFFER` entre o cabeçalho e o corpo; o cupom vai antes do link; com prazo, o cupom é obrigatório; o preview mostra a oferta, o prazo e o código | **PASS (unit + jsdom)**; invariante escrito (CI) |
+| J43.13 | Botão de flow | `FLOW` com `flow_id`, `flow_action` e `navigate_screen` (só em `navigate`); no máximo um; não vira parâmetro do envio | **PASS (unit + jsdom)**; invariante escrito (CI) |
+| J43.14 | Caminho de mídia de outra organização no corpo da criação | 422 `midia_de_outra_organizacao`, sem ida à Meta e sem linha no espelho | invariante escrito (CI) |
+| J43.15 | A lista mostra o arquivo guardado no slot de mídia | "Arquivo enviado na criação do modelo:" com link assinado de 1 h | **PASS (jsdom)** — `TemplatesClient.test.tsx`; GET no invariante (CI) |
+| J43.16 | Os formatos ricos pela tela, como um leigo | criar imagem, carrossel e oferta numa instalação fresca e ver o preview | **PENDENTE pela tela** — mesmo motivo da J43.8 |
+
+**Fora do #7, e dito aqui para ninguém supor que está coberto:** o ENVIO de um modelo com
+oferta por tempo limitado ainda não manda o parâmetro `limited_time_offer` (`expiration_time_ms`)
+— `deriveTemplateContract` não enxerga esse slot, e o disparo seria recusado pela Meta. É trabalho
+da fase de campanhas, junto com o uso da cópia de `header_media` em cada disparo.
 
 Sabotagem medida: tirar o aviso da Central e a escrita da categoria derruba seis
 casos da J43 (J43.5, J43.6 e a parte de isolamento que depende da recategorização).

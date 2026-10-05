@@ -120,6 +120,9 @@ export const ApiErrorCodes = {
   // POST /channels/templates/submit que a Meta recusou. A mensagem é a frase da
   // Meta para gente (`error_user_msg`); `details` traz o código e o subcódigo.
   meta_template_refused: "meta_template_refused",
+  // POST /channels/templates/media que a API de upload da Meta recusou (issue #7).
+  // `details` traz a etapa (app, sessão, arquivo), o código e o subcódigo.
+  meta_media_refused: "meta_media_refused",
 
   // 415 — tipo de mídia
   unsupported_media_type: "unsupported_media_type",

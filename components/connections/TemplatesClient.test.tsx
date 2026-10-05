@@ -13,6 +13,9 @@ import userEvent from "@testing-library/user-event";
 
 const mutateAsync = vi.fn();
 const salvos: { valores: Record<string, string> } = { valores: {} };
+const guardados: {
+  valores: Record<string, { fileName: string; mimeType: string; url: string | null }>;
+} = { valores: {} };
 
 vi.mock("@/hooks/channels/useTemplates", () => ({
   useTemplates: () => ({
@@ -34,6 +37,7 @@ vi.mock("@/hooks/channels/useTemplates", () => ({
             slots: [{ key: "1", expects: "image", onde: "cabeçalho", valueKey: "header:1" }],
             previews: [],
             savedValues: salvos.valores,
+            storedMedia: guardados.valores,
           },
         ],
       },
@@ -51,6 +55,25 @@ describe("TemplatesClient — link da mídia salvo no modelo", () => {
   beforeEach(() => {
     mutateAsync.mockReset().mockResolvedValue({ data: { savedValues: {} } });
     salvos.valores = {};
+    guardados.valores = {};
+  });
+
+  it("modelo criado no editor mostra o arquivo guardado na criação, com link (issue #7)", () => {
+    guardados.valores = {
+      "header:1": { fileName: "vitrine.png", mimeType: "image/png", url: "https://storage.exemplo/assinado" },
+    };
+    render(<TemplatesClient />);
+    const guardado = screen.getByTestId("template-midia-guardada");
+    expect(guardado).toHaveTextContent("Arquivo enviado na criação do modelo: vitrine.png");
+    expect(screen.getByRole("link", { name: "vitrine.png" })).toHaveAttribute(
+      "href",
+      "https://storage.exemplo/assinado",
+    );
+  });
+
+  it("modelo sem arquivo guardado não mostra a linha", () => {
+    render(<TemplatesClient />);
+    expect(screen.queryByTestId("template-midia-guardada")).toBeNull();
   });
 
   it("salva o link na chave do endereço, sem enviar nada", async () => {

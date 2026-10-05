@@ -3,15 +3,27 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Modelos da API Oficial",
-    "subtitle": "Sincronizar, criar no editor com preview, e o webhook de status, qualidade e categoria (issue #6)",
+    "subtitle": "Sincronizar, criar no editor com preview (mídia, carrossel, oferta e flow), e o webhook de status, qualidade e categoria (issues #6 e #7)",
     "output": "modelos-da-api-oficial.html",
     "quality_profile": "standard"
   },
   "lanes": [
-    { "id": "operador", "label": "Operação" },
-    { "id": "servidor", "label": "Servidor" },
-    { "id": "banco", "label": "Persistência" },
-    { "id": "externo", "label": "Meta" }
+    {
+      "id": "operador",
+      "label": "Operação"
+    },
+    {
+      "id": "servidor",
+      "label": "Servidor"
+    },
+    {
+      "id": "banco",
+      "label": "Persistência"
+    },
+    {
+      "id": "externo",
+      "label": "Meta"
+    }
   ],
   "mainPath": ["editor", "regra", "submit", "graph", "espelho", "webhook", "eventos", "central"],
   "nodes": [
@@ -20,21 +32,21 @@
       "lane": "operador",
       "col": 1,
       "type": "frontend",
-      "label": "Conexões › Templates da Meta (TemplatesClient) — status, categoria, qualidade, motivo"
+      "label": "Conexões › Templates da Meta (TemplatesClient) — status, categoria, qualidade, motivo, arquivo guardado"
     },
     {
       "id": "editor",
       "lane": "operador",
       "col": 1,
       "type": "frontend",
-      "label": "EditorDeModelo — corpo, exemplos, rodapé, botões e preview"
+      "label": "EditorDeModelo — padrão, carrossel e oferta; mídia, corpo, exemplos, rodapé, botões (flow) e preview"
     },
     {
       "id": "regra",
       "lane": "servidor",
       "col": 2,
       "type": "lib",
-      "label": "novo-modelo.ts — novoModeloSchema, problemasDoModelo, montarPedidoDeModelo, previewDoModelo"
+      "label": "novo-modelo.ts — novoModeloSchema, problemasDoModelo, montarPedidoDeModelo, midiasDoModelo, previewDoModelo"
     },
     {
       "id": "submit",
@@ -62,7 +74,7 @@
       "lane": "banco",
       "col": 4,
       "type": "database",
-      "label": "meta_templates (chave org+waba+nome+idioma, RLS)"
+      "label": "meta_templates (chave org+waba+nome+idioma, RLS; header_media = cópia por slot, migration 0537)"
     },
     {
       "id": "webhook",
@@ -104,7 +116,28 @@
       "lane": "banco",
       "col": 3,
       "type": "database",
-      "label": "api_audit_log meta_template.submitted | meta_template.synced"
+      "label": "api_audit_log meta_template.submitted | synced | media_uploaded"
+    },
+    {
+      "id": "midia",
+      "lane": "servidor",
+      "col": 2,
+      "type": "route",
+      "label": "POST /api/v1/channels/templates/media → farejarArquivo, enviarMidiaParaMeta (midia-de-modelo.ts)"
+    },
+    {
+      "id": "upload",
+      "lane": "externo",
+      "col": 3,
+      "type": "external",
+      "label": "Graph API — upload retomável: POST /{app}/uploads → POST /upload:… (handle)"
+    },
+    {
+      "id": "bucket",
+      "lane": "banco",
+      "col": 2,
+      "type": "database",
+      "label": "Storage whatsapp-media <org>/templates/<uuid>.<ext> (a retenção não poda)"
     }
   ],
   "edges": [
@@ -160,6 +193,27 @@
       "from": "espelho",
       "to": "envio",
       "label": "só APPROVED sai; NAMED leva parameter_name"
+    },
+    { "id": "e19", "from": "editor", "to": "midia", "label": "escolher o arquivo já envia" },
+    {
+      "id": "e20",
+      "from": "midia",
+      "to": "upload",
+      "label": "app do token, file_length/type, file_offset 0, OAuth"
+    },
+    { "id": "e21", "from": "midia", "to": "bucket", "label": "cópia DEPOIS do aceite da Meta" },
+    { "id": "e22", "from": "midia", "to": "audit", "label": "quem subiu (id = nome do arquivo)" },
+    {
+      "id": "e23",
+      "from": "submit",
+      "to": "espelho",
+      "label": "header_media: caminho conferido contra a org da sessão"
+    },
+    {
+      "id": "e24",
+      "from": "bucket",
+      "to": "lista",
+      "label": "link assinado de 1 h do arquivo guardado"
     }
   ]
 }

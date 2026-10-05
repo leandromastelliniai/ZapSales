@@ -21,7 +21,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { hashContract } from "./contract-hash";
 import { erroDaRespostaDaGraph } from "./erros";
 import { graphBaseUrl } from "./graph-base";
-import { montarPedidoDeModelo, type NovoModelo } from "./novo-modelo";
+import { midiasDoModelo, montarPedidoDeModelo, type NovoModelo } from "./novo-modelo";
 import { TEMPLATE_STATUS_DISABLED } from "./template-sync";
 
 export interface EntradaDaSubmissao {
@@ -130,6 +130,10 @@ export async function submeterModelo(
     parameter_format: pedido.parameter_format,
     // Derivado, como na sincronização: o envio confere o contrato por este hash.
     contract_hash: hashContract(pedido.components, pedido.parameter_format),
+    // Onde está a cópia de cada mídia do cabeçalho (issue #7). A Meta guarda só
+    // a amostra da revisão; o arquivo de cada disparo sai daqui. A linha
+    // reaproveitada troca o registro inteiro — o modelo é outro.
+    header_media: midiasDoModelo(modelo),
     synced_at: agora,
     updated_at: agora,
   };

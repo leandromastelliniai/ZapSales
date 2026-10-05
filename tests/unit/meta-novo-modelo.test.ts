@@ -26,14 +26,18 @@ import { deriveTemplateContract } from "@/lib/channels/meta/template-contract";
 
 function modelo(parcial: Partial<NovoModelo> = {}): NovoModelo {
   return {
+    kind: "STANDARD",
     name: "oferta_de_outubro",
     language: "pt_BR",
     category: "MARKETING",
     parameter_format: "POSITIONAL",
     body: "Olá {{1}}, sua oferta de {{2}} chegou.",
     examples: { "1": "Ana", "2": "outubro" },
+    header: null,
+    offer: null,
     footer: null,
     buttons: [],
+    cards: [],
     ...parcial,
   };
 }
@@ -310,6 +314,10 @@ describe("previewDoModelo", () => {
       }),
     );
     expect(p).toEqual({
+      tipo: "STANDARD",
+      cabecalho: null,
+      oferta: null,
+      cards: [],
       corpo: "Olá Ana, sua oferta de outubro chegou.",
       rodape: "Loja de Teste",
       botoes: [
