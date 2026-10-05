@@ -3267,3 +3267,25 @@ implícitos:
   na busca, como a documentação define. As duas saem do servidor para a Meta
   por TLS; a CONEXÃO em si põe o token só no cabeçalho (`GET /app` com
   `appsecret_proof`) e o invariante J42.3 cobra isso.
+
+## J43 — Criar e acompanhar modelos da API Oficial `[P1]` (2026-10-05, issue #6)
+
+Mesma fronteira da J41: o falso Graph (`tests/support/falso-graph.ts`) na saída, o
+webhook assinado na rota real na entrada, o baseline aplicado e as rotas do app.
+
+Spec: `tests/invariants/modelos-do-canal-oficial.test.ts`; editor e preview em
+`components/connections/EditorDeModelo.test.tsx`.
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J43.1 | Sincronizar com duas páginas na conta | segue o cursor; grava componentes, categoria, qualidade (`{score}` → `GREEN`) e motivo de recusa (`NONE` → vazio) | **PASS (invariante)** |
+| J43.2 | Criar no editor: posicional, rodapé, resposta rápida, link com `{{1}}`, copiar código | o falso Graph recebe `POST /v26.0/{waba}/message_templates` com `body_text` e o `example` da URL inteira; a lista mostra o modelo pendente; audit `meta_template.submitted` | **PASS (invariante)** |
+| J43.3 | Modelo com variável sem exemplo, ou nome repetido | 422 no campo / 409, sem ida à Meta | **PASS (invariante)** |
+| J43.4 | Preview enquanto edita | corpo com os exemplos e a formatação do WhatsApp, rodapé e botões (mais de 3 viram 2 + "Ver todas as opções"); o que a Meta recusaria aparece no campo e nada é enviado | **PASS (jsdom)** |
+| J43.5 | Webhook APPROVED, REJECTED, PAUSED, DISABLED | status atualizado sem sincronizar; os três últimos abrem um aviso na Central, uma vez só na reentrega. `REINSTATED` volta a `APPROVED` e `DELETED` vira `DISABLED` (`tests/unit/meta-eventos-de-modelo.test.ts`) | **PASS (invariante)** |
+| J43.6 | Webhook de categoria (utilidade → marketing) e de qualidade vermelha | categoria e qualidade atualizadas; aviso de custo nomeando o modelo | **PASS (invariante)** |
+| J43.7 | A outra organização, com modelo de mesmo nome, conta e idioma | não vê os modelos nem os avisos de A; os webhooks de A não tocam a linha dela | **PASS (invariante)** |
+| J43.8 | O editor pela tela, como um leigo | abrir "Novo modelo", preencher, ver o preview e enviar numa instalação fresca | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
+
+Sabotagem medida: tirar o aviso da Central e a escrita da categoria derruba seis
+casos da J43 (J43.5, J43.6 e a parte de isolamento que depende da recategorização).

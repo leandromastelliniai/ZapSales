@@ -270,3 +270,88 @@ describe("parseMetaWebhook", () => {
     expect(parseMetaWebhook({ object: "whatsapp_business_account" })).toEqual([]);
   });
 });
+
+describe("parseMetaWebhook — qualidade e categoria do modelo (issue #6)", () => {
+  const envelope = (field: string, value: Record<string, unknown>) => ({
+    object: "whatsapp_business_account",
+    entry: [{ id: "2434045433735175", changes: [{ field, value }] }],
+  });
+  const chave = {
+    message_template_id: 987,
+    message_template_name: "oferta_de_outubro",
+    message_template_language: "pt_BR",
+  };
+
+  it("`message_template_quality_update` vira evento de qualidade — antes era descartado", () => {
+    expect(
+      parseMetaWebhook(
+        envelope("message_template_quality_update", {
+          ...chave,
+          previous_quality_score: "GREEN",
+          new_quality_score: "RED",
+        }),
+      ),
+    ).toEqual([
+      {
+        kind: "template_quality",
+        wabaId: "2434045433735175",
+        templateName: "oferta_de_outubro",
+        templateLanguage: "pt_BR",
+        previous: "GREEN",
+        quality: "RED",
+      },
+    ]);
+  });
+
+  it("`template_category_update` com a categoria nova vira mudança efetiva", () => {
+    expect(
+      parseMetaWebhook(
+        envelope("template_category_update", {
+          ...chave,
+          previous_category: "UTILITY",
+          new_category: "MARKETING",
+        }),
+      ),
+    ).toEqual([
+      {
+        kind: "template_category",
+        wabaId: "2434045433735175",
+        templateName: "oferta_de_outubro",
+        templateLanguage: "pt_BR",
+        previous: "UTILITY",
+        category: "MARKETING",
+        efetiva: true,
+      },
+    ]);
+  });
+
+  it("`template_category_update` só com `correct_category` é o AVISO prévio da Meta — não muda nada ainda", () => {
+    const [e] = parseMetaWebhook(
+      envelope("template_category_update", { ...chave, correct_category: "MARKETING" }),
+    );
+    expect(e).toMatchObject({ kind: "template_category", category: "MARKETING", previous: null, efetiva: false });
+  });
+
+  it("qualidade ou categoria sem nome, idioma ou valor novo é descartada", () => {
+    expect(
+      parseMetaWebhook(envelope("message_template_quality_update", { new_quality_score: "RED" })),
+    ).toEqual([]);
+    expect(parseMetaWebhook(envelope("template_category_update", { ...chave }))).toEqual([]);
+  });
+
+  it("o status traz o detalhe da Meta (`other_info`) quando ela explica a pausa", () => {
+    const [e] = parseMetaWebhook(
+      envelope("message_template_status_update", {
+        ...chave,
+        event: "PAUSED",
+        reason: null,
+        other_info: { title: "FIRST_PAUSE", description: "Pausado por 3 horas por feedback negativo." },
+      }),
+    );
+    expect(e).toMatchObject({
+      kind: "template_status",
+      event: "PAUSED",
+      detail: "Pausado por 3 horas por feedback negativo.",
+    });
+  });
+});

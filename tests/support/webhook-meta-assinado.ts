@@ -116,3 +116,19 @@ export function statusDeEntrega(
     : [];
   return envelope(origem, { ...(contatos.length ? { contacts: contatos } : {}), statuses: [status] });
 }
+
+/**
+ * Evento de MODELO (issue #6): `message_template_status_update`,
+ * `message_template_quality_update` ou `template_category_update`. Vêm no
+ * `entry.id` da WABA, sem `metadata` de número — modelo é da conta, não do número.
+ */
+export function eventoDeModelo(
+  wabaId: string,
+  field: "message_template_status_update" | "message_template_quality_update" | "template_category_update",
+  value: Record<string, unknown>,
+) {
+  return {
+    object: "whatsapp_business_account",
+    entry: [{ id: wabaId, time: Math.floor(Date.now() / 1000), changes: [{ field, value }] }],
+  };
+}

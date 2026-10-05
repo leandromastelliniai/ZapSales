@@ -16,6 +16,20 @@ import {
 } from "@/hooks/channels/useTemplates";
 import { useT } from "@/hooks/i18n/useT";
 
+import { EditorDeModelo } from "./EditorDeModelo";
+
+/**
+ * A qualidade que a Meta atribui pelo retorno de quem recebe. Vermelha é o
+ * degrau antes da pausa — o webhook já avisa na Central; aqui ela fica à vista.
+ */
+function rotuloDaQualidade(q: string | null): { texto: string; tom: "outline" | "destructive" } | null {
+  const v = (q ?? "").toUpperCase();
+  if (v === "GREEN") return { texto: "Qualidade alta", tom: "outline" };
+  if (v === "YELLOW") return { texto: "Qualidade média", tom: "outline" };
+  if (v === "RED") return { texto: "Qualidade baixa", tom: "destructive" };
+  return null;
+}
+
 /** Só APPROVED pode ser disparado — o resto é informação, não opção. */
 function statusTone(status: string): "default" | "secondary" | "destructive" | "outline" {
   if (status === "APPROVED") return "default";
@@ -142,6 +156,7 @@ export function TemplatesClient() {
   const t = useT();
   const { data, isPending } = useTemplates();
   const sync = useSyncTemplates();
+  const [criando, setCriando] = useState(false);
 
   const waba = data?.data.waba ?? null;
   const templates = data?.data.templates ?? null;
@@ -179,16 +194,24 @@ export function TemplatesClient() {
           {t("Espelho da conta")} <span className="font-mono text-xs">{waba}</span> ·{" "}
           {templates.length} {t("template(s)")}
         </p>
-        <Button onClick={sincronizar} disabled={sync.isPending} data-testid="btn-sync">
-          {sync.isPending ? t("Sincronizando…") : t("Sincronizar com a Meta")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={sincronizar} disabled={sync.isPending} data-testid="btn-sync">
+            {sync.isPending ? t("Sincronizando…") : t("Sincronizar com a Meta")}
+          </Button>
+          <Button onClick={() => setCriando(true)} disabled={criando} data-testid="btn-novo-modelo">
+            {t("Novo modelo")}
+          </Button>
+        </div>
       </div>
+
+      {criando ? <EditorDeModelo onFechar={() => setCriando(false)} /> : null}
 
       {templates.length === 0 ? (
         <Card className="p-6">
           <h2 className="font-medium">{t("Nenhum template ainda")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("Crie templates no Gerenciador do WhatsApp e clique em")}{" "}
+            {t("Crie o primeiro em")} <strong>{t("Novo modelo")}</strong>
+            {t(", ou traga os que já existem na sua conta da Meta em")}{" "}
             <strong>{t("Sincronizar com a Meta")}</strong>.{" "}
             {t("Só templates aprovados podem ser enviados fora da janela de 24 horas.")}
           </p>
@@ -208,6 +231,14 @@ export function TemplatesClient() {
                     {tpl.category}
                   </Badge>
                 ) : null}
+                {(() => {
+                  const q = rotuloDaQualidade(tpl.qualityScore);
+                  return q ? (
+                    <Badge variant={q.tom} className="text-xs" data-testid="template-qualidade">
+                      {t(q.texto)}
+                    </Badge>
+                  ) : null;
+                })()}
                 <span className="ml-auto text-xs text-muted-foreground">
                   {tpl.slots.length === 0
                     ? t("sem parâmetros")

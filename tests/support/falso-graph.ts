@@ -9,7 +9,7 @@
  *    que prova o que chegou à "Meta", pelo fio, sem dublê de `fetch`.
  * 2. **Responde como a Graph responde**: sucesso realista por rota (validar o
  *    número, listar os números da WABA, assinar o app, apontar o webhook, enviar
- *    mensagem, listar modelos) ou o erro PROGRAMADO pelo teste, com o corpo de
+ *    mensagem, listar e criar modelos) ou o erro PROGRAMADO pelo teste, com o corpo de
  *    erro no formato da Graph (`erroDaGraph`).
  *
  * O que ele NÃO é: um simulador de regra de negócio da Meta. Janela de 24h,
@@ -81,6 +81,8 @@ export interface FalsoGraph {
   programar(casamento: CasamentoDeChamada, resposta: RespostaDoGraph): void;
   /** As chamadas à API de mensagens (`POST /{número}/messages`). */
   envios(): ChamadaAoGraph[];
+  /** As criações de modelo (`POST /{waba}/message_templates`). */
+  modelosCriados(): ChamadaAoGraph[];
   limpar(): void;
   fechar(): Promise<void>;
 }
@@ -92,7 +94,15 @@ export interface FalsoGraph {
  */
 export function erroDaGraph(
   code: number,
-  opcoes: { status?: number; subcode?: number; message?: string; details?: string } = {},
+  opcoes: {
+    status?: number;
+    subcode?: number;
+    message?: string;
+    details?: string;
+    /** `error_user_title`/`error_user_msg` — a frase que a Meta escreve para gente (recusa de modelo). */
+    userTitle?: string;
+    userMsg?: string;
+  } = {},
 ): RespostaDoGraph {
   return {
     status: opcoes.status ?? 400,
@@ -103,6 +113,8 @@ export function erroDaGraph(
         code,
         ...(opcoes.subcode !== undefined ? { error_subcode: opcoes.subcode } : {}),
         ...(opcoes.details ? { error_data: { messaging_product: "whatsapp", details: opcoes.details } } : {}),
+        ...(opcoes.userTitle ? { error_user_title: opcoes.userTitle } : {}),
+        ...(opcoes.userMsg ? { error_user_msg: opcoes.userMsg } : {}),
         fbtrace_id: "FalsoGraphTrace",
       },
     },
@@ -113,6 +125,7 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
   const chamadas: ChamadaAoGraph[] = [];
   const programadas: Array<{ casamento: CasamentoDeChamada; resposta: RespostaDoGraph }> = [];
   let contadorDeMensagens = 0;
+  let contadorDeModelos = 0;
 
   function respostaPadrao(c: ChamadaAoGraph): RespostaDoGraph {
     const { phoneNumberId, wabaId } = opcoes;
@@ -249,6 +262,15 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
     if (c.metodo === "GET" && c.caminho === `/${wabaId}/message_templates`) {
       return { status: 200, corpo: { data: [], paging: {} } };
     }
+    if (c.metodo === "POST" && c.caminho === `/${wabaId}/message_templates`) {
+      // Criação de modelo (issue #6): a Meta devolve o id, o status inicial e a
+      // categoria que ELA atribuiu — que pode não ser a pedida.
+      contadorDeModelos += 1;
+      return {
+        status: 200,
+        corpo: { id: `FALSO_TPL_${contadorDeModelos}`, status: "PENDING", category: c.corpo?.category ?? "MARKETING" },
+      };
+    }
     return erroDaGraph(100, { message: `(#100) rota desconhecida no falso Graph: ${c.metodo} ${c.caminho}` });
   }
 
@@ -293,6 +315,8 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
     programar: (casamento, resposta) => programadas.push({ casamento, resposta }),
     envios: () =>
       chamadas.filter((c) => c.metodo === "POST" && c.caminho === `/${opcoes.phoneNumberId}/messages`),
+    modelosCriados: () =>
+      chamadas.filter((c) => c.metodo === "POST" && c.caminho === `/${opcoes.wabaId}/message_templates`),
     limpar: () => {
       chamadas.length = 0;
       programadas.length = 0;

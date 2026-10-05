@@ -157,3 +157,25 @@ describe("sendTemplate", () => {
     expect(corpo.template).not.toHaveProperty("components");
   });
 });
+
+describe("sendTemplate — modelo com variáveis nomeadas (issue #6)", () => {
+  it("leva `parameter_name` em cada parâmetro quando o espelho diz NAMED", async () => {
+    // O editor da issue #6 cria modelos nomeados. Sem o formato chegar ao
+    // contrato, o envio montava parâmetros posicionais e a Meta recusava (132012).
+    const spy = stubFetch({ messages: [{ id: "wamid.NOMEADO" }] });
+    const components = [{ type: "BODY", text: "Olá {{nome}}, pedido {{pedido}} saiu." }];
+    const r = await sendTemplate({
+      ...BASE,
+      binding: { name: "pedido_nomeado", language: "pt_BR", contractHash: "h", values: { nome: "Ana", pedido: "ZAP-1" } },
+      current: { name: "pedido_nomeado", language: "pt_BR", contractHash: "h", status: "APPROVED", components, parameterFormat: "NAMED" },
+    });
+    expect(r).toEqual({ sent: true, externalId: "wamid.NOMEADO" });
+    const corpo = JSON.parse(spy.mock.calls[0]![1].body as string) as {
+      template: { components: { parameters: unknown[] }[] };
+    };
+    expect(corpo.template.components[0]!.parameters).toEqual([
+      { type: "text", parameter_name: "nome", text: "Ana" },
+      { type: "text", parameter_name: "pedido", text: "ZAP-1" },
+    ]);
+  });
+});

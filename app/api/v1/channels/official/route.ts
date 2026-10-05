@@ -236,8 +236,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           // `smb_message_echoes`: o que a empresa manda pelo app WhatsApp Business
           // num número em coexistência. Sem coexistência a Meta não o envia, então
           // assinar é inofensivo para quem não usa. Qualidade e limite do portfólio
-          // (issue #5) só chegam pela URL do APP — por isso entram na lista que a
-          // tela manda assinar quando o webhook é configurado à mão.
+          // (issue #5) e qualidade e categoria do modelo (issue #6) só chegam pela
+          // URL do APP — por isso entram na lista que a tela manda assinar quando o
+          // webhook é configurado à mão.
           fields: [...CAMPOS_DO_WEBHOOK_DO_APP],
         }
       : null,

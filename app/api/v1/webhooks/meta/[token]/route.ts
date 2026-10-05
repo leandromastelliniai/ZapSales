@@ -31,6 +31,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { fail } from "@/lib/api/wrappers";
 import { appDaMetaDoNumero } from "@/lib/channels/meta/app-da-sessao";
+import { aplicarEventoDeModelo, ehEventoDeModelo } from "@/lib/channels/meta/eventos-de-modelo";
 import { lerEnvelopeMeta } from "@/lib/channels/meta/envelope";
 import { parseMetaWebhook, verificationChallenge, verifyMetaSignature } from "@/lib/channels/meta/webhook";
 import { statusUpdate } from "@/lib/channels/meta/status-update";
@@ -135,6 +136,14 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
     // Confiar no `entry.id` para escolher a org seria aceitar o corpo como fonte.
     if (session.wabaId && e.wabaId && e.wabaId !== session.wabaId) continue;
 
+    if (ehEventoDeModelo(e)) {
+      // Status, qualidade e categoria do modelo: atualiza o espelho e, quando a
+      // mudança pede ação ou muda o custo, avisa na Central — uma vez por
+      // mudança, não por entrega. Ver `lib/channels/meta/eventos-de-modelo.ts`.
+      desfechos.push(await aplicarEventoDeModelo(admin, session.organizationId, e));
+      continue;
+    }
+
     if (e.kind === "inbound_message") {
       // A metade que faltava: mensagem do contato vira linha no inbox, move lead,
       // acorda o agente — e carimba `last_inbound_at`, que é o que ABRE a janela
@@ -189,15 +198,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
       continue;
     }
 
-    if (e.kind === "template_status") {
-      await admin
-        .from("meta_templates")
-        .update({ status: e.event, rejected_reason: e.reason, updated_at: now })
-        .eq("organization_id", session.organizationId)
-        .eq("waba_id", e.wabaId)
-        .eq("name", e.templateName)
-        .eq("language", e.templateLanguage);
-    } else if (e.status === "failed") {
+    if (e.status === "failed") {
       // A recusa da plataforma chega DEPOIS do 200 (131047 fora da janela,
       // 131026 número não registrado, 132015 template pausado). O evento inteiro
       // vira colunas como no ramo de baixo — e a falha emite `message.failed`

@@ -360,6 +360,60 @@ describe("o adaptador FILTRA POR CONJUNTO — `in`", () => {
   });
 });
 
+describe("UPSERT e lista de objetos em jsonb — pela sincronização de modelos (issue #6)", () => {
+  const chave = { organization_id: ORG, waba_id: "waba-adaptador", language: "pt_BR" };
+  const linha = (name: string, status: string) => ({
+    ...chave,
+    name,
+    status,
+    components: [{ type: "BODY", text: `corpo de ${name}` }],
+    contract_hash: `h-${status}`,
+  });
+
+  afterAll(async () => {
+    await pool.query("delete from meta_templates where organization_id = $1", [ORG]);
+  });
+
+  it("insere o que é novo, atualiza o que conflita, e a lista de objetos chega como jsonb", async () => {
+    const primeiro = await db
+      .from("meta_templates")
+      .upsert([linha("um", "PENDING"), linha("dois", "PENDING")], {
+        onConflict: "organization_id,waba_id,name,language",
+      });
+    expect(primeiro.error).toBeNull();
+    await pool.query(
+      "update meta_templates set saved_values = '{\"header:1\": \"https://x.exemplo/a.jpg\"}' where organization_id = $1 and name = 'um'",
+      [ORG],
+    );
+
+    const segundo = await db
+      .from("meta_templates")
+      .upsert([linha("um", "APPROVED")], { onConflict: "organization_id,waba_id,name,language" });
+    expect(segundo.error).toBeNull();
+
+    const { rows } = await pool.query(
+      `select name, status, jsonb_typeof(components) as tipo, components->0->>'text' as texto, saved_values
+         from meta_templates where organization_id = $1 order by name`,
+      [ORG],
+    );
+    expect(rows).toEqual([
+      { name: "dois", status: "PENDING", tipo: "array", texto: "corpo de dois", saved_values: {} },
+      // Coluna que o upsert não enviou SOBREVIVE — como no PostgREST.
+      {
+        name: "um",
+        status: "APPROVED",
+        tipo: "array",
+        texto: "corpo de um",
+        saved_values: { "header:1": "https://x.exemplo/a.jpg" },
+      },
+    ]);
+  });
+
+  it("upsert sem `onConflict` estoura em vez de adivinhar a chave", () => {
+    expect(() => db.from("meta_templates").upsert([linha("tres", "PENDING")])).toThrow(/não está implementado/);
+  });
+});
+
 describe("o que NÃO está implementado estoura", () => {
   it("método ausente lança em vez de devolver vazio — vazio silencioso é teste verde medindo nada", () => {
     expect(() => db.from("crm_pipelines").delete()).toThrow(/não está implementado/);

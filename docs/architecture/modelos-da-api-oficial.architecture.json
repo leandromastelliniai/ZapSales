@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Modelos da API Oficial",
+    "subtitle": "Sincronizar, criar no editor com preview, e o webhook de status, qualidade e categoria (issue #6)",
+    "output": "modelos-da-api-oficial.html",
+    "quality_profile": "standard"
+  },
+  "lanes": [
+    { "id": "operador", "label": "Operação" },
+    { "id": "servidor", "label": "Servidor" },
+    { "id": "banco", "label": "Persistência" },
+    { "id": "externo", "label": "Meta" }
+  ],
+  "mainPath": ["editor", "regra", "submit", "graph", "espelho", "webhook", "eventos", "central"],
+  "nodes": [
+    {
+      "id": "lista",
+      "lane": "operador",
+      "col": 1,
+      "type": "frontend",
+      "label": "Conexões › Templates da Meta (TemplatesClient) — status, categoria, qualidade, motivo"
+    },
+    {
+      "id": "editor",
+      "lane": "operador",
+      "col": 1,
+      "type": "frontend",
+      "label": "EditorDeModelo — corpo, exemplos, rodapé, botões e preview"
+    },
+    {
+      "id": "regra",
+      "lane": "servidor",
+      "col": 2,
+      "type": "lib",
+      "label": "novo-modelo.ts — novoModeloSchema, problemasDoModelo, montarPedidoDeModelo, previewDoModelo"
+    },
+    {
+      "id": "submit",
+      "lane": "servidor",
+      "col": 3,
+      "type": "route",
+      "label": "POST /api/v1/channels/templates/submit → submeterModelo"
+    },
+    {
+      "id": "sync",
+      "lane": "servidor",
+      "col": 3,
+      "type": "route",
+      "label": "POST /api/v1/channels/templates → syncTemplates (todas as páginas)"
+    },
+    {
+      "id": "graph",
+      "lane": "externo",
+      "col": 4,
+      "type": "external",
+      "label": "Graph API — GET|POST /{waba}/message_templates"
+    },
+    {
+      "id": "espelho",
+      "lane": "banco",
+      "col": 4,
+      "type": "database",
+      "label": "meta_templates (chave org+waba+nome+idioma, RLS)"
+    },
+    {
+      "id": "webhook",
+      "lane": "servidor",
+      "col": 5,
+      "type": "route",
+      "label": "POST /api/v1/webhooks/meta/[token] (status, qualidade, categoria)"
+    },
+    {
+      "id": "eventos",
+      "lane": "servidor",
+      "col": 6,
+      "type": "lib",
+      "label": "eventos-de-modelo.ts — aplica com trava no valor lido; aviso uma vez por mudança"
+    },
+    {
+      "id": "central",
+      "lane": "banco",
+      "col": 6,
+      "type": "database",
+      "label": "agent_inbox_items kind channel_template_review"
+    },
+    {
+      "id": "centralTela",
+      "lane": "operador",
+      "col": 6,
+      "type": "frontend",
+      "label": "Central de avisos → link para a lista de modelos"
+    },
+    {
+      "id": "envio",
+      "lane": "servidor",
+      "col": 5,
+      "type": "lib",
+      "label": "sendTemplateForSession — contrato com parameter_format do espelho"
+    },
+    {
+      "id": "audit",
+      "lane": "banco",
+      "col": 3,
+      "type": "database",
+      "label": "api_audit_log meta_template.submitted | meta_template.synced"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "editor",
+      "to": "regra",
+      "label": "mesmo schema e preview que o servidor"
+    },
+    { "id": "e2", "from": "editor", "to": "submit", "label": "Enviar para aprovação" },
+    { "id": "e3", "from": "submit", "to": "regra", "label": "valida e monta o pedido" },
+    { "id": "e4", "from": "submit", "to": "graph", "label": "POST com exemplos das variáveis" },
+    {
+      "id": "e5",
+      "from": "submit",
+      "to": "espelho",
+      "label": "status e categoria QUE A META devolveu"
+    },
+    { "id": "e6", "from": "submit", "to": "audit", "label": "quem criou" },
+    { "id": "e7", "from": "lista", "to": "sync", "label": "Sincronizar com a Meta" },
+    { "id": "e8", "from": "sync", "to": "graph", "label": "GET paginado (cursor)" },
+    { "id": "e9", "from": "sync", "to": "espelho", "label": "upsert; sumido vira DISABLED" },
+    { "id": "e10", "from": "sync", "to": "audit", "label": "contagem do efeito" },
+    { "id": "e11", "from": "graph", "to": "webhook", "label": "assinado com o App Secret" },
+    {
+      "id": "e12",
+      "from": "webhook",
+      "to": "eventos",
+      "label": "org do token do path, nunca do corpo"
+    },
+    {
+      "id": "e13",
+      "from": "eventos",
+      "to": "espelho",
+      "label": "status / quality_score / category"
+    },
+    {
+      "id": "e14",
+      "from": "eventos",
+      "to": "central",
+      "label": "recusado, pausado, desativado, vermelho, recategorizado"
+    },
+    { "id": "e15", "from": "central", "to": "centralTela", "label": "aviso nomeia o modelo" },
+    {
+      "id": "e16",
+      "from": "centralTela",
+      "to": "lista",
+      "label": "laço de retorno: o operador corrige ou cria outro"
+    },
+    { "id": "e17", "from": "espelho", "to": "lista", "label": "GET /api/v1/channels/templates" },
+    {
+      "id": "e18",
+      "from": "espelho",
+      "to": "envio",
+      "label": "só APPROVED sai; NAMED leva parameter_name"
+    }
+  ]
+}

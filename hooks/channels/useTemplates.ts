@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { apiClient } from "@/lib/api/client";
+import type { NovoModelo } from "@/lib/channels/meta/novo-modelo";
 
 export interface TemplateSlotView {
   key: string;
@@ -82,6 +83,34 @@ export function useSaveTemplateValues() {
         "/api/v1/channels/templates",
         args,
       ),
+    onError: showApiError,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["channel-templates"] });
+      qc.invalidateQueries({ queryKey: ["templates-da-conversa"] });
+    },
+  });
+}
+
+/** O que a rota de criação devolve: a linha do espelho, com o que a Meta respondeu. */
+export interface ModeloSubmetidoView {
+  id: string;
+  name: string;
+  language: string;
+  status: string;
+  category: string | null;
+  metaTemplateId: string | null;
+}
+
+/**
+ * Cria o modelo no editor e o envia à Meta para aprovação (issue #6). O corpo é
+ * o `NovoModelo` de `lib/channels/meta/novo-modelo.ts` — o mesmo schema que a
+ * rota aplica. A recusa da Meta chega como toast com a frase dela.
+ */
+export function useSubmitTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (modelo: NovoModelo) =>
+      apiClient.post<{ data: ModeloSubmetidoView }>("/api/v1/channels/templates/submit", modelo),
     onError: showApiError,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["channel-templates"] });

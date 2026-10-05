@@ -438,7 +438,8 @@ export async function registrarNumero(input: {
 
 /**
  * Os campos que a Meta SÓ entrega na URL do APP — nunca no override do número
- * nem no da WABA (documentação de overrides, 05/10/2026): modelos, qualidade do
+ * nem no da WABA (documentação de overrides, 05/10/2026): modelos (status,
+ * qualidade e categoria), qualidade do
  * número, limite do portfólio e conta. `messages` vai junto para o app inteiro
  * cair no mesmo endereço quando não houver override.
  */
@@ -446,6 +447,10 @@ export const CAMPOS_DO_WEBHOOK_DO_APP = [
   "messages",
   "smb_message_echoes",
   "message_template_status_update",
+  // Qualidade e categoria do modelo (issue #6): a recategorização muda o custo,
+  // e sem estes dois campos ela só apareceria na próxima sincronização manual.
+  "message_template_quality_update",
+  "template_category_update",
   "phone_number_quality_update",
   "business_capability_update",
   "account_update",

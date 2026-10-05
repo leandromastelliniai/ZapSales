@@ -15,6 +15,7 @@ import { randomUUID } from "node:crypto";
 import type { NextRequest, NextResponse } from "next/server";
 
 import { fail, ok } from "@/lib/api/wrappers";
+import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { resolveMetaCreds } from "@/lib/channels/meta/credentials";
 import { metaSessionForOrg } from "@/lib/channels/meta/session";
@@ -93,13 +94,13 @@ function textPreviews(components: unknown): Array<{ onde: string; text: string }
 }
 
 type OrgGate =
-  | { autorizado: true; orgId: string }
+  | { autorizado: true; orgId: string; userId: string }
   | { autorizado: false; resposta: NextResponse };
 
 async function orgOrFail(requestId: string): Promise<OrgGate> {
   const authz = await requireRole("admin", { requestId, resource: "channels_templates" });
   if (!authz.ok) return { autorizado: false, resposta: authz.response };
-  return { autorizado: true, orgId: authz.org.orgId };
+  return { autorizado: true, orgId: authz.org.orgId, userId: authz.user.id };
 }
 
 export async function GET(): Promise<NextResponse> {
@@ -209,6 +210,17 @@ export async function POST(_req: NextRequest): Promise<NextResponse> {
       wabaId: sessao.wabaId,
       token: creds.token,
       graphVersion: creds.graphVersion,
+    });
+    // A sincronização forçada reescreve o espelho (e desativa o que sumiu da
+    // Meta): é mutação, e a contagem diz o tamanho do efeito.
+    void audit({
+      action: "meta_template.synced",
+      actorUserId: r.userId,
+      organizationId: r.orgId,
+      resourceType: "channel_session",
+      resourceId: sessao.id,
+      requestId,
+      metadata: { waba_id: sessao.wabaId, ...counts },
     });
     return ok(counts);
   } catch (err) {
