@@ -167,6 +167,12 @@ EXTENSIONS_LOCAL_CATALOG_ORIGIN=http://127.0.0.1:56331
 # SaaS (3997), do Redis HTTP (3998) e do WAHA (3999). Fora daquela spec nada
 # escuta aqui, e não precisa: o Jev nasce desligado em toda organização.
 JEV_API_BASE_URL=http://127.0.0.1:3996
+# A Graph da Meta fala com o FALSO Graph (\`tests/support/falso-graph.ts\`), que a
+# spec \`conexao-oficial-assistente\` sobe nesta porta — a 3995, vizinha do dublê
+# do Jev. Fora daquela spec nada escuta aqui, e é o certo: um e2e nunca deve
+# levar token nenhum à Meta de verdade. \`http\` passa em produção porque é
+# loopback (\`lib/channels/meta/graph-base.ts\`, regra 4).
+META_GRAPH_BASE_URL=http://127.0.0.1:3995
 
 # Placeholders: 'next start' roda em NODE_ENV=production, e lib/env.ts exige
 # estas vars em produção. As specs não exercitam os serviços por trás delas.

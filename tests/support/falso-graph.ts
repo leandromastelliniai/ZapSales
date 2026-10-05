@@ -16,6 +16,7 @@
  * qualidade e limite de portfólio são decididos pelo teste, programando a
  * resposta — o falso Graph não inventa comportamento.
  */
+import { createHmac } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 
@@ -48,6 +49,28 @@ export interface OpcoesDoFalsoGraph {
   /** O que o `GET /{número}` devolve. */
   numeroExibido?: string;
   nomeVerificado?: string;
+  /** O app dono do token (`debug_token.app_id`) — e o `client_id` da troca de código. */
+  appId?: string;
+  /**
+   * O App Secret do app. Com ele, o falso Graph confere o `appsecret_proof` como a
+   * Graph confere (HMAC-SHA256 do token com o segredo) e recusa o que não bate.
+   */
+  appSecret?: string;
+  /** O que a troca do código do Embedded Signup devolve como token de negócio. */
+  tokenDoEmbeddedSignup?: string;
+  /**
+   * O `client_secret` que a troca do código aceita. É o segredo do app da
+   * INSTALAÇÃO (o Tech Provider) — pode ser outro app que não o do token do
+   * assistente. Ausente = vale `appSecret`.
+   */
+  segredoDaTroca?: string;
+  /**
+   * Porta fixa. Sem ela o sistema escolhe uma livre — o certo quando o teste e
+   * o app rodam no mesmo processo. A prova pela tela precisa da fixa: o
+   * `next start` lê `META_GRAPH_BASE_URL` do `.env.e2e`, escrito antes de a
+   * spec existir (`scripts/gerar-env-e2e.sh`).
+   */
+  porta?: number;
 }
 
 export interface FalsoGraph {
@@ -93,6 +116,85 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
 
   function respostaPadrao(c: ChamadaAoGraph): RespostaDoGraph {
     const { phoneNumberId, wabaId } = opcoes;
+    const appId = opcoes.appId ?? "1234567890";
+    const busca = new URLSearchParams(c.busca);
+    // `appsecret_proof` errado é recusado em QUALQUER rota, como na Graph.
+    const prova = busca.get("appsecret_proof");
+    if (prova !== null && opcoes.appSecret) {
+      const token = (c.authorization ?? "").replace(/^Bearer /, "");
+      const esperada = createHmac("sha256", opcoes.appSecret).update(token).digest("hex");
+      if (prova !== esperada) {
+        return {
+          status: 400,
+          corpo: {
+            error: {
+              message: "Invalid appsecret_proof provided in the API argument",
+              type: "GraphMethodException",
+              code: 100,
+              fbtrace_id: "FalsoGraphTrace",
+            },
+          },
+        };
+      }
+    }
+    if (c.metodo === "GET" && c.caminho === "/debug_token") {
+      return {
+        status: 200,
+        corpo: {
+          data: {
+            app_id: appId,
+            application: "App de Teste",
+            type: "SYSTEM_USER",
+            is_valid: true,
+            expires_at: 0,
+            data_access_expires_at: 0,
+            scopes: ["whatsapp_business_management", "whatsapp_business_messaging", "business_management"],
+            granular_scopes: [
+              { scope: "whatsapp_business_management", target_ids: [wabaId] },
+              { scope: "whatsapp_business_messaging", target_ids: [wabaId] },
+            ],
+          },
+        },
+      };
+    }
+    if (c.metodo === "GET" && c.caminho === "/app") {
+      return { status: 200, corpo: { id: appId, name: "App de Teste" } };
+    }
+    if (c.metodo === "GET" && c.caminho === `/${wabaId}`) {
+      return {
+        status: 200,
+        corpo: {
+          id: wabaId,
+          name: "Conta de Teste",
+          business_verification_status: "verified",
+          account_review_status: "APPROVED",
+          primary_funding_id: "998877",
+          health_status: {
+            can_send_message: "AVAILABLE",
+            entities: [
+              { entity_type: "WABA", id: wabaId, can_send_message: "AVAILABLE" },
+              { entity_type: "APP", id: appId, can_send_message: "AVAILABLE" },
+            ],
+          },
+        },
+      };
+    }
+    if (c.metodo === "POST" && c.caminho === `/${phoneNumberId}/register`) {
+      return { status: 200, corpo: { success: true } };
+    }
+    if (c.metodo === "POST" && c.caminho === `/${appId}/subscriptions`) {
+      return { status: 200, corpo: { success: true } };
+    }
+    if (c.metodo === "GET" && c.caminho === "/oauth/access_token") {
+      const segredoDaTroca = opcoes.segredoDaTroca ?? opcoes.appSecret;
+      if (busca.get("client_id") !== appId || (segredoDaTroca && busca.get("client_secret") !== segredoDaTroca)) {
+        return erroDaGraph(100, { message: "Error validating client secret." });
+      }
+      return {
+        status: 200,
+        corpo: { access_token: opcoes.tokenDoEmbeddedSignup ?? "EAAG-token-do-embedded-signup", token_type: "bearer" },
+      };
+    }
     if (c.metodo === "POST" && c.caminho === `/${phoneNumberId}/messages`) {
       // O "digitando"/lido não devolve mensagem — só sucesso.
       if (c.corpo?.status === "read") return { status: 200, corpo: { success: true } };
@@ -115,11 +217,28 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
           display_phone_number: opcoes.numeroExibido ?? "+55 31 90000-0000",
           verified_name: opcoes.nomeVerificado ?? "Loja de Teste",
           quality_rating: "GREEN",
+          whatsapp_business_manager_messaging_limit: "TIER_2K",
         },
       };
     }
     if (c.metodo === "GET" && c.caminho === `/${wabaId}/phone_numbers`) {
-      return { status: 200, corpo: { data: [{ id: phoneNumberId }] } };
+      return {
+        status: 200,
+        corpo: {
+          data: [
+            {
+              id: phoneNumberId,
+              display_phone_number: opcoes.numeroExibido ?? "+55 31 90000-0000",
+              verified_name: opcoes.nomeVerificado ?? "Loja de Teste",
+              quality_rating: "GREEN",
+              code_verification_status: "VERIFIED",
+              status: "CONNECTED",
+              account_mode: "LIVE",
+              whatsapp_business_manager_messaging_limit: "TIER_2K",
+            },
+          ],
+        },
+      };
     }
     if (c.metodo === "POST" && c.caminho === `/${wabaId}/subscribed_apps`) {
       return { status: 200, corpo: { success: true } };
@@ -165,7 +284,7 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
     res.setHeader("content-type", "application/json");
     res.end(JSON.stringify(resposta.corpo));
   });
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  await new Promise<void>((resolve) => server.listen(opcoes.porta ?? 0, "127.0.0.1", resolve));
   const { port } = server.address() as AddressInfo;
 
   return {

@@ -165,6 +165,7 @@ const NADA_CONFIGURADO: Props = {
   atualizadoEm: null,
   temNoAmbiente: false,
   leituraFalhou: false,
+  embeddedSignup: { ligado: false, appId: null, configId: null },
 };
 
 const TUDO_CONFIGURADO: Props = {

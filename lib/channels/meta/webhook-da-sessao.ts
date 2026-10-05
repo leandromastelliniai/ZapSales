@@ -20,7 +20,7 @@
  * como ausência de schema (log de aviso), não como erro de produto: o desfecho
  * ainda volta para a resposta da rota, que é onde o operador o vê.
  */
-import { appDaMeta } from "@/lib/channels/meta/app";
+import { appDaMetaDoNumero } from "@/lib/channels/meta/app-da-sessao";
 import {
   registrarWebhookDoNumero,
   urlDeCallbackDaSessao,
@@ -58,6 +58,13 @@ export async function registrarWebhookDaSessao(input: {
   webhookPathToken: string;
   base: string;
   requestId?: string;
+  /**
+   * O par do app PRÓPRIO do número (assistente, issue #5). Com ele, o override
+   * leva o verify token DO NÚMERO — é com ele que o handshake vai responder.
+   * Ausente = o app da instalação, como sempre foi.
+   */
+  appSecretCifrado?: string | null;
+  verifyTokenCifrado?: string | null;
 }): Promise<DesfechoDoWebhookDaSessao> {
   const em = new Date().toISOString();
 
@@ -101,7 +108,10 @@ export async function registrarWebhookDaSessao(input: {
     return desfecho;
   }
 
-  const app = await appDaMeta();
+  const app = await appDaMetaDoNumero(input.admin, {
+    appSecretCifrado: input.appSecretCifrado ?? null,
+    verifyTokenCifrado: input.verifyTokenCifrado ?? null,
+  });
   if (!app.verifyToken) {
     // O verify token é o que a Meta repete no handshake: sem ele o override até
     // registraria, e o GET de verificação responderia 403 — webhook registrado e

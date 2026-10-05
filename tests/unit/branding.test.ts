@@ -987,6 +987,16 @@ const HOSTS_DECLARADOS: Record<string, EntradaDeHost> = {
     motivo:
       "endpoint da Graph API do WhatsApp Cloud — 6 arquivos: envio de template, sincronização de modelos, validação de credencial, conversões e insights. É contrato da Meta, não escolha nossa.",
   },
+  "connect.facebook.net": {
+    categoria: "FORNECEDOR",
+    motivo:
+      "SDK JavaScript da Meta que abre o Embedded Signup (`components/connections/EmbeddedSignupOficial.tsx`, issue #5). Só carrega quando a instalação liga a chave do Conectar com Facebook; é o único jeito que a Meta oferece de abrir esse login.",
+  },
+  "facebook.com": {
+    categoria: "FORNECEDOR",
+    motivo:
+      "origem que o Embedded Signup usa no `postMessage` da janela de login (`components/connections/EmbeddedSignupOficial.tsx`). Não é chamada: é a origem CONFERIDA antes de aceitar a WABA e o número que a janela anuncia.",
+  },
   "www.googleapis.com": {
     categoria: "FORNECEDOR",
     motivo:

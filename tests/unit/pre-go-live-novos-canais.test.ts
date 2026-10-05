@@ -5,8 +5,11 @@ import { metadataInicialDoCanal } from "@/lib/ai/elegibilidade/pre-go-live";
 
 const RAIZ = process.cwd();
 
+// A criação do canal oficial saiu da rota para o caso de uso compartilhado pelo
+// formulário manual, pelo assistente e pelo Embedded Signup (issue #5): é ele
+// que faz o INSERT, então é ele que esta cerca lê.
 const CAMINHOS_DE_CRIACAO = [
-  "app/api/v1/channels/official/route.ts",
+  "lib/channels/meta/conectar-numero.ts",
 ] as const;
 
 describe("todo canal criado pela interface nasce em pré-go-live", () => {

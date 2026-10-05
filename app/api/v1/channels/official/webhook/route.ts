@@ -76,6 +76,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return fail("invalid_request", "channel_without_webhook_path", 422, { requestId });
   }
 
+  // O par do app próprio do número (0536), em leitura SEPARADA: num banco sem a
+  // coluna o select principal inteiro falharia, e o re-registro deixaria de
+  // existir por causa de um extra. Sem o par, vale o app da instalação.
+  const { data: par } = await admin
+    .from("channel_sessions")
+    .select("meta_app_secret_encrypted, meta_verify_token_encrypted")
+    .eq("organization_id", orgId)
+    .eq("id", sessao.id)
+    .maybeSingle();
+  const parDoNumero = par as {
+    meta_app_secret_encrypted?: string | null;
+    meta_verify_token_encrypted?: string | null;
+  } | null;
+
   const desfecho = await registrarWebhookDaSessao({
     admin,
     channelSessionId: sessao.id,
@@ -85,6 +99,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     webhookPathToken: sessao.webhook_path_token,
     base: basePublicaDoWebhookMeta(req),
     requestId,
+    appSecretCifrado: parDoNumero?.meta_app_secret_encrypted ?? null,
+    verifyTokenCifrado: parDoNumero?.meta_verify_token_encrypted ?? null,
   });
 
   // 200 mesmo quando a Meta recusou: a TENTATIVA foi feita e o desfecho é um estado

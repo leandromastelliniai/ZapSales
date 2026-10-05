@@ -19,6 +19,13 @@ export interface MetaWebhookSession {
   id: string;
   organizationId: string;
   wabaId: string | null;
+  /**
+   * O par do app PRÓPRIO do número (assistente de conexão, issue #5), cifrado.
+   * Ausente/nulo = o número usa o app da instalação. Quem decifra e decide é
+   * `appDaMetaDoNumero` — a sessão só carrega as colunas.
+   */
+  appSecretCifrado?: string | null;
+  verifyTokenCifrado?: string | null;
 }
 
 /**
@@ -59,22 +66,39 @@ export async function metaSessionByWebhookToken(
   if (!token || token.length < 8) return null;
 
   const admin = createAdminClient();
-  const base = () =>
+  const base = (colunas: string) =>
     admin
       .from("channel_sessions")
-      .select("id, organization_id, meta_waba_id")
+      .select(colunas)
       .eq("webhook_path_token", token)
       .eq("provider", CHANNEL_PROVIDER_META);
-  const { data } = await queryTolerantToMissingArchived(
-    () => base().is(ARCHIVED_AT, null).maybeSingle(),
-    () => base().maybeSingle(),
+  // O par do app próprio chega na 0536. Banco que ainda não a aplicou devolve
+  // 42703 no select com as colunas novas — e perder a SESSÃO por causa de um
+  // extra seria recusar toda entrega. Sem as colunas, vale o app da instalação.
+  const ler = async (colunas: string) =>
+    queryTolerantToMissingArchived(
+      () => base(colunas).is(ARCHIVED_AT, null).maybeSingle(),
+      () => base(colunas).maybeSingle(),
+    );
+  const comPar = await ler(
+    "id, organization_id, meta_waba_id, meta_app_secret_encrypted, meta_verify_token_encrypted",
   );
+  const { data } = comPar.error ? await ler("id, organization_id, meta_waba_id") : comPar;
 
   if (!data) return null;
+  const linha = data as unknown as {
+    id: string;
+    organization_id: string;
+    meta_waba_id: string | null;
+    meta_app_secret_encrypted?: string | null;
+    meta_verify_token_encrypted?: string | null;
+  };
   return {
-    id: data.id,
-    organizationId: data.organization_id,
-    wabaId: data.meta_waba_id ?? null,
+    id: linha.id,
+    organizationId: linha.organization_id,
+    wabaId: linha.meta_waba_id ?? null,
+    appSecretCifrado: linha.meta_app_secret_encrypted ?? null,
+    verifyTokenCifrado: linha.meta_verify_token_encrypted ?? null,
   };
 }
 
