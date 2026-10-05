@@ -181,7 +181,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           // `smb_message_echoes`: o que a empresa manda pelo app WhatsApp Business
           // num número em coexistência. Sem coexistência a Meta não o envia, então
           // assinar é inofensivo para quem não usa.
-          fields: ["messages", "message_template_status_update", "smb_message_echoes"],
+          // Os três campos de modelo (issue #6): status, qualidade e categoria.
+          // Sem `template_category_update` a recategorização — que muda o custo —
+          // só apareceria na próxima sincronização manual.
+          fields: [
+            "messages",
+            "message_template_status_update",
+            "message_template_quality_update",
+            "template_category_update",
+            "smb_message_echoes",
+          ],
         }
       : null,
     /**

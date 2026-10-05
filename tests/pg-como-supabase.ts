@@ -18,7 +18,7 @@
  *    organizações é medido pelos invariantes que usam papel restrito — não aqui.
  * 2. **Rede.** Timeout, retry e erro de transporte não existem neste caminho.
  * 3. **A superfície inteira do PostgREST.** Só o que está implementado abaixo:
- *    `select/insert` com `eq`, `order`, `limit`, `maybeSingle`, `single` e
+ *    `select/insert/update/upsert` com `eq`, `order`, `limit`, `maybeSingle`, `single` e
  *    embed to-one (`alias:coluna_fk(colunas)`, traduzido para subquery). Um
  *    método não implementado **estoura** em vez de ser ignorado em silêncio —
  *    ver `naoImplementado`. Silêncio aqui viraria teste verde medindo nada.
@@ -49,6 +49,19 @@ function naoImplementado(metodo: string): never {
       "Implemente-o (com caso no teste do adaptador) em vez de contornar — " +
       "método ausente que devolvesse vazio faria o teste passar medindo nada.",
   );
+}
+
+/**
+ * O valor como parâmetro do `pg`. Objeto vira JSON (o driver não converte), e
+ * LISTA DE OBJETOS também: o driver serializa `Array` como array do Postgres
+ * (`{...}`), o que numa coluna `jsonb` é JSON inválido — e `meta_templates.components`
+ * é exatamente uma lista de objetos. Lista de primitivos segue como array do
+ * Postgres (`text[]`, `uuid[]`), que é o que ela é nas colunas que a usam.
+ */
+function parametro(v: unknown): unknown {
+  if (v === null || typeof v !== "object") return v;
+  if (!Array.isArray(v)) return JSON.stringify(v);
+  return v.some((item) => item !== null && typeof item === "object") ? JSON.stringify(v) : v;
 }
 
 function erroDe(e: unknown): ErroPg {
@@ -380,11 +393,8 @@ class InsercaoPg<T> implements PromiseLike<RespostaFalsa<null>> {
 
   private montar(): { texto: string; valores: unknown[] } {
     const chaves = Object.keys(this.linha);
-    const valores = chaves.map((k) => {
-      const v = this.linha[k];
-      // jsonb/array vão como parâmetro; objeto solto o driver não converte.
-      return v !== null && typeof v === "object" && !Array.isArray(v) ? JSON.stringify(v) : v;
-    });
+    // jsonb/array vão como parâmetro — ver `parametro`.
+    const valores = chaves.map((k) => parametro(this.linha[k]));
     const marcas = chaves.map((_, i) => `$${i + 1}`).join(", ");
     const texto =
       `insert into public."${this.tabela}" (${chaves.map((k) => `"${k}"`).join(", ")}) values (${marcas})` +
@@ -489,8 +499,7 @@ class AtualizacaoPg<T> implements PromiseLike<RespostaFalsa<unknown>> {
   private montar(): { texto: string; valores: unknown[] } {
     const valores: unknown[] = [];
     const sets = Object.keys(this.patch).map((k) => {
-      const v = this.patch[k];
-      valores.push(v !== null && typeof v === "object" && !Array.isArray(v) ? JSON.stringify(v) : v);
+      valores.push(parametro(this.patch[k]));
       return `"${k}" = $${valores.length}`;
     });
     const onde = this.filtros.map(([op, c, v]) => {
@@ -559,6 +568,70 @@ class AtualizacaoPg<T> implements PromiseLike<RespostaFalsa<unknown>> {
 }
 
 /**
+ * `upsert(linhas, { onConflict })` — `insert … on conflict (…) do update`.
+ *
+ * Nasceu porque a sincronização de modelos da Meta (`syncTemplates`) é um
+ * upsert, e o invariante de modelos do canal oficial (issue #6) a dirige pela
+ * rota de verdade. Só a forma que o PostgREST aceita com `onConflict`: sem ele,
+ * ou com linhas de colunas diferentes, ESTOURA — o PostgREST resolveria pela
+ * chave primária, e adivinhar aqui faria o teste medir outra coisa.
+ *
+ * O `do update` reescreve só as colunas ENVIADAS, como o PostgREST: coluna que
+ * a linha não traz (ex.: `saved_values`) sobrevive ao upsert.
+ */
+class UpsertPg implements PromiseLike<RespostaFalsa<null>> {
+  constructor(
+    private readonly pool: pg.Pool,
+    private readonly tabela: string,
+    private readonly linhas: Array<Record<string, unknown>>,
+    private readonly conflito: string[],
+  ) {}
+
+  private montar(): { texto: string; valores: unknown[] } {
+    const chaves = Object.keys(this.linhas[0] ?? {});
+    for (const l of this.linhas) {
+      const outras = Object.keys(l);
+      if (outras.length !== chaves.length || outras.some((k) => !chaves.includes(k))) {
+        naoImplementado("upsert com linhas de colunas diferentes");
+      }
+    }
+    const valores: unknown[] = [];
+    const tuplas = this.linhas.map(
+      (l) =>
+        `(${chaves
+          .map((k) => {
+            valores.push(parametro(l[k]));
+            return `$${valores.length}`;
+          })
+          .join(", ")})`,
+    );
+    const atualiza = chaves.filter((k) => !this.conflito.includes(k));
+    const texto =
+      `insert into public."${this.tabela}" (${chaves.map((k) => `"${k}"`).join(", ")}) values ${tuplas.join(", ")}` +
+      ` on conflict (${this.conflito.map((c) => `"${c}"`).join(", ")})` +
+      (atualiza.length > 0
+        ? ` do update set ${atualiza.map((k) => `"${k}" = excluded."${k}"`).join(", ")}`
+        : " do nothing");
+    return { texto, valores };
+  }
+
+  then<R1 = RespostaFalsa<null>, R2 = never>(
+    aoResolver?: ((v: RespostaFalsa<null>) => R1 | PromiseLike<R1>) | null,
+    aoRejeitar?: ((r: unknown) => R2 | PromiseLike<R2>) | null,
+  ): PromiseLike<R1 | R2> {
+    if (this.linhas.length === 0) {
+      return Promise.resolve({ data: null, error: null } as RespostaFalsa<null>).then(aoResolver, aoRejeitar);
+    }
+    const { texto, valores } = this.montar();
+    return this.pool
+      .query(texto, valores)
+      .then(() => ({ data: null, error: null }) as RespostaFalsa<null>)
+      .catch((e: unknown) => ({ data: null, error: erroDe(e) }) as RespostaFalsa<null>)
+      .then(aoResolver, aoRejeitar);
+  }
+}
+
+/**
  * `rpc(nome, args)` — chamada de função por argumentos NOMEADOS, como o
  * PostgREST faz. Sem isto, todo caminho que emite evento (`emit_event`) morre no
  * meio do handler sob teste.
@@ -595,7 +668,15 @@ export function pgComoSupabase(pool: pg.Pool): SupabaseClient {
         insert: (linha: Record<string, unknown>) => new InsercaoPg(pool, tabela, linha),
         update: (patch: Record<string, unknown>) => new AtualizacaoPg(pool, tabela, patch),
         delete: () => naoImplementado("delete"),
-        upsert: () => naoImplementado("upsert"),
+        upsert: (linhas: Record<string, unknown> | Array<Record<string, unknown>>, opcoes?: { onConflict?: string }) => {
+          if (!opcoes?.onConflict) return naoImplementado("upsert sem onConflict");
+          return new UpsertPg(
+            pool,
+            tabela,
+            Array.isArray(linhas) ? linhas : [linhas],
+            opcoes.onConflict.split(",").map((c) => c.trim()),
+          );
+        },
       };
     },
     rpc: (nome: string, args: Record<string, unknown> = {}) => chamarRpc(pool, nome, args),

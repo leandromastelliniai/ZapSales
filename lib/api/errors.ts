@@ -101,6 +101,7 @@ export const ApiErrorCodes = {
   channel_archived: "channel_archived", // ação sobre canal que o usuário excluiu (a linha só sobrevive como âncora das FKs)
   knowledge_source_type_in_use: "knowledge_source_type_in_use", // fonte ATIVA do mesmo tipo no agente — era o índice ai_knowledge_sources_unique_per_agent, que a 0181 derrubou; nenhuma rota emite mais este código
   voice_already_paired: "voice_already_paired", // POST /voice/sessions/pair com aparelho já vinculado — a saída é DELETE /voice/sessions, nunca re-parear por cima (ver a rota)
+  meta_template_exists: "meta_template_exists", // POST /channels/templates/submit com nome+idioma já vivo no espelho — a Meta recusaria o repetido (issue #6)
 
   // 422 — semântica
   unprocessable_entity: "unprocessable_entity",
@@ -116,6 +117,9 @@ export const ApiErrorCodes = {
   // PATCH /api/v1/ai/jev pedindo `decidindo` numa tarefa que, nesta versão, só
   // observa (`soObserva` em lib/ai/decisao/tarefas.ts) — a do follow-up.
   jev_tarefa_so_observa: "jev_tarefa_so_observa",
+  // POST /channels/templates/submit que a Meta recusou. A mensagem é a frase da
+  // Meta para gente (`error_user_msg`); `details` traz o código e o subcódigo.
+  meta_template_refused: "meta_template_refused",
 
   // 415 — tipo de mídia
   unsupported_media_type: "unsupported_media_type",

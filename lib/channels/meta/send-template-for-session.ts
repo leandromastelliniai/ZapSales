@@ -94,7 +94,8 @@ export async function sendTemplateForSession(
     status: string;
     contract_hash: string;
     components: unknown;
-  }>(db, "name, language, status, contract_hash, components", {
+    parameter_format: string | null;
+  }>(db, "name, language, status, contract_hash, components, parameter_format", {
     organizationId: input.organizationId,
     name: input.name,
     language: input.language,
@@ -125,6 +126,7 @@ export async function sendTemplateForSession(
           contractHash: linha.contract_hash,
           status: linha.status,
           components: linha.components,
+          parameterFormat: linha.parameter_format,
         }
       : null,
   });

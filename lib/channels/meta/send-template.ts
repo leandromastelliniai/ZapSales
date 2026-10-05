@@ -40,7 +40,12 @@ export interface SendTemplateInput {
   to: string;
   binding: TemplateBinding;
   /** A linha do espelho local. `null` = template não existe mais na Meta. */
-  current: (CurrentTemplate & { components: unknown }) | null;
+  /**
+   * A linha do espelho. `parameterFormat` é o `parameter_format` dela: sem ele um
+   * modelo NAMED sairia com parâmetros posicionais e a Meta recusaria (132012).
+   * Ausente = POSITIONAL, o que a Meta assume.
+   */
+  current: (CurrentTemplate & { components: unknown; parameterFormat?: string | null }) | null;
 }
 
 /**
@@ -80,6 +85,7 @@ export async function sendTemplate(input: SendTemplateInput): Promise<SendTempla
   const contrato = deriveTemplateContract({
     name: input.binding.name,
     language: input.binding.language,
+    ...(input.current!.parameterFormat ? { parameter_format: input.current!.parameterFormat } : {}),
     components: input.current!.components as never,
   });
 

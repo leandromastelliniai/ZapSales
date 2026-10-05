@@ -88,6 +88,41 @@ export interface TemplateStatusEvent {
   templateLanguage: string;
   event: string;
   reason: string | null;
+  /**
+   * `other_info.description` — a explicação que a Meta dá à pausa ou à
+   * desativação ("pausado por 3 horas por feedback negativo"). Ausente quando
+   * ela não explica.
+   */
+  detail?: string | null;
+}
+
+/** A qualidade de um modelo mudou (`message_template_quality_update`). */
+export interface TemplateQualityEvent {
+  kind: "template_quality";
+  wabaId: string;
+  templateName: string;
+  templateLanguage: string;
+  /** `GREEN` | `YELLOW` | `RED` | `UNKNOWN` — vocabulário da Meta, sem trava aqui. */
+  previous: string | null;
+  quality: string;
+}
+
+/**
+ * A Meta recategorizou um modelo (`template_category_update`) — utilidade que
+ * vira marketing passa a custar como marketing.
+ *
+ * Chega em duas formas. A EFETIVA traz `previous_category` e `new_category`: a
+ * mudança já valeu. O AVISO PRÉVIO traz só `correct_category`: a Meta avisa que
+ * vai recategorizar; nada muda ainda, mas quem paga quer saber antes.
+ */
+export interface TemplateCategoryEvent {
+  kind: "template_category";
+  wabaId: string;
+  templateName: string;
+  templateLanguage: string;
+  previous: string | null;
+  category: string;
+  efetiva: boolean;
 }
 
 /**
@@ -186,6 +221,8 @@ export interface OutboundEchoEvent {
 
 export type MetaWebhookEvent =
   | TemplateStatusEvent
+  | TemplateQualityEvent
+  | TemplateCategoryEvent
   | MessageStatusEvent
   | InboundMessageEvent
   | OutboundEchoEvent;
@@ -233,6 +270,8 @@ export function parseMetaWebhook(envelope: MetaWebhookEnvelope): MetaWebhookEven
         const name = str(v.message_template_name);
         const language = str(v.message_template_language);
         if (!name || !language) continue; // payload capenga não vira linha meia-boca
+        const outra = v.other_info as { description?: unknown } | null | undefined;
+        const detalhe = str(outra?.description);
         out.push({
           kind: "template_status",
           wabaId,
@@ -240,6 +279,41 @@ export function parseMetaWebhook(envelope: MetaWebhookEnvelope): MetaWebhookEven
           templateLanguage: language,
           event: str(v.event) ?? "UNKNOWN",
           reason: normalizeRejectedReason(v.reason),
+          ...(detalhe ? { detail: detalhe } : {}),
+        });
+        continue;
+      }
+
+      if (change.field === "message_template_quality_update") {
+        const name = str(v.message_template_name);
+        const language = str(v.message_template_language);
+        const quality = str(v.new_quality_score);
+        if (!name || !language || !quality) continue;
+        out.push({
+          kind: "template_quality",
+          wabaId,
+          templateName: name,
+          templateLanguage: language,
+          previous: str(v.previous_quality_score),
+          quality,
+        });
+        continue;
+      }
+
+      if (change.field === "template_category_update") {
+        const name = str(v.message_template_name);
+        const language = str(v.message_template_language);
+        const nova = str(v.new_category);
+        const correta = str(v.correct_category);
+        if (!name || !language || (!nova && !correta)) continue;
+        out.push({
+          kind: "template_category",
+          wabaId,
+          templateName: name,
+          templateLanguage: language,
+          previous: nova ? str(v.previous_category) : null,
+          category: (nova ?? correta)!,
+          efetiva: nova !== null,
         });
         continue;
       }

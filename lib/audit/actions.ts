@@ -1004,6 +1004,14 @@ export const AUDIT_ACTIONS = [
   // A identidade da Página/WABA que a Meta exige no Purchase de clique-para-WhatsApp
   // (#2098): gravada pela tela de Conversões, em `organizations.settings.conversions`.
   "conversions.meta_identity_updated",
+
+  // Modelos da API Oficial (issue #6). `submitted`: o operador criou um modelo no
+  // editor e ele foi à Meta para aprovação — custa dinheiro a cada envio depois
+  // de aprovado, então quem criou precisa ter dono. `synced`: a sincronização
+  // forçada reescreveu o espelho local. Os nomes não colidem com `template.*`,
+  // que são as respostas rápidas (`message_templates`).
+  "meta_template.submitted",
+  "meta_template.synced",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */
