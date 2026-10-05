@@ -31,7 +31,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { fail } from "@/lib/api/wrappers";
 import { appDaMeta } from "@/lib/channels/meta/app";
-import { aplicarEventoDeModelo } from "@/lib/channels/meta/eventos-de-modelo";
+import { aplicarEventoDeModelo, ehEventoDeModelo } from "@/lib/channels/meta/eventos-de-modelo";
 import { lerEnvelopeMeta } from "@/lib/channels/meta/envelope";
 import { parseMetaWebhook, verificationChallenge, verifyMetaSignature } from "@/lib/channels/meta/webhook";
 import { statusUpdate } from "@/lib/channels/meta/status-update";
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
     // Confiar no `entry.id` para escolher a org seria aceitar o corpo como fonte.
     if (session.wabaId && e.wabaId && e.wabaId !== session.wabaId) continue;
 
-    if (e.kind === "template_status" || e.kind === "template_quality" || e.kind === "template_category") {
+    if (ehEventoDeModelo(e)) {
       // Status, qualidade e categoria do modelo: atualiza o espelho e, quando a
       // mudança pede ação ou muda o custo, avisa na Central — uma vez por
       // mudança, não por entrega. Ver `lib/channels/meta/eventos-de-modelo.ts`.

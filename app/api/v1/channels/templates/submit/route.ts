@@ -59,6 +59,12 @@ function respostaDaRecusa(d: SubmissaoRecusada["desfecho"], requestId: string): 
       details: { codigo: d.codigo, subcodigo: d.subcodigo },
     });
   }
+  if (d.motivo === "falha_na_leitura") {
+    // Nada foi à Meta: tentar de novo é seguro.
+    return fail("internal_error", "Não deu para conferir os modelos salvos. Tente de novo.", 500, {
+      requestId,
+    });
+  }
   // A Meta aceitou e o espelho não gravou: a sincronização traz o modelo.
   return fail(
     "internal_error",
@@ -76,6 +82,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const authz = await requireRole("admin", { requestId, resource: "channels_templates" });
   if (!authz.ok) return authz.response;
   const orgId = authz.org.orgId;
+  const userId = authz.user.id;
 
   const parsed = novoModeloSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
@@ -115,7 +122,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (!r.ok) throw new SubmissaoRecusada(r);
     void audit({
       action: "meta_template.submitted",
-      actorUserId: authz.ok ? authz.user.id : null,
+      actorUserId: userId,
       organizationId: orgId,
       resourceType: "meta_template",
       resourceId: r.modelo.id,

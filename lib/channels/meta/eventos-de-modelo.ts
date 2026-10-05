@@ -27,14 +27,24 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { InboxKind } from "@/lib/agent-engine/db/repository";
 import { logger } from "@/lib/logger";
+
+import { TEMPLATE_STATUS_DISABLED } from "./template-sync";
 
 import type { TemplateCategoryEvent, TemplateQualityEvent, TemplateStatusEvent } from "./webhook";
 
 export type EventoDeModelo = TemplateStatusEvent | TemplateQualityEvent | TemplateCategoryEvent;
 
+/** Se o evento do webhook é de modelo — a pergunta que a rota faz antes de despachar. */
+export function ehEventoDeModelo(e: { kind: string }): e is EventoDeModelo {
+  return (
+    e.kind === "template_status" || e.kind === "template_quality" || e.kind === "template_category"
+  );
+}
+
 /** O kind da Central para tudo o que este módulo avisa (0120). Constante, nunca o literal solto. */
-export const KIND_DO_AVISO_DE_MODELO = "channel_template_review";
+export const KIND_DO_AVISO_DE_MODELO = "channel_template_review" satisfies InboxKind;
 
 export interface AvisoDeModelo {
   severity: "info" | "warn" | "critical";
@@ -143,12 +153,30 @@ export function avisoDoEventoDeModelo(e: EventoDeModelo): AvisoDeModelo | null {
   };
 }
 
+/**
+ * O evento de status da Meta que NÃO é um status do espelho, traduzido para o
+ * que o espelho entende. `REINSTATED` é a Meta liberando um modelo pausado ou
+ * marcado — gravado cru, o envio (que só aceita `APPROVED`) o recusaria até
+ * alguém sincronizar à mão. `DELETED` é o modelo que sumiu, o mesmo estado que a
+ * sincronização grava para quem some (`planSync`). O resto atravessa como veio:
+ * a coluna não tem CHECK de propósito (ver `META_TEMPLATE_STATUS`).
+ */
+const STATUS_DO_ESPELHO: Record<string, string> = {
+  REINSTATED: "APPROVED",
+  DELETED: TEMPLATE_STATUS_DISABLED,
+};
+
 /** A coluna que o evento muda e o valor novo. O aviso prévio não muda coluna nenhuma. */
 function mudancaDoEvento(
   e: EventoDeModelo,
 ): { coluna: string; valor: string; extra: Record<string, unknown> } | null {
   if (e.kind === "template_status") {
-    return { coluna: "status", valor: e.event, extra: { rejected_reason: e.reason } };
+    const evento = e.event.toUpperCase();
+    return {
+      coluna: "status",
+      valor: STATUS_DO_ESPELHO[evento] ?? e.event,
+      extra: { rejected_reason: e.reason },
+    };
   }
   if (e.kind === "template_quality")
     return { coluna: "quality_score", valor: e.quality, extra: {} };

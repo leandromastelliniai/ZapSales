@@ -13,8 +13,8 @@
  * Cabeçalho de mídia, carrossel, oferta e flow ficam para o editor avançado
  * (issue #7).
  */
-import { Copy, ExternalLink, Plus, Reply, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Copy, ExternalLink, List, Plus, Reply, Trash2 } from "lucide-react";
+import { Fragment, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -28,11 +28,12 @@ import {
   previewDoModelo,
   variaveisDoTexto,
   type BotaoDoModelo,
+  type MotivoDeRecusa,
   type NovoModelo,
 } from "@/lib/channels/meta/novo-modelo";
 
 /** O código de cada recusa conhecida, na frase que o operador lê. */
-const FRASE_DO_MOTIVO: Record<string, string> = {
+const FRASE_DO_MOTIVO: Record<MotivoDeRecusa, string> = {
   exemplo_obrigatorio: "Preencha um exemplo: a Meta exige exemplo de cada variável.",
   variaveis_fora_de_sequencia: "As variáveis numeradas precisam seguir a sequência 1, 2, 3…",
   variavel_posicional_esperada: "No formato numerado, as variáveis são {{1}}, {{2}}…",
@@ -74,7 +75,7 @@ function problemasDoEstado(estado: NovoModelo): Problema[] {
   if (r.success) return [];
   return r.error.issues.map((i) => {
     const campo = i.path.join(".");
-    const conhecida = FRASE_DO_MOTIVO[i.message];
+    const conhecida = (FRASE_DO_MOTIVO as Record<string, string | undefined>)[i.message];
     if (conhecida) return { campo, frase: conhecida };
     if (i.code === "too_small") return { campo, frase: "Campo obrigatório." };
     if (i.code === "too_big") return { campo, frase: "Texto longo demais para este campo." };
@@ -96,10 +97,45 @@ const VAZIO: NovoModelo = {
 const SELECT = "mt-1 w-full rounded-md border bg-background p-2 text-sm";
 
 /** O balão do WhatsApp, com o que o cliente vai ler. */
+/**
+ * A formatação que o WhatsApp aplica ao texto: `*negrito*`, `_itálico_` e
+ * `~riscado~`, numa linha só e sem espaço colado no marcador — a mesma regra do
+ * aplicativo, que deixa "2 * 3" como está.
+ */
+const MARCA_DO_WHATSAPP = /([*_~])(?=\S)([^*_~\n]*?\S)\1/g;
+
+function formatado(texto: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  let desde = 0;
+  for (const m of texto.matchAll(MARCA_DO_WHATSAPP)) {
+    if (m.index > desde) out.push(texto.slice(desde, m.index));
+    const conteudo = m[2];
+    out.push(
+      m[1] === "*" ? (
+        <strong key={m.index}>{conteudo}</strong>
+      ) : m[1] === "_" ? (
+        <em key={m.index}>{conteudo}</em>
+      ) : (
+        <s key={m.index}>{conteudo}</s>
+      ),
+    );
+    desde = m.index + m[0].length;
+  }
+  if (desde < texto.length) out.push(texto.slice(desde));
+  return out;
+}
+
+/** Acima disto o WhatsApp mostra dois botões e esconde o resto atrás de "Ver todas as opções". */
+const BOTOES_A_VISTA = 3;
+
 function PreviewDoModeloView({ modelo }: { modelo: NovoModelo }) {
   const t = useT();
   const p = previewDoModelo(modelo);
   const icone = { QUICK_REPLY: Reply, URL: ExternalLink, COPY_CODE: Copy } as const;
+  const botoes =
+    p.botoes.length > BOTOES_A_VISTA
+      ? [...p.botoes.slice(0, 2), { tipo: "VER_TODAS" as const, texto: "Ver todas as opções" }]
+      : p.botoes;
   return (
     <div className="rounded-lg bg-muted p-3" data-testid="preview-do-modelo">
       <div className="rounded-lg bg-background shadow-sm">
@@ -107,7 +143,9 @@ function PreviewDoModeloView({ modelo }: { modelo: NovoModelo }) {
           className="px-3 pt-2 text-sm leading-relaxed break-words whitespace-pre-wrap"
           data-testid="preview-corpo"
         >
-          {p.corpo || (
+          {p.corpo ? (
+            formatado(p.corpo).map((parte, i) => <Fragment key={i}>{parte}</Fragment>)
+          ) : (
             <span className="text-muted-foreground">{t("O texto da mensagem aparece aqui.")}</span>
           )}
         </p>
@@ -119,8 +157,8 @@ function PreviewDoModeloView({ modelo }: { modelo: NovoModelo }) {
         <p className="px-3 pt-1 pb-2 text-right text-[10px] text-muted-foreground">12:00</p>
         {p.botoes.length > 0 ? (
           <div className="flex flex-col border-t">
-            {p.botoes.map((b, i) => {
-              const Icone = icone[b.tipo];
+            {botoes.map((b, i) => {
+              const Icone = b.tipo === "VER_TODAS" ? List : icone[b.tipo];
               return (
                 <span
                   key={i}
@@ -128,7 +166,7 @@ function PreviewDoModeloView({ modelo }: { modelo: NovoModelo }) {
                   data-testid="preview-botao"
                 >
                   <Icone className="size-3.5" aria-hidden />
-                  {b.tipo === "COPY_CODE" ? t(b.texto) : b.texto}
+                  {b.tipo === "COPY_CODE" || b.tipo === "VER_TODAS" ? t(b.texto) : b.texto}
                 </span>
               );
             })}
@@ -150,6 +188,7 @@ export function EditorDeModelo({ onFechar }: { onFechar: () => void }) {
   const submeter = useSubmitTemplate();
   const [modelo, setModelo] = useState<NovoModelo>(VAZIO);
   const [tentou, setTentou] = useState(false);
+  const corpoRef = useRef<HTMLTextAreaElement>(null);
 
   const variaveis = useMemo(() => variaveisDoTexto(modelo.body), [modelo.body]);
   const problemas = useMemo(() => problemasDoEstado(modelo), [modelo]);
@@ -163,13 +202,23 @@ export function EditorDeModelo({ onFechar }: { onFechar: () => void }) {
       buttons: m.buttons.map((b, j) => (j === i ? ({ ...b, ...parcial } as BotaoDoModelo) : b)),
     }));
 
+  /**
+   * Entra onde está o cursor. Colada sempre no fim, a variável caía na regra da
+   * Meta que o próprio editor cobra (variável na ponta do texto).
+   */
   function adicionarVariavel() {
     const proxima =
       modelo.parameter_format === "POSITIONAL"
         ? String(variaveis.filter((v) => /^\d+$/.test(v)).length + 1)
         : `variavel_${variaveis.length + 1}`;
-    const separador = modelo.body && !modelo.body.endsWith(" ") ? " " : "";
-    mudar({ body: `${modelo.body}${separador}{{${proxima}}}` });
+    const campo = corpoRef.current;
+    const texto = modelo.body;
+    // O textarea guarda a seleção mesmo depois de o clique ir para o botão.
+    const posicao = campo ? campo.selectionStart : texto.length;
+    const antes = texto.slice(0, posicao);
+    const depois = texto.slice(posicao);
+    const separador = antes && !/\s$/.test(antes) && posicao === texto.length ? " " : "";
+    mudar({ body: `${antes}${separador}{{${proxima}}}${depois}` });
   }
 
   async function enviar() {
@@ -261,6 +310,7 @@ export function EditorDeModelo({ onFechar }: { onFechar: () => void }) {
               className="mt-1 min-h-28"
               value={modelo.body}
               onChange={(e) => mudar({ body: e.target.value })}
+              ref={corpoRef}
               data-testid="modelo-corpo"
             />
             <Erros lista={doCampo("body")} />

@@ -163,6 +163,30 @@ describe("submeterModelo", () => {
     expect(tabelas.meta_templates![0]).toMatchObject({ status: "PENDING", rejected_reason: null });
   });
 
+  it("falha ao ler o espelho ANTES de ir à Meta não diz que o modelo foi enviado", async () => {
+    const quebrado = {
+      from: () => ({
+        select: () => {
+          const alvo = {
+            eq: () => alvo,
+            then: (r: (v: unknown) => unknown) =>
+              Promise.resolve({ data: null, error: { message: "fora do ar" } }).then(r),
+          };
+          return alvo;
+        },
+      }),
+    } as never;
+    const r = await submeterModelo(quebrado, {
+      organizationId: ORG,
+      wabaId: WABA,
+      token: TOKEN,
+      graphVersion: "v26.0",
+      modelo: MODELO,
+    });
+    expect(r).toEqual({ ok: false, motivo: "falha_na_leitura", mensagem: "fora do ar" });
+    expect(falso.modelosCriados()).toEqual([]);
+  });
+
   it("a recusa da Meta volta com a frase dela, e o espelho não ganha linha", async () => {
     falso.programar(
       { metodo: "POST", terminaCom: "/message_templates" },

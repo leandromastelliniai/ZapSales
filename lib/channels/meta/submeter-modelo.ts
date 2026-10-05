@@ -57,6 +57,8 @@ export type DesfechoDaSubmissao =
       codigo: number | null;
       subcodigo: number | null;
     }
+  /** Não deu para conferir o espelho; NADA foi à Meta. */
+  | { ok: false; motivo: "falha_na_leitura"; mensagem: string }
   /** A Meta ACEITOU, mas o espelho não gravou — a sincronização traz o modelo. */
   | { ok: false; motivo: "falha_no_espelho"; mensagem: string };
 
@@ -86,11 +88,13 @@ export async function submeterModelo(
     .eq("name", modelo.name)
     .eq("language", modelo.language);
   if (erroDeLeitura)
-    return { ok: false, motivo: "falha_no_espelho", mensagem: erroDeLeitura.message };
+    return { ok: false, motivo: "falha_na_leitura", mensagem: erroDeLeitura.message };
 
   const existente = (existentes ?? [])[0] as { id: string; status: string } | undefined;
-  // DESATIVADO é o modelo que sumiu da Meta (ver `planSync`): o nome está livre
-  // de novo lá, e a linha antiga é reaproveitada em vez de duplicada.
+  // DESATIVADO é o modelo que sumiu da Meta (ver `planSync`) ou que ela desativou:
+  // deixa-se tentar de novo, e a linha antiga é reaproveitada em vez de duplicada.
+  // Se a Meta ainda segura o nome (ela bloqueia nome apagado por um tempo), a
+  // recusa dela chega ao operador com a frase dela — `meta_recusou`.
   if (existente && existente.status !== TEMPLATE_STATUS_DISABLED) {
     return { ok: false, motivo: "modelo_ja_existe" };
   }

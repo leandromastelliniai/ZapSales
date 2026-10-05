@@ -126,6 +126,17 @@ describe("status do modelo", () => {
     expect(avisos()).toHaveLength(1);
   });
 
+  it("REINSTATED (a Meta liberou o modelo depois da pausa) volta a APPROVED — senão ele não sairia até alguém sincronizar", async () => {
+    await aplicarEventoDeModelo(db, ORG_A, status("PAUSED"));
+    expect(await aplicarEventoDeModelo(db, ORG_A, status("REINSTATED"))).toBe("modelo:atualizado");
+    expect(linhaDe(ORG_A).status).toBe("APPROVED");
+  });
+
+  it("DELETED vira DISABLED — o mesmo estado de quem sumiu da Meta na sincronização", async () => {
+    await aplicarEventoDeModelo(db, ORG_A, status("DELETED"));
+    expect(linhaDe(ORG_A).status).toBe("DISABLED");
+  });
+
   it("modelo que o espelho não conhece não vira linha nem aviso", async () => {
     const e = { ...status("PAUSED"), templateName: "nunca_sincronizado" };
     expect(await aplicarEventoDeModelo(db, ORG_A, e)).toBe("modelo:desconhecido");

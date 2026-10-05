@@ -100,10 +100,10 @@ describe("destinos da Central", () => {
     const l = leitor(); const items = await resolverDestinosDosAvisos(l.client, ORG, "admin", [aviso("novo"), aviso("handoff", "https://evil.test"), aviso("handoff", "channel_session"), aviso("__proto__"), aviso("other", "__proto__")]);
     expect(items.every(i => !("href" in i.destination))).toBe(true); expect(l.queries).toHaveLength(0);
   });
-  it("referências técnicas não inventam tela; modelos sem ID abrem canal Parceiro", async () => {
+  it("referências técnicas não inventam tela; o aviso de modelo (que o nomeia no corpo) abre a lista de modelos", async () => {
     const items = await resolverDestinosDosAvisos(leitor().client, ORG, "admin", [aviso("job_dead", "job_queue"), aviso("channel_template_review", null, null), aviso("contact_proposal_expired", "organization", ORG)]);
     expect(items[0]?.destination.estado).toBe("sem_destino");
-    expect(items[1]?.destination).toMatchObject({ href: "/app/connections?aba=oficial&sub=templates", orientacao: expect.stringContaining("não identifica") });
+    expect(items[1]?.destination).toMatchObject({ href: "/app/connections?aba=oficial&sub=templates", orientacao: expect.stringContaining("modelo citado no aviso") });
     expect(items[2]?.destination.estado).toBe("sem_destino");
   });
   it("reativação leva ao Inbox sem referência, e só para quem atende", async () => {

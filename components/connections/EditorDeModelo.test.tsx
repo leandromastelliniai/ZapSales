@@ -98,4 +98,36 @@ describe("EditorDeModelo", () => {
     await userEvent.click(screen.getByTestId("btn-variavel"));
     expect(screen.getByTestId("modelo-corpo")).toHaveValue("Olá {{1}}, código {{2}}");
   });
+
+  it("“Adicionar variável” entra onde está o cursor, não colada no fim", async () => {
+    render(<EditorDeModelo onFechar={() => {}} />);
+    digitar("modelo-corpo", "Olá , tudo bem?");
+    const corpo = screen.getByTestId("modelo-corpo") as HTMLTextAreaElement;
+    corpo.setSelectionRange(4, 4);
+    await userEvent.click(screen.getByTestId("btn-variavel"));
+    expect(corpo).toHaveValue("Olá {{1}}, tudo bem?");
+  });
+
+  it("o preview aplica a formatação do WhatsApp (*negrito*, _itálico_, ~riscado~)", () => {
+    render(<EditorDeModelo onFechar={() => {}} />);
+    digitar("modelo-corpo", "Oferta *imperdível* e _só hoje_, ~antes~ agora.");
+    const corpo = screen.getByTestId("preview-corpo");
+    expect(corpo.querySelector("strong")).toHaveTextContent("imperdível");
+    expect(corpo.querySelector("em")).toHaveTextContent("só hoje");
+    expect(corpo.querySelector("s")).toHaveTextContent("antes");
+    expect(corpo).toHaveTextContent("Oferta imperdível e só hoje, antes agora.");
+  });
+
+  it("com mais de 3 botões o preview mostra 2 e “Ver todas as opções”, como o WhatsApp", async () => {
+    render(<EditorDeModelo onFechar={() => {}} />);
+    for (let i = 0; i < 4; i += 1) await userEvent.click(screen.getByTestId("btn-add-resposta"));
+    screen.getAllByTestId("botao-texto").forEach((campo, i) => {
+      fireEvent.change(campo, { target: { value: `Opção ${i + 1}` } });
+    });
+    expect(screen.getAllByTestId("preview-botao").map((b) => b.textContent)).toEqual([
+      "Opção 1",
+      "Opção 2",
+      "Ver todas as opções",
+    ]);
+  });
 });

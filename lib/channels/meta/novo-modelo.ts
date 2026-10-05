@@ -70,12 +70,12 @@ const formaDoModelo = z.object({
     .trim()
     .min(1)
     .max(512)
-    .regex(/^[a-z0-9_]+$/, "nome_invalido"),
+    .regex(/^[a-z0-9_]+$/, "nome_invalido" satisfies MotivoDeRecusa),
   /** `pt_BR`, `en_US`, `es` — o código de idioma da Meta. */
   language: z
     .string()
     .trim()
-    .regex(/^[a-z]{2,3}(_[A-Z]{2})?$/, "idioma_invalido"),
+    .regex(/^[a-z]{2,3}(_[A-Z]{2})?$/, "idioma_invalido" satisfies MotivoDeRecusa),
   category: z.enum(CATEGORIAS_DO_EDITOR),
   parameter_format: z.enum(FORMATOS_DE_VARIAVEL).default("POSITIONAL"),
   body: z.string().trim().min(1).max(LIMITE_DO_CORPO),
@@ -93,9 +93,32 @@ const formaDoModelo = z.object({
 export type NovoModelo = z.output<typeof formaDoModelo>;
 
 /** Um motivo de recusa, apontando o campo. `motivo` é código; a tela traduz. */
+/**
+ * Os códigos de recusa que este módulo emite — os de `problemasDoModelo` e os
+ * dois de formato do schema. A tela os traduz por um mapa tipado por esta união:
+ * um código novo aqui sem frase lá é erro de compilação, não "Valor inválido.".
+ */
+export const MOTIVOS_DE_RECUSA = [
+  "exemplo_obrigatorio",
+  "variaveis_fora_de_sequencia",
+  "variavel_posicional_esperada",
+  "variavel_nomeada_invalida",
+  "variavel_na_ponta",
+  "rodape_sem_variavel",
+  "url_https",
+  "variavel_de_url_no_fim",
+  "respostas_rapidas_juntas",
+  "botoes_de_url_demais",
+  "copiar_codigo_demais",
+  "nome_invalido",
+  "idioma_invalido",
+] as const;
+
+export type MotivoDeRecusa = (typeof MOTIVOS_DE_RECUSA)[number];
+
 export interface ProblemaDoModelo {
   campo: string;
-  motivo: string;
+  motivo: Exclude<MotivoDeRecusa, "nome_invalido" | "idioma_invalido">;
 }
 
 /** As variáveis de um texto, uma vez cada, na ordem em que aparecem. */

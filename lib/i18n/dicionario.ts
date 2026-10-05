@@ -13768,6 +13768,7 @@ export const DICIONARIO: Traducoes = {
   "Esta campanha já criou o contato e o negócio dessas empresas ao iniciar. Desmarcar só impede o envio: elas continuam no funil.": { es: "Esta campaña ya creó el contacto y el negocio de estas empresas al iniciar. Desmarcar solo impide el envío: siguen en el embudo." },
 
   // ─── MODELOS DA API OFICIAL: editor básico e preview (issue #6) ───
+  "Ver todas as opções": { es: "Ver todas las opciones" },
   "O texto da mensagem aparece aqui.": { es: "El texto del mensaje aparece aquí." },
   "Modelo enviado para aprovação da Meta.": { es: "Plantilla enviada a Meta para aprobación." },
   "Situação:": { es: "Estado:" },
