@@ -14,7 +14,8 @@
  * que emitiu o token, e a instalação não guarda esse id por número.
  *
  * A Meta guarda só a amostra; o arquivo de cada DISPARO vai em cada envio. Por
- * isso a rota de upload também guarda uma cópia no bucket `whatsapp-media`, em
+ * isso a rota de upload também guarda uma cópia (que as campanhas oficiais vão
+ * usar no disparo; hoje só a lista de modelos a lê) no bucket `whatsapp-media`, em
  * `<org>/templates/<uuid>.<ext>` — a pasta que a retenção de mídia nunca poda —,
  * e o espelho do modelo registra o caminho por slot (`midiasDoModelo`).
  *

@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { apiClient } from "@/lib/api/client";
 import { ApiError, type ApiErrorBody } from "@/lib/api/types";
-import type { FormatoDeMidia, NovoModelo, TipoDeArquivoDoCabecalho } from "@/lib/channels/meta/novo-modelo";
+import type { MidiaEnviadaView } from "@/app/api/v1/channels/templates/media/route";
+import type { FormatoDeMidia, NovoModelo } from "@/lib/channels/meta/novo-modelo";
 
 export interface TemplateSlotView {
   key: string;
@@ -126,17 +127,7 @@ export function useSubmitTemplate() {
   });
 }
 
-/** O que a rota de upload devolve (`app/api/v1/channels/templates/media`). */
-export interface MidiaEnviadaView {
-  handle: string;
-  path: string;
-  mime_type: TipoDeArquivoDoCabecalho;
-  file_name: string;
-  size_bytes: number;
-  format: FormatoDeMidia;
-  /** Link assinado de 1 hora, só para o preview do editor. */
-  preview_url: string | null;
-}
+export type { MidiaEnviadaView };
 
 /**
  * Sobe a mídia do cabeçalho de um modelo (issue #7): a rota manda o arquivo à

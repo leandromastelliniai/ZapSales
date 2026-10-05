@@ -8,7 +8,8 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
  *  1. a API de upload retomável da Meta, que devolve o `handle` da amostra que
  *     a revisão do modelo exige (`example.header_handle`);
  *  2. a cópia no bucket `whatsapp-media`, em `<org>/templates/<uuid>.<ext>` —
- *     a Meta guarda só a amostra, e o arquivo de cada disparo sai daqui.
+ *     a Meta guarda só a amostra, e é daqui que o disparo das campanhas vai
+ *     tirar o arquivo (hoje só a lista de modelos o lê).
  *
  * A Meta vem primeiro: se ela recusar, nada fica no storage (a pasta de modelos
  * não é podada pela retenção, e um arquivo ali sem modelo seria custo para

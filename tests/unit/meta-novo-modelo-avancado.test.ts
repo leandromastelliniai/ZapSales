@@ -479,6 +479,17 @@ describe("novoModeloSchema — compatível com o editor básico", () => {
     }
   });
 
+  it("caminho com extensão que não é a do tipo (.pdf declarado como JPEG) é recusado na forma", () => {
+    const r = novoModeloSchema.safeParse({
+      ...modelo(),
+      header: {
+        format: "IMAGE",
+        media: { ...midia(1, "application/pdf"), mime_type: "image/jpeg" },
+      },
+    });
+    expect(r.success).toBe(false);
+  });
+
   it("caminho de mídia fora da pasta de modelos é recusado na forma", () => {
     const r = novoModeloSchema.safeParse({
       ...modelo(),

@@ -28,8 +28,9 @@
  *   os que o espelho local guarda, e é deles que o envio deriva os parâmetros
  *   (`deriveTemplateContract`) — o mesmo formato que a sincronização traz.
  * - `midiasDoModelo` diz onde está a cópia de cada mídia no storage, pela chave
- *   do slot do envio (`slotKey`). A Meta guarda só a amostra da revisão; o
- *   arquivo de cada disparo sai daqui.
+ *   do slot do envio (`slotKey`). A Meta guarda só a amostra da revisão; é
+ *   daqui que o disparo das campanhas oficiais vai tirar o arquivo. HOJE só a
+ *   lista de modelos lê o registro — o envio ainda pede o link colado.
  * - `previewDoModelo` é o que a tela mostra: os exemplos aplicados no corpo.
  *
  * A mídia do cabeçalho chega aqui JÁ ENVIADA: a rota de upload
@@ -141,14 +142,20 @@ const botaoSchema = z.discriminatedUnion("type", [
 export type BotaoDoModelo = z.infer<typeof botaoSchema>;
 
 /** A mídia já enviada: o `handle` da Meta e a cópia no storage. */
-const midiaSchema = z.object({
-  /** O `h` da API de upload retomável — vai em `example.header_handle`. */
-  handle: z.string().trim().min(1).max(2000),
-  path: z.string().trim().regex(CAMINHO_DA_MIDIA),
-  mime_type: z.enum(TIPOS_DE_ARQUIVO),
-  /** O nome original, para a tela. */
-  file_name: z.string().trim().max(255).default(""),
-});
+const midiaSchema = z
+  .object({
+    /** O `h` da API de upload retomável — vai em `example.header_handle`. */
+    handle: z.string().trim().min(1).max(2000),
+    path: z.string().trim().regex(CAMINHO_DA_MIDIA),
+    mime_type: z.enum(TIPOS_DE_ARQUIVO),
+    /** O nome original, para a tela. */
+    file_name: z.string().trim().max(255).default(""),
+  })
+  // O caminho é gerado pela rota de upload com a extensão do tipo; os dois
+  // discordando é corpo montado à mão, e a lista mostraria o tipo errado.
+  .refine((m) => m.path.endsWith(`.${MIDIAS_DO_CABECALHO[m.mime_type].extensao}`), {
+    path: ["path"],
+  });
 
 export type MidiaDoCabecalho = z.output<typeof midiaSchema>;
 

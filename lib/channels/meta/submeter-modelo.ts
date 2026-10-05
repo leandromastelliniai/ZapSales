@@ -131,7 +131,8 @@ export async function submeterModelo(
     // Derivado, como na sincronização: o envio confere o contrato por este hash.
     contract_hash: hashContract(pedido.components, pedido.parameter_format),
     // Onde está a cópia de cada mídia do cabeçalho (issue #7). A Meta guarda só
-    // a amostra da revisão; o arquivo de cada disparo sai daqui. A linha
+    // a amostra da revisão; é daqui que o disparo das campanhas vai tirar o
+    // arquivo (hoje só a lista lê). A linha
     // reaproveitada troca o registro inteiro — o modelo é outro.
     header_media: midiasDoModelo(modelo),
     synced_at: agora,
