@@ -3226,16 +3226,16 @@ na porta do `.env.e2e`), `tests/unit/meta-conexao-guiada.test.ts`,
 
 | # | Caso | Expectativa | Resultado |
 |---|------|-------------|-----------|
-| J42.1 | Token expirado (190/463), sem `whatsapp_business_messaging`, app em desenvolvimento (entidade APP do `health_status` limitada), chave secreta de outro app, token sem conta | uma frase específica por problema, com o que fazer; nada gravado | **PASS (unit, falso Graph)**; invariante e tela **aguardam o CI** (sem Docker nesta máquina) |
-| J42.2 | Credencial boa | lista as contas e os números da Meta; checklist (Live, pagamento, empresa verificada); número único já vem escolhido | **PASS (unit)**; tela aguarda o CI |
-| J42.3 | Conectar escolhendo da lista, com PIN e uso | `POST /{número}/register` com o PIN, `subscribed_apps`, override do número com o verify token DO NÚMERO, `/{app}/subscriptions` com os campos de saúde e modelos | invariante e tela aguardam o CI |
-| J42.4 | Segredos | token, App Secret e verify token cifrados (`fn_encrypt_oauth`); nenhum volta no GET nem no HTML | invariante e tela aguardam o CI |
+| J42.1 | Token expirado (190/463), sem `whatsapp_business_messaging`, app em desenvolvimento (entidade APP do `health_status` limitada), chave secreta de outro app, token sem conta | uma frase específica por problema, com o que fazer; nada gravado | **PASS (unit, falso Graph)**; **PASS (invariante + tela, CI do PR #18)** |
+| J42.2 | Credencial boa | lista as contas e os números da Meta; checklist (Live, pagamento, empresa verificada); número único já vem escolhido | **PASS (unit)**; **PASS (invariante + tela, CI do PR #18)** |
+| J42.3 | Conectar escolhendo da lista, com PIN e uso | `POST /{número}/register` com o PIN, `subscribed_apps`, override do número com o verify token DO NÚMERO, `/{app}/subscriptions` com os campos de saúde e modelos | **PASS (invariante + tela, CI do PR #18)** |
+| J42.4 | Segredos | token, App Secret e verify token cifrados (`fn_encrypt_oauth`); nenhum volta no GET nem no HTML | **PASS (invariante + tela, CI do PR #18)** |
 | J42.5 | Webhook do número com app próprio | aceita assinado com o segredo do app do cliente, recusa o da instalação; sem par próprio vale a instalação | **PASS (unit)** |
-| J42.6 | Uso declarado | gravado na conexão, visível no cartão, trocado pela tela (`PATCH …/uso`); outra organização recebe 404 | **PASS (unit)**; invariante e tela aguardam o CI |
-| J42.7 | `phone_number_quality_update` (FLAGGED) com a Graph dizendo RED | painel vermelho, aviso crítico na Central, reentrega não repete o aviso; evento de outro número não mexe neste | **PASS (unit, regra e parser)**; invariante e tela aguardam o CI |
-| J42.8 | `business_capability_update` com 250 (número ou `TIER_250`) | limite do portfólio atualizado e aviso de queda | **PASS (unit)**; invariante aguarda o CI |
-| J42.9 | Embedded Signup desligado (padrão) | o botão não aparece e a rota é 404 sem chamar a Meta | **PASS (unit)**; tela aguarda o CI |
-| J42.10 | Embedded Signup ligado | o botão aparece; a janela (SDK substituído na rede) anuncia WABA e número; o código é trocado no servidor com o App Secret da instalação e o número conecta pelo token de negócio | **PASS (unit, troca e chave)**; invariante e tela aguardam o CI |
+| J42.6 | Uso declarado | gravado na conexão, visível no cartão, trocado pela tela (`PATCH …/uso`); outra organização recebe 404 | **PASS (unit)**; **PASS (invariante + tela, CI do PR #18)** |
+| J42.7 | `phone_number_quality_update` (FLAGGED) com a Graph dizendo RED | painel vermelho, aviso crítico na Central, reentrega não repete o aviso; evento de outro número não mexe neste | **PASS (unit, regra e parser)**; **PASS (invariante + tela, CI do PR #18)** |
+| J42.8 | `business_capability_update` com 250 (número ou `TIER_250`) | limite do portfólio atualizado e aviso de queda | **PASS (unit)**; **PASS (invariante, CI do PR #18)** |
+| J42.9 | Embedded Signup desligado (padrão) | o botão não aparece e a rota é 404 sem chamar a Meta | **PASS (unit)**; **PASS (invariante + tela, CI do PR #18)** |
+| J42.10 | Embedded Signup ligado | o botão aparece; a janela (SDK substituído na rede) anuncia WABA e número; o código é trocado no servidor com o App Secret da instalação e o número conecta pelo token de negócio | **PASS (unit, troca e chave)**; **PASS (invariante + tela, CI do PR #18)** |
 
 Achados da pesquisa na documentação da Meta (05/10/2026), que viraram decisão:
 o nó `Application` não expõe modo Dev/Live — o sinal usado é a entidade APP do
