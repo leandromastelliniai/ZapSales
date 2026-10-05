@@ -30,14 +30,20 @@ export function SaudeDoNumeroOficial({
   const t = useT();
   const idioma = useTagDeIdioma();
   const declarar = useDeclararUso();
+  // O clique marca NA HORA: enquanto a gravação está em curso, vale o valor
+  // pedido. Ligado só ao valor do servidor, o rádio voltava ao antigo até a
+  // gravação responder — a pessoa via o clique "não pegar" (medido pela prova em
+  // tela da issue #5). Falhou, a mutation sai de pendente e volta o salvo.
+  const escolhido: UsoDoNumero | null =
+    declarar.isPending && declarar.variables ? declarar.variables.uso : (uso ?? null);
 
   async function trocarUso(novo: UsoDoNumero) {
-    if (novo === uso) return;
+    if (novo === escolhido) return;
     try {
       await declarar.mutateAsync({ channelSessionId, uso: novo });
       toast.success(t("Uso do número salvo."));
     } catch {
-      // O motivo já foi mostrado pelo `onError` do hook; o rádio volta ao valor salvo.
+      // O motivo já foi mostrado pelo `onError` do hook.
     }
   }
 
@@ -80,7 +86,7 @@ export function SaudeDoNumeroOficial({
 
       <fieldset className="flex flex-col gap-2" data-testid="uso-do-numero">
         <legend className="text-sm font-medium">{t("Uso do número")}</legend>
-        {!uso ? (
+        {!escolhido ? (
           <p className="text-xs text-warning-fg">
             {t("Ainda não declarado. Diga para que serve este número — o sistema usa isso para orientar os disparos.")}
           </p>
@@ -95,7 +101,7 @@ export function SaudeDoNumeroOficial({
                 type="radio"
                 name="uso-do-numero-conectado"
                 value={u.valor}
-                checked={uso === u.valor}
+                checked={escolhido === u.valor}
                 disabled={declarar.isPending}
                 onChange={() => void trocarUso(u.valor)}
                 data-testid={`uso-conectado-${u.valor}`}

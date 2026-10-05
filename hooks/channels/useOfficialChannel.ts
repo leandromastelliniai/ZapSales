@@ -185,9 +185,9 @@ export function useDeclararUso() {
         { uso: input.uso },
       ),
     onError: showApiError,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["official-channel"] });
-    },
+    // DEVOLVE a releitura: a mutation fica pendente até o estado novo chegar, e a
+    // tela não pisca de volta para o valor antigo no meio do caminho.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["official-channel"] }),
   });
 }
 

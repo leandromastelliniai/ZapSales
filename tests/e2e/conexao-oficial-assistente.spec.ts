@@ -269,7 +269,10 @@ test.describe("assistente de conexão oficial", () => {
   test("o uso declarado muda pela tela e fica salvo", async ({ page }) => {
     await login(page);
     await abrirAbaOficial(page);
-    await page.getByTestId("uso-conectado-ambos").check();
+    // Clique e ESPERA: o rádio marca na hora (valor em gravação) e o cartão
+    // acompanha quando o estado novo volta do servidor.
+    await page.getByTestId("uso-conectado-ambos").click();
+    await expect(page.getByTestId("uso-conectado-ambos")).toBeChecked({ timeout: 10_000 });
     await expect(page.getByTestId("canal-uso")).toContainText(/Ambos/, { timeout: 30_000 });
     await page.reload();
     await expect(page.getByTestId("uso-conectado-ambos")).toBeChecked({ timeout: 60_000 });
