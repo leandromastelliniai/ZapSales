@@ -167,12 +167,17 @@ export async function ingestMetaInbound(
   // que dispara o pedido de rodízio pelo banco. O identificador aqui chega só em
   // dígitos (`wa_id`), e o `+` é o que a comparação por variantes do nono dígito
   // espera — quem casa é a mesma regra dos outros dois ingestores.
+  //
+  // Só quando há telefone: o número interno é cadastrado por TELEFONE, e quem
+  // chega só com BSUID (nome de usuário, número escondido) não tem com o que
+  // casar — é cliente.
   if (
-    await ehNumeroInternoDeAviso(admin, orgId, {
+    e.from &&
+    (await ehNumeroInternoDeAviso(admin, orgId, {
       kind: "phone",
       phone: `+${e.from.replace(/\D/g, "")}`,
       lid: null,
-    })
+    }))
   ) {
     await registrarMensagemIgnorada(admin, orgId, {
       direction: "inbound",
@@ -181,21 +186,25 @@ export async function ingestMetaInbound(
     return { status: "ignored", reason: "numero_interno_de_aviso" };
   }
 
-  const existente = await findContactByVariants(admin, orgId, e.from);
+  const existente = e.from ? await findContactByVariants(admin, orgId, e.from) : null;
   // Celular BR grava COM o nono. A busca acima já reencontra a grafia sem o 9;
   // a RPC promove o cadastro antigo quando ainda está nos 12 dígitos.
-  const phone = existente?.phone_number
-    ? canonicalPhoneBR(existente.phone_number)
-    : canonicalPhoneBR(`+${e.from.replace(/\D/g, "")}`);
+  const phone = !e.from
+    ? null
+    : existente?.phone_number
+      ? canonicalPhoneBR(existente.phone_number)
+      : canonicalPhoneBR(`+${e.from.replace(/\D/g, "")}`);
 
+  // A identidade do canal oficial é telefone E/OU BSUID (`fn_upsert_meta_contact`,
+  // migration 0535): só telefone segue a regra de sempre; só BSUID acha ou cria a
+  // ficha sem telefone; os dois juntos ficam na mesma ficha.
   const { data: contactId, error: erroContato } = await admin.rpc(
-    "fn_upsert_wa_contact" as never,
+    "fn_upsert_meta_contact" as never,
     {
       p_org: orgId,
-      p_kind: "phone",
       p_phone: phone,
-      p_lid: null,
-      p_chat_id: e.from,
+      p_bsuid: e.fromUserId ?? null,
+      p_chat_id: e.from ?? e.fromUserId ?? null,
       p_notify: e.profileName,
     } as never,
   );

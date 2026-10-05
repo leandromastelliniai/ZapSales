@@ -83,7 +83,7 @@ function adminQueFalhaNoCarimbo(): SupabaseClient {
     if (name === "fn_mark_conversation_message") {
       return { data: null, error: { message: "boom: a RPC do carimbo caiu" } };
     }
-    if (name === "fn_upsert_wa_contact") return { data: "contact-1", error: null };
+    if (name === "fn_upsert_wa_contact" || name === "fn_upsert_meta_contact") return { data: "contact-1", error: null };
     if (name === "fn_upsert_wa_conversation") return { data: "conversation-1", error: null };
     return { data: null, error: null };
   };

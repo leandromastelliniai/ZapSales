@@ -502,6 +502,13 @@ const schema = z.object({
    */
   META_GRAPH_BASE_URL: z.string().optional().default(""),
   META_ADS_GRAPH_BASE_URL: z.string().optional().default(""),
+  /**
+   * Conta de mensagens da Meta (Graph v26, modelo novo de contas) da credencial
+   * do AMBIENTE — o fallback de instalação de número único. Pela tela de
+   * conexão o valor é por número (`channel_sessions.meta_messaging_account_id`).
+   * Vazia = a Meta resolve pela única conta que o token alcança.
+   */
+  META_MESSAGING_ACCOUNT_ID: z.string().optional().default(""),
 
   // Marca da instalação (white-label) — ver lib/branding.ts.
   // Sem prefixo NEXT_PUBLIC_ de propósito: essas seriam queimadas no bundle

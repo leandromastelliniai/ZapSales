@@ -5,8 +5,9 @@
  *
  * O canal de mensagem e a conta de anúncios são duas credenciais com ciclos de
  * vida diferentes, falando com a mesma plataforma. `lib/graph-version.ts` já
- * registra essa decisão: os dois eixos usam a MESMA versão, de propósito, mas
- * NENHUM herda a variável do outro. Aqui é igual, e por três razões medidas:
+ * registra essa decisão: cada eixo tem a SUA constante de versão (desde a issue
+ * #4 o canal está na v26.0 e o anúncio na anterior), e NENHUM herda a variável
+ * do outro. Aqui é igual, e por três razões medidas:
  *
  * 1. **A fronteira.** `scripts/lint-channels.ts` só libera nome de provider
  *    dentro de `lib/channels/` e `lib/plataformas-de-anuncio/`. Um util na raiz
@@ -30,7 +31,7 @@
  */
 import { isIPv4, isIPv6 } from "node:net";
 
-import { VERSAO_PADRAO_DA_GRAPH } from "@/lib/graph-version";
+import { VERSAO_DA_GRAPH_DE_ANUNCIO } from "@/lib/graph-version";
 
 /** O host real da Meta para o eixo de anúncio. */
 export const HOST_PADRAO_DA_GRAPH_DE_ANUNCIO = "https://graph.facebook.com";
@@ -41,7 +42,7 @@ const CHAVE = "META_ADS_GRAPH_BASE_URL";
 /**
  * A base com a versão — `https://graph.facebook.com/v22.0`.
  *
- * A VERSÃO é a constante do eixo (`VERSAO_PADRAO_DA_GRAPH`, a MESMA que
+ * A VERSÃO é a constante do eixo (`VERSAO_DA_GRAPH_DE_ANUNCIO`, a MESMA que
  * `conversions.ts` fixava), e não a função `graphVersion()` do canal: o anúncio
  * não herda a variável do canal de mensagem, por decisão já escrita em
  * `lib/graph-version.ts`. Subir de versão é uma edição deliberada num arquivo só,
@@ -49,7 +50,7 @@ const CHAVE = "META_ADS_GRAPH_BASE_URL";
  * sem aviso.
  */
 export function baseDaGraphDeAnuncio(): string {
-  return `${hostDaGraphDeAnuncio()}/${VERSAO_PADRAO_DA_GRAPH}`;
+  return `${hostDaGraphDeAnuncio()}/${VERSAO_DA_GRAPH_DE_ANUNCIO}`;
 }
 
 /** Só o host, para quem monta a URL com `new URL` e não quer caminho dentro. */

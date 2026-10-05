@@ -46,7 +46,7 @@
  */
 import { createHash } from "node:crypto";
 
-import { VERSAO_PADRAO_DA_GRAPH } from "@/lib/graph-version";
+import { VERSAO_DA_GRAPH_DE_ANUNCIO } from "@/lib/graph-version";
 import { logger } from "@/lib/logger";
 
 import { baseDaGraphDeAnuncio } from "./graph-base";
@@ -60,11 +60,12 @@ import type {
 /**
  * Fixada no código, e não em env nova (item 9 do DoD pede env em dois lugares e
  * este eixo não deve herdar a variável do canal de mensagem — são credenciais e
- * ciclos de vida diferentes). Referencia o número do módulo único
- * (`lib/graph-version.ts`) em vez de copiá-lo: o eixo de anúncio usa a MESMA
- * versão do transporte de mensagens, mas não a variável dele.
+ * ciclos de vida diferentes). Referencia a constante DESTE eixo no módulo único
+ * (`lib/graph-version.ts`) em vez de copiá-la. Desde a issue #4 o canal de
+ * mensagem fala a v26.0 e o anúncio segue na versão anterior até a
+ * reconferência dos campos dele — a razão está no cabeçalho daquele módulo.
  */
-const VERSAO_DA_API = VERSAO_PADRAO_DA_GRAPH;
+const VERSAO_DA_API = VERSAO_DA_GRAPH_DE_ANUNCIO;
 
 /** O teto da plataforma. Evento mais velho que isto é recusado. */
 const IDADE_MAXIMA_MS = 7 * 24 * 60 * 60 * 1000;

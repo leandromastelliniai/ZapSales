@@ -50,6 +50,18 @@ const conectarSchema = z.object({
   phone_number_id: z.string().min(5),
   waba_id: z.string().min(5),
   token: z.string().min(20),
+  /**
+   * Conta de mensagens (Graph v26, modelo novo de contas). Opcional: só é
+   * obrigatória para a Meta quando o token alcança mais de uma conta de mensagens
+   * no número. Vazia conta como ausente.
+   */
+  messaging_account_id: z
+    .string()
+    .trim()
+    .max(64)
+    .regex(/^[A-Za-z0-9_-]*$/)
+    .optional()
+    .transform((v) => (v ? v : null)),
 });
 
 interface DesfechoGravado {
@@ -131,7 +143,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const consultar = () =>
     admin
       .from("channel_sessions")
-      .select("id, meta_phone_number_id, meta_waba_id, meta_token_encrypted, phone_number, display_name, webhook_path_token, status")
+      .select("id, meta_phone_number_id, meta_waba_id, meta_messaging_account_id, meta_token_encrypted, phone_number, display_name, webhook_path_token, status")
       .eq("organization_id", orgId)
       .eq("provider", CHANNEL_PROVIDER_META);
   const { data } = await queryTolerantToMissingArchived(
@@ -149,6 +161,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     hasToken: Boolean(data?.meta_token_encrypted),
     phoneNumberId: data?.meta_phone_number_id ?? null,
     wabaId: data?.meta_waba_id ?? null,
+    /** Conta de mensagens (Graph v26) que vai em toda chamada à API de mensagens. */
+    messagingAccountId:
+      (data as { meta_messaging_account_id?: string | null } | null)?.meta_messaging_account_id ?? null,
     /** Base pública da Graph API — para o operador reaproveitar em outro sistema. */
     endpoint: data ? metaGraphBase() : null,
     displayName: data?.display_name ?? null,
@@ -204,7 +219,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       requestId,
     });
   }
-  const { phone_number_id, waba_id, token } = parsed.data;
+  const { phone_number_id, waba_id, token, messaging_account_id } = parsed.data;
 
   // VALIDA ANTES DE GRAVAR — a rota não sabe com quem fala; ela pergunta se a
   // credencial presta e o canal responde.
@@ -260,6 +275,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     provider: CHANNEL_PROVIDER_META,
     meta_phone_number_id: phone_number_id,
     meta_waba_id: waba_id,
+    meta_messaging_account_id: messaging_account_id,
     meta_token_encrypted: cifrado,
     phone_number: validacao.displayPhoneNumber ? `+${validacao.displayPhoneNumber.replace(/\D/g, "")}` : null,
     display_name: validacao.verifiedName ?? "Canal oficial",

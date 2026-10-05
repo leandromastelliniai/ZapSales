@@ -107,7 +107,14 @@ export interface InboundMessageEvent {
    * (medido: 553191234567 para quem recebemos como 5531991234567) — quem resolve o
    * contato TEM de usar `phoneLookupVariants`, senão duplica a pessoa.
    */
-  from: string;
+  from: string | null;
+  /**
+   * BSUID do contato (`messages[].from_user_id`, ou `contacts[].user_id`):
+   * identificador com escopo do portfólio de negócio, `BR.123…`. Quem ativou nome
+   * de usuário no WhatsApp pode chegar SÓ com ele — `from` vem nulo. Opcional no
+   * tipo para os eventos montados à mão nos testes antigos.
+   */
+  fromUserId?: string | null;
   profileName: string | null;
   sentAt: Date;
   /** `text` | `audio` | `image` | `video` | `document` | `sticker` | `contact` | … */
@@ -138,6 +145,8 @@ export interface MessageStatusEvent {
   externalId: string;
   status: string;
   recipient: string | null;
+  /** `recipient_user_id` — o BSUID do destinatário, presente mesmo sem telefone. */
+  recipientUserId?: string | null;
   errorCode: number | null;
   errorTitle: string | null;
 }
@@ -244,9 +253,16 @@ export function parseMetaWebhook(envelope: MetaWebhookEnvelope): MetaWebhookEven
         for (const raw of v.messages as Record<string, unknown>[]) {
           const id = str(raw.id);
           const from = str(raw.from);
-          if (!id || !from) continue; // payload capenga não vira linha meia-boca
+          // O BSUID vem na mensagem (`from_user_id`) e no bloco de contatos
+          // (`user_id`). Sem telefone NEM BSUID é payload capenga; só com o BSUID
+          // é quem ativou nome de usuário e escondeu o número — e é contato.
+          const perfil =
+            contatos.find((c) => from !== null && str(c.wa_id) === from) ??
+            contatos.find((c) => str(raw.from_user_id) !== null && str(c.user_id) === str(raw.from_user_id)) ??
+            (contatos.length === 1 ? contatos[0] : undefined);
+          const fromUserId = str(raw.from_user_id) ?? str(perfil?.user_id);
+          if (!id || (!from && !fromUserId)) continue; // payload capenga não vira linha meia-boca
 
-          const perfil = contatos.find((c) => str(c.wa_id) === from);
           const tipo = str(raw.type) ?? "unknown";
           const corpoMidia = tipo !== "contacts" ? (raw[tipo] as Record<string, unknown> | undefined) : undefined;
           const sharedContact = tipo === "contacts" ? parseMetaInboundContact(raw) : null;
@@ -258,6 +274,7 @@ export function parseMetaWebhook(envelope: MetaWebhookEnvelope): MetaWebhookEven
             phoneNumberId: str(meta.phone_number_id) ?? "",
             externalId: id,
             from,
+            fromUserId,
             profileName: str((perfil?.profile as Record<string, unknown> | undefined)?.name),
             // A Meta manda epoch em SEGUNDOS, string. Passar direto ao Date daria 1970.
             sentAt: new Date(Number(str(raw.timestamp) ?? "0") * 1000),
@@ -296,6 +313,7 @@ export function parseMetaWebhook(envelope: MetaWebhookEnvelope): MetaWebhookEven
             externalId: id,
             status: str(raw.status) ?? "unknown",
             recipient: str(raw.recipient_id),
+            recipientUserId: str(raw.recipient_user_id),
             errorCode: typeof first.code === "number" ? first.code : null,
             errorTitle: str(first.title),
           });

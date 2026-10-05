@@ -74,7 +74,10 @@ describe("0087 · o canal da sessão chega ao clone", () => {
     // As três `meta_webhook_override_*` (migration 0311) entraram de propósito: são o
     // desfecho do registro do webhook do número ao conectar o canal oficial. A cerca
     // continua valendo — ela existe para pegar coluna que entrou SEM querer.
+    // `meta_messaging_account_id` (migration 0535, issue #4) também é de propósito:
+    // a conta de mensagens do modelo novo de contas da Meta (Graph v26).
     expect(cols).toEqual([
+      "meta_messaging_account_id",
       "meta_phone_number_id",
       "meta_token_encrypted",
       "meta_waba_id",

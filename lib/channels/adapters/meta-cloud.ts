@@ -21,6 +21,12 @@
  */
 import { createAdminClient } from "@/lib/supabase/admin";
 import { metaContactsPayload } from "@/lib/channels/meta/contact-card";
+import {
+  campoDaContaDeMensagens,
+  campoDoDestinatario,
+  ehBsuid,
+} from "@/lib/channels/meta/destinatario";
+import { ErroDaMeta, erroDaRespostaDaGraph } from "@/lib/channels/meta/erros";
 import { graphBaseUrl } from "@/lib/channels/meta/graph-base";
 import { resolveMetaCreds } from "../meta/credentials";
 import type {
@@ -97,9 +103,12 @@ export const metaCloudAdapter: ChannelAdapter = {
     // Devolver null é honesto — o chamador grava `missing_phone_number` em vez de
     // montar um endereço que a Meta recusaria.
     if (input.isGroup) return null;
-    if (!input.phoneNumber) return null;
-    const digits = toE164Digits(input.phoneNumber);
-    return digits.length > 0 ? digits : null;
+    // Telefone primeiro: a Meta dá precedência a ele quando os dois existem. Sem
+    // telefone, o BSUID (quem só chegou por nome de usuário) — e é o `send` que
+    // o põe em `recipient` em vez de `to` (`campoDoDestinatario`).
+    const digits = input.phoneNumber ? toE164Digits(input.phoneNumber) : "";
+    if (digits.length > 0) return digits;
+    return ehBsuid(input.waBsuid) ? input.waBsuid : null;
   },
 
   /**
@@ -299,6 +308,7 @@ export const metaCloudAdapter: ChannelAdapter = {
       },
       body: JSON.stringify({
         messaging_product: "whatsapp",
+        ...campoDaContaDeMensagens(creds.messagingAccountId),
         status: "read",
         message_id: input.inboundExternalId,
         typing_indicator: { type: "text" },
@@ -309,12 +319,8 @@ export const metaCloudAdapter: ChannelAdapter = {
       // do indicador, que é decoração.
       signal: AbortSignal.timeout(5_000),
     });
-    const body = (await res.json().catch(() => ({}))) as {
-      error?: { code?: number; message?: string };
-    };
-    if (!res.ok || body.error) {
-      throw new Error(`meta_${body.error?.code ?? res.status}: ${body.error?.message ?? `http_${res.status}`}`);
-    }
+    const recusa = erroDaRespostaDaGraph(await res.json().catch(() => ({})), res.status);
+    if (recusa) throw new ErroDaMeta(recusa);
   },
 
   async send(envelope: OutboundEnvelope): Promise<{ externalId: string | null }> {
@@ -351,8 +357,9 @@ export const metaCloudAdapter: ChannelAdapter = {
         },
         body: JSON.stringify({
           messaging_product: "whatsapp",
+          ...campoDaContaDeMensagens(creds.messagingAccountId),
           recipient_type: "individual",
-          to: envelope.to,
+          ...campoDoDestinatario(envelope.to),
           ...corpo,
         }),
       },
@@ -360,15 +367,14 @@ export const metaCloudAdapter: ChannelAdapter = {
 
     const body = (await res.json().catch(() => ({}))) as {
       messages?: { id?: string }[];
-      error?: { code?: number; message?: string; error_data?: { details?: string } };
     };
 
-    if (!res.ok || body.error) {
-      // `details` é o campo que diz QUAL parâmetro divergiu; sem ele o operador lê
-      // "Parameter format does not match" e não tem pista nenhuma.
-      const detalhe = body.error?.error_data?.details ?? body.error?.message ?? `http_${res.status}`;
-      throw new Error(`meta_${body.error?.code ?? res.status}: ${detalhe}`);
-    }
+    // A recusa sai CLASSIFICADA (`../meta/erros.ts`): código, categoria,
+    // temporário ou definitivo, e o motivo legível que o handler grava. A
+    // mensagem mantém o prefixo `meta_<código>:` e o `details` da Meta — é ele
+    // que diz QUAL parâmetro divergiu.
+    const recusa = erroDaRespostaDaGraph(body, res.status);
+    if (recusa) throw new ErroDaMeta(recusa);
 
     return { externalId: body.messages?.[0]?.id ?? null };
   },

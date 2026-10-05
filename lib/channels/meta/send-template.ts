@@ -23,13 +23,20 @@ import {
   type TemplateBinding,
 } from "./template-binding";
 import { deriveTemplateContract } from "./template-contract";
+import { campoDaContaDeMensagens, campoDoDestinatario } from "./destinatario";
+import { erroDaRespostaDaGraph, type ErroMetaClassificado } from "./erros";
 import { graphBaseUrl } from "./graph-base";
 
 export interface SendTemplateInput {
   phoneNumberId: string;
   token: string;
   graphVersion: string;
-  /** Destinatário em dígitos E.164, sem `+` — é o que a Graph API aceita. */
+  /** Conta de mensagens (Graph v26): vai como `messaging_account_id` quando existe. */
+  messagingAccountId?: string | null;
+  /**
+   * Destinatário: dígitos E.164 sem `+`, ou o BSUID de quem só tem nome de
+   * usuário — `campoDoDestinatario` escolhe entre `to` e `recipient`.
+   */
   to: string;
   binding: TemplateBinding;
   /** A linha do espelho local. `null` = template não existe mais na Meta. */
@@ -47,7 +54,17 @@ export type SendTemplateResult =
   // por construção, em vez de exigir um `default` que engoliria caso novo em silêncio.
   | { sent: false; reason: Exclude<BindingState, "ok"> }
   | { sent: false; reason: "missing_values"; missing: string[] }
-  | { sent: false; reason: "api_error"; code: number | null; message: string };
+  | {
+      sent: false;
+      reason: "api_error";
+      code: number | null;
+      message: string;
+      /**
+       * A recusa da Graph já classificada pelo mapa de erros. Ausente só quando a
+       * falha é NOSSA (derivação do contrato), antes de qualquer chamada.
+       */
+      falha?: ErroMetaClassificado;
+    };
 
 interface GraphResponse {
   messages?: { id?: string }[];
@@ -101,7 +118,8 @@ export async function sendTemplate(input: SendTemplateInput): Promise<SendTempla
     },
     body: JSON.stringify({
       messaging_product: "whatsapp",
-      to: input.to,
+      ...campoDaContaDeMensagens(input.messagingAccountId),
+      ...campoDoDestinatario(input.to),
       type: "template",
       template: {
         name: input.binding.name,
@@ -114,7 +132,8 @@ export async function sendTemplate(input: SendTemplateInput): Promise<SendTempla
   });
 
   const body = (await res.json().catch(() => ({}))) as GraphResponse;
-  if (!res.ok || body.error) {
+  const falha = erroDaRespostaDaGraph(body, res.status);
+  if (falha) {
     return {
       sent: false,
       reason: "api_error",
@@ -122,6 +141,7 @@ export async function sendTemplate(input: SendTemplateInput): Promise<SendTempla
       // O `details` da Meta é o que diz QUAL parâmetro divergiu; sem ele o operador
       // recebe "Parameter format does not match" e nenhuma pista.
       message: body.error?.error_data?.details ?? body.error?.message ?? `http_${res.status}`,
+      falha,
     };
   }
 

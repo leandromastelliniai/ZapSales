@@ -36,10 +36,12 @@ export {
 } from "./capabilities";
 export { CHANNEL_SESSION_REF_COLUMNS, resolveSessionRef } from "./session-ref";
 export type { ChannelSessionRef } from "./session-ref";
+export { falhaDoCanalDe } from "./types";
 export type {
   ChannelAdapter,
   ChannelCapabilities,
   ChannelProvider,
+  FalhaDoCanal,
   ProviderDeMensagem,
   OutboundEnvelope,
   OutboundKind,

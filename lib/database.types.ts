@@ -4202,6 +4202,7 @@ export type Database = {
           is_warmup_complete: boolean | null
           last_health_check_at: string | null
           last_status_change_at: string
+          meta_messaging_account_id: string | null
           meta_phone_number_id: string | null
           meta_token_encrypted: string | null
           meta_waba_id: string | null
@@ -4236,6 +4237,7 @@ export type Database = {
           is_warmup_complete?: boolean | null
           last_health_check_at?: string | null
           last_status_change_at?: string
+          meta_messaging_account_id?: string | null
           meta_phone_number_id?: string | null
           meta_token_encrypted?: string | null
           meta_waba_id?: string | null
@@ -4270,6 +4272,7 @@ export type Database = {
           is_warmup_complete?: boolean | null
           last_health_check_at?: string | null
           last_status_change_at?: string
+          meta_messaging_account_id?: string | null
           meta_phone_number_id?: string | null
           meta_token_encrypted?: string | null
           meta_waba_id?: string | null
@@ -4440,6 +4443,7 @@ export type Database = {
           source_metadata: Json
           tags: string[]
           updated_at: string
+          wa_bsuid: string | null
           wa_identity: string | null
           wa_lid: string | null
         }
@@ -4483,6 +4487,7 @@ export type Database = {
           source_metadata?: Json
           tags?: string[]
           updated_at?: string
+          wa_bsuid?: string | null
           wa_identity?: string | null
           wa_lid?: string | null
         }
@@ -4526,6 +4531,7 @@ export type Database = {
           source_metadata?: Json
           tags?: string[]
           updated_at?: string
+          wa_bsuid?: string | null
           wa_identity?: string | null
           wa_lid?: string | null
         }
@@ -10679,6 +10685,16 @@ export type Database = {
           p_org: string
         }
         Returns: Json
+      }
+      fn_upsert_meta_contact: {
+        Args: {
+          p_bsuid: string
+          p_chat_id: string
+          p_notify: string
+          p_org: string
+          p_phone: string
+        }
+        Returns: string
       }
       fn_upsert_wa_contact: {
         Args: {
