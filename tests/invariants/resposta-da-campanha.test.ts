@@ -890,3 +890,163 @@ describe("a API guarda o mapa e a regra de quem atende", () => {
     expect(res.status).toBe(422);
   });
 });
+
+describe("revisão: as bordas que a primeira versão errava", () => {
+  /** Uma campanha para uma etiqueta, já disparada. */
+  async function disparar(tag: string, extra: Record<string, unknown> = {}): Promise<string> {
+    const criada = await criarCampanha({
+      name: `Avaliação ${tag}`,
+      channel_session_id: sessaoId,
+      meta_template_id: modeloId,
+      template_variables: { "1": { tipo: "contato", campo: "primeiro_nome" } },
+      base_legal: "consent",
+      audience_filter: { com_alguma_tag: [tag], limite: 100 },
+      pipeline_id: FUNIL,
+      stage_id: ETAPA_RESPONDEU,
+      agent_id: AGENTE,
+      ...extra,
+    });
+    const corpo = await json<{ id: string }>(criada);
+    expect(criada.status, JSON.stringify(corpo)).toBe(201);
+    const id = corpo.data.id;
+    expect((await acao(id, "preparar")).status).toBe(200);
+    expect((await acao(id, "iniciar")).status).toBe(200);
+    await rodada(emMinutos(minutoDaRodada++));
+    return id;
+  }
+
+  async function comNegocio(
+    tag: string,
+    nome: string,
+    funil: string,
+    etapa: string,
+  ): Promise<Pessoa> {
+    const [p] = (await semearContatos(tag, [nome])) as [Pessoa];
+    await pool.query(
+      `insert into crm_leads (organization_id, pipeline_id, stage_id, contact_id, title) values ($1, $2, $3, $4, $5)`,
+      [ORG, funil, etapa, p.id, `Negócio de ${nome}`],
+    );
+    return p;
+  }
+
+  it("duas mensagens coladas ('oi', 'quero') deixam UMA linha 'Respondeu à campanha' na timeline", async () => {
+    const vera = await comNegocio("resp-duas", "Vera Pinto", FUNIL, ETAPA_NOVO);
+    await disparar("resp-duas");
+
+    await responder(vera, { texto: "oi" });
+    await responder(vera, { texto: "quero" });
+
+    const lead = (await leadsAbertos(vera))[0]!;
+    expect(lead.stage_id).toBe(ETAPA_RESPONDEU);
+    const { rows } = await pool.query(
+      `select 1 from crm_lead_activities where organization_id = $1 and lead_id = $2 and type = 'campaign_replied'`,
+      [ORG, lead.id],
+    );
+    expect(rows).toHaveLength(1);
+  });
+
+  it("o consumidor da métrica carimbou ANTES: a resposta ainda conta como primeira e o card anda", async () => {
+    const wil = await comNegocio("resp-carimbo-antes", "Wil Souto", FUNIL, ETAPA_NOVO);
+    const id = await disparar("resp-carimbo-antes");
+    // O dreno de `message.received` passou primeiro, com a hora do evento.
+    await pool.query(
+      `update campaign_recipients set replied_at = $2, status = 'replied' where campaign_id = $1`,
+      [id, emMinutos(30 + sequenciaDeResposta + 1)],
+    );
+
+    await responder(wil, { texto: "pode mandar" });
+    expect((await leadsAbertos(wil))[0]?.stage_id).toBe(ETAPA_RESPONDEU);
+  });
+
+  it("funil declarado SEM etapa: quem já é lead vai para a primeira etapa aberta do funil", async () => {
+    const xavi = await comNegocio("resp-sem-etapa", "Xavi Rocha", OUTRO_FUNIL, OUTRA_ETAPA);
+    await disparar("resp-sem-etapa", { stage_id: null });
+
+    await responder(xavi, { texto: "tenho interesse" });
+    const abertos = await leadsAbertos(xavi);
+    expect(abertos).toHaveLength(1);
+    expect(abertos[0]).toMatchObject({ pipeline_id: FUNIL, stage_id: ETAPA_NOVO });
+  });
+
+  it("'Atribuir à IA' depois de a campanha mandar para a fila: a pausa da campanha sai e o agente atende", async () => {
+    const { pessoas } = await campanhaEnviada("resp-volta-ia", ["Yara Gomes"], {
+      quem_assume: "humano",
+      botoes_de_resposta: [{ botao: "Quero saber mais", acao: "atribuir_ia" }],
+    });
+    const [yara] = pessoas as [Pessoa];
+    const conversa = await conversaDe(yara);
+    const silenciada = async () =>
+      (
+        await pool.query<{ s: boolean }>(
+          `select coalesce(bot_silenced_until > now(), false) as s from conversations where id = $1`,
+          [conversa],
+        )
+      ).rows[0]!.s;
+
+    await responder(yara, { texto: "oi" });
+    expect(await silenciada()).toBe(true);
+    expect(await agenteAcordado(conversa)).toBe(false);
+
+    await responder(yara, { botao: "Quero saber mais" });
+    expect(await silenciada()).toBe(false);
+    expect(await agenteAcordado(conversa)).toBe(true);
+  });
+
+  it("toque num botão de uma campanha ANTIGA: a métrica credita a campanha tocada, não a mais recente", async () => {
+    const [zeca] = (await semearContatos("resp-duas-campanhas", ["Zeca Lima"])) as [Pessoa];
+    const antiga = await disparar("resp-duas-campanhas");
+    const wamidDaAntiga = wamidPara(zeca.tel);
+    // A campanha B falou com a mesma pessoa DEPOIS da A. A preparação recusaria
+    // o contato (limite de 24 h por usuário, no relógio real), então o envio de B
+    // é o destinatário gravado como a rodada o grava: entregue, mais recente.
+    const criadaB = await criarCampanha({
+      name: "Avaliação resp-duas-campanhas B",
+      channel_session_id: sessaoId,
+      meta_template_id: modeloId,
+      template_variables: { "1": { tipo: "contato", campo: "primeiro_nome" } },
+      base_legal: "consent",
+      audience_filter: { com_alguma_tag: ["resp-duas-campanhas"], limite: 100 },
+    });
+    const recente = (await json<{ id: string }>(criadaB)).data.id;
+    await pool.query(
+      `insert into campaign_recipients (organization_id, campaign_id, contact_id, conversation_id, status, sent_at, delivered_at)
+       values ($1, $2, $3, $4, 'delivered', $5, $5)`,
+      [ORG, recente, zeca.id, await conversaDe(zeca), emMinutos(minutoDaRodada + 1)],
+    );
+
+    sequenciaDeResposta += 1;
+    const wamid = `wamid.RESPOSTA.${sequenciaDeResposta}`;
+    const quando = emMinutos(minutoDaRodada + 5);
+    const res = await postarWebhookMeta({
+      token: tokenDoWebhook,
+      appSecret: APP_SECRET,
+      corpo: toqueNoBotao(ORIGEM, {
+        wamid,
+        rotulo: "Quero saber mais",
+        respondendoA: wamidDaAntiga,
+        telefone: zeca.tel.slice(1),
+        nome: zeca.nome,
+        quando,
+      }),
+    });
+    expect(res.status).toBe(200);
+    const { rows: msg } = await pool.query<{ id: string }>(
+      `select id from messages where organization_id = $1 and external_id = $2`,
+      [ORG, wamid],
+    );
+    const { campanhaRespostaHandler } = await import("@/lib/campanhas/resposta.handler");
+    await campanhaRespostaHandler.handle({
+      organization_id: ORG,
+      payload: { contact_id: zeca.id, message_id: msg[0]!.id },
+      created_at: quando.toISOString(),
+    } as never);
+
+    const { rows } = await pool.query<{ campaign_id: string; replied: boolean }>(
+      `select campaign_id, replied_at is not null as replied from campaign_recipients where contact_id = $1`,
+      [zeca.id],
+    );
+    const porCampanha = Object.fromEntries(rows.map((r) => [r.campaign_id, r.replied]));
+    expect(porCampanha[antiga]).toBe(true);
+    expect(porCampanha[recente]).toBe(false);
+  });
+});

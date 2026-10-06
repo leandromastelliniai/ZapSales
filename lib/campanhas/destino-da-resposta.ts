@@ -76,7 +76,7 @@ export const botaoDaRespostaSchema = z
 export type BotaoDaResposta = z.infer<typeof botaoDaRespostaSchema>;
 
 /** Rótulo comparável: a Meta e a tela não precisam bater em caixa nem em espaço. */
-function normalizar(rotulo: string): string {
+export function normalizar(rotulo: string): string {
   return rotulo.trim().toLocaleLowerCase("pt-BR");
 }
 

@@ -3,16 +3,15 @@
  * puras, e compartilhadas pela criação e pela edição para as duas não
  * divergirem do que o servidor exige (`exigeAgente` em `schemas.ts`).
  */
-import type { BotaoDaResposta, QuemAssume } from "./destino-da-resposta";
-
-const chave = (rotulo: string) => rotulo.trim().toLocaleLowerCase("pt-BR");
+import { normalizar as chave, type BotaoDaResposta, type QuemAssume } from "./destino-da-resposta";
+import { exigeAgente } from "./schemas";
 
 /** "IA e depois humano" e o botão "Atribuir à IA" entregam a conversa ao agente da campanha. */
 export function precisaDeAgente(
   quemAssume: QuemAssume,
   botoes: readonly BotaoDaResposta[],
 ): boolean {
-  return quemAssume === "ia_e_humano" || botoes.some((b) => b.acao === "atribuir_ia");
+  return exigeAgente({ quem_assume: quemAssume, botoes_de_resposta: botoes });
 }
 
 /** Só as linhas do mapa cujo rótulo existe no modelo escolhido. */

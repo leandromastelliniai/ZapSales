@@ -8816,5 +8816,6 @@
   "Escolha o agente da campanha: \"IA e depois humano\" e o botão \"Atribuir à IA\" entregam a conversa a ele.": "Choose the campaign's agent: \"AI then human\" and the \"Assign to AI\" button hand the conversation to it.",
   "Não foi possível conferir as etapas dos botões. Tente de novo.": "Could not check the buttons' stages. Try again.",
   "Um dos botões aponta para uma etapa que não existe mais neste CRM. Escolha a etapa de novo.": "One of the buttons points to a stage that no longer exists in this CRM. Choose the stage again.",
-  "Não foi possível carregar a campanha desta conversa.": "Could not load this conversation's campaign."
+  "Não foi possível carregar a campanha desta conversa.": "Could not load this conversation's campaign.",
+  "Respondeu à campanha": "Replied to the campaign"
 }

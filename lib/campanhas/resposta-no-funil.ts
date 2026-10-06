@@ -45,8 +45,9 @@ import {
   type QuemAssume,
 } from "./destino-da-resposta";
 
-/** Vocabulário ABERTO da timeline: o emissor usa a constante, nunca a string solta. */
-export const ATIVIDADE_RESPOSTA_DA_CAMPANHA = "campaign_replied" as const;
+import { ATIVIDADE_RESPOSTA_DA_CAMPANHA } from "./origem-do-lead";
+
+export { ATIVIDADE_RESPOSTA_DA_CAMPANHA };
 
 /**
  * O motivo gravado em `last_handoff_reason` quando a campanha manda a resposta
@@ -66,6 +67,15 @@ const MOTIVO_DA_PERDA_PELO_BOTAO = "other" satisfies CanonicalLostReason;
 
 /** Estados que uma resposta ainda pode promover — mesma régua de `resposta.ts`. */
 const AINDA_SEM_RESPOSTA = new Set(["sent", "delivered", "read"]);
+
+/**
+ * Folga da "primeira resposta". Quem carimba `replied_at` é o consumidor de
+ * `message.received`, que pode drenar ENTRE a gravação da mensagem e esta
+ * leitura — e carimba com a hora do evento, não a da mensagem. Um carimbo até
+ * dois minutos antes desta mensagem é o DELA (ou de uma irmã colada nela, e os
+ * efeitos são idempotentes); mais antigo que isso, a primeira resposta já foi.
+ */
+const FOLGA_DA_PRIMEIRA_RESPOSTA_MS = 2 * 60_000;
 
 export interface CampanhaDaResposta {
   campanhaId: string;
@@ -113,7 +123,10 @@ type LinhaDoDestinatario = {
 const COLUNAS_DO_DESTINATARIO =
   "id, status, replied_at, campaign_id, campaigns(name, pipeline_id, stage_id, quem_assume, botoes_de_resposta)";
 
-function campanhaDaLinha(linha: LinhaDoDestinatario | null): CampanhaDaResposta | null {
+function campanhaDaLinha(
+  linha: LinhaDoDestinatario | null,
+  recebidoEm: Date,
+): CampanhaDaResposta | null {
   if (!linha?.campaigns) return null;
   const c = linha.campaigns;
   const quemAssume = (QUEM_ASSUME as readonly string[]).includes(c.quem_assume ?? "")
@@ -127,7 +140,11 @@ function campanhaDaLinha(linha: LinhaDoDestinatario | null): CampanhaDaResposta 
     stageId: c.stage_id,
     quemAssume,
     botoes: lerBotoesDaResposta(c.botoes_de_resposta),
-    primeiraResposta: linha.replied_at === null && AINDA_SEM_RESPOSTA.has(linha.status),
+    primeiraResposta:
+      linha.replied_at === null
+        ? AINDA_SEM_RESPOSTA.has(linha.status)
+        : new Date(linha.replied_at).getTime() >=
+          recebidoEm.getTime() - FOLGA_DA_PRIMEIRA_RESPOSTA_MS,
   };
 }
 
@@ -164,7 +181,7 @@ export async function campanhaDaResposta(
           .eq("organization_id", organizationId)
           .eq("id", destinatarioId)
           .maybeSingle();
-        const campanha = campanhaDaLinha(data as unknown as LinhaDoDestinatario | null);
+        const campanha = campanhaDaLinha(data as unknown as LinhaDoDestinatario | null, recebidoEm);
         if (campanha) return campanha;
       }
     }
@@ -193,7 +210,7 @@ export async function campanhaDaResposta(
       lerConfiguracao((org as { settings?: unknown } | null)?.settings),
     );
     if (recebidoEm.getTime() - new Date(linha.sent_at).getTime() > janelaMs) return null;
-    return campanhaDaLinha(linha);
+    return campanhaDaLinha(linha, recebidoEm);
   } catch (err) {
     logger.warn(
       "[resposta-da-campanha] campanha da resposta não lida — a mensagem segue o caminho de sempre",
@@ -217,11 +234,42 @@ export async function prepararRespostaDaCampanha(
   const botao = botaoClicado(campanha.botoes, entrada.respostaRapida);
   const plano = planejarResposta({
     quemAssume: campanha.quemAssume,
-    etapaDaCampanha: campanha.stageId,
+    etapaDaCampanha:
+      campanha.stageId ??
+      (await primeiraEtapaDoFunil(admin, entrada.organizationId, campanha.pipelineId)),
     primeiraResposta: campanha.primeiraResposta,
     botao,
   });
   return { campanha, botao, plano };
+}
+
+/**
+ * Funil declarado sem etapa = "primeira etapa do funil" (o que a tela promete):
+ * a primeira etapa aberta, pela posição. `null` sem funil ou em erro — aí a
+ * resposta não move card nenhum, como antes.
+ */
+async function primeiraEtapaDoFunil(
+  admin: SupabaseClient,
+  organizationId: string,
+  pipelineId: string | null,
+): Promise<string | null> {
+  if (!pipelineId) return null;
+  try {
+    const { data } = await admin
+      .from("crm_stages")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("pipeline_id", pipelineId)
+      .eq("is_archived", false)
+      .eq("is_won", false)
+      .eq("is_lost", false)
+      .order("position", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    return (data as { id: string } | null)?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -252,12 +300,15 @@ export async function executarRespostaDaCampanha(
     if (plano.moverPara)
       leadId = await levarParaAEtapa(admin, ctx, entrada, campanha, plano.moverPara);
     else
-      leadId = await negocioAberto(
-        admin,
-        entrada.organizationId,
-        entrada.contactId,
-        campanha.pipelineId,
-      );
+      leadId =
+        (
+          await negocioAbertoCompleto(
+            admin,
+            entrada.organizationId,
+            entrada.contactId,
+            campanha.pipelineId,
+          )
+        )?.id ?? null;
   } catch (err) {
     logger.warn("[resposta-da-campanha] o card não foi para a etapa", {
       ...log,
@@ -288,22 +339,39 @@ export async function executarRespostaDaCampanha(
   }
 
   if (plano.paraHumano) await mandarParaAFila(admin, entrada, log);
+  if (botao?.acao === "atribuir_ia") await devolverAIA(admin, entrada, log);
+}
+
+/**
+ * "Atribuir à IA" depois de a campanha ter mandado a conversa para a fila (o
+ * modo "humano", ou um toque anterior em "falar com atendente"): a pausa que a
+ * CAMPANHA pôs sai, senão o agente acordado encontraria a conversa calada e o
+ * toque não faria nada. Só a pausa da campanha — a de um atendente que assumiu,
+ * ou de uma passagem por pedido do cliente, não é desfeita por um botão.
+ */
+async function devolverAIA(
+  admin: SupabaseClient,
+  entrada: EntradaDaResposta,
+  log: Record<string, unknown>,
+): Promise<void> {
+  const { error } = await admin
+    .from("conversations")
+    .update({ bot_silenced_until: null })
+    .eq("organization_id", entrada.organizationId)
+    .eq("id", entrada.conversationId)
+    .eq("last_handoff_reason", MOTIVO_FILA_DA_CAMPANHA);
+  if (error) {
+    logger.warn("[resposta-da-campanha] pausa da campanha não retirada", {
+      ...log,
+      detail: error.message.slice(0, 160),
+    });
+  }
 }
 
 /**
  * O negócio ABERTO do contato — o do funil da campanha primeiro, senão o mais
  * recente. É o mesmo "um contato, um negócio aberto" da ingestão.
  */
-async function negocioAberto(
-  admin: SupabaseClient,
-  organizationId: string,
-  contactId: string,
-  pipelinePreferido: string | null,
-): Promise<string | null> {
-  const linha = await negocioAbertoCompleto(admin, organizationId, contactId, pipelinePreferido);
-  return linha?.id ?? null;
-}
-
 async function negocioAbertoCompleto(
   admin: SupabaseClient,
   organizationId: string,
@@ -393,6 +461,27 @@ async function registrarNaTimeline(
   leadId: string,
   botao: BotaoDaResposta | null,
 ): Promise<void> {
+  // "Primeira resposta" é lida, não reservada: o carimbo de `replied_at` é do
+  // consumidor de `message.received`, que roda depois. Duas mensagens seguidas
+  // ("oi", "quero") chegam as duas como primeira — mover e pedir fila são
+  // idempotentes, mas a linha da timeline não é. Uma linha por destinatário e
+  // por botão, então: a segunda mensagem não repete "Respondeu à campanha".
+  const { data: registradas } = await admin
+    .from("crm_lead_activities")
+    .select("payload")
+    .eq("organization_id", entrada.organizationId)
+    .eq("lead_id", leadId)
+    .eq("type", ATIVIDADE_RESPOSTA_DA_CAMPANHA)
+    .limit(50);
+  const jaRegistrada = (
+    (registradas ?? []) as Array<{ payload: Record<string, unknown> | null }>
+  ).some(
+    (r) =>
+      r.payload?.campaign_recipient_id === campanha.destinatarioId &&
+      (r.payload?.botao ?? null) === (botao?.botao ?? null),
+  );
+  if (jaRegistrada) return;
+
   const resultado = await emitLeadActivity(admin, {
     organizationId: entrada.organizationId,
     leadId,

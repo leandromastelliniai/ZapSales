@@ -108,9 +108,36 @@ export interface ResumoDaResposta {
  */
 export async function aplicarRespostaNaCampanha(
   admin: SupabaseClient,
-  entrada: { organizationId: string; contactId: string; recebidoEm: Date },
+  entrada: {
+    organizationId: string;
+    contactId: string;
+    recebidoEm: Date;
+    /**
+     * O destinatário que a mensagem respondeu EXPLICITAMENTE (`context.id` do
+     * toque num botão ou da citação — issue #11). Vem primeiro: é o que o funil
+     * e os botões usaram, e a métrica tem de creditar a mesma campanha. Ausente,
+     * ou já carimbado, vale a régua da janela.
+     */
+    destinatarioRespondido?: string | null;
+  },
 ): Promise<ResumoDaResposta> {
   const { organizationId, contactId, recebidoEm } = entrada;
+
+  if (entrada.destinatarioRespondido) {
+    const { data: exato } = await admin
+      .from("campaign_recipients")
+      .update({ replied_at: recebidoEm.toISOString(), status: "replied" })
+      .eq("organization_id", organizationId)
+      .eq("contact_id", contactId)
+      .eq("id", entrada.destinatarioRespondido)
+      .is("replied_at", null)
+      .in("status", [...PROMOVIVEIS])
+      .select("id");
+    if ((exato ?? []).length > 0) {
+      const optOut = await fecharPorOptOut(admin, organizationId, contactId, recebidoEm);
+      return { atribuiu: true, optOut };
+    }
+  }
 
   // A janela vem da ORGANIZAÇÃO, com o default do produto quando ninguém
   // escolheu. Ler config nunca derruba a atribuição: `lerConfiguracao` cai no

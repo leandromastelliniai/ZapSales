@@ -31,9 +31,11 @@ export const campanhaRespostaHandler: EventHandler = {
     }
 
     try {
-      const resumo = await aplicarRespostaNaCampanha(createAdminClient(), {
+      const admin = createAdminClient();
+      const resumo = await aplicarRespostaNaCampanha(admin, {
         organizationId: row.organization_id,
         contactId,
+        destinatarioRespondido: await destinatarioCitado(admin, row.organization_id, row.payload.message_id),
         // A hora da MENSAGEM, não a do consumo: o drain pode rodar minutos
         // depois, e usar `now()` faria uma resposta na borda da janela de 72h
         // cair fora por causa do atraso da fila.
@@ -58,6 +60,41 @@ export const campanhaRespostaHandler: EventHandler = {
 };
 
 /** Quando a mensagem chegou, com o `created_at` do evento como piso. */
+/**
+ * O destinatário que esta mensagem respondeu pelo `context.id` (gravado pela
+ * ingestão em `metadata.context_wamid`): a mensagem citada é nossa e carrega o
+ * `campaign_recipient_id`. `null` em qualquer dúvida — vale a régua da janela.
+ */
+async function destinatarioCitado(
+  admin: ReturnType<typeof createAdminClient>,
+  organizationId: string,
+  messageId: unknown,
+): Promise<string | null> {
+  if (typeof messageId !== "string") return null;
+  try {
+    const { data: msg } = await admin
+      .from("messages")
+      .select("metadata")
+      .eq("organization_id", organizationId)
+      .eq("id", messageId)
+      .maybeSingle();
+    const wamid = ((msg as { metadata?: Record<string, unknown> } | null)?.metadata ?? {}).context_wamid;
+    if (typeof wamid !== "string") return null;
+    const { data: citada } = await admin
+      .from("messages")
+      .select("metadata")
+      .eq("organization_id", organizationId)
+      .eq("external_id", wamid)
+      .eq("direction", "outbound")
+      .limit(1)
+      .maybeSingle();
+    const id = ((citada as { metadata?: Record<string, unknown> } | null)?.metadata ?? {}).campaign_recipient_id;
+    return typeof id === "string" ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 function momentoDoEvento(row: { created_at?: string | Date | null }): Date {
   if (row.created_at) {
     const d = new Date(row.created_at);

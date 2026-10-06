@@ -14039,6 +14039,7 @@ export const DICIONARIO: Traducoes = {
   "Não foi possível conferir as etapas dos botões. Tente de novo.": { es: "No fue posible verificar las etapas de los botones. Inténtalo de nuevo." },
   "Um dos botões aponta para uma etapa que não existe mais neste CRM. Escolha a etapa de novo.": { es: "Uno de los botones apunta a una etapa que ya no existe en este CRM. Elige la etapa de nuevo." },
   "Não foi possível carregar a campanha desta conversa.": { es: "No fue posible cargar la campaña de esta conversación." },
+  "Respondeu à campanha": { es: "Respondió a la campaña" },
 };
 
 /**

@@ -83,8 +83,8 @@ export async function GET(_req: NextRequest, { params }: RouteParams): Promise<R
       .eq("organization_id", org.orgId)
       .eq("id", linha.campaigns.meta_template_id)
       .maybeSingle();
-    const t2 = m as { name: string; language: string } | null;
-    if (t2) modelo = { nome: t2.name, idioma: t2.language };
+    const linhaDoModelo = m as { name: string; language: string } | null;
+    if (linhaDoModelo) modelo = { nome: linhaDoModelo.name, idioma: linhaDoModelo.language };
   }
 
   return ok<CampanhaDaConversa>(

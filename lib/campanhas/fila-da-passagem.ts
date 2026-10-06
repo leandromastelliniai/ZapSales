@@ -9,7 +9,10 @@
  * "pendente" esperando alguém abrir a Inbox.
  *
  * Mesma campanha que `agenteDaCampanhaDaConversa` escolhe: a mais recente desta
- * conversa. Os dois caminhos de passagem chamam daqui — o do motor
+ * conversa, entre as que chegaram a enviar. SEM a janela de atribuição, de
+ * propósito: a regra é "conversa que nasceu da campanha", a mesma do agente da
+ * campanha (degrau 0 de `resolveTurnAgent`) — quem atende e para onde a
+ * passagem vai não podem obedecer a réguas diferentes na mesma conversa. Os dois caminhos de passagem chamam daqui — o do motor
  * (`performHumanHandoff`, `pg`) e o do CRM (`triggerHandoff`, supabase-js).
  *
  * Nunca lança: a passagem já aconteceu quando isto roda, e uma falha aqui não
@@ -36,8 +39,8 @@ export async function filaDaPassagemPelaCampanha(
          from (select c.quem_assume
                  from campaign_recipients r
                  join campaigns c on c.id = r.campaign_id and c.organization_id = r.organization_id
-                where r.organization_id = $1 and r.conversation_id = $2
-                order by r.sent_at desc nulls last
+                where r.organization_id = $1 and r.conversation_id = $2 and r.sent_at is not null
+                order by r.sent_at desc
                 limit 1) campanha
         where campanha.quem_assume = $3`,
       [organizationId, conversationId, QUEM_MANDA_PARA_A_FILA],
@@ -65,7 +68,8 @@ export async function filaDaPassagemPelaCampanhaSupabase(
       .select("campaigns(quem_assume)")
       .eq("organization_id", organizationId)
       .eq("conversation_id", conversationId)
-      .order("sent_at", { ascending: false, nullsFirst: false })
+      .not("sent_at", "is", null)
+      .order("sent_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     const quemAssume = (
