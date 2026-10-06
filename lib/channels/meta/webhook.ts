@@ -221,6 +221,12 @@ export interface MessageStatusEvent {
   recipientUserId?: string | null;
   errorCode: number | null;
   errorTitle: string | null;
+  /**
+   * `statuses[].pricing` cru — `{ billable, pricing_model, type, category }`.
+   * Repassado sem interpretar: a leitura é de `custoDaMensagem`
+   * (`lib/custo/custo-real.ts`). Opcional porque só o registro de custo o lê.
+   */
+  pricing?: unknown;
 }
 
 /**
@@ -489,6 +495,7 @@ export function parseMetaWebhook(envelope: MetaWebhookEnvelope): MetaWebhookEven
             recipientUserId: str(raw.recipient_user_id),
             errorCode: typeof first.code === "number" ? first.code : null,
             errorTitle: str(first.title),
+            pricing: raw.pricing ?? null,
           });
         }
       }

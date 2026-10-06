@@ -23,6 +23,12 @@ export const ritmoSchema = z.object({
   janela_fim_hora: z.number().int().min(1).max(24).nullable().optional(),
   teto_diario: z.number().int().min(1).max(10_000).nullable().optional(),
   teto_horario: z.number().int().min(1).max(10_000).nullable().optional(),
+  /**
+   * Teto de gasto da Meta desta campanha, em centavos (issue #10). Mora junto do
+   * ritmo porque se ajusta com a campanha andando: subir o teto é o que permite
+   * retomar a que pausou por ele.
+   */
+  teto_gasto_cents: z.number().positive().max(1_000_000_000).nullable().optional(),
 });
 
 const baseDaCampanha = {

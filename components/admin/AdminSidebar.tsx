@@ -22,6 +22,7 @@ import {
   Lock,
   PuzzlePiece,
   Stack,
+  Receipt,
 } from "@/lib/ui/icons";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
@@ -81,6 +82,9 @@ const NAV_ITEMS: NavItem[] = [
   // decisão pede explicitamente que o lugar onde o dono controla seja visível.
   // Sem esta linha a tela existiria e só se chegaria nela digitando a URL.
   { href: "/admin/destinos-internos", label: "Destinos internos", icon: Plugs },
+  // A tabela de preços da Meta e a cotação do dólar (issue #10): a base da
+  // estimativa e do teto de gasto de toda campanha oficial da instalação.
+  { href: "/admin/precos-da-meta", label: "Preços da Meta", icon: Receipt },
   // A porta das CREDENCIAIS da instalação (migration 0341): a chave do serviço
   // de e-mail, o remetente, os contatos — o que antes só se trocava por SSH.
   //

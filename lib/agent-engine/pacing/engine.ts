@@ -208,6 +208,12 @@ export function dayStartInTz(instant: Date, timezone: string): Date {
   return instantFromWall(w.y, w.mo, w.d, 0, timezone);
 }
 
+/** Meia-noite LOCAL do dia 1 do mês contendo `instant` — o corte dos contadores mensais. */
+export function monthStartInTz(instant: Date, timezone: string): Date {
+  const w = wallClock(instant, timezone);
+  return instantFromWall(w.y, w.mo, 1, 0, timezone);
+}
+
 /**
  * A janela horária está aberta agora? Exportada para quem precisa da pergunta
  * ANTES de ter uma mensagem para enviar — hoje o turno inbound, que adia o job

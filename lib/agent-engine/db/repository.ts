@@ -96,6 +96,8 @@ export type InboxKind =
   // da 0500). O Jev só avisa.
   | 'jev_pedido_de_humano'
   | 'jev_parar_de_receber'
+  // (0540) o número cruzou 80% ou 100% das 1.000 de atendimento grátis do mês.
+  | 'atendimento_gratis_do_numero'
   // Proposta presa em `enviando` há mais de 5min — o cron `proposta-travada`
   // a devolveu a rascunho sozinho, sem reenviar nada.
   | 'proposta_travada'
