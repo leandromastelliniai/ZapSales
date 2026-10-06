@@ -6,6 +6,7 @@
 import { z } from "zod";
 
 import { filtroDeAudienciaSchema } from "./audiencia";
+import { QUEM_ASSUME, botoesDaRespostaSchema } from "./destino-da-resposta";
 import { mapaDeVariaveisSchema } from "./variaveis-do-modelo";
 
 /**
@@ -22,6 +23,12 @@ export const ritmoSchema = z.object({
   janela_fim_hora: z.number().int().min(1).max(24).nullable().optional(),
   teto_diario: z.number().int().min(1).max(10_000).nullable().optional(),
   teto_horario: z.number().int().min(1).max(10_000).nullable().optional(),
+  /**
+   * Teto de gasto da Meta desta campanha, em centavos (issue #10). Mora junto do
+   * ritmo porque se ajusta com a campanha andando: subir o teto é o que permite
+   * retomar a que pausou por ele.
+   */
+  teto_gasto_cents: z.number().positive().max(1_000_000_000).nullable().optional(),
 });
 
 const baseDaCampanha = {
@@ -58,6 +65,32 @@ const baseDaCampanha = {
    * do modelo abre. Só com modelo; conferido na rota contra o botão do modelo.
    */
   numero_de_atendimento_id: z.string().uuid().nullable().optional(),
+  /**
+   * O que acontece com quem responde (migration 0541, issue #11): quem assume,
+   * o que cada botão de resposta rápida faz e a oferta que vai para o agente.
+   * As etapas dos botões são conferidas na rota, dentro da organização.
+   */
+  quem_assume: z.enum(QUEM_ASSUME).optional(),
+  botoes_de_resposta: botoesDaRespostaSchema.optional(),
+  oferta: z.string().trim().max(2000).nullable().optional(),
+};
+
+/**
+ * "Atribuir à IA" entrega a conversa ao agente DA CAMPANHA — sem ele, o botão
+ * prometeria um atendimento que ninguém faria. "IA e depois humano" também
+ * precisa de quem atenda antes da passagem. (Na edição a mesma regra é conferida
+ * na rota, sobre o estado final da campanha.)
+ */
+export function exigeAgente(c: {
+  quem_assume?: string | null;
+  botoes_de_resposta?: ReadonlyArray<{ acao: string }> | null;
+}): boolean {
+  return c.quem_assume === "ia_e_humano" || (c.botoes_de_resposta ?? []).some((b) => b.acao === "atribuir_ia");
+}
+
+export const MENSAGEM_SEM_AGENTE = {
+  message: 'Escolha o agente da campanha: "IA e depois humano" e o botão "Atribuir à IA" entregam a conversa a ele.',
+  path: ["agent_id"],
 };
 
 export const criarCampanhaSchema = z
@@ -76,6 +109,7 @@ export const criarCampanhaSchema = z
     message: "Escolha o funil antes da etapa — etapa sem funil seria um card sem coluna.",
     path: ["stage_id"],
   })
+  .refine((c) => !exigeAgente(c) || c.agent_id != null, MENSAGEM_SEM_AGENTE)
   .refine(
     (c) =>
       c.janela_inicio_hora == null ||
@@ -100,6 +134,9 @@ export const editarCampanhaSchema = z
     agent_id: baseDaCampanha.agent_id,
     meta_template_id: baseDaCampanha.meta_template_id,
     template_variables: baseDaCampanha.template_variables,
+    quem_assume: baseDaCampanha.quem_assume,
+    botoes_de_resposta: baseDaCampanha.botoes_de_resposta,
+    oferta: baseDaCampanha.oferta,
     numero_de_atendimento_id: baseDaCampanha.numero_de_atendimento_id,
   })
   .merge(ritmoSchema);

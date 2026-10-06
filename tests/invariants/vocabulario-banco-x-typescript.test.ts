@@ -436,6 +436,14 @@ const PARES: Array<{
   },
   {
     tabela: "campaigns",
+    coluna: "quem_assume",
+    // Quem assume a resposta da campanha (0541, issue #11). Um valor que nascesse
+    // só no banco cairia no `default` de `planejarResposta` e viraria "ia".
+    arquivo: "lib/campanhas/destino-da-resposta.ts",
+    simbolo: "QUEM_ASSUME",
+  },
+  {
+    tabela: "campaigns",
     coluna: "pausa_motivo",
     // lib/campanhas/pausa-automatica.ts → MOTIVOS_DA_PAUSA (tupla `as const`).
     // Nasce no MESMO commit da migration 0539. O motivo é gravado pela pausa
@@ -444,6 +452,22 @@ const PARES: Array<{
     // seguiria enviando, que é o contrário do que a pausa existe para fazer.
     arquivo: "lib/campanhas/pausa-automatica.ts",
     simbolo: "MOTIVOS_DA_PAUSA",
+  },
+  {
+    tabela: "meta_pricing_rates",
+    coluna: "category",
+    // lib/custo/tabela-de-precos.ts → CATEGORIAS_DE_PRECO (tupla `as const`): o
+    // vocabulário do `pricing.category` do webhook da Meta (migration 0540).
+    arquivo: "lib/custo/tabela-de-precos.ts",
+    simbolo: "CATEGORIAS_DE_PRECO",
+  },
+  {
+    tabela: "meta_message_costs",
+    coluna: "origem",
+    // lib/custo/registro.ts → ORIGENS_DO_CUSTO (tupla `as const`): estimado no
+    // envio, real pelo webhook (migration 0540).
+    arquivo: "lib/custo/registro.ts",
+    simbolo: "ORIGENS_DO_CUSTO",
   },
 ];
 

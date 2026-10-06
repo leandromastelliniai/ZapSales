@@ -60,7 +60,11 @@ Uma capability nunca é um booleano solto. Ela diz de que família é, porque is
 - **auto-restrição barrou** → adiar e tentar depois (a janela reabre, o cap zera à meia-noite).
   Vetar para sempre seria perder a mensagem por prudência.
 - **hetero-restrição barrou** → mudar a forma da mensagem (usar template) ou escalar ao humano.
-  Adiar não resolve: amanhã a janela de 24h estará ainda mais fechada.
+  Adiar não resolve: amanhã a janela de 24h estará ainda mais fechada. Quem escolhe o template
+  fora da janela é uma PESSOA (o modelo configurado no passo do follow-up), nunca o agente no
+  meio de um turno: o gate `messaging_window` veta o template do agente fora da janela
+  (`agent_template_outside_window`, issue #11) — modelo fora da janela é mensagem paga e
+  iniciada pela empresa.
 
 - **Verificação:** a matriz de capabilities é exaustiva — capability sem linha para algum
   provider reprova o CI. Capability que nenhum provider declara é código morto e sai.

@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Campanhas — da lista escolhida até a resposta que volta",
-    "subtitle": "Modo WAHA: o ritmo é do número (channel_knobs + pacing_ledger). Modo oficial: modelo aprovado em lotes, sem anti-ban (issue #8). Proteções (issue #9): limite do portfólio, pausa automática com motivo, aceite do risco no QR code e o modo dois números",
+    "subtitle": "Modo WAHA: o ritmo é do número (channel_knobs + pacing_ledger). Modo oficial: modelo aprovado em lotes, sem anti-ban (issue #8). Proteções (issue #9): limite do portfólio, pausa automática com motivo, aceite do risco no QR code e o modo dois números. A resposta cai no funil e no agente da campanha (issue #11)",
     "output": "campanhas.html",
     "quality_profile": "standard"
   },
@@ -229,6 +229,74 @@
       "col": 5,
       "type": "external",
       "label": "webhook da Meta (status assinado) — entregue, lido e a falha que chega depois"
+    },
+    {
+      "id": "precos-admin",
+      "lane": "tela",
+      "col": 4,
+      "type": "ui",
+      "label": "/admin/precos-da-meta — tabela de preços por país e categoria + cotação do dólar (administrador da instalação)"
+    },
+    {
+      "id": "rota-custo",
+      "lane": "api",
+      "col": 6,
+      "type": "service",
+      "label": "GET /api/v1/campaigns/:id/cost + /atendimento-gratis — estimativa, custo Meta + IA, por lead, anúncio, contador das 1.000"
+    },
+    {
+      "id": "teto-de-gasto",
+      "lane": "motor",
+      "col": 5,
+      "type": "logic",
+      "label": "teto-de-gasto.ts + fn_campanha_reservar_lote_no_teto — reserva só o que cabe (lock por organização); não cabe → pausa com motivo"
+    },
+    {
+      "id": "meta-pricing-rates",
+      "lane": "dados",
+      "col": 5,
+      "type": "database",
+      "label": "meta_pricing_rates — preço por país (prefixo) e categoria, da instalação"
+    },
+    {
+      "id": "meta-message-costs",
+      "lane": "dados",
+      "col": 6,
+      "type": "database",
+      "label": "meta_message_costs — custo por mensagem: estimado no envio, real pelo pricing do webhook"
+    },
+    {
+      "id": "aviso-gratis",
+      "lane": "retorno",
+      "col": 6,
+      "type": "logic",
+      "label": "registro.ts — 80% e 100% das 1.000 de atendimento grátis viram aviso na Central (atendimento_gratis_do_numero)",
+      "id": "resposta-no-funil",
+      "lane": "retorno",
+      "col": 6,
+      "type": "logic",
+      "label": "resposta-no-funil.ts — a resposta cria ou move o card, aplica quem assume e o botão tocado (issue #11)"
+    },
+    {
+      "id": "crm-leads",
+      "lane": "dados",
+      "col": 5,
+      "type": "database",
+      "label": "crm_leads + crm_lead_activities (campaign_replied)"
+    },
+    {
+      "id": "contexto-agente",
+      "lane": "motor",
+      "col": 5,
+      "type": "logic",
+      "label": "contexto-do-agente.ts — nome, modelo, texto recebido, variáveis e oferta no turno do agente"
+    },
+    {
+      "id": "fila-da-passagem",
+      "lane": "retorno",
+      "col": 7,
+      "type": "logic",
+      "label": "fila-da-passagem.ts — 'IA e depois humano': a passagem pede o rodízio de atendentes"
     }
 ,
     {
@@ -265,6 +333,13 @@
       "col": 5,
       "type": "database",
       "label": "channel_sessions — meta_portfolio_id (da WABA, na conexão), meta_qualidade, meta_limite_de_mensagens"
+    },
+    {
+      "id": "aviso-gratis",
+      "lane": "retorno",
+      "col": 6,
+      "type": "logic",
+      "label": "registro.ts — 80% e 100% das 1.000 de atendimento grátis viram aviso na Central (atendimento_gratis_do_numero)"
     }
   ],
   "edges": [
@@ -311,6 +386,13 @@
     { "id": "webhook-falha-tardia", "from": "webhook-meta", "to": "falha-oficial", "label": "failed de mensagem de campanha" },
     { "id": "falha-recoloca", "from": "falha-oficial", "to": "campaign-recipients", "label": "volta à fila, opted_out ou failed com o motivo" },
     { "id": "falha-recusa-marketing", "from": "falha-oficial", "to": "elegibilidade", "label": "131050: consent.marketing.declined_at tira o contato das próximas" },
+    { "id": "webhook-resposta-no-funil", "from": "webhook-meta", "to": "resposta-no-funil", "label": "resposta assinada: texto ou toque no botão, com context.id" },
+    { "id": "resposta-le-campanha", "from": "resposta-no-funil", "to": "campaigns", "label": "lê funil, etapa, quem assume e o mapa dos botões" },
+    { "id": "resposta-move-card", "from": "resposta-no-funil", "to": "crm-leads", "label": "cria na etapa da campanha ou move o que já existe, sem duplicar" },
+    { "id": "resposta-botao-opt-out", "from": "resposta-no-funil", "to": "opt-out", "label": "botão de parar grava is_blocked (quick_reply_opt_out)" },
+    { "id": "contexto-le-destinatario", "from": "contexto-agente", "to": "campaign-recipients", "label": "texto renderizado e variáveis de quem respondeu" },
+    { "id": "contexto-le-campanha", "from": "contexto-agente", "to": "campaigns", "label": "nome, modelo e oferta" },
+    { "id": "fila-le-campanha", "from": "fila-da-passagem", "to": "campaigns", "label": "quem_assume = ia_e_humano" },
     { "id": "rodada-pede-portfolio", "from": "rodada-oficial", "to": "portfolio", "label": "quanto cabe no limite do portfólio agora" },
     { "id": "portfolio-le-numeros", "from": "portfolio", "to": "channel-sessions", "label": "números do mesmo portfólio (inclusive de outra organização) e a menor faixa" },
     { "id": "portfolio-conta", "from": "portfolio", "to": "messages", "label": "modelos que saíram nas últimas 24 h" },
@@ -322,6 +404,15 @@
     { "id": "aviso-aceita", "from": "aviso-risco", "to": "rota-acao", "label": "aceitar-risco → risco_de_banimento_aceito_em/_por + campaign.ban_risk_accepted" },
     { "id": "criar-confere-dois-numeros", "from": "rota-criar", "to": "dois-numeros", "label": "numero_de_atendimento_id confere o botão wa.me" },
     { "id": "dois-numeros-preenche", "from": "dois-numeros", "to": "preparacao", "label": "variável do botão = telefone do número de QR code" },
-    { "id": "resposta-pelo-contato", "from": "dois-numeros", "to": "resposta", "label": "quem responde no QR code cai no mesmo contato; a resposta conta pela ficha" }
+    { "id": "resposta-pelo-contato", "from": "dois-numeros", "to": "resposta", "label": "quem responde no QR code cai no mesmo contato; a resposta conta pela ficha" },
+    { "id": "precos-grava-tabela", "from": "precos-admin", "to": "meta-pricing-rates", "label": "updatePrecosDaMeta (server action, audita platform.meta_pricing_updated)" },
+    { "id": "rodada-pergunta-teto", "from": "rodada-oficial", "to": "teto-de-gasto", "label": "antes da reserva: quanto ainda cabe" },
+    { "id": "teto-le-custos", "from": "teto-de-gasto", "to": "meta-message-costs", "label": "comprometido = custo registrado + reservados em voo" },
+    { "id": "teto-pausa", "from": "teto-de-gasto", "to": "campaigns", "label": "pausa_motivo = teto_de_gasto + pausa_detalhe" },
+    { "id": "rodada-estima", "from": "rodada-oficial", "to": "meta-message-costs", "label": "estimativa pela tabela quando a Meta aceita o envio" },
+    { "id": "webhook-registra-custo", "from": "webhook-meta", "to": "meta-message-costs", "label": "pricing do status: a Meta diz se cobrou; a tabela diz quanto" },
+    { "id": "custos-avisam", "from": "meta-message-costs", "to": "aviso-gratis", "label": "mensagem de atendimento cruza 800 ou 1.000 no mês do fuso" },
+    { "id": "detalhe-le-custo", "from": "detalhe", "to": "rota-custo", "label": "cartão de custo e aviso de pausa automática" },
+    { "id": "custo-le-tabela", "from": "rota-custo", "to": "meta-pricing-rates", "label": "estimativa da prévia e da campanha preparada" }
   ]
 }

@@ -1,4 +1,5 @@
 import { prospectingConversationContext } from "@/lib/prospecting/context";
+import { contextoDaCampanhaDaConversa } from "@/lib/campanhas/contexto-do-agente";
 import { setExecutionAgentOperation } from '@/lib/atendimento/fronteira-server';
 import { TIPOS_DE_CASO, TIPOS_DE_CASO_PARA_A_IA } from "@/lib/ai/case-copy";
 import { DEFAULT_CHANNEL_PROVIDER } from '@/lib/channels/capabilities';
@@ -457,8 +458,9 @@ export const AGENT_TOOL_DEFS = {
   },
   send_template: {
     description:
-      'Envia um TEMPLATE aprovado do WhatsApp. Use SOMENTE quando o send_message for recusado ' +
-      'porque a janela de 24 horas com o contato fechou — a mensagem de erro diz quando é o caso. ' +
+      'Envia um TEMPLATE aprovado do WhatsApp, e só DENTRO da janela de 24 horas com o contato. ' +
+      'Fora dela você não envia modelo por conta própria: se o send_message for recusado porque a ' +
+      'janela fechou, encerre o turno sem enviar — o follow-up configurado é quem fala. ' +
       'Você precisa do nome exato do template, do idioma e de um valor para CADA parâmetro. ' +
       'Se faltar valor, a resposta diz quais e você pode chamar de novo; qualquer outro erro ' +
       'significa que um humano precisa agir — encerre o turno sem insistir.',
@@ -2222,10 +2224,18 @@ async function executarTurnoDoAgente(
   // Com agente publicado, o system_prompt DELE é a camada tenant (platform de
   // compliance continua à frente, sempre).
   const prospectingContext = !preview && input.conversationId ? await prospectingConversationContext(pool, tenantId, input.conversationId) : "";
+  // A campanha que esta pessoa está respondendo: nome, modelo, texto recebido,
+  // variáveis e oferta (issue #11). Vazio fora da janela de atribuição.
+  const campanhaContext =
+    !preview && input.conversationId
+      ? await contextoDaCampanhaDaConversa(pool, tenantId, input.conversationId, clock())
+      : "";
   const playbook = await loadPlaybook(
     pool,
     tenantId,
-    agentConfig !== null ? { agentLayer: agentConfig.systemPrompt + prospectingContext } : undefined,
+    agentConfig !== null
+      ? { agentLayer: agentConfig.systemPrompt + prospectingContext + campanhaContext }
+      : undefined,
   );
   // Skills situacionais (F3-09): índice (name+description) SEMPRE residente — vai junto do
   // system do playbook, no prefixo estável org-wide (disclosure progressivo; cacheável F2-17).
@@ -2925,6 +2935,8 @@ async function executarTurnoDoAgente(
           body: rendered,
           // Só ESTE gate muda; stop, LGPD e pacing continuam valendo integralmente.
           isTemplate: true,
+          // Escolhido pelo agente: fora da janela, o gate veta (issue #11).
+          templateDoAgente: true,
           optedOutThisTurn,
           // Resposta do turno, mesmo sendo template: lê a janela de resposta (0495).
           resposta: eTurnoDeResposta(liveJob()),

@@ -75,7 +75,16 @@ function envelope(origem: Origem, value: Record<string, unknown>) {
 
 export function mensagemRecebida(
   origem: Origem,
-  m: { wamid: string; texto: string; nome?: string; telefone?: string; bsuid?: string; quando?: Date },
+  m: {
+    wamid: string;
+    texto: string;
+    nome?: string;
+    telefone?: string;
+    bsuid?: string;
+    quando?: Date;
+    /** `context.id`: o `wamid` da nossa mensagem que esta responde (issue #11). */
+    respondendoA?: string;
+  },
 ) {
   const contato: Record<string, unknown> = { profile: { name: m.nome ?? "Cliente" } };
   if (m.telefone) contato.wa_id = m.telefone;
@@ -88,7 +97,31 @@ export function mensagemRecebida(
   };
   if (m.telefone) mensagem.from = m.telefone;
   if (m.bsuid) mensagem.from_user_id = m.bsuid;
+  if (m.respondendoA) mensagem.context = { from: origem.numeroExibido ?? "5531900000000", id: m.respondendoA };
   return envelope(origem, { contacts: [contato], messages: [mensagem] });
+}
+
+/**
+ * O toque num botão de resposta rápida de um MODELO (`type: "button"`), como a
+ * Cloud API o entrega: o rótulo, o payload e o `context.id` da mensagem do modelo.
+ */
+export function toqueNoBotao(
+  origem: Origem,
+  b: { wamid: string; rotulo: string; payload?: string; respondendoA: string; telefone: string; nome?: string; quando?: Date },
+) {
+  return envelope(origem, {
+    contacts: [{ wa_id: b.telefone, profile: { name: b.nome ?? "Cliente" } }],
+    messages: [
+      {
+        from: b.telefone,
+        id: b.wamid,
+        timestamp: String(Math.floor((b.quando ?? new Date()).getTime() / 1000)),
+        type: "button",
+        context: { from: origem.numeroExibido ?? "5531900000000", id: b.respondendoA },
+        button: { text: b.rotulo, payload: b.payload ?? b.rotulo },
+      },
+    ],
+  });
 }
 
 export function statusDeEntrega(
@@ -100,14 +133,20 @@ export function statusDeEntrega(
     bsuid?: string;
     erro?: { code: number; title: string };
     categoria?: "marketing" | "utility" | "authentication" | "service";
+    /** O `pricing` inteiro, para provar o não cobrável e a janela de anúncio. `null` = sem pricing. */
+    pricing?: Record<string, unknown> | null;
   },
 ) {
   const status: Record<string, unknown> = {
     id: s.wamid,
     status: s.status,
     timestamp: String(Math.floor(Date.now() / 1000)),
-    pricing: { billable: true, pricing_model: "PMP", type: "regular", category: s.categoria ?? "marketing" },
   };
+  const pricing =
+    s.pricing === undefined
+      ? { billable: true, pricing_model: "PMP", type: "regular", category: s.categoria ?? "marketing" }
+      : s.pricing;
+  if (pricing) status.pricing = pricing;
   if (s.telefone) status.recipient_id = s.telefone;
   if (s.bsuid) status.recipient_user_id = s.bsuid;
   if (s.erro) status.errors = [{ code: s.erro.code, title: s.erro.title }];

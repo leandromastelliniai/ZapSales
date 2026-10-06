@@ -26,8 +26,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { LinhaDaEstimativa } from "@/components/campanhas/CustoDaCampanha";
 import { DoisNumeros, problemaDoParDoisNumeros } from "@/components/campanhas/DoisNumeros";
 import { MensagemOficial, mapaCompleto, mapaDoModelo } from "@/components/campanhas/MensagemOficial";
+import { RespostaDaCampanha } from "@/components/campanhas/RespostaDaCampanha";
+import { botoesDoModeloEscolhido, precisaDeAgente } from "@/lib/campanhas/resposta-na-tela";
+import { lerBotoesDaResposta, type BotaoDaResposta, type QuemAssume } from "@/lib/campanhas/destino-da-resposta";
 import {
   useCampanha,
   useEditarCampanha,
@@ -63,6 +67,9 @@ export function EditarCampanha({ id }: { id: string }) {
   const [carregado, setCarregado] = useState(false);
   const [modeloId, setModeloId] = useState("");
   const [mapa, setMapa] = useState<MapaDeVariaveis>({});
+  const [quemAssume, setQuemAssume] = useState<QuemAssume>("ia");
+  const [oferta, setOferta] = useState("");
+  const [botoes, setBotoes] = useState<BotaoDaResposta[]>([]);
   const [numeroDeAtendimento, setNumeroDeAtendimento] = useState("");
 
   // Número oficial manda modelo aprovado (issue #8); o de QR code, texto livre.
@@ -80,6 +87,7 @@ export function EditarCampanha({ id }: { id: string }) {
   const funis = useFunis();
   const etapas = useEtapas(funil || null);
   const agentes = useAgentesPublicados();
+  const botoesDoModelo = oficial ? (modelo?.botoesDeResposta ?? []) : [];
 
   // Uma carga só: depois disso quem manda é o que a pessoa está digitando. Sem
   // a trava, o `refetchInterval` do detalhe apagaria a edição em andamento.
@@ -101,6 +109,9 @@ export function EditarCampanha({ id }: { id: string }) {
     setAgente(c.agent_id ?? "");
     setModeloId(c.meta_template_id ?? "");
     setMapa(c.template_variables ?? {});
+    setQuemAssume(c.quem_assume ?? "ia");
+    setOferta(c.oferta ?? "");
+    setBotoes(lerBotoesDaResposta(c.botoes_de_resposta));
     setNumeroDeAtendimento(c.numero_de_atendimento_id ?? "");
     setCarregado(true);
   }, [campanha.data, carregado]);
@@ -175,7 +186,8 @@ export function EditarCampanha({ id }: { id: string }) {
     canal !== "" &&
     (oficial ? mapaCompleto(modelo, mapa, slotAutomatico) && !problemaDoAtendimento : texto.trim() !== "") &&
     temCriterio &&
-    (baseLegal !== "legitimate_interest" || liaRef.trim() !== "");
+    (baseLegal !== "legitimate_interest" || liaRef.trim() !== "") &&
+    !(precisaDeAgente(quemAssume, botoes) && !agente);
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-6">
@@ -312,6 +324,7 @@ export function EditarCampanha({ id }: { id: string }) {
             </p>
           )}
         </div>
+        {previa.data?.estimativa && <LinhaDaEstimativa estimativa={previa.data.estimativa} />}
       </Card>
 
       <Card className="space-y-4 p-4">
@@ -329,6 +342,8 @@ export function EditarCampanha({ id }: { id: string }) {
               onChange={(ev) => {
                 setFunil(ev.target.value);
                 setEtapa("");
+                // As etapas dos botões eram do funil anterior.
+                setBotoes((atual) => atual.filter((b) => b.acao !== "mover_etapa"));
               }}
             >
               <option value="">{t("Funil do número (padrão)")}</option>
@@ -375,6 +390,18 @@ export function EditarCampanha({ id }: { id: string }) {
             ))}
           </select>
         </div>
+        <RespostaDaCampanha
+          quemAssume={quemAssume}
+          onQuemAssume={setQuemAssume}
+          oferta={oferta}
+          onOferta={setOferta}
+          botoes={botoes}
+          onBotoes={setBotoes}
+          botoesDoModelo={botoesDoModelo}
+          etapas={(etapas.data ?? []).filter((x) => !x.is_lost)}
+          temFunil={funil !== ""}
+          temAgente={agente !== ""}
+        />
       </Card>
 
       <Card className="space-y-4 p-4">
@@ -445,6 +472,9 @@ export function EditarCampanha({ id }: { id: string }) {
               pipeline_id: funil || null,
               stage_id: etapa || null,
               agent_id: agente || null,
+              quem_assume: quemAssume,
+              botoes_de_resposta: botoesDoModeloEscolhido(botoes, botoesDoModelo),
+              oferta: oferta.trim() || null,
             });
             router.push(`/app/campaigns/${id}`);
           }}

@@ -58,10 +58,19 @@ export interface CampanhaCarregada {
   janela_fim_hora: number | null;
   teto_diario: number | null;
   teto_horario: number | null;
+  teto_gasto_cents: number | string | null;
   description: string | null;
   /** Com modelo, a campanha é OFICIAL (migration 0538). */
   meta_template_id: string | null;
   template_variables: unknown;
+  /** Onde o card nasce e quem atende (0378). */
+  pipeline_id: string | null;
+  stage_id: string | null;
+  agent_id: string | null;
+  /** O que acontece com quem responde (0541, issue #11). */
+  quem_assume: string;
+  botoes_de_resposta: unknown;
+  oferta: string | null;
   /** Por que o sistema pausou sozinho (migration 0539); nulo = pausa manual ou nenhuma. */
   pausa_motivo: string | null;
   pausa_detalhe: string | null;
@@ -77,9 +86,9 @@ export type Desfecho<T = unknown> = ({ ok: true } & T) | Recusa;
 const COLUNAS =
   "id, organization_id, name, status, channel_session_id, message_body, base_legal, lia_ref, " +
   "audience_filter, audience_version, content_version, scheduled_at, description, " +
-  "intervalo_segundos, janela_inicio_hora, janela_fim_hora, teto_diario, teto_horario, " +
-  "meta_template_id, template_variables, pausa_motivo, pausa_detalhe, risco_de_banimento_aceito_em, " +
-  "numero_de_atendimento_id";
+  "intervalo_segundos, janela_inicio_hora, janela_fim_hora, teto_diario, teto_horario, teto_gasto_cents, " +
+  "meta_template_id, template_variables, pipeline_id, stage_id, agent_id, quem_assume, botoes_de_resposta, oferta, " +
+  "pausa_motivo, pausa_detalhe, risco_de_banimento_aceito_em, numero_de_atendimento_id";
 
 export async function carregarCampanha(
   admin: SupabaseClient,
@@ -522,9 +531,20 @@ export async function duplicarAcao(
       janela_fim_hora: c.janela_fim_hora,
       teto_diario: c.teto_diario,
       teto_horario: c.teto_horario,
+      teto_gasto_cents: c.teto_gasto_cents,
       // O modelo e o mapa vão junto: a cópia de uma campanha oficial é oficial.
       meta_template_id: c.meta_template_id,
       template_variables: mapaGuardado(c.template_variables),
+      // Para onde vai quem responde também é parte da intenção: a cópia que
+      // perdesse o funil e os botões mandaria as respostas para o lugar errado.
+      pipeline_id: c.pipeline_id,
+      stage_id: c.stage_id,
+      agent_id: c.agent_id,
+      quem_assume: c.quem_assume,
+      ...(Array.isArray(c.botoes_de_resposta) && c.botoes_de_resposta.length > 0
+        ? { botoes_de_resposta: c.botoes_de_resposta }
+        : {}),
+      oferta: c.oferta,
       numero_de_atendimento_id: c.numero_de_atendimento_id,
       // O aceite do risco de banimento NÃO vem junto: a cópia é uma intenção
       // nova, e o aceite é sobre ESTA campanha.

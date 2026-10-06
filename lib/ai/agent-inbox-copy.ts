@@ -99,6 +99,7 @@ export const KIND_LABEL = {
   // nem o contato bloqueado. O que fazer vai no corpo.
   jev_pedido_de_humano: "Pedido para falar com uma pessoa, percebido pelo Jev",
   jev_parar_de_receber: "Pedido para parar de receber mensagens, percebido pelo Jev",
+  atendimento_gratis_do_numero: "Mensagens de atendimento grátis do mês acabando",
   proposta_travada: "Uma proposta ficou presa em envio e voltou a rascunho",
   proposta_pronta_para_revisao: "Uma proposta está pronta para revisão",
   // Igual ao `title` que fn_reativar_organizacao grava: diz o que a pessoa tem

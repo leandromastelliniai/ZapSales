@@ -172,6 +172,42 @@ export interface InboundMessageEvent {
    * leitura é de `extrairAtribuicaoMeta`. Opcional porque só a ingestão o lê.
    */
   referral?: unknown;
+  /**
+   * O toque num botão de resposta rápida (issue #11): botão de modelo
+   * (`type: "button"`) ou de mensagem interativa (`button_reply`/`list_reply`).
+   * O rótulo também vai para `text` — é o que o atendente lê na conversa —, e o
+   * evento sai como `type: "text"`, porque `messages.type` não tem (nem precisa
+   * de) um tipo próprio para clique. `null` quando não houve clique.
+   */
+  respostaRapida?: RespostaRapida | null;
+  /**
+   * `context.id`: o `wamid` da mensagem NOSSA que a pessoa respondeu ou citou.
+   * É o que liga o clique à campanha exata que o enviou, sem palpite por janela.
+   */
+  respondendoA?: string | null;
+}
+
+export interface RespostaRapida {
+  /** O rótulo que a pessoa viu e tocou. */
+  texto: string;
+  /** O identificador do botão (`payload` do modelo, `id` do interativo), quando houver. */
+  payload: string | null;
+}
+
+/** Lê o clique de um `messages[]` cru — `null` quando não é clique ou vem sem rótulo. */
+function respostaRapidaDe(raw: Record<string, unknown>): RespostaRapida | null {
+  if (raw.type === "button") {
+    const b = (raw.button ?? {}) as Record<string, unknown>;
+    const texto = str(b.text) ?? str(b.payload);
+    return texto ? { texto, payload: str(b.payload) } : null;
+  }
+  if (raw.type === "interactive") {
+    const i = (raw.interactive ?? {}) as Record<string, unknown>;
+    const r = (i.button_reply ?? i.list_reply ?? {}) as Record<string, unknown>;
+    const texto = str(r.title) ?? str(r.id);
+    return texto ? { texto, payload: str(r.id) } : null;
+  }
+  return null;
 }
 
 /** Status de entrega de uma mensagem que ENVIAMOS (sent/delivered/read/failed). */
@@ -185,6 +221,12 @@ export interface MessageStatusEvent {
   recipientUserId?: string | null;
   errorCode: number | null;
   errorTitle: string | null;
+  /**
+   * `statuses[].pricing` cru — `{ billable, pricing_model, type, category }`.
+   * Repassado sem interpretar: a leitura é de `custoDaMensagem`
+   * (`lib/custo/custo-real.ts`). Opcional porque só o registro de custo o lê.
+   */
+  pricing?: unknown;
 }
 
 /**
@@ -396,7 +438,11 @@ export function parseMetaWebhook(envelope: MetaWebhookEnvelope): MetaWebhookEven
           const tipo = str(raw.type) ?? "unknown";
           const corpoMidia = tipo !== "contacts" ? (raw[tipo] as Record<string, unknown> | undefined) : undefined;
           const sharedContact = tipo === "contacts" ? parseMetaInboundContact(raw) : null;
-          const tipoCrm = tipo === "contacts" ? "contact" : tipo;
+          const clique = respostaRapidaDe(raw);
+          // Clique vira texto: o rótulo é o que a pessoa "disse", e `button`/
+          // `interactive` não existem no CHECK de `messages.type`.
+          const tipoCrm =
+            tipo === "contacts" ? "contact" : tipo === "button" || tipo === "interactive" ? "text" : tipo;
 
           out.push({
             kind: "inbound_message",
@@ -409,10 +455,13 @@ export function parseMetaWebhook(envelope: MetaWebhookEnvelope): MetaWebhookEven
             // A Meta manda epoch em SEGUNDOS, string. Passar direto ao Date daria 1970.
             sentAt: new Date(Number(str(raw.timestamp) ?? "0") * 1000),
             type: tipoCrm,
-            text:
-              tipoCrm === "text"
+            text: clique
+              ? clique.texto
+              : tipoCrm === "text"
                 ? str((raw.text as Record<string, unknown>)?.body)
                 : sharedContact?.name ?? null,
+            respostaRapida: clique,
+            respondendoA: str((raw.context as Record<string, unknown> | undefined)?.id),
             ...(sharedContact ? { sharedContact } : {}),
             media:
               corpoMidia && str(corpoMidia.id)
@@ -446,6 +495,7 @@ export function parseMetaWebhook(envelope: MetaWebhookEnvelope): MetaWebhookEven
             recipientUserId: str(raw.recipient_user_id),
             errorCode: typeof first.code === "number" ? first.code : null,
             errorTitle: str(first.title),
+            pricing: raw.pricing ?? null,
           });
         }
       }

@@ -435,6 +435,9 @@ export const AUDIT_ACTIONS = [
   // estado, não o histórico —, e não há event_log que cubra o tipo (nenhum
   // handler o consumiria; evento sem consumer é o anti-pattern nº 3).
   "platform.internal_destinations_updated",
+  // Tabela de preços da Meta e cotação do dólar (issue #10): mudam a estimativa
+  // de toda campanha seguinte e o teto que a pausa usa.
+  "platform.meta_pricing_updated",
   "platform_google_oauth.updated",
   "platform_smtp_settings.updated",
   // A credencial do APP da Meta da INSTALAÇÃO (migration 0257): o App Secret que

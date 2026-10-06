@@ -6,6 +6,7 @@
  * a tela de detalhe RECONSULTA enquanto ela anda e para quando ela para — polling
  * eterno numa campanha concluída é bateria e banco gastos para ver o mesmo número.
  */
+import type { QuemAssume } from "@/lib/campanhas/destino-da-resposta";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { showApiError } from "@/components/feedback/ApiErrorToast";
@@ -16,6 +17,9 @@ import type { UsoDoPortfolio } from "@/lib/campanhas/portfolio-da-campanha";
 import { painelAindaMuda } from "@/lib/campanhas/painel-ao-vivo";
 import type { MapaDeVariaveis } from "@/lib/campanhas/variaveis-do-modelo";
 import type { StatusDaCampanha } from "@/lib/campanhas/tipos";
+import type { EstimativaDeCusto } from "@/lib/custo/estimativa";
+import type { ContadorDoAtendimentoGratis } from "@/lib/custo/registro";
+import type { RelatorioDeCusto } from "@/lib/custo/relatorio";
 
 export interface CampanhaDaLista {
   id: string;
@@ -54,9 +58,15 @@ export interface CampanhaDetalhada extends CampanhaDaLista {
   janela_fim_hora: number | null;
   teto_diario: number | null;
   teto_horario: number | null;
+  /** Teto de gasto da Meta da campanha, em centavos (issue #10). `null` = sem teto próprio. */
+  teto_gasto_cents?: number | null;
   /** Com modelo, a campanha é OFICIAL (issue #8); sem ele, é do modo WAHA. */
   meta_template_id?: string | null;
   template_variables?: MapaDeVariaveis;
+  /** O que acontece com quem responde (migration 0541, issue #11). */
+  quem_assume?: QuemAssume;
+  botoes_de_resposta?: unknown;
+  oferta?: string | null;
   /** Modo "dois números" (issue #9): o número de QR code que recebe a conversa. */
   numero_de_atendimento_id?: string | null;
   /** Por que o sistema pausou sozinho (issue #9); nulo = pausa manual ou nenhuma. */
@@ -102,7 +112,11 @@ export interface PreviaDaAudiencia {
   motivos: Record<string, number>;
   amostra: Array<{ nome: string | null; motivo: string | null }>;
   legenda: Record<string, string>;
+  /** Campanha oficial: o custo dos elegíveis pela tabela de preços da Meta (issue #10). */
+  estimativa?: EstimativaDeCusto;
 }
+
+export type { RelatorioDeCusto };
 
 
 export function useCampanhas(filtros: { status?: string; limit?: number }) {
@@ -188,6 +202,7 @@ export function useAcaoDeCampanha(id: string) {
       void qc.invalidateQueries({ queryKey: ["campanha", id] });
       void qc.invalidateQueries({ queryKey: ["campanha-metricas", id] });
       void qc.invalidateQueries({ queryKey: ["campanha-destinatarios", id] });
+      void qc.invalidateQueries({ queryKey: ["campanha-custo", id] });
       void qc.invalidateQueries({ queryKey: ["campanhas"] });
     },
     onError: (err) => showApiError(err),
@@ -226,6 +241,8 @@ export function useEditarCampanha(id: string) {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["campanha", id] });
       void qc.invalidateQueries({ queryKey: ["campanhas"] });
+      // O teto mora no relatório de custo também.
+      void qc.invalidateQueries({ queryKey: ["campanha-custo", id] });
     },
     onError: (err) => showApiError(err),
   });
@@ -245,5 +262,28 @@ export function useModelosDaCampanha(channelSessionId: string | null) {
           `/api/v1/campaigns/modelos?channel_session_id=${channelSessionId}`,
         )
       ).data,
+  });
+}
+
+/** O custo da campanha: estimativa antes do disparo e o gasto depois (issue #10). */
+export function useCustoDaCampanha(
+  id: string,
+  campanha?: { status: StatusDaCampanha; completed_at: string | null },
+) {
+  return useQuery({
+    queryKey: ["campanha-custo", id],
+    queryFn: async () => (await apiClient.get<{ data: RelatorioDeCusto }>(`/api/v1/campaigns/${id}/cost`)).data,
+    refetchInterval: () => (campanha && painelAindaMuda(campanha, new Date()) ? 30_000 : false),
+  });
+}
+
+/** As 1.000 mensagens de atendimento grátis do mês, por número oficial (issue #10). */
+export function useAtendimentoGratis() {
+  return useQuery({
+    queryKey: ["atendimento-gratis"],
+    queryFn: async () =>
+      (await apiClient.get<{ data: { numeros: Array<ContadorDoAtendimentoGratis & { display_name: string | null; phone_number: string | null }> } }>(
+        "/api/v1/campaigns/atendimento-gratis",
+      )).data.numeros,
   });
 }

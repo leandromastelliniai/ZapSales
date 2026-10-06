@@ -180,10 +180,20 @@ export type ActivityType =
    * retorno veio" seria indistinguível de "o retorno está a caminho" — e é
    * justamente no silêncio que a demanda morre. O PORQUÊ vai no `reason`.
    */
-  | "proposal_followup_skipped";
+  | "proposal_followup_skipped"
+  /**
+   * O contato respondeu a uma CAMPANHA (issue #11). É a linha que diz de onde
+   * veio a conversa quando o negócio JÁ existia — o card nascido da campanha já
+   * carrega a origem em `source`, mas o movido para a etapa dela, não. O
+   * `payload` leva `campaign_id`, `campaign_name` e, se foi toque, o `botao`.
+   * Emissor: `lib/campanhas/resposta-no-funil.ts`, pela constante
+   * `ATIVIDADE_RESPOSTA_DA_CAMPANHA`.
+   */
+  | "campaign_replied";
 
 export const ACTIVITY_LABELS: Record<ActivityType, string> = {
   lead_created: "Entrou no funil",
+  campaign_replied: "Respondeu à campanha",
   stage_changed: "Mudou de estágio",
   agent_move_corrected: "Correção do que o assistente tinha feito",
   note: "Anotação",
