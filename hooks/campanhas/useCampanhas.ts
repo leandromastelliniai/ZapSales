@@ -59,10 +59,6 @@ export interface CampanhaDetalhada extends CampanhaDaLista {
   teto_horario: number | null;
   /** Teto de gasto da Meta da campanha, em centavos (issue #10). `null` = sem teto próprio. */
   teto_gasto_cents?: number | null;
-  /** Por que o SISTEMA pausou (teto de gasto, qualidade, modelo). `null` = pausa manual ou nenhuma. */
-  pausa_motivo?: string | null;
-  /** A frase que a tela mostra sobre a pausa automática. */
-  pausa_detalhe?: string | null;
   /** Com modelo, a campanha é OFICIAL (issue #8); sem ele, é do modo WAHA. */
   meta_template_id?: string | null;
   template_variables?: MapaDeVariaveis;
