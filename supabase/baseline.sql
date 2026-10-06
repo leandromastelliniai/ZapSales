@@ -39084,7 +39084,7 @@ grant  execute on function public.fn_expurgar_candidatos_do_golden(int,int) to s
 -- ---- a fila de remoção de mídia deixa de ser eterna (migration 0434) ----
 -- ---- a contagem do expurgo volta para o retorno (migration 0435) ----
 -- ---- os órfãos da pasta de cabeçalho de modelo entram na poda (migration 0542) ----
--- Ver o cabeçalho das DUAS migrations: a 0432 enfileira arquivo vencido e
+-- Ver o cabeçalho das migrations: a 0432 enfileira arquivo vencido e
 -- órfão na mesma fila da LGPD (o cron storage-redaction remove pelo Storage
 -- API); a 0434 (#1739) reabre `deleted`/`skipped` quando o mesmo caminho
 -- volta a existir e expurga linha `deleted` com mais de 90 dias; a 0435
@@ -39092,10 +39092,9 @@ grant  execute on function public.fn_expurgar_candidatos_do_golden(int,int) to s
 -- retorno nem na trilha; a 0483 acrescenta o passo 2b (bucket da nota
 -- interna); a 0542 (#21) põe a pasta `org/templates/` no passo 2, segurada
 -- por `meta_templates.header_media` e com 7 dias de carência. O corpo abaixo
--- é a 0542 EDITADA NO LUGAR — ele tem
--- de casar com o da última migration, senão quem instala pelo kit self-host
--- fica com outra função de quem aplica a cadeia
--- (apendice-do-baseline-nao-diverge-da-cadeia).
+-- é a 0542 EDITADA NO LUGAR — ele tem de casar com o da última migration,
+-- senão quem instala pelo kit self-host fica com outra função de quem aplica
+-- a cadeia (apendice-do-baseline-nao-diverge-da-cadeia).
 create or replace function public.fn_enfileirar_midia_vencida(p_limite integer default 500)
 returns jsonb
 language plpgsql
