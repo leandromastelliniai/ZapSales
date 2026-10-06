@@ -1,4 +1,5 @@
 import type { ServiceBoundary } from "@/lib/atendimento/fronteira";
+import { filaDaPassagemPelaCampanhaSupabase } from "@/lib/campanhas/fila-da-passagem";
 import { assertServiceBoundarySupabase } from "@/lib/atendimento/origem";
 /**
  * Handoff orchestrator — central point que executa a transição bot→humano
@@ -296,6 +297,11 @@ export async function triggerHandoff(
       });
       return { triggered: false, reason: "orchestrator_error" };
     }
+
+    // Step 1b — campanha "IA e depois humano": a conversa passada entra no
+    // rodízio de atendentes (issue #11). Sem campanha assim, não faz nada.
+    await guard();
+    await filaDaPassagemPelaCampanhaSupabase(admin, input.organizationId, input.conversationId);
 
     // Step 2 — timeline activity (best-effort; missing leadId is OK).
     if (input.leadId) {

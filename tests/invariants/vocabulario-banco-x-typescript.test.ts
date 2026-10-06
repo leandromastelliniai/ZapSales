@@ -436,6 +436,14 @@ const PARES: Array<{
   },
   {
     tabela: "campaigns",
+    coluna: "quem_assume",
+    // Quem assume a resposta da campanha (0541, issue #11). Um valor que nascesse
+    // só no banco cairia no `default` de `planejarResposta` e viraria "ia".
+    arquivo: "lib/campanhas/destino-da-resposta.ts",
+    simbolo: "QUEM_ASSUME",
+  },
+  {
+    tabela: "campaigns",
     coluna: "pausa_motivo",
     // lib/campanhas/pausa-automatica.ts → MOTIVOS_DA_PAUSA (tupla `as const`).
     // Nasce no MESMO commit da migration 0539. O motivo é gravado pela pausa
