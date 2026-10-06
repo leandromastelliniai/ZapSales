@@ -52,6 +52,11 @@ export function tamanhoDoLimite(faixa: string | null): number | null {
   return Number(m[1]) * (m[2] ? 1000 : 1);
 }
 
+/** O número como o operador o reconhece nos avisos: apelido + telefone. */
+export function apelidoDoNumero(n: { display_name: string | null; phone_number: string | null }): string {
+  return [n.display_name, n.phone_number].filter(Boolean).join(" ") || "oficial";
+}
+
 /** A qualidade é vermelha? É o que pausa as campanhas do número (issue #9). */
 export function ehQualidadeVermelha(q: string | null | undefined): boolean {
   return (q ?? "").trim().toUpperCase() === "RED";

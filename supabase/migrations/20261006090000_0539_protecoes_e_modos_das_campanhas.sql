@@ -58,13 +58,15 @@ update public.campaigns
    set pausa_motivo = null
  where pausa_motivo is not null
    and pausa_motivo not in (
-     'qualidade_vermelha', 'modelo_rejeitado', 'modelo_pausado', 'modelo_desativado', 'modelo_recategorizado'
+     'qualidade_vermelha', 'modelo_rejeitado', 'modelo_pausado', 'modelo_desativado', 'modelo_recategorizado',
+     'risco_nao_aceito'
    );
 
 alter table public.campaigns drop constraint if exists campaigns_pausa_motivo_check;
 alter table public.campaigns add constraint campaigns_pausa_motivo_check
   check (pausa_motivo is null or pausa_motivo in (
-    'qualidade_vermelha', 'modelo_rejeitado', 'modelo_pausado', 'modelo_desativado', 'modelo_recategorizado'
+    'qualidade_vermelha', 'modelo_rejeitado', 'modelo_pausado', 'modelo_desativado', 'modelo_recategorizado',
+     'risco_nao_aceito'
   ));
 
 alter table public.campaigns drop constraint if exists campaigns_risco_aceito_por_fk;
@@ -88,7 +90,7 @@ alter table public.campaigns add constraint campaigns_numero_de_atendimento_org_
   on delete set null (numero_de_atendimento_id);
 
 comment on column public.campaigns.pausa_motivo is
-  'Por que o sistema pausou a campanha sozinho (issue #9): qualidade_vermelha, modelo_rejeitado, modelo_pausado, modelo_desativado, modelo_recategorizado. Nulo = pausa manual ou nenhuma. Limpo ao retomar.';
+  'Por que o sistema pausou a campanha sozinho (issue #9): qualidade_vermelha, modelo_rejeitado, modelo_pausado, modelo_desativado, modelo_recategorizado, risco_nao_aceito (campanha de QR code agendada sem o aceite). Nulo = pausa manual ou nenhuma. Limpo ao retomar.';
 comment on column public.campaigns.pausa_detalhe is
   'A frase da pausa automática que a tela mostra, com o número ou o modelo nomeados.';
 comment on column public.campaigns.risco_de_banimento_aceito_em is
@@ -117,9 +119,9 @@ create index if not exists idx_messages_modelo_por_numero
 --
 -- O que conta como alcançado (a Meta conta contatos ÚNICOS em 24 h móveis):
 -- - modelo que saiu de um número do portfólio, menos o que falhou;
--- - destinatário já reservado (`sending`) de campanha do portfólio, que ainda
---   pode não ter mensagem — é o que impede a segunda reserva de não ver a
---   primeira.
+-- - destinatário reservado (`sending`) nas últimas 24 h, de campanha do
+--   portfólio, que ainda pode não ter mensagem — é o que impede a segunda
+--   reserva de não ver a primeira.
 -- A união é por contato, então quem está nos dois lados conta uma vez. Contato
 -- que já recebeu modelo hoje e vai receber outro conta de novo na reserva — a
 -- conta erra para o lado de mandar menos, nunca mais.
@@ -156,6 +158,10 @@ as $$
         from public.campaign_recipients r
         join public.campaigns c on c.id = r.campaign_id
        where r.status = 'sending'
+         -- Reserva também tem 24 h: um destinatário preso em `sending` (mensagem
+         -- que nunca saiu nem falhou) não pode ocupar o limite para sempre — e o
+         -- limite é de todas as organizações do portfólio.
+         and r.sending_at > p_agora - interval '24 hours'
          and c.channel_session_id = any(p_sessoes)
     ) u;
 $$;

@@ -33,7 +33,7 @@ import {
   textoDoModelo,
 } from "./modelo-da-campanha";
 import { mapaComNumeroDeAtendimento, recusaDoBotaoWaMe } from "./dois-numeros";
-import { ehQualidadeVermelha } from "@/lib/channels/meta/saude";
+import { apelidoDoNumero, ehQualidadeVermelha } from "@/lib/channels/meta/saude";
 import { numerosDaCampanha } from "./rodada";
 import type { ConteudoOficial } from "./preparacao";
 import { renderizar } from "./renderizador";
@@ -139,11 +139,14 @@ async function conteudoOficial(
   // atendimento — e, quando a URL é dinâmica, a variável dele SAI desse número.
   if (modelo && c.numero_de_atendimento_id) {
     const doAtendimento = await numeroDeAtendimento(admin, c.organization_id, c.numero_de_atendimento_id);
-    const recusa = doAtendimento.ok
-      ? recusaDoBotaoWaMe(modelo.components, doAtendimento.telefone)
-      : doAtendimento.motivo;
-    if (recusa) return { ok: false, codigo: "campanha_conteudo_invalido", mensagem: recusa, status: 422 };
-    mapa = mapaComNumeroDeAtendimento(modelo.components, mapa, doAtendimento.ok ? doAtendimento.telefone! : "");
+    if (!doAtendimento.ok) {
+      return { ok: false, codigo: "campanha_conteudo_invalido", mensagem: doAtendimento.motivo, status: 422 };
+    }
+    const recusa = recusaDoBotaoWaMe(modelo.components, doAtendimento.telefone);
+    if (recusa || !doAtendimento.telefone) {
+      return { ok: false, codigo: "campanha_conteudo_invalido", mensagem: recusa ?? "Número de atendimento sem telefone.", status: 422 };
+    }
+    mapa = mapaComNumeroDeAtendimento(modelo.components, mapa, doAtendimento.telefone);
   }
   const motivo = recusaDoModelo(modelo, mapa);
   if (motivo || !modelo) {
@@ -188,7 +191,7 @@ async function recusaPorQualidade(admin: SupabaseClient, c: CampanhaCarregada): 
     phone_number: string | null;
   }>).find((n) => ehQualidadeVermelha(n.meta_qualidade));
   if (!vermelho) return null;
-  const apelido = [vermelho.display_name, vermelho.phone_number].filter(Boolean).join(" ") || "oficial";
+  const apelido = apelidoDoNumero(vermelho);
   return {
     ok: false,
     codigo: "campanha_canal_indisponivel",
@@ -219,13 +222,23 @@ export async function aceitarRiscoAcao(
     };
   }
   if (c.risco_de_banimento_aceito_em) return { ok: true, jaAceito: true };
-  const { data } = await admin
+  const { data, error } = await admin
     .from("campaigns")
     .update({ risco_de_banimento_aceito_em: agora.toISOString(), risco_de_banimento_aceito_por: autorId })
     .eq("organization_id", c.organization_id)
     .eq("id", c.id)
     .is("risco_de_banimento_aceito_em", null)
     .select("id");
+  // Falha de gravação NÃO é "já aceito": o operador seguiria achando que o
+  // aceite ficou registrado, e a campanha seguiria recusando iniciar.
+  if (error) {
+    return {
+      ok: false,
+      codigo: "internal_error",
+      mensagem: `Não foi possível registrar o aceite: ${error.message}`,
+      status: 500,
+    };
+  }
   return { ok: true, jaAceito: (data ?? []).length === 0 };
 }
 

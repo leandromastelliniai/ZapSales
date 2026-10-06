@@ -1,7 +1,9 @@
 /**
  * A PAUSA AUTOMÁTICA DA CAMPANHA (issue #9) — a campanha se protege sozinha.
  *
- * Três coisas fazem uma campanha oficial parar de valer a pena no meio:
+ * Três coisas fazem uma campanha oficial parar de valer a pena no meio (e uma
+ * quarta, a campanha de QR code agendada sem o aceite do risco de banimento,
+ * não pode começar sozinha):
  *
  * - a **qualidade do número** fica vermelha: a Meta está recebendo bloqueios e
  *   denúncias, e o passo seguinte é ela reduzir o limite ou restringir o número;
@@ -41,6 +43,7 @@ export const MOTIVOS_DA_PAUSA = [
   "modelo_pausado",
   "modelo_desativado",
   "modelo_recategorizado",
+  "risco_nao_aceito",
 ] as const;
 
 export type MotivoDaPausa = (typeof MOTIVOS_DA_PAUSA)[number];
@@ -112,6 +115,11 @@ export function fraseDaPausa(motivo: MotivoDaPausa, ctx: ContextoDaPausa): strin
       return `A Meta pausou o modelo ${modelo}, em geral por reclamação de quem recebeu.${daMeta} Retome quando ele voltar a ficar aprovado.`;
     case "modelo_desativado":
       return `A Meta desativou o modelo ${modelo}, que não pode mais ser enviado.${daMeta} Crie um modelo novo e use-o numa cópia desta campanha.`;
+    case "risco_nao_aceito":
+      return (
+        "Esta campanha dispara por um número conectado por QR code e chegou a hora agendada sem que ninguém aceitasse o aviso de risco de banimento. " +
+        "Leia o aviso e aceite-o ao retomar — sem o aceite ela não sai."
+      );
     case "modelo_recategorizado":
       return (
         `A Meta mudou a categoria do modelo ${modelo} de ${categoria(ctx.de)} para ${categoria(ctx.para)}, e o custo de cada envio mudou junto. ` +
@@ -181,6 +189,15 @@ export async function campanhasDoNumero(
       .eq("organization_id", organizationId)
       .eq("channel_session_id", channelSessionId),
   ]);
+  // Consulta que falhou não pode virar "nenhuma campanha" em silêncio: a pausa
+  // por qualidade simplesmente não aconteceria. A rodada pausa na volta
+  // seguinte (rede de segurança); o log diz por que não foi agora.
+  if (emAndamento.error || pool.error) {
+    logger.error("[campanha] campanhas do número não lidas para a pausa", {
+      codigo: (emAndamento.error ?? pool.error)?.code,
+      sessao: channelSessionId,
+    });
+  }
   const doPool = new Set(((pool.data ?? []) as Array<{ campaign_id: string }>).map((l) => l.campaign_id));
   return ((emAndamento.data ?? []) as Array<{ id: string; channel_session_id: string }>)
     .filter((c) => c.channel_session_id === channelSessionId || doPool.has(c.id))
@@ -193,11 +210,12 @@ export async function campanhasDoModelo(
   organizationId: string,
   modeloId: string,
 ): Promise<string[]> {
-  const { data } = await admin
+  const { data, error } = await admin
     .from("campaigns")
     .select("id")
     .eq("organization_id", organizationId)
     .eq("meta_template_id", modeloId)
     .in("status", [...PAUSAVEIS]);
+  if (error) logger.error("[campanha] campanhas do modelo não lidas para a pausa", { codigo: error.code });
   return ((data ?? []) as Array<{ id: string }>).map((l) => l.id);
 }

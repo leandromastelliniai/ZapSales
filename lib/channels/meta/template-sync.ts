@@ -13,6 +13,7 @@
  * `fetch`, lê o que existe, escreve. Toda a decisão perigosa (o que desabilitar) mora
  * no lado puro, que é testável contra a fixture real; a casca não decide nada.
  */
+import { campanhasDoModelo, fraseDaPausa, pausarAutomaticamente } from "@/lib/campanhas/pausa-automatica";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 import { hashContract } from "./contract-hash";
@@ -60,10 +61,13 @@ export interface MetaTemplateRow {
 
 /** O que já existe no banco, na projeção mínima que o plano precisa. */
 export interface LocalTemplate {
+  /** Presente quando lido do espelho — a recategorização precisa dele (issue #9). */
+  id?: string;
   name: string;
   language: string;
   status: string;
   contract_hash: string;
+  category?: string | null;
 }
 
 export interface TemplateKey {
@@ -203,6 +207,37 @@ export function planSync(rows: MetaTemplateRow[], existing: LocalTemplate[]): Sy
   return { disable, counts: { inserted, updated, unchanged, disabled: disable.length } };
 }
 
+/** Um modelo que a sincronização encontrou em OUTRA categoria. */
+export interface Recategorizado {
+  id: string;
+  name: string;
+  language: string;
+  de: string;
+  para: string;
+}
+
+/**
+ * Os modelos já conhecidos cuja categoria a Meta mudou — puro. O webhook de
+ * categoria pausa as campanhas na hora; quando a sincronização chega primeiro,
+ * o webhook encontra a categoria já gravada e não muda nada. Esta é a mesma
+ * pergunta feita pela sincronização (issue #9). Categoria antes desconhecida
+ * não conta: não é mudança, é o primeiro registro.
+ */
+export function recategorizados(
+  rows: Array<Pick<MetaTemplateRow, "name" | "language" | "category">>,
+  existing: LocalTemplate[],
+): Recategorizado[] {
+  const local = new Map(existing.map((e) => [key(e), e]));
+  const out: Recategorizado[] = [];
+  for (const r of rows) {
+    const antes = local.get(key(r));
+    if (!antes?.id || !antes.category || !r.category) continue;
+    if (antes.category.toUpperCase() === r.category.toUpperCase()) continue;
+    out.push({ id: antes.id, name: r.name, language: r.language, de: antes.category, para: r.category });
+  }
+  return out;
+}
+
 export interface SyncInput {
   organizationId: string;
   wabaId: string;
@@ -262,7 +297,7 @@ export async function syncTemplates(input: SyncInput): Promise<SyncCounts> {
 
   const { data: existing, error: readError } = await db
     .from("meta_templates")
-    .select("name, language, status, contract_hash")
+    .select("id, name, language, status, contract_hash, category")
     .eq("organization_id", input.organizationId)
     .eq("waba_id", input.wabaId);
   if (readError) throw new Error(`syncTemplates: leitura do espelho falhou — ${readError.message}`);
@@ -278,6 +313,18 @@ export async function syncTemplates(input: SyncInput): Promise<SyncCounts> {
         { onConflict: "organization_id,waba_id,name,language" },
       );
     if (error) throw new Error(`syncTemplates: upsert falhou — ${error.message}`);
+  }
+
+  // Modelo recategorizado pausa as campanhas que o usam, como no webhook.
+  for (const m of recategorizados(rows, (existing ?? []) as LocalTemplate[])) {
+    const campanhas = await campanhasDoModelo(db, input.organizationId, m.id);
+    await pausarAutomaticamente(
+      db,
+      input.organizationId,
+      campanhas,
+      "modelo_recategorizado",
+      fraseDaPausa("modelo_recategorizado", { modelo: `${m.name} (${m.language})`, de: m.de, para: m.para }),
+    );
   }
 
   for (const alvo of plano.disable) {

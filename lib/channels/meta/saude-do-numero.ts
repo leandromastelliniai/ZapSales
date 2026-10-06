@@ -29,7 +29,7 @@ import { logger } from "@/lib/logger";
 import { REF_KIND_SESSAO } from "../health";
 import { resolveMetaCreds } from "./credentials";
 import { graphBaseUrl } from "./graph-base";
-import { avisoDeSaude, ehQualidadeVermelha, PREFIXO_DO_AVISO_DE_QUALIDADE, type EstadoDeSaude } from "./saude";
+import { apelidoDoNumero, avisoDeSaude, ehQualidadeVermelha, PREFIXO_DO_AVISO_DE_QUALIDADE, type EstadoDeSaude } from "./saude";
 import type { BusinessCapabilityEvent, NumberQualityEvent } from "./webhook";
 
 export { avisoDeSaude, limiteDoPortfolio, tamanhoDoLimite, type EstadoDeSaude } from "./saude";
@@ -156,7 +156,7 @@ export async function aplicarEventoDeSaude(
       );
     }
 
-    const apelido = [sessao.display_name, sessao.phone_number].filter(Boolean).join(" ") || "oficial";
+    const apelido = apelidoDoNumero(sessao);
 
     // Qualidade VERMELHA pausa as campanhas oficiais que falam por este número
     // (issue #9), com o motivo na campanha. Toda entrega vermelha, e não só a

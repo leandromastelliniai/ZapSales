@@ -21,11 +21,13 @@
  * ─── Quando não se sabe ─────────────────────────────────────────────────────
  *
  * O portfólio vem da WABA na conexão (`meta_portfolio_id`) e pode faltar
- * (número conectado antes, Graph que não respondeu). Faltando, o número divide o
- * limite com tudo o que PODE ser do mesmo portfólio e se sabe: os números
- * oficiais da mesma organização e os da mesma WABA (a WABA é de um portfólio
- * só). A faixa que falta vale a INICIAL da Meta. O erro possível é mandar menos,
- * nunca mais: limite estourado é mensagem recusada e qualidade do número em risco.
+ * (número conectado antes, Graph que não respondeu). O motor tenta descobri-lo
+ * antes de contar (`lib/channels/meta/portfolio-do-numero.ts`); enquanto falta,
+ * o número divide o limite com o que se sabe que PODE ser do mesmo portfólio:
+ * os números oficiais da mesma organização e os da mesma WABA (a WABA é de um
+ * portfólio só). Isso erra para menos DENTRO da organização; entre organizações
+ * de WABAs diferentes, só o portfólio conhecido junta — por isso a descoberta.
+ * A faixa que falta vale a INICIAL da Meta.
  */
 import { tamanhoDoLimite } from "@/lib/channels/meta/saude";
 

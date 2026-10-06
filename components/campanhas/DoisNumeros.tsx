@@ -40,7 +40,8 @@ export function problemaDoParDoisNumeros(
     return "Este modelo não tem botão de link para wa.me. Escolha um modelo com esse botão (ex.: https://wa.me/{{1}}) ou crie um.";
   }
   const fixo = modelo.botao_wa_me.numero_fixo;
-  if (fixo && !samePhone(`+${fixo}`, numero.phone_number)) {
+  // A mesma comparação do servidor (`recusaDoBotaoWaMe`): só dígitos, com o nono dígito.
+  if (fixo && !samePhone(`+${fixo}`, `+${numero.phone_number.replace(/\D/g, "")}`)) {
     return `O botão deste modelo abre o número ${fixo}, não o número escolhido.`;
   }
   return null;

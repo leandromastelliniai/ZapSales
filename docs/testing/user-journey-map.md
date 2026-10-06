@@ -3389,12 +3389,17 @@ botão wa.me em `lib/campanhas/dois-numeros.test.ts`; variável do sistema na te
 | J45.7 | Campanha por número de QR code sem o aceite | iniciar e agendar → 422 `campanha_risco_nao_aceito`; aceitar grava quem e quando, audita `campaign.ban_risk_accepted` uma vez só (repetir não audita de novo); depois inicia; a cópia não herda o aceite; campanha oficial não tem risco a aceitar (409) | **PASS (invariante)** |
 | J45.8 | Modo dois números | modelo sem botão wa.me → 422; número de atendimento oficial → 422; com `https://wa.me/{{1}}` o envio leva o botão com o telefone do número de QR code, sem o operador dar fonte à variável | **PASS (invariante)** |
 | J45.9 | Quem clica e escreve no número de QR code | a mensagem entra no MESMO contato da campanha (nenhuma ficha nova) e a resposta marca o destinatário como `replied` | **PASS (invariante)** |
+| J45.11 | Número conectado antes da coluna do portfólio | antes de contar o limite, o motor lê o portfólio da WABA com a credencial do próprio número, grava e volta a somar o número da outra organização (freio de uma tentativa por hora) | **PASS (invariante)** |
+| J45.12 | Campanha de QR code agendada antes de o aceite existir | quando a hora chega, o cron não a promove: pausa com `risco_nao_aceito`; retomar sem aceite → 422; aceitando, retoma | **PASS (invariante)** |
+| J45.13 | Recategorização que chega pela sincronização (sem webhook) | a sincronização compara a categoria gravada com a da Meta e pausa as campanhas do modelo com `modelo_recategorizado` | **PASS (invariante)** |
 | J45.10 | As proteções pela tela, como um leigo | aviso de risco com a caixa "Entendi o risco", cartão "Pausada automaticamente", limite do portfólio e o seletor "Quem responde fala com qual número?" numa instalação fresca | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
 
 Sabotagem medida, um desligamento por vez: reservar sem o limite do portfólio derruba a J45.2; tirar
 a pausa do webhook de modelo derruba a J45.3 e a J45.4; tirar a pausa do webhook de qualidade
 derruba a J45.6; tirar o portão do aceite derruba a J45.7; não preencher a variável do botão com o
-número de atendimento derruba a J45.8 e a J45.9. Rodou no PGlite desta máquina (21 casos), junto da
+número de atendimento derruba a J45.8 e a J45.9; tirar a descoberta do portfólio derruba a J45.11;
+promover a agendada sem o aceite derruba a J45.12; tirar a pausa da sincronização derruba a J45.13.
+Rodou no PGlite desta máquina (24 casos), junto da
 J41 (19), J42 (20), J43 (23) e J44 (29, com o caso do QR code agora aceitando o risco antes de
 iniciar). Não é o gate: o `test:db` do CI é.
 
@@ -3408,6 +3413,10 @@ iniciar). Não é o gate: o `test:db` do CI é.
 - A conta é conservadora: modelo que saiu dentro da janela de atendimento também conta, e contato
   que já recebeu modelo hoje conta de novo na reserva.
 - Um número vermelho no pool pausa a campanha inteira, não só tira o número do rodízio.
+- A pausa alcança `running` e `scheduled` (a agendada também é "ativa": sair na hora marcada com o
+  número vermelho seria o mesmo dano). Retomar uma agendada pausada a faz sair na hora, como a
+  pausa manual já fazia.
+- A qualidade AMARELA só avisa (issue #5); não muda o ritmo nem pausa.
 
 **Fora do #9:** custo, teto de gasto e as 1.000 grátis (issue #10, que soma `teto_de_gasto` ao
 mesmo `pausa_motivo`); a resposta caindo no funil e no agente com o contexto (issue #11).

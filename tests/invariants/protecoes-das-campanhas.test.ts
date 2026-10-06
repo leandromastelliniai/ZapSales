@@ -22,6 +22,10 @@
  *  5. no modo "dois números", quem clica e escreve no número de QR code aparece
  *     no mesmo contato da campanha.
  *
+ * E as três lacunas que a revisão achou (bloco 6): número conectado antes da
+ * coluna do portfólio, campanha de QR code agendada antes do aceite existir, e a
+ * recategorização que chega pela sincronização em vez do webhook.
+ *
  * ─── O relógio ──────────────────────────────────────────────────────────────
  *
  * A conta do limite compara `messages.created_at` (relógio do BANCO) com o
@@ -756,5 +760,88 @@ describe("5 · modo dois números: o modelo sai pelo oficial, a conversa segue n
       [campanha, contato],
     );
     expect(d[0]!.status).toBe("replied");
+  });
+});
+
+describe("6 · o que chega por outro caminho", () => {
+  it("número conectado antes da coluna do portfólio descobre o portfólio na Meta antes de contar o limite", async () => {
+    await pool.query(`update channel_sessions set meta_portfolio_id = null where id = $1`, [numeroA]);
+    const { rows: campanhas } = await pool.query<{ id: string }>(
+      `select id from campaigns where organization_id = $1 and channel_session_id = $2 and meta_template_id is not null limit 1`,
+      [ORG_A, numeroA],
+    );
+    como(ORG_A, USER_A);
+    const c = await lerCampanha(campanhas[0]!.id);
+    // O limite volta a ser o do portfólio inteiro (o número de B entra na conta).
+    expect(c.portfolio?.teto).toBe(50);
+    const { rows } = await pool.query<{ meta_portfolio_id: string | null }>(
+      `select meta_portfolio_id from channel_sessions where id = $1`,
+      [numeroA],
+    );
+    expect(rows[0]!.meta_portfolio_id).toBe(PORTFOLIO);
+  });
+
+  it("campanha de QR code agendada sem o aceite não sai sozinha: pausa com o motivo, e retomar pede o aceite", async () => {
+    como(ORG_A, USER_A);
+    await semear(ORG_A, "qr-agendada", 1, "+55319866");
+    const criada = await criarCampanha({
+      name: "Agendada antes do aceite existir",
+      channel_session_id: numeroQr,
+      message_body: "Oi {{primeiro_nome}}!",
+      base_legal: "consent",
+      audience_filter: { com_alguma_tag: ["qr-agendada"], limite: 10 },
+    });
+    const id = (await json<{ id: string }>(criada)).data.id;
+    expect((await acao(id, "preparar")).status).toBe(200);
+    // Agendada como era possível antes da regra: direto no banco, hora já vencida.
+    await pool.query(`update campaigns set status = 'scheduled', scheduled_at = now() - interval '1 minute' where id = $1`, [
+      id,
+    ]);
+
+    await rodada(T());
+    const pausada = await lerCampanha(id);
+    expect(pausada.status).toBe("paused");
+    expect(pausada.pausa_motivo).toBe("risco_nao_aceito");
+
+    const retomar = await acao(id, "retomar");
+    expect(retomar.status).toBe(422);
+    expect((await json(retomar)).error?.code).toBe("campanha_risco_nao_aceito");
+    expect((await acao(id, "aceitar-risco")).status).toBe(200);
+    expect((await acao(id, "retomar")).status).toBe(200);
+    expect((await lerCampanha(id)).pausa_motivo).toBeNull();
+  });
+
+  it("a recategorização que chega pela SINCRONIZAÇÃO também pausa as campanhas do modelo", async () => {
+    como(ORG_A, USER_A);
+    const sincronizado = await modelo(ORG_A, WABA_A, "modelo_sincronizado", [{ type: "BODY", text: TEXTO_DO_MODELO }], "UTILITY");
+    await semear(ORG_A, "sincronizado", 1, "+55319877");
+    const campanha = await campanhaRodando(campanhaOficial(numeroA, sincronizado, "sincronizado"));
+
+    falso.programar(
+      { metodo: "GET", terminaCom: `/${WABA_A}/message_templates` },
+      {
+        status: 200,
+        corpo: {
+          data: [
+            {
+              id: "998877",
+              name: "modelo_sincronizado",
+              language: "pt_BR",
+              status: "APPROVED",
+              category: "MARKETING",
+              components: [{ type: "BODY", text: TEXTO_DO_MODELO }],
+            },
+          ],
+          paging: {},
+        },
+      },
+    );
+    const { syncTemplates } = await import("@/lib/channels/meta/template-sync");
+    await syncTemplates({ organizationId: ORG_A, wabaId: WABA_A, token: TOKEN_DA_META, graphVersion: "v26.0" });
+
+    const c = await lerCampanha(campanha);
+    expect(c.status).toBe("paused");
+    expect(c.pausa_motivo).toBe("modelo_recategorizado");
+    expect(c.pausa_detalhe).toMatch(/utilidade para marketing/);
   });
 });

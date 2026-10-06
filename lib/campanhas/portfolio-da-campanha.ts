@@ -16,6 +16,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { CHANNEL_PROVIDER_META } from "@/lib/channels/capabilities";
+import { descobrirPortfolioDoNumero } from "@/lib/channels/meta/portfolio-do-numero";
 
 import { portfolioDoNumero, type NumeroDoPortfolio, type PortfolioDoNumero } from "./portfolio";
 
@@ -30,9 +31,19 @@ export async function portfolioDaCampanha(
 ): Promise<PortfolioDoNumero> {
   const { data } = await admin
     .from("channel_sessions")
-    .select("id, organization_id, meta_waba_id, meta_portfolio_id, meta_limite_de_mensagens")
+    .select("id, organization_id, meta_waba_id, meta_portfolio_id, meta_limite_de_mensagens, meta_phone_number_id")
     .eq("provider", CHANNEL_PROVIDER_META);
-  return portfolioDoNumero((data ?? []) as NumeroDoPortfolio[], campanha.channel_session_id);
+  const numeros = (data ?? []) as Array<NumeroDoPortfolio & { meta_phone_number_id: string | null }>;
+
+  // Número conectado antes da coluna existir: sem o portfólio, ele não enxerga o
+  // número de OUTRA organização do mesmo portfólio, e os dois gastariam o limite
+  // inteiro cada um. Descobre-se na Meta antes de contar (com freio por hora).
+  const alvo = numeros.find((n) => n.id === campanha.channel_session_id);
+  if (alvo && !alvo.meta_portfolio_id) {
+    const descoberto = await descobrirPortfolioDoNumero(admin, alvo);
+    if (descoberto) alvo.meta_portfolio_id = descoberto;
+  }
+  return portfolioDoNumero(numeros, campanha.channel_session_id);
 }
 
 export interface UsoDoPortfolio {

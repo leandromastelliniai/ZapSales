@@ -9,6 +9,7 @@ import {
   templatesToRows,
   type LocalTemplate,
   type MetaTemplateRow,
+  recategorizados,
 } from "@/lib/channels/meta/template-sync";
 
 const FIXTURE: unknown = JSON.parse(
@@ -222,5 +223,31 @@ describe("planSync — o que sumiu da Meta vira DISABLED, nunca DELETE", () => {
       ),
     );
     expect(soStatus.counts).toEqual({ inserted: 0, updated: 1, unchanged: 1, disabled: 0 });
+  });
+});
+
+describe("recategorizados — a sincronização também vê o modelo que mudou de categoria (issue #9)", () => {
+  const remoto = (name: string, category: string | null) => ({ name, language: "pt_BR", category }) as never;
+
+  it("devolve o modelo conhecido cuja categoria mudou, com de e para", () => {
+    const r = recategorizados(
+      [remoto("promo", "MARKETING"), remoto("aviso", "UTILITY")],
+      [
+        { id: "m1", name: "promo", language: "pt_BR", status: "APPROVED", contract_hash: "x", category: "UTILITY" },
+        { id: "m2", name: "aviso", language: "pt_BR", status: "APPROVED", contract_hash: "y", category: "UTILITY" },
+      ],
+    );
+    expect(r).toEqual([{ id: "m1", name: "promo", language: "pt_BR", de: "UTILITY", para: "MARKETING" }]);
+  });
+
+  it("modelo novo e categoria antes desconhecida não contam como recategorização", () => {
+    const r = recategorizados(
+      [remoto("novo", "MARKETING"), remoto("sem", "MARKETING"), remoto("sumiu", null)],
+      [
+        { id: "m3", name: "sem", language: "pt_BR", status: "APPROVED", contract_hash: "x", category: null },
+        { id: "m4", name: "sumiu", language: "pt_BR", status: "APPROVED", contract_hash: "x", category: "UTILITY" },
+      ],
+    );
+    expect(r).toEqual([]);
   });
 });

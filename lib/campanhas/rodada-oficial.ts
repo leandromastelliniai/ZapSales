@@ -38,7 +38,7 @@ import { PACING_DEFAULTS } from "@/lib/agent-engine/pacing/defaults";
 import { fusoDaJanela } from "@/lib/agent-engine/pacing/store";
 import { beginServiceAtOrigin } from "@/lib/atendimento/origem";
 import { CHANNEL_PROVIDER_META } from "@/lib/channels/capabilities";
-import { ehQualidadeVermelha } from "@/lib/channels/meta/saude";
+import { apelidoDoNumero, ehQualidadeVermelha } from "@/lib/channels/meta/saude";
 import { isStatusSendable } from "@/lib/channels/meta/template-binding";
 import { logger } from "@/lib/logger";
 import { OrgNaoOperanteError, STATUS_OPERANTE, ehOperante, statusDaOrgEmbutida } from "@/lib/organizacao/operante";
@@ -667,7 +667,7 @@ async function numerosOficiais(
     numeros.push({
       id,
       qualidade: l.meta_qualidade,
-      apelido: [l.display_name, l.phone_number].filter(Boolean).join(" ") || "oficial",
+      apelido: apelidoDoNumero(l),
     });
   }
   return numeros;

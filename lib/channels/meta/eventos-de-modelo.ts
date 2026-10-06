@@ -319,7 +319,7 @@ async function pausarCampanhasDoModelo(
   try {
     const campanhas = await campanhasDoModelo(admin, organizationId, modeloId);
     const detalhe = fraseDaPausa(motivo, {
-      modelo: identificacao(e).replace(/"/g, ""),
+      modelo: `${e.templateName} (${e.templateLanguage})`,
       motivoDaMeta: e.kind === "template_status" ? (e.detail ?? e.reason) : null,
       de: e.kind === "template_category" ? (e.previous ?? antes) : null,
       para: e.kind === "template_category" ? e.category : null,
