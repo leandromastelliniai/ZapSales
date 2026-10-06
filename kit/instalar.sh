@@ -163,14 +163,22 @@ ler_configuracao() {
 
   # Nome e idioma da empresa só valem na criação do primeiro administrador; o
   # .env os lembra para uma rodada que falhou antes disso não perguntar de novo.
+  # Numa ATUALIZAÇÃO (o .env já existe) nada é perguntado: a empresa já nasceu,
+  # e o idioma dela muda pela tela, não pelo kit — vale o que o .env lembra, ou
+  # o padrão para uma instalação anterior à pergunta.
+  local primeira_rodada=0
+  [ -f "$ENV_ARQ" ] || primeira_rodada=1
   EMPRESA="${ZAPSALES_EMPRESA:-$(env_ler "$ENV_ARQ" ZAPSALES_EMPRESA)}"
-  [ -n "$EMPRESA" ] || EMPRESA="$(perguntar "Nome da sua empresa [Minha Empresa]")"
+  if [ -z "$EMPRESA" ] && [ "$primeira_rodada" = "1" ]; then
+    EMPRESA="$(perguntar "Nome da sua empresa [Minha Empresa]")"
+  fi
   EMPRESA="${EMPRESA:-Minha Empresa}"
 
   if [ -n "${ZAPSALES_IDIOMA:-}" ] && [ -z "$(idioma_valido "$ZAPSALES_IDIOMA")" ]; then
     falha "ZAPSALES_IDIOMA='$ZAPSALES_IDIOMA' — use pt-BR, es ou en."
   fi
   IDIOMA="$(idioma_valido "${ZAPSALES_IDIOMA:-$(env_ler "$ENV_ARQ" APP_LOCALE)}")"
+  [ -n "$IDIOMA" ] || [ "$primeira_rodada" = "1" ] || IDIOMA="pt-BR"
   while [ -z "$IDIOMA" ]; do
     local resposta
     resposta="$(perguntar "Idioma do sistema — 1) Português  2) Español  3) English [1]")"
