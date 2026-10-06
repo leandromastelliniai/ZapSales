@@ -112,18 +112,22 @@ saude_atende() {
 
 dc() { (cd "$RAIZ" && docker compose "$@"); }
 
+# Nunca falha: app fora do ar (curl recusado, no meio de um restart) é uma
+# RESPOSTA ("ilegivel"), não um erro. Com pipefail, o código do curl subiria
+# pelo pipe e o `set -e` encerraria o deploy no meio da prova, sem voltar.
 sondar_saude() {
-  curl -sk --max-time 10 --resolve "$DOMINIO:443:127.0.0.1" "https://$DOMINIO/api/v1/health" 2>/dev/null | resumo_saude
+  { curl -sk --max-time 10 --resolve "$DOMINIO:443:127.0.0.1" "https://$DOMINIO/api/v1/health" 2>/dev/null || true; } \
+    | resumo_saude
 }
 
 # estado_dos_servicos — "<serviço>:<id curto>:<status>:<saúde>:<reinícios>" por serviço.
 estado_dos_servicos() {
   local s id
   for s in "${SERVICOS[@]}"; do
-    id="$(dc ps -q "$s" 2>/dev/null | head -1)"
+    id="$(dc ps -q "$s" 2>/dev/null | head -1 || true)"
     if [ -z "$id" ]; then printf '%s:ausente ' "$s"; continue; fi
     printf '%s:%s:%s ' "$s" "${id:0:12}" \
-      "$(docker inspect -f '{{.State.Status}}:{{if .State.Health}}{{.State.Health.Status}}{{else}}sem-healthcheck{{end}}:{{.RestartCount}}' "$id")"
+      "$(docker inspect -f '{{.State.Status}}:{{if .State.Health}}{{.State.Health.Status}}{{else}}sem-healthcheck{{end}}:{{.RestartCount}}' "$id" 2>/dev/null || echo sumiu)"
   done
 }
 
@@ -212,6 +216,13 @@ baixar_imagens() {
 # ─── 3 e 4. Troca e prova ────────────────────────────────────────────────────
 
 trocar() {
+  # Daqui em diante a produção pode já não ser a anterior: um erro que ninguém
+  # previu sai pela VOLTA (código 2 ou 3), nunca pelo código 1, que diz
+  # "nada foi alterado". `set -E` faz o trap valer dentro das funções — e
+  # também dentro de cada `$(...)`; a condição do BASHPID impede a volta de
+  # rodar numa subshell (ela só falha, e a falha volta para o processo
+  # principal, onde o mesmo trap dispara uma vez só).
+  trap '[ "$BASHPID" = "$$" ] && voltar "Erro inesperado (linha $LINENO, comando: $BASH_COMMAND)."' ERR
   passo "Trocando o código para ${SHA:0:12}"
   cp -p "$RAIZ/.env" "$ESTADO/env.anterior"
   chmod 600 "$ESTADO/env.anterior"
