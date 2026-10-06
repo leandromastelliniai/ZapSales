@@ -109,7 +109,7 @@ describe("o relatório depois do disparo", () => {
     expect(screen.getByText("—")).toBeTruthy();
   });
 
-  it("campanha do modo WAHA não tem cartão de custo", () => {
+  it("campanha do modo de texto livre não tem cartão de custo", () => {
     dados.relatorio = relatorio();
     const { container } = render(<CustoDaCampanha campanha={{ ...CAMPANHA, meta_template_id: null }} />);
     expect(container.textContent).toBe("");

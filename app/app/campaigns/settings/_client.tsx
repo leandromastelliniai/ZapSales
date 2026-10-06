@@ -200,7 +200,7 @@ function AtendimentoGratis() {
           return (
             <div key={n.channel_session_id} className="space-y-1">
               <div className="flex items-baseline justify-between gap-2 text-sm">
-                <span className="min-w-0 truncate">{channelLabel({ ...n, waha_session_name: null }, t)}</span>
+                <span className="min-w-0 truncate">{channelLabel({ display_name: n.display_name, phone_number: n.phone_number } as Parameters<typeof channelLabel>[0], t)}</span>
                 <span className="shrink-0 tabular-nums">
                   {n.usadas.toLocaleString("pt-BR")} / {n.gratis.toLocaleString("pt-BR")}
                 </span>
