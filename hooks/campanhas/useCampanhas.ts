@@ -6,6 +6,7 @@
  * a tela de detalhe RECONSULTA enquanto ela anda e para quando ela para — polling
  * eterno numa campanha concluída é bateria e banco gastos para ver o mesmo número.
  */
+import type { QuemAssume } from "@/lib/campanhas/destino-da-resposta";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { showApiError } from "@/components/feedback/ApiErrorToast";
@@ -56,6 +57,10 @@ export interface CampanhaDetalhada extends CampanhaDaLista {
   /** Com modelo, a campanha é OFICIAL (issue #8); sem ele, é do modo WAHA. */
   meta_template_id?: string | null;
   template_variables?: MapaDeVariaveis;
+  /** O que acontece com quem responde (migration 0541, issue #11). */
+  quem_assume?: QuemAssume;
+  botoes_de_resposta?: unknown;
+  oferta?: string | null;
 }
 
 export interface Destinatario {

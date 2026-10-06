@@ -57,6 +57,13 @@ import { acelerarPipelineDeEventos } from "@/lib/dev/kick-local-pipeline";
 import { origemDoNegocioPeloCanal } from "@/lib/channels/origem-do-negocio";
 import { autorizarContatoParaIA } from "@/lib/ai/elegibilidade/autorizacao";
 import { casarCampanha, lerCampanhas } from "@/lib/ai/elegibilidade/campanha";
+import type { RespostaRapida } from "@/lib/channels/meta/webhook";
+import {
+  MOTIVO_BLOQUEIO_PELO_BOTAO,
+  executarRespostaDaCampanha,
+  prepararRespostaDaCampanha,
+  type RespostaPreparada,
+} from "@/lib/campanhas/resposta-no-funil";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
@@ -122,6 +129,12 @@ export interface EntradaDeMensagem {
    * (`origemDoNegocioPeloCanal`).
    */
   canal?: string;
+  /** O toque num botão de resposta rápida, quando o canal o entrega (oficial). */
+  respostaRapida?: RespostaRapida | null;
+  /** `context.id`: o `wamid` da nossa mensagem que esta responde. */
+  respondendoA?: string | null;
+  /** Quando a mensagem foi enviada pelo contato. Default: agora. */
+  recebidoEm?: Date;
 }
 
 /**
@@ -153,9 +166,15 @@ export async function aplicarEfeitosPosEntrada(
     return;
   }
 
-  await aplicarOptOut(admin, entrada);
+  // A resposta a uma CAMPANHA (issue #11): só LÊ aqui, antes de tudo, porque o
+  // toque em "parar" é opt-out e o opt-out tem de vir antes do lead (passo 1).
+  const resposta = await lerRespostaDaCampanha(admin, entrada);
+
+  await aplicarOptOut(admin, entrada, resposta?.plano.optOut === true);
   await guardarOrigemDaPagina(admin, entrada);
   await abrirDemanda(admin, entrada);
+  // Depois do lead: mover e fechar precisam do card.
+  if (resposta) await aplicarRespostaDaCampanha(admin, entrada, resposta);
   await avaliarCampanha(admin, entrada);
   // A resposta do lead avança o follow-up AQUI. O despacho do agente (LLM)
   // vem depois: no Hobby ele estoura o tempo da request e o próximo texto
@@ -166,7 +185,60 @@ export async function aplicarEfeitosPosEntrada(
     messageId: entrada.messageId,
     texto: entrada.texto,
   });
+  // A campanha mandou para a fila, ou o botão já resolveu a mensagem (perdido,
+  // opt-out): o agente não é acordado — nenhuma chamada de modelo de linguagem.
+  if (resposta?.plano.despacharAgente === false) {
+    logger.info("pos-entrada: agente não acordado — a resposta da campanha já decidiu", {
+      organization_id: entrada.organizationId,
+      conversation_id: entrada.conversationId,
+      campaign_id: resposta.campanha.campanhaId,
+    });
+    return;
+  }
   await pedirDespachoDoAgente(admin, entrada);
+}
+
+function entradaDaResposta(entrada: EntradaDeMensagem) {
+  return {
+    organizationId: entrada.organizationId,
+    contactId: entrada.contactId,
+    conversationId: entrada.conversationId,
+    respostaRapida: entrada.respostaRapida ?? null,
+    respondendoA: entrada.respondendoA ?? null,
+    recebidoEm: entrada.recebidoEm ?? new Date(),
+    requestId: entrada.requestId,
+  };
+}
+
+/** A campanha que esta mensagem responde, e o plano. Nunca lança. */
+async function lerRespostaDaCampanha(admin: Admin, entrada: EntradaDeMensagem): Promise<RespostaPreparada | null> {
+  try {
+    return await prepararRespostaDaCampanha(admin, entradaDaResposta(entrada));
+  } catch (err) {
+    logger.warn("pos-entrada: resposta da campanha não lida (a mensagem segue o caminho de sempre)", {
+      organization_id: entrada.organizationId,
+      conversation_id: entrada.conversationId,
+      detail: err instanceof Error ? err.message.slice(0, 160) : "desconhecido",
+    });
+    return null;
+  }
+}
+
+async function aplicarRespostaDaCampanha(
+  admin: Admin,
+  entrada: EntradaDeMensagem,
+  resposta: RespostaPreparada,
+): Promise<void> {
+  try {
+    await executarRespostaDaCampanha(admin, entradaDaResposta(entrada), resposta);
+  } catch (err) {
+    logger.error("pos-entrada: resposta da campanha não aplicada (a mensagem entra assim mesmo)", {
+      organization_id: entrada.organizationId,
+      conversation_id: entrada.conversationId,
+      campaign_id: resposta.campanha.campanhaId,
+      detail: err instanceof Error ? err.message.slice(0, 160) : "desconhecido",
+    });
+  }
 }
 
 /**
@@ -239,14 +311,18 @@ async function avaliarCampanha(admin: Admin, entrada: EntradaDeMensagem): Promis
  * regravar `true` sobre `true` é barato, e a linha de auditoria de cada pedido
  * é justamente o que prova, depois, que o pedido chegou e foi respeitado.
  */
-async function aplicarOptOut(admin: Admin, entrada: EntradaDeMensagem): Promise<void> {
-  if (!ehPedidoDeOptOut(entrada.texto)) return;
+async function aplicarOptOut(admin: Admin, entrada: EntradaDeMensagem, peloBotao = false): Promise<void> {
+  // O toque no botão de opt-out de uma campanha é pedido tão explícito quanto a
+  // palavra — e não passa pela régua do texto, porque o rótulo é do operador
+  // ("Não quero mais", "Sair da lista") e não precisa estar no vocabulário.
+  if (!peloBotao && !ehPedidoDeOptOut(entrada.texto)) return;
+  const motivo = peloBotao ? MOTIVO_BLOQUEIO_PELO_BOTAO : "stop_keyword";
 
   try {
     const agora = new Date().toISOString();
     const { error } = await admin
       .from("contacts")
-      .update({ is_blocked: true, blocked_reason: "stop_keyword", blocked_at: agora })
+      .update({ is_blocked: true, blocked_reason: motivo, blocked_at: agora })
       .eq("organization_id", entrada.organizationId)
       .eq("id", entrada.contactId);
 
@@ -268,7 +344,7 @@ async function aplicarOptOut(admin: Admin, entrada: EntradaDeMensagem): Promise<
       organizationId: entrada.organizationId,
       resourceType: "contact",
       requestId: entrada.requestId,
-      metadata: { reason: "stop_keyword", contact_id: entrada.contactId, origem: entrada.origem },
+      metadata: { reason: motivo, contact_id: entrada.contactId, origem: entrada.origem },
     });
   } catch (err) {
     logger.error("pos-entrada: opt-out NAO gravado — o contato segue recebendo", {

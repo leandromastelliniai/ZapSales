@@ -52,6 +52,14 @@ export interface CampanhaCarregada {
   /** Com modelo, a campanha é OFICIAL (migration 0538). */
   meta_template_id: string | null;
   template_variables: unknown;
+  /** Onde o card nasce e quem atende (0378). */
+  pipeline_id: string | null;
+  stage_id: string | null;
+  agent_id: string | null;
+  /** O que acontece com quem responde (0541, issue #11). */
+  quem_assume: string;
+  botoes_de_resposta: unknown;
+  oferta: string | null;
 }
 
 export type Recusa = { ok: false; codigo: ApiErrorCode; mensagem: string; status: number };
@@ -61,7 +69,7 @@ const COLUNAS =
   "id, organization_id, name, status, channel_session_id, message_body, base_legal, lia_ref, " +
   "audience_filter, audience_version, content_version, scheduled_at, description, " +
   "intervalo_segundos, janela_inicio_hora, janela_fim_hora, teto_diario, teto_horario, " +
-  "meta_template_id, template_variables";
+  "meta_template_id, template_variables, pipeline_id, stage_id, agent_id, quem_assume, botoes_de_resposta, oferta";
 
 export async function carregarCampanha(
   admin: SupabaseClient,
@@ -394,6 +402,16 @@ export async function duplicarAcao(
       // O modelo e o mapa vão junto: a cópia de uma campanha oficial é oficial.
       meta_template_id: c.meta_template_id,
       template_variables: mapaGuardado(c.template_variables),
+      // Para onde vai quem responde também é parte da intenção: a cópia que
+      // perdesse o funil e os botões mandaria as respostas para o lugar errado.
+      pipeline_id: c.pipeline_id,
+      stage_id: c.stage_id,
+      agent_id: c.agent_id,
+      quem_assume: c.quem_assume,
+      ...(Array.isArray(c.botoes_de_resposta) && c.botoes_de_resposta.length > 0
+        ? { botoes_de_resposta: c.botoes_de_resposta }
+        : {}),
+      oferta: c.oferta,
       created_by: autorId,
       // Nada de destinatário, resultado, agenda ou carimbo de execução: a cópia
       // é uma INTENÇÃO nova, e herdar números faria a tela mostrar entrega de

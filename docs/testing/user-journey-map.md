@@ -3358,9 +3358,57 @@ importa: `update of status` dispara mesmo sem mudança de valor, e o webhook sem
   aviso de risco do WAHA são da issue #9 (hoje a rodada só deixa de enviar quando o modelo não está
   aprovado, sem pausar a campanha);
 - custo, teto de gasto e as 1.000 grátis são da issue #10;
-- resposta da campanha caindo no funil e no agente é da issue #11;
+- resposta da campanha caindo no funil e no agente: entregue pela issue #11 (J45);
 - modelo com cabeçalho de mídia recebe o link público como texto fixo; a cópia de `header_media`
   ainda não é usada no disparo, e a oferta por tempo limitado ainda não manda o prazo;
 - mensagem de campanha que ficou `queued` (canal sem credencial na hora) deixa o destinatário em
   `sending`, ligado a ela: a campanha só conclui quando a mensagem sair ou for dada como falha.
   Reenfileirar mandaria em dobro; marcar falha mentiria se ela sair.
+
+## J45 — A resposta da campanha cai no funil e no agente `[P0]` (2026-10-06, issue #11)
+
+Mesma fronteira da J44: o falso Graph na saída; na entrada, a RESPOSTA chega como webhook
+assinado na rota real — texto digitado ou toque num botão de resposta rápida (`type: "button"`,
+com o `context.id` da mensagem do modelo, como a Cloud API entrega). O worker roda por passos com
+relógio controlado.
+
+Spec: `tests/invariants/resposta-da-campanha.test.ts`; a regra pura em
+`lib/campanhas/destino-da-resposta.test.ts`; o parser do clique em
+`tests/unit/meta-webhook-resposta-rapida.test.ts`; o contexto do agente em
+`lib/campanhas/contexto-do-agente.test.ts` e no turno inteiro de
+`tests/invariants/agent-send-template-turn.test.ts`; a janela de 24 h em
+`tests/unit/gate-messaging-window.test.ts` e `tests/unit/fluxo-envia-modelo-aprovado.test.ts`.
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J45.1 | Contato sem negócio responde | o card nasce no funil e na etapa da campanha, com `source = campanha` e o id dela | **PASS (invariante)** |
+| J45.2 | Contato que já é lead no funil responde | o MESMO negócio vai para a etapa da campanha (um aberto só), e a timeline ganha "Respondeu à campanha" | **PASS (invariante)** |
+| J45.3 | Contato com negócio aberto em outro funil responde | o negócio é levado para o funil da campanha (clone + origem fechada como transferência), sem dois abertos | **PASS (invariante)** |
+| J45.4 | A conversa mostra a origem | `GET /api/v1/conversations/[id]/campanha` devolve a campanha e o modelo; conversa sem campanha devolve `null` | **PASS (invariante)** |
+| J45.5 | "IA" | o agente é acordado; o agente da campanha atende mesmo num número SEM agente publicado (o portão do dreno pergunta pela campanha) | **PASS (invariante)** |
+| J45.6 | "Humano" | a IA fica calada na conversa (`bot_silenced_until = infinity`, motivo `campanha_atendimento_humano`), ela entra no rodízio e o agente NÃO é acordado | **PASS (invariante)** |
+| J45.7 | "IA e depois humano" | o agente atende; a passagem pela regra existente (`performHumanHandoff`) pede o rodízio — e numa campanha de "IA" a mesma passagem não pede | **PASS (invariante)** |
+| J45.8 | Botões mapeados | mover para etapa, atribuir a humano, marcar perdido e opt-out agem na ingestão, sem acordar o agente; "atribuir à IA" acorda; "Parar" grava `is_blocked` com `quick_reply_opt_out`; o toque vira mensagem de texto com o rótulo e o clique no `metadata` | **PASS (invariante)** |
+| J45.9 | Contexto do agente | o prompt do turno traz a campanha, o texto recebido, as variáveis e a oferta; depois da janela de atribuição (72 h), nada | **PASS (invariante, turno inteiro com modelo fake)** |
+| J45.10 | Métrica | resposta digitada e por botão viram `replied` e somam em `responderam` | **PASS (invariante)** |
+| J45.11 | Janela de 24 h | com o último inbound de 30 h, o template pedido pelo agente é vetado (`agent_template_outside_window`) e nada sai; com 23 h, sai; o passo de follow-up sem modelo configurado é pulado sem chamar a IA, e com o modelo configurado sai SÓ ele | **PASS (relógio controlado)** |
+| J45.12 | A API guarda o mapa | botão apontando para etapa inexistente → 422; "IA e depois humano" (ou botão "atribuir à IA") sem agente → 422 | **PASS (invariante)** |
+| J45.13 | Configurar e ver pela tela, como um leigo | escolher quem assume, mapear os botões do modelo, escrever a oferta; responder pelo celular e ver o card, a fila e a origem na Inbox | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
+
+**Como rodou nesta máquina.** No mesmo PGlite da J44 (prelúdio do `scripts/test-db.sh` +
+`baseline.sql`). Não é o gate: o `test:db` do CI é.
+
+Sabotagem medida: não mover o card que já está no funil derruba a J45.2, a J45.3 e o botão de
+mover da J45.8; não pedir a fila derruba a J45.6 e o botão de atendente; deixar o gate aceitar
+template do agente fora da janela derruba a J45.11.
+
+**Decisões desta entrega, para ninguém supor outra coisa:**
+- "Primeira resposta" é a que encontra o destinatário ainda sem `replied_at`. Só ela move o card e
+  aplica quem assume — a conversa que a equipe devolveu ao robô não volta para a fila no "ok"
+  seguinte. O toque num botão vale sempre.
+- "Mover para etapa" não decide quem atende: segue a campanha. "Atribuir à IA" acorda o agente da
+  campanha (por isso exige agente); a decisão do toque em si não passa por modelo de linguagem.
+- "Não tenho interesse" fecha como perdido com o motivo canônico `other` e a frase do botão na
+  timeline — criar um motivo novo exigiria mexer no trigger de validação.
+- Editar quem assume, botões e oferta com a campanha andando é aceito pela API (como o ritmo); a
+  tela de edição só existe para rascunho.

@@ -81,3 +81,27 @@ export function marcaDaOrigem(origem: OrigemDeCampanha): {
 }
 
 export const ORIGEM_CAMPANHA = "campanha";
+
+/** O que a conversa mostra sobre a campanha que a originou (issue #11). */
+export interface CampanhaDaConversa {
+  campanha: { id: string; nome: string };
+  modelo: { nome: string; idioma: string } | null;
+  enviada_em: string | null;
+  respondida_em: string | null;
+}
+
+/**
+ * A campanha que fez o CARD nascer, lida da marca de origem — `null` quando o
+ * negócio não nasceu de campanha. Pura: o dossiê e o card leem daqui, e nenhum
+ * deles abre `source_metadata` por caminho solto.
+ */
+export function campanhaDaMarca(
+  source: string | null | undefined,
+  sourceMetadata: Record<string, unknown> | null | undefined,
+): { id: string | null; nome: string } | null {
+  if (source !== ORIGEM_CAMPANHA) return null;
+  const nome = sourceMetadata?.campaign_name;
+  if (typeof nome !== "string" || nome.trim() === "") return null;
+  const id = sourceMetadata?.campaign_id;
+  return { id: typeof id === "string" ? id : null, nome };
+}

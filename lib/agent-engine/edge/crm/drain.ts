@@ -22,7 +22,7 @@ import { enqueueJob } from '../../queue/queue';
 import { decidirRajada, debounceEfetivo } from './debounce';
 import { avisoDeEventoMorto, IA_QUE_NAO_RESPONDEU } from '@/lib/event-log/aviso-de-evento-morto';
 import { TIPOS_DERIVAVEIS, DERIVACAO_TERMINADA } from '@/lib/messaging/media/derivable';
-import { haQuemAtendaASessao } from '@/lib/ai/agents/quem-atende-a-sessao';
+import { haAgenteDaCampanhaNaConversa, haQuemAtendaASessao } from '@/lib/ai/agents/quem-atende-a-sessao';
 import { decidirElegibilidadeDaConversa } from '@/lib/ai/elegibilidade/consulta-pg';
 import { deveCederTurnoAoRetorno } from '@/lib/followup/ceder-turno-ao-retorno';
 import { ehOperante } from '@/lib/organizacao/operante';
@@ -312,7 +312,10 @@ async function processEvent(
   // MESMA antes de perguntar ao Jev pelos pedidos do cliente: ele só conta um
   // pedido que a regra de hoje deixou passar onde este turno rodaria.
   const haQuem = await haQuemAtendaASessao(pool, event.organization_id, p.channel_session_id);
-  if (haQuem === false) {
+  // O agente da CAMPANHA também atende (degrau 0 de `resolveTurnAgent`), mesmo
+  // num número sem agente publicado — a pergunta só é feita quando o número
+  // disse não, então quem não usa campanha não paga a leitura (issue #11).
+  if (haQuem === false && !(await haAgenteDaCampanhaNaConversa(pool, event.organization_id, p.conversation_id))) {
     log.info('drain: nenhum agente publicado para a sessão — turno pulado (sem gasto)', {
       event_id: event.id,
       channel_session_id: p.channel_session_id,

@@ -21,6 +21,7 @@ const OFERTA: ModeloParaCampanha = {
   language: "pt_BR",
   category: "MARKETING",
   texto: "Oi {{1}}, sua oferta de {{2}} chegou.",
+  botoesDeResposta: [],
   variaveis: [
     {
       chave: "1",
@@ -46,6 +47,7 @@ const AVISO: ModeloParaCampanha = {
   name: "aviso_geral",
   language: "pt_BR",
   category: "UTILITY",
+  botoesDeResposta: [],
   texto: "Nosso horário mudou.",
   variaveis: [],
 };

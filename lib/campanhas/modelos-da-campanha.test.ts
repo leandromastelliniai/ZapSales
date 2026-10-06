@@ -45,4 +45,28 @@ describe("modelosParaCampanha — o que a tela de campanha oferece", () => {
     ]);
     expect(m!.variaveis.map((v) => v.chave)).toEqual(["1"]);
   });
+
+  it("lista os rótulos dos botões de RESPOSTA RÁPIDA — os que a campanha pode mapear (issue #11)", () => {
+    const [m] = modelosParaCampanha([
+      {
+        ...APROVADO,
+        components: [
+          { type: "BODY", text: "Quer saber mais?" },
+          {
+            type: "BUTTONS",
+            buttons: [
+              { type: "QUICK_REPLY", text: "Quero" },
+              { type: "QUICK_REPLY", text: "Parar" },
+              { type: "URL", text: "Ver", url: "https://loja.exemplo" },
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(m!.botoesDeResposta).toEqual(["Quero", "Parar"]);
+  });
+
+  it("modelo sem botão de resposta rápida não tem o que mapear", () => {
+    expect(modelosParaCampanha([APROVADO])[0]!.botoesDeResposta).toEqual([]);
+  });
 });

@@ -250,6 +250,10 @@ export async function ingestMetaInbound(
       metadata: {
         ...(e.media ? { meta_media_id: e.media.id, voice: e.media.voice } : {}),
         ...(e.sharedContact ? { shared_contact: e.sharedContact } : {}),
+        // O toque num botão e a mensagem respondida (issue #11): é o que a
+        // conversa mostra como "tocou no botão" e o que liga a resposta à campanha.
+        ...(e.respostaRapida ? { resposta_rapida: e.respostaRapida } : {}),
+        ...(e.respondendoA ? { context_wamid: e.respondendoA } : {}),
       },
     })
     .select("id")
@@ -306,6 +310,9 @@ export async function ingestMetaInbound(
     texto: e.text ?? null,
     nomeDoContato: e.profileName ?? null,
     origem: "meta_webhook",
+    respostaRapida: e.respostaRapida ?? null,
+    respondendoA: e.respondendoA ?? null,
+    recebidoEm: e.sentAt,
   });
 
   return {

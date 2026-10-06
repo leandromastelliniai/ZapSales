@@ -119,6 +119,14 @@ export interface GateContext {
      * inteira — e aí template viraria bypass de opt-out, LGPD e horário.
      */
     isTemplate?: boolean;
+    /**
+     * O template foi escolhido pelo AGENTE (ferramenta `send_template`), e não
+     * configurado por uma pessoa (o modelo do follow-up)? A IA não envia modelo
+     * por conta própria fora da janela (issue #11): modelo fora da janela é
+     * mensagem paga e iniciada pela empresa, e quem a decide é quem configurou o
+     * follow-up — nunca o modelo de linguagem no meio de um turno.
+     */
+    templateDoAgente?: boolean;
   };
   pacing: {
     knobs: PacingKnobs;
@@ -751,18 +759,30 @@ export const messagingWindowGate: Gate = {
     // regrediu" é esta linha no trace (invariante 4 da doutrina).
     if (caps.freeformOutsideWindow) return { pass: true, skipped: 'not_applicable' };
 
-    // Template é a saída legítima fora da janela — é o que a `reason` do veto
-    // manda usar. Vetá-lo aqui fecharia a única porta que este gate abre.
-    if (ctx.messagingWindow?.isTemplate === true) return { pass: true };
-
     if (isWindowOpen(ctx.now, ctx.messagingWindow?.lastInboundAt ?? null)) return { pass: true };
+
+    // Fora da janela, o template CONFIGURADO é a saída legítima (o modelo do
+    // follow-up, escolhido por uma pessoa). O escolhido pelo agente, não: a IA
+    // não inicia conversa paga por conta própria (issue #11).
+    if (ctx.messagingWindow?.isTemplate === true && ctx.messagingWindow.templateDoAgente !== true) {
+      return { pass: true };
+    }
+    if (ctx.messagingWindow?.isTemplate === true) {
+      return {
+        pass: false,
+        code: 'agent_template_outside_window',
+        reason:
+          'a janela de 24 horas com este contato fechou, e você não envia modelo por conta própria. ' +
+          'Encerre o turno sem enviar: fora da janela, só o follow-up configurado manda um modelo aprovado.',
+      };
+    }
 
     return {
       pass: false,
       code: 'messaging_window_closed',
       reason:
         'a janela de 24 horas com este contato fechou; o canal vai recusar texto livre. ' +
-        'Use um template aprovado (ferramenta send_template) ou encerre o turno sem enviar.',
+        'Encerre o turno sem enviar: fora da janela, só o follow-up configurado manda um modelo aprovado.',
     };
   },
 };
@@ -885,6 +905,8 @@ export interface RunBeforeSendArgs {
    * e SÓ o gate de janela o consulta — todos os demais continuam valendo.
    */
   isTemplate?: boolean;
+  /** O template veio da ferramenta do agente? Só o gate de janela consulta (issue #11). */
+  templateDoAgente?: boolean;
   /**
    * RUN a que a tentativa pertence (job_queue.id) — chave de export da auditoria
    * (`before_send_traces`, acceptance 3 F4-08). Ausente = trace NÃO persistido em DB (só
@@ -1218,7 +1240,11 @@ export async function runBeforeSend(args: RunBeforeSendArgs): Promise<BeforeSend
       body: bodyDoModelo,
       optedOut,
       provider,
-      messagingWindow: { lastInboundAt, ...(args.isTemplate === true ? { isTemplate: true } : {}) },
+      messagingWindow: {
+        lastInboundAt,
+        ...(args.isTemplate === true ? { isTemplate: true } : {}),
+        ...(args.isTemplate === true && args.templateDoAgente === true ? { templateDoAgente: true } : {}),
+      },
       pacing: {
         knobs: pacingCfg.knobs,
         state: pacingState,

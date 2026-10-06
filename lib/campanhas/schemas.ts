@@ -6,6 +6,7 @@
 import { z } from "zod";
 
 import { filtroDeAudienciaSchema } from "./audiencia";
+import { QUEM_ASSUME, botoesDaRespostaSchema } from "./destino-da-resposta";
 import { mapaDeVariaveisSchema } from "./variaveis-do-modelo";
 
 /**
@@ -53,6 +54,32 @@ const baseDaCampanha = {
   meta_template_id: z.string().uuid().nullable().optional(),
   /** De onde vem cada variável do modelo, por slotKey (`lib/campanhas/variaveis-do-modelo.ts`). */
   template_variables: mapaDeVariaveisSchema.optional(),
+  /**
+   * O que acontece com quem responde (migration 0541, issue #11): quem assume,
+   * o que cada botão de resposta rápida faz e a oferta que vai para o agente.
+   * As etapas dos botões são conferidas na rota, dentro da organização.
+   */
+  quem_assume: z.enum(QUEM_ASSUME).optional(),
+  botoes_de_resposta: botoesDaRespostaSchema.optional(),
+  oferta: z.string().trim().max(2000).nullable().optional(),
+};
+
+/**
+ * "Atribuir à IA" entrega a conversa ao agente DA CAMPANHA — sem ele, o botão
+ * prometeria um atendimento que ninguém faria. "IA e depois humano" também
+ * precisa de quem atenda antes da passagem. (Na edição a mesma regra é conferida
+ * na rota, sobre o estado final da campanha.)
+ */
+export function exigeAgente(c: {
+  quem_assume?: string | null;
+  botoes_de_resposta?: ReadonlyArray<{ acao: string }> | null;
+}): boolean {
+  return c.quem_assume === "ia_e_humano" || (c.botoes_de_resposta ?? []).some((b) => b.acao === "atribuir_ia");
+}
+
+export const MENSAGEM_SEM_AGENTE = {
+  message: 'Escolha o agente da campanha: "IA e depois humano" e o botão "Atribuir à IA" entregam a conversa a ele.',
+  path: ["agent_id"],
 };
 
 export const criarCampanhaSchema = z
@@ -71,6 +98,7 @@ export const criarCampanhaSchema = z
     message: "Escolha o funil antes da etapa — etapa sem funil seria um card sem coluna.",
     path: ["stage_id"],
   })
+  .refine((c) => !exigeAgente(c) || c.agent_id != null, MENSAGEM_SEM_AGENTE)
   .refine(
     (c) =>
       c.janela_inicio_hora == null ||
@@ -95,6 +123,9 @@ export const editarCampanhaSchema = z
     agent_id: baseDaCampanha.agent_id,
     meta_template_id: baseDaCampanha.meta_template_id,
     template_variables: baseDaCampanha.template_variables,
+    quem_assume: baseDaCampanha.quem_assume,
+    botoes_de_resposta: baseDaCampanha.botoes_de_resposta,
+    oferta: baseDaCampanha.oferta,
   })
   .merge(ritmoSchema);
 

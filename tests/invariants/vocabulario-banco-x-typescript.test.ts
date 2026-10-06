@@ -434,6 +434,14 @@ const PARES: Array<{
     arquivo: "lib/organizacao/operante.ts",
     simbolo: "TIPOS_DE_SUSPENSAO",
   },
+  {
+    tabela: "campaigns",
+    coluna: "quem_assume",
+    // Quem assume a resposta da campanha (0541, issue #11). Um valor que nascesse
+    // só no banco cairia no `default` de `planejarResposta` e viraria "ia".
+    arquivo: "lib/campanhas/destino-da-resposta.ts",
+    simbolo: "QUEM_ASSUME",
+  },
 ];
 
 /** Tira um nível de parênteses externos, se ele envolver a expressão inteira. */
