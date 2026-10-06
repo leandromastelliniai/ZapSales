@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Campanhas — da lista escolhida até a resposta que volta",
-    "subtitle": "Modo WAHA: o ritmo é do número (channel_knobs + pacing_ledger). Modo oficial: modelo aprovado em lotes, sem anti-ban (issue #8). Proteções (issue #9): limite do portfólio, pausa automática com motivo, aceite do risco no QR code e o modo dois números",
+    "subtitle": "Modo WAHA: o ritmo é do número (channel_knobs + pacing_ledger). Modo oficial: modelo aprovado em lotes, sem anti-ban (issue #8). Proteções (issue #9): limite do portfólio, pausa automática com motivo, aceite do risco no QR code e o modo dois números. A resposta cai no funil e no agente da campanha (issue #11)",
     "output": "campanhas.html",
     "quality_profile": "standard"
   },
@@ -270,7 +270,33 @@
       "lane": "retorno",
       "col": 6,
       "type": "logic",
-      "label": "registro.ts — 80% e 100% das 1.000 de atendimento grátis viram aviso na Central (atendimento_gratis_do_numero)"
+      "label": "registro.ts — 80% e 100% das 1.000 de atendimento grátis viram aviso na Central (atendimento_gratis_do_numero)",
+      "id": "resposta-no-funil",
+      "lane": "retorno",
+      "col": 6,
+      "type": "logic",
+      "label": "resposta-no-funil.ts — a resposta cria ou move o card, aplica quem assume e o botão tocado (issue #11)"
+    },
+    {
+      "id": "crm-leads",
+      "lane": "dados",
+      "col": 5,
+      "type": "database",
+      "label": "crm_leads + crm_lead_activities (campaign_replied)"
+    },
+    {
+      "id": "contexto-agente",
+      "lane": "motor",
+      "col": 5,
+      "type": "logic",
+      "label": "contexto-do-agente.ts — nome, modelo, texto recebido, variáveis e oferta no turno do agente"
+    },
+    {
+      "id": "fila-da-passagem",
+      "lane": "retorno",
+      "col": 7,
+      "type": "logic",
+      "label": "fila-da-passagem.ts — 'IA e depois humano': a passagem pede o rodízio de atendentes"
     }
 ,
     {
@@ -307,6 +333,13 @@
       "col": 5,
       "type": "database",
       "label": "channel_sessions — meta_portfolio_id (da WABA, na conexão), meta_qualidade, meta_limite_de_mensagens"
+    },
+    {
+      "id": "aviso-gratis",
+      "lane": "retorno",
+      "col": 6,
+      "type": "logic",
+      "label": "registro.ts — 80% e 100% das 1.000 de atendimento grátis viram aviso na Central (atendimento_gratis_do_numero)"
     }
   ],
   "edges": [
@@ -353,6 +386,13 @@
     { "id": "webhook-falha-tardia", "from": "webhook-meta", "to": "falha-oficial", "label": "failed de mensagem de campanha" },
     { "id": "falha-recoloca", "from": "falha-oficial", "to": "campaign-recipients", "label": "volta à fila, opted_out ou failed com o motivo" },
     { "id": "falha-recusa-marketing", "from": "falha-oficial", "to": "elegibilidade", "label": "131050: consent.marketing.declined_at tira o contato das próximas" },
+    { "id": "webhook-resposta-no-funil", "from": "webhook-meta", "to": "resposta-no-funil", "label": "resposta assinada: texto ou toque no botão, com context.id" },
+    { "id": "resposta-le-campanha", "from": "resposta-no-funil", "to": "campaigns", "label": "lê funil, etapa, quem assume e o mapa dos botões" },
+    { "id": "resposta-move-card", "from": "resposta-no-funil", "to": "crm-leads", "label": "cria na etapa da campanha ou move o que já existe, sem duplicar" },
+    { "id": "resposta-botao-opt-out", "from": "resposta-no-funil", "to": "opt-out", "label": "botão de parar grava is_blocked (quick_reply_opt_out)" },
+    { "id": "contexto-le-destinatario", "from": "contexto-agente", "to": "campaign-recipients", "label": "texto renderizado e variáveis de quem respondeu" },
+    { "id": "contexto-le-campanha", "from": "contexto-agente", "to": "campaigns", "label": "nome, modelo e oferta" },
+    { "id": "fila-le-campanha", "from": "fila-da-passagem", "to": "campaigns", "label": "quem_assume = ia_e_humano" },
     { "id": "rodada-pede-portfolio", "from": "rodada-oficial", "to": "portfolio", "label": "quanto cabe no limite do portfólio agora" },
     { "id": "portfolio-le-numeros", "from": "portfolio", "to": "channel-sessions", "label": "números do mesmo portfólio (inclusive de outra organização) e a menor faixa" },
     { "id": "portfolio-conta", "from": "portfolio", "to": "messages", "label": "modelos que saíram nas últimas 24 h" },

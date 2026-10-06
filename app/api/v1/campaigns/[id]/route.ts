@@ -7,6 +7,8 @@
  * mostrar um texto e a fila enviar outro. Para editar, volta-se ao rascunho
  * (o que invalida a lista) — e isso só vale enquanto nada saiu.
  */
+import { recusaDasEtapasDosBotoes } from "@/lib/campanhas/resposta-no-funil";
+import { lerBotoesDaResposta } from "@/lib/campanhas/destino-da-resposta";
 import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 
@@ -19,7 +21,7 @@ import { ehEditavel, ehTerminal } from "@/lib/campanhas/maquina-de-estados";
 import { recusaDaConexaoComModelo, recusaDoNumeroDeAtendimento } from "@/lib/campanhas/modelo-da-campanha";
 import { gravarPool, lerPoolExtra } from "@/lib/campanhas/pool-de-numeros";
 import { usoDoPortfolio } from "@/lib/campanhas/portfolio-da-campanha";
-import { editarCampanhaSchema } from "@/lib/campanhas/schemas";
+import { editarCampanhaSchema, MENSAGEM_SEM_AGENTE, exigeAgente } from "@/lib/campanhas/schemas";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { requireSupportWrite } from "@/lib/impersonate/support";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -33,6 +35,7 @@ const COLUNAS =
   "snapshot_excluded, scheduled_at, prepared_at, started_at, paused_at, completed_at, " +
   "cancelled_at, failure_code, intervalo_segundos, janela_inicio_hora, janela_fim_hora, " +
   "teto_diario, teto_horario, teto_gasto_cents, pipeline_id, stage_id, agent_id, meta_template_id, template_variables, " +
+  "quem_assume, botoes_de_resposta, oferta, " +
   "numero_de_atendimento_id, pausa_motivo, pausa_detalhe, risco_de_banimento_aceito_em, " +
   "risco_de_banimento_aceito_por, created_at, created_by";
 
@@ -110,6 +113,10 @@ export async function PATCH(
   // andando rápido demais precisa poder desacelerá-la AGORA. Obrigar a duplicar
   // a campanha para trocar um intervalo é obrigar a recomeçar o envio — ou, pior,
   // a deixar correndo do jeito errado porque recomeçar custa caro.
+  //
+  // O QUE ACONTECE COM QUEM RESPONDE (quem assume, botões, oferta — issue #11)
+  // também muda com a campanha andando: não toca no que foi enviado, e é com a
+  // campanha no ar que o operador descobre que o botão devia ir para outra etapa.
   const CAMPOS_DE_RITMO = [
     "channel_session_ids",
     "intervalo_segundos",
@@ -118,6 +125,9 @@ export async function PATCH(
     "teto_diario",
     "teto_horario",
     "teto_gasto_cents",
+    "quem_assume",
+    "botoes_de_resposta",
+    "oferta",
   ] as const;
   const mexeEmConteudo = Object.entries(entrada).some(
     ([campo, valor]) =>
@@ -170,9 +180,31 @@ export async function PATCH(
     "agent_id",
     "meta_template_id",
     "template_variables",
+    "quem_assume",
+    "botoes_de_resposta",
+    "oferta",
     "numero_de_atendimento_id",
   ] as const) {
     if (entrada[campo] !== undefined) mudanca[campo] = entrada[campo];
+  }
+
+  // Quem assume e botões conferidos sobre o estado FINAL (o que vai ficar
+  // gravado): trocar só o agente também pode deixar um botão sem quem atenda.
+  if (
+    entrada.quem_assume !== undefined ||
+    entrada.botoes_de_resposta !== undefined ||
+    entrada.agent_id !== undefined
+  ) {
+    const final = {
+      quem_assume: entrada.quem_assume ?? campanha.quem_assume,
+      botoes_de_resposta: entrada.botoes_de_resposta ?? lerBotoesDaResposta(campanha.botoes_de_resposta),
+      agent_id: entrada.agent_id === undefined ? campanha.agent_id : entrada.agent_id,
+    };
+    if (exigeAgente(final) && !final.agent_id) {
+      return fail("campanha_conteudo_invalido", t(MENSAGEM_SEM_AGENTE.message), 422, { requestId });
+    }
+    const recusaDosBotoes = await recusaDasEtapasDosBotoes(supabase, authz.org.orgId, entrada.botoes_de_resposta);
+    if (recusaDosBotoes) return fail("campanha_conteudo_invalido", t(recusaDosBotoes), 422, { requestId });
   }
   if (entrada.base_legal !== undefined) mudanca.base_legal = entrada.base_legal;
   if (entrada.lia_ref !== undefined) mudanca.lia_ref = entrada.lia_ref;

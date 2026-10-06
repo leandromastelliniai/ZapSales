@@ -27,10 +27,17 @@ import type * as ObsLogger from "@/lib/agent-engine/obs/logger";
  * (adapter que captura em vez de enviar), `clock` e `sleep`.
  *
  * ─── O que só este arquivo prova ────────────────────────────────────────────
- * O guard de forma prova que `isTemplate: true` está escrito no código. Aqui a
- * mensagem inbound tem **30 horas** — a janela de 24h está fechada de verdade — e o
- * gate `messaging_window` **deixa passar**. É a diferença entre "a flag está lá" e
- * "a flag faz o que promete".
+ * Com a janela de 24h ABERTA, o template do agente sai, renderizado e com a
+ * identidade de template. Com ela FECHADA (30 horas), ele NÃO sai: a IA não envia
+ * modelo por conta própria fora da janela (issue #11) — fora dela, só o modelo que
+ * uma pessoa configurou no follow-up. Antes da #11 este arquivo provava o
+ * contrário (o template do agente passava com a janela fechada), e a decisão de
+ * produto que o inverteu está escrita na issue: modelo fora da janela é mensagem
+ * paga, iniciada pela empresa, e quem a decide não é o modelo de linguagem.
+ *
+ * E o turno do agente da campanha recebe o contexto dela (nome, modelo, texto
+ * recebido, variáveis e oferta) no prompt — o critério 5 da #11, medido no
+ * prompt que o modelo de verdade receberia.
  */
 
 const container = process.env.TEST_DB_CONTAINER;
@@ -58,6 +65,15 @@ const CONV = "cccccccc-0000-4000-8000-000000000004";
 const CONV_WAHA = "cccccccc-0000-4000-8000-000000000014";
 const MSG = "cccccccc-0000-4000-8000-000000000005";
 const MSG_WAHA = "cccccccc-0000-4000-8000-000000000015";
+/** O cenário da campanha (#11): número oficial com agente publicado, conversa nascida da campanha. */
+const SESSION_CAMPANHA = "cccccccc-0000-4000-8000-000000000023";
+const CONV_CAMPANHA = "cccccccc-0000-4000-8000-000000000024";
+const MSG_CAMPANHA = "cccccccc-0000-4000-8000-000000000025";
+const CAMPANHA = "cccccccc-0000-4000-8000-000000000026";
+const AGENTE = "cccccccc-0000-4000-8000-000000000027";
+const VERSAO = "cccccccc-0000-4000-8000-000000000028";
+/** O relógio do turno — o mesmo de `montaHandler`. */
+const AGORA = new Date("2026-07-30T15:00:00Z");
 
 interface EnvioCapturado {
   body: string;
@@ -170,7 +186,7 @@ function montaHandler(doGenerate: unknown) {
       }) as never,
     // Instante fixo DENTRO da janela horária do anti-ban: um horário fora dela
     // reprovaria o turno por um motivo que não é o deste teste.
-    clock: () => new Date("2026-07-30T15:00:00Z"),
+    clock: () => AGORA,
     sleep: async () => {},
   });
 }
@@ -285,6 +301,52 @@ beforeAll(async () => {
      on conflict (organization_id, waba_id, name, language) do update set status = 'PENDING'`,
     [ORG],
   );
+  // ── O cenário da campanha (#11) ──
+  await pool.query(
+    `insert into channel_sessions (id, organization_id, provider, meta_phone_number_id,
+                                   meta_waba_id, status, webhook_secret_encrypted)
+     values ($1,$2,'meta_cloud','333','222','WORKING','\\x00'::bytea)
+     on conflict (id) do nothing`,
+    [SESSION_CAMPANHA, ORG],
+  );
+  await pool.query(
+    `insert into conversations (id, organization_id, contact_id, channel_session_id, status, is_group, last_inbound_at)
+     values ($1,$2,$3,$4,'open',false,$5) on conflict (id) do nothing`,
+    [CONV_CAMPANHA, ORG, CONTACT, SESSION_CAMPANHA, new Date(AGORA.getTime() - 60_000)],
+  );
+  await pool.query(
+    `insert into messages (id, organization_id, conversation_id, channel_session_id, contact_id,
+       type, direction, status, body, sent_via, sent_at)
+     values ($1,$2,$3,$4,$5,'text','inbound','delivered','quero','external_device',$6)
+     on conflict (id) do nothing`,
+    [MSG_CAMPANHA, ORG, CONV_CAMPANHA, SESSION_CAMPANHA, CONTACT, new Date(AGORA.getTime() - 60_000)],
+  );
+  await pool.query(
+    `insert into ai_agents (id, organization_id, name, system_prompt)
+     values ($1,$2,'Agente da campanha','você atende quem respondeu à campanha') on conflict (id) do nothing`,
+    [AGENTE, ORG],
+  );
+  await pool.query(
+    `insert into ai_agent_versions (id, organization_id, agent_id, version_number, system_prompt,
+                                    provider, model, channel_session_id, status, published_at)
+     values ($1,$2,$3,1,'você atende quem respondeu à campanha','anthropic','claude-sonnet-4-6',$4,'published',now())
+     on conflict (id) do nothing`,
+    [VERSAO, ORG, AGENTE, SESSION_CAMPANHA],
+  );
+  await pool.query(`update ai_agents set published_version_id = $1 where id = $2`, [VERSAO, AGENTE]);
+  await pool.query(
+    `insert into campaigns (id, organization_id, name, channel_session_id, base_legal, status, agent_id, oferta)
+     values ($1,$2,'Black Friday da Clínica',$3,'consent','running',$4,'Avaliação por R$ 99 até sexta')
+     on conflict (id) do nothing`,
+    [CAMPANHA, ORG, SESSION_CAMPANHA, AGENTE],
+  );
+  await pool.query(
+    `insert into campaign_recipients (organization_id, campaign_id, contact_id, conversation_id, status,
+                                      sent_at, rendered_body, variables)
+     values ($1,$2,$3,$4,'delivered',$5,'Oi Lead, a avaliação sai por R$ 99 até sexta.','{"1":"Lead"}'::jsonb)`,
+    [ORG, CAMPANHA, CONTACT, CONV_CAMPANHA, new Date(AGORA.getTime() - 5 * 3_600_000)],
+  );
+
   await pool.query(
     `with v as (
        insert into playbook_versions (organization_id, layer, content)
@@ -304,7 +366,19 @@ beforeEach(() => {
 const ALVO_META = { conv: CONV, sessao: SESSION_META, msg: MSG, evento: "cccccccc-0000-4000-8000-000000000006" };
 const ALVO_WAHA = { conv: CONV_WAHA, sessao: SESSION_WAHA, msg: MSG_WAHA, evento: "cccccccc-0000-4000-8000-000000000016" };
 
-describe("turno completo — send_template com a janela de 24h FECHADA", () => {
+/** A janela é derivada de `conversations.last_inbound_at` (ver `readLastInboundAt`). */
+async function ultimoInboundHa(horas: number): Promise<void> {
+  await pool.query(`update conversations set last_inbound_at = $2 where id = $1`, [
+    CONV,
+    new Date(AGORA.getTime() - horas * 3_600_000),
+  ]);
+}
+
+describe("turno completo — send_template com a janela de 24h ABERTA", () => {
+  beforeEach(async () => {
+    await ultimoInboundHa(2);
+  });
+
   it("o template sai, com corpo renderizado e identidade preservada", async () => {
     const erro = await rodaTurno(
       montaHandler(
@@ -326,21 +400,6 @@ describe("turno completo — send_template com a janela de 24h FECHADA", () => {
       language: "pt_BR",
       values: { "1": "Ana" },
     });
-  });
-
-  it("o gate messaging_window DEIXA passar — é a flag fazendo efeito, não só existindo", async () => {
-    // O guard de forma prova que `isTemplate: true` está escrito. Este caso prova que
-    // ele funciona: o inbound tem 30 horas, a janela está fechada, e o envio sai.
-    // Se a flag deixasse de ser passada, o gate vetaria e `enviados` ficaria vazio.
-    const erro = await rodaTurno(
-      montaHandler(
-        modeloQueChamaTemplate({ template_name: "retomada", language: "pt_BR", values: { "1": "Bia" } }),
-      ),
-      ALVO_META,
-    );
-    expect(erro).toBeNull();
-    expect(enviados).toHaveLength(1);
-    expect(enviados[0]!.body).toBe("Oi Bia, tudo certo?");
   });
 
   it("template PENDING é recusado, NADA sai, e o modelo lê o motivo", async () => {
@@ -373,6 +432,65 @@ describe("turno completo — send_template com a janela de 24h FECHADA", () => {
     expect(erro).toBeNull();
     expect(enviados).toHaveLength(0);
     expect(JSON.stringify(ultimoResultadoDeTool)).toMatch(/template_desconhecido/);
+  });
+});
+
+describe("turno completo — janela de 24h FECHADA: a IA não envia modelo por conta própria (issue #11)", () => {
+  beforeEach(async () => {
+    await ultimoInboundHa(30);
+  });
+
+  it("o modelo pede o template e NADA sai — o gate recusa o template do agente", async () => {
+    const erro = await rodaTurno(
+      montaHandler(
+        modeloQueChamaTemplate({ template_name: "retomada", language: "pt_BR", values: { "1": "Bia" } }),
+      ),
+      ALVO_META,
+    );
+    expect(erro).toBeNull();
+    expect(enviados).toHaveLength(0);
+    // E o modelo LEU o porquê, com a saída: encerrar o turno.
+    expect(JSON.stringify(ultimoResultadoDeTool)).toMatch(/agent_template_outside_window/);
+    expect(JSON.stringify(ultimoResultadoDeTool)).toMatch(/[Ee]ncerre o turno/);
+  });
+
+  it("controle de relógio: o MESMO pedido com o inbound de 23 h atrás sai — é a janela que decide", async () => {
+    await ultimoInboundHa(23);
+    const erro = await rodaTurno(
+      montaHandler(
+        modeloQueChamaTemplate({ template_name: "retomada", language: "pt_BR", values: { "1": "Bia" } }),
+      ),
+      ALVO_META,
+    );
+    expect(erro).toBeNull();
+    expect(enviados).toHaveLength(1);
+  });
+});
+
+describe("turno completo — o agente da campanha recebe o contexto dela (issue #11)", () => {
+  it("o prompt do primeiro turno traz a campanha, o texto recebido, as variáveis e a oferta", async () => {
+    let sistema = "";
+    const doGenerate = async (opts: { prompt?: unknown }) => {
+      const msgs = (opts.prompt ?? []) as Array<{ role: string; content?: unknown }>;
+      if (!sistema) sistema = msgs.filter((x) => x.role === "system").map((x) => JSON.stringify(x.content)).join("\n");
+      return {
+        content: [{ type: "text" as const, text: CHECKPOINT }],
+        finishReason: { unified: "stop" as const, raw: undefined },
+        usage: USO,
+        warnings: [],
+      };
+    };
+    await rodaTurno(montaHandler(doGenerate), {
+      conv: CONV_CAMPANHA,
+      sessao: SESSION_CAMPANHA,
+      msg: MSG_CAMPANHA,
+      evento: "cccccccc-0000-4000-8000-000000000029",
+    });
+
+    expect(sistema).toContain("Esta conversa veio de uma campanha");
+    expect(sistema).toContain("Black Friday da Clínica");
+    expect(sistema).toContain("Oi Lead, a avaliação sai por R$ 99 até sexta.");
+    expect(sistema).toContain("Avaliação por R$ 99 até sexta");
   });
 });
 

@@ -47576,6 +47576,50 @@ comment on column public.meta_templates.header_media is
 
 notify pgrst, 'reload schema';
 
+-- ---- resposta da campanha cai no funil e no agente (migration 0541) ----
+-- Espelho idempotente. Racional completo no arquivo da migration. Não cria
+-- função, então pode ficar depois da VARREDURA anon.
+alter table public.campaigns
+  add column if not exists quem_assume text not null default 'ia',
+  add column if not exists botoes_de_resposta jsonb not null default '[]'::jsonb,
+  add column if not exists oferta text;
+
+-- Valor fora do vocabulário antes da constraint: este bloco é re-aplicado na
+-- atualização e não pode derrubar o update de um clone.
+update public.campaigns
+   set quem_assume = 'ia'
+ where quem_assume not in ('ia', 'humano', 'ia_e_humano');
+update public.campaigns
+   set botoes_de_resposta = '[]'::jsonb
+ where jsonb_typeof(botoes_de_resposta) <> 'array';
+update public.campaigns
+   set oferta = left(oferta, 2000)
+ where char_length(oferta) > 2000;
+
+alter table public.campaigns drop constraint if exists campaigns_quem_assume_check;
+alter table public.campaigns
+  add constraint campaigns_quem_assume_check
+  check (quem_assume in ('ia', 'humano', 'ia_e_humano'));
+
+alter table public.campaigns drop constraint if exists campaigns_botoes_de_resposta_lista;
+alter table public.campaigns
+  add constraint campaigns_botoes_de_resposta_lista
+  check (jsonb_typeof(botoes_de_resposta) = 'array');
+
+alter table public.campaigns drop constraint if exists campaigns_oferta_tamanho;
+alter table public.campaigns
+  add constraint campaigns_oferta_tamanho
+  check (oferta is null or char_length(oferta) <= 2000);
+
+comment on column public.campaigns.quem_assume is
+  'Quem assume a resposta (issue #11): ia = o agente da campanha atende; humano = a IA fica calada na conversa e ela vai para a fila de atendentes; ia_e_humano = o agente atende e a passagem para humano (regra existente) manda a conversa para a fila. Vale na primeira resposta à campanha.';
+comment on column public.campaigns.botoes_de_resposta is
+  'Mapa dos botões de resposta rápida: [{ botao, acao, stage_id? }], acao em mover_etapa | atribuir_ia | atribuir_humano | marcar_perdido | opt_out. Lido só pelo Zod de lib/campanhas/destino-da-resposta.ts. O clique executa a ação sem chamar modelo de linguagem.';
+comment on column public.campaigns.oferta is
+  'O que a campanha oferece, nas palavras do operador (até 2000 caracteres). Vai para o contexto do agente que atende a resposta.';
+
+notify pgrst, 'reload schema';
+
 -- ---- cotação do dólar da instalação (migration 0540) ----
 -- A outra metade da 0540, aqui porque platform_settings nasce depois da
 -- varredura anon. Sem função: só coluna e CHECK, idempotentes.

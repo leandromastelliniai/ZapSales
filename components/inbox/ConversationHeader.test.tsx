@@ -17,6 +17,9 @@ const closeMutate = vi.hoisted(() => vi.fn());
 const arquivarMutate = vi.hoisted(() => vi.fn());
 const startCall = vi.hoisted(() => vi.fn());
 
+// A origem da campanha (issue #11) busca pela API e tem teste próprio; aqui
+// mede-se o resto do cabeçalho.
+vi.mock("@/components/inbox/CampanhaDeOrigem", () => ({ CampanhaDeOrigem: () => null }));
 vi.mock("@/hooks/auth/AuthProvider", () => ({
   useAuth: () => ({ user: { id: "u1", support: null } }),
 }));
