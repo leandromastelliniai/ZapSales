@@ -13,6 +13,7 @@ import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { apiClient } from "@/lib/api/client";
 import type { ContagemDaCampanha, TaxasDaCampanha } from "@/lib/campanhas/metricas";
 import type { ModeloParaCampanha } from "@/lib/campanhas/modelos-da-campanha";
+import type { UsoDoPortfolio } from "@/lib/campanhas/portfolio-da-campanha";
 import { painelAindaMuda } from "@/lib/campanhas/painel-ao-vivo";
 import type { MapaDeVariaveis } from "@/lib/campanhas/variaveis-do-modelo";
 import type { StatusDaCampanha } from "@/lib/campanhas/tipos";
@@ -61,6 +62,15 @@ export interface CampanhaDetalhada extends CampanhaDaLista {
   quem_assume?: QuemAssume;
   botoes_de_resposta?: unknown;
   oferta?: string | null;
+  /** Modo "dois números" (issue #9): o número de QR code que recebe a conversa. */
+  numero_de_atendimento_id?: string | null;
+  /** Por que o sistema pausou sozinho (issue #9); nulo = pausa manual ou nenhuma. */
+  pausa_motivo?: string | null;
+  pausa_detalhe?: string | null;
+  /** Quando alguém aceitou o aviso de risco de banimento do modo WAHA (issue #9). */
+  risco_de_banimento_aceito_em?: string | null;
+  /** Campanha oficial: o uso do limite diário do portfólio da Meta (issue #9). */
+  portfolio?: UsoDoPortfolio | null;
 }
 
 export interface Destinatario {
@@ -168,7 +178,8 @@ export type AcaoDeCampanha =
   | "retomar"
   | "cancelar"
   | "duplicar"
-  | "testar";
+  | "testar"
+  | "aceitar-risco";
 
 export function useAcaoDeCampanha(id: string) {
   const qc = useQueryClient();
@@ -196,6 +207,7 @@ export function usePreviaDaAudiencia() {
       campaign_id?: string;
       meta_template_id?: string;
       template_variables?: MapaDeVariaveis;
+      numero_de_atendimento_id?: string;
     }) => (await apiClient.post<{ data: PreviaDaAudiencia }>("/api/v1/campaigns/preview", corpo)).data,
     onError: (err) => showApiError(err),
   });

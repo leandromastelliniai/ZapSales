@@ -52,6 +52,8 @@ export function DetalheDaCampanha({ id }: { id: string }) {
   const acao = useAcaoDeCampanha(id);
   const [confirmando, setConfirmando] = useState<AcaoDeCampanha | null>(null);
   const [testando, setTestando] = useState(false);
+  const [entendeuORisco, setEntendeuORisco] = useState(false);
+  const idioma = useIdioma();
 
   if (campanha.isLoading) {
     return (
@@ -92,6 +94,11 @@ export function DetalheDaCampanha({ id }: { id: string }) {
   if (c.status === "paused") disponiveis.push("retomar", "cancelar");
   disponiveis.push("duplicar");
 
+  // Campanha por número de QR code só sai depois do aceite do aviso de risco de
+  // banimento (issue #9). Quem ainda não aceitou vê o aviso no lugar da
+  // confirmação comum — o servidor recusa sem ele de qualquer jeito.
+  const pedeAceiteDoRisco = !c.meta_template_id && !c.risco_de_banimento_aceito_em;
+
   return (
     <div className="space-y-4 p-6">
       <div>
@@ -129,8 +136,10 @@ export function DetalheDaCampanha({ id }: { id: string }) {
               disabled={acao.isPending}
               onClick={() => {
                 // Iniciar e cancelar mexem com gente de verdade: confirmação
-                // explícita (PRD §34). As outras não pedem cerimônia.
+                // explícita (PRD §34). As outras não pedem cerimônia — exceto
+                // retomar sem o aceite do risco, que mostra o aviso.
                 if (a === "iniciar" || a === "cancelar") setConfirmando(a);
+                else if (a === "retomar" && pedeAceiteDoRisco) setConfirmando(a);
                 // O teste precisa saber PARA QUEM: mandar para o primeiro da
                 // lista transformaria um teste num envio real a um prospect.
                 else if (a === "testar") setTestando(true);
@@ -143,7 +152,24 @@ export function DetalheDaCampanha({ id }: { id: string }) {
         </div>
       </header>
 
-      {confirmando && (
+      {confirmando && (confirmando === "iniciar" || confirmando === "retomar") && pedeAceiteDoRisco ? (
+        <AvisoDeRiscoDeBanimento
+          entendeu={entendeuORisco}
+          onEntendeu={setEntendeuORisco}
+          enviando={acao.isPending}
+          onConfirmar={async () => {
+            // O aceite é gravado (quem e quando) ANTES da ação, e auditado.
+            await acao.mutateAsync({ acao: "aceitar-risco" });
+            acao.mutate({ acao: confirmando });
+            setConfirmando(null);
+            setEntendeuORisco(false);
+          }}
+          onVoltar={() => {
+            setConfirmando(null);
+            setEntendeuORisco(false);
+          }}
+        />
+      ) : confirmando ? (
         <Card className="space-y-3 border-warning-fg p-4">
           <p className="text-sm">
             {confirmando === "iniciar"
@@ -164,6 +190,13 @@ export function DetalheDaCampanha({ id }: { id: string }) {
               {t("Voltar")}
             </Button>
           </div>
+        </Card>
+      ) : null}
+
+      {c.status === "paused" && c.pausa_detalhe && (
+        <Card className="space-y-1 border-warning-fg p-4" role="status" data-testid="pausa-automatica">
+          <h2 className="font-medium text-warning-fg">{t("Pausada automaticamente")}</h2>
+          <p className="text-sm">{t(c.pausa_detalhe)}</p>
         </Card>
       )}
 
@@ -211,6 +244,8 @@ export function DetalheDaCampanha({ id }: { id: string }) {
         </Card>
       )}
 
+      {c.portfolio && <LimiteDoPortfolio uso={c.portfolio} />}
+
       <DestinoDaCampanha campanha={c} />
 
       <NumerosDaCampanha campanha={c} />
@@ -222,7 +257,15 @@ export function DetalheDaCampanha({ id }: { id: string }) {
         {c.meta_template_id ? (
           <ModeloDaCampanha campanha={c} />
         ) : (
-          <p className="whitespace-pre-wrap text-sm">{c.message_body}</p>
+          <>
+            <p className="whitespace-pre-wrap text-sm">{c.message_body}</p>
+            {c.risco_de_banimento_aceito_em && (
+              <p className="text-xs text-muted-foreground">
+                {t("Aviso de risco de banimento aceito em")}{" "}
+                {new Date(c.risco_de_banimento_aceito_em).toLocaleString(tagDeIdioma(idioma))}
+              </p>
+            )}
+          </>
         )}
         <p className="text-xs text-muted-foreground">
           {t("Base legal")}: {c.base_legal === "consent" ? t("consentimento") : t("interesse legítimo")}
@@ -296,6 +339,7 @@ export function DetalheDaCampanha({ id }: { id: string }) {
 function ModeloDaCampanha({ campanha }: { campanha: CampanhaDetalhada }) {
   const t = useT();
   const modelos = useModelosDaCampanha(campanha.channel_session_id);
+  const canais = useChannelSessions();
   const modelo = modelos.data?.modelos.find((m) => m.id === campanha.meta_template_id);
   if (modelos.isPending) return <Skeleton className="h-12 w-full" />;
   if (!modelo) {
@@ -306,11 +350,20 @@ function ModeloDaCampanha({ campanha }: { campanha: CampanhaDetalhada }) {
     );
   }
   const mapa = campanha.template_variables ?? {};
+  const atendimento = campanha.numero_de_atendimento_id
+    ? (canais.data ?? []).find((s) => s.id === campanha.numero_de_atendimento_id)
+    : undefined;
   return (
     <div className="space-y-2 text-sm">
       <p>
         {t("Modelo aprovado")}: <span className="font-mono">{modelo.name}</span> ({modelo.language})
       </p>
+      {campanha.numero_de_atendimento_id && (
+        <p data-testid="modo-dois-numeros">
+          {t("Modo dois números: quem responde pelo botão do modelo conversa com")}{" "}
+          <strong>{atendimento ? channelLabel(atendimento, t) : t("o número de atendimento")}</strong>.
+        </p>
+      )}
       <p className="whitespace-pre-wrap rounded-md border border-border bg-surface-elevated p-3">{modelo.texto}</p>
       {modelo.variaveis.length > 0 && (
         <ul className="space-y-1 text-muted-foreground">
@@ -601,6 +654,7 @@ const ROTULO_DA_ACAO: Record<AcaoDeCampanha, string> = {
   cancelar: "Cancelar campanha",
   duplicar: "Duplicar",
   testar: "Enviar teste",
+  "aceitar-risco": "Aceitar o risco",
 };
 
 const ROTULO_DO_DESTINATARIO: Record<string, string> = {
@@ -620,4 +674,87 @@ const ROTULO_DO_DESTINATARIO: Record<string, string> = {
 function rotuloDoMotivo(motivo: string | null): string {
   if (!motivo) return "Fora da lista";
   return (TEXTO_DA_EXCLUSAO as Record<string, string>)[motivo] ?? motivo;
+}
+
+/**
+ * O aviso de risco de banimento do modo de texto livre (issue #9). O operador
+ * marca que entendeu e só então confirma; o aceite fica gravado na campanha e
+ * na auditoria. O texto diz o RISCO concreto, não um "tem certeza?" genérico.
+ */
+function AvisoDeRiscoDeBanimento({
+  entendeu,
+  onEntendeu,
+  enviando,
+  onConfirmar,
+  onVoltar,
+}: {
+  entendeu: boolean;
+  onEntendeu: (v: boolean) => void;
+  enviando: boolean;
+  onConfirmar: () => void;
+  onVoltar: () => void;
+}) {
+  const t = useT();
+  return (
+    <Card className="space-y-3 border-warning-fg p-4" data-testid="aviso-risco-de-banimento">
+      <h2 className="font-medium text-warning-fg">{t("Risco de banimento do número")}</h2>
+      <p className="text-sm">
+        {t(
+          "Esta campanha dispara por um número conectado por QR code, fora da API Oficial. O WhatsApp pode banir o número que manda mensagem em massa — principalmente para quem nunca falou com você —, e um número banido não volta: as conversas dele param e ele precisa ser trocado.",
+        )}
+      </p>
+      <p className="text-sm text-muted-foreground">
+        {t(
+          "O ritmo da campanha (intervalo, janela e tetos) reduz o risco, mas não o elimina. Para disparo em massa, prefira um número da API Oficial.",
+        )}
+      </p>
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={entendeu}
+          onChange={(e) => onEntendeu(e.target.checked)}
+        />
+        <span>{t("Entendi o risco e quero disparar por este número mesmo assim.")}</span>
+      </label>
+      <div className="flex gap-2">
+        <Button disabled={!entendeu || enviando} onClick={onConfirmar}>
+          {t("Aceitar o risco e continuar")}
+        </Button>
+        <Button variant="outline" onClick={onVoltar}>
+          {t("Voltar")}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * Quanto do limite diário do PORTFÓLIO da Meta já foi usado (issue #9). O limite
+ * é do portfólio inteiro, somando todos os números e campanhas — é o que explica
+ * uma campanha "em andamento" que parou de enviar até o limite liberar.
+ */
+function LimiteDoPortfolio({ uso }: { uso: NonNullable<CampanhaDetalhada["portfolio"]> }) {
+  const t = useT();
+  const idioma = useIdioma();
+  const numero = (n: number) => n.toLocaleString(tagDeIdioma(idioma));
+  const esgotado = uso.teto !== null && uso.alcancados >= uso.teto;
+  return (
+    <Card className="space-y-1 p-4" data-testid="limite-do-portfolio">
+      <h2 className="font-medium">{t("Limite diário do portfólio na Meta")}</h2>
+      <p className="text-sm">
+        {uso.teto === null
+          ? `${numero(uso.alcancados)} ${t("contatos alcançados nas últimas 24 h · sem limite")}`
+          : `${numero(uso.alcancados)} ${t("de")} ${numero(uso.teto)} ${t("contatos nas últimas 24 h")}`}
+      </p>
+      <p className={esgotado ? "text-sm text-warning-fg" : "text-sm text-muted-foreground"}>
+        {esgotado
+          ? t("O limite foi atingido: os envios esperam as 24 h móveis liberarem espaço, sozinhos.")
+          : t("O limite é do portfólio inteiro: somam todos os números e campanhas dele.")}
+        {uso.limite === null && uso.teto !== null
+          ? ` ${t("A Meta ainda não informou a faixa deste portfólio; vale a inicial, de 250.")}`
+          : ""}
+      </p>
+    </Card>
+  );
 }

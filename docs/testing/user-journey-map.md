@@ -3358,14 +3358,70 @@ importa: `update of status` dispara mesmo sem mudança de valor, e o webhook sem
   aviso de risco do WAHA são da issue #9 (hoje a rodada só deixa de enviar quando o modelo não está
   aprovado, sem pausar a campanha);
 - custo, teto de gasto e as 1.000 grátis são da issue #10;
-- resposta da campanha caindo no funil e no agente: entregue pela issue #11 (J45);
+- resposta da campanha caindo no funil e no agente: entregue pela issue #11 (J46);
 - modelo com cabeçalho de mídia recebe o link público como texto fixo; a cópia de `header_media`
   ainda não é usada no disparo, e a oferta por tempo limitado ainda não manda o prazo;
 - mensagem de campanha que ficou `queued` (canal sem credencial na hora) deixa o destinatário em
   `sending`, ligado a ela: a campanha só conclui quando a mensagem sair ou for dada como falha.
   Reenfileirar mandaria em dobro; marcar falha mentiria se ela sair.
 
-## J45 — A resposta da campanha cai no funil e no agente `[P0]` (2026-10-06, issue #11)
+## J45 — Proteções e modos de envio das campanhas `[P0]` (2026-10-06, issue #9)
+
+Mesma fronteira da J44: o falso Graph na saída (agora com um segundo número que envia, de outra
+organização do mesmo portfólio), webhooks assinados na rota real (qualidade do número, status e
+categoria do modelo), a ingestão real do número de QR code (`dispatchWahaEvent`) e as rotas do app.
+As rodadas usam o relógio REAL com janela 0–24: a conta do limite compara `messages.created_at`
+(relógio do banco) com o `agora` da rodada, e avançar 25 h é o "dia seguinte" da conta.
+
+Spec: `tests/invariants/protecoes-das-campanhas.test.ts`; regra do portfólio em
+`lib/campanhas/portfolio.test.ts`; motivos e frases da pausa em `lib/campanhas/pausa-automatica.test.ts`;
+botão wa.me em `lib/campanhas/dois-numeros.test.ts`; variável do sistema na tela em
+`components/campanhas/MensagemOficial.test.tsx`.
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J45.1 | A conexão guarda o portfólio | o número conectado pela API grava `meta_portfolio_id` do `owner_business_info` da WABA | **PASS (invariante)** |
+| J45.2 | Duas campanhas, duas organizações, números e WABAs diferentes, o mesmo portfólio na faixa de 50 | 40 + 40 contatos: saem exatamente 50 somados (A 40, B 10); a página de B mostra `50 de 50`; duas reservas simultâneas no portfólio cheio não levam ninguém; 25 h depois os 30 restantes saem sozinhos | **PASS (invariante)** — a simultaneidade só é medida de verdade no Postgres do CI (no PGlite as conexões dividem uma sessão) |
+| J45.3 | Modelo rejeitado, pausado, desativado e recategorizado (webhook) | cada um pausa a campanha dele com `pausa_motivo` e a frase com o nome do modelo (e o motivo da Meta / "utilidade para marketing"); a campanha de outro modelo segue `running`; `campaign.auto_paused` na auditoria; a reentrega não repete efeito | **PASS (invariante)** |
+| J45.4 | Retomar | com o modelo ainda rejeitado → 422; a recategorizada retoma e o motivo some | **PASS (invariante)** |
+| J45.5 | Modelo pausado sem webhook (sincronização) | a rodada pausa a campanha com `modelo_pausado` | **PASS (invariante)** |
+| J45.6 | Qualidade vermelha (webhook `FLAGGED`, a Graph diz `RED`) | as campanhas oficiais do número pausam com `qualidade_vermelha` e o número nomeado; nada da outra organização pausa; retomar com o número vermelho → 409 "vermelha"; verde de novo → retoma; vermelho lido sem webhook → a rodada pausa | **PASS (invariante)** |
+| J45.7 | Campanha por número de QR code sem o aceite | iniciar e agendar → 422 `campanha_risco_nao_aceito`; aceitar grava quem e quando, audita `campaign.ban_risk_accepted` uma vez só (repetir não audita de novo); depois inicia; a cópia não herda o aceite; campanha oficial não tem risco a aceitar (409) | **PASS (invariante)** |
+| J45.8 | Modo dois números | modelo sem botão wa.me → 422; número de atendimento oficial → 422; com `https://wa.me/{{1}}` o envio leva o botão com o telefone do número de QR code, sem o operador dar fonte à variável | **PASS (invariante)** |
+| J45.9 | Quem clica e escreve no número de QR code | a mensagem entra no MESMO contato da campanha (nenhuma ficha nova) e a resposta marca o destinatário como `replied` | **PASS (invariante)** |
+| J45.11 | Número conectado antes da coluna do portfólio | antes de contar o limite, o motor lê o portfólio da WABA com a credencial do próprio número, grava e volta a somar o número da outra organização (freio de uma tentativa por hora) | **PASS (invariante)** |
+| J45.12 | Campanha de QR code agendada antes de o aceite existir | quando a hora chega, o cron não a promove: pausa com `risco_nao_aceito`; retomar sem aceite → 422; aceitando, retoma | **PASS (invariante)** |
+| J45.13 | Recategorização que chega pela sincronização (sem webhook) | a sincronização compara a categoria gravada com a da Meta e pausa as campanhas do modelo com `modelo_recategorizado` | **PASS (invariante)** |
+| J45.10 | As proteções pela tela, como um leigo | aviso de risco com a caixa "Entendi o risco", cartão "Pausada automaticamente", limite do portfólio e o seletor "Quem responde fala com qual número?" numa instalação fresca | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
+
+Sabotagem medida, um desligamento por vez: reservar sem o limite do portfólio derruba a J45.2; tirar
+a pausa do webhook de modelo derruba a J45.3 e a J45.4; tirar a pausa do webhook de qualidade
+derruba a J45.6; tirar o portão do aceite derruba a J45.7; não preencher a variável do botão com o
+número de atendimento derruba a J45.8 e a J45.9; tirar a descoberta do portfólio derruba a J45.11;
+promover a agendada sem o aceite derruba a J45.12; tirar a pausa da sincronização derruba a J45.13.
+Rodou no PGlite desta máquina (24 casos), junto da
+J41 (19), J42 (20), J43 (23) e J44 (29, com o caso do QR code agora aceitando o risco antes de
+iniciar). Não é o gate: o `test:db` do CI é.
+
+**Decisões que valem dizer:**
+- Uma organização tem UM número oficial (a conexão atualiza a linha que existe). Dois números do
+  mesmo portfólio são, então, de organizações diferentes da instalação, e o grupo do portfólio
+  cruza tenants — só contagem e faixa atravessam. A trava da reserva é única da instalação.
+- Portfólio desconhecido (número conectado antes desta versão) junta o número com os oficiais da
+  mesma organização e os da mesma WABA; faixa desconhecida vale 250 (a inicial da Meta). Os dois
+  erram para mandar menos.
+- A conta é conservadora: modelo que saiu dentro da janela de atendimento também conta, e contato
+  que já recebeu modelo hoje conta de novo na reserva.
+- Um número vermelho no pool pausa a campanha inteira, não só tira o número do rodízio.
+- A pausa alcança `running` e `scheduled` (a agendada também é "ativa": sair na hora marcada com o
+  número vermelho seria o mesmo dano). Retomar uma agendada pausada a faz sair na hora, como a
+  pausa manual já fazia.
+- A qualidade AMARELA só avisa (issue #5); não muda o ritmo nem pausa.
+
+**Fora do #9:** custo, teto de gasto e as 1.000 grátis (issue #10, que soma `teto_de_gasto` ao
+mesmo `pausa_motivo`); a resposta caindo no funil e no agente com o contexto (issue #11).
+
+## J46 — A resposta da campanha cai no funil e no agente `[P0]` (2026-10-06, issue #11)
 
 Mesma fronteira da J44: o falso Graph na saída; na entrada, a RESPOSTA chega como webhook
 assinado na rota real — texto digitado ou toque num botão de resposta rápida (`type: "button"`,
@@ -3381,26 +3437,26 @@ Spec: `tests/invariants/resposta-da-campanha.test.ts`; a regra pura em
 
 | # | Caso | Expectativa | Resultado |
 |---|------|-------------|-----------|
-| J45.1 | Contato sem negócio responde | o card nasce no funil e na etapa da campanha, com `source = campanha` e o id dela | **PASS (invariante)** |
-| J45.2 | Contato que já é lead no funil responde | o MESMO negócio vai para a etapa da campanha (um aberto só), e a timeline ganha "Respondeu à campanha" | **PASS (invariante)** |
-| J45.3 | Contato com negócio aberto em outro funil responde | o negócio é levado para o funil da campanha (clone + origem fechada como transferência), sem dois abertos | **PASS (invariante)** |
-| J45.4 | A conversa mostra a origem | `GET /api/v1/conversations/[id]/campanha` devolve a campanha e o modelo; conversa sem campanha devolve `null` | **PASS (invariante)** |
-| J45.5 | "IA" | o agente é acordado; o agente da campanha atende mesmo num número SEM agente publicado (o portão do dreno pergunta pela campanha) | **PASS (invariante)** |
-| J45.6 | "Humano" | a IA fica calada na conversa (`bot_silenced_until = infinity`, motivo `campanha_atendimento_humano`), ela entra no rodízio e o agente NÃO é acordado | **PASS (invariante)** |
-| J45.7 | "IA e depois humano" | o agente atende; a passagem pela regra existente (`performHumanHandoff`) pede o rodízio — e numa campanha de "IA" a mesma passagem não pede | **PASS (invariante)** |
-| J45.8 | Botões mapeados | mover para etapa, atribuir a humano, marcar perdido e opt-out agem na ingestão, sem acordar o agente; "atribuir à IA" acorda; "Parar" grava `is_blocked` com `quick_reply_opt_out`; o toque vira mensagem de texto com o rótulo e o clique no `metadata` | **PASS (invariante)** |
-| J45.9 | Contexto do agente | o prompt do turno traz a campanha, o texto recebido, as variáveis e a oferta; depois da janela de atribuição (72 h), nada | **PASS (invariante, turno inteiro com modelo fake)** |
-| J45.10 | Métrica | resposta digitada e por botão viram `replied` e somam em `responderam` | **PASS (invariante)** |
-| J45.11 | Janela de 24 h | com o último inbound de 30 h, o template pedido pelo agente é vetado (`agent_template_outside_window`) e nada sai; com 23 h, sai; o passo de follow-up sem modelo configurado é pulado sem chamar a IA, e com o modelo configurado sai SÓ ele | **PASS (relógio controlado)** |
-| J45.12 | A API guarda o mapa | botão apontando para etapa inexistente → 422; "IA e depois humano" (ou botão "atribuir à IA") sem agente → 422 | **PASS (invariante)** |
-| J45.13 | Configurar e ver pela tela, como um leigo | escolher quem assume, mapear os botões do modelo, escrever a oferta; responder pelo celular e ver o card, a fila e a origem na Inbox | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
+| J46.1 | Contato sem negócio responde | o card nasce no funil e na etapa da campanha, com `source = campanha` e o id dela | **PASS (invariante)** |
+| J46.2 | Contato que já é lead no funil responde | o MESMO negócio vai para a etapa da campanha (um aberto só), e a timeline ganha "Respondeu à campanha" | **PASS (invariante)** |
+| J46.3 | Contato com negócio aberto em outro funil responde | o negócio é levado para o funil da campanha (clone + origem fechada como transferência), sem dois abertos | **PASS (invariante)** |
+| J46.4 | A conversa mostra a origem | `GET /api/v1/conversations/[id]/campanha` devolve a campanha e o modelo; conversa sem campanha devolve `null` | **PASS (invariante)** |
+| J46.5 | "IA" | o agente é acordado; o agente da campanha atende mesmo num número SEM agente publicado (o portão do dreno pergunta pela campanha) | **PASS (invariante)** |
+| J46.6 | "Humano" | a IA fica calada na conversa (`bot_silenced_until = infinity`, motivo `campanha_atendimento_humano`), ela entra no rodízio e o agente NÃO é acordado | **PASS (invariante)** |
+| J46.7 | "IA e depois humano" | o agente atende; a passagem pela regra existente (`performHumanHandoff`) pede o rodízio — e numa campanha de "IA" a mesma passagem não pede | **PASS (invariante)** |
+| J46.8 | Botões mapeados | mover para etapa, atribuir a humano, marcar perdido e opt-out agem na ingestão, sem acordar o agente; "atribuir à IA" acorda; "Parar" grava `is_blocked` com `quick_reply_opt_out`; o toque vira mensagem de texto com o rótulo e o clique no `metadata` | **PASS (invariante)** |
+| J46.9 | Contexto do agente | o prompt do turno traz a campanha, o texto recebido, as variáveis e a oferta; depois da janela de atribuição (72 h), nada | **PASS (invariante, turno inteiro com modelo fake)** |
+| J46.10 | Métrica | resposta digitada e por botão viram `replied` e somam em `responderam` | **PASS (invariante)** |
+| J46.11 | Janela de 24 h | com o último inbound de 30 h, o template pedido pelo agente é vetado (`agent_template_outside_window`) e nada sai; com 23 h, sai; o passo de follow-up sem modelo configurado é pulado sem chamar a IA, e com o modelo configurado sai SÓ ele | **PASS (relógio controlado)** |
+| J46.12 | A API guarda o mapa | botão apontando para etapa inexistente → 422; "IA e depois humano" (ou botão "atribuir à IA") sem agente → 422 | **PASS (invariante)** |
+| J46.13 | Configurar e ver pela tela, como um leigo | escolher quem assume, mapear os botões do modelo, escrever a oferta; responder pelo celular e ver o card, a fila e a origem na Inbox | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
 
 **Como rodou nesta máquina.** No mesmo PGlite da J44 (prelúdio do `scripts/test-db.sh` +
 `baseline.sql`). Não é o gate: o `test:db` do CI é.
 
-Sabotagem medida: não mover o card que já está no funil derruba a J45.2, a J45.3 e o botão de
-mover da J45.8; não pedir a fila derruba a J45.6 e o botão de atendente; deixar o gate aceitar
-template do agente fora da janela derruba a J45.11.
+Sabotagem medida: não mover o card que já está no funil derruba a J46.2, a J46.3 e o botão de
+mover da J46.8; não pedir a fila derruba a J46.6 e o botão de atendente; deixar o gate aceitar
+template do agente fora da janela derruba a J46.11.
 
 **Decisões desta entrega, para ninguém supor outra coisa:**
 - "Primeira resposta" é a que encontra o destinatário ainda sem `replied_at`. Só ela move o card e

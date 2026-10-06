@@ -64,13 +64,19 @@ function fonteDoValor(
   return { tipo: "contato", campo };
 }
 
-/** Toda variável tem fonte utilizável? É o que libera salvar. */
+/**
+ * Toda variável tem fonte utilizável? É o que libera salvar. `slotAutomatico` é
+ * a variável que o SISTEMA preenche — o link wa.me do modo dois números (issue
+ * #9) — e não pede fonte ao operador.
+ */
 export function mapaCompleto(
   modelo: ModeloParaCampanha | undefined,
   mapa: MapaDeVariaveis,
+  slotAutomatico: string | null = null,
 ): boolean {
   if (!modelo) return false;
   return modelo.variaveis.every((v) => {
+    if (v.chave === slotAutomatico) return true;
     const f = mapa[v.chave];
     if (!f) return false;
     if (f.tipo === "fixo") return f.valor.trim() !== "";
@@ -107,9 +113,19 @@ interface Props {
   onModelo: (id: string) => void;
   mapa: MapaDeVariaveis;
   onMapa: (mapa: MapaDeVariaveis) => void;
+  /** A variável que o sistema preenche (modo dois números) — sem seletor de fonte. */
+  slotAutomatico?: string | null;
 }
 
-export function MensagemOficial({ modelos, carregando, modeloId, onModelo, mapa, onMapa }: Props) {
+export function MensagemOficial({
+  modelos,
+  carregando,
+  modeloId,
+  onModelo,
+  mapa,
+  onMapa,
+  slotAutomatico = null,
+}: Props) {
   const t = useT();
   const modelo = modelos.find((m) => m.id === modeloId);
 
@@ -198,7 +214,11 @@ export function MensagemOficial({ modelos, carregando, modeloId, onModelo, mapa,
                         </span>
                       ) : null}
                     </Label>
-                    {midia ? (
+                    {v.chave === slotAutomatico ? (
+                      <p className="text-sm text-muted-foreground">
+                        {t("Preenchido com o número que recebe a conversa (modo dois números).")}
+                      </p>
+                    ) : midia ? (
                       <Input
                         id={id}
                         value={fonte?.tipo === "fixo" ? fonte.valor : ""}

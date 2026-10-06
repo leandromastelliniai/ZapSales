@@ -55,6 +55,11 @@ const baseDaCampanha = {
   /** De onde vem cada variável do modelo, por slotKey (`lib/campanhas/variaveis-do-modelo.ts`). */
   template_variables: mapaDeVariaveisSchema.optional(),
   /**
+   * Modo "dois números" (migration 0539): o número de QR code que o botão wa.me
+   * do modelo abre. Só com modelo; conferido na rota contra o botão do modelo.
+   */
+  numero_de_atendimento_id: z.string().uuid().nullable().optional(),
+  /**
    * O que acontece com quem responde (migration 0541, issue #11): quem assume,
    * o que cada botão de resposta rápida faz e a oferta que vai para o agente.
    * As etapas dos botões são conferidas na rota, dentro da organização.
@@ -126,6 +131,7 @@ export const editarCampanhaSchema = z
     quem_assume: baseDaCampanha.quem_assume,
     botoes_de_resposta: baseDaCampanha.botoes_de_resposta,
     oferta: baseDaCampanha.oferta,
+    numero_de_atendimento_id: baseDaCampanha.numero_de_atendimento_id,
   })
   .merge(ritmoSchema);
 
@@ -136,6 +142,8 @@ export const previaSchema = z.object({
   /** Campanha oficial: a prévia conta quem fica sem valor para alguma variável do modelo. */
   meta_template_id: z.string().uuid().optional(),
   template_variables: mapaDeVariaveisSchema.optional(),
+  /** Modo "dois números": a variável do botão wa.me sai deste número. */
+  numero_de_atendimento_id: z.string().uuid().optional(),
 });
 
 export const criarTemplateSchema = z.object({

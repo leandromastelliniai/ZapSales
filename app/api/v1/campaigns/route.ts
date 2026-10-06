@@ -18,7 +18,7 @@ import { fail, ok } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { FILTRO_VAZIO } from "@/lib/campanhas/audiencia";
-import { recusaDaConexaoComModelo } from "@/lib/campanhas/modelo-da-campanha";
+import { recusaDaConexaoComModelo, recusaDoNumeroDeAtendimento } from "@/lib/campanhas/modelo-da-campanha";
 import { gravarPool } from "@/lib/campanhas/pool-de-numeros";
 import {
   codificarCursor,
@@ -36,7 +36,7 @@ export const dynamic = "force-dynamic";
 const COLUNAS_DA_LISTA =
   "id, name, status, channel_session_id, snapshot_total, snapshot_eligible, snapshot_excluded, " +
   "scheduled_at, started_at, completed_at, cancelled_at, created_at, created_by, " +
-  "pipeline_id, stage_id, agent_id, meta_template_id, quem_assume";
+  "pipeline_id, stage_id, agent_id, meta_template_id, quem_assume, numero_de_atendimento_id, pausa_motivo";
 
 export async function GET(req: NextRequest): Promise<Response> {
   const requestId = randomUUID();
@@ -140,6 +140,17 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (recusaDoModelo) {
     return fail("campanha_conteudo_invalido", t(recusaDoModelo), 422, { requestId });
   }
+  // Modo "dois números" (issue #9): número de QR code desta organização, e o
+  // botão wa.me do modelo abrindo esse número.
+  const recusaDoAtendimento = await recusaDoNumeroDeAtendimento(
+    supabase,
+    org.orgId,
+    entrada.numero_de_atendimento_id ?? null,
+    entrada.meta_template_id ?? null,
+  );
+  if (recusaDoAtendimento) {
+    return fail("campanha_conteudo_invalido", t(recusaDoAtendimento), 422, { requestId });
+  }
 
   // O mapa dos botões é `jsonb`, sem FK: a etapa é conferida aqui (issue #11).
   const recusaDosBotoes = await recusaDasEtapasDosBotoes(supabase, org.orgId, entrada.botoes_de_resposta);
@@ -173,6 +184,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       // se é array do Postgres ou de jsonb para quem a traduz.
       ...((entrada.botoes_de_resposta ?? []).length > 0 ? { botoes_de_resposta: entrada.botoes_de_resposta } : {}),
       oferta: entrada.oferta ?? null,
+      numero_de_atendimento_id: entrada.numero_de_atendimento_id ?? null,
       created_by: user.id,
     })
     .select(COLUNAS_DA_LISTA)
@@ -211,7 +223,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     metadata: {
       base_legal: entrada.base_legal,
       numeros: 1 + (entrada.channel_session_ids ?? []).length,
-      modo: entrada.meta_template_id ? "oficial" : "texto",
+      modo: entrada.meta_template_id ? (entrada.numero_de_atendimento_id ? "dois_numeros" : "oficial") : "texto",
     },
   });
 

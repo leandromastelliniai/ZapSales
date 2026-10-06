@@ -46,6 +46,8 @@ import { OrgNaoOperanteError, STATUS_OPERANTE, ehOperante, statusDaOrgEmbutida }
 
 import { motivoParaExcluir, recusouMarketing } from "./elegibilidade";
 import { hashDoEndereco } from "./exclusoes";
+import { ehOficial } from "./modelo-da-campanha";
+import { fraseDaPausa, pausarAutomaticamente } from "./pausa-automatica";
 import { renderizar } from "./renderizador";
 import { escolherNumero, poolDaCampanha, type NumeroDisponivel } from "./rodizio";
 import { podeMandarAgora, proximaTentativa, type RitmoDaCampanha } from "./ritmo";
@@ -196,7 +198,7 @@ export async function promoverAgendadas(
 ): Promise<number> {
   const { data: vencidas, error: falhaDaEscolha } = await admin
     .from("campaigns")
-    .select("id, organizations:organization_id!inner(status)")
+    .select("id, organization_id, meta_template_id, risco_de_banimento_aceito_em, organizations:organization_id!inner(status)")
     .eq("status", "scheduled")
     .lte("scheduled_at", agora.toISOString())
     .eq("organizations.status", STATUS_OPERANTE)
@@ -206,7 +208,27 @@ export async function promoverAgendadas(
     logger.warn("[campanha] promoção de agendadas falhou", { motivo: falhaDaEscolha.message });
     return 0;
   }
-  const ids = ((vencidas ?? []) as Array<{ id: string }>).map((c) => c.id);
+  const linhas = (vencidas ?? []) as Array<{
+    id: string;
+    organization_id: string;
+    meta_template_id: string | null;
+    risco_de_banimento_aceito_em: string | null;
+  }>;
+  // Chegar a hora é INICIAR, e campanha de QR code só inicia com o aviso de risco
+  // de banimento aceito (issue #9). A agendada antes desta regra existir não sai
+  // sozinha: pausa com o motivo, e retomar pede o aceite.
+  const semAceite = linhas.filter((c) => !ehOficial(c) && !c.risco_de_banimento_aceito_em);
+  for (const c of semAceite) {
+    await pausarAutomaticamente(
+      admin,
+      c.organization_id,
+      [c.id],
+      "risco_nao_aceito",
+      fraseDaPausa("risco_nao_aceito", {}),
+      agora,
+    );
+  }
+  const ids = linhas.filter((c) => !semAceite.includes(c)).map((c) => c.id);
   if (ids.length === 0) return 0;
   const { data, error } = await admin
     .from("campaigns")

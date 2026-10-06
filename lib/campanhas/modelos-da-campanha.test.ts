@@ -69,4 +69,19 @@ describe("modelosParaCampanha — o que a tela de campanha oferece", () => {
   it("modelo sem botão de resposta rápida não tem o que mapear", () => {
     expect(modelosParaCampanha([APROVADO])[0]!.botoesDeResposta).toEqual([]);
   });
+
+  it("diz se o modelo tem o botão wa.me do modo dois números (issue #9)", () => {
+    const [semBotao] = modelosParaCampanha([APROVADO]);
+    expect(semBotao!.botao_wa_me).toBeNull();
+    const [comBotao] = modelosParaCampanha([
+      {
+        ...APROVADO,
+        components: [
+          { type: "BODY", text: "Oi {{1}}" },
+          { type: "BUTTONS", buttons: [{ type: "URL", text: "Falar", url: "https://wa.me/{{1}}" }] },
+        ],
+      },
+    ]);
+    expect(comBotao!.botao_wa_me).toEqual({ slot: "button0:1", numero_fixo: null });
+  });
 });

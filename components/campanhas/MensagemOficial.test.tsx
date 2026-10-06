@@ -40,6 +40,7 @@ const OFERTA: ModeloParaCampanha = {
       tipo: "text",
     },
   ],
+  botao_wa_me: null,
 };
 
 const AVISO: ModeloParaCampanha = {
@@ -50,6 +51,7 @@ const AVISO: ModeloParaCampanha = {
   botoesDeResposta: [],
   texto: "Nosso horário mudou.",
   variaveis: [],
+  botao_wa_me: null,
 };
 
 function Tela({ modelos = [OFERTA, AVISO] }: { modelos?: ModeloParaCampanha[] }) {
@@ -148,5 +150,32 @@ describe("mapaDoModelo — trocar de modelo não arrasta fonte velha", () => {
     ).toEqual({
       "1": { tipo: "contato", campo: "nome" },
     });
+  });
+});
+
+describe("modo dois números (issue #9)", () => {
+  it("a variável do botão wa.me é do sistema, sem seletor de fonte", () => {
+    const comBotao: ModeloParaCampanha = {
+      ...AVISO,
+      variaveis: [
+        { chave: "button0:1", rotulo: "{{1}}", onde: "botão 1 (url)", antes: "", depois: "", tipo: "url_suffix" },
+      ],
+      botao_wa_me: { slot: "button0:1", numero_fixo: null },
+    };
+    expect(mapaCompleto(comBotao, {})).toBe(false);
+    expect(mapaCompleto(comBotao, {}, "button0:1")).toBe(true);
+    render(
+      <MensagemOficial
+        modelos={[comBotao]}
+        carregando={false}
+        modeloId={comBotao.id}
+        onModelo={() => {}}
+        mapa={{}}
+        onMapa={() => {}}
+        slotAutomatico="button0:1"
+      />,
+    );
+    expect(screen.getByText(/Preenchido com o número que recebe a conversa/)).toBeTruthy();
+    expect(screen.queryByLabelText(/botão 1/)).toBeNull();
   });
 });

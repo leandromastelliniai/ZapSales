@@ -23,6 +23,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DoisNumeros, problemaDoParDoisNumeros } from "@/components/campanhas/DoisNumeros";
 import { MensagemOficial, mapaCompleto, mapaDoModelo } from "@/components/campanhas/MensagemOficial";
 import { RespostaDaCampanha } from "@/components/campanhas/RespostaDaCampanha";
 import { botoesDoModeloEscolhido, precisaDeAgente } from "@/lib/campanhas/resposta-na-tela";
@@ -70,6 +71,7 @@ export function NovaCampanha() {
   const [quemAssume, setQuemAssume] = useState<QuemAssume>("ia");
   const [oferta, setOferta] = useState("");
   const [botoes, setBotoes] = useState<BotaoDaResposta[]>([]);
+  const [numeroDeAtendimento, setNumeroDeAtendimento] = useState("");
 
   // Número da API Oficial manda MODELO aprovado (issue #8); número de QR code, texto livre.
   // Quem decide é o número escolhido — a rota devolve `oficial: false` para número de QR code.
@@ -77,6 +79,13 @@ export function NovaCampanha() {
   const oficial = modelosDoNumero.data?.oficial === true;
   const modelos = modelosDoNumero.data?.modelos ?? [];
   const modelo = modelos.find((m) => m.id === modeloId);
+  // Modo "dois números" (issue #9): só com modelo. A variável do botão wa.me,
+  // quando dinâmica, é do sistema — o operador não escolhe fonte para ela.
+  const atendimento = oficial && modeloId ? numeroDeAtendimento : "";
+  const slotAutomatico = atendimento ? (modelo?.botao_wa_me?.slot ?? null) : null;
+  const problemaDoAtendimento = atendimento
+    ? problemaDoParDoisNumeros(modelo, (canais.data ?? []).find((c) => c.id === atendimento))
+    : null;
 
   const funis = useFunis();
   const etapas = useEtapas(funil || null);
@@ -105,13 +114,18 @@ export function NovaCampanha() {
 
   /** O conteúdo que vai à API e à prévia: modelo + mapa (oficial) ou texto livre. */
   const conteudo = oficial
-    ? { message_body: null, meta_template_id: modeloId || null, template_variables: mapaDoModelo(modelo, mapa) }
-    : { message_body: texto.trim(), meta_template_id: null, template_variables: {} };
+    ? {
+        message_body: null,
+        meta_template_id: modeloId || null,
+        template_variables: mapaDoModelo(modelo, mapa),
+        numero_de_atendimento_id: atendimento || null,
+      }
+    : { message_body: texto.trim(), meta_template_id: null, template_variables: {}, numero_de_atendimento_id: null };
 
   const podeSalvar =
     nome.trim() !== "" &&
     canal !== "" &&
-    (oficial ? mapaCompleto(modelo, mapa) : texto.trim() !== "") &&
+    (oficial ? mapaCompleto(modelo, mapa, slotAutomatico) && !problemaDoAtendimento : texto.trim() !== "") &&
     temCriterio &&
     (baseLegal !== "legitimate_interest" || liaRef.trim() !== "") &&
     !(precisaDeAgente(quemAssume, botoes) && !agente);
@@ -358,6 +372,7 @@ export function NovaCampanha() {
                       message_body: "",
                       meta_template_id: modeloId,
                       template_variables: mapaDoModelo(modelo, mapa),
+                      ...(atendimento ? { numero_de_atendimento_id: atendimento } : {}),
                     }
                   : { audience_filter: filtro, message_body: texto },
               )
@@ -388,17 +403,28 @@ export function NovaCampanha() {
       <Card className="space-y-4 p-4">
         <h2 className="font-medium">{t("Mensagem")}</h2>
         {oficial ? (
-          <MensagemOficial
-            modelos={modelos}
-            carregando={modelosDoNumero.isPending}
-            modeloId={modeloId}
-            onModelo={(id) => {
-              setModeloId(id);
-              setMapa((atual) => mapaDoModelo(modelos.find((m) => m.id === id), atual));
-            }}
-            mapa={mapa}
-            onMapa={setMapa}
-          />
+          <>
+            <MensagemOficial
+              modelos={modelos}
+              carregando={modelosDoNumero.isPending}
+              modeloId={modeloId}
+              onModelo={(id) => {
+                setModeloId(id);
+                setMapa((atual) => mapaDoModelo(modelos.find((m) => m.id === id), atual));
+              }}
+              mapa={mapa}
+              onMapa={setMapa}
+              slotAutomatico={slotAutomatico}
+            />
+            {modeloId && (
+              <DoisNumeros
+                canais={canais.data ?? []}
+                modelo={modelo}
+                numeroId={numeroDeAtendimento}
+                onNumero={setNumeroDeAtendimento}
+              />
+            )}
+          </>
         ) : (
           <>
             <Textarea
