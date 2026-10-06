@@ -47,8 +47,8 @@ const baseDaCampanha = {
   agent_id: z.string().uuid().nullable().optional(),
   /**
    * O modelo aprovado da Meta (migration 0538). Com ele a campanha é OFICIAL e
-   * `message_body` não é usado; sem ele, é do modo de texto livre. A conexão precisa ser do
-   * canal oficial — conferido na rota, que sabe o provedor.
+   * `message_body` não é usado; sem ele, é do modo de texto livre. Modelo exige conexão do
+   * canal oficial, e conexão oficial exige modelo — conferido na rota, que sabe o provedor.
    */
   meta_template_id: z.string().uuid().nullable().optional(),
   /** De onde vem cada variável do modelo, por slotKey (`lib/campanhas/variaveis-do-modelo.ts`). */

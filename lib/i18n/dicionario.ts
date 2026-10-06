@@ -14006,6 +14006,7 @@ export const DICIONARIO: Traducoes = {
   "[e-mail]": { es: "[correo]" },
   "Escolha o número da campanha.": { es: "Elige el número de la campaña." },
   "O modelo escolhido não existe nesta organização.": { es: "La plantilla elegida no existe en esta organización." },
+  "Número da API Oficial só dispara campanha com modelo aprovado pela Meta. Escolha um modelo aprovado.": { es: "Un número de la API Oficial solo envía campañas con una plantilla aprobada por Meta. Elige una plantilla aprobada." },
   "Modelo aprovado só sai por um número da API Oficial. Escolha um número oficial ou escreva o texto da campanha.": { es: "Una plantilla aprobada solo sale por un número de la API Oficial. Elige un número oficial o escribe el texto de la campaña." },
   "Este modelo é de outra conta da Meta. Escolha um modelo da conta do número da campanha.": { es: "Esta plantilla es de otra cuenta de Meta. Elige una plantilla de la cuenta del número de la campaña." },
   "O modelo escolhido não existe mais nesta organização. Escolha outro modelo aprovado.": { es: "La plantilla elegida ya no existe en esta organización. Elige otra plantilla aprobada." },

@@ -17,18 +17,27 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { audit } from "@/lib/audit";
 import { classificarErroMeta } from "@/lib/channels/meta/erros";
 import { logger } from "@/lib/logger";
 
+import { recusouMarketing } from "./elegibilidade";
 import { desfechoDaFalhaOficial, type DesfechoDaFalha, type FalhaOficial } from "./falha-oficial";
 
 /** Estados em que a campanha ainda pode mandar: o destinatário de campanha encerrada não volta à fila. */
 const CAMPANHA_VIVA = ["running", "paused", "scheduled"];
 
+/** De onde veio a recusa: o 131050 da Meta, gravado em `consent.marketing.source`. */
+const ORIGEM_DA_RECUSA = "meta:131050";
+
 /**
  * Grava a recusa de marketing no contato, na mesma forma que o resto do produto
  * lê (`consent.marketing.declined_at`, ver `recusouMarketing` em
- * `./elegibilidade.ts`). A partir daí o contato fica fora de toda campanha.
+ * `./elegibilidade.ts`) e que o formulário do Respondi grava
+ * (`buildContactConsentDenial`). A partir daí o contato fica fora de toda campanha.
+ *
+ * Mudar consentimento é ato LGPD: deixa `lgpd.consent_changed` na auditoria. A
+ * recusa que já estava gravada não é mudança — nem reescrita, nem reauditada.
  */
 export async function gravarRecusaDeMarketing(
   admin: SupabaseClient,
@@ -48,19 +57,35 @@ export async function gravarRecusaDeMarketing(
       : {};
   const marketing =
     consent.marketing && typeof consent.marketing === "object" ? (consent.marketing as Record<string, unknown>) : {};
+  if (recusouMarketing(consent)) return;
   const { error } = await admin
     .from("contacts")
     .update({
       consent: {
         ...consent,
-        marketing: { ...marketing, granted_at: null, declined_at: agora.toISOString(), source: "meta:131050" },
+        marketing: {
+          ...marketing,
+          granted_at: null,
+          declined_at: agora.toISOString(),
+          source: ORIGEM_DA_RECUSA,
+          version: null,
+        },
       },
     })
     .eq("organization_id", organizationId)
     .eq("id", contactId);
   if (error) {
     logger.warn("[campanha] recusa de marketing não gravada no contato", { contato: contactId, motivo: error.message });
+    return;
   }
+  await audit({
+    action: "lgpd.consent_changed",
+    organizationId,
+    resourceType: "contact",
+    resourceId: contactId,
+    bypassedRls: true,
+    metadata: { contact_id: contactId, consent_type: "marketing", granted: false, source: ORIGEM_DA_RECUSA },
+  });
 }
 
 /**

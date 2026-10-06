@@ -8,6 +8,7 @@
  * (o que invalida a lista) — e isso só vale enquanto nada saiu.
  */
 import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 
 import type { NextRequest } from "next/server";
 
@@ -168,8 +169,9 @@ export async function PATCH(
   if (
     (entrada.message_body !== undefined && entrada.message_body !== campanha.message_body) ||
     (entrada.meta_template_id !== undefined && entrada.meta_template_id !== campanha.meta_template_id) ||
+    // `jsonb` devolve as chaves em outra ordem: compara o conteúdo, não o texto.
     (entrada.template_variables !== undefined &&
-      JSON.stringify(entrada.template_variables) !== JSON.stringify(campanha.template_variables ?? {}))
+      !isDeepStrictEqual(entrada.template_variables, campanha.template_variables ?? {}))
   ) {
     mudanca.content_version = campanha.content_version + 1;
   }

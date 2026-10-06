@@ -66,10 +66,17 @@ export function textoDoModelo(m: ModeloDaCampanha, valores: Record<string, strin
   });
 }
 
+const FRASE_NUMERO_OFICIAL_SEM_MODELO =
+  "Número da API Oficial só dispara campanha com modelo aprovado pela Meta. Escolha um modelo aprovado.";
+
 /**
- * A conexão e o modelo combinam? `null` = sim. Modelo da Meta só sai por número
- * do canal oficial, e só por número da MESMA conta (WABA) — o modelo é da conta,
- * e a Meta recusa o envio por número de outra.
+ * A conexão e o modelo combinam? `null` = sim. As duas direções valem:
+ *
+ * - modelo da Meta só sai por número do canal oficial, e só por número da
+ *   MESMA conta (WABA) — o modelo é da conta, e a Meta recusa o envio por
+ *   número de outra;
+ * - número oficial só dispara com modelo: fora da janela de 24 h a Meta recusa
+ *   texto livre, e campanha é, quase sempre, o primeiro toque.
  */
 export async function recusaDaConexaoComModelo(
   admin: SupabaseClient,
@@ -77,7 +84,6 @@ export async function recusaDaConexaoComModelo(
   channelSessionId: string,
   modeloId: string | null,
 ): Promise<string | null> {
-  if (!modeloId) return null;
   const { data: canal } = await admin
     .from("channel_sessions")
     .select("provider, meta_waba_id")
@@ -85,6 +91,9 @@ export async function recusaDaConexaoComModelo(
     .eq("id", channelSessionId)
     .maybeSingle();
   const conexao = canal as { provider?: string; meta_waba_id?: string | null } | null;
+  if (!modeloId) {
+    return conexao?.provider === CHANNEL_PROVIDER_META ? FRASE_NUMERO_OFICIAL_SEM_MODELO : null;
+  }
   if (!conexao) return "Escolha uma conexão de WhatsApp desta organização.";
   if (conexao.provider !== CHANNEL_PROVIDER_META) {
     return "Modelo aprovado só sai por um número da API Oficial. Escolha um número oficial ou escreva o texto da campanha.";

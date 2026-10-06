@@ -46,7 +46,7 @@ import { useIdioma } from "@/lib/i18n/IdiomaProvider";
 export function DetalheDaCampanha({ id }: { id: string }) {
   const t = useT();
   const campanha = useCampanha(id);
-  const metricas = useMetricasDaCampanha(id, campanha.data?.status);
+  const metricas = useMetricasDaCampanha(id, campanha.data);
   const [filtroDeStatus, setFiltroDeStatus] = useState("");
   const destinatarios = useDestinatarios(id, { status: filtroDeStatus || undefined });
   const acao = useAcaoDeCampanha(id);

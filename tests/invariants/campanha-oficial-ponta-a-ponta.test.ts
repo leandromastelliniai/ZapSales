@@ -385,7 +385,12 @@ describe("1 · modelo de texto com variáveis por contato sai para todos os eleg
     expect(c.enviados).toBe(2);
     expect(c.pendentes).toBe(0);
 
+    // Fila vazia ainda não é fim: a Meta pode avisar uma falha logo depois do
+    // envio, e campanha concluída não põe ninguém de volta na fila.
     await rodada(emMinutos(1));
+    expect(await statusDaCampanha(campanhaId)).toBe("running");
+
+    await rodada(emMinutos(16));
     expect(await statusDaCampanha(campanhaId)).toBe("completed");
   });
 });
@@ -606,6 +611,9 @@ describe("6 · erros da Meta: temporário, 131049, 131050 e definitivo", () => {
     const envio = emMinutos(30);
     await rodada(envio);
     expect(enviosPara(m!.tel)).toHaveLength(1);
+    // A ordem real: o worker volta antes do aviso da Meta, e acha a fila vazia.
+    await rodada(new Date(envio.getTime() + 60_000));
+    expect(await statusDaCampanha(primeira)).toBe("running");
 
     await postarStatus(m!.tel, "failed", { code: 131049, title: "Healthy ecosystem engagement" });
     const voltou = await destinatarioDe(primeira, m!.id);
@@ -638,6 +646,18 @@ describe("6 · erros da Meta: temporário, 131049, 131050 e definitivo", () => {
     expect(d.status).toBe("opted_out");
     expect(d.last_error_code).toBe("131050");
     expect((await metricas(id)).optOut).toBe(1);
+
+    // Mudança de consentimento é ato LGPD: deixa rastro, sem telefone nem nome.
+    const { rows: trilha } = await pool.query<{ organization_id: string; metadata: Record<string, unknown> }>(
+      `select organization_id, metadata from api_audit_log
+        where action = 'lgpd.consent_changed' and resource_type = 'contact' and resource_id = $1`,
+      [o!.id],
+    );
+    expect(trilha).toHaveLength(1);
+    expect(trilha[0]).toMatchObject({
+      organization_id: ORG_A,
+      metadata: { consent_type: "marketing", granted: false, source: "meta:131050" },
+    });
 
     const outra = await criarCampanha(campanhaOficial({ audience_filter: { com_alguma_tag: ["recusa"], limite: 100 } }));
     const outraId = (await json<{ id: string }>(outra)).data.id;
@@ -724,6 +744,26 @@ describe("8 · o modo WAHA não muda", () => {
   it("modelo da Meta não sai por número WAHA", async () => {
     como(ORG_A, USER_A);
     expect((await criarCampanha(campanhaOficial({ channel_session_id: canalWaha }))).status).toBe(422);
+  });
+
+  it("número oficial sem modelo é recusado pela API, não só pela tela — na criação e na edição", async () => {
+    como(ORG_A, USER_A);
+    const semModelo = campanhaOficial({ message_body: "Oi {{primeiro_nome}}, tudo bem?" });
+    delete semModelo.meta_template_id;
+    delete semModelo.template_variables;
+    expect((await criarCampanha(semModelo)).status).toBe(422);
+
+    const criada = await criarCampanha(campanhaOficial({ audience_filter: { com_alguma_tag: ["ninguem"], limite: 1 } }));
+    const id = (await json<{ id: string }>(criada)).data.id;
+    const { PATCH } = await import("@/app/api/v1/campaigns/[id]/route");
+    const tirou = await PATCH(
+      pedido(`http://localhost/api/v1/campaigns/${id}`, "PATCH", {
+        meta_template_id: null,
+        message_body: "Oi {{primeiro_nome}}, tudo bem?",
+      }),
+      { params: Promise.resolve({ id }) },
+    );
+    expect(tirou.status).toBe(422);
   });
 
   it("a rodada oficial não toca na campanha de texto do modo WAHA", async () => {

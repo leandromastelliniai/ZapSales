@@ -25,7 +25,14 @@ export const MAX_TENTATIVAS_OFICIAIS = 5;
 
 const UM_MINUTO_MS = 60_000;
 const UMA_HORA_MS = 60 * UM_MINUTO_MS;
-const UM_DIA_MS = 24 * UMA_HORA_MS;
+
+/**
+ * A regra das 24 h do 131049, para os dois lados: a espera do próprio
+ * destinatário (aqui) e a do CONTATO em outra campanha, que o worker procura
+ * pelo código gravado em `campaign_recipients.last_error_code`.
+ */
+export const ESPERA_DO_LIMITE_DE_MARKETING_MS = 24 * UMA_HORA_MS;
+export const CODIGO_DO_LIMITE_DE_MARKETING = "131049";
 
 /** A falha como o canal a classifica (`FalhaDoCanal`). */
 export interface FalhaOficial {
@@ -54,7 +61,7 @@ export function desfechoDaFalhaOficial(falha: FalhaOficial, tentativas: number, 
   }
   const espera =
     falha.categoria === "limite_de_marketing_por_usuario"
-      ? UM_DIA_MS
+      ? ESPERA_DO_LIMITE_DE_MARKETING_MS
       : Math.min(UMA_HORA_MS, UM_MINUTO_MS * 2 ** Math.max(0, tentativas - 1));
   return { acao: "tentar_de_novo", em: new Date(agora.getTime() + espera), motivo: falha.motivo };
 }

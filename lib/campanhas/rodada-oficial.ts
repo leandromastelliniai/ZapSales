@@ -45,7 +45,12 @@ import { OrgNaoOperanteError, STATUS_OPERANTE, ehOperante, statusDaOrgEmbutida }
 import { aplicarDesfecho } from "./desfecho-oficial";
 import { motivoParaExcluir, recusouMarketing } from "./elegibilidade";
 import { hashDoEndereco } from "./exclusoes";
-import { desfechoDaFalhaOficial } from "./falha-oficial";
+import {
+  CODIGO_DO_LIMITE_DE_MARKETING,
+  desfechoDaFalhaOficial,
+  ESPERA_DO_LIMITE_DE_MARKETING_MS,
+  type DesfechoDaFalha,
+} from "./falha-oficial";
 import { carregarModelo, type ModeloDaCampanha } from "./modelo-da-campanha";
 import { podeMandarAgora } from "./ritmo";
 import {
@@ -78,9 +83,13 @@ const CAMPANHAS_POR_RODADA = 20;
  * que o worker não terminou (queda, redeploy). Bem acima do tempo de um lote.
  */
 const TRAVADO_APOS_MS = 10 * 60_000;
-/** A regra das 24 h do limite de marketing por usuário (131049). */
-const UM_DIA_MS = 24 * 60 * 60 * 1000;
-const CODIGO_LIMITE_DE_MARKETING = "131049";
+/**
+ * Por quanto tempo depois do último envio a campanha espera o aviso da Meta
+ * antes de concluir. 131049 e outros temporários costumam chegar PELO WEBHOOK,
+ * segundos depois do `sent` — e campanha concluída é terminal: não põe ninguém
+ * de volta na fila (`aplicarFalhaTardia`). Fila vazia ainda não é fim.
+ */
+const AGUARDA_AVISO_DA_META_MS = 15 * 60_000;
 
 interface CampanhaOficialRow {
   id: string;
@@ -288,7 +297,10 @@ async function rodarUmaCampanhaOficial(
   };
 }
 
-/** Nada pendente AGORA não é nada pendente: só conclui quem não tem ninguém em voo. */
+/**
+ * Nada pendente AGORA não é nada pendente: só conclui quem não tem ninguém em
+ * voo, nem envio recente cujo aviso da Meta ainda pode chegar.
+ */
 async function talvezConcluir(
   admin: SupabaseClient,
   campanha: CampanhaOficialRow,
@@ -302,6 +314,15 @@ async function talvezConcluir(
     .eq("campaign_id", campanha.id)
     .in("status", ["pending", "queued", "sending"]);
   if ((count ?? 0) > 0) return { placar, concluida: false, detalhe: "aguardando" };
+
+  const { count: semAviso } = await admin
+    .from("campaign_recipients")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", campanha.organization_id)
+    .eq("campaign_id", campanha.id)
+    .eq("status", "sent")
+    .gt("sent_at", new Date(agora.getTime() - AGUARDA_AVISO_DA_META_MS).toISOString());
+  if ((semAviso ?? 0) > 0) return { placar, concluida: false, detalhe: "aguardando_aviso_da_meta" };
 
   const { data } = await admin
     .from("campaigns")
@@ -421,13 +442,7 @@ async function enviarUm(
           idempotency_key: `campaign:${alvo.id}:${alvo.attempt_count}`,
         },
       } as Parameters<typeof sendMessageHandler>[2],
-    )) as {
-      id?: string;
-      status?: string;
-      error_code?: string | null;
-      error_message?: string | null;
-      metadata?: Record<string, unknown> | null;
-    };
+    )) as MensagemDoEnvio;
 
     if (mensagem.status === "sent") {
       // `.eq("status","sending")`: o ack pode ter chegado antes desta linha, e o
@@ -466,20 +481,7 @@ async function enviarUm(
       return null;
     }
 
-    const classificada = falhaClassificada(mensagem);
-    const desfecho = classificada
-      ? desfechoDaFalhaOficial(classificada, alvo.attempt_count, agora)
-      : ({ acao: "falhar", motivo: mensagem.error_message ?? "O envio falhou no canal." } as const);
-    await aplicarDesfecho(
-      admin,
-      { organizationId: org, destinatarioId: alvo.id, contactId: alvo.contact_id, de: "sending" },
-      desfecho,
-      mensagem.error_code ?? null,
-      agora,
-    );
-    if (desfecho.acao === "tentar_de_novo") return "reenfileirados";
-    if (desfecho.acao === "recusou_marketing") return "pulados";
-    return "falharam";
+    return await decidirFalhaDaMensagem(admin, org, alvo, mensagem, agora);
   } catch (err) {
     logger.warn("[campanha oficial] envio falhou", { campanha: campanha.id, destinatario: alvo.id });
     // A mesma decisão da rodada de texto livre: organização que parou no meio do
@@ -499,12 +501,54 @@ async function enviarUm(
   }
 }
 
-/** A falha que o handler de mensagens classificou (`metadata.falha_do_canal`). */
-function falhaClassificada(m: {
+/** A mensagem como o envio a deixa: o que basta para decidir o destinatário. */
+interface MensagemDoEnvio {
+  id?: string;
+  status?: string;
   error_code?: string | null;
   error_message?: string | null;
   metadata?: Record<string, unknown> | null;
-}) {
+}
+
+/** Estados da mensagem em que ela saiu para a Meta. */
+const SAIU: readonly string[] = ["sent", "delivered", "read"];
+
+/** Em que casa do placar cai cada desfecho de falha. */
+const CASA_DO_DESFECHO: Record<DesfechoDaFalha["acao"], keyof Placar> = {
+  tentar_de_novo: "reenfileirados",
+  recusou_marketing: "pulados",
+  falhar: "falharam",
+};
+
+/**
+ * A mensagem deste destinatário falhou no canal: a política de falha decide, o
+ * desfecho é gravado (o destinatário ainda está em `sending`), e volta a casa
+ * do placar. Os dois caminhos que veem a falha na hora — o envio e a
+ * recuperação de lote travado — passam por aqui.
+ */
+async function decidirFalhaDaMensagem(
+  admin: SupabaseClient,
+  organizationId: string,
+  alvo: { id: string; contact_id: string; attempt_count: number },
+  mensagem: MensagemDoEnvio,
+  agora: Date,
+): Promise<keyof Placar> {
+  const classificada = falhaClassificada(mensagem);
+  const desfecho: DesfechoDaFalha = classificada
+    ? desfechoDaFalhaOficial(classificada, alvo.attempt_count, agora)
+    : { acao: "falhar", motivo: mensagem.error_message ?? "O envio falhou no canal." };
+  await aplicarDesfecho(
+    admin,
+    { organizationId, destinatarioId: alvo.id, contactId: alvo.contact_id, de: "sending" },
+    desfecho,
+    mensagem.error_code ?? null,
+    agora,
+  );
+  return CASA_DO_DESFECHO[desfecho.acao];
+}
+
+/** A falha que o handler de mensagens classificou (`metadata.falha_do_canal`). */
+function falhaClassificada(m: MensagemDoEnvio) {
   const f = m.metadata?.falha_do_canal as { categoria?: unknown; temporario?: unknown } | undefined;
   if (!f || typeof f.categoria !== "string") return null;
   return {
@@ -535,19 +579,19 @@ async function bloqueioDeMarketingAte(
   alvo: Reservado,
   agora: Date,
 ): Promise<Date | null> {
-  const desde = new Date(agora.getTime() - UM_DIA_MS).toISOString();
+  const desde = new Date(agora.getTime() - ESPERA_DO_LIMITE_DE_MARKETING_MS).toISOString();
   const { data } = await admin
     .from("campaign_recipients")
     .select("last_attempt_at")
     .eq("organization_id", organizationId)
     .eq("contact_id", alvo.contact_id)
-    .eq("last_error_code", CODIGO_LIMITE_DE_MARKETING)
+    .eq("last_error_code", CODIGO_DO_LIMITE_DE_MARKETING)
     .neq("id", alvo.id)
     .gt("last_attempt_at", desde)
     .order("last_attempt_at", { ascending: false })
     .limit(1);
   const ultimo = ((data ?? []) as Array<{ last_attempt_at: string }>)[0];
-  return ultimo ? new Date(new Date(ultimo.last_attempt_at).getTime() + UM_DIA_MS) : null;
+  return ultimo ? new Date(new Date(ultimo.last_attempt_at).getTime() + ESPERA_DO_LIMITE_DE_MARKETING_MS) : null;
 }
 
 /** Os números do pool que podem mandar ESTE modelo agora. */
@@ -634,19 +678,14 @@ async function recuperarTravados(
       .eq("organization_id", org)
       .eq("id", idDaMensagemDoEnvio(r.id, r.attempt_count))
       .maybeSingle();
-    const mensagem = msg as {
-      id: string;
-      status: string;
-      error_code: string | null;
-      error_message: string | null;
-      metadata: Record<string, unknown> | null;
-    } | null;
+    const mensagem = msg as (MensagemDoEnvio & { id: string; status: string }) | null;
+    const saiu = !!mensagem && SAIU.includes(mensagem.status);
     await admin
       .from("campaign_recipients")
       .update(
         !mensagem
           ? { status: "pending", sending_at: null, attempt_count: Math.max(0, r.attempt_count - 1) }
-          : ["sent", "delivered", "read"].includes(mensagem.status)
+          : saiu
             ? { status: "sent", sent_at: agora.toISOString(), message_id: mensagem.id }
             : { message_id: mensagem.id },
       )
@@ -655,21 +694,10 @@ async function recuperarTravados(
       .eq("status", "sending");
     if (!mensagem) {
       placar.reenfileirados += 1;
-    } else if (["sent", "delivered", "read"].includes(mensagem.status)) {
+    } else if (saiu) {
       placar.enviadas += 1;
     } else if (mensagem.status === "failed") {
-      const classificada = falhaClassificada(mensagem);
-      const desfecho = classificada
-        ? desfechoDaFalhaOficial(classificada, r.attempt_count, agora)
-        : ({ acao: "falhar", motivo: mensagem.error_message ?? "O envio falhou no canal." } as const);
-      await aplicarDesfecho(
-        admin,
-        { organizationId: org, destinatarioId: r.id, contactId: r.contact_id, de: "sending" },
-        desfecho,
-        mensagem.error_code,
-        agora,
-      );
-      placar[desfecho.acao === "tentar_de_novo" ? "reenfileirados" : desfecho.acao === "falhar" ? "falharam" : "pulados"] += 1;
+      placar[await decidirFalhaDaMensagem(admin, org, r, mensagem, agora)] += 1;
     }
   }
 }
