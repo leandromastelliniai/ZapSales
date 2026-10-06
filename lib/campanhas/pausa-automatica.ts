@@ -36,7 +36,7 @@ import { logger } from "@/lib/logger";
 
 import type { EventoDeModelo } from "@/lib/channels/meta/eventos-de-modelo";
 
-/** O vocabulário de `campaigns.pausa_motivo` — o mesmo CHECK da 0539. */
+/** O vocabulário de `campaigns.pausa_motivo` — o mesmo CHECK da 0539, que a 0540 estende com `teto_de_gasto`. */
 export const MOTIVOS_DA_PAUSA = [
   "qualidade_vermelha",
   "modelo_rejeitado",
@@ -44,6 +44,8 @@ export const MOTIVOS_DA_PAUSA = [
   "modelo_desativado",
   "modelo_recategorizado",
   "risco_nao_aceito",
+  // Issue #10: o teto de gasto da campanha ou o mensal da empresa acabou.
+  "teto_de_gasto",
 ] as const;
 
 export type MotivoDaPausa = (typeof MOTIVOS_DA_PAUSA)[number];
@@ -97,6 +99,8 @@ export interface ContextoDaPausa {
   /** Recategorização: de qual categoria para qual. */
   de?: string | null;
   para?: string | null;
+  /** Teto de gasto: a frase com quanto foi gasto de quanto (`lib/campanhas/teto-de-gasto.ts`). */
+  doTeto?: string | null;
 }
 
 /** A frase que a campanha pausada mostra — diz o que aconteceu e o que fazer. */
@@ -120,6 +124,8 @@ export function fraseDaPausa(motivo: MotivoDaPausa, ctx: ContextoDaPausa): strin
         "Esta campanha dispara por um número conectado por QR code e chegou a hora agendada sem que ninguém aceitasse o aviso de risco de banimento. " +
         "Leia o aviso e aceite-o ao retomar — sem o aceite ela não sai."
       );
+    case "teto_de_gasto":
+      return ctx.doTeto ?? "A campanha atingiu o teto de gasto da Meta. Aumente o teto para retomar.";
     case "modelo_recategorizado":
       return (
         `A Meta mudou a categoria do modelo ${modelo} de ${categoria(ctx.de)} para ${categoria(ctx.para)}, e o custo de cada envio mudou junto. ` +

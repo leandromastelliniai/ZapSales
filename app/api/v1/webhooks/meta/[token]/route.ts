@@ -39,6 +39,7 @@ import { statusUpdate } from "@/lib/channels/meta/status-update";
 import { aplicarEventoDeSaude } from "@/lib/channels/meta/saude-do-numero";
 import { ingestMetaEcho, ingestMetaInbound } from "@/lib/channels/meta/ingest";
 import { metaSessionByWebhookToken } from "@/lib/channels/meta/session";
+import { registrarCustoDoWebhook, zerarCustoDaFalha } from "@/lib/custo/registro";
 import { logger } from "@/lib/logger";
 import {
   emitirFalhaDeEntrega,
@@ -256,6 +257,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
           new Date(),
         );
         if (naCampanha !== "nao_e_campanha") desfechos.push(`campanha:${naCampanha}`);
+        // Mensagem que não saiu não é cobrada: a estimativa do envio vira zero.
+        await zerarCustoDaFalha(admin, session.organizationId, e.externalId);
       }
     } else {
       // O evento inteiro vira colunas, não só `status`: quando a Meta ACEITA o
@@ -266,6 +269,17 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
         .update(statusUpdate(e, now))
         .eq("organization_id", session.organizationId)
         .eq("external_id", e.externalId);
+      // O custo REAL (issue #10): a Meta diz se cobrou e em que categoria; o
+      // valor sai da tabela de preços. Depois do update acima, para a mensagem
+      // já existir quando o status chega junto com o ack do envio.
+      const custo = await registrarCustoDoWebhook(admin, {
+        organizationId: session.organizationId,
+        externalId: e.externalId,
+        destinatario: e.recipient,
+        pricing: e.pricing,
+        agora: new Date(),
+      });
+      if (custo === "registrado") desfechos.push("custo:registrado");
     }
   }
 

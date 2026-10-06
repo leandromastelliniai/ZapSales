@@ -34,7 +34,7 @@ const COLUNAS =
   "audience_filter, audience_version, content_version, snapshot_total, snapshot_eligible, " +
   "snapshot_excluded, scheduled_at, prepared_at, started_at, paused_at, completed_at, " +
   "cancelled_at, failure_code, intervalo_segundos, janela_inicio_hora, janela_fim_hora, " +
-  "teto_diario, teto_horario, pipeline_id, stage_id, agent_id, meta_template_id, template_variables, " +
+  "teto_diario, teto_horario, teto_gasto_cents, pipeline_id, stage_id, agent_id, meta_template_id, template_variables, " +
   "quem_assume, botoes_de_resposta, oferta, " +
   "numero_de_atendimento_id, pausa_motivo, pausa_detalhe, risco_de_banimento_aceito_em, " +
   "risco_de_banimento_aceito_por, created_at, created_by";
@@ -124,6 +124,7 @@ export async function PATCH(
     "janela_fim_hora",
     "teto_diario",
     "teto_horario",
+    "teto_gasto_cents",
     "quem_assume",
     "botoes_de_resposta",
     "oferta",
@@ -172,6 +173,7 @@ export async function PATCH(
     "janela_fim_hora",
     "teto_diario",
     "teto_horario",
+    "teto_gasto_cents",
     "channel_session_id",
     "pipeline_id",
     "stage_id",

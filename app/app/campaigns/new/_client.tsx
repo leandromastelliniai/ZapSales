@@ -25,10 +25,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DoisNumeros, problemaDoParDoisNumeros } from "@/components/campanhas/DoisNumeros";
 import { MensagemOficial, mapaCompleto, mapaDoModelo } from "@/components/campanhas/MensagemOficial";
+import { CampoDoTetoDeGasto, LinhaDaEstimativa } from "@/components/campanhas/CustoDaCampanha";
 import { RespostaDaCampanha } from "@/components/campanhas/RespostaDaCampanha";
 import { botoesDoModeloEscolhido, precisaDeAgente } from "@/lib/campanhas/resposta-na-tela";
 import type { BotaoDaResposta, QuemAssume } from "@/lib/campanhas/destino-da-resposta";
 import { useCriarCampanha, useModelosDaCampanha, usePreviaDaAudiencia } from "@/hooks/campanhas/useCampanhas";
+import { centavosDoTexto } from "@/lib/custo/formato";
 import { channelLabel, useChannelSessions } from "@/hooks/channels/useChannelSessions";
 import { useT } from "@/hooks/i18n/useT";
 import {
@@ -60,6 +62,7 @@ export function NovaCampanha() {
   const [janelaFim, setJanelaFim] = useState("");
   const [tetoDiario, setTetoDiario] = useState("");
   const [tetoHorario, setTetoHorario] = useState("");
+  const [tetoGasto, setTetoGasto] = useState("");
   const [extras, setExtras] = useState<string[]>([]);
   const [funil, setFunil] = useState("");
   const [etapa, setEtapa] = useState("");
@@ -144,6 +147,8 @@ export function NovaCampanha() {
       janela_fim_hora: janelaFim ? Number(janelaFim) : null,
       teto_diario: tetoDiario ? Number(tetoDiario) : null,
       teto_horario: tetoHorario ? Number(tetoHorario) : null,
+      // O teto de gasto é da Meta: só a campanha oficial é cobrada por mensagem.
+      teto_gasto_cents: oficial ? centavosDoTexto(tetoGasto) : null,
       channel_session_ids: extras,
       pipeline_id: funil || null,
       stage_id: etapa || null,
@@ -389,6 +394,7 @@ export function NovaCampanha() {
             </p>
           )}
         </div>
+        {previa.data?.estimativa && <LinhaDaEstimativa estimativa={previa.data.estimativa} />}
         {previa.data && previa.data.excluidos > 0 && (
           <ul className="space-y-1 text-sm text-muted-foreground">
             {Object.entries(previa.data.motivos).map(([motivo, quantos]) => (
@@ -603,6 +609,7 @@ export function NovaCampanha() {
             />
           </div>
         </div>
+        {oficial && <CampoDoTetoDeGasto id="teto-gasto" valor={tetoGasto} onChange={setTetoGasto} />}
       </Card>
 
       <div className="flex items-center justify-end gap-2">

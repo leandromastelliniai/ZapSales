@@ -133,14 +133,20 @@ export function statusDeEntrega(
     bsuid?: string;
     erro?: { code: number; title: string };
     categoria?: "marketing" | "utility" | "authentication" | "service";
+    /** O `pricing` inteiro, para provar o não cobrável e a janela de anúncio. `null` = sem pricing. */
+    pricing?: Record<string, unknown> | null;
   },
 ) {
   const status: Record<string, unknown> = {
     id: s.wamid,
     status: s.status,
     timestamp: String(Math.floor(Date.now() / 1000)),
-    pricing: { billable: true, pricing_model: "PMP", type: "regular", category: s.categoria ?? "marketing" },
   };
+  const pricing =
+    s.pricing === undefined
+      ? { billable: true, pricing_model: "PMP", type: "regular", category: s.categoria ?? "marketing" }
+      : s.pricing;
+  if (pricing) status.pricing = pricing;
   if (s.telefone) status.recipient_id = s.telefone;
   if (s.bsuid) status.recipient_user_id = s.bsuid;
   if (s.erro) status.errors = [{ code: s.erro.code, title: s.erro.title }];

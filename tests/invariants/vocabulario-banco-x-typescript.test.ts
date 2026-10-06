@@ -453,6 +453,22 @@ const PARES: Array<{
     arquivo: "lib/campanhas/pausa-automatica.ts",
     simbolo: "MOTIVOS_DA_PAUSA",
   },
+  {
+    tabela: "meta_pricing_rates",
+    coluna: "category",
+    // lib/custo/tabela-de-precos.ts → CATEGORIAS_DE_PRECO (tupla `as const`): o
+    // vocabulário do `pricing.category` do webhook da Meta (migration 0540).
+    arquivo: "lib/custo/tabela-de-precos.ts",
+    simbolo: "CATEGORIAS_DE_PRECO",
+  },
+  {
+    tabela: "meta_message_costs",
+    coluna: "origem",
+    // lib/custo/registro.ts → ORIGENS_DO_CUSTO (tupla `as const`): estimado no
+    // envio, real pelo webhook (migration 0540).
+    arquivo: "lib/custo/registro.ts",
+    simbolo: "ORIGENS_DO_CUSTO",
+  },
 ];
 
 /** Tira um nível de parênteses externos, se ele envolver a expressão inteira. */
