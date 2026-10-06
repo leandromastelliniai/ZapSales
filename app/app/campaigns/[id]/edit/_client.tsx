@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { LinhaDaEstimativa } from "@/components/campanhas/CustoDaCampanha";
+import { DoisNumeros, problemaDoParDoisNumeros } from "@/components/campanhas/DoisNumeros";
 import { MensagemOficial, mapaCompleto, mapaDoModelo } from "@/components/campanhas/MensagemOficial";
 import {
   useCampanha,
@@ -63,12 +64,19 @@ export function EditarCampanha({ id }: { id: string }) {
   const [carregado, setCarregado] = useState(false);
   const [modeloId, setModeloId] = useState("");
   const [mapa, setMapa] = useState<MapaDeVariaveis>({});
+  const [numeroDeAtendimento, setNumeroDeAtendimento] = useState("");
 
   // Número oficial manda modelo aprovado (issue #8); o de QR code, texto livre.
   const modelosDoNumero = useModelosDaCampanha(canal || null);
   const oficial = modelosDoNumero.data?.oficial === true;
   const modelos = modelosDoNumero.data?.modelos ?? [];
   const modelo = modelos.find((m) => m.id === modeloId);
+  // Modo "dois números" (issue #9) — a mesma regra da criação.
+  const atendimento = oficial && modeloId ? numeroDeAtendimento : "";
+  const slotAutomatico = atendimento ? (modelo?.botao_wa_me?.slot ?? null) : null;
+  const problemaDoAtendimento = atendimento
+    ? problemaDoParDoisNumeros(modelo, (canais.data ?? []).find((c) => c.id === atendimento))
+    : null;
 
   const funis = useFunis();
   const etapas = useEtapas(funil || null);
@@ -94,6 +102,7 @@ export function EditarCampanha({ id }: { id: string }) {
     setAgente(c.agent_id ?? "");
     setModeloId(c.meta_template_id ?? "");
     setMapa(c.template_variables ?? {});
+    setNumeroDeAtendimento(c.numero_de_atendimento_id ?? "");
     setCarregado(true);
   }, [campanha.data, carregado]);
 
@@ -154,13 +163,18 @@ export function EditarCampanha({ id }: { id: string }) {
   }
 
   const conteudo = oficial
-    ? { message_body: null, meta_template_id: modeloId || null, template_variables: mapaDoModelo(modelo, mapa) }
-    : { message_body: texto.trim(), meta_template_id: null, template_variables: {} };
+    ? {
+        message_body: null,
+        meta_template_id: modeloId || null,
+        template_variables: mapaDoModelo(modelo, mapa),
+        numero_de_atendimento_id: atendimento || null,
+      }
+    : { message_body: texto.trim(), meta_template_id: null, template_variables: {}, numero_de_atendimento_id: null };
 
   const podeSalvar =
     nome.trim() !== "" &&
     canal !== "" &&
-    (oficial ? mapaCompleto(modelo, mapa) : texto.trim() !== "") &&
+    (oficial ? mapaCompleto(modelo, mapa, slotAutomatico) && !problemaDoAtendimento : texto.trim() !== "") &&
     temCriterio &&
     (baseLegal !== "legitimate_interest" || liaRef.trim() !== "");
 
@@ -284,6 +298,7 @@ export function EditarCampanha({ id }: { id: string }) {
                       campaign_id: id,
                       meta_template_id: modeloId,
                       template_variables: mapaDoModelo(modelo, mapa),
+                      ...(atendimento ? { numero_de_atendimento_id: atendimento } : {}),
                     }
                   : { audience_filter: filtro, message_body: texto, campaign_id: id },
               )
@@ -367,17 +382,28 @@ export function EditarCampanha({ id }: { id: string }) {
       <Card className="space-y-4 p-4">
         <h2 className="font-medium">{t("Mensagem")}</h2>
         {oficial ? (
-          <MensagemOficial
-            modelos={modelos}
-            carregando={modelosDoNumero.isPending}
-            modeloId={modeloId}
-            onModelo={(novo) => {
-              setModeloId(novo);
-              setMapa((atual) => mapaDoModelo(modelos.find((m) => m.id === novo), atual));
-            }}
-            mapa={mapa}
-            onMapa={setMapa}
-          />
+          <>
+            <MensagemOficial
+              modelos={modelos}
+              carregando={modelosDoNumero.isPending}
+              modeloId={modeloId}
+              onModelo={(novo) => {
+                setModeloId(novo);
+                setMapa((atual) => mapaDoModelo(modelos.find((m) => m.id === novo), atual));
+              }}
+              mapa={mapa}
+              onMapa={setMapa}
+              slotAutomatico={slotAutomatico}
+            />
+            {modeloId && (
+              <DoisNumeros
+                canais={canais.data ?? []}
+                modelo={modelo}
+                numeroId={numeroDeAtendimento}
+                onNumero={setNumeroDeAtendimento}
+              />
+            )}
+          </>
         ) : (
           <>
             <Textarea

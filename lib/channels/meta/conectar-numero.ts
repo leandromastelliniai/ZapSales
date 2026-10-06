@@ -45,7 +45,7 @@ import { ARCHIVED_AT, queryTolerantToMissingArchived } from "../archived";
 import { CHANNEL_PROVIDER_META } from "../capabilities";
 import { reactivateChannelSession } from "../reactivate";
 import type { UsoDoNumero } from "../uso";
-import { assinarCamposDoApp, conferirSegredoDoApp, registrarNumero } from "./conexao-guiada";
+import { assinarCamposDoApp, conferirSegredoDoApp, lerPortfolioDaConta, registrarNumero } from "./conexao-guiada";
 import { validateMetaCredentials } from "./validate-credentials";
 import { registrarWebhookDaSessao, type DesfechoDoWebhookDaSessao } from "./webhook-da-sessao";
 import { urlDeCallbackDaSessao } from "./webhook-override";
@@ -206,6 +206,11 @@ export async function conectarNumeroOficial(input: {
     webhook_path_token?: string | null;
   } | null;
 
+  // O portfólio da WABA: o limite diário das campanhas é dele (issue #9).
+  // Melhor esforço — sem ele o número conecta igual, e o motor conta o limite
+  // junto com todos os números oficiais da organização.
+  const portfolio = await lerPortfolioDaConta({ wabaId: entrada.wabaId, token: entrada.token, appSecret });
+
   const agora = new Date().toISOString();
   const linha: Record<string, unknown> = {
     organization_id: orgId,
@@ -233,6 +238,7 @@ export async function conectarNumeroOficial(input: {
         }
       : {}),
     ...(numeroRegistrado ? { meta_numero_registrado_em: agora } : {}),
+    ...(portfolio ? { meta_portfolio_id: portfolio } : {}),
   };
 
   // `update` quando já existe em vez de upsert: a trava única de (org,

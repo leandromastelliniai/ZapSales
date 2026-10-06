@@ -726,3 +726,55 @@ describe("2b · teto sem preço na tabela não deixa a campanha seguir sem conta
     expect(r).toEqual({ ok: false, error: "invalid_input" });
   });
 });
+
+describe("2c · teto de gasto e limite do portfólio valem juntos (issue #9 + #10)", () => {
+  it("com teto de gasto folgado, o portfólio apertado é quem segura — pela mesma reserva travada", async () => {
+    como(ORG_A, USER_A);
+    falso.limpar();
+    const { updatePrecosDaMeta } = await import("@/app/actions/settings/updatePrecosDaMeta");
+    expect(
+      await updatePrecosDaMeta({
+        linhas: [{ country: "BR", dial_prefix: "55", category: "marketing", unit_price_cents: MARKETING_BR, currency: "BRL" }],
+        cotacao_usd_brl: null,
+      }),
+    ).toEqual({ ok: true });
+
+    // O portfólio já alcançou 45 contatos por modelo na janela de 24 h do relógio
+    // da rodada — sem isto a janela estaria vazia, sobrariam 50 e o lote (50)
+    // seguraria sozinho: o caso passaria sem medir o portfólio.
+    const agora = emMinutos(40);
+    const alcancados = await semearContatos("alcancados-no-portfolio", 45);
+    for (const c of alcancados) {
+      const { rows: conv } = await pool.query<{ id: string }>(
+        `insert into conversations (organization_id, contact_id, channel_session_id)
+         values ($1, $2, $3) returning id`,
+        [ORG_A, c.id, sessaoId],
+      );
+      await pool.query(
+        `insert into messages (organization_id, conversation_id, channel_session_id, contact_id, type, direction, status, body, created_at)
+         values ($1, $2, $3, $4, 'template', 'outbound', 'sent', 'oferta', $5::timestamptz - interval '1 hour')`,
+        [ORG_A, conv[0]!.id, sessaoId, c.id, agora.toISOString()],
+      );
+    }
+    const { rows } = await pool.query<{ n: number }>(
+      `select public.fn_portfolio_contatos_alcancados(array[$1::uuid], $2::timestamptz) as n`,
+      [sessaoId, agora.toISOString()],
+    );
+    const restante = 50 - Number(rows[0]!.n);
+    expect(restante).toBeGreaterThan(0);
+    expect(restante).toBeLessThan(10);
+    await pool.query(`update channel_sessions set meta_limite_de_mensagens = 'TIER_50' where id = $1`, [sessaoId]);
+
+    await semearContatos("dois-limites", restante + 2);
+    // Teto de gasto que caberia todos: R$ 1.000.
+    const id = await criarEPreparar("dois-limites", { teto_gasto_cents: 100_000 });
+    await iniciar(id);
+    const r = await rodada(agora);
+    expect(r.enviadas, JSON.stringify(r)).toBe(restante);
+    expect(falso.envios()).toHaveLength(restante);
+    // Não foi o teto de gasto: a campanha segue andando, esperando o portfólio.
+    expect((await campanha(id)).status).toBe("running");
+
+    await pool.query(`update channel_sessions set meta_limite_de_mensagens = null where id = $1`, [sessaoId]);
+  });
+});

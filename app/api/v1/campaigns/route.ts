@@ -17,7 +17,7 @@ import { fail, ok } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { FILTRO_VAZIO } from "@/lib/campanhas/audiencia";
-import { recusaDaConexaoComModelo } from "@/lib/campanhas/modelo-da-campanha";
+import { recusaDaConexaoComModelo, recusaDoNumeroDeAtendimento } from "@/lib/campanhas/modelo-da-campanha";
 import { gravarPool } from "@/lib/campanhas/pool-de-numeros";
 import {
   codificarCursor,
@@ -35,7 +35,7 @@ export const dynamic = "force-dynamic";
 const COLUNAS_DA_LISTA =
   "id, name, status, channel_session_id, snapshot_total, snapshot_eligible, snapshot_excluded, " +
   "scheduled_at, started_at, completed_at, cancelled_at, created_at, created_by, " +
-  "pipeline_id, stage_id, agent_id, meta_template_id";
+  "pipeline_id, stage_id, agent_id, meta_template_id, numero_de_atendimento_id, pausa_motivo";
 
 export async function GET(req: NextRequest): Promise<Response> {
   const requestId = randomUUID();
@@ -139,6 +139,17 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (recusaDoModelo) {
     return fail("campanha_conteudo_invalido", t(recusaDoModelo), 422, { requestId });
   }
+  // Modo "dois números" (issue #9): número de QR code desta organização, e o
+  // botão wa.me do modelo abrindo esse número.
+  const recusaDoAtendimento = await recusaDoNumeroDeAtendimento(
+    supabase,
+    org.orgId,
+    entrada.numero_de_atendimento_id ?? null,
+    entrada.meta_template_id ?? null,
+  );
+  if (recusaDoAtendimento) {
+    return fail("campanha_conteudo_invalido", t(recusaDoAtendimento), 422, { requestId });
+  }
 
   const { data, error } = await supabase
     .from("campaigns")
@@ -162,6 +173,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       agent_id: entrada.agent_id ?? null,
       meta_template_id: entrada.meta_template_id ?? null,
       template_variables: entrada.template_variables ?? {},
+      numero_de_atendimento_id: entrada.numero_de_atendimento_id ?? null,
       created_by: user.id,
     })
     .select(COLUNAS_DA_LISTA)
@@ -200,7 +212,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     metadata: {
       base_legal: entrada.base_legal,
       numeros: 1 + (entrada.channel_session_ids ?? []).length,
-      modo: entrada.meta_template_id ? "oficial" : "texto",
+      modo: entrada.meta_template_id ? (entrada.numero_de_atendimento_id ? "dois_numeros" : "oficial") : "texto",
     },
   });
 

@@ -1,7 +1,8 @@
 "use client";
 /**
  * O CUSTO da campanha oficial na tela (issue #10): a estimativa antes do
- * disparo, o campo do teto, o relatório depois e o aviso de pausa automática.
+ * disparo, o campo do teto e o relatório depois. A pausa por teto aparece no
+ * cartão de pausa automática da issue #9, com a frase de `pausa_detalhe`.
  *
  * Os números chegam prontos da API (`lib/custo/relatorio.ts`); aqui só se
  * formata e se diz o que cada um significa. Custo por lead "—" quando ninguém
@@ -57,18 +58,6 @@ export function CampoDoTetoDeGasto({
         {t("Ao chegar no teto, a campanha pausa sozinha e diz por quê. O teto mensal da empresa, em Campanhas › Configuração, vale junto.")}
       </p>
     </div>
-  );
-}
-
-/** A campanha pausou sozinha: o motivo, em destaque, antes de tudo. */
-export function AvisoDePausaAutomatica({ campanha }: { campanha: CampanhaDetalhada }) {
-  const t = useT();
-  if (campanha.status !== "paused" || !campanha.pausa_motivo) return null;
-  return (
-    <Card className="space-y-1 border-warning-fg p-4" role="status" data-testid="pausa-automatica">
-      <h2 className="font-medium">{t("Pausada automaticamente")}</h2>
-      <p className="text-sm">{campanha.pausa_detalhe ?? t("O sistema pausou esta campanha.")}</p>
-    </Card>
   );
 }
 

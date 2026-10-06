@@ -437,10 +437,12 @@ const PARES: Array<{
   {
     tabela: "campaigns",
     coluna: "pausa_motivo",
-    // lib/campanhas/teto-de-gasto.ts → MOTIVOS_DA_PAUSA (tupla `as const`). Os
-    // motivos das issues #9 e #10 no mesmo CHECK (migration 0540); quem pausa
-    // grava um deles, e um motivo só no TypeScript viraria `23514` na pausa.
-    arquivo: "lib/campanhas/teto-de-gasto.ts",
+    // lib/campanhas/pausa-automatica.ts → MOTIVOS_DA_PAUSA (tupla `as const`).
+    // Nasce no MESMO commit da migration 0539. O motivo é gravado pela pausa
+    // automática (webhook e rodada) e lido pela tela; um motivo novo só no
+    // TypeScript viraria `23514` dentro do UPDATE da pausa — e a campanha
+    // seguiria enviando, que é o contrário do que a pausa existe para fazer.
+    arquivo: "lib/campanhas/pausa-automatica.ts",
     simbolo: "MOTIVOS_DA_PAUSA",
   },
   {

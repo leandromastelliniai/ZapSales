@@ -8,7 +8,8 @@
  * (`fn_custo_comprometido`): custo registrado, real ou estimado, mais os
  * reservados em voo — e a reserva de verdade refaz a conta com a organização
  * travada (`fn_campanha_reservar_lote_no_teto`), para dois lotes simultâneos não
- * passarem juntos do teto.
+ * passarem juntos do teto. Quem pausa é `pausarAutomaticamente`, com o motivo
+ * `teto_de_gasto` (`./pausa-automatica.ts`).
  *
  * O preço de referência de quem ainda não tem custo é o MAIOR da categoria na
  * tabela: na dúvida sobre o país, o teto erra para o lado de gastar menos.
@@ -16,7 +17,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { fusoDaJanela } from "@/lib/agent-engine/pacing/store";
-import { audit } from "@/lib/audit";
 import { inicioDoMesNoFuso } from "@/lib/custo/atendimento-gratis";
 import { emReais } from "@/lib/custo/formato";
 import {
@@ -29,23 +29,6 @@ import {
 import { mensagensQueCabem } from "@/lib/custo/teto";
 
 import { lerConfiguracao } from "./configuracao";
-
-/**
- * Por que o SISTEMA pausou a campanha — o mesmo vocabulário do CHECK
- * `campaigns_pausa_motivo_check` (migration 0540). Os seis primeiros são da
- * issue #9 (qualidade do número, modelo, aceite do risco); `teto_de_gasto` é
- * desta. Nulo no banco = pausa manual ou nenhuma.
- */
-export const MOTIVOS_DA_PAUSA = [
-  "qualidade_vermelha",
-  "modelo_rejeitado",
-  "modelo_pausado",
-  "modelo_desativado",
-  "modelo_recategorizado",
-  "risco_nao_aceito",
-  "teto_de_gasto",
-] as const;
-export type MotivoDaPausa = (typeof MOTIVOS_DA_PAUSA)[number];
 
 export interface TetoDaRodada {
   /** Quantas mensagens ainda cabem nos dois tetos (Infinity = sem teto). */
@@ -139,36 +122,4 @@ export async function tetoDaRodada(
     tabela,
     detalhe,
   };
-}
-
-/**
- * Pausa a campanha em andamento com o motivo e a frase que a tela mostra.
- * Compare-and-set: só quem ainda está `running` pausa, e só uma vez audita.
- */
-export async function pausarPorTeto(
-  admin: SupabaseClient,
-  organizationId: string,
-  campanhaId: string,
-  detalhe: string,
-  agora: Date,
-): Promise<boolean> {
-  const motivo: MotivoDaPausa = "teto_de_gasto";
-  const { data } = await admin
-    .from("campaigns")
-    .update({ status: "paused", paused_at: agora.toISOString(), pausa_motivo: motivo, pausa_detalhe: detalhe })
-    .eq("organization_id", organizationId)
-    .eq("id", campanhaId)
-    .eq("status", "running")
-    .select("id");
-  const pausou = (data ?? []).length > 0;
-  if (pausou) {
-    void audit({
-      action: "campaign.auto_paused",
-      organizationId,
-      resourceType: "campaign",
-      resourceId: campanhaId,
-      metadata: { motivo },
-    });
-  }
-  return pausou;
 }

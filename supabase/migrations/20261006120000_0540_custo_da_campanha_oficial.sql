@@ -210,10 +210,19 @@ comment on function public.fn_custo_comprometido(uuid, uuid, timestamptz, numeri
 revoke execute on function public.fn_custo_comprometido(uuid, uuid, timestamptz, numeric) from public, anon, authenticated;
 grant execute on function public.fn_custo_comprometido(uuid, uuid, timestamptz, numeric) to service_role;
 
--- A reserva da campanha oficial COM teto: trava a organização (advisory lock da
--- transação), recalcula o comprometido e só então reserva o que cabe. Sem a
--- trava, o laço do worker e o cron de rede de segurança veriam a mesma folga ao
--- mesmo tempo e, juntos, reservariam o dobro.
+-- A reserva da campanha oficial COM teto de gasto: trava a organização (advisory
+-- lock da transação), recalcula o comprometido e só então reserva o que cabe.
+-- Sem a trava, o laço do worker e o cron de rede de segurança veriam a mesma
+-- folga ao mesmo tempo e, juntos, reservariam o dobro.
+--
+-- O limite do PORTFÓLIO (issue #9, migration 0539) vale junto: com teto de
+-- portfólio, quem reserva é `fn_campanha_reservar_lote_no_portfolio`, chamada
+-- daqui, na MESMA transação — as duas travas ficam presas até o commit. A ordem
+-- é sempre organização → portfólio, e a do portfólio não trava organização:
+-- não há ciclo. Uma função só reservando é o que impede um dos dois limites de
+-- ficar de fora em algum caminho.
+drop function if exists public.fn_campanha_reservar_lote_no_teto(uuid, integer, timestamptz, numeric, numeric, numeric, timestamptz);
+
 create or replace function public.fn_campanha_reservar_lote_no_teto(
   p_campaign_id uuid,
   p_limite integer,
@@ -221,7 +230,9 @@ create or replace function public.fn_campanha_reservar_lote_no_teto(
   p_preco numeric,
   p_teto_campanha numeric,
   p_teto_organizacao numeric,
-  p_inicio_do_mes timestamptz
+  p_inicio_do_mes timestamptz,
+  p_sessoes uuid[] default null,
+  p_teto_portfolio integer default null
 )
 returns table (
   id uuid,
@@ -256,15 +267,20 @@ begin
       v_cabem := least(v_cabem, greatest(0, floor((p_teto_organizacao - v_organizacao) / p_preco + 0.000001))::integer);
     end if;
   end if;
-  return query select * from public.fn_campanha_reservar_lote(p_campaign_id, v_cabem, p_agora);
+  if p_teto_portfolio is not null then
+    return query select * from public.fn_campanha_reservar_lote_no_portfolio(
+      p_campaign_id, v_cabem, p_agora, coalesce(p_sessoes, '{}'::uuid[]), p_teto_portfolio);
+  else
+    return query select * from public.fn_campanha_reservar_lote(p_campaign_id, v_cabem, p_agora);
+  end if;
 end
 $$;
 
-comment on function public.fn_campanha_reservar_lote_no_teto(uuid, integer, timestamptz, numeric, numeric, numeric, timestamptz) is
-  'Issue #10: fn_campanha_reservar_lote limitada pelos tetos de gasto, com a organização travada durante a conta. Sem teto (ou sem preço), reserva como a original.';
+comment on function public.fn_campanha_reservar_lote_no_teto(uuid, integer, timestamptz, numeric, numeric, numeric, timestamptz, uuid[], integer) is
+  'Issue #10: a reserva limitada pelos tetos de gasto, com a organização travada durante a conta; com teto de portfólio, delega a fn_campanha_reservar_lote_no_portfolio na mesma transação. Sem teto de gasto (ou sem preço), reserva como a delegada.';
 
-revoke execute on function public.fn_campanha_reservar_lote_no_teto(uuid, integer, timestamptz, numeric, numeric, numeric, timestamptz) from public, anon, authenticated;
-grant execute on function public.fn_campanha_reservar_lote_no_teto(uuid, integer, timestamptz, numeric, numeric, numeric, timestamptz) to service_role;
+revoke execute on function public.fn_campanha_reservar_lote_no_teto(uuid, integer, timestamptz, numeric, numeric, numeric, timestamptz, uuid[], integer) from public, anon, authenticated;
+grant execute on function public.fn_campanha_reservar_lote_no_teto(uuid, integer, timestamptz, numeric, numeric, numeric, timestamptz, uuid[], integer) to service_role;
 
 -- ═══ 5. O relatório de custo da campanha ═══
 --

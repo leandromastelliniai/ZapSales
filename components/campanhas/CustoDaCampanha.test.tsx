@@ -1,6 +1,6 @@
 /**
  * O custo da campanha oficial pela tela (issue #10): a estimativa antes do
- * disparo, o aviso da pausa automática e o cartão de custo depois.
+ * disparo e o cartão de custo depois.
  *
  * O hook de dados é dublado com o relatório que a API devolve; o resto é o
  * componente de verdade.
@@ -16,7 +16,7 @@ vi.mock("@/hooks/campanhas/useCampanhas", () => ({
   useCustoDaCampanha: () => ({ isPending: false, isError: false, data: dados.relatorio }),
 }));
 
-import { AvisoDePausaAutomatica, CustoDaCampanha, LinhaDaEstimativa } from "./CustoDaCampanha";
+import { CustoDaCampanha, LinhaDaEstimativa } from "./CustoDaCampanha";
 
 const CAMPANHA = {
   id: "c1",
@@ -112,29 +112,6 @@ describe("o relatório depois do disparo", () => {
   it("campanha do modo WAHA não tem cartão de custo", () => {
     dados.relatorio = relatorio();
     const { container } = render(<CustoDaCampanha campanha={{ ...CAMPANHA, meta_template_id: null }} />);
-    expect(container.textContent).toBe("");
-  });
-});
-
-describe("a pausa automática", () => {
-  it("aparece com a frase do motivo quando o sistema pausou", () => {
-    render(
-      <AvisoDePausaAutomatica
-        campanha={{
-          ...CAMPANHA,
-          status: "paused",
-          pausa_motivo: "teto_de_gasto",
-          pausa_detalhe: "A campanha atingiu o teto de gasto: R$ 0,64 de R$ 0,70.",
-        }}
-      />,
-    );
-    const aviso = screen.getByTestId("pausa-automatica");
-    expect(aviso.textContent).toContain("Pausada automaticamente");
-    expect(aviso.textContent).toContain("R$ 0,64 de R$ 0,70");
-  });
-
-  it("não aparece na pausa manual", () => {
-    const { container } = render(<AvisoDePausaAutomatica campanha={{ ...CAMPANHA, status: "paused" }} />);
     expect(container.textContent).toBe("");
   });
 });

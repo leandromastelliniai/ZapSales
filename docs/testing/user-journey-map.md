@@ -3365,7 +3365,63 @@ importa: `update of status` dispara mesmo sem mudança de valor, e o webhook sem
   `sending`, ligado a ela: a campanha só conclui quando a mensagem sair ou for dada como falha.
   Reenfileirar mandaria em dobro; marcar falha mentiria se ela sair.
 
-## J45 — Custo da campanha oficial: estimativa, teto, custo real e as 1.000 grátis `[P0]` (2026-10-06, issue #10)
+## J45 — Proteções e modos de envio das campanhas `[P0]` (2026-10-06, issue #9)
+
+Mesma fronteira da J44: o falso Graph na saída (agora com um segundo número que envia, de outra
+organização do mesmo portfólio), webhooks assinados na rota real (qualidade do número, status e
+categoria do modelo), a ingestão real do número de QR code (`dispatchWahaEvent`) e as rotas do app.
+As rodadas usam o relógio REAL com janela 0–24: a conta do limite compara `messages.created_at`
+(relógio do banco) com o `agora` da rodada, e avançar 25 h é o "dia seguinte" da conta.
+
+Spec: `tests/invariants/protecoes-das-campanhas.test.ts`; regra do portfólio em
+`lib/campanhas/portfolio.test.ts`; motivos e frases da pausa em `lib/campanhas/pausa-automatica.test.ts`;
+botão wa.me em `lib/campanhas/dois-numeros.test.ts`; variável do sistema na tela em
+`components/campanhas/MensagemOficial.test.tsx`.
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J45.1 | A conexão guarda o portfólio | o número conectado pela API grava `meta_portfolio_id` do `owner_business_info` da WABA | **PASS (invariante)** |
+| J45.2 | Duas campanhas, duas organizações, números e WABAs diferentes, o mesmo portfólio na faixa de 50 | 40 + 40 contatos: saem exatamente 50 somados (A 40, B 10); a página de B mostra `50 de 50`; duas reservas simultâneas no portfólio cheio não levam ninguém; 25 h depois os 30 restantes saem sozinhos | **PASS (invariante)** — a simultaneidade só é medida de verdade no Postgres do CI (no PGlite as conexões dividem uma sessão) |
+| J45.3 | Modelo rejeitado, pausado, desativado e recategorizado (webhook) | cada um pausa a campanha dele com `pausa_motivo` e a frase com o nome do modelo (e o motivo da Meta / "utilidade para marketing"); a campanha de outro modelo segue `running`; `campaign.auto_paused` na auditoria; a reentrega não repete efeito | **PASS (invariante)** |
+| J45.4 | Retomar | com o modelo ainda rejeitado → 422; a recategorizada retoma e o motivo some | **PASS (invariante)** |
+| J45.5 | Modelo pausado sem webhook (sincronização) | a rodada pausa a campanha com `modelo_pausado` | **PASS (invariante)** |
+| J45.6 | Qualidade vermelha (webhook `FLAGGED`, a Graph diz `RED`) | as campanhas oficiais do número pausam com `qualidade_vermelha` e o número nomeado; nada da outra organização pausa; retomar com o número vermelho → 409 "vermelha"; verde de novo → retoma; vermelho lido sem webhook → a rodada pausa | **PASS (invariante)** |
+| J45.7 | Campanha por número de QR code sem o aceite | iniciar e agendar → 422 `campanha_risco_nao_aceito`; aceitar grava quem e quando, audita `campaign.ban_risk_accepted` uma vez só (repetir não audita de novo); depois inicia; a cópia não herda o aceite; campanha oficial não tem risco a aceitar (409) | **PASS (invariante)** |
+| J45.8 | Modo dois números | modelo sem botão wa.me → 422; número de atendimento oficial → 422; com `https://wa.me/{{1}}` o envio leva o botão com o telefone do número de QR code, sem o operador dar fonte à variável | **PASS (invariante)** |
+| J45.9 | Quem clica e escreve no número de QR code | a mensagem entra no MESMO contato da campanha (nenhuma ficha nova) e a resposta marca o destinatário como `replied` | **PASS (invariante)** |
+| J45.11 | Número conectado antes da coluna do portfólio | antes de contar o limite, o motor lê o portfólio da WABA com a credencial do próprio número, grava e volta a somar o número da outra organização (freio de uma tentativa por hora) | **PASS (invariante)** |
+| J45.12 | Campanha de QR code agendada antes de o aceite existir | quando a hora chega, o cron não a promove: pausa com `risco_nao_aceito`; retomar sem aceite → 422; aceitando, retoma | **PASS (invariante)** |
+| J45.13 | Recategorização que chega pela sincronização (sem webhook) | a sincronização compara a categoria gravada com a da Meta e pausa as campanhas do modelo com `modelo_recategorizado` | **PASS (invariante)** |
+| J45.10 | As proteções pela tela, como um leigo | aviso de risco com a caixa "Entendi o risco", cartão "Pausada automaticamente", limite do portfólio e o seletor "Quem responde fala com qual número?" numa instalação fresca | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
+
+Sabotagem medida, um desligamento por vez: reservar sem o limite do portfólio derruba a J45.2; tirar
+a pausa do webhook de modelo derruba a J45.3 e a J45.4; tirar a pausa do webhook de qualidade
+derruba a J45.6; tirar o portão do aceite derruba a J45.7; não preencher a variável do botão com o
+número de atendimento derruba a J45.8 e a J45.9; tirar a descoberta do portfólio derruba a J45.11;
+promover a agendada sem o aceite derruba a J45.12; tirar a pausa da sincronização derruba a J45.13.
+Rodou no PGlite desta máquina (24 casos), junto da
+J41 (19), J42 (20), J43 (23) e J44 (29, com o caso do QR code agora aceitando o risco antes de
+iniciar). Não é o gate: o `test:db` do CI é.
+
+**Decisões que valem dizer:**
+- Uma organização tem UM número oficial (a conexão atualiza a linha que existe). Dois números do
+  mesmo portfólio são, então, de organizações diferentes da instalação, e o grupo do portfólio
+  cruza tenants — só contagem e faixa atravessam. A trava da reserva é única da instalação.
+- Portfólio desconhecido (número conectado antes desta versão) junta o número com os oficiais da
+  mesma organização e os da mesma WABA; faixa desconhecida vale 250 (a inicial da Meta). Os dois
+  erram para mandar menos.
+- A conta é conservadora: modelo que saiu dentro da janela de atendimento também conta, e contato
+  que já recebeu modelo hoje conta de novo na reserva.
+- Um número vermelho no pool pausa a campanha inteira, não só tira o número do rodízio.
+- A pausa alcança `running` e `scheduled` (a agendada também é "ativa": sair na hora marcada com o
+  número vermelho seria o mesmo dano). Retomar uma agendada pausada a faz sair na hora, como a
+  pausa manual já fazia.
+- A qualidade AMARELA só avisa (issue #5); não muda o ritmo nem pausa.
+
+**Fora do #9:** custo, teto de gasto e as 1.000 grátis (issue #10, que soma `teto_de_gasto` ao
+mesmo `pausa_motivo`); a resposta caindo no funil e no agente com o contexto (issue #11).
+
+## J46 — Custo da campanha oficial: estimativa, teto, custo real e as 1.000 grátis `[P0]` (2026-10-06, issue #10)
 
 Mesma fronteira da J44: falso Graph na saída, webhook de status assinado **com `pricing`** na rota
 real na entrada, baseline aplicado, rotas do app, a server action do painel da instalação e o
@@ -3377,23 +3433,24 @@ de 80%/100%, formato de dinheiro).
 
 | # | Caso | Expectativa | Resultado |
 |---|------|-------------|-----------|
-| J45.1 | Prévia do público de uma campanha oficial | `estimativa` = elegíveis × preço da tabela (3 × R$ 0,3217 para três contatos do Brasil) | **PASS (invariante)** |
-| J45.2 | Campanha preparada, antes de iniciar | `GET /campaigns/:id/cost` traz a mesma estimativa e custo da Meta 0 | **PASS (invariante)** |
-| J45.3 | Teto da campanha (R$ 0,70, marketing a R$ 0,3217) | saem 2 de 3; a rodada seguinte pausa com `pausa_motivo = teto_de_gasto` e a frase com "R$ 0,70"; o falso Graph não recebe o terceiro | **PASS (invariante, relógio controlado)** |
-| J45.4 | Subir o teto e retomar | o motivo sai, e o terceiro é enviado | **PASS (invariante)** |
-| J45.5 | Teto mensal da empresa | com folga para uma mensagem, sai uma e a campanha pausa com o motivo da empresa; `campaign.auto_paused` auditado sem ator | **PASS (invariante)** |
-| J45.6 | Custo real pelo webhook | estimado no envio → `webhook` com o preço da tabela; reentrega de `read` não regrava; `billable: false` custa 0; `free_entry_point` marca janela grátis de anúncio; `failed` zera a estimativa | **PASS (invariante)** |
-| J45.7 | Relatório | Meta + IA (US$ convertido pela cotação, só do contato do destinatário e dentro da janela de atribuição) ÷ quem respondeu; conversas de anúncio contadas | **PASS (invariante)** |
-| J45.8 | As 1.000 grátis | a 800ª abre o aviso de 80% na Central, a reentrega não duplica, a 1.000ª abre o de 100%, a 1.001ª custa R$ 0,035; a rota do contador mostra 1.001/1.000 | **PASS (invariante)** |
-| J45.9 | Virada do mês no fuso da conta | 23h30 de 31/10 em São Paulo ainda conta outubro; à meia-noite de 01/11 o contador zera | **PASS (invariante, relógio controlado)** |
-| J45.10 | Alterar a tabela no painel | `updatePrecosDaMeta` grava; a próxima estimativa usa o preço novo; custo já registrado não muda | **PASS (invariante)** |
-| J45.11 | Isolamento | a organização B recebe 404 no custo da A e, como `authenticated` com RLS ligada, não lê nenhuma linha de `meta_message_costs` (controle: a A lê as dela) | **PASS (invariante)** |
-| J45.13 | Teto ligado e categoria sem preço na tabela | a campanha não envia nada e pausa com a frase "não tem preço para marketing" — sem preço o teto não mede | **PASS (invariante)** |
-| J45.14 | Linha da tabela em outra moeda | o painel recusa (`invalid_input`): o teto é em reais | **PASS (invariante)** |
-| J45.12 | Prova pela tela (estimativa, teto, cartão de custo, contador, painel de preços) | um leigo vê a estimativa antes de iniciar, o aviso de pausa e o cartão de custo | **PENDENTE** — a máquina desta sessão não tem Docker para subir o ambiente fresco estilo VPS; falta a spec Playwright |
+| J46.1 | Prévia do público de uma campanha oficial | `estimativa` = elegíveis × preço da tabela (3 × R$ 0,3217 para três contatos do Brasil) | **PASS (invariante)** |
+| J46.2 | Campanha preparada, antes de iniciar | `GET /campaigns/:id/cost` traz a mesma estimativa e custo da Meta 0 | **PASS (invariante)** |
+| J46.3 | Teto da campanha (R$ 0,70, marketing a R$ 0,3217) | saem 2 de 3; a rodada seguinte pausa com `pausa_motivo = teto_de_gasto` e a frase com "R$ 0,70"; o falso Graph não recebe o terceiro | **PASS (invariante, relógio controlado)** |
+| J46.4 | Subir o teto e retomar | o motivo sai, e o terceiro é enviado | **PASS (invariante)** |
+| J46.5 | Teto mensal da empresa | com folga para uma mensagem, sai uma e a campanha pausa com o motivo da empresa; `campaign.auto_paused` auditado sem ator | **PASS (invariante)** |
+| J46.6 | Custo real pelo webhook | estimado no envio → `webhook` com o preço da tabela; reentrega de `read` não regrava; `billable: false` custa 0; `free_entry_point` marca janela grátis de anúncio; `failed` zera a estimativa | **PASS (invariante)** |
+| J46.7 | Relatório | Meta + IA (US$ convertido pela cotação, só do contato do destinatário e dentro da janela de atribuição) ÷ quem respondeu; conversas de anúncio contadas | **PASS (invariante)** |
+| J46.8 | As 1.000 grátis | a 800ª abre o aviso de 80% na Central, a reentrega não duplica, a 1.000ª abre o de 100%, a 1.001ª custa R$ 0,035; a rota do contador mostra 1.001/1.000 | **PASS (invariante)** |
+| J46.9 | Virada do mês no fuso da conta | 23h30 de 31/10 em São Paulo ainda conta outubro; à meia-noite de 01/11 o contador zera | **PASS (invariante, relógio controlado)** |
+| J46.10 | Alterar a tabela no painel | `updatePrecosDaMeta` grava; a próxima estimativa usa o preço novo; custo já registrado não muda | **PASS (invariante)** |
+| J46.11 | Isolamento | a organização B recebe 404 no custo da A e, como `authenticated` com RLS ligada, não lê nenhuma linha de `meta_message_costs` (controle: a A lê as dela) | **PASS (invariante)** |
+| J46.13 | Teto ligado e categoria sem preço na tabela | a campanha não envia nada e pausa com a frase "não tem preço para marketing" — sem preço o teto não mede | **PASS (invariante)** |
+| J46.14 | Linha da tabela em outra moeda | o painel recusa (`invalid_input`): o teto é em reais | **PASS (invariante)** |
+| J46.15 | Teto de gasto e limite do portfólio juntos (#9 + #10) | com teto de gasto que caberia todos e o portfólio em `TIER_50` com 45 já alcançados, saem só os 5 que o portfólio deixa, e a campanha segue `running` — a reserva com teto delega à do portfólio sob as duas travas | **PASS (invariante)**; sabotado (sem delegar), saem 7 e o caso fica vermelho |
+| J46.12 | Prova pela tela (estimativa, teto, cartão de custo, contador, painel de preços) | um leigo vê a estimativa antes de iniciar, o aviso de pausa e o cartão de custo | **PENDENTE** — a máquina desta sessão não tem Docker para subir o ambiente fresco estilo VPS; falta a spec Playwright |
 
 Sabotagem medida: desligar o teto na rodada (reserva sem teto e sem pausa) derruba quatro casos
-(J45.3, J45.4, J45.5 e a auditoria da pausa).
+(J46.3, J46.4, J46.5 e a auditoria da pausa).
 
 Limites conhecidos, de propósito fora desta entrega:
 

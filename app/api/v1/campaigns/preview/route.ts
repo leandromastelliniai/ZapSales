@@ -14,7 +14,8 @@ import type { NextRequest } from "next/server";
 import { fail, ok } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { requireSupportWrite } from "@/lib/impersonate/support";
-import { carregarModelo } from "@/lib/campanhas/modelo-da-campanha";
+import { mapaComNumeroDeAtendimento } from "@/lib/campanhas/dois-numeros";
+import { carregarModelo, numeroDeAtendimento } from "@/lib/campanhas/modelo-da-campanha";
 import { preverAudiencia } from "@/lib/campanhas/preparacao";
 import { previaSchema } from "@/lib/campanhas/schemas";
 import { TEXTO_DA_EXCLUSAO } from "@/lib/campanhas/tipos";
@@ -59,6 +60,13 @@ export async function POST(req: NextRequest): Promise<Response> {
       });
     }
   }
+  // Modo "dois números" (issue #9): a variável do botão wa.me sai do número de
+  // atendimento — sem isto a prévia contaria todo mundo como "sem o dado".
+  let mapa = parsed.data.template_variables ?? {};
+  if (modelo && parsed.data.numero_de_atendimento_id) {
+    const numero = await numeroDeAtendimento(admin, authz.org.orgId, parsed.data.numero_de_atendimento_id);
+    if (numero.ok && numero.telefone) mapa = mapaComNumeroDeAtendimento(modelo.components, mapa, numero.telefone);
+  }
   try {
     const resumo = await preverAudiencia(admin, {
       organizationId: authz.org.orgId,
@@ -66,7 +74,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       corpo: parsed.data.message_body,
       agora: new Date(),
       campanhaId: parsed.data.campaign_id,
-      ...(modelo ? { oficial: { modelo, mapa: parsed.data.template_variables ?? {} } } : {}),
+      ...(modelo ? { oficial: { modelo, mapa } } : {}),
     });
     return ok(
       {

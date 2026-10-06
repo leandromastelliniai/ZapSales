@@ -8813,7 +8813,6 @@
   "O custo de IA é registrado em dólar, e a Meta cobra em reais. Esta cotação soma os dois no relatório da campanha.": "AI cost is recorded in dollars, and Meta charges in reais. This rate adds the two in the campaign report.",
   "O mesmo país aparece duas vezes. Deixe uma linha por país.": "The same country appears twice. Keep one row per country.",
   "O país é o de quem RECEBE, reconhecido pelo prefixo do telefone (55 é o Brasil). Destinatário de país fora da tabela aparece à parte na estimativa, sem preço inventado.": "The country is the RECIPIENT's, recognized by the phone prefix (55 is Brazil). A recipient from a country outside the table appears separately in the estimate, with no made-up price.",
-  "O sistema pausou esta campanha.": "The system paused this campaign.",
   "Pausada automaticamente": "Paused automatically",
   "Preço de uma mensagem, em reais, para quem recebe naquele país. Mudar aqui muda as estimativas e os tetos daqui para a frente; o custo das mensagens que já saíram continua com o preço da hora em que saíram.": "Price of one message, in reais, for recipients in that country. Changing it here changes estimates and caps from now on; messages already sent keep the price from when they went out.",
   "Preço que não entendi em": "Price I could not read in",

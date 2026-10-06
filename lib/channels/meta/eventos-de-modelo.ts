@@ -18,7 +18,8 @@
  *
  * ─── O que fica fora ─────────────────────────────────────────────────────────
  *
- * Pausar as campanhas que usam o modelo afetado é da issue #9. Modelo que o
+ * Modelo rejeitado, pausado, desativado ou recategorizado também pausa as
+ * campanhas que o usam (issue #9, `lib/campanhas/pausa-automatica.ts`). Modelo que o
  * espelho não conhece (nunca sincronizado) não vira linha: sem os componentes a
  * linha seria inútil para o envio, e a próxima sincronização o traz inteiro.
  *
@@ -28,6 +29,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { InboxKind } from "@/lib/agent-engine/db/repository";
+import {
+  campanhasDoModelo,
+  fraseDaPausa,
+  motivoDoEventoDeModelo,
+  pausarAutomaticamente,
+} from "@/lib/campanhas/pausa-automatica";
 import { logger } from "@/lib/logger";
 
 import { TEMPLATE_STATUS_DISABLED } from "./template-sync";
@@ -289,5 +296,41 @@ export async function aplicarEventoDeModelo(
   if (!mudou || mudou.length === 0) return "modelo:sem_mudanca";
 
   if (aviso) await abrirAviso(admin, organizationId, aviso);
+  await pausarCampanhasDoModelo(admin, organizationId, linha.id as string, e, antes, agora);
   return "modelo:atualizado";
+}
+
+/**
+ * Modelo rejeitado, pausado, desativado ou recategorizado pausa as campanhas em
+ * andamento que o usam, com o motivo na campanha (issue #9). Só na MUDANÇA, pela
+ * mesma trava do aviso: a reentrega não pausa de novo uma campanha que o
+ * operador decidiu retomar depois de uma recategorização.
+ */
+async function pausarCampanhasDoModelo(
+  admin: SupabaseClient,
+  organizationId: string,
+  modeloId: string,
+  e: EventoDeModelo,
+  antes: string | null,
+  agora: Date,
+): Promise<void> {
+  const motivo = motivoDoEventoDeModelo(e);
+  if (!motivo) return;
+  try {
+    const campanhas = await campanhasDoModelo(admin, organizationId, modeloId);
+    const detalhe = fraseDaPausa(motivo, {
+      modelo: `${e.templateName} (${e.templateLanguage})`,
+      motivoDaMeta: e.kind === "template_status" ? (e.detail ?? e.reason) : null,
+      de: e.kind === "template_category" ? (e.previous ?? antes) : null,
+      para: e.kind === "template_category" ? e.category : null,
+    });
+    await pausarAutomaticamente(admin, organizationId, campanhas, motivo, detalhe, agora);
+  } catch (err) {
+    // O espelho já foi atualizado; a rodada oficial pausa pelo status na volta
+    // seguinte (a recategorização não tem essa rede, por isso o log alto).
+    logger.error("[meta.modelo] a pausa das campanhas do modelo falhou", {
+      organization_id: organizationId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
