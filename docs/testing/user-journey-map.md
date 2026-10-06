@@ -3469,7 +3469,51 @@ template do agente fora da janela derruba a J46.11.
 - Editar quem assume, botões e oferta com a campanha andando é aceito pela API (como o ritmo); a
   tela de edição só existe para rascunho.
 
-## J47 — Enviar arquivo acima de 10 MB `[P1]` (2026-10-06, issue #22)
+## J47 — Custo da campanha oficial: estimativa, teto, custo real e as 1.000 grátis `[P0]` (2026-10-06, issue #10)
+
+Mesma fronteira da J44: falso Graph na saída, webhook de status assinado **com `pricing`** na rota
+real na entrada, baseline aplicado, rotas do app, a server action do painel da instalação e o
+worker dirigido por passos com relógio controlado.
+
+Spec: `tests/invariants/custo-da-campanha-oficial.test.ts`; regras puras em `lib/custo/*.test.ts`
+(estimativa pela tabela, custo real a partir do `pricing`, teto, virada do mês no fuso e limiares
+de 80%/100%, formato de dinheiro).
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J47.1 | Prévia do público de uma campanha oficial | `estimativa` = elegíveis × preço da tabela (3 × R$ 0,3217 para três contatos do Brasil) | **PASS (invariante)** |
+| J47.2 | Campanha preparada, antes de iniciar | `GET /campaigns/:id/cost` traz a mesma estimativa e custo da Meta 0 | **PASS (invariante)** |
+| J47.3 | Teto da campanha (R$ 0,70, marketing a R$ 0,3217) | saem 2 de 3; a rodada seguinte pausa com `pausa_motivo = teto_de_gasto` e a frase com "R$ 0,70"; o falso Graph não recebe o terceiro | **PASS (invariante, relógio controlado)** |
+| J47.4 | Subir o teto e retomar | o motivo sai, e o terceiro é enviado | **PASS (invariante)** |
+| J47.5 | Teto mensal da empresa | com folga para uma mensagem, sai uma e a campanha pausa com o motivo da empresa; `campaign.auto_paused` auditado sem ator | **PASS (invariante)** |
+| J47.6 | Custo real pelo webhook | estimado no envio → `webhook` com o preço da tabela; reentrega de `read` não regrava; `billable: false` custa 0; `free_entry_point` marca janela grátis de anúncio; `failed` zera a estimativa | **PASS (invariante)** |
+| J47.7 | Relatório | Meta + IA (US$ convertido pela cotação, só do contato do destinatário e dentro da janela de atribuição) ÷ quem respondeu; conversas de anúncio contadas | **PASS (invariante)** |
+| J47.8 | As 1.000 grátis | a 800ª abre o aviso de 80% na Central, a reentrega não duplica, a 1.000ª abre o de 100%, a 1.001ª custa R$ 0,035; a rota do contador mostra 1.001/1.000 | **PASS (invariante)** |
+| J47.9 | Virada do mês no fuso da conta | 23h30 de 31/10 em São Paulo ainda conta outubro; à meia-noite de 01/11 o contador zera | **PASS (invariante, relógio controlado)** |
+| J47.10 | Alterar a tabela no painel | `updatePrecosDaMeta` grava; a próxima estimativa usa o preço novo; custo já registrado não muda | **PASS (invariante)** |
+| J47.11 | Isolamento | a organização B recebe 404 no custo da A e, como `authenticated` com RLS ligada, não lê nenhuma linha de `meta_message_costs` (controle: a A lê as dela) | **PASS (invariante)** |
+| J47.13 | Teto ligado e categoria sem preço na tabela | a campanha não envia nada e pausa com a frase "não tem preço para marketing" — sem preço o teto não mede | **PASS (invariante)** |
+| J47.14 | Linha da tabela em outra moeda | o painel recusa (`invalid_input`): o teto é em reais | **PASS (invariante)** |
+| J47.15 | Teto de gasto e limite do portfólio juntos (#9 + #10) | com teto de gasto que caberia todos e o portfólio em `TIER_50` com 45 já alcançados, saem só os 5 que o portfólio deixa, e a campanha segue `running` — a reserva com teto delega à do portfólio sob as duas travas | **PASS (invariante)**; sabotado (sem delegar), saem 7 e o caso fica vermelho |
+| J47.12 | Prova pela tela (estimativa, teto, cartão de custo, contador, painel de preços) | um leigo vê a estimativa antes de iniciar, o aviso de pausa e o cartão de custo | **PENDENTE** — a máquina desta sessão não tem Docker para subir o ambiente fresco estilo VPS; falta a spec Playwright |
+
+Sabotagem medida: desligar o teto na rodada (reserva sem teto e sem pausa) derruba quatro casos
+(J47.3, J47.4, J47.5 e a auditoria da pausa).
+
+Limites conhecidos, de propósito fora desta entrega:
+
+- **Fuso da conta.** O contador das 1.000 zera no fuso do número (`channel_knobs.timezone`, senão o
+  da organização). O fuso da conta da Meta (`timezone_id` da WABA) não é lido nem guardado em lugar
+  nenhum hoje; se divergir, a virada do contador e a da fatura não coincidem.
+- **Só a campanha oficial é barrada pelo teto.** Modelo mandado por follow-up ou pelo agente e
+  atendimento cobrado CONTAM no teto mensal da empresa, mas não são barrados por ele.
+- **Recategorização no meio do lote.** A reserva usa o preço da categoria guardada do modelo; se a
+  Meta cobrar como marketing um modelo de utilidade, o lote em voo custa mais que o reservado até a
+  pausa por recategorização (#9) entrar.
+- **IA em janelas sobrepostas.** O custo de IA é do contato dentro da janela de atribuição; um
+  contato em duas campanhas cujas janelas se sobrepõem entra nas duas.
+
+## J48 — Enviar arquivo acima de 10 MB `[P1]` (2026-10-06, issue #22)
 
 **Achado:** em caminho que o `proxy.ts` alcança, o Next entrega à rota só os primeiros 10 MB do
 corpo. Um arquivo de 12 MB chegava cortado e a tela dizia "Campo 'file' obrigatório", embora

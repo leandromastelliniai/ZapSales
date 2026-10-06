@@ -117,6 +117,7 @@ export const POLITICAS_DE_AVISO = {
   // leva a ela, onde está o que o cliente escreveu — a Central não o repete.
   jev_pedido_de_humano: { refs: ["conversation"], orientacao: "Abra a conversa e decida se alguém da equipe assume o atendimento." },
   jev_parar_de_receber: { refs: ["conversation"], orientacao: "Abra a conversa e confira se o cliente quer mesmo parar de receber mensagens." },
+  atendimento_gratis_do_numero: { refs: ["channel_session"], orientacao: "Depois das 1.000 grátis do mês, cada mensagem de atendimento deste número é cobrada pela Meta. Acompanhe o contador em Campanhas › Configuração.", geral: CONEXOES },
   // Mesmo par de `message_send_stuck`, para a proposta — o cron devolve a
   // rascunho sozinho, sem reenviar; quem lê decide se envia de novo.
   proposta_travada: { refs: ["proposal"], orientacao: "Confira a proposta antes de decidir se precisa enviar novamente." },

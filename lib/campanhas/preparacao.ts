@@ -33,6 +33,9 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { estimarCusto, type EstimativaDeCusto } from "@/lib/custo/estimativa";
+import { carregarTabela, categoriaDoModelo } from "@/lib/custo/tabela-de-precos";
+
 import { FILTRO_VAZIO, filtroDeAudienciaSchema, type FiltroDeAudiencia } from "./audiencia";
 import { buscarCandidatos, contatosJaEmCampanha } from "./consulta-de-audiencia";
 import { hashDoEndereco, hashesExcluidos } from "./exclusoes";
@@ -82,10 +85,26 @@ export async function preverAudiencia(
     campanhaId?: string;
     oficial?: ConteudoOficial;
   },
-): Promise<ResumoDoSnapshot & { amostra: Array<{ nome: string | null; motivo: MotivoDeExclusao | null }> }> {
+): Promise<
+  ResumoDoSnapshot & {
+    amostra: Array<{ nome: string | null; motivo: MotivoDeExclusao | null }>;
+    /** Campanha oficial: quanto os elegíveis custam pela tabela de preços (issue #10). */
+    estimativa?: EstimativaDeCusto;
+  }
+> {
   const linhas = await classificar(admin, entrada);
   const elegiveis = linhas.filter((l) => l.elegivel).length;
+  // A estimativa conta os MESMOS elegíveis da prévia — a tabela é lida agora,
+  // então mudar o preço muda a próxima estimativa.
+  const estimativa = entrada.oficial
+    ? estimarCusto(
+        linhas.filter((l) => l.elegivel).map((l) => l.candidato.telefone ?? ""),
+        categoriaDoModelo(entrada.oficial.modelo.category),
+        await carregarTabela(admin),
+      )
+    : undefined;
   return {
+    ...(estimativa ? { estimativa } : {}),
     total: linhas.length,
     elegiveis,
     excluidos: linhas.length - elegiveis,
