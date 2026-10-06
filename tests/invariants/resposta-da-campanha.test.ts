@@ -50,6 +50,23 @@ const pool = new pg.Pool({
   },
 });
 
+/**
+ * O pool do dublê do PostgREST devolve `timestamptz` como TEXTO, como o
+ * PostgREST devolve. A trava otimista de `moveLeadHandler` compara
+ * `updated_at` com o valor lido; um `Date` do JavaScript corta os
+ * microssegundos do Postgres e a comparação nunca bate ("Lead foi modificado
+ * concorrentemente"). As consultas diretas do teste seguem no `pool` acima.
+ */
+const TEXTO_CRU = new Set([17, 1114, 1184]);
+const poolDoPostgrest = new pg.Pool({
+  connectionString: `postgresql://postgres:postgres@127.0.0.1:${PORT}/postgres`,
+  max: 1,
+  types: {
+    getTypeParser: ((oid: number, formato?: unknown) =>
+      TEXTO_CRU.has(oid) ? (v: string) => v : pg.types.getTypeParser(oid, formato as never)) as never,
+  },
+});
+
 const quem = vi.hoisted(() => ({ db: null as unknown, org: "", user: "" }));
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => quem.db }));
@@ -343,7 +360,7 @@ async function rodizioDoNascimentoJaRodou(conversa: string): Promise<void> {
 }
 
 beforeAll(async () => {
-  quem.db = pgComoSupabase(pool);
+  quem.db = pgComoSupabase(poolDoPostgrest);
   quem.org = ORG;
   quem.user = USER;
 
@@ -471,6 +488,7 @@ afterAll(async () => {
   vi.unstubAllEnvs();
   await falso?.fechar();
   await pool.end();
+  await poolDoPostgrest.end();
 });
 
 describe("1 · a resposta cria o lead na etapa configurada; quem já é lead é movido, não duplicado", () => {
