@@ -556,6 +556,12 @@ describe("3 · o custo real de cada mensagem vem do webhook", () => {
         await client.query("rollback").catch(() => undefined);
         client.release();
       }
+      // Escrita direta pelo papel do navegador: nenhuma — só o servidor grava custo.
+      const { rows: privs } = await pool.query<{ p: string; tem: boolean }>(
+        `select p, has_table_privilege('authenticated', 'public.meta_message_costs', p) as tem
+           from unnest(array['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']) p`,
+      );
+      expect(privs.filter((r) => r.tem).map((r) => r.p)).toEqual([]);
       como(ORG_A, USER_A);
     });
   });
@@ -742,8 +748,22 @@ describe("2c · teto de gasto e limite do portfólio valem juntos (issue #9 + #1
     // O portfólio já alcançou 45 contatos por modelo na janela de 24 h do relógio
     // da rodada — sem isto a janela estaria vazia, sobrariam 50 e o lote (50)
     // seguraria sozinho: o caso passaria sem medir o portfólio.
+    // O alcance que JÁ existe depende da hora em que a suíte roda (os envios dos
+    // casos anteriores caem ou não na janela de 24 h do relógio do teste): mede-se
+    // e completa-se até 45, para o caso não depender do relógio de parede.
     const agora = emMinutos(40);
-    const alcancados = await semearContatos("alcancados-no-portfolio", 45);
+    const alcance = async () =>
+      Number(
+        (
+          await pool.query<{ n: number }>(
+            `select public.fn_portfolio_contatos_alcancados(array[$1::uuid], $2::timestamptz) as n`,
+            [sessaoId, agora.toISOString()],
+          )
+        ).rows[0]!.n,
+      );
+    const jaAlcancados = await alcance();
+    expect(jaAlcancados).toBeLessThanOrEqual(45);
+    const alcancados = await semearContatos("alcancados-no-portfolio", 45 - jaAlcancados);
     for (const c of alcancados) {
       const { rows: conv } = await pool.query<{ id: string }>(
         `insert into conversations (organization_id, contact_id, channel_session_id)
@@ -756,13 +776,8 @@ describe("2c · teto de gasto e limite do portfólio valem juntos (issue #9 + #1
         [ORG_A, conv[0]!.id, sessaoId, c.id, agora.toISOString()],
       );
     }
-    const { rows } = await pool.query<{ n: number }>(
-      `select public.fn_portfolio_contatos_alcancados(array[$1::uuid], $2::timestamptz) as n`,
-      [sessaoId, agora.toISOString()],
-    );
-    const restante = 50 - Number(rows[0]!.n);
-    expect(restante).toBeGreaterThan(0);
-    expect(restante).toBeLessThan(10);
+    const restante = 50 - (await alcance());
+    expect(restante).toBe(5);
     await pool.query(`update channel_sessions set meta_limite_de_mensagens = 'TIER_50' where id = $1`, [sessaoId]);
 
     await semearContatos("dois-limites", restante + 2);
