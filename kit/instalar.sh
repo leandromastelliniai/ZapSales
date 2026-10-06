@@ -102,8 +102,8 @@ CADDYFILE_SISTEMA=""
 # rodada do modo limpa — e só ele: um contêiner de outro projeto segue alheio.
 portas_sao_do_nosso_caddy() {
   docker ps --filter "label=com.docker.compose.project=zapsales" \
-    --filter "label=com.docker.compose.service=caddy" --format '{{.Ports}}' 2>/dev/null \
-    | grep -qE '(0\.0\.0\.0|\[::\]|:::):(80|443)->'
+    --filter "label=com.docker.compose.service=caddy" --format 'caddy {{.Ports}}' 2>/dev/null \
+    | portas_publicas | grep -qE ':(80|443)->'
 }
 
 detectar_o_proxy() {
@@ -329,6 +329,23 @@ preparar_env() {
   env_definir "$ENV_ARQ" WAHA_API_BASE_URL "http://waha:3000"
   env_definir "$ENV_ARQ" WAHA_WEBHOOK_REQUIRE_SIGNATURE "true"
   env_definir "$ENV_ARQ" UPSTASH_REDIS_REST_URL "http://srh:80"
+
+  # Os e-mails de acesso do GoTrue (confirmar conta, redefinir senha) pelos
+  # moldes do app, no idioma da instalação (docker-compose.supabase.yml). Valor
+  # escrito à mão pelo operador fica; o do kit acompanha o idioma.
+  local molde chave valor
+  for molde in confirmation recovery; do
+    chave="GOTRUE_MAILER_TEMPLATES_$(printf '%s' "$molde" | tr 'a-z' 'A-Z')"
+    valor="$(env_ler "$ENV_ARQ" "$chave")"
+    if eh_valor_do_kit_para_molde "$valor"; then
+      env_definir "$ENV_ARQ" "$chave" "http://app:3000/email-templates/$molde?idioma=$IDIOMA"
+    fi
+    chave="GOTRUE_MAILER_SUBJECTS_$(printf '%s' "$molde" | tr 'a-z' 'A-Z')"
+    valor="$(env_ler "$ENV_ARQ" "$chave")"
+    if eh_valor_do_kit_para_molde "$valor"; then
+      env_definir "$ENV_ARQ" "$chave" "$(assunto_do_molde "$molde" "$IDIOMA")"
+    fi
+  done
 
   # A porta do loopback: escolhida uma vez, e mantida (o proxy do sistema aponta
   # para ela). Só existe no modo convivendo; no limpa o Caddy usa 80/443.

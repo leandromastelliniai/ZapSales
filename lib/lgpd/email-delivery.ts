@@ -28,7 +28,8 @@
 import { createHash } from "node:crypto";
 
 import { NEUTROS_DE_SAIDA, type MarcaDeSaida } from "@/lib/branding/saida";
-import { escapeHtml, frase, fraseHtml } from "@/lib/email/frase";
+import { frase, fraseHtml } from "@/lib/email/frase";
+import { escapeHtml } from "@/lib/html/escapar";
 import { sendEmail } from "@/lib/email/roteador";
 import { tagDeIdioma } from "@/lib/i18n/datas";
 import { IDIOMA_PADRAO, type Idioma } from "@/lib/i18n/idiomas";

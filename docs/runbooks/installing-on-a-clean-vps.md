@@ -49,7 +49,8 @@ or through the **browser terminal** in the Hostinger panel, and paste:
 curl -fsSL https://raw.githubusercontent.com/leandromastelliniai/ZapSales/main/kit/obter.sh | sudo bash
 ```
 
-It downloads the published version of ZapSales to `/opt/zapsales`, installs Docker if it is
+It downloads the latest published version of ZapSales to `/opt/zapsales` (while there is none
+yet, the most recent code — and it says so), installs Docker if it is
 missing and starts the installation. From then on it asks the questions below. The installer
 itself speaks Portuguese; this guide translates each question.
 
@@ -171,6 +172,9 @@ it after checking a backup.
   never switches modes by itself. To force one: `ZAPSALES_MODO=limpa` or `convivendo`.
 - In clean mode `COMPOSE_FILE` is `docker-compose.prod.yml:docker-compose.supabase.yml`: the
   stack's Caddy publishes 80/443 and gets the certificate by itself (`CADDY_SITE` = the domain);
-  no other service publishes a port.
-- GoTrue's account-confirmation and password-reset e-mail templates
-  (`/email-templates/confirmation` and `/email-templates/recovery`) accept `?idioma=pt-BR|es|en`.
+  no other service publishes a port. The optional voice profiles (`COMPOSE_PROFILES=voz` or
+  `telefonia`) publish UDP media ports, and with them on the kit's final check flags those
+  ports — in both modes.
+- Account-confirmation and password-reset e-mails use the app's templates: the kit writes
+  `GOTRUE_MAILER_TEMPLATES_*` and `GOTRUE_MAILER_SUBJECTS_*` to `.env`, in the chosen
+  language. A value you write there by hand is kept.

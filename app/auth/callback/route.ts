@@ -7,6 +7,8 @@ import { decidirConviteDoSignup } from "@/lib/auth/convite-no-signup";
 import { modoDeCadastro } from "@/lib/auth/politica-de-cadastro";
 import { aplicarConvite } from "@/lib/auth/aplicar-convite";
 import { respostaDePonte } from "@/lib/auth/ponte-de-volta";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { normalizarIdioma, parseAcceptLanguage } from "@/lib/i18n/idiomas";
 import { safeNext } from "@/lib/auth/safe-next";
 import { audit } from "@/lib/audit";
 import { marcaDaSaida } from "@/lib/branding/saida";
@@ -90,7 +92,13 @@ export async function GET(request: NextRequest) {
   // só olhasse o destino final, porque o destino não muda: muda quem o inicia.
   const paraTelaAutenticada = async (path: string) => {
     const marca = await marcaDaSaida(null);
-    return respostaDePonte(path, marca.nome, "Voltando para o sistema…");
+    const idioma = normalizarIdioma(parseAcceptLanguage(request.headers.get("accept-language")));
+    return respostaDePonte(
+      path,
+      marca.nome,
+      traduzir("Voltando para o sistema…", idioma),
+      idioma,
+    );
   };
 
   // O Google devolve `error=access_denied` quando a pessoa fecha a tela de

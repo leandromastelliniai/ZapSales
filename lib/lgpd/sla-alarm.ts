@@ -14,7 +14,8 @@ import * as Sentry from "@sentry/nextjs";
 
 import { NEUTROS_DE_SAIDA, type MarcaDeSaida } from "@/lib/branding/saida";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { escapeHtml, frase, fraseHtml } from "@/lib/email/frase";
+import { frase, fraseHtml } from "@/lib/email/frase";
+import { escapeHtml } from "@/lib/html/escapar";
 import { sendEmail } from "@/lib/email/roteador";
 import { tagDeIdioma } from "@/lib/i18n/datas";
 import { idiomaDaOrganizacao } from "@/lib/i18n/idioma-da-organizacao";

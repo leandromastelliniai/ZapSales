@@ -1,3 +1,5 @@
+import { escapeHtml } from "@/lib/html/escapar";
+import { preencher } from "@/lib/i18n/aviso-no-idioma";
 import { traduzir } from "@/lib/i18n/dicionario";
 import type { Idioma } from "@/lib/i18n/idiomas";
 
@@ -37,19 +39,3 @@ export const fraseHtml = (
     preencher(escapeHtml(traduzir(chave, idioma)), marcacao),
     Object.fromEntries(Object.entries(valores).map(([nome, valor]) => [nome, escapeHtml(valor)])),
   );
-
-function preencher(texto: string, valores: Record<string, string>): string {
-  return Object.entries(valores).reduce(
-    (parcial, [nome, valor]) => parcial.replaceAll(`{${nome}}`, valor),
-    texto,
-  );
-}
-
-export function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}

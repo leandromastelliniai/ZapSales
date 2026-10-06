@@ -43,9 +43,16 @@ function propostaBase(slug: string | null): PropostaParaPdf {
   };
 }
 
-function montarAdmin() {
+function montarAdmin(localeDaOrganizacao?: string) {
   return {
     from: vi.fn((tabela: string) => {
+      if (tabela === "organizations" && localeDaOrganizacao !== undefined) {
+        return {
+          select: () => ({
+            eq: () => ({ maybeSingle: async () => ({ data: { locale: localeDaOrganizacao }, error: null }) }),
+          }),
+        };
+      }
       if (tabela === "crm_proposal_items") {
         return {
           select: () => ({
@@ -154,5 +161,30 @@ describe("montarPdfDaProposta", () => {
     expect(comOpcao.ok).toBe(false);
     if (!comOpcao.ok) expect(comOpcao.motivo).toContain("modelo da proposta");
     expect(mocks.renderDocumentoPdf).not.toHaveBeenCalled();
+  });
+
+  // Issue #12: quem recebe o PDF é cliente da ORGANIZAÇÃO, então o arquivo sai
+  // no idioma dela — e não no de quem está na tela (o `t` do chamador, que só
+  // serve ao motivo da recusa). Lido aqui dentro, o envio e a prévia não têm
+  // como divergir.
+  it("o PDF sai no idioma da organização, não no do `t` de quem chamou", async () => {
+    const resultado = await montarPdfDaProposta(montarAdmin("en") as never, ORG_ID, propostaBase("site"), {
+      numero: 1,
+      ano: 2026,
+      t: (texto: string) => texto,
+    });
+    expect(resultado.ok).toBe(true);
+    expect(mocks.renderDocumentoPdf).toHaveBeenCalledWith(expect.objectContaining({ idioma: "en" }));
+  });
+
+  it("leitura do idioma que falha cai no português, sem barrar o PDF", async () => {
+    // O dublê sem `organizations` lança — `idiomaPeloCliente` nunca lança.
+    const resultado = await montarPdfDaProposta(montarAdmin() as never, ORG_ID, propostaBase("site"), {
+      numero: 1,
+      ano: 2026,
+      t: (texto: string) => texto,
+    });
+    expect(resultado.ok).toBe(true);
+    expect(mocks.renderDocumentoPdf).toHaveBeenCalledWith(expect.objectContaining({ idioma: "pt-BR" }));
   });
 });

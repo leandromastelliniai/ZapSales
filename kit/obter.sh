@@ -51,11 +51,31 @@ api_do_repo() {
   printf '%s\n' "$1" | sed -E 's#^https://github\.com/#https://api.github.com/repos/#; s#\.git$##; s#/$##'
 }
 
+# ref_pela_resposta CODIGO_HTTP TAG_ATUAL — decide a ref pela resposta da API
+# (o corpo vem na entrada). Pura, para o gate de shell.
+#
+# Só o 404 quer dizer "não há release": aí vale a `main`. Qualquer outra falha
+# (sem rede, limite de 60 consultas/hora da API anônima, 5xx) NÃO pode virar
+# `main` — uma instalação fixada numa versão iria parar na tag móvel e começar
+# a construir na VPS por causa de um soluço do GitHub (packaging, invariante
+# 3). Nesse caso fica a tag que já está em uso, ou o kit para.
+ref_pela_resposta() {
+  local codigo="$1" atual="$2" tag
+  tag="$(tag_da_ultima_release)"
+  if [ "$codigo" = "200" ] && [ -n "$tag" ]; then printf '%s\n' "$tag"; return; fi
+  if [ "$codigo" = "404" ]; then printf 'main\n'; return; fi
+  if [ -n "$atual" ]; then printf '%s\n' "$atual"; return; fi
+  printf 'erro:Não consegui perguntar ao GitHub qual é a última versão (resposta %s). Tente de novo em alguns minutos, ou fixe a versão com ZAPSALES_REF=vX.Y.Z.\n' "${codigo:-sem rede}"
+}
+
 escolher_ref() {
   if [ -n "${ZAPSALES_REF:-}" ]; then printf '%s\n' "$ZAPSALES_REF"; return; fi
-  local tag
-  tag="$(curl -fsSL --max-time 20 "$(api_do_repo "$REPO")/releases/latest" 2>/dev/null | tag_da_ultima_release || true)"
-  printf '%s\n' "${tag:-main}"
+  local corpo codigo atual=""
+  corpo="$(mktemp)"
+  codigo="$(curl -sSL --max-time 20 -o "$corpo" -w '%{http_code}' "$(api_do_repo "$REPO")/releases/latest" 2>/dev/null || true)"
+  [ -d "$PASTA/.git" ] && atual="$(git -C "$PASTA" describe --tags --exact-match 2>/dev/null || true)"
+  ref_pela_resposta "$codigo" "$atual" < "$corpo"
+  rm -f "$corpo"
 }
 
 obter_codigo() { # REF
@@ -94,6 +114,7 @@ principal() {
 
   local ref
   ref="$(escolher_ref)"
+  case "$ref" in erro:*) falha "${ref#erro:}" ;; esac
   if [ "$ref" = "main" ] && [ -z "${ZAPSALES_REF:-}" ]; then
     aviso "Ainda não há versão publicada do ZapSales: instalando o topo da main, com as imagens construídas nesta VPS (leva mais tempo — de 10 a 40 minutos, conforme a máquina)."
     export ZAPSALES_IMAGENS="${ZAPSALES_IMAGENS:-construir}"

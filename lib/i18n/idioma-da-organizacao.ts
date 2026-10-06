@@ -1,4 +1,5 @@
-import { normalizarIdioma, IDIOMA_PADRAO, type Idioma } from "./idiomas";
+import { idiomaPeloCliente } from "./aviso-no-idioma";
+import { IDIOMA_PADRAO, type Idioma } from "./idiomas";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -10,19 +11,16 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * organização é a única preferência que existe para eles — é a mesma que um
  * convidado herda ao entrar (`lib/auth/server.ts`).
  *
- * Nunca lança: uma leitura que falha devolve o padrão do produto. Um e-mail em
- * português é pior que um em inglês para quem lê inglês, e muito melhor que um
- * e-mail que não saiu.
+ * É `idiomaPeloCliente` (`./aviso-no-idioma`) com o cliente admin, para quem
+ * não tem um cliente à mão. Nunca lança: uma leitura que falha devolve o padrão
+ * do produto — um e-mail em português é pior que um em inglês para quem lê
+ * inglês, e muito melhor que um e-mail que não saiu.
  */
 export async function idiomaDaOrganizacao(organizationId: string): Promise<Idioma> {
   try {
-    const { data } = await createAdminClient()
-      .from("organizations")
-      .select("locale")
-      .eq("id", organizationId)
-      .maybeSingle();
-    return normalizarIdioma((data as { locale?: string | null } | null)?.locale ?? null);
+    return await idiomaPeloCliente(createAdminClient(), organizationId);
   } catch {
+    // `createAdminClient` lança sem as variáveis do Supabase.
     return IDIOMA_PADRAO;
   }
 }

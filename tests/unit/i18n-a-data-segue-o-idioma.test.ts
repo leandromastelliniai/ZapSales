@@ -80,14 +80,9 @@ const FORA_DE_INTERFACE: Record<string, string> = {
   "lib/lgpd/email-delivery.ts": "e-mail de LGPD: mesma fronteira do convite",
   "lib/lgpd/sla-alarm.ts": "alarme por e-mail: mesma fronteira",
 
-  // ─── O PDF de LGPD é documento LEGAL, e fica em português por decisão ───
-  //
-  // Ele responde a um direito previsto na LGPD, lei brasileira, e nomeia o
-  // CONTROLADOR (`organizations.legal_name`) — o CLAUDE.md já trata este
-  // arquivo como caso especial pelo mesmo motivo. Emitir a data dele no idioma
-  // da interface faria um documento de conformidade mudar de forma conforme
-  // quem apertou o botão.
-  "lib/lgpd/pdf-renderer.tsx": "documento legal brasileiro: a data acompanha a lei, não a interface",
+  // O PDF de LGPD (`lib/lgpd/pdf-renderer.tsx`) saiu desta lista na issue #12:
+  // ele passou a sair no idioma da ORGANIZAÇÃO — que não depende de quem
+  // apertou o botão, a objeção que o mantinha aqui —, e a data o acompanha.
 };
 
 function arquivos(dir: string, acc: string[] = []): string[] {

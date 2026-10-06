@@ -16,6 +16,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { assertSafeOutboundUrl } from "@/lib/automation/outbound-url";
 import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
+import { idiomaPeloCliente } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
 import {
   montarDocumentoDaProposta,
   type PropostaParaDocumento,
@@ -36,6 +38,10 @@ export interface OpcoesDoPdfDaProposta {
   /** `null` em rascunho: é a prévia que mostra "sem número" no lugar dele. */
   numero: number | null;
   ano: number | null;
+  /**
+   * O idioma de QUEM ESTÁ NA TELA — só para o motivo da recusa, que volta a
+   * essa pessoa. O PDF em si sai no idioma da organização, lido aqui dentro.
+   */
   t: (texto: string) => string;
   /** Prévia de tela — o número ainda não existe e o PDF diz isso no lugar dele. */
   previa?: boolean;
@@ -150,6 +156,12 @@ export async function montarPdfDaProposta(
     .eq("id", proposta.contact_id)
     .maybeSingle();
   const marca = await marcaDaOrganizacaoParaPdf(admin, orgId);
+  // O PDF sai no idioma da ORGANIZAÇÃO, e não no de quem apertou o botão: quem
+  // o recebe é cliente dela. Lido aqui, e não por quem chama, para o envio e a
+  // prévia não poderem divergir — a prévia que mostra outro idioma promete um
+  // arquivo que o cliente não vai receber. Nunca lança (cai no português).
+  const idioma = await idiomaPeloCliente(admin, orgId);
+  const tDoPdf = (texto: string) => traduzir(texto, idioma);
 
   const itensDoPdf = listaDeItens.map((it) => ({
     descricao: it.descricao,
@@ -166,7 +178,7 @@ export async function montarPdfDaProposta(
     numero: opcoes.numero,
     ano: opcoes.ano,
     versao: proposta.versao,
-    destinatario: { nome: rotuloDoContato(contato, t) },
+    destinatario: { nome: rotuloDoContato(contato, tDoPdf) },
     secoes: documento.secoes,
     itens: itensDoPdf,
     totalCents: proposta.total_cents,
@@ -175,6 +187,7 @@ export async function montarPdfDaProposta(
     condicoes: proposta.condicoes,
     marca: { app_name: marca.appName, accent_hex: marca.accentHex, logoUrl: marca.logoUrl },
     ...(opcoes.previa ? { previa: true } : {}),
+    idioma,
   });
   return { ok: true, buffer };
 }

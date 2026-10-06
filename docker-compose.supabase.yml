@@ -118,6 +118,15 @@ services:
       GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
       GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
       GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+      # Os e-mails de confirmar conta e redefinir senha saem dos moldes que o
+      # app serve (app/email-templates/[modelo]), no idioma da instalação: o
+      # modelo PADRÃO do GoTrue linka para um fluxo que não fecha o acesso aqui
+      # (a tela de login avisa "template_padrao"). O kit grava as URLs e os
+      # assuntos no .env; vazio = o padrão do GoTrue, como antes.
+      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: ${GOTRUE_MAILER_TEMPLATES_CONFIRMATION:-}
+      GOTRUE_MAILER_TEMPLATES_RECOVERY: ${GOTRUE_MAILER_TEMPLATES_RECOVERY:-}
+      GOTRUE_MAILER_SUBJECTS_CONFIRMATION: ${GOTRUE_MAILER_SUBJECTS_CONFIRMATION:-}
+      GOTRUE_MAILER_SUBJECTS_RECOVERY: ${GOTRUE_MAILER_SUBJECTS_RECOVERY:-}
       GOTRUE_SECURITY_REFRESH_TOKEN_ROTATION_ENABLED: "true"
       GOTRUE_SECURITY_REFRESH_TOKEN_REUSE_INTERVAL: "10"
       # Verificação em duas etapas por app autenticador: OPCIONAL no produto

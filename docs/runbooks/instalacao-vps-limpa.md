@@ -50,7 +50,8 @@ pelo **Terminal do navegador** do painel da Hostinger, e cole:
 curl -fsSL https://raw.githubusercontent.com/leandromastelliniai/ZapSales/main/kit/obter.sh | sudo bash
 ```
 
-Ele baixa a versão publicada do ZapSales para `/opt/zapsales`, instala o Docker se faltar e
+Ele baixa a última versão publicada do ZapSales para `/opt/zapsales` (enquanto não houver
+nenhuma, o código mais recente — e avisa), instala o Docker se faltar e
 começa a instalação. A partir daí, ele faz as perguntas abaixo.
 
 ## As cinco perguntas
@@ -169,6 +170,9 @@ isso depois de conferir um backup.
   nunca troca de modo sozinho. Forçar: `ZAPSALES_MODO=limpa` ou `convivendo`.
 - No modo limpa o `COMPOSE_FILE` é `docker-compose.prod.yml:docker-compose.supabase.yml`: o
   Caddy da stack publica 80/443 e tira o certificado sozinho (`CADDY_SITE` = o domínio);
-  nenhum outro serviço publica porta.
-- Os moldes de e-mail de confirmação de conta e de troca de senha do GoTrue
-  (`/email-templates/confirmation` e `/email-templates/recovery`) aceitam `?idioma=pt-BR|es|en`.
+  nenhum outro serviço publica porta. Os perfis opcionais de voz (`COMPOSE_PROFILES=voz` ou
+  `telefonia`) publicam portas UDP de mídia, e com eles ligados a conferência final do kit
+  acusa essas portas — nos dois modos.
+- Os e-mails de confirmar conta e redefinir senha saem pelos moldes do app: o kit grava
+  `GOTRUE_MAILER_TEMPLATES_*` e `GOTRUE_MAILER_SUBJECTS_*` no `.env`, no idioma escolhido.
+  Um valor que você escrever ali à mão fica.

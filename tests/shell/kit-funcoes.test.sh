@@ -95,6 +95,15 @@ igual "o nome da língua" "es" "$(idioma_valido 'Español')"
 igual "pt-BR como o .env guarda" "pt-BR" "$(idioma_valido pt-BR)"
 igual "idioma não servido: vazio" "" "$(idioma_valido fr)"
 
+echo "moldes do GoTrue — assunto no idioma, e o kit só regrava o que é dele"
+igual "assunto em inglês" "Reset your password" "$(assunto_do_molde recovery en)"
+igual "idioma desconhecido cai no português" "Confirme seu e-mail" "$(assunto_do_molde confirmation fr)"
+verdade "vazio é do kit (primeira rodada)" eh_valor_do_kit_para_molde ""
+verdade "a URL interna do app é do kit" eh_valor_do_kit_para_molde "http://app:3000/email-templates/recovery?idioma=es"
+verdade "um assunto que o kit gravou é do kit" eh_valor_do_kit_para_molde "Confirma tu correo"
+falso "URL do operador fica" eh_valor_do_kit_para_molde "https://moldes.empresa.com/confirmar.html"
+falso "assunto do operador fica" eh_valor_do_kit_para_molde "Bem-vindo à Acme!"
+
 echo "modo — VPS limpa ou convivendo"
 igual "portas livres na primeira rodada: limpa" "limpa" "$(decidir_modo nenhum '' '')"
 igual "Caddy do sistema na primeira rodada: convivendo" "convivendo" "$(decidir_modo caddy-host '' '')"
@@ -223,6 +232,13 @@ release='{
 }'
 igual "a tag da última release" "v0.2.0" "$(printf '%s\n' "$release" | tag_da_ultima_release)"
 igual "sem release (404 do GitHub): vazio" "" "$(printf '{"message":"Not Found"}\n' | tag_da_ultima_release)"
+igual "200 com release: a tag" "v0.2.0" "$(printf '%s\n' "$release" | ref_pela_resposta 200 '')"
+igual "404 (nenhuma release): a main" "main" "$(printf '{"message":"Not Found"}\n' | ref_pela_resposta 404 '')"
+# Soluço do GitHub nunca empurra uma instalação fixada para a tag móvel.
+igual "limite da API com versão em uso: fica a versão" "v0.1.0" \
+  "$(printf '{"message":"API rate limit exceeded"}\n' | ref_pela_resposta 403 v0.1.0)"
+verdade "sem rede e sem versão em uso: erro, não main" \
+  grep -q '^erro:' <<<"$(printf '' | ref_pela_resposta 000 '')"
 igual "API do repositório" "https://api.github.com/repos/leandromastelliniai/ZapSales" \
   "$(api_do_repo https://github.com/leandromastelliniai/ZapSales.git)"
 igual "o obter não depende de outro arquivo do kit" "" "$(grep -nE '^[[:space:]]*(\.|source) ' kit/obter.sh)"

@@ -6,7 +6,7 @@
  *   2. Move status received -> processing, attempts++ (cap at 3).
  *   3. collectExportData → varredura das tabelas que a anonimização alcança (PII-safe).
  *      Sem contagem fixa aqui: esta linha dizia "8 tabelas" muito depois de serem dezenas.
- *   4. Render PDF via @react-pdf/renderer (PT-BR, Art. 18 II).
+ *   4. Render PDF via @react-pdf/renderer (no idioma da organização, Art. 18 II).
  *   5. signPdfPades — STUB when LGPD_SIGNING_KEY missing (warning, no throw).
  *   6. Upload PDF + JSON to bucket `lgpd-exports/{org}/{request}/...`.
  *   7. Create signed URL (LGPD_EXPORT_EXPIRES_HOURS, default 72h).
@@ -172,10 +172,12 @@ export async function processLgpdExport(event: EventRow): Promise<HandlerResult>
       externalCustomerId: req.external_customer_id,
     });
 
-    // 4. Render PDF (with warning banner when unsigned).
+    // 4. Render PDF (with warning banner when unsigned). O relatório sai no
+    // idioma da organização — o mesmo do e-mail que o entrega (passo 9).
+    const idioma = await idiomaDaOrganizacao(orgId);
     const padesConfigured = isPadesConfigured();
     const { renderLgpdPdf } = await import("@/lib/lgpd/pdf-renderer");
-    const pdfBuffer = await renderLgpdPdf(data, { unsignedWarning: !padesConfigured });
+    const pdfBuffer = await renderLgpdPdf(data, { unsignedWarning: !padesConfigured, idioma });
 
     // 5. Sign (stubbed when key missing).
     const signResult = await signPdfPades(pdfBuffer);
@@ -277,7 +279,7 @@ export async function processLgpdExport(event: EventRow): Promise<HandlerResult>
         signedUrl: signed.signedUrl,
         expiresAt,
         marca: await marcaDaSaida(orgId),
-        idioma: await idiomaDaOrganizacao(orgId),
+        idioma,
       });
       messageId = sent.messageId;
     } catch (err) {
