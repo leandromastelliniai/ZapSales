@@ -155,6 +155,20 @@ describe("o matcher do proxy e o limite de corpo", () => {
     });
   }
 
+  it("rota fora do proxy recusa pelo Content-Length ANTES de ler o corpo", () => {
+    // Fora do matcher, nada corta o corpo antes da rota: sem esta guarda, uma
+    // sessão válida faria o servidor bufferizar gigabytes até o `file.size`.
+    const semGuarda = Object.entries(ROTAS_COM_MULTIPART)
+      .filter(([, { teto }]) => teto + ENVELOPE > limite)
+      .filter(([rota]) => {
+        const fonte = readFileSync(rota, "utf8");
+        const guarda = fonte.indexOf('req.headers.get("content-length")');
+        return guarda === -1 || guarda > fonte.indexOf("formData()");
+      })
+      .map(([rota]) => rota);
+    expect(semGuarda).toEqual([]);
+  });
+
   it("a exclusão é ancorada — vizinhos das rotas de upload seguem pelo proxy", () => {
     // Exclusão sem âncora é como o proxy deixa de proteger tela inteira.
     for (const vizinho of [
