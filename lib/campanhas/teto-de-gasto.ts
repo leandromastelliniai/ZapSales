@@ -19,7 +19,13 @@ import { fusoDaJanela } from "@/lib/agent-engine/pacing/store";
 import { audit } from "@/lib/audit";
 import { inicioDoMesNoFuso } from "@/lib/custo/atendimento-gratis";
 import { emReais } from "@/lib/custo/formato";
-import { carregarTabela, categoriaDoModelo, maiorPreco, type LinhaDePreco } from "@/lib/custo/tabela-de-precos";
+import {
+  carregarTabela,
+  categoriaDoModelo,
+  maiorPreco,
+  ROTULO_DA_CATEGORIA,
+  type LinhaDePreco,
+} from "@/lib/custo/tabela-de-precos";
 import { mensagensQueCabem } from "@/lib/custo/teto";
 
 import { lerConfiguracao } from "./configuracao";
@@ -72,10 +78,24 @@ export async function tetoDaRodada(
   const o = org as { timezone?: string | null; settings?: unknown } | null;
   const tetoCampanha = campanha.teto_gasto_cents === null ? null : Number(campanha.teto_gasto_cents);
   const tetoOrg = lerConfiguracao(o?.settings).teto_gasto_mensal_cents;
-  const preco = maiorPreco(categoriaDoModelo(categoriaDoModeloMeta), tabela);
-  // Sem teto, ou sem preço na tabela para a categoria: não há o que medir.
-  if ((tetoCampanha === null && tetoOrg === null) || preco <= 0) {
+  const categoria = categoriaDoModelo(categoriaDoModeloMeta);
+  const preco = maiorPreco(categoria, tabela);
+  // Sem teto, ou categoria de preço zero: não há o que medir.
+  if ((tetoCampanha === null && tetoOrg === null) || preco === 0) {
     return { cabem: Infinity, esgotado: null, reserva: null, tabela, detalhe: null };
+  }
+  // Há teto e a tabela não tem preço para a categoria: sem preço o teto não
+  // mede, e seguir enviando seria prometer um teto que ninguém confere.
+  if (preco === null) {
+    return {
+      cabem: 0,
+      esgotado: tetoCampanha !== null ? "campanha" : "organizacao",
+      reserva: null,
+      tabela,
+      detalhe:
+        `Há teto de gasto, mas a tabela de preços da Meta não tem preço para ${ROTULO_DA_CATEGORIA[categoria].toLowerCase()}: ` +
+        "sem o preço não dá para garantir o teto. Peça a quem administra a instalação para completar a tabela em Painel › Preços da Meta.",
+    };
   }
 
   const inicio = inicioDoMesNoFuso(agora, fusoDaJanela(null, o?.timezone ?? null));

@@ -37,6 +37,7 @@ import {
   useTirarDaExclusao,
 } from "@/hooks/campanhas/useConfiguracao";
 import { useAtendimentoGratis } from "@/hooks/campanhas/useCampanhas";
+import { channelLabel } from "@/hooks/channels/useChannelSessions";
 import { useT } from "@/hooks/i18n/useT";
 import { centavosDoTexto, textoDosCentavos } from "@/lib/custo/formato";
 import { ArrowBendUpLeft } from "@/lib/ui/icons";
@@ -199,7 +200,7 @@ function AtendimentoGratis() {
           return (
             <div key={n.channel_session_id} className="space-y-1">
               <div className="flex items-baseline justify-between gap-2 text-sm">
-                <span className="min-w-0 truncate">{n.nome ?? t("Número sem nome")}</span>
+                <span className="min-w-0 truncate">{channelLabel({ ...n, waha_session_name: null }, t)}</span>
                 <span className="shrink-0 tabular-nums">
                   {n.usadas.toLocaleString("pt-BR")} / {n.gratis.toLocaleString("pt-BR")}
                 </span>

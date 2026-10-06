@@ -111,6 +111,11 @@ export function CustoDaCampanha({ campanha }: { campanha: CampanhaDetalhada }) {
       </div>
 
       {c.estimativa && naoSaiu && <LinhaDaEstimativa estimativa={c.estimativa} />}
+      {c.estimativa && c.estimativa_parcial && (
+        <p className="text-sm text-warning-fg">
+          {t("A lista é grande demais para estimar de uma vez: a estimativa conta só os primeiros 20 mil destinatários.")}
+        </p>
+      )}
 
       {!naoSaiu && (
         <div className="divide-y divide-border">

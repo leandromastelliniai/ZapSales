@@ -91,10 +91,12 @@ export function precoPara(
 /**
  * O MAIOR preço da categoria na tabela — a régua conservadora do teto: quem
  * ainda não tem custo registrado é contado por ela, para o teto nunca ser
- * ultrapassado por um destinatário de país mais caro.
+ * ultrapassado por um destinatário de país mais caro. `null` = a categoria não
+ * tem linha nenhuma, e é diferente de preço zero: sem preço o teto não mede.
  */
-export function maiorPreco(categoria: CategoriaDePreco, tabela: readonly LinhaDePreco[]): number {
-  return tabela.filter((l) => l.category === categoria).reduce((m, l) => Math.max(m, l.unit_price_cents), 0);
+export function maiorPreco(categoria: CategoriaDePreco, tabela: readonly LinhaDePreco[]): number | null {
+  const linhas = tabela.filter((l) => l.category === categoria);
+  return linhas.length === 0 ? null : linhas.reduce((m, l) => Math.max(m, l.unit_price_cents), 0);
 }
 
 /** A tabela como o banco a guarda. Nunca lança: tabela ilegível é tabela vazia. */
@@ -120,7 +122,12 @@ export const linhaDePrecoSchema = z.object({
   dial_prefix: z.string().trim().regex(/^[0-9]{1,4}$/),
   category: z.enum(CATEGORIAS_DE_PRECO),
   unit_price_cents: z.number().min(0).max(100_000),
-  currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).default("BRL"),
+  /**
+   * Só real, por ora: o teto da campanha e o mensal da empresa são em R$, e uma
+   * linha em outra moeda somaria dólar com real na mesma conta. O banco aceita
+   * qualquer ISO-4217 para o dia em que houver conversão.
+   */
+  currency: z.literal("BRL").default("BRL"),
 });
 
 /**

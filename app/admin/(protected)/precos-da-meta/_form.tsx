@@ -77,7 +77,7 @@ export function FormularioDePrecosDaMeta({ linhasIniciais, cotacaoInicial, cotac
   function salvar() {
     setErro(null);
     setSalvo(false);
-    const linhas: LinhaDePreco[] = [];
+    const linhas: Parameters<typeof updatePrecosDaMeta>[0]["linhas"] = [];
     for (const p of paises) {
       for (const categoria of CATEGORIAS_DE_PRECO) {
         const c = centavos(p.precos[categoria]);
@@ -86,7 +86,7 @@ export function FormularioDePrecosDaMeta({ linhasIniciais, cotacaoInicial, cotac
           setErro(`${t("Preço que não entendi em")} ${p.country || "?"} · ${t(ROTULO_DA_CATEGORIA[categoria])}`);
           return;
         }
-        linhas.push({ country: p.country.trim().toUpperCase(), dial_prefix: p.dial_prefix.trim(), category: categoria, unit_price_cents: c, currency: p.currency.trim().toUpperCase() || "BRL" });
+        linhas.push({ country: p.country.trim().toUpperCase(), dial_prefix: p.dial_prefix.trim(), category: categoria, unit_price_cents: c, currency: "BRL" });
       }
     }
     const cot = cotacao.trim() === "" ? null : Number(cotacao.trim().replace(",", "."));

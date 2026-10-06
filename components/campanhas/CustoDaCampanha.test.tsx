@@ -38,6 +38,7 @@ function relatorio(extra: Partial<RelatorioDeCusto> = {}): RelatorioDeCusto {
       sem_preco: 0,
       por_pais: [{ country: "BR", quantidade: 3, unit_price_cents: 32.17, subtotal_cents: 96.51 }],
     },
+    estimativa_parcial: false,
     teto_gasto_cents: 7000,
     meta_cents: 0,
     meta_estimado_cents: 0,

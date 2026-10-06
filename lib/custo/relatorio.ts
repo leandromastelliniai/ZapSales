@@ -23,12 +23,14 @@ import { carregarCotacao } from "./cotacao";
 import { estimarCusto, type EstimativaDeCusto } from "./estimativa";
 import { carregarTabela, categoriaDoModelo } from "./tabela-de-precos";
 
-/** Teto de linhas lidas para a estimativa, como o das métricas. */
+/** Teto de linhas lidas para a estimativa, como o das métricas. Acima dele a resposta se declara parcial. */
 const TETO_DE_LINHAS = 20_000;
 
 export interface RelatorioDeCusto {
   oficial: boolean;
   estimativa: EstimativaDeCusto | null;
+  /** A lista passou do teto de leitura: a estimativa conta só os primeiros. */
+  estimativa_parcial: boolean;
   teto_gasto_cents: number | null;
   meta_cents: number;
   /** A parte de `meta_cents` cujo `pricing` ainda não chegou. */
@@ -68,6 +70,7 @@ export async function relatorioDeCusto(
   const janelaHoras = lerConfiguracao((org as { settings?: unknown } | null)?.settings).atribuicao_horas;
 
   let estimativa: EstimativaDeCusto | null = null;
+  let estimativaParcial = false;
   if (campanha.meta_template_id) {
     const modelo = await carregarModelo(admin, organizationId, campanha.meta_template_id);
     const { data: linhas } = await admin
@@ -77,6 +80,7 @@ export async function relatorioDeCusto(
       .eq("campaign_id", campanhaId)
       .eq("eligibility_status", "eligible")
       .limit(TETO_DE_LINHAS);
+    estimativaParcial = (linhas ?? []).length >= TETO_DE_LINHAS;
     const telefones = ((linhas ?? []) as Array<{ recipient_address: string | null }>)
       .map((l) => l.recipient_address ?? "")
       .filter((t) => t !== "");
@@ -100,6 +104,7 @@ export async function relatorioDeCusto(
   return {
     oficial: !!campanha.meta_template_id,
     estimativa,
+    estimativa_parcial: estimativaParcial,
     teto_gasto_cents: teto,
     meta_cents: meta,
     meta_estimado_cents: n(r.meta_estimado_cents),

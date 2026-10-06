@@ -22,16 +22,17 @@ export function inicioDoMesNoFuso(agora: Date, fuso: string): Date {
 }
 
 /**
- * A contagem passou de `antes` para `depois`: cruzou algum limiar? Devolve o
- * MAIOR cruzado (pular de 790 para 1.001 avisa só o 100%), ou `null`.
- * "Uma vez por limiar" sai daqui: depois de cruzado, o próximo incremento não
- * cruza de novo.
+ * O MAIOR limiar que a contagem do mês já alcançou, ou `null`.
+ *
+ * Não é "cruzou agora?" (antes < marca ≤ depois): dois webhooks simultâneos que
+ * gravam a 800ª e a 801ª podem ler os dois 801, e nenhum dos dois "cruzaria" o
+ * 800 — o aviso de 80% se perderia para sempre. O "uma vez por limiar" mora no
+ * banco (índice único do aviso por número, mês e limiar), não nesta conta.
  */
-export function alertaDoAtendimentoGratis(antes: number, depois: number): LimiarDoAtendimentoGratis | null {
-  let cruzado: LimiarDoAtendimentoGratis | null = null;
+export function limiarAtingido(usadas: number): LimiarDoAtendimentoGratis | null {
+  let atingido: LimiarDoAtendimentoGratis | null = null;
   for (const pct of LIMIARES) {
-    const marca = (GRATIS_POR_MES * pct) / 100;
-    if (antes < marca && depois >= marca) cruzado = pct;
+    if (usadas >= (GRATIS_POR_MES * pct) / 100) atingido = pct;
   }
-  return cruzado;
+  return atingido;
 }

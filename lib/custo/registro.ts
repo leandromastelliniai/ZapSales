@@ -14,11 +14,12 @@
  * diz que a mensagem foi de atendimento, e é ali que um limiar é cruzado.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 
 import { fusoDaJanela } from "@/lib/agent-engine/pacing/store";
 import { logger } from "@/lib/logger";
 
-import { alertaDoAtendimentoGratis, GRATIS_POR_MES, inicioDoMesNoFuso } from "./atendimento-gratis";
+import { GRATIS_POR_MES, inicioDoMesNoFuso, limiarAtingido } from "./atendimento-gratis";
 import { custoDaMensagem } from "./custo-real";
 import { carregarTabela, precoPara, type CategoriaDePreco, type LinhaDePreco } from "./tabela-de-precos";
 
@@ -28,6 +29,9 @@ export type OrigemDoCusto = (typeof ORIGENS_DO_CUSTO)[number];
 
 const ESTIMADO: OrigemDoCusto = "estimado";
 const WEBHOOK: OrigemDoCusto = "webhook";
+
+/** O `metadata.campaign_id` da mensagem é jsonb: só vira FK se for uuid. */
+const uuid = z.string().uuid();
 
 function ehDuplicada(err: { code?: string } | null): boolean {
   return err?.code === "23505";
@@ -144,7 +148,7 @@ export async function registrarCustoDoWebhook(
       organization_id: org,
       message_id: mensagem.id,
       channel_session_id: mensagem.channel_session_id,
-      campaign_id: typeof campanha === "string" && /^[0-9a-f-]{36}$/i.test(campanha) ? campanha : null,
+      campaign_id: uuid.safeParse(campanha).success ? (campanha as string) : null,
       ...valores,
     });
     if (ehDuplicada(error)) return "ja_registrado";
@@ -159,8 +163,9 @@ export async function registrarCustoDoWebhook(
 }
 
 /**
- * Falhou: a Meta não cobra mensagem que não saiu. A estimativa da rodada (se
- * houver) vira zero — senão o teto contaria para sempre um gasto que não houve.
+ * Falhou: a Meta não cobra mensagem que não saiu. O custo da mensagem — a
+ * estimativa da rodada ou um `pricing` que veio num status anterior — vira
+ * zero; senão o teto contaria para sempre um gasto que não houve.
  */
 export async function zerarCustoDaFalha(admin: SupabaseClient, organizationId: string, externalId: string): Promise<void> {
   const { data: msg } = await admin
@@ -175,8 +180,7 @@ export async function zerarCustoDaFalha(admin: SupabaseClient, organizationId: s
     .from("meta_message_costs")
     .update({ billable: false, cost_cents: 0 })
     .eq("organization_id", organizationId)
-    .eq("message_id", id)
-    .eq("origem", ESTIMADO);
+    .eq("message_id", id);
 }
 
 /** O fuso da conta de um número: o do número, senão o da organização. */
@@ -231,11 +235,13 @@ async function avisarSeCruzouLimiar(
   agora: Date,
 ): Promise<void> {
   const c = await contadorDoAtendimentoGratis(admin, organizationId, channelSessionId, agora);
-  const limiar = alertaDoAtendimentoGratis(c.usadas - 1, c.usadas);
+  const limiar = limiarAtingido(c.usadas);
   if (!limiar) return;
   const mes = c.desde.slice(0, 7);
-  // O título leva o mês e o limiar: é a chave do "uma vez" — dois webhooks
-  // simultâneos que cruzam juntos abrem um aviso só.
+  // O título leva o mês e o limiar, e é a chave do índice único
+  // `agent_inbox_atendimento_gratis_unico` (migration 0540): dois webhooks
+  // simultâneos que alcançam o limiar juntos abrem um aviso só — o segundo
+  // recebe 23505. A consulta abaixo só poupa a tentativa de cada mensagem.
   const title =
     limiar === 100
       ? `As 1.000 mensagens de atendimento grátis de ${mes} deste número acabaram`
@@ -261,5 +267,7 @@ async function avisarSeCruzouLimiar(
     ref_kind: "channel_session",
     ref_id: channelSessionId,
   });
-  if (error) logger.warn("[custo] aviso das grátis não aberto", { numero: channelSessionId, motivo: error.message });
+  if (error && !ehDuplicada(error)) {
+    logger.warn("[custo] aviso das grátis não aberto", { numero: channelSessionId, motivo: error.message });
+  }
 }

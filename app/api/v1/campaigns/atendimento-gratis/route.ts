@@ -37,7 +37,9 @@ export async function GET(_req: NextRequest): Promise<Response> {
     ((data ?? []) as Array<{ id: string; display_name: string | null; phone_number: string | null }>).map(
       async (n) => ({
         ...(await contadorDoAtendimentoGratis(admin, authz.org.orgId, n.id, agora)),
-        nome: n.display_name ?? n.phone_number,
+        // Crus: o rótulo do número é montado na tela, por `channelLabel`.
+        display_name: n.display_name,
+        phone_number: n.phone_number,
       }),
     ),
   );

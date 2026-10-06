@@ -269,7 +269,7 @@ export function useAtendimentoGratis() {
   return useQuery({
     queryKey: ["atendimento-gratis"],
     queryFn: async () =>
-      (await apiClient.get<{ data: { numeros: Array<ContadorDoAtendimentoGratis & { nome: string | null }> } }>(
+      (await apiClient.get<{ data: { numeros: Array<ContadorDoAtendimentoGratis & { display_name: string | null; phone_number: string | null }> } }>(
         "/api/v1/campaigns/atendimento-gratis",
       )).data.numeros,
   });

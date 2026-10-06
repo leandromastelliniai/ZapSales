@@ -3388,7 +3388,22 @@ de 80%/100%, formato de dinheiro).
 | J45.9 | Virada do mês no fuso da conta | 23h30 de 31/10 em São Paulo ainda conta outubro; à meia-noite de 01/11 o contador zera | **PASS (invariante, relógio controlado)** |
 | J45.10 | Alterar a tabela no painel | `updatePrecosDaMeta` grava; a próxima estimativa usa o preço novo; custo já registrado não muda | **PASS (invariante)** |
 | J45.11 | Isolamento | a organização B recebe 404 no custo da A e, como `authenticated` com RLS ligada, não lê nenhuma linha de `meta_message_costs` (controle: a A lê as dela) | **PASS (invariante)** |
+| J45.13 | Teto ligado e categoria sem preço na tabela | a campanha não envia nada e pausa com a frase "não tem preço para marketing" — sem preço o teto não mede | **PASS (invariante)** |
+| J45.14 | Linha da tabela em outra moeda | o painel recusa (`invalid_input`): o teto é em reais | **PASS (invariante)** |
 | J45.12 | Prova pela tela (estimativa, teto, cartão de custo, contador, painel de preços) | um leigo vê a estimativa antes de iniciar, o aviso de pausa e o cartão de custo | **PENDENTE** — a máquina desta sessão não tem Docker para subir o ambiente fresco estilo VPS; falta a spec Playwright |
 
 Sabotagem medida: desligar o teto na rodada (reserva sem teto e sem pausa) derruba quatro casos
 (J45.3, J45.4, J45.5 e a auditoria da pausa).
+
+Limites conhecidos, de propósito fora desta entrega:
+
+- **Fuso da conta.** O contador das 1.000 zera no fuso do número (`channel_knobs.timezone`, senão o
+  da organização). O fuso da conta da Meta (`timezone_id` da WABA) não é lido nem guardado em lugar
+  nenhum hoje; se divergir, a virada do contador e a da fatura não coincidem.
+- **Só a campanha oficial é barrada pelo teto.** Modelo mandado por follow-up ou pelo agente e
+  atendimento cobrado CONTAM no teto mensal da empresa, mas não são barrados por ele.
+- **Recategorização no meio do lote.** A reserva usa o preço da categoria guardada do modelo; se a
+  Meta cobrar como marketing um modelo de utilidade, o lote em voo custa mais que o reservado até a
+  pausa por recategorização (#9) entrar.
+- **IA em janelas sobrepostas.** O custo de IA é do contato dentro da janela de atribuição; um
+  contato em duas campanhas cujas janelas se sobrepõem entra nas duas.

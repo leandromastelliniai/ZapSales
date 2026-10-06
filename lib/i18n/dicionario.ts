@@ -14012,6 +14012,7 @@ export const DICIONARIO: Traducoes = {
   "O modelo escolhido não existe mais nesta organização. Escolha outro modelo aprovado.": { es: "La plantilla elegida ya no existe en esta organización. Elige otra plantilla aprobada." },
   "O canal oficial não enviou a mensagem agora. Confira a conexão do número.": { es: "El canal oficial no envió el mensaje ahora. Revisa la conexión del número." },
   // ─── CUSTO DA CAMPANHA OFICIAL (issue #10) ───
+  "A lista é grande demais para estimar de uma vez: a estimativa conta só os primeiros 20 mil destinatários.": { es: "La lista es demasiado grande para estimar de una vez: la estimación cuenta solo los primeros 20 mil destinatarios." },
   "A Meta dá 1.000 mensagens de atendimento grátis por número a cada mês; depois disso, cada uma é cobrada. Você recebe um aviso na Central em 80% e em 100%.": { es: "Meta da 1.000 mensajes de atención gratis por número cada mes; después, cada uno se cobra. Recibes un aviso en la Central al 80% y al 100%." },
   "A cotação precisa ser um número maior que zero, ou ficar em branco.": { es: "El tipo de cambio debe ser un número mayor que cero, o quedar en blanco." },
   "Acrescentar país": { es: "Agregar país" },

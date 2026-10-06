@@ -692,3 +692,37 @@ describe("6 · alterar a tabela de preços muda as estimativas seguintes", () =>
     for (const l of real) expect(Number(l.cost_cents)).toBeCloseTo(MARKETING_BR, 4);
   });
 });
+
+describe("2b · teto sem preço na tabela não deixa a campanha seguir sem conta", () => {
+  it("tirada a linha de marketing, a campanha com teto pausa dizendo que falta o preço", async () => {
+    como(ORG_A, USER_A);
+    falso.limpar();
+    const { updatePrecosDaMeta } = await import("@/app/actions/settings/updatePrecosDaMeta");
+    expect(
+      await updatePrecosDaMeta({
+        linhas: [{ country: "BR", dial_prefix: "55", category: "utility", unit_price_cents: 3.5, currency: "BRL" }],
+        cotacao_usd_brl: null,
+      }),
+    ).toEqual({ ok: true });
+
+    await semearContatos("sem-preco", 2);
+    const id = await criarEPreparar("sem-preco", { teto_gasto_cents: 1000 });
+    await iniciar(id);
+    const r = await rodada(emMinutos(30));
+    expect(r.enviadas).toBe(0);
+    const c = await campanha(id);
+    expect(c.status).toBe("paused");
+    expect(c.pausa_motivo).toBe("teto_de_gasto");
+    expect(c.pausa_detalhe).toContain("não tem preço para marketing");
+    expect(falso.envios()).toHaveLength(0);
+  });
+
+  it("o painel recusa linha em outra moeda: o teto é em reais", async () => {
+    const { updatePrecosDaMeta } = await import("@/app/actions/settings/updatePrecosDaMeta");
+    const r = await updatePrecosDaMeta({
+      linhas: [{ country: "US", dial_prefix: "1", category: "marketing", unit_price_cents: 2.5, currency: "USD" as never }],
+      cotacao_usd_brl: null,
+    });
+    expect(r).toEqual({ ok: false, error: "invalid_input" });
+  });
+});

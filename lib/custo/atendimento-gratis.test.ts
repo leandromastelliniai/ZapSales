@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { alertaDoAtendimentoGratis, GRATIS_POR_MES, inicioDoMesNoFuso } from "./atendimento-gratis";
+import { GRATIS_POR_MES, inicioDoMesNoFuso, limiarAtingido } from "./atendimento-gratis";
 
 const SP = "America/Sao_Paulo";
 
@@ -18,26 +18,27 @@ describe("inicioDoMesNoFuso — o contador zera à meia-noite do dia 1 no fuso d
   });
 });
 
-describe("alertaDoAtendimentoGratis — avisa uma vez ao cruzar 80% e 100%", () => {
+describe("limiarAtingido — o maior limiar já alcançado, para avisar uma vez cada", () => {
   it("as grátis são 1.000 por número no mês", () => {
     expect(GRATIS_POR_MES).toBe(1000);
   });
 
-  it("cruzar 800 avisa 80%", () => {
-    expect(alertaDoAtendimentoGratis(799, 800)).toBe(80);
+  it("abaixo de 800 não há limiar", () => {
+    expect(limiarAtingido(0)).toBeNull();
+    expect(limiarAtingido(799)).toBeNull();
   });
 
-  it("cruzar 1.000 avisa 100%", () => {
-    expect(alertaDoAtendimentoGratis(999, 1000)).toBe(100);
+  it("de 800 a 999 é o de 80%", () => {
+    expect(limiarAtingido(800)).toBe(80);
+    expect(limiarAtingido(999)).toBe(80);
   });
 
-  it("pular os dois de uma vez avisa o maior", () => {
-    expect(alertaDoAtendimentoGratis(790, 1001)).toBe(100);
+  it("de 1.000 em diante é o de 100%", () => {
+    expect(limiarAtingido(1000)).toBe(100);
+    expect(limiarAtingido(5000)).toBe(100);
   });
 
-  it("abaixo, entre ou depois dos limiares não avisa de novo", () => {
-    expect(alertaDoAtendimentoGratis(10, 11)).toBeNull();
-    expect(alertaDoAtendimentoGratis(800, 801)).toBeNull();
-    expect(alertaDoAtendimentoGratis(1000, 1001)).toBeNull();
+  it("não depende de ter visto o número exato: dois webhooks juntos que leem 801 ainda acham o 80%", () => {
+    expect(limiarAtingido(801)).toBe(80);
   });
 });

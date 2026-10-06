@@ -322,6 +322,14 @@ comment on function public.fn_custo_da_campanha(uuid, uuid, integer) is
 revoke execute on function public.fn_custo_da_campanha(uuid, uuid, integer) from public, anon, authenticated;
 grant execute on function public.fn_custo_da_campanha(uuid, uuid, integer) to service_role;
 
+-- O aviso das 1.000 grátis é um por número, mês e limiar — o título leva os
+-- três. Único em QUALQUER status: aviso resolvido não reabre no mesmo mês, e dois
+-- webhooks simultâneos que alcançam o limiar juntos abrem um só (o segundo
+-- recebe 23505, e o registro de custo o engole).
+create unique index if not exists agent_inbox_atendimento_gratis_unico
+  on public.agent_inbox_items (organization_id, ref_id, title)
+  where kind = 'atendimento_gratis_do_numero';
+
 notify pgrst, 'reload schema';
 
 -- ═══ 6. O aviso das 1.000 grátis na Central ═══

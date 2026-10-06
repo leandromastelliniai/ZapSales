@@ -8835,5 +8835,6 @@
   "mensagens cobradas são de países sem preço na tabela e não entram no total.": "charged messages are from countries with no price in the table and are not in the total.",
   "pessoa respondeu": "person replied",
   "pessoas responderam": "people replied",
-  "referência": "reference"
+  "referência": "reference",
+  "A lista é grande demais para estimar de uma vez: a estimativa conta só os primeiros 20 mil destinatários.": "The list is too large to estimate at once: the estimate counts only the first 20,000 recipients."
 }
