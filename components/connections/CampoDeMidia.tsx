@@ -28,8 +28,8 @@ const ACEITA: Record<FormatoDeMidia, string> = {
 
 const DICA: Record<FormatoDeMidia, string> = {
   IMAGE: "JPG ou PNG, até 5 MB.",
-  VIDEO: "MP4, até 9 MB.",
-  DOCUMENT: "PDF, até 9 MB.",
+  VIDEO: "MP4, até 16 MB.",
+  DOCUMENT: "PDF, até 50 MB.",
 };
 
 export function CampoDeMidia({

@@ -75,7 +75,9 @@ Superfícies **não-cookie** (cada uma com guard próprio, nunca o cookie de ses
 `lib/api/auth-dual.ts`. Esta última cresce rota por rota (decisão do dono em 17/09/2026: converter
 o que cada integração precisar), então o inventário é um comando e não uma lista:
 `git grep -ln "auth-dual" -- app/api/v1`. Rota com o helper **também** precisa de entrada em
-`lib/auth/public-paths.ts`, senão o `proxy.ts` devolve 401 antes do handler. Inventário e superfície de ataque: [`docs/threat-model.md`](docs/threat-model.md).
+`lib/auth/public-paths.ts`, senão o `proxy.ts` devolve 401 antes do handler — salvo as rotas de
+upload acima de 10 MB, que ficam fora do matcher do proxy para o corpo não chegar cortado
+(`tests/unit/proxy-nao-corta-upload-grande.test.ts`). Inventário e superfície de ataque: [`docs/threat-model.md`](docs/threat-model.md).
 
 Turno do agente de IA: inbound WhatsApp → HMAC + idempotência → `event_log` → worker →
 `runAgentTurn` (RAG + tools MCP) → guardrails → adapter WAHA → handoff humano se o gatilho

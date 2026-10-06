@@ -134,7 +134,15 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Run on all paths except static assets / Next internals.
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)",
+    // Run on all paths except static assets / Next internals — and the upload
+    // routes whose ceiling passes the proxy body limit (issue #22). On a path
+    // the proxy reaches, Next hands the route only the first
+    // `proxyClientMaxBodySize` bytes (10 MB): a 12 MB video arrives cut and
+    // `formData()` finds no file. Each of these routes authenticates itself
+    // (requireRole / resolveAuthDual), so the proxy had nothing to decide there.
+    // Raising the limit instead would let ANY POST, signed in or not, pin 5x
+    // more memory before the proxy runs. Kept in sync by
+    // tests/unit/proxy-nao-corta-upload-grande.test.ts.
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api/v1/conversations/[^/]+/(?:notes/)?media$|api/v1/channels/templates/media$|api/v1/ai/knowledge/sources/upload$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)",
   ],
 };

@@ -38,11 +38,12 @@ import {
   ErroDeExtracao,
   extrairTextoDoArquivo,
   resolverExtensao,
+  TAMANHO_MAXIMO_DE_DOCUMENTO,
 } from "@/lib/ai/rag/ingest/documento";
 
 export const dynamic = "force-dynamic";
 
-const TAMANHO_MAXIMO = 20 * 1024 * 1024; // 20 MB
+const MB = 1024 * 1024;
 
 const nameSchema = z.string().trim().min(2).max(120);
 const agentIdSchema = z.string().uuid();
@@ -57,6 +58,16 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (!authz.ok) return authz.response;
   const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { user: authUser, org: activeOrg } = authz;
+
+  // Recusa pelo Content-Length declarado ANTES de bufferizar o corpo. A rota
+  // fica fora do matcher do proxy (issue #22), então nada mais corta o corpo
+  // antes daqui; o `file.size` abaixo continua sendo o check autoritativo.
+  const declarado = Number(req.headers.get("content-length") ?? 0);
+  if (declarado > TAMANHO_MAXIMO_DE_DOCUMENTO + MB) {
+    return fail("payload_too_large", `O arquivo passa de ${TAMANHO_MAXIMO_DE_DOCUMENTO / MB} MB.`, 413, {
+      requestId,
+    });
+  }
 
   let formData: FormData;
   try {
@@ -108,8 +119,10 @@ export async function POST(req: NextRequest): Promise<Response> {
     agentId = agentIdParsed.data;
   }
 
-  if (file.size > TAMANHO_MAXIMO) {
-    return fail("payload_too_large", "O arquivo passa de 20 MB.", 413, { requestId });
+  if (file.size > TAMANHO_MAXIMO_DE_DOCUMENTO) {
+    return fail("payload_too_large", `O arquivo passa de ${TAMANHO_MAXIMO_DE_DOCUMENTO / MB} MB.`, 413, {
+      requestId,
+    });
   }
 
   const ext = resolverExtensao(file.name, file.type);

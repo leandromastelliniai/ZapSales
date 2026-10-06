@@ -117,6 +117,11 @@ export const PUBLIC_PATHS: RegExp[] = [
   // Upload outbound: primeiro passo do envio de MÍDIA por token. Sem ele, o
   // cartão de fidelidade (a única das automações que não é texto) não teria
   // como sair depois do corte de gateway.
+  //
+  // Desde a issue #22 este caminho também fica FORA do matcher do `proxy.ts`
+  // (o corpo de até 50 MB chegaria cortado em 10 MB), e o proxy nem roda nele.
+  // A entrada fica: é a declaração de que a rota aceita Bearer, e a garantia
+  // caso o matcher volte a alcançá-la.
   /^\/api\/v1\/conversations\/[^/]+\/media$/,
   // CONFIGURAÇÃO DE IA, FOLLOW-UP E AGENDA SERVER-TO-SERVER (issue #1875).
   // Mesma dualidade das linhas acima: sessão OU Bearer `zps_…`, resolvidos por

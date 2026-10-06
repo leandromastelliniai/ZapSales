@@ -30,6 +30,13 @@ import { extractCsvText, CsvExtractError } from "@/lib/ai/rag/extractors/csv";
 export const BUCKET_DE_CONHECIMENTO = "ai-policy";
 
 /**
+ * O maior arquivo que o acervo aceita. Passa do limite de corpo do proxy
+ * (10 MB), por isso a rota de envio fica fora do matcher de `proxy.ts` — ver
+ * `tests/unit/proxy-nao-corta-upload-grande.test.ts`.
+ */
+export const TAMANHO_MAXIMO_DE_DOCUMENTO = 20 * 1024 * 1024;
+
+/**
  * Extensões que o produto sabe ler hoje.
  *
  * `xlsx`/`xls` NÃO entram de propósito — mesma decisão de `lib/contacts/csv.ts`:

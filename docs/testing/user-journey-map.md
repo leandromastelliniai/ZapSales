@@ -3512,3 +3512,23 @@ Limites conhecidos, de propósito fora desta entrega:
   pausa por recategorização (#9) entrar.
 - **IA em janelas sobrepostas.** O custo de IA é do contato dentro da janela de atribuição; um
   contato em duas campanhas cujas janelas se sobrepõem entra nas duas.
+
+## J48 — Enviar arquivo acima de 10 MB `[P1]` (2026-10-06, issue #22)
+
+**Achado:** em caminho que o `proxy.ts` alcança, o Next entrega à rota só os primeiros 10 MB do
+corpo. Um arquivo de 12 MB chegava cortado e a tela dizia "Campo 'file' obrigatório", embora
+prometesse 20 MB (acervo) e 50 MB (anexos da conversa e da nota). Os modelos oficiais ficaram em
+9 MB por causa disso. Conserto: as rotas de upload grande saíram do matcher do proxy.
+
+| Caso | Spec | Estado |
+|---|---|---|
+| Arquivo de 12 MB sobe pelo diálogo do acervo e vira material (201, nome na lista) | `tests/e2e/acervo-arquivo-acima-de-10mb.spec.ts` | CI (PARTE_2) |
+| Toda rota de multipart declara o teto; acima do limite fica fora do matcher, abaixo fica dentro; vizinhos seguem pelo proxy | `tests/unit/proxy-nao-corta-upload-grande.test.ts` | unit |
+| Vídeo de 12 MB no cabeçalho de modelo vai inteiro à Meta e ao bucket; acima de 16 MB, 413 | `tests/unit/meta-midia-de-modelo-rota.test.ts` | unit |
+
+**Prova local (`next build` + `next start` e `node .next/standalone/server.js`):** POST de 12 MB
+em `/api/v1/conversations/<id>/drafts` e `/messages` registra "Request body exceeded 10MB"; nas
+quatro rotas excluídas, nenhum registro, e a resposta vem da autenticação da própria rota.
+
+**Não coberto:** anexo de 12 MB na conversa e no cabeçalho de modelo pela tela (exigem conversa e
+canal oficial, que o banco do CI não tem); medem o mesmo mecanismo do caso do acervo.

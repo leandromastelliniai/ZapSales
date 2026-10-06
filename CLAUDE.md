@@ -69,6 +69,12 @@ ZapSales é um CRM de WhatsApp com funil (Kanban), inbox, agentes de IA e campan
     reconhece cookie. Sem uma entrada em `lib/auth/public-paths.ts` para o caminho, todo bearer
     recebe 401 do proxy antes de chegar ao handler. "Público" ali quer dizer "o proxy não decide",
     nunca "sem autenticação"
+  - **Exceção: rotas de upload acima de 10 MB ficam FORA do matcher do proxy** (issue #22). Em
+    caminho que o proxy alcança, o Next entrega à rota só os primeiros 10 MB do corpo
+    (`proxyClientMaxBodySize`), e o multipart chega cortado. Fora do matcher o proxy não roda — é
+    o mesmo "o proxy não decide" de `public-paths.ts`, e a rota se autentica sozinha. Quais são,
+    e a cobrança de que toda rota de multipart declare o teto:
+    `tests/unit/proxy-nao-corta-upload-grande.test.ts`
   - Decisão do dono do produto em 17/09/2026: **converter as rotas que cada integração precisar**,
     conforme aparecerem, em vez de namespace paralelo por cliente. Uma rota convertida serve a todo
     integrador. Contexto: PR #1008, que escreveu 26 rotas paralelas porque não achou por onde entrar

@@ -24,6 +24,8 @@
  */
 import { randomUUID } from "node:crypto";
 
+import { MAX_MEDIA_BYTES } from "@/lib/messaging/media/types";
+
 import { erroDaRespostaDaGraph } from "./erros";
 import { graphBaseUrl } from "./graph-base";
 import {
@@ -38,18 +40,21 @@ export const BUCKET_DA_MIDIA_DE_MODELO = "whatsapp-media";
 const MB = 1024 * 1024;
 
 /**
- * O maior arquivo aceito por formato. Imagem é o teto da Meta (5 MB). Vídeo e
- * documento ficam em 9 MB, abaixo do da Meta (16 MB e 100 MB), por causa do
- * `proxy.ts`: ele roda antes de toda rota, e o Next entrega à rota só os
- * primeiros 10 MB do corpo quando há proxy (`proxyClientMaxBodySize`, padrão
- * 10 MB — "Only the first 10MB will be available", em
- * `next/dist/server/body-streams.js`). Acima disso o multipart chegaria cortado
- * e a rota não acharia o arquivo. 9 MB deixa folga para o envelope do multipart.
+ * O maior arquivo aceito por formato. Imagem e vídeo são o teto da Meta (5 MB e
+ * 16 MB). Documento fica no teto do bucket da cópia (50 MB), abaixo dos 100 MB
+ * da Meta: acima disso o storage recusaria a cópia depois de a Meta aceitar a
+ * amostra.
+ *
+ * Até a issue #22 vídeo e documento ficavam em 9 MB por causa do `proxy.ts`:
+ * em caminho que o proxy alcança, o Next entrega à rota só os primeiros 10 MB
+ * do corpo (`proxyClientMaxBodySize`). A rota de upload agora fica fora do
+ * matcher do proxy — `tests/unit/proxy-nao-corta-upload-grande.test.ts` cobra
+ * isso para toda rota cujo teto passa do limite.
  */
 export const TETO_POR_FORMATO: Record<FormatoDeMidia, number> = {
   IMAGE: 5 * MB,
-  VIDEO: 9 * MB,
-  DOCUMENT: 9 * MB,
+  VIDEO: 16 * MB,
+  DOCUMENT: MAX_MEDIA_BYTES,
 };
 
 const comeca = (bytes: Uint8Array, cabeca: number[], desde = 0) =>
