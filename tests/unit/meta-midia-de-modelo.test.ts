@@ -13,6 +13,8 @@
  *
  * Medir: `pnpm vitest run tests/unit/meta-midia-de-modelo.test.ts`
  */
+import { readFileSync } from "node:fs";
+
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -66,10 +68,21 @@ describe("farejarArquivo — o tipo pelo conteúdo, não pelo nome", () => {
     expect(farejarArquivo(new Uint8Array())).toBeNull();
   });
 
-  it("tem teto por formato, abaixo do bucket (50 MB)", () => {
+  it("tem teto por formato: o da Meta, sem passar do bucket (50 MB)", () => {
     expect(TETO_POR_FORMATO.IMAGE).toBe(5 * 1024 * 1024);
-    expect(TETO_POR_FORMATO.VIDEO).toBeLessThanOrEqual(50 * 1024 * 1024);
-    expect(TETO_POR_FORMATO.DOCUMENT).toBeLessThanOrEqual(50 * 1024 * 1024);
+    // Vídeo: o teto da Meta. Até a #22 ficava em 9 MB por causa do corte do proxy.
+    expect(TETO_POR_FORMATO.VIDEO).toBe(16 * 1024 * 1024);
+    // Documento: a Meta aceita 100 MB, mas a cópia vai para o bucket de 50 MB.
+    expect(TETO_POR_FORMATO.DOCUMENT).toBe(50 * 1024 * 1024);
+  });
+
+  it("a dica do campo na tela diz o mesmo teto que a rota aplica", () => {
+    // A dica é texto literal (precisa estar no dicionário); um teto mudado só
+    // aqui deixaria a tela prometendo um número que a rota recusa.
+    const campo = readFileSync("components/connections/CampoDeMidia.tsx", "utf8");
+    for (const teto of Object.values(TETO_POR_FORMATO)) {
+      expect(campo).toContain(`até ${teto / (1024 * 1024)} MB.`);
+    }
   });
 });
 

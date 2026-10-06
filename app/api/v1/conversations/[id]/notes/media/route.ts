@@ -56,10 +56,11 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     scope: "mcp:write",
   });
   if (!authz.ok) return authz.response;
-  // Fora de PUBLIC_PATHS hoje: o proxy recusa Bearer sem cookie antes daqui.
-  // O teto é defesa em profundidade e passa a valer no dia em que a rota
-  // entrar na lista — mesmo teto das irmãs que já aplicam sobre
-  // resolveAuthDual. Anexo de nota é escrita real no bucket.
+  // Fora do matcher do `proxy.ts` desde a issue #22 (o proxy cortaria o corpo
+  // em 10 MB, e o teto aqui é 50 MB): o proxy não decide sobre esta rota, como
+  // se ela estivesse em PUBLIC_PATHS, e o Bearer chega até aqui. Quem decide é
+  // `resolveAuthDual` acima, e o teto vale como nas irmãs. Anexo de nota é
+  // escrita real no bucket.
   const teto = await tetoDeEscritaDoToken(authz, "conversation_notes", requestId);
   if (teto) return teto;
   const t = (texto: string) => traduzir(texto, authz.idioma ?? IDIOMA_PADRAO);

@@ -38,11 +38,10 @@ import {
   ErroDeExtracao,
   extrairTextoDoArquivo,
   resolverExtensao,
+  TAMANHO_MAXIMO_DE_DOCUMENTO,
 } from "@/lib/ai/rag/ingest/documento";
 
 export const dynamic = "force-dynamic";
-
-const TAMANHO_MAXIMO = 20 * 1024 * 1024; // 20 MB
 
 const nameSchema = z.string().trim().min(2).max(120);
 const agentIdSchema = z.string().uuid();
@@ -108,7 +107,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     agentId = agentIdParsed.data;
   }
 
-  if (file.size > TAMANHO_MAXIMO) {
+  if (file.size > TAMANHO_MAXIMO_DE_DOCUMENTO) {
     return fail("payload_too_large", "O arquivo passa de 20 MB.", 413, { requestId });
   }
 

@@ -176,6 +176,29 @@ describe("POST /api/v1/channels/templates/media", () => {
     expect(falso.chamadas).toEqual([]);
   });
 
+  it("vídeo de 12 MB (acima do antigo teto de 9 MB): vai inteiro à Meta e ao bucket", async () => {
+    // O caso da issue #22. A rota agora fica fora do matcher do proxy, que
+    // cortaria o corpo em 10 MB; aqui a prova é que a rota aceita o tamanho.
+    const bytes = arquivoDeTeste(ASSINATURAS.mp4, 12 * 1024 * 1024);
+    const res = await subir(bytes, "demonstracao.mp4", "VIDEO");
+    const json = await corpo(res);
+    expect(res.status, JSON.stringify(json.error)).toBe(201);
+    expect(json.data.size_bytes).toBe(12 * 1024 * 1024);
+    const [enviado] = falso.arquivosEnviados();
+    expect(Buffer.compare(enviado!.bytes, Buffer.from(bytes))).toBe(0);
+  });
+
+  it("vídeo acima de 16 MB (o teto da Meta): 413 com o número, sem ida à Meta", async () => {
+    const res = await subir(
+      arquivoDeTeste(ASSINATURAS.mp4, 16 * 1024 * 1024 + 1),
+      "longo.mp4",
+      "VIDEO",
+    );
+    expect(res.status).toBe(413);
+    expect((await corpo(res)).error.message).toBe("Este tipo de arquivo precisa ter até 16 MB.");
+    expect(falso.chamadas).toEqual([]);
+  });
+
   it("a Meta recusa: 422 com a etapa, e o bucket fica vazio", async () => {
     falso.programar(
       { metodo: "POST", terminaCom: "/uploads" },

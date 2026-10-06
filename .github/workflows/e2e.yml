@@ -736,6 +736,7 @@ jobs:
         followup-publicado-abre-no-construtor.spec.ts
         automacao-diz-a-verdade.spec.ts
         acervo-de-conhecimento.spec.ts
+        acervo-arquivo-acima-de-10mb.spec.ts
         agenda-kit-visual.spec.ts
         agenda-conectar-google.spec.ts
         agenda-painel-cabe-na-tela.spec.ts
