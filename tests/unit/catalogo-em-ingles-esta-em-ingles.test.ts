@@ -78,9 +78,19 @@ const PALAVRAS_DO_PORTUGUES = new Set(
  */
 const DADO_GRAVADO_EM_PORTUGUES = ["Cliente Anonimizado #N"];
 
+/**
+ * O `{marcador}` é nome de variável, não frase: a tradução TEM de repeti-lo
+ * igual à chave (`catalogo-de-idioma-tem-forma` cobra isso), então um
+ * `{quando}` em português na tradução inglesa é o certo, não um esquecimento.
+ */
+const MARCADOR = /\{\{?[A-Za-z_][A-Za-z0-9_]*\}?\}/g;
+
 /** As palavras em português que a tradução carrega sem serem nome próprio nem dado citado. */
 function sobraDePortugues(valor: string): string[] {
-  const semDado = DADO_GRAVADO_EM_PORTUGUES.reduce((texto, dado) => texto.split(dado).join(" "), valor);
+  const semDado = DADO_GRAVADO_EM_PORTUGUES.reduce(
+    (texto, dado) => texto.split(dado).join(" "),
+    valor.replace(MARCADOR, " "),
+  );
   return palavras(semDado).filter(
     (palavra) =>
       (LETRA_DO_PORTUGUES.test(palavra) && !NOMES_PROPRIOS_COM_ACENTO.has(palavra)) ||
@@ -104,6 +114,9 @@ describe("o catálogo em inglês", () => {
     // Nome próprio e dado citado passam.
     expect(sobraDePortugues("São Paulo (Brazil)")).toEqual([]);
     expect(sobraDePortugues('The name becomes "Cliente Anonimizado #N".')).toEqual([]);
+    // O marcador é variável; a palavra solta ao lado dele, não.
+    expect(sobraDePortugues("Expires on {quando}.")).toEqual([]);
+    expect(sobraDePortugues("Salvar by {quando}.")).toEqual(["Salvar"]);
   });
 
   it("nenhuma tradução carrega palavra em português", () => {

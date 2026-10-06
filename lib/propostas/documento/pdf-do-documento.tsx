@@ -2,6 +2,11 @@
 import { Document, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import React from "react";
 
+import { traduzir } from "@/lib/i18n/dicionario";
+import { preencher } from "@/lib/i18n/aviso-no-idioma";
+import { tagDeIdioma } from "@/lib/i18n/datas";
+import { IDIOMA_PADRAO, type Idioma } from "@/lib/i18n/idiomas";
+
 import { formatarMoeda } from "../moeda";
 import type { SecaoRenderizada } from "./renderer";
 
@@ -48,6 +53,13 @@ export interface DocumentoPdfInput {
    * alguma coisa no PDF").
    */
   previa?: boolean;
+  /**
+   * O idioma da ORGANIZAÇÃO que envia (`montarPdfDaProposta` lê). É o mesmo na
+   * prévia e no envio: a prévia promete o arquivo que o cliente vai receber, e
+   * ele recebe no idioma da organização, não no de quem está olhando a tela.
+   * Ausente: português, o texto de sempre.
+   */
+  idioma?: Idioma;
 }
 
 export type BlocoDoPdf = { tipo: "secao"; secao: SecaoRenderizada } | { tipo: "itens" };
@@ -70,6 +82,8 @@ export function blocosDoDocumento(secoes: SecaoRenderizada[]): BlocoDoPdf[] {
 }
 
 function Itens({ d, accent }: { d: DocumentoPdfInput; accent: string | undefined }): React.ReactElement {
+  const idioma = d.idioma ?? IDIOMA_PADRAO;
+  const tag = tagDeIdioma(idioma);
   return (
     <View style={{ marginTop: 8 }}>
       {d.itens.map((it, i) => (
@@ -80,16 +94,19 @@ function Itens({ d, accent }: { d: DocumentoPdfInput; accent: string | undefined
               {it.descricao} (x{it.quantidade})
             </Text>
           </View>
-          <Text>{formatarMoeda(it.quantidade * it.precoUnitarioCents - it.descontoCents, d.moeda)}</Text>
+          <Text>{formatarMoeda(it.quantidade * it.precoUnitarioCents - it.descontoCents, d.moeda, tag)}</Text>
         </View>
       ))}
-      <Text style={[styles.total, accent ? { color: accent } : {}]}>Total: {formatarMoeda(d.totalCents, d.moeda)}</Text>
+      <Text style={[styles.total, accent ? { color: accent } : {}]}>
+        {preencher(traduzir("Total: {valor}", idioma), { valor: formatarMoeda(d.totalCents, d.moeda, tag) })}
+      </Text>
     </View>
   );
 }
 
 function DocumentoPdfDoc({ d }: { d: DocumentoPdfInput }): React.ReactElement {
   const accent = d.marca.accent_hex ?? undefined;
+  const idioma = d.idioma ?? IDIOMA_PADRAO;
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -97,10 +114,10 @@ function DocumentoPdfDoc({ d }: { d: DocumentoPdfInput }): React.ReactElement {
           <View>
             <Text style={[styles.titulo, accent ? { color: accent } : {}]}>{d.titulo}</Text>
             {d.previa ? (
-              <Text>Prévia — sem número</Text>
+              <Text>{traduzir("Prévia — sem número", idioma)}</Text>
             ) : d.numero !== null && d.ano !== null ? (
               <Text>
-                Proposta {String(d.numero).padStart(4, "0")}/{d.ano}
+                {preencher(traduzir("Proposta {numero}", idioma), { numero: `${String(d.numero).padStart(4, "0")}/${d.ano}` })}
                 {d.versao > 1 ? ` — v${d.versao}` : ""}
               </Text>
             ) : null}
@@ -112,7 +129,7 @@ function DocumentoPdfDoc({ d }: { d: DocumentoPdfInput }): React.ReactElement {
           ) : null}
         </View>
 
-        <Text>Para: {d.destinatario.nome}</Text>
+        <Text>{preencher(traduzir("Para: {nome}", idioma), { nome: d.destinatario.nome })}</Text>
 
         {blocosDoDocumento(d.secoes).map((bloco, i) =>
           bloco.tipo === "itens" ? (
@@ -125,14 +142,19 @@ function DocumentoPdfDoc({ d }: { d: DocumentoPdfInput }): React.ReactElement {
           ),
         )}
 
-        {d.validUntil ? <Text style={{ marginTop: 12 }}>Válida até {d.validUntil}</Text> : null}
+        {d.validUntil ? (
+          <Text style={{ marginTop: 12 }}>{preencher(traduzir("Válida até {data}", idioma), { data: d.validUntil })}</Text>
+        ) : null}
         {d.condicoes ? <Text style={{ marginTop: 8 }}>{d.condicoes}</Text> : null}
 
         <Text
           style={styles.footer}
           fixed
           render={({ pageNumber, totalPages }) =>
-            `${d.marca.app_name ?? "Proposta comercial"} — página ${pageNumber} de ${totalPages}`
+            `${d.marca.app_name ?? traduzir("Proposta comercial", idioma)} — ${preencher(
+              traduzir("página {pagina} de {total}", idioma),
+              { pagina: pageNumber, total: totalPages },
+            )}`
           }
         />
       </Page>

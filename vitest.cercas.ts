@@ -70,10 +70,16 @@ function resolver(raiz: string, arquivo: string, especificador: string): string 
   else if (especificador.startsWith(".")) base = join(dirname(arquivo), especificador);
   else return null;
   const candidato = EXTENSOES.map((ext) => base + ext).find(
-    (c) => /\.tsx?$/.test(c) && existsSync(c) && statSync(c).isFile(),
+    (c) => /\.(tsx?|json)$/.test(c) && existsSync(c) && statSync(c).isFile(),
   );
   return candidato ?? null;
 }
+
+// JSON importado é DADO: não importa nada nem roda nada. O catálogo de idioma
+// (`lib/i18n/traducoes/en.json`, lido pelo dicionário desde a issue #12) tirava
+// da seleção o teste de i18n que motivou a regra transitiva. Ele não passa pelo
+// `USA_DOM`: a palavra "window" numa tradução não é o global do browser.
+const ehDado = (arquivo: string) => arquivo.endsWith(".json");
 
 // Memo por caminho absoluto. Ciclo conta como NÃO cerca (o valor provisório é
 // `false`): conservador — no pior caso o teste fica no `produto`, mais lento.
@@ -82,6 +88,7 @@ function classificador(raiz: string): (arquivo: string) => boolean {
   const classificar = (arquivo: string): boolean => {
     const conhecido = memo.get(arquivo);
     if (conhecido !== undefined) return conhecido;
+    if (ehDado(arquivo)) return true;
     memo.set(arquivo, false);
     const fonte = readFileSync(arquivo, "utf-8");
     const resultado =

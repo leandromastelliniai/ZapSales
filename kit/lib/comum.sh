@@ -60,3 +60,46 @@ env_garantir() {
 exigir_root() {
   [ "$(id -u)" -eq 0 ] || falha "Rode como root (sudo $0)."
 }
+
+# assunto_do_molde MODELO IDIOMA — o assunto do e-mail de acesso do GoTrue
+# (confirmation | recovery). São as mesmas frases de `COPIA` em
+# lib/email/templates/acesso-gotrue.ts, sem a marca: o assunto é variável de
+# ambiente, fixa, e a marca mora no banco e muda pela tela.
+assunto_do_molde() {
+  case "$1:$2" in
+    confirmation:es) printf 'Confirma tu correo' ;;
+    confirmation:en) printf 'Confirm your email' ;;
+    confirmation:*)  printf 'Confirme seu e-mail' ;;
+    recovery:es)     printf 'Restablece tu contraseña' ;;
+    recovery:en)     printf 'Reset your password' ;;
+    recovery:*)      printf 'Redefinir sua senha' ;;
+  esac
+}
+
+# eh_valor_do_kit_para_molde VALOR — o valor é um que o próprio kit grava (URL
+# interna do app, ou um dos assuntos acima)? Só esses o kit regrava quando o
+# idioma muda; o que o operador escreveu à mão fica.
+eh_valor_do_kit_para_molde() {
+  local m i
+  case "$1" in ""|http://app:3000/email-templates/*) return 0 ;; esac
+  for m in confirmation recovery; do
+    for i in pt-BR es en; do
+      [ "$1" = "$(assunto_do_molde "$m" "$i")" ] && return 0
+    done
+  done
+  return 1
+}
+
+# idioma_valido BRUTO — o código do idioma servido, ou vazio. Aceita o jeito
+# como uma pessoa responde ("en", "EN", "english", "espanhol", "1"…). Os códigos
+# são os idiomas visíveis do registro (lib/i18n/registro.ts), e quem garante que
+# não divergem é tests/unit/instalador-oferece-os-idiomas-servidos.test.ts. O
+# bootstrap-owner fecha para pt-BR diante de qualquer outra coisa, então errar
+# aqui nunca grava lixo.
+idioma_valido() {
+  case "$(printf '%s' "$1" | tr 'A-Z' 'a-z' | tr -d '[:space:]')" in
+    1|pt|pt-br|ptbr|portugues|português|portuguese) printf 'pt-BR' ;;
+    2|es|espanhol|español|espanol|spanish) printf 'es' ;;
+    3|en|ingles|inglês|english) printf 'en' ;;
+  esac
+}

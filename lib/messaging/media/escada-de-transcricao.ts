@@ -68,6 +68,13 @@ export interface DecisaoDeTranscricao {
    * o operador vê `failed` e não sabe o que fazer a seguir.
    */
   motivo: string;
+  /**
+   * O MESMO motivo como chave de tradução e valores, quando ele leva um dado
+   * (o nome do modelo). O aviso da Central sai no idioma da organização, e uma
+   * frase montada não casa com chave nenhuma do dicionário. Sem isto, `motivo`
+   * é a própria chave.
+   */
+  frase?: { chave: string; valores: Record<string, string> };
 }
 
 /**
@@ -186,10 +193,20 @@ export async function decidirTranscricao(entrada: {
   }
 
   // 4 · Nada — e o motivo é do caso, não um "deu erro" genérico.
+  if (conversa?.modelId && !transcreveAudio(conversa.provider, conversa.modelId)) {
+    return {
+      origem: "nada",
+      transcriber: null,
+      motivo: `o modelo de conversa ${conversa.modelId} não declara a capacidade audio, e não há chave OpenAI para o serviço de transcrição`,
+      frase: {
+        chave:
+          "o modelo de conversa {modelo} não declara a capacidade audio, e não há chave OpenAI para o serviço de transcrição",
+        valores: { modelo: conversa.modelId },
+      },
+    };
+  }
   const motivo = !conversa
     ? "não consegui resolver o modelo de conversa desta organização e não há chave OpenAI para transcrever"
-    : conversa.modelId && !transcreveAudio(conversa.provider, conversa.modelId)
-      ? `o modelo de conversa ${conversa.modelId} não declara a capacidade audio, e não há chave OpenAI para o serviço de transcrição`
-      : "não há chave OpenAI nem modelo de conversa com capacidade audio nesta organização";
+    : "não há chave OpenAI nem modelo de conversa com capacidade audio nesta organização";
   return { origem: "nada", transcriber: null, motivo };
 }

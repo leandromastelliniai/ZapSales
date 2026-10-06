@@ -27,6 +27,102 @@ detectar_proxy() {
   '
 }
 
+# decidir_modo PROXY MODO_SALVO MODO_PEDIDO — o modo da instalação.
+#
+#   PROXY        o que `detectar_proxy` viu, ou `zapsales` quando quem segura
+#                as portas 80/443 é o Caddy da PRÓPRIA stack (segunda rodada
+#                do modo limpa: ali o dono das portas é o docker-proxy, e sem
+#                essa distinção o kit tomaria o próprio Caddy por um alheio).
+#   MODO_SALVO   o ZAPSALES_MODO do .env (vazio na primeira rodada).
+#   MODO_PEDIDO  o ZAPSALES_MODO do ambiente (vazio = deixar o kit decidir).
+#
+# Imprime `limpa`, `convivendo` ou `erro:<explicação>`. Pura: nada de `ss`,
+# `docker` ou arquivo aqui, para o gate de shell provar cada caminho.
+#
+# A regra que importa é a da DÚVIDA: o kit nunca troca de modo sozinho. Uma
+# instalação `convivendo` cujo proxy do sistema caiu NÃO vira `limpa` — isso
+# poria o Caddy da stack nas portas que eram dos outros sites no dia em que o
+# proxy deles voltasse.
+decidir_modo() {
+  local proxy="$1" salvo="$2" pedido="$3" quer
+  case "$pedido" in
+    ""|limpa|convivendo) ;;
+    *) printf 'erro:ZAPSALES_MODO=%s — use "limpa" ou "convivendo" (ou deixe vazio para o kit decidir).\n' "$pedido"; return ;;
+  esac
+  quer="${pedido:-$salvo}"
+  case "$proxy" in
+    nenhum)
+      if [ "$quer" = "convivendo" ]; then
+        printf 'erro:Esta instalação é do modo "convivendo", mas ninguém atende as portas 80/443 agora: o proxy do sistema (Caddy ou Nginx) parou. Ligue-o de novo e rode o kit; para o ZapSales passar a usar o próprio proxy, rode com ZAPSALES_MODO=limpa.\n'
+      else
+        printf 'limpa\n'
+      fi
+      ;;
+    zapsales)
+      if [ "$quer" = "convivendo" ]; then
+        printf 'erro:As portas 80/443 são do Caddy do próprio ZapSales (modo "limpa"). Para conviver com outro proxy, pare o ZapSales (docker compose down), suba o proxy do sistema e rode de novo com ZAPSALES_MODO=convivendo.\n'
+      else
+        printf 'limpa\n'
+      fi
+      ;;
+    caddy-host|nginx-host)
+      if [ "$quer" = "limpa" ]; then
+        printf 'erro:O modo "limpa" precisa das portas 80/443, mas elas já são do %s do sistema, que serve outros sites. Rode sem ZAPSALES_MODO para o kit conviver com ele.\n' "${proxy%-host}"
+      else
+        printf 'convivendo\n'
+      fi
+      ;;
+    docker)
+      printf 'erro:As portas 80/443 são de um contêiner Docker (Traefik, Caddy em contêiner, painel de hospedagem...). Este kit sabe se acoplar a Caddy ou Nginx instalados no sistema, ou usar a VPS sozinho (modo "limpa", com as portas livres).\n'
+      ;;
+    *)
+      printf 'erro:Proxy não suportado nas portas 80/443: %s. O kit sabe trabalhar com Caddy ou Nginx do sistema, ou com as portas livres (modo "limpa").\n' "${proxy#outro:}"
+      ;;
+  esac
+}
+
+# arquivos_compose MODO — o COMPOSE_FILE de cada modo (sem o de build). O limpa
+# é o conjunto base, em que o Caddy publica 80/443 com HTTPS automático; o
+# convivendo acrescenta o override que o põe só no loopback.
+arquivos_compose() {
+  case "$1" in
+    convivendo) printf 'docker-compose.prod.yml:docker-compose.supabase.yml:docker-compose.convivio.yml\n' ;;
+    *)          printf 'docker-compose.prod.yml:docker-compose.supabase.yml\n' ;;
+  esac
+}
+
+# compose_com_loopback COMPOSE_FILE — o mesmo conjunto, com o override do
+# loopback garantido logo depois do supabase (ou no fim). Para o ensaio de
+# restauração, que nunca pode publicar 80/443.
+compose_com_loopback() {
+  local lista="$1"
+  case ":$lista:" in
+    *:docker-compose.convivio.yml:*) printf '%s\n' "$lista"; return ;;
+  esac
+  case ":$lista:" in
+    *:docker-compose.supabase.yml:*)
+      printf '%s\n' "${lista/docker-compose.supabase.yml/docker-compose.supabase.yml:docker-compose.convivio.yml}" ;;
+    *) printf '%s\n' "${lista:+$lista:}docker-compose.convivio.yml" ;;
+  esac
+}
+
+# portas_publicas — lê linhas "SERVIÇO PORTAS" (o `docker ps --format` com o
+# rótulo do serviço) e imprime "SERVIÇO PORTA" para cada porta publicada fora
+# do loopback. Nada impresso = nada exposto.
+portas_publicas() {
+  awk '{
+    servico = $1; $1 = ""
+    n = split($0, p, ",")
+    for (i = 1; i <= n; i++) { gsub(/^ +| +$/, "", p[i]); if (p[i] != "") print servico, p[i] }
+  }' | grep -E ' (0\.0\.0\.0|\[::\]|::):[0-9]+->' || true
+}
+
+# tirar_as_portas_web_do_caddy — filtra a saída de `portas_publicas` deixando
+# só o que NÃO é a 80/443 do Caddy: no modo limpa essas duas são o esperado.
+tirar_as_portas_web_do_caddy() {
+  grep -vE '^caddy (0\.0\.0\.0|\[::\]|::):(80|443)->(80|443)/tcp$' | grep -v '^$' || true
+}
+
 # porta_livre INICIAL — lê `ss -ltn` na entrada e devolve a primeira porta
 # livre a partir de INICIAL.
 porta_livre() {

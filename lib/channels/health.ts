@@ -30,6 +30,8 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { idiomaPeloCliente, preencher } from "@/lib/i18n/aviso-no-idioma";
+
 import { PROVIDERS_DE_MENSAGEM } from "./capabilities";
 import { ehNomeDeSessaoE2E } from "./sessoes-e2e";
 
@@ -95,8 +97,18 @@ export interface SaudeObservada {
  * `apelido` é como o operador chama esta conexão na tela. Entra no título porque
  * com dois números ligados "WhatsApp desconectado" não diz QUAL — e a primeira
  * pergunta de quem lê o aviso é exatamente essa.
+ *
+ * O texto sai no idioma da organização pelo `t` (a Central mostra o aviso
+ * como foi gravado); sem ele, em português. O detalhe técnico do "não deu para
+ * verificar" atravessa como veio. `t` e não o idioma: o dicionário só é
+ * carregado por quem de fato grava o aviso (ver `sincronizarSaudeDaConexao`),
+ * e não por todo o grafo do webhook que importa esta regra.
  */
-export function avisoDaConexao(saude: SaudeObservada, apelido: string): AvisoDeConexao | null {
+export function avisoDaConexao(
+  saude: SaudeObservada,
+  apelido: string,
+  t: (texto: string) => string = (texto) => texto,
+): AvisoDeConexao | null {
   if (!saude.reachable) {
     // "Não deu para perguntar" tem DOIS motivos que pedem ações opostas, e
     // tratá-los igual foi o defeito medido: numa VPS real a chave do WAHA foi
@@ -112,9 +124,10 @@ export function avisoDaConexao(saude: SaudeObservada, apelido: string): AvisoDeC
       return {
         kind: "channel_number_alert",
         severity: "critical",
-        title: `Conexão "${apelido}": o servidor de WhatsApp recusou a chave de acesso`,
-        body:
+        title: preencher(t('Conexão "{apelido}": o servidor de WhatsApp recusou a chave de acesso'), { apelido }),
+        body: t(
           "Escanear o QR não resolve: a chave que o CRM usa para falar com o servidor de WhatsApp não confere com a que o servidor espera. Enquanto isso durar, nenhuma mensagem entra nem sai por NENHUMA conexão. Quem cuida do servidor precisa conferir a WAHA_API_KEY do .env e recriar o contêiner do WhatsApp.",
+        ),
         episodio: "CREDENCIAL_RECUSADA",
       };
     }
@@ -126,7 +139,7 @@ export function avisoDaConexao(saude: SaudeObservada, apelido: string): AvisoDeC
     return {
       kind: "channel_number_alert",
       severity: "warn",
-      title: `Não foi possível verificar a conexão "${apelido}"`,
+      title: preencher(t('Não foi possível verificar a conexão "{apelido}"'), { apelido }),
       body: saude.detail,
       episodio: "UNREACHABLE",
     };
@@ -140,8 +153,8 @@ export function avisoDaConexao(saude: SaudeObservada, apelido: string): AvisoDeC
     return {
       kind: "qr_rescan",
       severity: "critical",
-      title: `WhatsApp "${apelido}" desconectado — precisa escanear o QR de novo`,
-      body: "Enquanto isso não acontecer, nenhuma mensagem entra nem sai por esta conexão.",
+      title: preencher(t('WhatsApp "{apelido}" desconectado — precisa escanear o QR de novo'), { apelido }),
+      body: t("Enquanto isso não acontecer, nenhuma mensagem entra nem sai por esta conexão."),
       episodio: status,
     };
   }
@@ -149,8 +162,8 @@ export function avisoDaConexao(saude: SaudeObservada, apelido: string): AvisoDeC
   return {
     kind: "channel_number_alert",
     severity: "critical",
-    title: `WhatsApp "${apelido}" fora do ar (${status})`,
-    body: "Nenhuma mensagem entra nem sai por esta conexão até ela voltar.",
+    title: preencher(t('WhatsApp "{apelido}" fora do ar ({status})'), { apelido, status }),
+    body: t("Nenhuma mensagem entra nem sai por esta conexão até ela voltar."),
     episodio: status,
   };
 }
@@ -291,12 +304,16 @@ export async function sincronizarSaudeDaConexao(
   // (caiu por QR, agora está FAILED) avisa de novo — mudou o que fazer.
   if (jaEscalado === episodio) return "ja_avisado";
 
+  // O texto no idioma da organização — a decisão acima é a mesma em todo idioma.
+  const idioma = await idiomaPeloCliente(admin, sessao.organization_id);
+  const { traduzir } = await import("@/lib/i18n/dicionario");
+  const texto = avisoDaConexao(saude, apelido, (frase) => traduzir(frase, idioma)) ?? aviso;
   await admin.from("agent_inbox_items").insert({
     organization_id: sessao.organization_id,
     kind: aviso.kind,
     severity: aviso.severity,
-    title: aviso.title,
-    body: aviso.body,
+    title: texto.title,
+    body: texto.body,
     ref_kind: REF_KIND_SESSAO,
     ref_id: sessao.id,
   });

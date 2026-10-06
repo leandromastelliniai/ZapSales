@@ -47,6 +47,8 @@ import {
   type EmbedDoContato,
 } from "@/lib/messaging/falha-de-entrega";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { idiomaPeloCliente, preencher } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
 import { autorizaCron } from "@/lib/auth/cron-auth";
 
 export const dynamic = "force-dynamic";
@@ -180,18 +182,23 @@ export async function recoverStuckMessages(
     // que trava não é uma mensagem, é o envio inteiro — N avisos idênticos
     // enterrariam a Central de avisos exatamente no dia em que ela mais precisa
     // ser lida.
+    // No idioma da organização: a Central mostra o aviso como foi gravado.
+    const idioma = await idiomaPeloCliente(admin, orgId);
     const { error: inboxErr } = await admin.from("agent_inbox_items").insert({
       organization_id: orgId,
       kind: "message_send_stuck",
       severity: "critical",
       title:
         n === 1
-          ? "Uma resposta não chegou ao cliente"
-          : `${n} respostas não chegaram ao cliente`,
+          ? traduzir("Uma resposta não chegou ao cliente", idioma)
+          : preencher(traduzir("{n} respostas não chegaram ao cliente", idioma), { n }),
       body:
-        `Ficaram mais de ${STUCK_AFTER_MS / 60000} minutos aguardando envio e foram marcadas como falha. ` +
-        `Verifique se a conexão do WhatsApp está ativa e se o worker de envio está rodando. ` +
-        `Nada foi reenviado automaticamente — reenviar sem saber a causa arrisca mandar a mesma mensagem duas vezes.`,
+        `${preencher(traduzir("Ficaram mais de {minutos} minutos aguardando envio e foram marcadas como falha.", idioma), { minutos: STUCK_AFTER_MS / 60000 })} ` +
+        `${traduzir("Verifique se a conexão do WhatsApp está ativa e se o worker de envio está rodando.", idioma)} ` +
+        traduzir(
+          "Nada foi reenviado automaticamente — reenviar sem saber a causa arrisca mandar a mesma mensagem duas vezes.",
+          idioma,
+        ),
       ref_kind: "conversation",
       ref_id: mensagens[0]?.conversation_id ?? null,
     });

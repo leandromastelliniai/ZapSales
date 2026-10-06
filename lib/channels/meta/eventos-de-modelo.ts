@@ -35,6 +35,9 @@ import {
   motivoDoEventoDeModelo,
   pausarAutomaticamente,
 } from "@/lib/campanhas/pausa-automatica";
+import { idiomaPeloCliente, preencher } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { IDIOMAS, type Idioma } from "@/lib/i18n/idiomas";
 import { logger } from "@/lib/logger";
 
 import { TEMPLATE_STATUS_DISABLED } from "./template-sync";
@@ -65,17 +68,21 @@ const NOME_DA_CATEGORIA: Record<string, string> = {
   AUTHENTICATION: "autenticação",
 };
 
-function categoriaLegivel(c: string | null): string {
-  if (!c) return "outra categoria";
-  return NOME_DA_CATEGORIA[c.toUpperCase()] ?? c.toLowerCase();
+function categoriaLegivel(c: string | null, idioma: Idioma): string {
+  if (!c) return traduzir("outra categoria", idioma);
+  const nome = NOME_DA_CATEGORIA[c.toUpperCase()];
+  return nome ? traduzir(nome, idioma) : c.toLowerCase();
 }
 
 function identificacao(e: EventoDeModelo): string {
   return `"${e.templateName}" (${e.templateLanguage})`;
 }
 
-function motivoDaMeta(e: TemplateStatusEvent): string {
-  const partes = [e.reason ? `Motivo informado pela Meta: ${e.reason}.` : null, e.detail ?? null];
+function motivoDaMeta(e: TemplateStatusEvent, idioma: Idioma): string {
+  const partes = [
+    e.reason ? preencher(traduzir("Motivo informado pela Meta: {motivo}.", idioma), { motivo: e.reason }) : null,
+    e.detail ?? null,
+  ];
   return partes.filter(Boolean).join(" ");
 }
 
@@ -85,45 +92,54 @@ function motivoDaMeta(e: TemplateStatusEvent): string {
  * Aprovado e pendente não avisam — a lista de modelos já mostra, e avisar de
  * notícia boa ensina a ignorar a Central. Qualidade só avisa no vermelho, que é
  * o degrau antes da pausa.
+ *
+ * O texto sai no `idioma` da organização: a Central mostra o aviso como foi
+ * gravado. O nome do modelo e o motivo da Meta atravessam como vieram — são
+ * dado, não frase nossa.
  */
-export function avisoDoEventoDeModelo(e: EventoDeModelo): AvisoDeModelo | null {
+export function avisoDoEventoDeModelo(e: EventoDeModelo, idioma: Idioma = "pt-BR"): AvisoDeModelo | null {
+  const t = (texto: string) => traduzir(texto, idioma);
+  const modelo = { nome: e.templateName, modelo: identificacao(e) };
+
   if (e.kind === "template_status") {
     const evento = e.event.toUpperCase();
-    const motivo = motivoDaMeta(e);
+    const motivo = motivoDaMeta(e, idioma);
     if (evento === "REJECTED") {
       return {
         severity: "warn",
-        title: `A Meta recusou o modelo ${e.templateName}`,
+        title: preencher(t("A Meta recusou o modelo {nome}"), modelo),
         body:
-          `O modelo ${identificacao(e)} foi recusado e não pode ser enviado. ${motivo} ` +
-          `Ajuste o texto e envie um modelo novo para aprovação.`.replace(/\s+/g, " "),
+          `${preencher(t("O modelo {modelo} foi recusado e não pode ser enviado."), modelo)} ${motivo} ` +
+          t("Ajuste o texto e envie um modelo novo para aprovação."),
       };
     }
     if (evento === "PAUSED") {
       return {
         severity: "critical",
-        title: `A Meta pausou o modelo ${e.templateName}`,
-        body:
-          `O modelo ${identificacao(e)} foi pausado pela Meta, em geral por reclamação ou bloqueio de quem recebeu. ` +
-          `Enquanto estiver pausado, os envios com ele não saem. ${motivo}`.trim(),
+        title: preencher(t("A Meta pausou o modelo {nome}"), modelo),
+        body: (
+          `${preencher(t("O modelo {modelo} foi pausado pela Meta, em geral por reclamação ou bloqueio de quem recebeu."), modelo)} ` +
+          `${t("Enquanto estiver pausado, os envios com ele não saem.")} ${motivo}`
+        ).trim(),
       };
     }
     if (evento === "DISABLED") {
       return {
         severity: "critical",
-        title: `A Meta desativou o modelo ${e.templateName}`,
+        title: preencher(t("A Meta desativou o modelo {nome}"), modelo),
         body:
-          `O modelo ${identificacao(e)} foi desativado pela Meta e não pode mais ser enviado. ${motivo} ` +
-          `Crie um modelo novo para substituí-lo.`.replace(/\s+/g, " "),
+          `${preencher(t("O modelo {modelo} foi desativado pela Meta e não pode mais ser enviado."), modelo)} ${motivo} ` +
+          t("Crie um modelo novo para substituí-lo."),
       };
     }
     if (evento === "FLAGGED") {
       return {
         severity: "warn",
-        title: `O modelo ${e.templateName} está em observação`,
-        body:
-          `A Meta marcou o modelo ${identificacao(e)} por qualidade baixa. Se a qualidade não melhorar, ` +
-          `ele será desativado. ${motivo}`.trim(),
+        title: preencher(t("O modelo {nome} está em observação"), modelo),
+        body: (
+          `${preencher(t("A Meta marcou o modelo {modelo} por qualidade baixa. Se a qualidade não melhorar, ele será desativado."), modelo)} ` +
+          motivo
+        ).trim(),
       };
     }
     return null;
@@ -133,30 +149,33 @@ export function avisoDoEventoDeModelo(e: EventoDeModelo): AvisoDeModelo | null {
     if (e.quality.toUpperCase() !== "RED") return null;
     return {
       severity: "warn",
-      title: `A qualidade do modelo ${e.templateName} ficou vermelha`,
-      body:
-        `Quem recebe o modelo ${identificacao(e)} está reclamando ou bloqueando. ` +
-        `Se continuar assim, a Meta pausa o modelo. Revise o texto e o público dos envios.`,
+      title: preencher(t("A qualidade do modelo {nome} ficou vermelha"), modelo),
+      body: preencher(
+        t("Quem recebe o modelo {modelo} está reclamando ou bloqueando. Se continuar assim, a Meta pausa o modelo. Revise o texto e o público dos envios."),
+        modelo,
+      ),
     };
   }
 
-  const de = categoriaLegivel(e.previous);
-  const para = categoriaLegivel(e.category);
+  const de = categoriaLegivel(e.previous, idioma);
+  const para = categoriaLegivel(e.category, idioma);
   if (!e.efetiva) {
     return {
       severity: "warn",
-      title: `A Meta vai mudar a categoria do modelo ${e.templateName} — o custo muda`,
-      body:
-        `A Meta avisou que o modelo ${identificacao(e)} vai passar para a categoria ${para}. ` +
-        `O preço de cada envio segue a categoria: confira se ainda vale usar este modelo.`,
+      title: preencher(t("A Meta vai mudar a categoria do modelo {nome} — o custo muda"), modelo),
+      body: preencher(
+        t("A Meta avisou que o modelo {modelo} vai passar para a categoria {para}. O preço de cada envio segue a categoria: confira se ainda vale usar este modelo."),
+        { ...modelo, para },
+      ),
     };
   }
   return {
     severity: "warn",
-    title: `A Meta mudou a categoria do modelo ${e.templateName} — o custo muda`,
-    body:
-      `O modelo ${identificacao(e)} passou de ${de} para ${para}. ` +
-      `O preço de cada envio segue a categoria: os próximos envios com ele já custam como ${para}.`,
+    title: preencher(t("A Meta mudou a categoria do modelo {nome} — o custo muda"), modelo),
+    body: preencher(
+      t("O modelo {modelo} passou de {de} para {para}. O preço de cada envio segue a categoria: os próximos envios com ele já custam como {para}."),
+      { ...modelo, de, para },
+    ),
   };
 }
 
@@ -202,8 +221,11 @@ export type DesfechoDoEventoDeModelo =
 async function abrirAviso(
   admin: SupabaseClient,
   organizationId: string,
-  aviso: AvisoDeModelo,
+  e: EventoDeModelo,
+  emPortugues: AvisoDeModelo,
 ): Promise<void> {
+  // No idioma da organização: a Central mostra o aviso como foi gravado.
+  const aviso = avisoDoEventoDeModelo(e, await idiomaPeloCliente(admin, organizationId)) ?? emPortugues;
   const { error } = await admin.from("agent_inbox_items").insert({
     organization_id: organizationId,
     kind: KIND_DO_AVISO_DE_MODELO,
@@ -249,11 +271,13 @@ export async function aplicarEventoDeModelo(
       .eq("organization_id", organizationId)
       .eq("kind", KIND_DO_AVISO_DE_MODELO)
       .eq("status", "open")
-      .eq("title", aviso.title)
+      // O título em TODO idioma: trocar o idioma da organização entre duas
+      // entregas não pode abrir um segundo aviso do mesmo fato.
+      .in("title", [...new Set(IDIOMAS.map((i) => avisoDoEventoDeModelo(e, i)?.title ?? aviso.title))])
       .limit(1);
     // Falha ABERTA: sem conseguir checar, o aviso sai. Repetir é o erro barato.
     if (!error && jaAvisado && jaAvisado.length > 0) return "modelo:sem_mudanca";
-    await abrirAviso(admin, organizationId, aviso);
+    await abrirAviso(admin, organizationId, e, aviso);
     return "modelo:aviso_previo";
   }
 
@@ -295,7 +319,7 @@ export async function aplicarEventoDeModelo(
   }
   if (!mudou || mudou.length === 0) return "modelo:sem_mudanca";
 
-  if (aviso) await abrirAviso(admin, organizationId, aviso);
+  if (aviso) await abrirAviso(admin, organizationId, e, aviso);
   await pausarCampanhasDoModelo(admin, organizationId, linha.id as string, e, antes, agora);
   return "modelo:atualizado";
 }

@@ -1,6 +1,8 @@
 import { resolveCaseFromHuman } from "@/lib/agent-engine/agent/human-cases";
 import type pg from "pg";
 import { insertInboxItem } from "@/lib/agent-engine/db/repository";
+import { idiomaPeloPool } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 /** Só respostas humanas a casos; cancelamentos normais não abrem avisos. */
 export async function avisarRespostaDeCasoObsoleto(
@@ -13,14 +15,16 @@ export async function avisarRespostaDeCasoObsoleto(
     [org, caseId],
   );
   if (!rows[0]) return;
+  // No idioma da organização: a Central mostra o aviso como foi gravado.
+  const idioma = await idiomaPeloPool(db, org);
   await insertInboxItem(
     db,
     org,
     {
       kind: "job_dead",
       severity: "warn",
-      title: "Resposta registrada; atendimento mudou",
-      body: "Resposta registrada; não repassada porque o atendimento mudou. Revise a conversa.",
+      title: traduzir("Resposta registrada; atendimento mudou", idioma),
+      body: traduzir("Resposta registrada; não repassada porque o atendimento mudou. Revise a conversa.", idioma),
       refKind: "conversation",
       refId: rows[0].conversation_id,
     },

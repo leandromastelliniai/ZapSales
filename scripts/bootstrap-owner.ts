@@ -21,6 +21,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { escolherModeloNoCatalogo } from "@/lib/ai/agents/escolher-modelo";
+import { normalizarIdioma } from "@/lib/i18n/idiomas";
 
 /** Lê env do processo; completa com .env / .env.local se rodando localmente. */
 function loadEnv(): Record<string, string> {
@@ -54,14 +55,12 @@ const ORG_NAME = env.OWNER_ORG_NAME || "Minha Empresa";
  * todo mundo que o dono convidasse.
  *
  * Fecha para o padrão diante de qualquer valor desconhecido: um `.env` com
- * `APP_LOCALE=en` não pode derrubar a instalação nem escrever lixo no banco.
+ * `APP_LOCALE=fr` não pode derrubar a instalação nem escrever lixo no banco. A
+ * lista é a do registro de idiomas (`IDIOMAS`), não uma cópia: a cópia que
+ * estava aqui (`["pt-BR", "es"]`) gravaria português para quem escolheu inglês
+ * no instalador no dia em que o inglês foi promovido (issue #12).
  */
-const IDIOMAS_SERVIDOS = ["pt-BR", "es"] as const;
-const APP_LOCALE = (IDIOMAS_SERVIDOS as readonly string[]).includes(
-  (env.APP_LOCALE ?? "").trim(),
-)
-  ? (env.APP_LOCALE as string).trim()
-  : "pt-BR";
+const APP_LOCALE = normalizarIdioma((env.APP_LOCALE ?? "").trim());
 
 if (!SUPABASE_URL || !SERVICE_ROLE) {
   throw new Error("Faltam NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY.");

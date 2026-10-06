@@ -10,9 +10,11 @@ import {
   avisoDeEventoMorto,
   IA_QUE_NAO_RESPONDEU,
   MENSAGEM_QUE_NAO_ENTROU,
+  tituloEmTodoIdioma,
 } from "@/lib/event-log/aviso-de-evento-morto";
 import { dispatchEvent, getRegisteredHandlers, type EventRow } from "@/lib/event-log/dispatcher";
 import { logger } from "@/lib/logger";
+import { idiomaPeloCliente } from "@/lib/i18n/aviso-no-idioma";
 import { ehOperante } from "@/lib/organizacao/operante";
 
 const MAX_ATTEMPTS = 5;
@@ -82,16 +84,25 @@ export async function avisarEventoMorto(
   motivo: string,
 ): Promise<void> {
   try {
-    const { data: jaAberto } = await admin
+    let busca = admin
       .from("agent_inbox_items")
       .select("id")
       .eq("organization_id", row.organization_id)
       .eq("kind", "event_dead")
       .eq("status", "open")
       .neq("title", IA_QUE_NAO_RESPONDEU.titulo)
-      .neq("title", MENSAGEM_QUE_NAO_ENTROU.titulo)
-      .limit(1)
-      .maybeSingle();
+      .neq("title", MENSAGEM_QUE_NAO_ENTROU.titulo);
+    // As duas famílias próprias em TODO idioma: o aviso nasce no idioma da
+    // organização, e o da IA em espanhol não pode calar o genérico.
+    for (const titulo of [
+      ...tituloEmTodoIdioma(IA_QUE_NAO_RESPONDEU.titulo),
+      ...tituloEmTodoIdioma(MENSAGEM_QUE_NAO_ENTROU.titulo),
+    ]) {
+      if (titulo !== IA_QUE_NAO_RESPONDEU.titulo && titulo !== MENSAGEM_QUE_NAO_ENTROU.titulo) {
+        busca = busca.neq("title", titulo);
+      }
+    }
+    const { data: jaAberto } = await busca.limit(1).maybeSingle();
     if (jaAberto) return;
 
     // `critical` e não `warn`: é a mesma classe de `job_dead` — algo que o
@@ -101,11 +112,14 @@ export async function avisarEventoMorto(
     // que esta função existe para tornar visível.
     // O texto é o MESMO do dreno do agent-engine (`edge/crm/drain.ts`), que
     // desiste do `ai_agent.dispatch_requested` — ver `aviso-de-evento-morto.ts`.
-    const { title, body } = avisoDeEventoMorto({
-      eventType: row.event_type,
-      tentativas: row.attempts + 1,
-      motivo,
-    });
+    const { title, body } = avisoDeEventoMorto(
+      {
+        eventType: row.event_type,
+        tentativas: row.attempts + 1,
+        motivo,
+      },
+      await idiomaPeloCliente(admin, row.organization_id),
+    );
     const { error } = await admin.from("agent_inbox_items").insert({
       organization_id: row.organization_id,
       kind: "event_dead",

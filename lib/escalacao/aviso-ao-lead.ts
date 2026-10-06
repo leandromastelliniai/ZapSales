@@ -51,6 +51,8 @@
 
 import { createHash } from "node:crypto";
 
+import type { Idioma } from "@/lib/i18n/idiomas";
+
 import type { QuemPodeAssumir } from "./disponibilidade";
 
 /**
@@ -207,14 +209,61 @@ const FECHOS_ES = {
   ],
 } as const;
 
+/**
+ * E em inglês (issue #12), pela mesma razão: a organização em `en` conversa em
+ * inglês, e o aviso no meio da conversa não pode ser a única frase em outra
+ * língua. As variantes seguem a regra das outras duas — redação diferente de
+ * verdade, não sinônimo, para o `spinningGate` não vetar a terceira.
+ */
+const ABERTURAS_EN: Record<MotivoDoAviso, readonly string[]> = {
+  suspeita_de_opt_out: [
+    "Got it. I'll stop sending you automated messages here.",
+    "Noted: no more automated messages will go to this number.",
+    "Okay! Automated messages on this channel are switched off right now.",
+  ],
+  pediu_humano: [
+    "Sure! I'm calling someone from the team to talk with you.",
+    "No problem. I just asked a person from our team to take it from here.",
+    "Perfect. Your conversation is now with a human agent.",
+  ],
+  orcamento_de_ia: [
+    "I'm handing your conversation over to someone on the team.",
+    "From here on, a team member will continue with you.",
+    "This chat is being transferred to a human agent.",
+  ],
+  outro: [
+    "A person will handle this better. I've already let the team know.",
+    "I'd rather not guess here: your request went to a human agent.",
+    "Let me get help from someone on the team to sort this out with you.",
+  ],
+};
+
+const FECHOS_EN = {
+  sem_equipe: [
+    "Your request is on record and the team will reply as soon as possible.",
+    "Everything is noted; we'll get back to you as soon as we can.",
+    "It's logged here, and someone will answer at the first chance.",
+  ],
+  fora_de_expediente: [
+    "Nobody is available right now, but your request is on record.",
+    "No one is free at the moment; I left your request for the team.",
+    "There's no agent available this minute; your conversation is in the queue.",
+  ],
+  com_equipe: [
+    "Just wait a moment here in the chat.",
+    "Stay right here and someone will reply shortly.",
+    "Please hold on a moment in this conversation.",
+  ],
+} as const;
+
 interface TextosDoAviso {
   aberturas: Record<MotivoDoAviso, readonly string[]>;
   fechos: { sem_equipe: readonly string[]; fora_de_expediente: readonly string[]; com_equipe: readonly string[] };
   fechoDoOptOut: string;
 }
 
-const TEXTOS: Record<"pt" | "es", TextosDoAviso> = {
-  pt: {
+const TEXTOS: Record<Idioma, TextosDoAviso> = {
+  "pt-BR": {
     aberturas: ABERTURAS,
     fechos: FECHOS,
     fechoDoOptOut: "Encaminhei seu pedido para uma pessoa da equipe confirmar.",
@@ -224,6 +273,11 @@ const TEXTOS: Record<"pt" | "es", TextosDoAviso> = {
     fechos: FECHOS_ES,
     fechoDoOptOut: "Le pasé tu pedido a una persona del equipo para que lo confirme.",
   },
+  en: {
+    aberturas: ABERTURAS_EN,
+    fechos: FECHOS_EN,
+    fechoDoOptOut: "I passed your request to a person on the team to confirm it.",
+  },
 };
 
 /**
@@ -231,7 +285,13 @@ const TEXTOS: Record<"pt" | "es", TextosDoAviso> = {
  * ausente) segue em português, que é o comportamento de antes desta tabela.
  */
 function textosDoIdioma(idioma: string | null | undefined): TextosDoAviso {
-  return (idioma ?? "").trim().toLowerCase().startsWith("es") ? TEXTOS.es : TEXTOS.pt;
+  // Pela subtag primária, e não pelo código exato: `es-MX` gravado à mão no
+  // banco continua sendo espanhol. O mapa é exaustivo em `Idioma`, então um
+  // idioma promovido no registro reprova a compilação até ganhar as frases.
+  const primario = (idioma ?? "").trim().toLowerCase().split("-")[0];
+  if (primario === "es") return TEXTOS.es;
+  if (primario === "en") return TEXTOS.en;
+  return TEXTOS["pt-BR"];
 }
 
 /**

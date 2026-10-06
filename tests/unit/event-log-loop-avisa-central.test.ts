@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   sincronizarAvisoDoLacoDeEventLog,
   TITULO_LACO_EVENT_LOG_DEGRADADO,
+  TITULOS_LACO_EVENT_LOG_DEGRADADO,
 } from "@/lib/event-log/aviso-do-laco";
 
 type Filtro = [string, unknown];
@@ -12,6 +13,10 @@ type Row = Record<string, unknown>;
 function cadeia<T>(valor: T, filtros: Filtro[]) {
   const q = {
     eq(coluna: string, valorDoFiltro: unknown) {
+      filtros.push([coluna, valorDoFiltro]);
+      return q;
+    },
+    in(coluna: string, valorDoFiltro: unknown) {
       filtros.push([coluna, valorDoFiltro]);
       return q;
     },
@@ -90,7 +95,7 @@ describe("laço rápido do event_log — feedback visível", () => {
     expect(f.filtrosDeSelect).toEqual(
       expect.arrayContaining([
         ["kind", "other"],
-        ["title", TITULO_LACO_EVENT_LOG_DEGRADADO],
+        ["title", TITULOS_LACO_EVENT_LOG_DEGRADADO],
         ["status", "open"],
       ]),
     );
@@ -105,7 +110,7 @@ describe("laço rápido do event_log — feedback visível", () => {
     expect(f.updates[0]).toMatchObject({ status: "resolved", resolved_at: expect.any(String) });
     expect(f.filtrosDeUpdate).toEqual([
       ["kind", "other"],
-      ["title", TITULO_LACO_EVENT_LOG_DEGRADADO],
+      ["title", TITULOS_LACO_EVENT_LOG_DEGRADADO],
       ["status", "open"],
     ]);
   });

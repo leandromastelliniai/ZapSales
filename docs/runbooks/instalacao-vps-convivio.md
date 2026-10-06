@@ -5,8 +5,12 @@ Nginx instalado no sistema — servindo outros sites nas portas 80/443. O ZapSal
 tocar neles: toda a stack escuta só no `127.0.0.1`, e o proxy ganha **um bloco** que
 repassa o domínio do ZapSales para lá.
 
-O modo "VPS limpa" (o ZapSales com o próprio proxy, para quem não tem nada na máquina) é a
-issue #12 e ainda não está no kit: numa VPS sem proxy nas portas 80/443 o kit para e diz isso.
+O modo "VPS limpa" (o ZapSales com o próprio proxy, para quem não tem nada na máquina) é o
+outro modo do mesmo kit (issue #12), com guia próprio:
+[`instalacao-vps-limpa.md`](./instalacao-vps-limpa.md). O kit escolhe sozinho pelo dono das
+portas 80/443 e grava a escolha em `ZAPSALES_MODO` no `.env`; ele nunca troca de modo sozinho —
+se o proxy do sistema estiver parado numa instalação `convivendo`, o kit para e explica, em vez
+de tomar as portas dos outros sites.
 
 ## O que precisa existir antes
 
@@ -35,12 +39,15 @@ Sem as variáveis, ele pergunta. Outras opcionais:
 | Variável | Para quê |
 |---|---|
 | `ZAPSALES_EMPRESA` | nome da organização criada com o primeiro administrador |
+| `ZAPSALES_IDIOMA` | `pt-BR`, `es` ou `en` — idioma com que a organização nasce (padrão: pergunta; sem terminal, `pt-BR`) |
 | `ZAPSALES_SENHA` | senha do primeiro administrador (padrão: gerada) |
 | `ZAPSALES_IMAGENS=construir` | constrói as imagens na VPS em vez de puxar do registro (ver abaixo) |
 | `ZAPSALES_VERSAO` | versão das imagens do registro (padrão: a do `package.json`) |
 
 Ao fim, as credenciais do primeiro acesso ficam em `/etc/zapsales/primeiro-acesso` (só o
-root lê): `sudo cat /etc/zapsales/primeiro-acesso`. Troque a senha no primeiro login.
+root lê): `sudo cat /etc/zapsales/primeiro-acesso`. Na primeira rodada, com terminal, o kit
+pergunta a senha (Enter gera uma); guarde-a num cofre de senhas e apague o arquivo. O produto
+ainda não tem tela de troca de senha, e o "esqueci a senha" depende de e-mail configurado.
 
 ### Imagens: registro ou construção local
 

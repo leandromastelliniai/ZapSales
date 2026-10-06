@@ -19,6 +19,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { idsDoContatoEGemeos } from "@/lib/channels/contato-por-telefone";
 import { logger } from "@/lib/logger";
+import { idiomaPeloCliente, preencher } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { IDIOMA_PADRAO, normalizarIdioma, type Idioma } from "@/lib/i18n/idiomas";
 
 import { flowGraphSchema, type FlowGraph, type FlowNode, type ReplySaveTo } from "./graph-schema";
 import {
@@ -47,6 +50,7 @@ import {
 import { coletarEsperasAdaptativas, type EsperaAdaptativa, type TimingPlan } from "./timing-plan";
 import {
   avisoDeRecuperacaoEsgotada,
+  textoDoAvisoRecuperacaoEsgotada,
   type AvisoRecuperacaoEsgotada,
 } from "./no-show-recuperacao-esgotada";
 import { interpolarDestino, persistirRespostaFollowupSupabase } from "./persistir-resposta";
@@ -157,6 +161,12 @@ export interface AdminClient {
   applyEnrollmentStep?(id:string,orgId:string,patch:EnrollmentPatch,event:{job_claim?:JobClaim;job_id?:string;node_id:string;event_type:string;payload:Record<string,unknown>;idempotency_key:string}):Promise<void>;
   updateEnrollment(id: string, orgId: string, patch: EnrollmentPatch): Promise<void>;
   loadFlowPointerName(orgId: string, pointerId: string): Promise<string | null>;
+  /**
+   * O `organizations.locale` — os avisos que este motor grava na Central saem no
+   * idioma da organização, porque a tela os mostra como foram gravados.
+   * Opcional: sem ele (dublê de teste), o aviso sai em português.
+   */
+  loadOrgLocale?(orgId: string): Promise<string | null>;
   insertDeadInboxItem(item: { organization_id: string; title: string; body: string; ref_id: string }): Promise<void>;
   /**
    * Nó `internal_task` (#1540): grava a tarefa no CRM para o contato da
@@ -350,10 +360,15 @@ async function markDead(
   // status='dead' gravado e o aviso NUNCA sair — enrollment morto em
   // silêncio. Duplicata visível > perda silenciosa.
   const flowName = (await db.loadFlowPointerName(enrollment.organization_id, enrollment.pointer_id)) ?? enrollment.pointer_id;
+  const idioma = await idiomaDoAviso(db, enrollment.organization_id);
   await db.insertDeadInboxItem({
     organization_id: enrollment.organization_id,
-    title: "Um fluxo de follow-up parou de tentar",
-    body: `O fluxo "${flowName}" (enrollment ${enrollment.id}) foi marcado como "dead": ${sanitized}`,
+    title: traduzir("Um fluxo de follow-up parou de tentar", idioma),
+    body: preencher(traduzir('O fluxo "{fluxo}" (enrollment {id}) foi marcado como "dead": {motivo}', idioma), {
+      fluxo: flowName,
+      id: enrollment.id,
+      motivo: sanitized,
+    }),
     ref_id: enrollment.id,
   });
 
@@ -367,6 +382,15 @@ async function markDead(
     completed_at: clock().toISOString(),
     updated_at: clock().toISOString(),
   });
+}
+
+/** O idioma do aviso. Nunca lança: na dúvida, português. */
+async function idiomaDoAviso(db: AdminClient, orgId: string): Promise<Idioma> {
+  try {
+    return normalizarIdioma((await db.loadOrgLocale?.(orgId)) ?? null);
+  } catch {
+    return IDIOMA_PADRAO;
+  }
 }
 
 async function applyHandlerFailure(
@@ -697,13 +721,17 @@ async function processEnrollment(
       const nome =
         (await db.loadFlowPointerName(enrollment.organization_id, enrollment.pointer_id)) ??
         enrollment.pointer_id;
+      const idioma = await idiomaDoAviso(db, enrollment.organization_id);
       await db.insertDeadInboxItem({
         organization_id: enrollment.organization_id,
-        title: "Um retorno programado não pôde ser enviado",
-        body:
-          `O fluxo "${nome}" esperava a data do retorno, mas o atendimento que o originou ` +
-          `foi encerrado ou substituído no meio da espera, e o envio foi cancelado ` +
-          `(enrollment ${enrollment.id}). Fale com o contato por outro caminho se ainda fizer sentido.`,
+        title: traduzir("Um retorno programado não pôde ser enviado", idioma),
+        body: preencher(
+          traduzir(
+            'O fluxo "{fluxo}" esperava a data do retorno, mas o atendimento que o originou foi encerrado ou substituído no meio da espera, e o envio foi cancelado (enrollment {id}). Fale com o contato por outro caminho se ainda fizer sentido.',
+            idioma,
+          ),
+          { fluxo: nome, id: enrollment.id },
+        ),
         ref_id: enrollment.id,
       });
     }
@@ -1060,6 +1088,9 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
       if (error) throw new Error(error.message);
       return data?.name ?? null;
     },
+    async loadOrgLocale(orgId) {
+      return idiomaPeloCliente(admin, orgId);
+    },
     async insertDeadInboxItem(item) {
       const { error } = await admin.from("agent_inbox_items").insert({
         organization_id: item.organization_id,
@@ -1267,6 +1298,7 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
         if ((contato as { is_anonymized: boolean | null } | null)?.is_anonymized === true) return;
       }
 
+      const texto = textoDoAvisoRecuperacaoEsgotada(await idiomaPeloCliente(admin, item.organization_id));
       const { error } = await admin.from("agent_inbox_items").insert({
         organization_id: item.organization_id,
         // Reusa o kind da 0224 (mesma família: "a recuperação desta falta
@@ -1274,10 +1306,8 @@ export function createSupabaseAdminClient(admin: SupabaseClient): AdminClient {
         // Central já sabe renderizar `ref_kind='appointment'`.
         kind: "appointment_recovery_review",
         severity: "warn",
-        title: "Cliente faltou e não respondeu à recuperação",
-        body:
-          "As mensagens de reengajamento pós-falta foram enviadas e o cliente não respondeu. " +
-          "Decida o próximo passo e mova o card no funil.",
+        title: texto.title,
+        body: texto.body,
         ref_kind: "appointment",
         ref_id: item.appointment_id,
         appointment_revision: item.appointment_revision,

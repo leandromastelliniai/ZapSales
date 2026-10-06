@@ -1,6 +1,11 @@
 import { Document, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import React from "react";
 
+import { traduzir } from "@/lib/i18n/dicionario";
+import { preencher } from "@/lib/i18n/aviso-no-idioma";
+import { tagDeIdioma } from "@/lib/i18n/datas";
+import { IDIOMA_PADRAO, type Idioma } from "@/lib/i18n/idiomas";
+
 import { formatarMoeda } from "./moeda";
 
 const styles = StyleSheet.create({
@@ -34,17 +39,29 @@ export interface PropostaPdfInput {
    */
   marca: { app_name: string | null; accent_hex: string | null; logoUrl: string | null };
   destinatario: { nome: string; email: string | null; telefone: string | null };
+  /**
+   * O idioma da ORGANIZAÇÃO que envia — quem recebe a proposta é cliente dela,
+   * não de quem apertou o botão. Ausente: português, o texto de sempre.
+   */
+  idioma?: Idioma;
 }
 
 function PropostaPdfDoc({ d }: { d: PropostaPdfInput }): React.ReactElement {
   const accent = d.marca.accent_hex ?? undefined;
+  const idioma = d.idioma ?? IDIOMA_PADRAO;
+  const tag = tagDeIdioma(idioma);
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View>
             <Text style={[styles.titulo, accent ? { color: accent } : undefined]}>{d.titulo}</Text>
-            {d.numero && <Text>Proposta {String(d.numero).padStart(4, "0")}/{d.ano}{d.versao > 1 ? ` — v${d.versao}` : ""}</Text>}
+            {d.numero && (
+              <Text>
+                {preencher(traduzir("Proposta {numero}", idioma), { numero: `${String(d.numero).padStart(4, "0")}/${d.ano}` })}
+                {d.versao > 1 ? ` — v${d.versao}` : ""}
+              </Text>
+            )}
           </View>
           {d.marca.logoUrl ? (
             <Image src={d.marca.logoUrl} style={styles.logo} />
@@ -53,7 +70,7 @@ function PropostaPdfDoc({ d }: { d: PropostaPdfInput }): React.ReactElement {
           )}
         </View>
 
-        <Text>Para: {d.destinatario.nome}</Text>
+        <Text>{preencher(traduzir("Para: {nome}", idioma), { nome: d.destinatario.nome })}</Text>
 
         <View style={{ marginTop: 16 }}>
           {d.itens.map((it, i) => (
@@ -62,21 +79,28 @@ function PropostaPdfDoc({ d }: { d: PropostaPdfInput }): React.ReactElement {
                 {it.imagemUrl && <Image src={it.imagemUrl} style={styles.itemImagem} />}
                 <Text>{it.descricao} (x{it.quantidade})</Text>
               </View>
-              <Text>{formatarMoeda(it.quantidade * it.precoUnitarioCents - it.descontoCents, d.moeda)}</Text>
+              <Text>{formatarMoeda(it.quantidade * it.precoUnitarioCents - it.descontoCents, d.moeda, tag)}</Text>
             </View>
           ))}
         </View>
 
-        <Text style={[styles.total, accent ? { color: accent } : undefined]}>Total: {formatarMoeda(d.totalCents, d.moeda)}</Text>
+        <Text style={[styles.total, accent ? { color: accent } : undefined]}>
+          {preencher(traduzir("Total: {valor}", idioma), { valor: formatarMoeda(d.totalCents, d.moeda, tag) })}
+        </Text>
 
-        {d.validUntil && <Text style={{ marginTop: 8 }}>Válida até {d.validUntil}</Text>}
+        {d.validUntil && (
+          <Text style={{ marginTop: 8 }}>{preencher(traduzir("Válida até {data}", idioma), { data: d.validUntil })}</Text>
+        )}
         {d.condicoes && <Text style={{ marginTop: 8 }}>{d.condicoes}</Text>}
 
         <Text
           style={styles.footer}
           fixed
           render={({ pageNumber, totalPages }) =>
-            `${d.marca.app_name ?? "Proposta comercial"} — página ${pageNumber} de ${totalPages}`
+            `${d.marca.app_name ?? traduzir("Proposta comercial", idioma)} — ${preencher(
+              traduzir("página {pagina} de {total}", idioma),
+              { pagina: pageNumber, total: totalPages },
+            )}`
           }
         />
       </Page>

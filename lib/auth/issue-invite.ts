@@ -11,6 +11,7 @@ import { signInviteToken, INVITE_TTL_SECONDS } from "@/lib/auth/invite-token";
 import { buildInviteEmail } from "@/lib/email/templates/invite";
 import { sendEmail, type EmailDeliveryError, type TransporteDeEmail } from "@/lib/email/roteador";
 import { marcaDaSaida } from "@/lib/branding/saida";
+import { idiomaDaOrganizacao } from "@/lib/i18n/idioma-da-organizacao";
 
 /** Link sempre existe, inclusive quando a instalação não configurou e-mail. */
 export async function issueInvite(input: {
@@ -62,7 +63,10 @@ export async function issueInvite(input: {
   // Falhas de infraestrutura não desfazem a organização já criada nem o link.
   if (input.dispatch !== false) {
     try {
-      const marca = await marcaDaSaida(input.organizationId);
+      const [marca, idioma] = await Promise.all([
+        marcaDaSaida(input.organizationId),
+        idiomaDaOrganizacao(input.organizationId),
+      ]);
       const message = buildInviteEmail({
         inviterName: input.inviterName,
         orgName: input.orgName,
@@ -70,6 +74,7 @@ export async function issueInvite(input: {
         role: input.role,
         expiresAt: new Date(exp * 1000),
         marca,
+        idioma,
       });
       const result = await sendEmail({
         to: email,

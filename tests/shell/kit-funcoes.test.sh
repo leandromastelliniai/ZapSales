@@ -87,6 +87,68 @@ igual "proxy não suportado" "outro:apache2" "$(printf '%s\n' "$ss_outro" | dete
 ss_8080='LISTEN 0 4096 *:8080 *:* users:(("caddy",pid=9,fd=4))'
 igual "porta 8080 não é a porta web" "nenhum" "$(printf '%s\n' "$ss_8080" | detectar_proxy)"
 
+echo "idioma — a resposta de uma pessoa vira o código servido"
+igual "Enter (1) é português" "pt-BR" "$(idioma_valido 1)"
+igual "número 3 é inglês" "en" "$(idioma_valido 3)"
+igual "o código, em qualquer caixa" "en" "$(idioma_valido EN)"
+igual "o nome da língua" "es" "$(idioma_valido 'Español')"
+igual "pt-BR como o .env guarda" "pt-BR" "$(idioma_valido pt-BR)"
+igual "idioma não servido: vazio" "" "$(idioma_valido fr)"
+
+echo "moldes do GoTrue — assunto no idioma, e o kit só regrava o que é dele"
+igual "assunto em inglês" "Reset your password" "$(assunto_do_molde recovery en)"
+igual "idioma desconhecido cai no português" "Confirme seu e-mail" "$(assunto_do_molde confirmation fr)"
+verdade "vazio é do kit (primeira rodada)" eh_valor_do_kit_para_molde ""
+verdade "a URL interna do app é do kit" eh_valor_do_kit_para_molde "http://app:3000/email-templates/recovery?idioma=es"
+verdade "um assunto que o kit gravou é do kit" eh_valor_do_kit_para_molde "Confirma tu correo"
+falso "URL do operador fica" eh_valor_do_kit_para_molde "https://moldes.empresa.com/confirmar.html"
+falso "assunto do operador fica" eh_valor_do_kit_para_molde "Bem-vindo à Acme!"
+
+echo "modo — VPS limpa ou convivendo"
+igual "portas livres na primeira rodada: limpa" "limpa" "$(decidir_modo nenhum '' '')"
+igual "Caddy do sistema na primeira rodada: convivendo" "convivendo" "$(decidir_modo caddy-host '' '')"
+igual "Nginx do sistema: convivendo" "convivendo" "$(decidir_modo nginx-host '' '')"
+igual "segunda rodada do limpa: o Caddy da stack não é alheio" "limpa" "$(decidir_modo zapsales limpa '')"
+igual "segunda rodada do convivendo, proxy de pé" "convivendo" "$(decidir_modo caddy-host convivendo '')"
+# O kit nunca troca de modo sozinho: o proxy dos outros parado não é convite
+# para tomar as portas deles.
+verdade "convivendo com o proxy do sistema parado: erro, não limpa" \
+  grep -q '^erro:.*parou' <<<"$(decidir_modo nenhum convivendo '')"
+igual "…a não ser que o operador peça" "limpa" "$(decidir_modo nenhum convivendo limpa)"
+verdade "limpa pedido com proxy alheio nas portas: erro" \
+  grep -q '^erro:.*caddy do sistema' <<<"$(decidir_modo caddy-host '' limpa)"
+verdade "convivendo pedido com as portas do próprio Caddy: erro" \
+  grep -q '^erro:' <<<"$(decidir_modo zapsales limpa convivendo)"
+verdade "contêiner alheio nas portas: erro" grep -q '^erro:.*contêiner' <<<"$(decidir_modo docker '' '')"
+verdade "proxy desconhecido: erro com o nome dele" grep -q '^erro:.*apache2' <<<"$(decidir_modo outro:apache2 '' '')"
+verdade "modo inválido: erro" grep -q '^erro:ZAPSALES_MODO=vps' <<<"$(decidir_modo nenhum '' vps)"
+
+echo "modo — arquivos do compose"
+igual "limpa: o conjunto base, Caddy em 80/443" "docker-compose.prod.yml:docker-compose.supabase.yml" "$(arquivos_compose limpa)"
+igual "convivendo: com o override do loopback" \
+  "docker-compose.prod.yml:docker-compose.supabase.yml:docker-compose.convivio.yml" "$(arquivos_compose convivendo)"
+# O ensaio de restauração nunca pode publicar 80/443 ao lado da instalação no ar.
+igual "ensaio de uma instalação limpa ganha o loopback" \
+  "docker-compose.prod.yml:docker-compose.supabase.yml:docker-compose.convivio.yml:docker-compose.build.yml" \
+  "$(compose_com_loopback docker-compose.prod.yml:docker-compose.supabase.yml:docker-compose.build.yml)"
+igual "convivendo já tem: nada muda" "$(arquivos_compose convivendo)" "$(compose_com_loopback "$(arquivos_compose convivendo)")"
+igual "lista sem o supabase: o override vai no fim" "a.yml:docker-compose.convivio.yml" "$(compose_com_loopback a.yml)"
+
+echo "modo — portas publicadas"
+ps_limpa='caddy 0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp
+app 3000/tcp
+db 5432/tcp'
+igual "limpa: só as 80/443 do Caddy, e elas são o esperado" "" \
+  "$(printf '%s\n' "$ps_limpa" | portas_publicas | tirar_as_portas_web_do_caddy)"
+ps_vazou='caddy 0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp
+db 0.0.0.0:5432->5432/tcp
+waha :::3000->3000/tcp'
+igual "banco e WAHA publicados são acusados mesmo no limpa" "db 0.0.0.0:5432->5432/tcp|waha :::3000->3000/tcp" \
+  "$(printf '%s\n' "$ps_vazou" | portas_publicas | tirar_as_portas_web_do_caddy | paste -sd'|')"
+igual "outro serviço na 443 não vira Caddy" "app 0.0.0.0:443->443/tcp" \
+  "$(printf 'app 0.0.0.0:443->443/tcp\n' | portas_publicas | tirar_as_portas_web_do_caddy)"
+igual "loopback não é exposição" "" "$(printf 'caddy 127.0.0.1:8088->80/tcp\n' | portas_publicas)"
+
 echo "proxy — porta livre no loopback"
 ocupadas='LISTEN 0 511 127.0.0.1:8088 0.0.0.0:*
 LISTEN 0 511 127.0.0.1:8089 0.0.0.0:*
@@ -158,6 +220,30 @@ falso "prazo inválido é recusado" podar_dumps "$D" 0
 echo "backup — repositório no R2"
 igual "endereço S3 do R2" "s3:https://abc123.r2.cloudflarestorage.com/meu-bucket/zapsales" \
   "$(repositorio_r2 abc123 meu-bucket)"
+
+echo "obter — o comando único escolhe a versão"
+# shellcheck source=/dev/null
+ZAPSALES_OBTER_SO_FUNCOES=1 . kit/obter.sh
+set +e  # o obter.sh liga -e; este gate conta falhas, não aborta na primeira
+release='{
+  "url": "https://api.github.com/repos/leandromastelliniai/ZapSales/releases/1",
+  "tag_name": "v0.2.0",
+  "name": "v0.2.0 — tag_name falso no nome"
+}'
+igual "a tag da última release" "v0.2.0" "$(printf '%s\n' "$release" | tag_da_ultima_release)"
+igual "sem release (404 do GitHub): vazio" "" "$(printf '{"message":"Not Found"}\n' | tag_da_ultima_release)"
+igual "200 com release: a tag" "v0.2.0" "$(printf '%s\n' "$release" | ref_pela_resposta 200 '')"
+igual "404 (nenhuma release): a main" "main" "$(printf '{"message":"Not Found"}\n' | ref_pela_resposta 404 '')"
+# Soluço do GitHub nunca empurra uma instalação fixada para a tag móvel.
+igual "limite da API com versão em uso: fica a versão" "v0.1.0" \
+  "$(printf '{"message":"API rate limit exceeded"}\n' | ref_pela_resposta 403 v0.1.0)"
+verdade "sem rede e sem versão em uso: erro, não main" \
+  grep -q '^erro:' <<<"$(printf '' | ref_pela_resposta 000 '')"
+igual "API do repositório" "https://api.github.com/repos/leandromastelliniai/ZapSales" \
+  "$(api_do_repo https://github.com/leandromastelliniai/ZapSales.git)"
+igual "o obter não depende de outro arquivo do kit" "" "$(grep -nE '^[[:space:]]*(\.|source) ' kit/obter.sh)"
+verdade "obter.sh e instalar.sh são executáveis no git" \
+  test "$(git ls-files -s kit/obter.sh kit/instalar.sh | awk '{print $1}' | sort -u)" = "100755"
 
 echo "roteiros do kit — sintaxe"
 for f in kit/*.sh kit/lib/*.sh; do

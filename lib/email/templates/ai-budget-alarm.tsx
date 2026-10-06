@@ -9,6 +9,8 @@
  * D1 de marca (`tests/unit/branding.test.ts`): ele ainda escreve o nosso nome,
  * o que só passa a importar no dia em que ele voltar a ser enviado.
  */
+import { escapeHtml } from "@/lib/html/escapar";
+
 export interface BudgetAlarmEmailOptions {
   pct: number;
   consumedCents: number;
@@ -77,13 +79,4 @@ export function buildBudgetAlarmEmail(opts: BudgetAlarmEmailOptions): {
     .join("\n");
 
   return { subject, html, text };
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }

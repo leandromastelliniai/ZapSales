@@ -13,6 +13,8 @@ import { emitLeadActivity } from "@/lib/leads/activity-emitter";
 import { autorizaCron } from "@/lib/auth/cron-auth";
 import { logger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { normalizarIdioma, type Idioma } from "@/lib/i18n/idiomas";
 import { dataIsoNoFuso } from "@/lib/propostas/data-no-fuso";
 import { FUSO_PADRAO, fusoUtilizavel } from "@/lib/tempo/fusos";
 
@@ -51,10 +53,14 @@ async function rodarVencimento(
 
   const orgIds = [...new Set((candidatas ?? []).map((p) => p.organization_id))];
   const fusoPorOrganizacao = new Map<string, string>();
+  // Mesma leitura, mais uma coluna: o aviso sai no idioma da organização (a
+  // Central o mostra como foi gravado).
+  const idiomaPorOrganizacao = new Map<string, Idioma>();
   if (orgIds.length > 0) {
-    const { data: orgs } = await admin.from("organizations").select("id, timezone").in("id", orgIds);
-    for (const o of (orgs ?? []) as Array<{ id: string; timezone: string | null }>) {
+    const { data: orgs } = await admin.from("organizations").select("id, timezone, locale").in("id", orgIds);
+    for (const o of (orgs ?? []) as Array<{ id: string; timezone: string | null; locale?: string | null }>) {
       fusoPorOrganizacao.set(o.id, fusoUtilizavel(o.timezone));
+      idiomaPorOrganizacao.set(o.id, normalizarIdioma(o.locale ?? null));
     }
   }
   const vencidas = encontrarPropostasVencidas(candidatas ?? [], new Date(), fusoPorOrganizacao);
@@ -89,12 +95,16 @@ async function rodarVencimento(
       .eq("status", "open")
       .maybeSingle();
     if (!existente) {
+      const idioma = idiomaPorOrganizacao.get(p.organization_id) ?? "pt-BR";
       const { error: inboxErr } = await admin.from("agent_inbox_items").insert({
         organization_id: p.organization_id,
         kind: "proposal_expired_notice",
         severity: "warn",
-        title: "Uma proposta venceu sem decisão do cliente",
-        body: "O prazo de validade passou e ninguém marcou aceite ou recusa. Reveja a proposta e decida os próximos passos com o cliente.",
+        title: traduzir("Uma proposta venceu sem decisão do cliente", idioma),
+        body: traduzir(
+          "O prazo de validade passou e ninguém marcou aceite ou recusa. Reveja a proposta e decida os próximos passos com o cliente.",
+          idioma,
+        ),
         ref_kind: "proposal",
         ref_id: p.id,
       });

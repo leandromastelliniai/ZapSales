@@ -27,7 +27,8 @@
  * `created_at` (`supabase/baseline.sql`, `create table public.webhook_events_log`).
  */
 import { ARCHIVED_AT, queryTolerantToMissingArchived } from "@/lib/channels/archived";
-import { avisoDeEventoMorto, MENSAGEM_QUE_NAO_ENTROU } from "@/lib/event-log/aviso-de-evento-morto";
+import { avisoDeEventoMorto, MENSAGEM_QUE_NAO_ENTROU, tituloEmTodoIdioma } from "@/lib/event-log/aviso-de-evento-morto";
+import { idiomaPeloCliente } from "@/lib/i18n/aviso-no-idioma";
 import { logger } from "@/lib/logger";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { processarEventoWaha } from "@/lib/waha/desfecho-do-webhook";
@@ -78,16 +79,20 @@ async function avisarMensagemPerdida(admin: Admin, linha: LinhaArquivada, tentat
       .eq("organization_id", linha.organization_id)
       .eq("kind", "event_dead")
       .eq("status", "open")
-      .eq("title", MENSAGEM_QUE_NAO_ENTROU.titulo)
+      // Em TODO idioma: o aviso nasce no idioma da organização.
+      .in("title", tituloEmTodoIdioma(MENSAGEM_QUE_NAO_ENTROU.titulo))
       .limit(1)
       .maybeSingle();
     if (jaAberto) return;
-    const { title, body } = avisoDeEventoMorto({
-      eventType: "waha.webhook",
-      tentativas,
-      motivo: linha.error_message ?? "falha transitória do banco",
-      efeito: MENSAGEM_QUE_NAO_ENTROU,
-    });
+    const { title, body } = avisoDeEventoMorto(
+      {
+        eventType: "waha.webhook",
+        tentativas,
+        motivo: linha.error_message ?? "falha transitória do banco",
+        efeito: MENSAGEM_QUE_NAO_ENTROU,
+      },
+      await idiomaPeloCliente(admin, linha.organization_id),
+    );
     const { error } = await admin.from("agent_inbox_items").insert({
       organization_id: linha.organization_id,
       kind: "event_dead",

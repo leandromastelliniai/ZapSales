@@ -36,6 +36,9 @@ export default defineConfig({
   retries: 0,
   use: {
     baseURL: `http://localhost:${PORT}`,
+    // Uma pessoa no Brasil: sem isto o `en-US` padrão do Playwright pede as
+    // telas sem sessão em inglês, servido desde a issue #12.
+    locale: "pt-BR",
     trace: "retain-on-failure",
     // Microfone falso: o composer grava áudio via getUserMedia/MediaRecorder —
     // sem isto o passo 5 da jornada não existe em headless.

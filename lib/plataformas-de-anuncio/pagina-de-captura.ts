@@ -9,6 +9,10 @@
  * que custa o lead inteiro quando quebra.
  */
 import { NextResponse, type NextRequest } from "next/server";
+import { escapeHtml } from "@/lib/html/escapar";
+import { tagDeIdioma } from "@/lib/i18n/datas";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { IDIOMA_PADRAO, IDIOMAS } from "@/lib/i18n/idiomas";
 
 /** Mesma lição de `lib/auth/rate-limit.ts`: sem IP identificável, não conta —
  * um balde global aqui trancaria a landing page da instalação inteira. */
@@ -44,8 +48,16 @@ export function paginaDeSaida(destino: string | null): NextResponse {
   if (destino) {
     return NextResponse.redirect(destino, { status: 302 });
   }
+  // Quem abre é um lead vindo de anúncio: não há sessão nem organização para
+  // perguntar o idioma, e o link pode ter circulado em qualquer país. A frase
+  // sai nos idiomas servidos, um parágrafo cada, cada um com o próprio `lang`.
+  const titulo = IDIOMAS.map((idioma) => traduzir("Link indisponível", idioma)).join(" · ");
+  const frases = IDIOMAS.map(
+    (idioma) =>
+      `<p lang="${tagDeIdioma(idioma)}">${escapeHtml(traduzir("Este link não está disponível no momento.", idioma))}</p>`,
+  ).join("");
   return new NextResponse(
-    `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Link indisponível</title></head><body style="font-family:system-ui,sans-serif;padding:2rem;text-align:center;color:#333"><p>Este link não está disponível no momento.</p></body></html>`,
+    `<!doctype html><html lang="${tagDeIdioma(IDIOMA_PADRAO)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(titulo)}</title></head><body style="font-family:system-ui,sans-serif;padding:2rem;text-align:center;color:#333">${frases}</body></html>`,
     { status: 404, headers: { "content-type": "text/html; charset=utf-8" } },
   );
 }

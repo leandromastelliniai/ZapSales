@@ -31,6 +31,8 @@ RAIZ="$RAIZ_KIT"
 . "$KIT/lib/comum.sh"
 # shellcheck source=lib/stack.sh
 . "$KIT/lib/stack.sh"
+# shellcheck source=lib/proxy.sh
+. "$KIT/lib/proxy.sh"
 # shellcheck source=lib/restic.sh
 . "$KIT/lib/restic.sh"
 
@@ -186,6 +188,11 @@ ensaio() {
   for k in APP_IMAGE WORKER_IMAGE SCHEDULER_IMAGE COMPOSE_FILE APP_VERSION; do
     env_definir "$env" "$k" "$(env_ler "$RAIZ_KIT/.env" "$k")"
   done
+  # O ensaio escuta SEMPRE no loopback, na --porta. Numa instalação do modo
+  # VPS limpa o COMPOSE_FILE de produção não traz o override do loopback, e o
+  # Caddy do ensaio iria disputar as portas 80/443 com a instalação no ar.
+  env_definir "$env" COMPOSE_FILE "$(compose_com_loopback "$(env_ler "$env" COMPOSE_FILE)")"
+  env_definir "$env" ZAPSALES_MODO convivendo
   RAIZ="$DESTINO_ENSAIO"
 
   restaurar_banco

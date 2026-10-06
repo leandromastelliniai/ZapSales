@@ -1,5 +1,10 @@
 import { createHash } from "node:crypto";
 
+import { escapeHtml } from "@/lib/html/escapar";
+import { tagDeIdioma } from "@/lib/i18n/datas";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { IDIOMA_PADRAO, type Idioma } from "@/lib/i18n/idiomas";
+
 /**
  * A PONTE DE VOLTA — o documento same-origin que fecha uma navegação de OAuth.
  *
@@ -52,28 +57,26 @@ function literalDeScript(valor: string): string {
   return JSON.stringify(valor).replace(/</g, "\\u003c");
 }
 
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 /**
  * @param destino  caminho interno já filtrado por `safeNext`
  * @param nomeDaMarca  `marcaDaSaida(null).nome` (nunca lança)
- * @param mensagem  texto visível enquanto o documento não segue
+ * @param mensagem  texto visível enquanto o documento não segue, já no idioma
+ * @param idioma  de quem volta — o do navegador (`Accept-Language`): a sessão
+ *   acabou de nascer e a página dura um instante, então não vale ler o perfil
  */
-export function respostaDePonte(destino: string, nomeDaMarca: string, mensagem: string): Response {
+export function respostaDePonte(
+  destino: string,
+  nomeDaMarca: string,
+  mensagem: string,
+  idioma: Idioma = IDIOMA_PADRAO,
+): Response {
   const script = `window.location.replace(${literalDeScript(destino)});`;
   const hash = createHash("sha256").update(script).digest("base64");
   const alvo = escapeHtml(destino);
   const nome = escapeHtml(nomeDaMarca);
 
   return new Response(
-    `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Voltando ao ${nome}</title><body><p>${escapeHtml(mensagem)}</p><a href="${alvo}">Continuar no ${nome}</a><script>${script}</script></body></html>`,
+    `<!doctype html><html lang="${tagDeIdioma(idioma)}"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(traduzir("Voltando ao {marca}", idioma)).replace("{marca}", () => nome)}</title><body><p>${escapeHtml(mensagem)}</p><a href="${alvo}">${escapeHtml(traduzir("Continuar no {marca}", idioma)).replace("{marca}", () => nome)}</a><script>${script}</script></body></html>`,
     {
       headers: {
         "Content-Type": "text/html; charset=utf-8",

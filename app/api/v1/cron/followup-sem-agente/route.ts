@@ -49,6 +49,9 @@ import { ok, fail } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { logger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { leitorDeIdiomaPeloCliente, preencher } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
+import type { Idioma } from "@/lib/i18n/idiomas";
 import { autorizaCron } from "@/lib/auth/cron-auth";
 import {
   createSupabaseFollowupGateDb,
@@ -82,14 +85,22 @@ interface PonteiroDesarmado {
   active_version_id: string | null;
 }
 
-export function corpoDoAviso(nome: string, kind: string): string {
-  const quando = COMO_DISPARA[kind] ?? "pelo gatilho configurado";
-  return (
-    `O fluxo «${nome}» está publicado e dispararia ${quando} — mas nenhum agente publicado ` +
-    `arma ele, e por isso nenhum contato entra. Abra IA › Agentes, escolha o agente que ` +
-    `atende esse número, marque «${nome}» em "follow-ups que arma" e publique a versão. ` +
-    `Este aviso se resolve sozinho quando o vínculo existir.`
+/** No `idioma` da organização: a Central mostra o aviso como foi gravado. */
+export function corpoDoAviso(nome: string, kind: string, idioma: Idioma = "pt-BR"): string {
+  const gatilho = COMO_DISPARA[kind];
+  const quando = gatilho ? traduzir(gatilho, idioma) : traduzir("pelo gatilho configurado", idioma);
+  return preencher(
+    traduzir(
+      'O fluxo «{nome}» está publicado e dispararia {quando} — mas nenhum agente publicado arma ele, e por isso nenhum contato entra. Abra IA › Agentes, escolha o agente que atende esse número, marque «{nome}» em "follow-ups que arma" e publique a versão. Este aviso se resolve sozinho quando o vínculo existir.',
+      idioma,
+    ),
+    { nome, quando },
   );
+}
+
+/** O título, no mesmo idioma do corpo. */
+export function tituloDoAviso(nome: string, idioma: Idioma = "pt-BR"): string {
+  return preencher(traduzir("O follow-up «{nome}» não está disparando", idioma), { nome });
 }
 
 /** Sem grafo (ou grafo ilegível) falha fechado: o aviso continua sendo o certo. */
@@ -179,6 +190,8 @@ async function handle(req: NextRequest): Promise<Response> {
   let abertos = 0;
   let jaAbertos = 0;
   let fechados = 0;
+  // O aviso sai no idioma de cada organização: a Central o mostra como foi gravado.
+  const idiomaDe = leitorDeIdiomaPeloCliente(admin);
 
   for (const ponteiro of candidatos) {
     const armados = armadosPorOrg.get(ponteiro.organization_id);
@@ -222,6 +235,7 @@ async function handle(req: NextRequest): Promise<Response> {
       continue;
     }
 
+    const idioma = await idiomaDe(ponteiro.organization_id);
     const { error: erroAviso } = await admin.from("agent_inbox_items").insert({
       organization_id: ponteiro.organization_id,
       kind: KIND,
@@ -229,8 +243,8 @@ async function handle(req: NextRequest): Promise<Response> {
       // está. Mas também não é `info` — há gente que devia estar sendo
       // reengajada e não está, e isso pede uma ação de alguém.
       severity: "warn",
-      title: `O follow-up «${ponteiro.name}» não está disparando`,
-      body: corpoDoAviso(ponteiro.name, ponteiro.kind),
+      title: tituloDoAviso(ponteiro.name, idioma),
+      body: corpoDoAviso(ponteiro.name, ponteiro.kind, idioma),
       ref_kind: "followup_flow",
       ref_id: ponteiro.id,
     });

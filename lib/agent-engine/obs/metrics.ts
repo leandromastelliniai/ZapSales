@@ -20,6 +20,9 @@
  */
 import type pg from 'pg';
 
+import { idiomaPeloPool, preencher } from '@/lib/i18n/aviso-no-idioma';
+import { traduzir } from '@/lib/i18n/dicionario';
+
 import { sessionHealthMetrics, type SessionHealthMetric } from '../edge/crm/session-watchdog';
 import type { JobRow } from '../queue/queue';
 
@@ -131,23 +134,30 @@ export async function evaluateCacheHitAlert(
   if (runs < knobs.cacheHitAlertMinRuns || avgRatio === null || avgRatio >= knobs.cacheHitAlertThreshold) {
     return { runs, avgRatio, alerted: false };
   }
+  // No idioma da organização: a Central mostra o aviso como foi gravado.
+  const idioma = await idiomaPeloPool(db, tenantId);
   const res = await db.query(
     `insert into agent_inbox_items (organization_id, kind, severity, title, body, ref_kind)
-     select $1, 'other', 'warn',
-            'Cache hit de prompt abaixo do alvo — custo por run acima do esperado',
-            $2,
-            $3
+     select $1, 'other', 'warn', $4, $2, $3
      where not exists (
        select 1 from agent_inbox_items
        where organization_id = $1 and ref_kind = $3 and status = 'open'
      )`,
     [
       tenantId,
-      `média de cache_read/input nos últimos ${runs} runs da janela = ` +
-        `${(avgRatio * 100).toFixed(1)}% (alvo ≥ ${(knobs.cacheHitAlertThreshold * 100).toFixed(0)}%). ` +
-        'Prefixo do prompt possivelmente abaixo do mínimo cacheável do modelo ou com conteúdo ' +
-        'volátil antes do último breakpoint — ver CLAUDE.md regra 15 e o smoke de caching.',
+      preencher(
+        traduzir(
+          'média de cache_read/input nos últimos {runs} runs da janela = {media}% (alvo ≥ {alvo}%). Prefixo do prompt possivelmente abaixo do mínimo cacheável do modelo ou com conteúdo volátil antes do último breakpoint — ver CLAUDE.md regra 15 e o smoke de caching.',
+          idioma,
+        ),
+        {
+          runs,
+          media: (avgRatio * 100).toFixed(1),
+          alvo: (knobs.cacheHitAlertThreshold * 100).toFixed(0),
+        },
+      ),
       CACHE_ALERT_REF_KIND,
+      traduzir('Cache hit de prompt abaixo do alvo — custo por run acima do esperado', idioma),
     ],
   );
   return { runs, avgRatio, alerted: (res.rowCount ?? 0) > 0 };

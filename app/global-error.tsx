@@ -4,6 +4,19 @@ import * as Sentry from "@sentry/nextjs";
 import { useEffect, useState } from "react";
 
 import { copyToClipboard } from "@/lib/clipboard";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { IDIOMA_PADRAO, normalizarIdioma, parseAcceptLanguage, type Idioma } from "@/lib/i18n/idiomas";
+
+/**
+ * O idioma de quem viu o erro. Este é o error boundary da RAIZ: renderiza fora
+ * de qualquer provider, quando o app já falhou — não há `useT` a chamar. O
+ * navegador é a fonte que sobra, e `traduzir` é função pura: nada aqui pode
+ * falhar de novo. Sem `navigator` (pré-render), o padrão do produto.
+ */
+function idiomaDoNavegador(): Idioma {
+  if (typeof navigator === "undefined") return IDIOMA_PADRAO;
+  return normalizarIdioma(parseAcceptLanguage((navigator.languages ?? [navigator.language]).join(",")));
+}
 
 export default function GlobalError({
   error,
@@ -20,10 +33,11 @@ export default function GlobalError({
     setEventId(id);
   }, [error]);
 
+  const [idioma] = useState<Idioma>(idiomaDoNavegador);
   const displayId = eventId ?? error.digest ?? "—";
 
   return (
-    <html lang="pt-BR">
+    <html lang={idioma}>
       <body
         style={{
           margin: 0,
@@ -50,10 +64,13 @@ export default function GlobalError({
           }}
         >
           <h1 style={{ fontSize: "1.5rem", margin: "0 0 0.5rem", fontWeight: 600 }}>
-            Algo deu errado
+            {traduzir("Algo deu errado", idioma)}
           </h1>
           <p style={{ color: "#57534e", margin: "0 0 1.5rem" }}>
-            Tente novamente em instantes. Se persistir, contate o suporte com o ID abaixo.
+            {traduzir(
+              "Tente novamente em instantes. Se persistir, contate o suporte com o ID abaixo.",
+              idioma,
+            )}
           </p>
           <div
             style={{
@@ -87,7 +104,7 @@ export default function GlobalError({
                 cursor: "pointer",
               }}
             >
-              {copied ? "Copiado!" : "Copiar ID"}
+              {copied ? traduzir("Copiado!", idioma) : traduzir("Copiar ID", idioma)}
             </button>
             <button
               type="button"
@@ -101,7 +118,7 @@ export default function GlobalError({
                 cursor: "pointer",
               }}
             >
-              Tentar de novo
+              {traduzir("Tentar de novo", idioma)}
             </button>
           </div>
         </div>

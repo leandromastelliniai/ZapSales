@@ -18,6 +18,9 @@ import { z } from "zod";
 
 import { fusoDaJanela } from "@/lib/agent-engine/pacing/store";
 import { logger } from "@/lib/logger";
+import { idiomaPeloCliente, preencher } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { IDIOMAS, type Idioma } from "@/lib/i18n/idiomas";
 
 import { GRATIS_POR_MES, inicioDoMesNoFuso, limiarAtingido } from "./atendimento-gratis";
 import { custoDaMensagem } from "./custo-real";
@@ -242,17 +245,25 @@ async function avisarSeCruzouLimiar(
   // `agent_inbox_atendimento_gratis_unico` (migration 0540): dois webhooks
   // simultâneos que alcançam o limiar juntos abrem um aviso só — o segundo
   // recebe 23505. A consulta abaixo só poupa a tentativa de cada mensagem.
-  const title =
-    limiar === 100
-      ? `As 1.000 mensagens de atendimento grátis de ${mes} deste número acabaram`
-      : `Este número já usou 80% das 1.000 mensagens de atendimento grátis de ${mes}`;
+  // O aviso sai no idioma da organização (issue #12); a consulta abaixo procura
+  // o título em TODO idioma, para uma troca de idioma no meio do mês não abrir
+  // um segundo aviso do mesmo limiar.
+  const idioma = await idiomaPeloCliente(admin, organizationId);
+  const tituloEm = (i: Idioma) =>
+    preencher(
+      limiar === 100
+        ? traduzir("As 1.000 mensagens de atendimento grátis de {mes} deste número acabaram", i)
+        : traduzir("Este número já usou 80% das 1.000 mensagens de atendimento grátis de {mes}", i),
+      { mes },
+    );
+  const title = tituloEm(idioma);
   const { data: jaAberto } = await admin
     .from("agent_inbox_items")
     .select("id")
     .eq("organization_id", organizationId)
     .eq("kind", "atendimento_gratis_do_numero")
     .eq("ref_id", channelSessionId)
-    .eq("title", title)
+    .in("title", IDIOMAS.map(tituloEm))
     .limit(1);
   if ((jaAberto ?? []).length > 0) return;
   const { error } = await admin.from("agent_inbox_items").insert({
@@ -260,10 +271,18 @@ async function avisarSeCruzouLimiar(
     kind: "atendimento_gratis_do_numero",
     severity: limiar === 100 ? "warn" : "info",
     title,
-    body:
+    body: preencher(
       limiar === 100
-        ? `A partir de agora, cada mensagem de atendimento deste número é cobrada pela Meta até o dia 1 do mês que vem (fuso ${c.fuso}).`
-        : `${c.usadas} de ${c.gratis} usadas. Ao passar de ${c.gratis}, a Meta passa a cobrar cada mensagem de atendimento deste número até o fim do mês (fuso ${c.fuso}).`,
+        ? traduzir(
+            "A partir de agora, cada mensagem de atendimento deste número é cobrada pela Meta até o dia 1 do mês que vem (fuso {fuso}).",
+            idioma,
+          )
+        : traduzir(
+            "{usadas} de {gratis} usadas. Ao passar de {gratis}, a Meta passa a cobrar cada mensagem de atendimento deste número até o fim do mês (fuso {fuso}).",
+            idioma,
+          ),
+      { fuso: c.fuso, usadas: c.usadas, gratis: c.gratis },
+    ),
     ref_kind: "channel_session",
     ref_id: channelSessionId,
   });

@@ -28,6 +28,10 @@ export function bancoEmMemoria(tabelas: Record<string, Linha[]>): SupabaseClient
         filtros.push((l) => (l[c] ?? null) === v);
         return alvo;
       },
+      in(c: string, vs: readonly unknown[]) {
+        filtros.push((l) => vs.includes(l[c]));
+        return alvo;
+      },
       limit(n: number) {
         teto = n;
         return alvo;

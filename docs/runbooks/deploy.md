@@ -17,7 +17,8 @@ cd /opt/zapsales && sudo kit/instalar.sh
 ```
 
 Passo a passo completo, com o que cada etapa faz e como conferir:
-[`instalacao-vps-convivio.md`](./instalacao-vps-convivio.md). Backup e restauração:
+[`instalacao-vps-convivio.md`](./instalacao-vps-convivio.md) (VPS com outros sites) ou
+[`instalacao-vps-limpa.md`](./instalacao-vps-limpa.md) (VPS só do ZapSales). Backup e restauração:
 [`backup-e-restauracao.md`](./backup-e-restauracao.md).
 
 ### O roteamento faz parte de todo `up -d`

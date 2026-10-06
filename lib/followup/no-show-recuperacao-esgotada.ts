@@ -18,7 +18,25 @@
  * adaptador em `engine.ts` (`abrirAvisoRecuperacaoEsgotada`), no mesmo lugar e
  * pelo mesmo motivo que `insertDeadInboxItem`.
  */
+import { traduzir } from "@/lib/i18n/dicionario";
+import type { Idioma } from "@/lib/i18n/idiomas";
+
 import type { EnrollmentRow, NodeResult } from "./node-handlers";
+
+/**
+ * O texto do aviso, no idioma da organização — a Central o mostra como foi
+ * gravado. Um só para os dois adaptadores (`engine.ts` e `turn-bridge.ts`),
+ * que antes repetiam o literal cada um.
+ */
+export function textoDoAvisoRecuperacaoEsgotada(idioma: Idioma): { title: string; body: string } {
+  return {
+    title: traduzir("Cliente faltou e não respondeu à recuperação", idioma),
+    body: traduzir(
+      "As mensagens de reengajamento pós-falta foram enviadas e o cliente não respondeu. Decida o próximo passo e mova o card no funil.",
+      idioma,
+    ),
+  };
+}
 
 export interface AvisoRecuperacaoEsgotada {
   organization_id: string;

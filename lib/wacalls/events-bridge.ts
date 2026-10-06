@@ -17,6 +17,8 @@ import type pg from 'pg';
 import { phoneLookupVariants } from '@/lib/channels/phone-variants';
 import { emitAgentActivityForContact } from '@/lib/leads/agent-activity';
 import { motivoDaChamadaEmPortugues } from '@/lib/wacalls/motivo-da-chamada';
+import { idiomaPeloPool, preencher } from '@/lib/i18n/aviso-no-idioma';
+import { traduzir } from '@/lib/i18n/dicionario';
 
 import type { Logger } from '../agent-engine/obs/logger';
 
@@ -397,13 +399,16 @@ async function handleCallEnded(
   // Chamada de número que não casou com contato nenhum entra sem referência —
   // o telefone está no título, e o aviso continua sendo aviso.
   if (!atendida && recebida) {
+    // No idioma da organização: a Central mostra o aviso como foi gravado. O
+    // motivo conhecido é frase do dicionário; o desconhecido leva o token cru.
+    const idioma = await idiomaPeloPool(pool, sess.organizationId);
     await pool.query(
       `insert into agent_inbox_items (organization_id, kind, severity, title, body, ref_kind, ref_id)
        values ($1, 'voice_call_missed', 'warn', $2, $3, $4, $5)`,
       [
         sess.organizationId,
-        `Chamada perdida de ${row.peer_phone}`,
-        motivoDaChamadaEmPortugues(ev.reason),
+        preencher(traduzir('Chamada perdida de {telefone}', idioma), { telefone: row.peer_phone }),
+        traduzir(motivoDaChamadaEmPortugues(ev.reason), idioma),
         row.contact_id ? 'contact' : null,
         row.contact_id,
       ],

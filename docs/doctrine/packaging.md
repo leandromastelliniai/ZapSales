@@ -12,8 +12,9 @@ Ao mudar um invariante aqui, atualize os dois na mesma sessão.
 
 > **O kit de instalação mora em `kit/`.** O kit herdado da origem (`install.sh`,
 > `update.sh`, `agent.sh`) foi removido. O novo é `kit/instalar.sh`, que instala E atualiza
-> (rodar de novo é a atualização), no modo "convivendo com outros apps" (issue #3); o modo
-> "VPS limpa" é a issue #12. Onde esta lei fala em `install.sh` e `update.sh`, leia
+> (rodar de novo é a atualização), nos modos "convivendo com outros apps" (issue #3) e
+> "VPS limpa" (issue #12), e o comando único de uma VPS nova é o `kit/obter.sh`, que clona a
+> última release e chama o `kit/instalar.sh`. Onde esta lei fala em `install.sh` e `update.sh`, leia
 > `kit/instalar.sh` — os invariantes valem para ele integralmente. Ele grava tag de versão
 > quando puxa do registro; `ZAPSALES_IMAGENS=construir` é a exceção de
 > [`deploy.md` §4](../runbooks/deploy.md), usada enquanto as imagens são privadas.

@@ -24,12 +24,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { campanhasDoNumero, fraseDaPausa, pausarAutomaticamente } from "@/lib/campanhas/pausa-automatica";
+import { idiomaPeloCliente } from "@/lib/i18n/aviso-no-idioma";
 import { logger } from "@/lib/logger";
 
 import { REF_KIND_SESSAO } from "../health";
 import { resolveMetaCreds } from "./credentials";
 import { graphBaseUrl } from "./graph-base";
-import { apelidoDoNumero, avisoDeSaude, ehQualidadeVermelha, PREFIXO_DO_AVISO_DE_QUALIDADE, type EstadoDeSaude } from "./saude";
+import { apelidoDoNumero, avisoDeSaude, ehQualidadeVermelha, PREFIXOS_DO_AVISO_DE_QUALIDADE, type EstadoDeSaude } from "./saude";
 import type { BusinessCapabilityEvent, NumberQualityEvent } from "./webhook";
 
 export { avisoDeSaude, limiteDoPortfolio, tamanhoDoLimite, type EstadoDeSaude } from "./saude";
@@ -174,7 +175,9 @@ export async function aplicarEventoDeSaude(
       );
     }
 
-    const aviso = avisoDeSaude(antes, depois, apelido);
+    if (!avisoDeSaude(antes, depois, apelido)) return "atualizado";
+    // No idioma da organização: a Central mostra o aviso como foi gravado.
+    const aviso = avisoDeSaude(antes, depois, apelido, await idiomaPeloCliente(admin, sessao.organization_id));
     if (!aviso) return "atualizado";
 
     const { error: erroAviso } = await admin.from("agent_inbox_items").insert({
@@ -220,7 +223,7 @@ async function fecharAvisosDeQualidade(admin: SupabaseClient, sessao: LinhaDaSes
     return;
   }
   const ids = ((data ?? []) as Array<{ id: string; title: string }>)
-    .filter((a) => a.title.startsWith(PREFIXO_DO_AVISO_DE_QUALIDADE))
+    .filter((a) => PREFIXOS_DO_AVISO_DE_QUALIDADE.some((prefixo) => a.title.startsWith(prefixo)))
     .map((a) => a.id);
   // Um por id: são um ou dois avisos abertos, nunca uma lista longa.
   for (const id of ids) {
