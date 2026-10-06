@@ -14,29 +14,35 @@ import type { Idioma } from "@/lib/i18n/idiomas";
  * Os marcadores são trocados DEPOIS da tradução, para a ordem das palavras ser
  * a de cada língua, e o guarda de forma do catálogo
  * (`catalogo-de-idioma-tem-forma`) reprova a tradução que perder um deles.
+ *
+ * As duas são REPASSE (o corpo é uma chamada, a chave atravessa): é a forma que
+ * o guarda "dado do operador" de `i18n-espanhol-cobre-a-tela` reconhece como
+ * entrada da tradução, e não como tela escolhendo traduzir um dado.
  */
-export function frase(idioma: Idioma, chave: string, valores: Record<string, string> = {}): string {
-  let texto = traduzir(chave, idioma);
-  for (const [nome, valor] of Object.entries(valores)) texto = texto.replaceAll(`{${nome}}`, valor);
-  return texto;
-}
+export const frase = (idioma: Idioma, chave: string, valores: Record<string, string> = {}): string =>
+  preencher(traduzir(chave, idioma), valores);
 
 /**
  * A mesma frase para o corpo HTML. A tradução e cada valor passam por escape;
  * `marcacao` entra crua porque é montada pelo template (um `<strong>` em volta
  * de um valor que ele mesmo escapou), nunca dado de fora.
  */
-export function fraseHtml(
+export const fraseHtml = (
   idioma: Idioma,
   chave: string,
   valores: Record<string, string> = {},
   marcacao: Record<string, string> = {},
-): string {
-  let texto = escapeHtml(traduzir(chave, idioma));
-  for (const [nome, valor] of Object.entries(marcacao)) texto = texto.replaceAll(`{${nome}}`, valor);
-  for (const [nome, valor] of Object.entries(valores))
-    texto = texto.replaceAll(`{${nome}}`, escapeHtml(valor));
-  return texto;
+): string =>
+  preencher(
+    preencher(escapeHtml(traduzir(chave, idioma)), marcacao),
+    Object.fromEntries(Object.entries(valores).map(([nome, valor]) => [nome, escapeHtml(valor)])),
+  );
+
+function preencher(texto: string, valores: Record<string, string>): string {
+  return Object.entries(valores).reduce(
+    (parcial, [nome, valor]) => parcial.replaceAll(`{${nome}}`, valor),
+    texto,
+  );
 }
 
 export function escapeHtml(s: string): string {
