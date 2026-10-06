@@ -229,6 +229,48 @@
       "col": 5,
       "type": "external",
       "label": "webhook da Meta (status assinado) — entregue, lido e a falha que chega depois"
+    },
+    {
+      "id": "precos-admin",
+      "lane": "tela",
+      "col": 4,
+      "type": "ui",
+      "label": "/admin/precos-da-meta — tabela de preços por país e categoria + cotação do dólar (administrador da instalação)"
+    },
+    {
+      "id": "rota-custo",
+      "lane": "api",
+      "col": 6,
+      "type": "service",
+      "label": "GET /api/v1/campaigns/:id/cost + /atendimento-gratis — estimativa, custo Meta + IA, por lead, anúncio, contador das 1.000"
+    },
+    {
+      "id": "teto-de-gasto",
+      "lane": "motor",
+      "col": 5,
+      "type": "logic",
+      "label": "teto-de-gasto.ts + fn_campanha_reservar_lote_no_teto — reserva só o que cabe (lock por organização); não cabe → pausa com motivo"
+    },
+    {
+      "id": "meta-pricing-rates",
+      "lane": "dados",
+      "col": 5,
+      "type": "database",
+      "label": "meta_pricing_rates — preço por país (prefixo) e categoria, da instalação"
+    },
+    {
+      "id": "meta-message-costs",
+      "lane": "dados",
+      "col": 6,
+      "type": "database",
+      "label": "meta_message_costs — custo por mensagem: estimado no envio, real pelo pricing do webhook"
+    },
+    {
+      "id": "aviso-gratis",
+      "lane": "retorno",
+      "col": 6,
+      "type": "logic",
+      "label": "registro.ts — 80% e 100% das 1.000 de atendimento grátis viram aviso na Central (atendimento_gratis_do_numero)"
     }
   ],
   "edges": [
@@ -274,6 +316,15 @@
     { "id": "webhook-carimba", "from": "webhook-meta", "to": "messages", "label": "statuses: delivered_at / read_at / failed" },
     { "id": "webhook-falha-tardia", "from": "webhook-meta", "to": "falha-oficial", "label": "failed de mensagem de campanha" },
     { "id": "falha-recoloca", "from": "falha-oficial", "to": "campaign-recipients", "label": "volta à fila, opted_out ou failed com o motivo" },
-    { "id": "falha-recusa-marketing", "from": "falha-oficial", "to": "elegibilidade", "label": "131050: consent.marketing.declined_at tira o contato das próximas" }
+    { "id": "falha-recusa-marketing", "from": "falha-oficial", "to": "elegibilidade", "label": "131050: consent.marketing.declined_at tira o contato das próximas" },
+    { "id": "precos-grava-tabela", "from": "precos-admin", "to": "meta-pricing-rates", "label": "updatePrecosDaMeta (server action, audita platform.meta_pricing_updated)" },
+    { "id": "rodada-pergunta-teto", "from": "rodada-oficial", "to": "teto-de-gasto", "label": "antes da reserva: quanto ainda cabe" },
+    { "id": "teto-le-custos", "from": "teto-de-gasto", "to": "meta-message-costs", "label": "comprometido = custo registrado + reservados em voo" },
+    { "id": "teto-pausa", "from": "teto-de-gasto", "to": "campaigns", "label": "pausa_motivo = teto_de_gasto + pausa_detalhe" },
+    { "id": "rodada-estima", "from": "rodada-oficial", "to": "meta-message-costs", "label": "estimativa pela tabela quando a Meta aceita o envio" },
+    { "id": "webhook-registra-custo", "from": "webhook-meta", "to": "meta-message-costs", "label": "pricing do status: a Meta diz se cobrou; a tabela diz quanto" },
+    { "id": "custos-avisam", "from": "meta-message-costs", "to": "aviso-gratis", "label": "mensagem de atendimento cruza 800 ou 1.000 no mês do fuso" },
+    { "id": "detalhe-le-custo", "from": "detalhe", "to": "rota-custo", "label": "cartão de custo e aviso de pausa automática" },
+    { "id": "custo-le-tabela", "from": "rota-custo", "to": "meta-pricing-rates", "label": "estimativa da prévia e da campanha preparada" }
   ]
 }

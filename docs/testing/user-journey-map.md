@@ -3364,3 +3364,31 @@ importa: `update of status` dispara mesmo sem mudança de valor, e o webhook sem
 - mensagem de campanha que ficou `queued` (canal sem credencial na hora) deixa o destinatário em
   `sending`, ligado a ela: a campanha só conclui quando a mensagem sair ou for dada como falha.
   Reenfileirar mandaria em dobro; marcar falha mentiria se ela sair.
+
+## J45 — Custo da campanha oficial: estimativa, teto, custo real e as 1.000 grátis `[P0]` (2026-10-06, issue #10)
+
+Mesma fronteira da J44: falso Graph na saída, webhook de status assinado **com `pricing`** na rota
+real na entrada, baseline aplicado, rotas do app, a server action do painel da instalação e o
+worker dirigido por passos com relógio controlado.
+
+Spec: `tests/invariants/custo-da-campanha-oficial.test.ts`; regras puras em `lib/custo/*.test.ts`
+(estimativa pela tabela, custo real a partir do `pricing`, teto, virada do mês no fuso e limiares
+de 80%/100%, formato de dinheiro).
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J45.1 | Prévia do público de uma campanha oficial | `estimativa` = elegíveis × preço da tabela (3 × R$ 0,3217 para três contatos do Brasil) | **PASS (invariante)** |
+| J45.2 | Campanha preparada, antes de iniciar | `GET /campaigns/:id/cost` traz a mesma estimativa e custo da Meta 0 | **PASS (invariante)** |
+| J45.3 | Teto da campanha (R$ 0,70, marketing a R$ 0,3217) | saem 2 de 3; a rodada seguinte pausa com `pausa_motivo = teto_de_gasto` e a frase com "R$ 0,70"; o falso Graph não recebe o terceiro | **PASS (invariante, relógio controlado)** |
+| J45.4 | Subir o teto e retomar | o motivo sai, e o terceiro é enviado | **PASS (invariante)** |
+| J45.5 | Teto mensal da empresa | com folga para uma mensagem, sai uma e a campanha pausa com o motivo da empresa; `campaign.auto_paused` auditado sem ator | **PASS (invariante)** |
+| J45.6 | Custo real pelo webhook | estimado no envio → `webhook` com o preço da tabela; reentrega de `read` não regrava; `billable: false` custa 0; `free_entry_point` marca janela grátis de anúncio; `failed` zera a estimativa | **PASS (invariante)** |
+| J45.7 | Relatório | Meta + IA (US$ convertido pela cotação, só do contato do destinatário e dentro da janela de atribuição) ÷ quem respondeu; conversas de anúncio contadas | **PASS (invariante)** |
+| J45.8 | As 1.000 grátis | a 800ª abre o aviso de 80% na Central, a reentrega não duplica, a 1.000ª abre o de 100%, a 1.001ª custa R$ 0,035; a rota do contador mostra 1.001/1.000 | **PASS (invariante)** |
+| J45.9 | Virada do mês no fuso da conta | 23h30 de 31/10 em São Paulo ainda conta outubro; à meia-noite de 01/11 o contador zera | **PASS (invariante, relógio controlado)** |
+| J45.10 | Alterar a tabela no painel | `updatePrecosDaMeta` grava; a próxima estimativa usa o preço novo; custo já registrado não muda | **PASS (invariante)** |
+| J45.11 | Isolamento | a organização B recebe 404 no custo da A e, como `authenticated` com RLS ligada, não lê nenhuma linha de `meta_message_costs` (controle: a A lê as dela) | **PASS (invariante)** |
+| J45.12 | Prova pela tela (estimativa, teto, cartão de custo, contador, painel de preços) | um leigo vê a estimativa antes de iniciar, o aviso de pausa e o cartão de custo | **PENDENTE** — a máquina desta sessão não tem Docker para subir o ambiente fresco estilo VPS; falta a spec Playwright |
+
+Sabotagem medida: desligar o teto na rodada (reserva sem teto e sem pausa) derruba quatro casos
+(J45.3, J45.4, J45.5 e a auditoria da pausa).

@@ -36,7 +36,9 @@ import {
   useTextosSalvos,
   useTirarDaExclusao,
 } from "@/hooks/campanhas/useConfiguracao";
+import { useAtendimentoGratis } from "@/hooks/campanhas/useCampanhas";
 import { useT } from "@/hooks/i18n/useT";
+import { centavosDoTexto, textoDosCentavos } from "@/lib/custo/formato";
 import { ArrowBendUpLeft } from "@/lib/ui/icons";
 
 export function ConfiguracaoDeCampanhas() {
@@ -60,6 +62,7 @@ export function ConfiguracaoDeCampanhas() {
       </header>
 
       <Padroes />
+      <AtendimentoGratis />
       <TextosSalvos />
       <ListaDeExclusao />
     </div>
@@ -76,6 +79,7 @@ function Padroes() {
   const [tetoHora, setTetoHora] = useState("");
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
+  const [tetoMensal, setTetoMensal] = useState("");
   const [carregado, setCarregado] = useState(false);
 
   useEffect(() => {
@@ -87,6 +91,7 @@ function Padroes() {
     setTetoHora(txt(c.teto_horario));
     setInicio(txt(c.janela_inicio_hora));
     setFim(txt(c.janela_fim_hora));
+    setTetoMensal(textoDosCentavos(c.teto_gasto_mensal_cents));
     setCarregado(true);
   }, [q.data, carregado]);
 
@@ -125,6 +130,20 @@ function Padroes() {
         <Campo id="p-fim" rotulo={t("Parar de enviar às (hora)")} valor={fim} onChange={setFim} />
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="p-teto-mensal">{t("Teto de gasto da Meta da empresa no mês (R$)")}</Label>
+        <Input
+          id="p-teto-mensal"
+          inputMode="decimal"
+          placeholder={t("Sem teto")}
+          value={tetoMensal}
+          onChange={(e) => setTetoMensal(e.target.value)}
+        />
+        <p className="text-sm text-muted-foreground">
+          {t("Soma tudo que a Meta cobra das mensagens da empresa no mês. Ao chegar nele, as campanhas oficiais em andamento pausam e dizem por quê; o mês vira à meia-noite do dia 1, no fuso da organização.")}
+        </p>
+      </div>
+
       <p className="text-sm text-muted-foreground">
         {t("A proteção do número — ritmo, janela e aquecimento que valem para tudo que sai por ele — fica em")}{" "}
         <Link href="/app/connections" className="underline">
@@ -145,6 +164,7 @@ function Padroes() {
               teto_horario: num(tetoHora),
               janela_inicio_hora: num(inicio),
               janela_fim_hora: num(fim),
+              teto_gasto_mensal_cents: centavosDoTexto(tetoMensal),
             })
           }
         >
@@ -154,6 +174,54 @@ function Padroes() {
           <span className="text-sm text-success-fg">{t("Padrões salvos.")}</span>
         )}
       </div>
+    </Card>
+  );
+}
+
+/** As 1.000 mensagens de atendimento grátis do mês, por número oficial (issue #10). */
+function AtendimentoGratis() {
+  const t = useT();
+  const q = useAtendimentoGratis();
+  if (q.isLoading) return <Skeleton className="h-24 w-full" />;
+  const numeros = q.data ?? [];
+  if (numeros.length === 0) return null;
+  return (
+    <Card className="space-y-4 p-4" data-testid="atendimento-gratis">
+      <div>
+        <h2 className="font-medium">{t("Mensagens de atendimento grátis do mês")}</h2>
+        <p className="text-sm text-muted-foreground">
+          {t("A Meta dá 1.000 mensagens de atendimento grátis por número a cada mês; depois disso, cada uma é cobrada. Você recebe um aviso na Central em 80% e em 100%.")}
+        </p>
+      </div>
+      <div className="space-y-3">
+        {numeros.map((n) => {
+          const pct = Math.min(100, Math.round((n.usadas / n.gratis) * 100));
+          return (
+            <div key={n.channel_session_id} className="space-y-1">
+              <div className="flex items-baseline justify-between gap-2 text-sm">
+                <span className="min-w-0 truncate">{n.nome ?? t("Número sem nome")}</span>
+                <span className="shrink-0 tabular-nums">
+                  {n.usadas.toLocaleString("pt-BR")} / {n.gratis.toLocaleString("pt-BR")}
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-surface-elevated">
+                <div
+                  className={pct >= 100 ? "h-full bg-error-fg" : pct >= 80 ? "h-full bg-warning-fg" : "h-full bg-accent-500"}
+                  style={{ width: `${pct}%` }}
+                  role="progressbar"
+                  aria-valuenow={pct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={t("Atendimento grátis usado")}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {t("Zera à meia-noite do dia 1, no fuso do número.")}
+      </p>
     </Card>
   );
 }

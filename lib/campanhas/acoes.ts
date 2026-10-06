@@ -48,6 +48,7 @@ export interface CampanhaCarregada {
   janela_fim_hora: number | null;
   teto_diario: number | null;
   teto_horario: number | null;
+  teto_gasto_cents: number | string | null;
   description: string | null;
   /** Com modelo, a campanha é OFICIAL (migration 0538). */
   meta_template_id: string | null;
@@ -60,7 +61,7 @@ export type Desfecho<T = unknown> = ({ ok: true } & T) | Recusa;
 const COLUNAS =
   "id, organization_id, name, status, channel_session_id, message_body, base_legal, lia_ref, " +
   "audience_filter, audience_version, content_version, scheduled_at, description, " +
-  "intervalo_segundos, janela_inicio_hora, janela_fim_hora, teto_diario, teto_horario, " +
+  "intervalo_segundos, janela_inicio_hora, janela_fim_hora, teto_diario, teto_horario, teto_gasto_cents, " +
   "meta_template_id, template_variables";
 
 export async function carregarCampanha(
@@ -289,6 +290,9 @@ export async function iniciarAcao(
       started_at: agora.toISOString(),
       paused_at: null,
       scheduled_at: null,
+      // Retomar é decisão de quem opera: o motivo da pausa automática sai junto.
+      pausa_motivo: null,
+      pausa_detalhe: null,
     })
     .eq("id", c.id)
     .eq("status", c.status)
@@ -317,7 +321,7 @@ export async function agendarAcao(
   }
   const { data } = await admin
     .from("campaigns")
-    .update({ status: "scheduled", scheduled_at: quando.toISOString(), paused_at: null })
+    .update({ status: "scheduled", scheduled_at: quando.toISOString(), paused_at: null, pausa_motivo: null, pausa_detalhe: null })
     .eq("id", c.id)
     .eq("status", c.status)
     .select("id");
@@ -334,7 +338,7 @@ export async function pausarAcao(
   if (recusa) return recusa;
   const { data } = await admin
     .from("campaigns")
-    .update({ status: "paused", paused_at: agora.toISOString() })
+    .update({ status: "paused", paused_at: agora.toISOString(), pausa_motivo: null, pausa_detalhe: null })
     .eq("id", c.id)
     .eq("status", c.status)
     .select("id");
@@ -391,6 +395,7 @@ export async function duplicarAcao(
       janela_fim_hora: c.janela_fim_hora,
       teto_diario: c.teto_diario,
       teto_horario: c.teto_horario,
+      teto_gasto_cents: c.teto_gasto_cents,
       // O modelo e o mapa vão junto: a cópia de uma campanha oficial é oficial.
       meta_template_id: c.meta_template_id,
       template_variables: mapaGuardado(c.template_variables),

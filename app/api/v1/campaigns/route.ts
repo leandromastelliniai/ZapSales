@@ -156,6 +156,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       janela_fim_hora: entrada.janela_fim_hora ?? null,
       teto_diario: entrada.teto_diario ?? null,
       teto_horario: entrada.teto_horario ?? null,
+      teto_gasto_cents: entrada.teto_gasto_cents ?? null,
       pipeline_id: entrada.pipeline_id ?? null,
       stage_id: entrada.stage_id ?? null,
       agent_id: entrada.agent_id ?? null,

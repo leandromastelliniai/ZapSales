@@ -17,6 +17,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { AvisoDePausaAutomatica, CampoDoTetoDeGasto, CustoDaCampanha } from "@/components/campanhas/CustoDaCampanha";
 import { EstadoDaCampanha } from "@/components/campanhas/EstadoDaCampanha";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,6 +43,7 @@ import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
 import { TEXTO_DA_EXCLUSAO } from "@/lib/campanhas/tipos";
 import { tagDeIdioma } from "@/lib/i18n/datas";
 import { useIdioma } from "@/lib/i18n/IdiomaProvider";
+import { centavosDoTexto, textoDosCentavos } from "@/lib/custo/formato";
 
 export function DetalheDaCampanha({ id }: { id: string }) {
   const t = useT();
@@ -143,6 +145,8 @@ export function DetalheDaCampanha({ id }: { id: string }) {
         </div>
       </header>
 
+      <AvisoDePausaAutomatica campanha={c} />
+
       {confirmando && (
         <Card className="space-y-3 border-warning-fg p-4">
           <p className="text-sm">
@@ -210,6 +214,8 @@ export function DetalheDaCampanha({ id }: { id: string }) {
           </p>
         </Card>
       )}
+
+      <CustoDaCampanha campanha={c} />
 
       <DestinoDaCampanha campanha={c} />
 
@@ -506,6 +512,7 @@ function RitmoDaCampanha({ campanha }: { campanha: CampanhaDetalhada }) {
   const [tetoHora, setTetoHora] = useState(texto(campanha.teto_horario));
   const [inicio, setInicio] = useState(texto(campanha.janela_inicio_hora));
   const [fim, setFim] = useState(texto(campanha.janela_fim_hora));
+  const [tetoGasto, setTetoGasto] = useState(textoDosCentavos(campanha.teto_gasto_cents));
 
   const encerrada = campanha.status === "completed" || campanha.status === "cancelled";
   if (encerrada) return null;
@@ -528,6 +535,8 @@ function RitmoDaCampanha({ campanha }: { campanha: CampanhaDetalhada }) {
         <CampoDeRitmo id="r-inicio" rotulo={t("Enviar só a partir das (hora)")} valor={inicio} onChange={setInicio} />
         <CampoDeRitmo id="r-fim" rotulo={t("Parar de enviar às (hora)")} valor={fim} onChange={setFim} />
       </div>
+      {/* O teto se ajusta com a campanha andando: subir é o que deixa retomar a que pausou por ele. */}
+      {campanha.meta_template_id && <CampoDoTetoDeGasto id="r-teto-gasto" valor={tetoGasto} onChange={setTetoGasto} />}
       <div className="flex items-center gap-3">
         <Button
           size="sm"
@@ -539,6 +548,7 @@ function RitmoDaCampanha({ campanha }: { campanha: CampanhaDetalhada }) {
               teto_horario: numero(tetoHora),
               janela_inicio_hora: numero(inicio),
               janela_fim_hora: numero(fim),
+              ...(campanha.meta_template_id ? { teto_gasto_cents: centavosDoTexto(tetoGasto) } : {}),
             })
           }
         >

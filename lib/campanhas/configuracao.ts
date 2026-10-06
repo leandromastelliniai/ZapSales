@@ -41,6 +41,12 @@ export const configuracaoDeCampanhasSchema = z.object({
   janela_fim_hora: z.number().int().min(1).max(24).nullable().default(null),
   teto_diario: z.number().int().min(1).max(10_000).nullable().default(null),
   teto_horario: z.number().int().min(1).max(10_000).nullable().default(null),
+  /**
+   * Teto de gasto da Meta da EMPRESA no mês (issue #10), em centavos — o mês é o
+   * do fuso da organização. Atingido, cada campanha oficial em andamento pausa
+   * com motivo na próxima rodada. `null` = sem teto mensal.
+   */
+  teto_gasto_mensal_cents: z.number().positive().max(1_000_000_000).nullable().default(null),
 });
 
 export type ConfiguracaoDeCampanhas = z.infer<typeof configuracaoDeCampanhasSchema>;
@@ -52,6 +58,7 @@ export const CONFIGURACAO_PADRAO: ConfiguracaoDeCampanhas = {
   janela_fim_hora: null,
   teto_diario: null,
   teto_horario: null,
+  teto_gasto_mensal_cents: null,
 };
 
 /**

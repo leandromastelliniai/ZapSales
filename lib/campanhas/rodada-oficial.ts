@@ -39,6 +39,8 @@ import { fusoDaJanela } from "@/lib/agent-engine/pacing/store";
 import { beginServiceAtOrigin } from "@/lib/atendimento/origem";
 import { CHANNEL_PROVIDER_META } from "@/lib/channels/capabilities";
 import { isStatusSendable } from "@/lib/channels/meta/template-binding";
+import { registrarEstimativaDoEnvio } from "@/lib/custo/registro";
+import { categoriaDoModelo, type LinhaDePreco } from "@/lib/custo/tabela-de-precos";
 import { logger } from "@/lib/logger";
 import { OrgNaoOperanteError, STATUS_OPERANTE, ehOperante, statusDaOrgEmbutida } from "@/lib/organizacao/operante";
 
@@ -53,6 +55,7 @@ import {
 } from "./falha-oficial";
 import { carregarModelo, type ModeloDaCampanha } from "./modelo-da-campanha";
 import { podeMandarAgora } from "./ritmo";
+import { pausarPorTeto, tetoDaRodada } from "./teto-de-gasto";
 import {
   estadoDeEnvio,
   numeroDoHistorico,
@@ -102,11 +105,14 @@ interface CampanhaOficialRow {
   janela_fim_hora: number | null;
   teto_diario: number | null;
   teto_horario: number | null;
+  /** Teto de gasto da Meta da campanha, em centavos (issue #10). */
+  teto_gasto_cents: number | string | null;
 }
 
 const COLUNAS =
   "id, organization_id, channel_session_id, name, meta_template_id, content_version, " +
-  "janela_inicio_hora, janela_fim_hora, teto_diario, teto_horario, organizations:organization_id!inner(status)";
+  "janela_inicio_hora, janela_fim_hora, teto_diario, teto_horario, teto_gasto_cents, " +
+  "organizations:organization_id!inner(status)";
 
 interface Reservado {
   id: string;
@@ -267,12 +273,32 @@ async function rodarUmaCampanhaOficial(
   const numeros = await numerosOficiais(admin, campanha, modelo);
   if (numeros.length === 0) return { placar, concluida: false, detalhe: "canal:sem_numero_oficial" };
 
+  // ─── O teto de gasto (issue #10) ───
+  // Antes da reserva: o que não cabe no teto da campanha ou no mensal da
+  // empresa nem chega a ser reservado. Não cabe nada → pausa com o motivo.
+  const teto = await tetoDaRodada(admin, campanha, modelo.category, agora);
+  // Sem ninguém na fila, não há o que o teto barrar: a campanha só espera os
+  // avisos da Meta para concluir, e pausá-la a deixaria aberta para sempre.
+  if (teto.cabem === 0 && (await temFilaVencida(admin, campanha, agora))) {
+    await pausarPorTeto(admin, campanha.organization_id, campanha.id, teto.detalhe ?? "Teto de gasto atingido.", agora);
+    return { placar, concluida: false, detalhe: `teto:${teto.esgotado}` };
+  }
+
   // ─── A reserva ───
-  const { data: reservados, error } = await admin.rpc("fn_campanha_reservar_lote", {
-    p_campaign_id: campanha.id,
-    p_limite: folga,
-    p_agora: agora.toISOString(),
-  });
+  // Com teto, a reserva refaz a conta com a organização travada: o laço do
+  // worker e o cron podem rodar juntos, e cada um viu a mesma folga.
+  const { data: reservados, error } = teto.reserva
+    ? await admin.rpc("fn_campanha_reservar_lote_no_teto", {
+        p_campaign_id: campanha.id,
+        p_limite: Math.min(folga, teto.cabem),
+        p_agora: agora.toISOString(),
+        ...teto.reserva,
+      })
+    : await admin.rpc("fn_campanha_reservar_lote", {
+        p_campaign_id: campanha.id,
+        p_limite: folga,
+        p_agora: agora.toISOString(),
+      });
   if (error) {
     logger.warn("[campanha oficial] reserva do lote falhou", { campanha: campanha.id, motivo: error.message });
     return { placar, concluida: false, detalhe: `erro_na_reserva:${error.message.slice(0, 40)}` };
@@ -285,7 +311,7 @@ async function rodarUmaCampanhaOficial(
   for (let i = 0; i < lote.length; i += ENVIOS_EM_PARALELO) {
     const fatia = lote.slice(i, i + ENVIOS_EM_PARALELO);
     const desfechos = await Promise.all(
-      fatia.map((alvo, j) => enviarUm(admin, campanha, modelo, numeros, i + j, alvo, agora)),
+      fatia.map((alvo, j) => enviarUm(admin, campanha, modelo, numeros, i + j, alvo, agora, teto.tabela)),
     );
     for (const d of desfechos) if (d) placar[d] += 1;
   }
@@ -295,6 +321,22 @@ async function rodarUmaCampanhaOficial(
     concluida: false,
     detalhe: `lote:${lote.length}:enviadas:${placar.enviadas}`,
   };
+}
+
+/** Há destinatário pendente que já poderia sair agora? */
+async function temFilaVencida(admin: SupabaseClient, campanha: CampanhaOficialRow, agora: Date): Promise<boolean> {
+  const pendentes = () =>
+    admin
+      .from("campaign_recipients")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", campanha.organization_id)
+      .eq("campaign_id", campanha.id)
+      .eq("status", "pending");
+  const [semEspera, vencidos] = await Promise.all([
+    pendentes().is("next_attempt_at", null),
+    pendentes().lte("next_attempt_at", agora.toISOString()),
+  ]);
+  return (semEspera.count ?? 0) + (vencidos.count ?? 0) > 0;
 }
 
 /**
@@ -347,6 +389,7 @@ async function enviarUm(
   ordem: number,
   alvo: Reservado,
   agora: Date,
+  tabela: readonly LinhaDePreco[],
 ): Promise<keyof Placar | null> {
   const org = campanha.organization_id;
   try {
@@ -445,6 +488,20 @@ async function enviarUm(
     )) as MensagemDoEnvio;
 
     if (mensagem.status === "sent") {
+      // A estimativa do custo ANTES de o destinatário sair de `sending`: entre
+      // as duas escritas ele continua contando como em voo, e o teto nunca vê
+      // um instante em que este envio não custa nada.
+      if (mensagem.id) {
+        await registrarEstimativaDoEnvio(admin, {
+          organizationId: org,
+          mensagemId: mensagem.id,
+          campanhaId: campanha.id,
+          channelSessionId: numero,
+          telefone: endereco,
+          categoria: categoriaDoModelo(modelo.category),
+          tabela,
+        });
+      }
       // `.eq("status","sending")`: o ack pode ter chegado antes desta linha, e o
       // trigger já teria avançado o destinatário — escrever por cima o rebaixaria.
       await admin
