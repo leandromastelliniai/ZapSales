@@ -9,6 +9,7 @@
  * Paginação: keyset sobre (created_at DESC, id DESC), o mesmo formato de
  * `lead-captures`.
  */
+import { recusaDasEtapasDosBotoes } from "@/lib/campanhas/resposta-no-funil";
 import { randomUUID } from "node:crypto";
 
 import type { NextRequest } from "next/server";
@@ -35,7 +36,7 @@ export const dynamic = "force-dynamic";
 const COLUNAS_DA_LISTA =
   "id, name, status, channel_session_id, snapshot_total, snapshot_eligible, snapshot_excluded, " +
   "scheduled_at, started_at, completed_at, cancelled_at, created_at, created_by, " +
-  "pipeline_id, stage_id, agent_id, meta_template_id, numero_de_atendimento_id, pausa_motivo";
+  "pipeline_id, stage_id, agent_id, meta_template_id, quem_assume, numero_de_atendimento_id, pausa_motivo";
 
 export async function GET(req: NextRequest): Promise<Response> {
   const requestId = randomUUID();
@@ -151,6 +152,12 @@ export async function POST(req: NextRequest): Promise<Response> {
     return fail("campanha_conteudo_invalido", t(recusaDoAtendimento), 422, { requestId });
   }
 
+  // O mapa dos botões é `jsonb`, sem FK: a etapa é conferida aqui (issue #11).
+  const recusaDosBotoes = await recusaDasEtapasDosBotoes(supabase, org.orgId, entrada.botoes_de_resposta);
+  if (recusaDosBotoes) {
+    return fail("campanha_conteudo_invalido", t(recusaDosBotoes), 422, { requestId });
+  }
+
   const { data, error } = await supabase
     .from("campaigns")
     .insert({
@@ -172,6 +179,11 @@ export async function POST(req: NextRequest): Promise<Response> {
       agent_id: entrada.agent_id ?? null,
       meta_template_id: entrada.meta_template_id ?? null,
       template_variables: entrada.template_variables ?? {},
+      quem_assume: entrada.quem_assume ?? "ia",
+      // Mapa vazio fica com o default da coluna ('[]'): uma lista vazia não diz
+      // se é array do Postgres ou de jsonb para quem a traduz.
+      ...((entrada.botoes_de_resposta ?? []).length > 0 ? { botoes_de_resposta: entrada.botoes_de_resposta } : {}),
+      oferta: entrada.oferta ?? null,
       numero_de_atendimento_id: entrada.numero_de_atendimento_id ?? null,
       created_by: user.id,
     })

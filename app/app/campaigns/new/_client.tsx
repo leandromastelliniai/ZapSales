@@ -25,6 +25,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DoisNumeros, problemaDoParDoisNumeros } from "@/components/campanhas/DoisNumeros";
 import { MensagemOficial, mapaCompleto, mapaDoModelo } from "@/components/campanhas/MensagemOficial";
+import { RespostaDaCampanha } from "@/components/campanhas/RespostaDaCampanha";
+import { botoesDoModeloEscolhido, precisaDeAgente } from "@/lib/campanhas/resposta-na-tela";
+import type { BotaoDaResposta, QuemAssume } from "@/lib/campanhas/destino-da-resposta";
 import { useCriarCampanha, useModelosDaCampanha, usePreviaDaAudiencia } from "@/hooks/campanhas/useCampanhas";
 import { channelLabel, useChannelSessions } from "@/hooks/channels/useChannelSessions";
 import { useT } from "@/hooks/i18n/useT";
@@ -65,6 +68,9 @@ export function NovaCampanha() {
   const [etapaDoPublico, setEtapaDoPublico] = useState("");
   const [modeloId, setModeloId] = useState("");
   const [mapa, setMapa] = useState<MapaDeVariaveis>({});
+  const [quemAssume, setQuemAssume] = useState<QuemAssume>("ia");
+  const [oferta, setOferta] = useState("");
+  const [botoes, setBotoes] = useState<BotaoDaResposta[]>([]);
   const [numeroDeAtendimento, setNumeroDeAtendimento] = useState("");
 
   // Número da API Oficial manda MODELO aprovado (issue #8); número de QR code, texto livre.
@@ -85,6 +91,7 @@ export function NovaCampanha() {
   const etapas = useEtapas(funil || null);
   const etapasDoPublico = useEtapas(funilDoPublico || null);
   const agentes = useAgentesPublicados();
+  const botoesDoModelo = oficial ? (modelo?.botoesDeResposta ?? []) : [];
 
   const filtro = useMemo(
     () => ({
@@ -120,7 +127,8 @@ export function NovaCampanha() {
     canal !== "" &&
     (oficial ? mapaCompleto(modelo, mapa, slotAutomatico) && !problemaDoAtendimento : texto.trim() !== "") &&
     temCriterio &&
-    (baseLegal !== "legitimate_interest" || liaRef.trim() !== "");
+    (baseLegal !== "legitimate_interest" || liaRef.trim() !== "") &&
+    !(precisaDeAgente(quemAssume, botoes) && !agente);
 
   async function salvar() {
     const criada = await criar.mutateAsync({
@@ -140,6 +148,10 @@ export function NovaCampanha() {
       pipeline_id: funil || null,
       stage_id: etapa || null,
       agent_id: agente || null,
+      quem_assume: quemAssume,
+      // Só os botões do modelo escolhido: trocar de modelo não leva junto o mapa do anterior.
+      botoes_de_resposta: botoesDoModeloEscolhido(botoes, botoesDoModelo),
+      oferta: oferta.trim() || null,
     });
     router.push(`/app/campaigns/${criada.id}`);
   }
@@ -463,6 +475,8 @@ export function NovaCampanha() {
               onChange={(e) => {
                 setFunil(e.target.value);
                 setEtapa("");
+                // As etapas dos botões eram do funil anterior.
+                setBotoes((atual) => atual.filter((b) => b.acao !== "mover_etapa"));
               }}
             >
               <option value="">{t("Funil do número (padrão)")}</option>
@@ -512,6 +526,18 @@ export function NovaCampanha() {
             {t("Vale só para conversas que nascem desta campanha: quem já falava com você continua com quem o atendia. Quem aborda precisa saber dizer de onde veio o contato — essa resposta tem de estar no material do agente escolhido.")}
           </p>
         </div>
+        <RespostaDaCampanha
+          quemAssume={quemAssume}
+          onQuemAssume={setQuemAssume}
+          oferta={oferta}
+          onOferta={setOferta}
+          botoes={botoes}
+          onBotoes={setBotoes}
+          botoesDoModelo={botoesDoModelo}
+          etapas={(etapas.data ?? []).filter((e) => !e.is_lost)}
+          temFunil={funil !== ""}
+          temAgente={agente !== ""}
+        />
       </Card>
 
       <Card className="space-y-4 p-4">

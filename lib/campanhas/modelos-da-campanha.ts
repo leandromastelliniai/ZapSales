@@ -33,6 +33,8 @@ export interface ModeloParaCampanha {
   /** O corpo aprovado, com os `{{…}}` — o operador escolhe pelo conteúdo, não pelo nome técnico. */
   texto: string;
   variaveis: VariavelDoModelo[];
+  /** Os rótulos dos botões de resposta rápida — o que a campanha mapeia para ações (issue #11). */
+  botoesDeResposta: string[];
   /**
    * O botão de link que abre conversa no WhatsApp (`wa.me`) — é o que o modo
    * "dois números" exige (issue #9). `slot` é a variável que o sistema preenche
@@ -63,13 +65,15 @@ export function modelosParaCampanha(
         tipo: s.expects,
       });
     }
+    const conteudo = lerConteudo(l.components);
     saida.push({
       id: l.id,
       name: l.name,
       language: l.language,
       category: l.category,
-      texto: lerConteudo(l.components).body?.trim() ?? "",
+      texto: conteudo.body?.trim() ?? "",
       variaveis,
+      botoesDeResposta: conteudo.botoes.filter((b) => b.tipo === "QUICK_REPLY" && b.texto).map((b) => b.texto),
       botao_wa_me: (() => {
         const b = botaoWaMe(l.components);
         return b ? { slot: b.slot, numero_fixo: b.numeroFixo } : null;

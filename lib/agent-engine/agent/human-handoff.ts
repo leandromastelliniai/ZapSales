@@ -24,6 +24,7 @@ import { guardServiceEffect } from "@/lib/atendimento/fronteira-server";
  * tenant/lead/conversation vêm da ROW do job (closure do run), NUNCA do payload (regra dura 1).
  * O contexto vai à passagem (é PARA o humano assumir) — mas NUNCA a log (PII fora de log, regra 8).
  */
+import { filaDaPassagemPelaCampanha } from "@/lib/campanhas/fila-da-passagem";
 import { z } from 'zod';
 import type pg from 'pg';
 
@@ -201,6 +202,12 @@ export async function performHumanHandoff(
       where organization_id = $1 and id = $2`,
     [ids.tenantId, ids.conversationId, SILENCE_INFINITY, opts.reason],
   );
+
+  // (b2) A campanha "IA e depois humano" leva a conversa passada para o rodízio
+  // de atendentes (issue #11). Depois do status 'pending' de (b), que é o que o
+  // pedido de fila exige; sem campanha assim, não faz nada.
+  await guardServiceEffect();
+  await filaDaPassagemPelaCampanha(db, ids.tenantId, ids.conversationId);
 
   // (c) Cancela os crons PENDENTES do lead (follow-ups agendados — F3-01/02). Idempotente,
   // via o cancel compartilhado (mesma garantia que o opt-out irrevogável usa — F4-07).

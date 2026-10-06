@@ -543,11 +543,23 @@ async function runFlowDrivenTurn(
     // e o campo era gravado, validado e nunca lido. Só vale para modelo APROVADO
     // do canal: um texto de `message_templates` seria recusado pela mesma janela,
     // então nesse caso o turno segue para a IA como sempre seguiu.
-    if (
-      passo === null &&
-      input.fallbackTemplateId !== undefined &&
-      (await janelaFechada(pool, target, clock()))
-    ) {
+    if (passo === null && (await janelaFechada(pool, target, clock()))) {
+      if (input.fallbackTemplateId === undefined) {
+        // Janela fechada e nenhum modelo configurado no passo: a IA não envia
+        // modelo por conta própria (issue #11) e o canal recusaria o texto dela.
+        // Rodar o turno seria pagar o modelo de linguagem para não mandar nada —
+        // ou, antes desta regra, deixá-lo escolher um modelo pago sozinho.
+        runLog.info('passo do fluxo pulado — janela fechada e sem modelo configurado');
+        await complete(pool, {
+          jobId: job.id,
+          jobClaim: claimOfJob(job),
+          organizationId: target.tenantId,
+          enrollmentId,
+          nodeId,
+          result: { kind: 'skipped', reason: MOTIVO_JANELA_FECHADA_SEM_MODELO },
+        });
+        return;
+      }
       passo = await resolveModeloAprovado(pool, target.tenantId, target.channelSessionId, input.fallbackTemplateId);
     }
     if (passo !== null && passo.tipo === 'recusado') {
@@ -852,6 +864,10 @@ async function resolveModeloAprovado(
     modelo: { name: alvo.name, language: alvo.language, values: {} },
   };
 }
+
+/** O porquê do passo pulado, na língua de quem lê o histórico do follow-up. */
+export const MOTIVO_JANELA_FECHADA_SEM_MODELO =
+  'A janela de 24 horas fechou e o passo não tem modelo aprovado configurado; a IA não envia modelo por conta própria.';
 
 /**
  * A janela de 24 h desta conversa está fechada? Mesmo insumo do gate da cadeia

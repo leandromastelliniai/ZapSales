@@ -84,8 +84,10 @@ describe("gate messaging_window", () => {
       baseCtx({ provider: "meta_cloud", messagingWindow: { lastInboundAt: horasAtras(30) } }),
     );
     if (v.pass) throw new Error("inalcançável");
-    expect(v.reason).toMatch(/send_template/);
-    expect(v.reason).toMatch(/template aprovado/);
+    // Desde a issue #11 a saída NÃO é mais "use um template": a IA não envia
+    // modelo por conta própria fora da janela. A saída é encerrar o turno.
+    expect(v.reason).toMatch(/encerre o turno/i);
+    expect(v.reason).not.toMatch(/send_template/);
   });
 
   it("a borda de 24h fecha — não é 'quase aberta'", () => {
@@ -127,5 +129,40 @@ describe("gate messaging_window — template é a saída, não um bypass", () =>
       messagingWindow: { lastInboundAt: null, isTemplate: true },
     });
     expect(Object.keys(ctx)).not.toContain("isTemplate");
+  });
+});
+
+describe("gate messaging_window — a IA não envia modelo por conta própria (issue #11)", () => {
+  it("template DO AGENTE com a janela fechada é vetado", () => {
+    const v = messagingWindowGate.evaluate(
+      baseCtx({
+        provider: "meta_cloud",
+        messagingWindow: { lastInboundAt: horasAtras(30), isTemplate: true, templateDoAgente: true },
+      }),
+    );
+    expect(v.pass).toBe(false);
+    if (v.pass) throw new Error("inalcançável");
+    expect(v.code).toBe("agent_template_outside_window");
+    expect(v.reason).toMatch(/encerre o turno/i);
+  });
+
+  it("template do agente com a janela ABERTA passa — dentro dela não há o que proteger", () => {
+    const v = messagingWindowGate.evaluate(
+      baseCtx({
+        provider: "meta_cloud",
+        messagingWindow: { lastInboundAt: horasAtras(2), isTemplate: true, templateDoAgente: true },
+      }),
+    );
+    expect(v.pass).toBe(true);
+  });
+
+  it("o modelo CONFIGURADO (follow-up) segue passando fora da janela — o par prova que o veto é da origem", () => {
+    const v = messagingWindowGate.evaluate(
+      baseCtx({
+        provider: "meta_cloud",
+        messagingWindow: { lastInboundAt: horasAtras(30), isTemplate: true },
+      }),
+    );
+    expect(v.pass).toBe(true);
   });
 });

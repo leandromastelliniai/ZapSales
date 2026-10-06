@@ -81,3 +81,53 @@ export function marcaDaOrigem(origem: OrigemDeCampanha): {
 }
 
 export const ORIGEM_CAMPANHA = "campanha";
+
+/**
+ * O tipo da linha da timeline "Respondeu à campanha" (issue #11). Vocabulário
+ * ABERTO de `crm_lead_activities.type`: emissor e leitor usam esta constante.
+ */
+export const ATIVIDADE_RESPOSTA_DA_CAMPANHA = "campaign_replied" as const;
+
+/** O que a conversa mostra sobre a campanha que a originou (issue #11). */
+export interface CampanhaDaConversa {
+  campanha: { id: string; nome: string };
+  modelo: { nome: string; idioma: string } | null;
+  enviada_em: string | null;
+  respondida_em: string | null;
+}
+
+/**
+ * A campanha que fez o CARD nascer, lida da marca de origem — `null` quando o
+ * negócio não nasceu de campanha. Pura: o dossiê e o card leem daqui, e nenhum
+ * deles abre `source_metadata` por caminho solto.
+ */
+export function campanhaDaMarca(
+  source: string | null | undefined,
+  sourceMetadata: Record<string, unknown> | null | undefined,
+): { id: string | null; nome: string } | null {
+  if (source !== ORIGEM_CAMPANHA) return null;
+  const nome = sourceMetadata?.campaign_name;
+  if (typeof nome !== "string" || nome.trim() === "") return null;
+  const id = sourceMetadata?.campaign_id;
+  return { id: typeof id === "string" ? id : null, nome };
+}
+
+/**
+ * A campanha do negócio que JÁ existia quando a pessoa respondeu: ele não nasceu
+ * dela (a marca é outra), mas foi movido por ela, e a linha "Respondeu à
+ * campanha" mais recente diz qual. Pura, sobre as linhas que o dossiê já tem.
+ */
+export function campanhaDaUltimaResposta(
+  itens: ReadonlyArray<{ type: string; payload: Record<string, unknown> | null; performed_at: string }>,
+): { id: string | null; nome: string } | null {
+  let melhor: { quando: string; id: string | null; nome: string } | null = null;
+  for (const item of itens) {
+    if (item.type !== ATIVIDADE_RESPOSTA_DA_CAMPANHA) continue;
+    const nome = item.payload?.campaign_name;
+    if (typeof nome !== "string" || nome.trim() === "") continue;
+    if (melhor && melhor.quando >= item.performed_at) continue;
+    const id = item.payload?.campaign_id;
+    melhor = { quando: item.performed_at, id: typeof id === "string" ? id : null, nome };
+  }
+  return melhor ? { id: melhor.id, nome: melhor.nome } : null;
+}

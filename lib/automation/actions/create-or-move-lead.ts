@@ -14,15 +14,8 @@ import { nomeDoContato } from "@/lib/contacts/rotulo-do-contato";
 import type { ActionCtx, ActionResultDetail } from "@/lib/automation/types";
 import type { HandlerCtx } from "@/lib/api/handlers/types";
 import { createLeadHandler, moveLeadHandler } from "@/app/api/v1/leads/_handler";
-import {
-  escolheEtapaDeDestino,
-  montaPayloadDoClone,
-  recusaTrocaDeFunil,
-  type EtapaDoFunil,
-  type OrigemParaClonar,
-} from "@/lib/leads/clonar-para-funil";
-import { encerraDemanda } from "@/lib/leads/encerramento";
-import { motivoDaPerdaDaOrigem } from "@/lib/leads/motivo-da-perda";
+import type { OrigemParaClonar } from "@/lib/leads/clonar-para-funil";
+import { COLUNAS_DA_ORIGEM, transferirParaFunil } from "@/lib/leads/transferir-para-funil";
 
 async function execute(ctx: ActionCtx, config: Record<string, unknown>): Promise<ActionResultDetail> {
   const pipelineId = typeof config.pipeline_id === "string" ? config.pipeline_id : null;
@@ -191,11 +184,6 @@ async function negocioAbertoDoContato(
   return (data as { id?: string } | null)?.id ?? null;
 }
 
-/** As colunas que o clone precisa copiar da origem. */
-const COLUNAS_DA_ORIGEM =
-  "id, pipeline_id, status, title, description, contact_id, value_cents, currency, " +
-  "owner_user_id, owner_agent_id, expected_close_date, tags, source, custom_fields, source_metadata";
-
 /**
  * O negócio ABERTO do contato em qualquer OUTRO funil, se houver um.
  *
@@ -224,63 +212,21 @@ async function negocioAbertoEmOutroFunil(
 }
 
 /**
- * Leva o negócio do contato para o funil da regra: clona e encerra a origem.
- *
- * Mesma ordem da rota do clone, e pelas mesmas razões: o funil de destino
- * confere a etapa, a origem confere se tem onde fechar (sem isso o clone
- * nasceria com a origem aberta — o defeito de novo, agora em dobro) e só então
- * o clone é criado e a origem encerrada como PERDIDA com o motivo da
- * transferência. O motivo é o canônico `moved_to_another_pipeline`, que não é
- * perda comercial: `fn_attendant_metrics` o exclui (migration 0266).
- *
- * Devolve o erro em vez de lançar: quem chama transforma isso no `status:
- * "failed"` da execução, que é o que a aba Atividade mostra ao operador.
+ * Leva o negócio do contato para o funil da regra — o caminho compartilhado de
+ * `lib/leads/transferir-para-funil.ts`, com a frase da automação na timeline.
  */
-async function transfereParaOFunil(
+function transfereParaOFunil(
   ctx: ActionCtx,
   handlerCtx: HandlerCtx,
   origem: OrigemParaClonar,
   pipelineId: string,
   stageId: string,
-): Promise<{ ok: true; clone: Record<string, unknown> } | { ok: false; error: string }> {
-  const recusa = recusaTrocaDeFunil(origem, pipelineId);
-  if (recusa) return { ok: false, error: recusa.code };
-
-  const { data: etapas, error: etapasErr } = await ctx.admin
-    .from("crm_stages")
-    .select("id, pipeline_id, position, is_won, is_lost, is_archived")
-    .eq("organization_id", ctx.organizationId)
-    .eq("pipeline_id", pipelineId)
-    .eq("is_archived", false)
-    .order("position", { ascending: true });
-  if (etapasErr) return { ok: false, error: etapasErr.message };
-
-  const destino = escolheEtapaDeDestino((etapas ?? []) as EtapaDoFunil[], stageId);
-  if (!destino.ok) return { ok: false, error: destino.code };
-
-  const { data: etapaDePerda, error: perdaErr } = await ctx.admin
-    .from("crm_stages")
-    .select("id")
-    .eq("organization_id", ctx.organizationId)
-    .eq("pipeline_id", origem.pipeline_id)
-    .eq("is_lost", true)
-    .eq("is_archived", false)
-    .limit(1)
-    .maybeSingle();
-  if (perdaErr) return { ok: false, error: perdaErr.message };
-  if (!etapaDePerda) return { ok: false, error: "origem_sem_etapa_de_perda" };
-
-  const clone = await createLeadHandler(ctx.admin, handlerCtx, montaPayloadDoClone(origem, destino.etapa));
-
-  await encerraDemanda(ctx.admin, handlerCtx, {
-    leadId: origem.id,
-    desfecho: "lost",
-    motivo: motivoDaPerdaDaOrigem(null),
+): ReturnType<typeof transferirParaFunil> {
+  return transferirParaFunil(ctx.admin, handlerCtx, origem, {
+    pipelineId,
+    stageId,
     razaoNaTimeline: "Levado para outro funil pela automação",
-    payloadNaTimeline: { to_pipeline_id: pipelineId, to_lead_id: clone.id },
   });
-
-  return { ok: true, clone: clone as unknown as Record<string, unknown> };
 }
 
 /**
