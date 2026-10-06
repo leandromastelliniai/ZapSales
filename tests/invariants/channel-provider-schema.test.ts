@@ -80,12 +80,15 @@ describe("0087 · o canal da sessão chega ao clone", () => {
     // número (`meta_app_secret_encrypted`, `meta_verify_token_encrypted`), a saúde
     // que a Meta empurra (`meta_qualidade`, `meta_limite_de_mensagens`,
     // `meta_saude_*`) e quando o assistente registrou o número.
+    // `meta_portfolio_id` (migration 0539, issue #9) também: o portfólio de
+    // negócio dono da WABA, do qual é o limite diário que as campanhas respeitam.
     expect(cols).toEqual([
       "meta_app_secret_encrypted",
       "meta_limite_de_mensagens",
       "meta_messaging_account_id",
       "meta_numero_registrado_em",
       "meta_phone_number_id",
+      "meta_portfolio_id",
       "meta_qualidade",
       "meta_saude_em",
       "meta_saude_evento",
