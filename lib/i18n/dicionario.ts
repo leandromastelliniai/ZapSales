@@ -32,9 +32,16 @@
  * do que estava.
  */
 import type { Idioma } from "./idiomas";
+import CATALOGO_EN from "./traducoes/en.json";
+
+/** Os idiomas cujo texto mora num catálogo plano em `traducoes/`, e não aqui. */
+type IdiomaDeCatalogo = "en";
+
+/** Os que moram neste arquivo, ao lado da chave. */
+type IdiomaDoDicionario = Exclude<Idioma, "pt-BR" | IdiomaDeCatalogo>;
 
 /** `pt-BR` não aparece: é a chave. Só o que DIFERE precisa de linha. */
-type Traducoes = Record<string, Partial<Record<Exclude<Idioma, "pt-BR">, string>>>;
+type Traducoes = Record<string, Partial<Record<IdiomaDoDicionario, string>>>;
 
 export const DICIONARIO: Traducoes = {
   // ─── EMPRESAS, PESSOAS E IMPORTAÇÃO (metade B2B do #1621) ───
@@ -14055,5 +14062,38 @@ export const DICIONARIO: Traducoes = {
  */
 export function traduzir(texto: string, idioma: Idioma): string {
   if (idioma === "pt-BR") return texto;
-  return DICIONARIO[texto]?.[idioma] ?? texto;
+  return fonteDoIdioma(idioma, texto) ?? texto;
+}
+
+/**
+ * A frase tem tradução própria neste idioma? Em português, sempre: a chave é o
+ * texto. É a pergunta que os guardas de cobertura fazem, e ela mora aqui para
+ * nenhum deles precisar saber de qual arquivo cada idioma vem.
+ */
+export function temTraducao(texto: string, idioma: Idioma): boolean {
+  return idioma === "pt-BR" || fonteDoIdioma(idioma, texto) !== undefined;
+}
+
+/**
+ * De onde vem cada idioma.
+ *
+ * O espanhol mora neste arquivo, ao lado da chave; o inglês, no catálogo plano
+ * `traducoes/en.json` — o formato que o PR #773 trouxe para os idiomas novos.
+ * `Object.hasOwn` e não `CATALOGO[texto]`: uma frase como "constructor" não
+ * pode devolver uma função do protótipo.
+ */
+const CATALOGOS: Record<IdiomaDeCatalogo, Readonly<Record<string, string>>> = {
+  en: CATALOGO_EN,
+};
+
+function ehIdiomaDeCatalogo(idioma: Idioma): idioma is IdiomaDeCatalogo {
+  return Object.hasOwn(CATALOGOS, idioma);
+}
+
+function fonteDoIdioma(idioma: Exclude<Idioma, "pt-BR">, texto: string): string | undefined {
+  if (ehIdiomaDeCatalogo(idioma)) {
+    const catalogo = CATALOGOS[idioma];
+    return Object.hasOwn(catalogo, texto) ? catalogo[texto] : undefined;
+  }
+  return Object.hasOwn(DICIONARIO, texto) ? DICIONARIO[texto]?.[idioma] : undefined;
 }

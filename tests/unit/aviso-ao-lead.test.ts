@@ -261,6 +261,58 @@ describe("o aviso sai no idioma da organização", () => {
   });
 });
 
+// Issue #12: a organização em inglês recebe o aviso em inglês, com as mesmas
+// regras — o fecho segue a equipe, quem pediu para parar não é convidado a
+// esperar, e há variantes de verdade para o spinning.
+describe("o aviso sai em inglês para a organização em inglês", () => {
+  const PALAVRAS_DE_OUTRA_LINGUA =
+    /\b(você|seu|sua|equipe|atendente|não|já|ninguém|aguarde|equipo|tu|consulta|ahora|persona)\b/i;
+
+  it("nenhuma palavra em português ou espanhol, em nenhum motivo nem estado", () => {
+    for (const motivo of MOTIVOS) {
+      for (const estado of ESTADOS) {
+        for (let i = 0; i < 30; i++) {
+          const t = textoDoAviso(motivo, estado.quem, randomUUID(), "en");
+          expect(t, `${motivo} / ${estado.rotulo}`).not.toMatch(PALAVRAS_DE_OUTRA_LINGUA);
+        }
+      }
+    }
+  });
+
+  it("o estado da equipe muda o fecho em inglês", () => {
+    expect(textoDoAviso("outro", { disponiveis: 0, total: 0 }, LEAD, "en")).toMatch(/record|noted|logged/i);
+    expect(textoDoAviso("outro", { disponiveis: 0, total: 3 }, LEAD, "en")).toMatch(/nobody|no one|no agent/i);
+    expect(textoDoAviso("outro", { disponiveis: 2, total: 3 }, LEAD, "en")).toMatch(/wait|stay|hold on/i);
+  });
+
+  it("quem pediu para parar, em inglês, não recebe convite para esperar", () => {
+    for (const estado of ESTADOS) {
+      const t = textoDoAviso("suspeita_de_opt_out", estado.quem, LEAD, "en");
+      expect(t, estado.rotulo).toMatch(/stop sending|no more automated|switched off/i);
+      expect(t, estado.rotulo).not.toMatch(/wait|queue|hold on/i);
+    }
+  });
+
+  it("há ao menos 3 redações por motivo e estado, e o aviso não cabe na isenção do spinning", () => {
+    for (const motivo of MOTIVOS) {
+      for (const estado of ESTADOS) {
+        const textos = new Set(
+          Array.from({ length: 60 }, () => textoDoAviso(motivo, estado.quem, randomUUID(), "en")),
+        );
+        expect(textos.size, `${motivo} / ${estado.rotulo}`).toBeGreaterThanOrEqual(3);
+      }
+      const t = normalizeCopy(textoDoAviso(motivo, null, LEAD, "en"));
+      expect(t.length, motivo).toBeGreaterThan(SPINNING_DEFAULTS.allowlistMaxLength);
+    }
+  });
+
+  it("locale inglês com região vale", () => {
+    expect(textoDoAviso("pediu_humano", null, LEAD, "en-US")).toBe(
+      textoDoAviso("pediu_humano", null, LEAD, "en"),
+    );
+  });
+});
+
 describe("o aviso não usa travessão (#1881)", () => {
   /**
    * Há marca cuja regra de estilo proíbe travessão em texto ao cliente, e esta
@@ -268,8 +320,8 @@ describe("o aviso não usa travessão (#1881)", () => {
    * todo estado e os dois idiomas, com leads bastantes para sortear todas as
    * variantes.
    */
-  it("nenhuma redação, em português ou espanhol, leva —", () => {
-    for (const idioma of ["pt-BR", "es"]) {
+  it("nenhuma redação, em nenhum idioma servido, leva —", () => {
+    for (const idioma of ["pt-BR", "es", "en"]) {
       for (const motivo of MOTIVOS) {
         for (const estado of ESTADOS) {
           for (let i = 0; i < 200; i++) {

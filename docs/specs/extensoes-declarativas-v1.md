@@ -19,7 +19,7 @@ Este incremento entrega instalação inicial, configuração, desativação, rea
 Pacote JSON UTF-8 estrito, sem ZIP, comentários, chaves duplicadas, chaves `__proto__`/`prototype`/`constructor`, HTML, script, SQL, CSS, expressões ou URLs de assets. Texto é renderizado como texto. A exceção que confirma a regra é o tema (`contributions.theme`, PR #2091): ele não é CSS, é um mapa de tokens de cor — chave de uma lista fechada (`CHAVES_DE_TOKEN_DO_TEMA` em `lib/extensions/tema.ts`) e valor na mesma régua de forma da marca (`#rrggbb`, `rgb()`, `rgba()`, `var(--nome)`) —, e o CSS que o `/app` injeta é montado pelo host a partir desses tokens. Declarar um tema exige a permissão `theme.apply`. As estruturas de autoridade são estritas; propriedade desconhecida é erro. O formato e a API do host são separados da versão pública do CRM. Textos localizados precisam de conteúdo legível; NUL e Unicode malformado são recusados antes do banco.
 
 ```typescript
-type LocalizedText = { "pt-BR": string; es?: string };
+type LocalizedText = { "pt-BR": string; es?: string; en?: string };
 type ExtensionConfiguration = {
   density: "comfortable" | "compact";
   show_description: boolean;

@@ -15,6 +15,8 @@ import { audit } from "@/lib/audit";
 import { env } from "@/lib/env";
 import { signInviteToken, INVITE_TTL_SECONDS } from "@/lib/auth/invite-token";
 import { buildInviteEmail } from "@/lib/email/templates/invite";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { idiomaDaOrganizacao } from "@/lib/i18n/idioma-da-organizacao";
 import { sendEmail } from "@/lib/email/roteador";
 import { marcaDaSaida } from "@/lib/branding/saida";
 import { inviteOnboardingSchema } from "@/lib/schemas/onboarding";
@@ -72,7 +74,8 @@ export async function sendOnboardingInvites(payload: InvitePayload): Promise<Sen
 
   // env.* é runtime → correto na imagem genérica self-host (ver browser.ts).
   const baseUrl = env.NEXT_PUBLIC_APP_URL;
-  const inviterName = ctx.fullName ?? ctx.email ?? "Um colega";
+  const idioma = await idiomaDaOrganizacao(ctx.orgId);
+  const inviterName = ctx.fullName ?? ctx.email ?? traduzir("Um colega", idioma);
   // Fora do laço: a marca é a mesma para o lote inteiro (mesma organização).
   const marca = await marcaDaSaida(ctx.orgId);
 
@@ -99,6 +102,7 @@ export async function sendOnboardingInvites(payload: InvitePayload): Promise<Sen
       role: inv.role,
       expiresAt,
       marca,
+      idioma,
     });
     const result = await sendEmail({
       to: email,

@@ -33,7 +33,7 @@ export const EXTENSION_LIMITS = {
   bodyCharacters: 2_000,
 } as const;
 
-export type LocalizedText = { "pt-BR": string; es?: string };
+export type LocalizedText = { "pt-BR": string; es?: string; en?: string };
 
 export type ExtensionConfiguration = {
   density: "comfortable" | "compact";
@@ -156,7 +156,7 @@ function textSchema(maxCharacters: number) {
 
 function localizedTextSchema(maxCharacters: number) {
   const text = textSchema(maxCharacters);
-  return z.object({ "pt-BR": text, es: text.optional() }).strict();
+  return z.object({ "pt-BR": text, es: text.optional(), en: text.optional() }).strict();
 }
 
 const hostApiSchema = z
@@ -486,9 +486,9 @@ function incompatible(reason: CompatibilityReason): CompatibilityResult {
 }
 
 export function localize(text: LocalizedText, locale: string): { text: string; fallback: boolean } {
-  if (locale.toLowerCase().split("-")[0] === "es" && text.es !== undefined) {
-    return { text: text.es, fallback: false };
-  }
+  const primario = locale.toLowerCase().split("-")[0];
+  if (primario === "es" && text.es !== undefined) return { text: text.es, fallback: false };
+  if (primario === "en" && text.en !== undefined) return { text: text.en, fallback: false };
   return { text: text["pt-BR"], fallback: locale.toLowerCase() !== "pt-br" };
 }
 

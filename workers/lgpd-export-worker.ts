@@ -56,6 +56,7 @@ import {
   sendExportEmail,
 } from "@/lib/lgpd/email-delivery";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { idiomaDaOrganizacao } from "@/lib/i18n/idioma-da-organizacao";
 import { marcaDaSaida } from "@/lib/branding/saida";
 
 const MAX_ATTEMPTS = 3;
@@ -276,6 +277,7 @@ export async function processLgpdExport(event: EventRow): Promise<HandlerResult>
         signedUrl: signed.signedUrl,
         expiresAt,
         marca: await marcaDaSaida(orgId),
+        idioma: await idiomaDaOrganizacao(orgId),
       });
       messageId = sent.messageId;
     } catch (err) {

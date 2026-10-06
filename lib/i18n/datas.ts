@@ -1,4 +1,4 @@
-import { es, ptBR } from "date-fns/locale";
+import { enUS, es, ptBR } from "date-fns/locale";
 import type { Locale } from "date-fns";
 
 import { IDIOMA_PADRAO, type Idioma } from "./idiomas";
@@ -35,6 +35,10 @@ import { idiomaVisivelPorCodigo } from "./registro";
 const LOCALE_DE_DATA: Record<Idioma, Locale> = {
   "pt-BR": ptBR,
   es,
+  // `enUS` é o único `Locale` inglês sem região forte de convenção no date-fns
+  // que a tela usa (nome de mês e dia); a ordem dia/mês dos padrões vem do
+  // próprio catálogo `en.json`, que traduz cada padrão de formato.
+  en: enUS,
 };
 
 /** O `Locale` do date-fns para quem está lendo. */

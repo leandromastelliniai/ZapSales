@@ -4,10 +4,9 @@ import { join, relative, sep } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
-import { DICIONARIO } from "@/lib/i18n/dicionario";
-import { traduzir } from "@/lib/i18n/dicionario";
-import { IDIOMAS } from "@/lib/i18n/idiomas";
-import { IDIOMAS_EM_CONSTRUCAO } from "@/lib/i18n/registro";
+import { DICIONARIO, temTraducao, traduzir } from "@/lib/i18n/dicionario";
+import { IDIOMAS, type Idioma } from "@/lib/i18n/idiomas";
+import { IDIOMAS_EM_CONSTRUCAO, REGISTRO_DE_IDIOMAS } from "@/lib/i18n/registro";
 
 import {
   AREAS_DE_PRODUTO,
@@ -62,13 +61,18 @@ import { arquivosDeCodigo, caminhoRelativo } from "./helpers/varrer-codigo";
  * (`PASTAS_IGNORADAS`), e o que nasce como `throw` em `lib/**` e vira
  * `t(err.message)` não é literal — issue #1046.
  *
- * ─── Só o espanhol é cobrado aqui, e é de propósito ────────────────────────
+ * ─── Quem é cobrado: todo idioma `completo` do registro ────────────────────
  *
- * O nível de cada idioma mora em `lib/i18n/registro.ts`. O espanhol é
- * `completo`: toda frase de tela precisa dele, e isto reprova. Idioma
+ * O nível de cada idioma mora em `lib/i18n/registro.ts`. O espanhol e, desde a
+ * issue #12, o inglês são `completo`: toda frase de tela precisa dos dois, e
+ * isto reprova. A lista não é escrita aqui — é lida do registro, então promover
+ * um idioma passa a cobrá-lo sem ninguém mexer neste arquivo. Idioma
  * `em_construcao` não reprova ninguém — a chave sem tradução cai no português —,
  * e as mensagens abaixo dizem isso a quem contribui, com o nome do idioma lido
  * do registro, para a frase não envelhecer.
+ *
+ * O nome do arquivo ficou "espanhol" porque é o caminho que o resto do repo
+ * cita; o que ele cobra é a lista do registro.
  */
 
 const RAIZ = join(__dirname, "..", "..");
@@ -80,11 +84,30 @@ const RAIZ = join(__dirname, "..", "..");
  */
 const EM_CONSTRUCAO =
   IDIOMAS_EM_CONSTRUCAO.map((idioma) => idioma.nomeNativo).join(", ") || "nenhum hoje";
-const COMO_CONSERTAR =
-  'Conserto: uma linha em lib/i18n/dicionario.ts, no formato "texto em português": { es: "texto en español" }. ' +
-  "Não fala espanhol? Mande o PR assim mesmo e diga isso na descrição. " +
+/** Os idiomas cobrados: todo `completo` do registro, menos o padrão (que é a chave). */
+const IDIOMAS_COBRADOS = REGISTRO_DE_IDIOMAS.filter(
+  (idioma) => idioma.nivel === "completo" && idioma.codigo !== "pt-BR",
+).map((idioma) => ({ codigo: idioma.codigo as Exclude<Idioma, "pt-BR">, nome: idioma.nomeNativo }));
+
+/** Onde mora a linha que falta, por idioma — o espanhol no dicionário, o inglês no catálogo. */
+const ONDE_CONSERTAR: Record<Exclude<Idioma, "pt-BR">, string> = {
+  es: 'uma linha em lib/i18n/dicionario.ts, no formato "texto em português": { es: "texto en español" }',
+  en: 'uma linha em lib/i18n/traducoes/en.json, no formato "texto em português": "text in English"',
+};
+
+const COMO_CONSERTAR_RODAPE =
+  "Não fala o idioma? Mande o PR assim mesmo e diga isso na descrição. " +
   `Idiomas em construção (${EM_CONSTRUCAO}) não reprovam: a frase sem tradução aparece em português. ` +
   "Confira com: pnpm test:unit tests/unit/i18n-espanhol-cobre-a-tela.test.ts";
+
+const comoConsertar = (idioma: Exclude<Idioma, "pt-BR">) =>
+  `Conserto: ${ONDE_CONSERTAR[idioma]}. ${COMO_CONSERTAR_RODAPE}`;
+
+/** Para o texto cru, que falta em TODO idioma cobrado ao mesmo tempo. */
+const COMO_CONSERTAR =
+  "Conserto: passe o texto por t() e acrescente " +
+  IDIOMAS_COBRADOS.map((idioma) => ONDE_CONSERTAR[idioma.codigo]).join("; e ") +
+  `. ${COMO_CONSERTAR_RODAPE}`;
 
 /** Diretórios cuja saída um cliente vê. `api` não renderiza tela. */
 const AREAS = ["app", "components"];
@@ -478,14 +501,12 @@ describe("a chave é o texto em português, e o português não muda", () => {
     expect(mudaram).toEqual([]);
   });
 
-  it("todo idioma servido, exceto o padrão, tem coluna no dicionário", () => {
+  it("todo idioma servido, exceto o padrão, tem tradução de verdade", () => {
     // Guarda contra o defeito que originou esta feature: o seletor oferecia
     // `en-US` e nenhuma tradução existia — escolher não mudava uma letra.
     const outros = IDIOMAS.filter((i) => i !== "pt-BR");
     for (const idioma of outros) {
-      const comEsse = Object.values(DICIONARIO).filter((v) =>
-        Object.prototype.hasOwnProperty.call(v, idioma),
-      );
+      const comEsse = Object.keys(DICIONARIO).filter((chave) => temTraducao(chave, idioma));
       expect(
         comEsse.length,
         `o idioma "${idioma}" é oferecido mas não tem NENHUMA tradução no dicionário`,
@@ -494,16 +515,28 @@ describe("a chave é o texto em português, e o português não muda", () => {
   });
 });
 
-describe("toda chave usada na tela tem espanhol", () => {
-  it("nenhuma chamada t() cai no português por falta de tradução", () => {
-    const semEspanhol = [...chavesUsadas().entries()]
-      .filter(([chave]) => !DICIONARIO[chave]?.es)
-      .map(([chave, onde]) => `${onde[0]} → t(${JSON.stringify(chave)})`);
-    expect(
-      semEspanhol,
-      `${semEspanhol.length} chamada(s) t() sem tradução em espanhol: a tela cai no português. ${COMO_CONSERTAR}`,
-    ).toEqual([]);
+describe("toda chave usada na tela tem cada idioma completo", () => {
+  /** Uma varredura só para todos os idiomas: ela relê centenas de arquivos. */
+  const usadas = [...chavesUsadas().entries()];
+
+  it("o registro cobra ao menos o espanhol e o inglês — a lista não é vazia", () => {
+    expect(IDIOMAS_COBRADOS.map((idioma) => idioma.codigo)).toEqual(
+      expect.arrayContaining(["es", "en"]),
+    );
   });
+
+  it.each(IDIOMAS_COBRADOS)(
+    "$nome: nenhuma chamada t() cai no português por falta de tradução",
+    ({ codigo, nome }) => {
+      const semTraducao = usadas
+        .filter(([chave]) => !temTraducao(chave, codigo))
+        .map(([chave, onde]) => `${onde[0]} → t(${JSON.stringify(chave)})`);
+      expect(
+        semTraducao,
+        `${semTraducao.length} chamada(s) t() sem tradução em ${nome}: a tela cai no português. ${comoConsertar(codigo)}`,
+      ).toEqual([]);
+    },
+  );
 });
 
 describe("nenhuma prosa em português escapa de t()", () => {
@@ -544,16 +577,22 @@ describe("nenhuma prosa em português escapa de t()", () => {
  * nova custa a confiança dela.
  * ══════════════════════════════════════════════════════════════════════════════ */
 
-/** Só o que o dicionário promete: a coluna `es`. */
+/** Só o que o dicionário promete: a coluna `es`. As fixtures abaixo medem o dente com ela. */
 const temEspanholNoDicionario = (chave: string): boolean => Boolean(DICIONARIO[chave]?.es);
 
-const COMO_CONSERTAR_CHAVE_DINAMICA =
-  "Conserto: uma linha em lib/i18n/dicionario.ts para CADA valor que a expressão pode assumir — " +
-  '"texto em português": { es: "texto en español" }. A chave vem de uma tabela de rótulo: traduza todos os valores dela. ' +
-  "Não fala espanhol? Mande o PR assim mesmo e diga isso na descrição. " +
+const COMO_CONSERTAR_CHAVE_DINAMICA_RODAPE =
+  "Não fala o idioma? Mande o PR assim mesmo e diga isso na descrição. " +
   "Se o valor não é texto de tela (identificador de wire, chave técnica), ele não deveria passar por t(): conserte a chamada. " +
-  "É dívida de antes e não é do seu PR? Escreva o motivo em DIVIDA_CONGELADA, neste arquivo, com o par arquivo + valor. " +
+  "É dívida de antes e não é do seu PR? Escreva o motivo em DIVIDA_CONGELADA, neste arquivo, com o par arquivo + valor + idioma. " +
   "Confira com: pnpm test:unit tests/unit/i18n-espanhol-cobre-a-tela.test.ts";
+
+const comoConsertarChaveDinamica = (idioma: Exclude<Idioma, "pt-BR">) =>
+  `Conserto: ${ONDE_CONSERTAR[idioma]}, para CADA valor que a expressão pode assumir. ` +
+  "A chave vem de uma tabela de rótulo: traduza todos os valores dela. " +
+  COMO_CONSERTAR_CHAVE_DINAMICA_RODAPE;
+
+/** A mensagem do espanhol, que as fixtures conferem: o dente é medido com ela. */
+const COMO_CONSERTAR_CHAVE_DINAMICA = comoConsertarChaveDinamica("es");
 
 /**
  * A dívida de HOJE, congelada — um par arquivo + valor por linha.
@@ -566,19 +605,25 @@ const COMO_CONSERTAR_CHAVE_DINAMICA =
  * Casa por arquivo + valor, não por linha: rebase alheio que sobe três linhas
  * não tem de pintar vermelho quem não mexeu em tradução.
  */
-const DIVIDA_CONGELADA: { arquivo: string; chave: string; motivo: string }[] = [];
+const DIVIDA_CONGELADA: { arquivo: string; chave: string; idioma: string; motivo: string }[] = [];
 
-function ehDividaCongelada(arquivo: string, chave: string): boolean {
-  return DIVIDA_CONGELADA.some((e) => e.arquivo === arquivo && e.chave === chave);
+function ehDividaCongelada(arquivo: string, chave: string, idioma: string): boolean {
+  return DIVIDA_CONGELADA.some(
+    (e) => e.arquivo === arquivo && e.chave === chave && e.idioma === idioma,
+  );
 }
 
-describe("chave dinâmica: o valor que sai de tabela também tem de ter espanhol", () => {
+describe("chave dinâmica: o valor que sai de tabela também tem de ter cada idioma completo", () => {
   /**
    * Uma varredura só para o `describe` inteiro: cada uma lê e parseia centenas
    * de arquivos, e repetir por `it()` seria caro sem cobrar nada a mais.
    */
   const varredura = varrerChavesDeI18n(AREAS_DE_PRODUTO);
-  const buracos = buracosDeEspanhol(varredura, temEspanholNoDicionario);
+  /** O nome do helper ficou do tempo de um idioma só; quem decide é o predicado. */
+  const buracosPorIdioma = IDIOMAS_COBRADOS.map((idioma) => ({
+    ...idioma,
+    buracos: buracosDeEspanhol(varredura, (chave) => temTraducao(chave, idioma.codigo)),
+  }));
 
   it("a varredura enxerga de verdade — o verde abaixo não é vacuidade", () => {
     expect(
@@ -604,20 +649,28 @@ describe("chave dinâmica: o valor que sai de tabela também tem de ter espanhol
     ).toContain("labels.ts");
   });
 
-  it("nenhum valor de chave dinâmica cai no português fora da dívida congelada", () => {
-    const foraDaLista = buracos
-      .filter((b) => !ehDividaCongelada(b.arquivo, b.chave))
-      .map((b) => `${b.locais.join(" ")} → ${JSON.stringify(b.chave)}\n      ${b.procedencia}`);
-    expect(
-      foraDaLista,
-      `${foraDaLista.length} valor(es) de chave dinâmica sem espanhol: quem escolheu espanhol vê isto em português. ` +
-        COMO_CONSERTAR_CHAVE_DINAMICA,
-    ).toEqual([]);
-  });
+  it.each(buracosPorIdioma)(
+    "$nome: nenhum valor de chave dinâmica cai no português fora da dívida congelada",
+    ({ codigo, nome, buracos }) => {
+      const foraDaLista = buracos
+        .filter((b) => !ehDividaCongelada(b.arquivo, b.chave, codigo))
+        .map((b) => `${b.locais.join(" ")} → ${JSON.stringify(b.chave)}\n      ${b.procedencia}`);
+      expect(
+        foraDaLista,
+        `${foraDaLista.length} valor(es) de chave dinâmica sem ${nome}: quem escolheu ${nome} vê isto em português. ` +
+          comoConsertarChaveDinamica(codigo),
+      ).toEqual([]);
+    },
+  );
 
   it("a dívida congelada só encolhe: entrada que deixou de casar é vermelho", () => {
     const pagas = DIVIDA_CONGELADA.filter(
-      (e) => !buracos.some((b) => b.arquivo === e.arquivo && b.chave === e.chave),
+      (e) =>
+        !buracosPorIdioma.some(
+          (idioma) =>
+            idioma.codigo === e.idioma &&
+            idioma.buracos.some((b) => b.arquivo === e.arquivo && b.chave === e.chave),
+        ),
     ).map((e) => `${e.arquivo} → ${JSON.stringify(e.chave)} (motivo declarado: ${e.motivo})`);
     expect(
       pagas,
