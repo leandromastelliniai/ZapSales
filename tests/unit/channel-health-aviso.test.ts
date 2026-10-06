@@ -249,7 +249,12 @@ describe("os elos que somem sem barulho", () => {
     const aviso = ops.find((o) => o.tabela === "agent_inbox_items" && o.op === "insert");
     expect(aviso, "a queda chegou pelo webhook e ninguém foi avisado").toBeTruthy();
     expect(aviso?.payload).toMatchObject({ kind: "channel_number_alert", ref_id: "sess-1" });
-  });
+    // Prazo próprio, e não os 15 s do `vitest.config.ts`: o caso importa o
+    // roteador REAL do webhook a frio (medido: 12,4 s num Windows de
+    // desenvolvimento antes da issue #12) e, desde ela, o dicionário de
+    // tradução que o aviso usa. O que este caso prova é o efeito, não a
+    // velocidade do import.
+  }, 60_000);
 
   it("o vigia PERGUNTA — é o único que enxerga o transporte morto", () => {
     // Só o webhook não basta: quando o transporte morre, ele para de mandar
