@@ -17,6 +17,7 @@ import { fail, ok } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { FILTRO_VAZIO } from "@/lib/campanhas/audiencia";
+import { recusaDaConexaoComModelo } from "@/lib/campanhas/modelo-da-campanha";
 import { gravarPool } from "@/lib/campanhas/pool-de-numeros";
 import {
   codificarCursor,
@@ -34,7 +35,7 @@ export const dynamic = "force-dynamic";
 const COLUNAS_DA_LISTA =
   "id, name, status, channel_session_id, snapshot_total, snapshot_eligible, snapshot_excluded, " +
   "scheduled_at, started_at, completed_at, cancelled_at, created_at, created_by, " +
-  "pipeline_id, stage_id, agent_id";
+  "pipeline_id, stage_id, agent_id, meta_template_id";
 
 export async function GET(req: NextRequest): Promise<Response> {
   const requestId = randomUUID();
@@ -128,6 +129,17 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
+  // Modelo da Meta só por número oficial da mesma conta (issue #8).
+  const recusaDoModelo = await recusaDaConexaoComModelo(
+    supabase,
+    org.orgId,
+    entrada.channel_session_id,
+    entrada.meta_template_id ?? null,
+  );
+  if (recusaDoModelo) {
+    return fail("campanha_conteudo_invalido", t(recusaDoModelo), 422, { requestId });
+  }
+
   const { data, error } = await supabase
     .from("campaigns")
     .insert({
@@ -147,6 +159,8 @@ export async function POST(req: NextRequest): Promise<Response> {
       pipeline_id: entrada.pipeline_id ?? null,
       stage_id: entrada.stage_id ?? null,
       agent_id: entrada.agent_id ?? null,
+      meta_template_id: entrada.meta_template_id ?? null,
+      template_variables: entrada.template_variables ?? {},
       created_by: user.id,
     })
     .select(COLUNAS_DA_LISTA)
@@ -182,7 +196,11 @@ export async function POST(req: NextRequest): Promise<Response> {
     resourceType: "campaign",
     resourceId: criada.id,
     requestId,
-    metadata: { base_legal: entrada.base_legal, numeros: 1 + (entrada.channel_session_ids ?? []).length },
+    metadata: {
+      base_legal: entrada.base_legal,
+      numeros: 1 + (entrada.channel_session_ids ?? []).length,
+      modo: entrada.meta_template_id ? "oficial" : "texto",
+    },
   });
 
   return ok(data, { requestId, status: 201 });

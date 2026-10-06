@@ -41,8 +41,19 @@ import {
   contarExclusoes,
   type CandidatoDaAudiencia,
 } from "./elegibilidade";
+import { contratoDoModelo, textoDoModelo, type ModeloDaCampanha } from "./modelo-da-campanha";
 import { renderizar } from "./renderizador";
 import type { MotivoDeExclusao } from "./tipos";
+import { valoresDoDestinatario, type MapaDeVariaveis } from "./variaveis-do-modelo";
+
+/**
+ * O conteúdo da campanha OFICIAL (issue #8): o modelo aprovado e o mapa de
+ * variáveis. Ausente = modo de texto livre, com o texto em `corpo`.
+ */
+export interface ConteudoOficial {
+  modelo: ModeloDaCampanha;
+  mapa: MapaDeVariaveis;
+}
 
 export interface ResumoDoSnapshot {
   total: number;
@@ -69,6 +80,7 @@ export async function preverAudiencia(
     agora: Date;
     /** Campanha a ignorar na conta de "já em campanha" (a que está sendo editada). */
     campanhaId?: string;
+    oficial?: ConteudoOficial;
   },
 ): Promise<ResumoDoSnapshot & { amostra: Array<{ nome: string | null; motivo: MotivoDeExclusao | null }> }> {
   const linhas = await classificar(admin, entrada);
@@ -92,6 +104,7 @@ async function classificar(
     corpo: string;
     agora: Date;
     campanhaId?: string;
+    oficial?: ConteudoOficial;
   },
 ) {
   const candidatos = await buscarCandidatos(admin, {
@@ -110,13 +123,36 @@ async function classificar(
     jaEmCampanha,
     suprimidos,
     hashDoEndereco,
-    // A saudação NÃO é resolvida aqui: ela é da hora do envio. O token fica no
-    // corpo congelado e o despacho o troca — ver `rodada.ts`.
-    renderizar: (c: CandidatoDaAudiencia) => {
-      const r = renderizar(entrada.corpo, { nome: c.nome });
-      return { texto: r.texto, faltando: r.faltando };
-    },
+    renderizar: entrada.oficial ? renderizarModelo(entrada.oficial) : renderizarTexto(entrada.corpo),
   });
+}
+
+/**
+ * Modo de texto livre. A saudação NÃO é resolvida aqui: ela é da hora do envio. O token
+ * fica no corpo congelado e o despacho o troca — ver `rodada.ts`.
+ */
+function renderizarTexto(corpo: string) {
+  return (c: CandidatoDaAudiencia) => {
+    const r = renderizar(corpo, { nome: c.nome });
+    return { texto: r.texto, faltando: r.faltando };
+  };
+}
+
+/**
+ * Modo oficial: os valores de cada variável saem do cadastro de CADA contato e
+ * ficam congelados no destinatário — o worker envia exatamente o que a prévia e
+ * o snapshot mostraram. O texto renderizado é o que a conversa e o painel exibem.
+ */
+function renderizarModelo({ modelo, mapa }: ConteudoOficial) {
+  const contrato = contratoDoModelo(modelo);
+  return (c: CandidatoDaAudiencia) => {
+    const r = valoresDoDestinatario(contrato, mapa, c.dados ?? { name: c.nome, phone_number: c.telefone });
+    return {
+      texto: r.faltando.length > 0 ? "" : textoDoModelo(modelo, r.valores),
+      faltando: r.faltando,
+      variaveis: r.valores,
+    };
+  };
 }
 
 /**
@@ -132,6 +168,7 @@ export async function prepararCampanha(
     corpo: string;
     contentVersion: number;
     agora: Date;
+    oficial?: ConteudoOficial;
   },
 ): Promise<ResumoDoSnapshot> {
   const filtro = filtroDeAudienciaSchema.safeParse(entrada.filtro);
@@ -145,6 +182,7 @@ export async function prepararCampanha(
     corpo: entrada.corpo,
     agora: entrada.agora,
     campanhaId: entrada.campanhaId,
+    ...(entrada.oficial ? { oficial: entrada.oficial } : {}),
   });
 
   // Reconstrução limpa: a rota só chega aqui quando nada saiu, então apagar a
@@ -169,7 +207,7 @@ export async function prepararCampanha(
     exclusion_reason: l.motivo,
     rendered_body: l.corpo,
     content_version: entrada.contentVersion,
-    variables: { nome: l.candidato.nome },
+    variables: l.variaveis ?? { nome: l.candidato.nome },
     cancelled_at: null,
     created_at: agoraIso,
   }));

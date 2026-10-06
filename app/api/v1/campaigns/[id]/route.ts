@@ -15,6 +15,7 @@ import { fail, ok } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { carregarCampanha } from "@/lib/campanhas/acoes";
 import { ehEditavel, ehTerminal } from "@/lib/campanhas/maquina-de-estados";
+import { recusaDaConexaoComModelo } from "@/lib/campanhas/modelo-da-campanha";
 import { gravarPool, lerPoolExtra } from "@/lib/campanhas/pool-de-numeros";
 import { editarCampanhaSchema } from "@/lib/campanhas/schemas";
 import { traduzir } from "@/lib/i18n/dicionario";
@@ -29,7 +30,8 @@ const COLUNAS =
   "audience_filter, audience_version, content_version, snapshot_total, snapshot_eligible, " +
   "snapshot_excluded, scheduled_at, prepared_at, started_at, paused_at, completed_at, " +
   "cancelled_at, failure_code, intervalo_segundos, janela_inicio_hora, janela_fim_hora, " +
-  "teto_diario, teto_horario, pipeline_id, stage_id, agent_id, created_at, created_by";
+  "teto_diario, teto_horario, pipeline_id, stage_id, agent_id, meta_template_id, template_variables, " +
+  "created_at, created_by";
 
 export async function GET(
   _req: NextRequest,
@@ -154,6 +156,8 @@ export async function PATCH(
     "pipeline_id",
     "stage_id",
     "agent_id",
+    "meta_template_id",
+    "template_variables",
   ] as const) {
     if (entrada[campo] !== undefined) mudanca[campo] = entrada[campo];
   }
@@ -161,8 +165,25 @@ export async function PATCH(
   if (entrada.lia_ref !== undefined) mudanca.lia_ref = entrada.lia_ref;
   // Mexer no TEXTO sobe a versão do conteúdo: é ela que o destinatário carrega,
   // e é por ela que se sabe se a mensagem preparada é a mensagem de hoje.
-  if (entrada.message_body !== undefined && entrada.message_body !== campanha.message_body) {
+  if (
+    (entrada.message_body !== undefined && entrada.message_body !== campanha.message_body) ||
+    (entrada.meta_template_id !== undefined && entrada.meta_template_id !== campanha.meta_template_id) ||
+    (entrada.template_variables !== undefined &&
+      JSON.stringify(entrada.template_variables) !== JSON.stringify(campanha.template_variables ?? {}))
+  ) {
     mudanca.content_version = campanha.content_version + 1;
+  }
+
+  // Modelo da Meta só por número oficial da mesma conta (issue #8). Confere o
+  // par que VAI ficar gravado: trocar só o número também pode quebrá-lo.
+  if (entrada.meta_template_id !== undefined || entrada.channel_session_id !== undefined) {
+    const recusa = await recusaDaConexaoComModelo(
+      supabase,
+      authz.org.orgId,
+      entrada.channel_session_id ?? campanha.channel_session_id,
+      entrada.meta_template_id === undefined ? campanha.meta_template_id : entrada.meta_template_id,
+    );
+    if (recusa) return fail("campanha_conteudo_invalido", t(recusa), 422, { requestId });
   }
 
   if (entrada.channel_session_id !== undefined) {

@@ -13,7 +13,7 @@ import { StaleServiceBoundaryError } from "@/lib/atendimento/fronteira";
  *
  * Ritual de boot: env (Zod) → check do schema do harness (recusa subir sem a
  * migration 0050 aplicada — aplicar é ato de deploy) → solta órfãos → healthz →
- * loops (worker, drain, cron, holds, saúde do número).
+ * loops (worker, drain, cron, holds, saúde do número, campanha oficial).
  *
  * Graceful shutdown: SIGTERM/SIGINT → para de claimar, drena jobs em curso até
  * SHUTDOWN_GRACE_MS, fecha healthz e pool, sai 0. Morte súbita é o caso do
@@ -84,6 +84,7 @@ import { createOperatorTurnHandler } from "@/lib/agent-engine/agent/operator-tur
 import { completeTurnForEnrollment, createPgAdminClient } from "@/lib/followup/turn-bridge";
 import { seedPlatformPlaybook } from "@/lib/agent-engine/agent/playbook-seed";
 import { runCronLoop } from "@/lib/agent-engine/cron/scheduler";
+import { KNOBS_DO_LACO_OFICIAL, rodarLacoDaCampanhaOficial } from "@/lib/campanhas/laco-oficial";
 import { createPool } from "@/lib/agent-engine/db/pool";
 import {
   carregarComportamentoPorPool,
@@ -412,6 +413,11 @@ export async function startWorker(
         )
       : (log.info('ponte WaCalls OFF — endereço ou credencial ausente no env', {}), Promise.resolve());
 
+  // Campanha oficial (issue #8): lotes paralelos pela API Oficial, em poucos
+  // segundos enquanto há trabalho. O cron `campaign-worker` segue como rede de
+  // segurança; a reserva `SKIP LOCKED` impede os dois de pegarem o mesmo.
+  const campanhaOficialLoop = rodarLacoDaCampanhaOficial(KNOBS_DO_LACO_OFICIAL, log, loopsAbort.signal);
+
   // Circuito de saúde do número (block/response rate → hold).
   const healthLoop = runHealthLoop(
     pool,
@@ -635,6 +641,7 @@ export async function startWorker(
       sessionWatchdogLoop,
       flywheelLoop,
       voiceCallsBridgeLoop,
+      campanhaOficialLoop,
     ]);
     await workerLoop;
     let graceTimer: NodeJS.Timeout | undefined;

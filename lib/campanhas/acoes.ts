@@ -24,8 +24,11 @@ import { baseLegalValida, motivoParaExcluir, recusouMarketing } from "./elegibil
 import { ehStatusDaCampanha, podeTransitar } from "./maquina-de-estados";
 import { prepararCampanha } from "./preparacao";
 import { nomeDoContato } from "@/lib/contacts/rotulo-do-contato";
+import { carregarModelo, contratoDoModelo, ehOficial, recusaDoModelo, textoDoModelo } from "./modelo-da-campanha";
+import type { ConteudoOficial } from "./preparacao";
 import { renderizar } from "./renderizador";
 import type { StatusDaCampanha } from "./tipos";
+import { mapaDeVariaveisSchema, valoresDoDestinatario, type MapaDeVariaveis } from "./variaveis-do-modelo";
 
 export interface CampanhaCarregada {
   id: string;
@@ -46,6 +49,9 @@ export interface CampanhaCarregada {
   teto_diario: number | null;
   teto_horario: number | null;
   description: string | null;
+  /** Com modelo, a campanha é OFICIAL (migration 0538). */
+  meta_template_id: string | null;
+  template_variables: unknown;
 }
 
 export type Recusa = { ok: false; codigo: ApiErrorCode; mensagem: string; status: number };
@@ -54,7 +60,8 @@ export type Desfecho<T = unknown> = ({ ok: true } & T) | Recusa;
 const COLUNAS =
   "id, organization_id, name, status, channel_session_id, message_body, base_legal, lia_ref, " +
   "audience_filter, audience_version, content_version, scheduled_at, description, " +
-  "intervalo_segundos, janela_inicio_hora, janela_fim_hora, teto_diario, teto_horario";
+  "intervalo_segundos, janela_inicio_hora, janela_fim_hora, teto_diario, teto_horario, " +
+  "meta_template_id, template_variables";
 
 export async function carregarCampanha(
   admin: SupabaseClient,
@@ -92,9 +99,34 @@ function recusaDeTransicao(de: StatusDaCampanha, para: StatusDaCampanha): Recusa
   return r.pode ? null : { ok: false, codigo: "campanha_estado_invalido", mensagem: r.motivo, status: 409 };
 }
 
+/** O mapa de variáveis guardado, ou vazio quando o jsonb não tem a forma esperada. */
+function mapaGuardado(valor: unknown): MapaDeVariaveis {
+  const r = mapaDeVariaveisSchema.safeParse(valor ?? {});
+  return r.success ? r.data : {};
+}
+
+/**
+ * O conteúdo oficial da campanha (modelo + mapa), conferido. `null` = campanha
+ * do modo de texto livre. Modelo inexistente, não aprovado ou com variável sem fonte vira
+ * recusa com o motivo — é o mesmo portão para preparar, iniciar e testar.
+ */
+async function conteudoOficial(
+  admin: SupabaseClient,
+  c: CampanhaCarregada,
+): Promise<{ ok: true; oficial: ConteudoOficial | null } | Recusa> {
+  if (!ehOficial(c)) return { ok: true, oficial: null };
+  const modelo = await carregarModelo(admin, c.organization_id, c.meta_template_id!);
+  const mapa = mapaGuardado(c.template_variables);
+  const motivo = recusaDoModelo(modelo, mapa);
+  if (motivo || !modelo) {
+    return { ok: false, codigo: "campanha_conteudo_invalido", mensagem: motivo ?? "Modelo indisponível.", status: 422 };
+  }
+  return { ok: true, oficial: { modelo, mapa } };
+}
+
 /** O que toda campanha precisa ter antes de qualquer envio — inclusive o de teste. */
 function faltaParaEnviar(c: CampanhaCarregada): Recusa | null {
-  if ((c.message_body ?? "").trim() === "") {
+  if (!ehOficial(c) && (c.message_body ?? "").trim() === "") {
     return {
       ok: false,
       codigo: "campanha_conteudo_invalido",
@@ -132,6 +164,8 @@ export async function prepararAcao(
 ): Promise<Desfecho<{ resumo: { total: number; elegiveis: number; excluidos: number } }>> {
   const recusa = recusaDeTransicao(c.status, "preparing") ?? faltaParaEnviar(c);
   if (recusa) return recusa;
+  const conteudo = await conteudoOficial(admin, c);
+  if (!conteudo.ok) return conteudo;
   if (await jaEnviou(admin, c.id)) {
     return {
       ok: false,
@@ -165,6 +199,7 @@ export async function prepararAcao(
       corpo: c.message_body ?? "",
       contentVersion: c.content_version,
       agora,
+      ...(conteudo.oficial ? { oficial: conteudo.oficial } : {}),
     });
     if (resumo.total === 0) {
       await voltarAoRascunho(admin, c.id, "audiencia_vazia");
@@ -228,6 +263,9 @@ export async function iniciarAcao(
 ): Promise<Desfecho<{ retomada: boolean }>> {
   const recusa = recusaDeTransicao(c.status, "running") ?? faltaParaEnviar(c);
   if (recusa) return recusa;
+  // O modelo pode ter sido pausado ou rejeitado na Meta entre preparar e iniciar.
+  const conteudo = await conteudoOficial(admin, c);
+  if (!conteudo.ok) return conteudo;
 
   const { count } = await admin
     .from("campaign_recipients")
@@ -267,6 +305,8 @@ export async function agendarAcao(
 ): Promise<Desfecho> {
   const recusa = recusaDeTransicao(c.status, "scheduled") ?? faltaParaEnviar(c);
   if (recusa) return recusa;
+  const conteudo = await conteudoOficial(admin, c);
+  if (!conteudo.ok) return conteudo;
   if (quando.getTime() <= agora.getTime()) {
     return {
       ok: false,
@@ -351,6 +391,9 @@ export async function duplicarAcao(
       janela_fim_hora: c.janela_fim_hora,
       teto_diario: c.teto_diario,
       teto_horario: c.teto_horario,
+      // O modelo e o mapa vão junto: a cópia de uma campanha oficial é oficial.
+      meta_template_id: c.meta_template_id,
+      template_variables: mapaGuardado(c.template_variables),
       created_by: autorId,
       // Nada de destinatário, resultado, agenda ou carimbo de execução: a cópia
       // é uma INTENÇÃO nova, e herdar números faria a tela mostrar entrega de
@@ -386,10 +429,12 @@ export async function testarAcao(
 ): Promise<Desfecho<{ status: string }>> {
   const recusa = faltaParaEnviar(c);
   if (recusa) return recusa;
+  const conteudo = await conteudoOficial(admin, c);
+  if (!conteudo.ok) return conteudo;
 
   const { data: contato } = await admin
     .from("contacts")
-    .select("id, name, display_name, phone_number, is_blocked, is_anonymized, consent")
+    .select("id, name, display_name, phone_number, email, custom_fields, is_blocked, is_anonymized, consent")
     .eq("organization_id", c.organization_id)
     .eq("id", contactId)
     .maybeSingle();
@@ -406,6 +451,8 @@ export async function testarAcao(
     name: string | null;
     display_name: string | null;
     phone_number: string | null;
+    email: string | null;
+    custom_fields: unknown;
     is_blocked: boolean;
     is_anonymized: boolean;
     consent: unknown;
@@ -429,18 +476,44 @@ export async function testarAcao(
     };
   }
 
-  const render = renderizar(
-    c.message_body ?? "",
-    { nome: nomeDoContato(linha) },
-    { agora, fuso },
-  );
-  if (render.faltando.length > 0) {
-    return {
-      ok: false,
-      codigo: "campanha_conteudo_invalido",
-      mensagem: `Falta ${render.faltando.join(", ")} no cadastro deste contato — escolha outro para o teste.`,
-      status: 422,
+  // O conteúdo do teste: o modelo com os valores DESTE contato (oficial) ou o
+  // texto renderizado (texto livre). Faltar dado no cadastro recusa nos dois modos.
+  let conteudoDoEnvio: {
+    type: "text" | "template";
+    body: string;
+    template_name?: string;
+    template_language?: string;
+    template_values?: Record<string, string>;
+  };
+  if (conteudo.oficial) {
+    const { modelo, mapa } = conteudo.oficial;
+    const r = valoresDoDestinatario(contratoDoModelo(modelo), mapa, linha);
+    if (r.faltando.length > 0) {
+      return {
+        ok: false,
+        codigo: "campanha_conteudo_invalido",
+        mensagem: `Falta ${r.faltando.map((k) => `{{${k}}}`).join(", ")} no cadastro deste contato — escolha outro para o teste.`,
+        status: 422,
+      };
+    }
+    conteudoDoEnvio = {
+      type: "template",
+      body: textoDoModelo(modelo, r.valores) || modelo.name,
+      template_name: modelo.name,
+      template_language: modelo.language,
+      template_values: r.valores,
     };
+  } else {
+    const render = renderizar(c.message_body ?? "", { nome: nomeDoContato(linha) }, { agora, fuso });
+    if (render.faltando.length > 0) {
+      return {
+        ok: false,
+        codigo: "campanha_conteudo_invalido",
+        mensagem: `Falta ${render.faltando.join(", ")} no cadastro deste contato — escolha outro para o teste.`,
+        status: 422,
+      };
+    }
+    conteudoDoEnvio = { type: "text", body: render.texto };
   }
 
   const boundary = await beginServiceAtOrigin(admin, c.organization_id, linha.id, c.channel_session_id);
@@ -455,8 +528,7 @@ export async function testarAcao(
     } as Parameters<typeof sendMessageHandler>[1],
     {
       conversation_id: boundary.conversation_id,
-      type: "text",
-      body: render.texto,
+      ...conteudoDoEnvio,
       metadata: { source: "campaign_test", campaign_id: c.id },
     } as Parameters<typeof sendMessageHandler>[2],
   );

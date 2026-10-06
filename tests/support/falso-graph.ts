@@ -34,6 +34,12 @@ export interface ChamadaAoGraph {
   /** O `file_offset` do upload retomável (cabeçalho), quando veio. */
   fileOffset: string | undefined;
   authorization: string | undefined;
+  /**
+   * O que o falso respondeu — o `wamid` de um envio sai daqui. A campanha
+   * oficial (issue #8) precisa dele para postar o status DAQUELA mensagem no
+   * webhook, e deduzir pela ordem quebraria com envios em paralelo.
+   */
+  resposta?: RespostaDoGraph;
 }
 
 export interface RespostaDoGraph {
@@ -348,6 +354,7 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
 
     const i = programadas.findIndex((p) => casa(p.casamento, chamada));
     const resposta = i >= 0 ? programadas.splice(i, 1)[0]!.resposta : respostaPadrao(chamada);
+    chamada.resposta = resposta;
     res.statusCode = resposta.status;
     res.setHeader("content-type", "application/json");
     res.end(JSON.stringify(resposta.corpo));

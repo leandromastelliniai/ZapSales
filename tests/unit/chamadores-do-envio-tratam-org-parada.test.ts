@@ -19,6 +19,7 @@ const TRATA = "trata";
 const CHAMADORES: Record<string, string> = {
   "app/api/v1/cron/agenda-reminder/route.ts": TRATA, // tests/unit/lembrete-pula-org-parada.test.ts
   "lib/campanhas/rodada.ts": TRATA, // registrarExcecaoDoEnvio, tests/unit/suspensao-nao-dispara-campanha.test.ts
+  "lib/campanhas/rodada-oficial.ts": TRATA, // a mesma registrarExcecaoDoEnvio da rodada.ts; a busca já corta org parada
   "lib/prospecting/worker.ts": TRATA, // tests/unit/prospecting-worker.test.ts
   "lib/followup/enviar-texto-fixo.ts": TRATA, // lib/followup/enviar-texto-fixo.test.ts
   "lib/agent-engine/edge/crm/send-message.ts":

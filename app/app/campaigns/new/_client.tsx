@@ -23,7 +23,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCriarCampanha, usePreviaDaAudiencia } from "@/hooks/campanhas/useCampanhas";
+import { MensagemOficial, mapaCompleto, mapaDoModelo } from "@/components/campanhas/MensagemOficial";
+import { useCriarCampanha, useModelosDaCampanha, usePreviaDaAudiencia } from "@/hooks/campanhas/useCampanhas";
 import { channelLabel, useChannelSessions } from "@/hooks/channels/useChannelSessions";
 import { useT } from "@/hooks/i18n/useT";
 import {
@@ -32,6 +33,7 @@ import {
   useFunis,
 } from "@/hooks/campanhas/useDestinoDaCampanha";
 import { VARIAVEIS_DA_CAMPANHA, DESCRICAO_DA_VARIAVEL } from "@/lib/campanhas/renderizador";
+import type { MapaDeVariaveis } from "@/lib/campanhas/variaveis-do-modelo";
 
 export function NovaCampanha() {
   const t = useT();
@@ -60,6 +62,15 @@ export function NovaCampanha() {
   const [agente, setAgente] = useState("");
   const [funilDoPublico, setFunilDoPublico] = useState("");
   const [etapaDoPublico, setEtapaDoPublico] = useState("");
+  const [modeloId, setModeloId] = useState("");
+  const [mapa, setMapa] = useState<MapaDeVariaveis>({});
+
+  // Número da API Oficial manda MODELO aprovado (issue #8); número de QR code, texto livre.
+  // Quem decide é o número escolhido — a rota devolve `oficial: false` para número de QR code.
+  const modelosDoNumero = useModelosDaCampanha(canal || null);
+  const oficial = modelosDoNumero.data?.oficial === true;
+  const modelos = modelosDoNumero.data?.modelos ?? [];
+  const modelo = modelos.find((m) => m.id === modeloId);
 
   const funis = useFunis();
   const etapas = useEtapas(funil || null);
@@ -85,10 +96,15 @@ export function NovaCampanha() {
     filtro.etapas.length > 0 ||
     filtro.sem_interacao_ha_dias !== null;
 
+  /** O conteúdo que vai à API e à prévia: modelo + mapa (oficial) ou texto livre. */
+  const conteudo = oficial
+    ? { message_body: null, meta_template_id: modeloId || null, template_variables: mapaDoModelo(modelo, mapa) }
+    : { message_body: texto.trim(), meta_template_id: null, template_variables: {} };
+
   const podeSalvar =
     nome.trim() !== "" &&
     canal !== "" &&
-    texto.trim() !== "" &&
+    (oficial ? mapaCompleto(modelo, mapa) : texto.trim() !== "") &&
     temCriterio &&
     (baseLegal !== "legitimate_interest" || liaRef.trim() !== "");
 
@@ -96,11 +112,12 @@ export function NovaCampanha() {
     const criada = await criar.mutateAsync({
       name: nome.trim(),
       channel_session_id: canal,
-      message_body: texto.trim(),
+      ...conteudo,
       base_legal: baseLegal,
       lia_ref: liaRef.trim() || null,
       audience_filter: filtro,
-      intervalo_segundos: intervalo ? Number(intervalo) : null,
+      // O intervalo é anti-banimento do modo de texto livre; a campanha oficial não o usa.
+      intervalo_segundos: !oficial && intervalo ? Number(intervalo) : null,
       janela_inicio_hora: janelaInicio ? Number(janelaInicio) : null,
       janela_fim_hora: janelaFim ? Number(janelaFim) : null,
       teto_diario: tetoDiario ? Number(tetoDiario) : null,
@@ -139,7 +156,12 @@ export function NovaCampanha() {
             id="canal"
             className="h-9 w-full rounded-md border border-border bg-surface px-2 text-sm"
             value={canal}
-            onChange={(e) => setCanal(e.target.value)}
+            onChange={(e) => {
+              setCanal(e.target.value);
+              // Modelo é da conta do número: trocar de número zera a escolha.
+              setModeloId("");
+              setMapa({});
+            }}
           >
             <option value="">{t("Escolha um número")}</option>
             {(canais.data ?? []).map((c) => (
@@ -317,7 +339,16 @@ export function NovaCampanha() {
             variant="outline"
             disabled={!temCriterio || previa.isPending}
             onClick={() =>
-              previa.mutate({ audience_filter: filtro, message_body: texto })
+              previa.mutate(
+                oficial && modeloId
+                  ? {
+                      audience_filter: filtro,
+                      message_body: "",
+                      meta_template_id: modeloId,
+                      template_variables: mapaDoModelo(modelo, mapa),
+                    }
+                  : { audience_filter: filtro, message_body: texto },
+              )
             }
           >
             {previa.isPending ? t("Contando…") : t("Ver quantas pessoas")}
@@ -344,35 +375,51 @@ export function NovaCampanha() {
 
       <Card className="space-y-4 p-4">
         <h2 className="font-medium">{t("Mensagem")}</h2>
-        <Textarea
-          rows={6}
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          placeholder={t("Escreva como você falaria com uma pessoa só.")}
-          aria-label={t("Texto da mensagem")}
-        />
-        <div className="space-y-1 text-sm text-muted-foreground">
-          <p>{t("Você pode usar:")}</p>
-          <ul className="space-y-1">
-            {VARIAVEIS_DA_CAMPANHA.map((v) => (
-              <li key={v}>
-                <button
-                  type="button"
-                  className="rounded-md bg-surface-elevated px-1 font-mono text-xs"
-                  onClick={() => setTexto((atual) => `${atual}{{${v}}}`)}
-                >
-                  {`{{${v}}}`}
-                </button>{" "}
-                — {t(DESCRICAO_DA_VARIAVEL[v])}
-              </li>
-            ))}
-          </ul>
-          <p>
-            {t(
-              "Quem não tiver o dado que a mensagem usa fica de fora, com o motivo na lista — mensagem com buraco não sai.",
-            )}
-          </p>
-        </div>
+        {oficial ? (
+          <MensagemOficial
+            modelos={modelos}
+            carregando={modelosDoNumero.isPending}
+            modeloId={modeloId}
+            onModelo={(id) => {
+              setModeloId(id);
+              setMapa((atual) => mapaDoModelo(modelos.find((m) => m.id === id), atual));
+            }}
+            mapa={mapa}
+            onMapa={setMapa}
+          />
+        ) : (
+          <>
+            <Textarea
+              rows={6}
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder={t("Escreva como você falaria com uma pessoa só.")}
+              aria-label={t("Texto da mensagem")}
+            />
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <p>{t("Você pode usar:")}</p>
+              <ul className="space-y-1">
+                {VARIAVEIS_DA_CAMPANHA.map((v) => (
+                  <li key={v}>
+                    <button
+                      type="button"
+                      className="rounded-md bg-surface-elevated px-1 font-mono text-xs"
+                      onClick={() => setTexto((atual) => `${atual}{{${v}}}`)}
+                    >
+                      {`{{${v}}}`}
+                    </button>{" "}
+                    — {t(DESCRICAO_DA_VARIAVEL[v])}
+                  </li>
+                ))}
+              </ul>
+              <p>
+                {t(
+                  "Quem não tiver o dado que a mensagem usa fica de fora, com o motivo na lista — mensagem com buraco não sai.",
+                )}
+              </p>
+            </div>
+          </>
+        )}
       </Card>
 
       <Card className="space-y-4 p-4">
@@ -449,16 +496,18 @@ export function NovaCampanha() {
           )}
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="intervalo">{t("Intervalo mínimo entre mensagens (segundos)")}</Label>
-            <Input
-              id="intervalo"
-              type="number"
-              min={1}
-              value={intervalo}
-              onChange={(e) => setIntervalo(e.target.value)}
-            />
-          </div>
+          {!oficial && (
+            <div className="space-y-2">
+              <Label htmlFor="intervalo">{t("Intervalo mínimo entre mensagens (segundos)")}</Label>
+              <Input
+                id="intervalo"
+                type="number"
+                min={1}
+                value={intervalo}
+                onChange={(e) => setIntervalo(e.target.value)}
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="teto">{t("Máximo por dia")}</Label>
             <Input

@@ -25,6 +25,7 @@
  * produto. A campanha não cria régua concorrente: lê as que existem.
  */
 import type { MotivoDeExclusao } from "./tipos";
+import type { ContatoDasVariaveis } from "./variaveis-do-modelo";
 
 /** O que se sabe do destinatário na hora de decidir. Nada além disto importa. */
 export interface ContatoParaDecidir {
@@ -60,6 +61,8 @@ export function motivoParaExcluir(c: ContatoParaDecidir): MotivoDeExclusao | nul
 /** Um candidato do recorte, já lido do banco. */
 export interface CandidatoDaAudiencia extends ContatoParaDecidir {
   nome: string | null;
+  /** O cadastro cru que preenche as variáveis do modelo oficial. */
+  dados?: ContatoDasVariaveis;
 }
 
 export interface LinhaClassificada {
@@ -68,6 +71,8 @@ export interface LinhaClassificada {
   motivo: MotivoDeExclusao | null;
   /** O texto final — só existe para quem é elegível. */
   corpo: string | null;
+  /** Os valores congelados das variáveis (modo oficial: por slotKey) — só de quem é elegível. */
+  variaveis?: Record<string, string>;
 }
 
 export interface ContextoDaClassificacao {
@@ -83,7 +88,11 @@ export interface ContextoDaClassificacao {
   /** O hash de um endereço — injetado para esta função continuar pura. */
   hashDoEndereco: (endereco: string) => string;
   /** Renderiza o texto e diz o que faltou. Injetado para esta função ficar pura. */
-  renderizar: (c: CandidatoDaAudiencia) => { texto: string; faltando: string[] };
+  renderizar: (c: CandidatoDaAudiencia) => {
+    texto: string;
+    faltando: string[];
+    variaveis?: Record<string, string>;
+  };
 }
 
 /**
@@ -140,14 +149,14 @@ export function classificarAudiencia(
       excluir("duplicado");
       continue;
     }
-    const { texto, faltando } = ctx.renderizar(candidato);
+    const { texto, faltando, variaveis } = ctx.renderizar(candidato);
     if (faltando.length > 0) {
       excluir("variavel_ausente");
       continue;
     }
 
     enderecosVistos.add(endereco);
-    saida.push({ candidato, elegivel: true, motivo: null, corpo: texto });
+    saida.push({ candidato, elegivel: true, motivo: null, corpo: texto, ...(variaveis ? { variaveis } : {}) });
   }
 
   return saida;

@@ -30,6 +30,7 @@ import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { fail } from "@/lib/api/wrappers";
+import { aplicarFalhaTardia } from "@/lib/campanhas/desfecho-oficial";
 import { appDaMetaDoNumero } from "@/lib/channels/meta/app-da-sessao";
 import { aplicarEventoDeModelo, ehEventoDeModelo } from "@/lib/channels/meta/eventos-de-modelo";
 import { lerEnvelopeMeta } from "@/lib/channels/meta/envelope";
@@ -244,6 +245,17 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
             erro: { codigo: falha.error_code ?? "", titulo: falha.error_message },
           },
         });
+        // Mensagem de campanha oficial (issue #8): temporário volta à fila,
+        // 131049 espera 24 h, 131050 grava a recusa de marketing no contato.
+        // Dentro do `if (linha)` pelo mesmo "uma vez" do aviso acima.
+        const naCampanha = await aplicarFalhaTardia(
+          admin,
+          session.organizationId,
+          e.externalId,
+          e.errorCode,
+          new Date(),
+        );
+        if (naCampanha !== "nao_e_campanha") desfechos.push(`campanha:${naCampanha}`);
       }
     } else {
       // O evento inteiro vira colunas, não só `status`: quando a Meta ACEITA o

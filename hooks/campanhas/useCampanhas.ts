@@ -11,6 +11,8 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { apiClient } from "@/lib/api/client";
 import type { ContagemDaCampanha, TaxasDaCampanha } from "@/lib/campanhas/metricas";
+import type { ModeloParaCampanha } from "@/lib/campanhas/modelos-da-campanha";
+import type { MapaDeVariaveis } from "@/lib/campanhas/variaveis-do-modelo";
 import type { StatusDaCampanha } from "@/lib/campanhas/tipos";
 
 export interface CampanhaDaLista {
@@ -50,6 +52,9 @@ export interface CampanhaDetalhada extends CampanhaDaLista {
   janela_fim_hora: number | null;
   teto_diario: number | null;
   teto_horario: number | null;
+  /** Com modelo, a campanha é OFICIAL (issue #8); sem ele, é do modo WAHA. */
+  meta_template_id?: string | null;
+  template_variables?: MapaDeVariaveis;
 }
 
 export interface Destinatario {
@@ -65,6 +70,10 @@ export interface Destinatario {
   delivered_at: string | null;
   read_at: string | null;
   replied_at: string | null;
+  /** Código e motivo legível da última falha; com `next_attempt_at`, quando tenta de novo. */
+  last_error_code?: string | null;
+  last_error_detail?: string | null;
+  next_attempt_at?: string | null;
   contacts: { name: string | null; display_name: string | null } | null;
 }
 
@@ -182,6 +191,8 @@ export function usePreviaDaAudiencia() {
       audience_filter: Record<string, unknown>;
       message_body: string;
       campaign_id?: string;
+      meta_template_id?: string;
+      template_variables?: MapaDeVariaveis;
     }) => (await apiClient.post<{ data: PreviaDaAudiencia }>("/api/v1/campaigns/preview", corpo)).data,
     onError: (err) => showApiError(err),
   });
@@ -207,5 +218,22 @@ export function useEditarCampanha(id: string) {
       void qc.invalidateQueries({ queryKey: ["campanhas"] });
     },
     onError: (err) => showApiError(err),
+  });
+}
+
+/**
+ * Os modelos aprovados que o número escolhido pode mandar (issue #8). `oficial:
+ * false` = número do modo WAHA, e a tela mostra o campo de texto.
+ */
+export function useModelosDaCampanha(channelSessionId: string | null) {
+  return useQuery({
+    queryKey: ["campanha-modelos", channelSessionId],
+    enabled: !!channelSessionId,
+    queryFn: async () =>
+      (
+        await apiClient.get<{ data: { oficial: boolean; modelos: ModeloParaCampanha[] } }>(
+          `/api/v1/campaigns/modelos?channel_session_id=${channelSessionId}`,
+        )
+      ).data,
   });
 }
