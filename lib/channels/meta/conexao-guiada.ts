@@ -403,6 +403,26 @@ export function checklistDaConta(no: NoDaWaba): ItemDoChecklist[] {
   ];
 }
 
+/**
+ * O PORTFÓLIO de negócio dono da WABA (`owner_business_info.id`) — o limite
+ * diário de mensagens é dele, compartilhado por todos os números de todas as
+ * WABAs do portfólio (issue #9). Melhor esforço: `null` quando a Graph não
+ * responde ou não diz, e o motor de campanhas trata o número como de portfólio
+ * desconhecido (conta junto com todos os oficiais da organização).
+ */
+export async function lerPortfolioDaConta(input: {
+  wabaId: string;
+  token: string;
+  appSecret?: string | null;
+}): Promise<string | null> {
+  const r = await chamar<{ owner_business_info?: { id?: unknown } }>(`/${input.wabaId}`, input.token, {
+    busca: { fields: "owner_business_info" },
+    appSecret: input.appSecret ?? null,
+  });
+  const id = r.ok ? r.corpo.owner_business_info?.id : null;
+  return typeof id === "string" && id.trim() !== "" ? id.trim() : null;
+}
+
 /** O motivo do registro recusado — o PIN tem nome próprio. */
 const MOTIVO_DO_REGISTRO: Record<number, string> = {
   133005: "PIN incorreto. Use o PIN de confirmação em duas etapas que já está no número, ou crie um novo de 6 dígitos no WhatsApp Manager.",

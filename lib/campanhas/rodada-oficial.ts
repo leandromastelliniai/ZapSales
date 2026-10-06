@@ -38,6 +38,7 @@ import { PACING_DEFAULTS } from "@/lib/agent-engine/pacing/defaults";
 import { fusoDaJanela } from "@/lib/agent-engine/pacing/store";
 import { beginServiceAtOrigin } from "@/lib/atendimento/origem";
 import { CHANNEL_PROVIDER_META } from "@/lib/channels/capabilities";
+import { ehQualidadeVermelha } from "@/lib/channels/meta/saude";
 import { isStatusSendable } from "@/lib/channels/meta/template-binding";
 import { logger } from "@/lib/logger";
 import { OrgNaoOperanteError, STATUS_OPERANTE, ehOperante, statusDaOrgEmbutida } from "@/lib/organizacao/operante";
@@ -52,6 +53,8 @@ import {
   type DesfechoDaFalha,
 } from "./falha-oficial";
 import { carregarModelo, type ModeloDaCampanha } from "./modelo-da-campanha";
+import { fraseDaPausa, motivoDoStatusDoModelo, pausarAutomaticamente } from "./pausa-automatica";
+import { portfolioDaCampanha } from "./portfolio-da-campanha";
 import { podeMandarAgora } from "./ritmo";
 import {
   estadoDeEnvio,
@@ -228,10 +231,16 @@ async function rodarUmaCampanhaOficial(
 
   // ─── O modelo tem de estar aprovado AGORA ───
   // Modelo pausado ou rejeitado depois do início faria cada envio voltar com
-  // 132xxx. A pausa da campanha por isso é da issue #9; aqui só não se gasta
-  // o lote com algo que a Meta vai recusar.
+  // 132xxx. O webhook de modelo pausa a campanha na hora (issue #9); esta é a
+  // rede de segurança para o status que mudou sem webhook (sincronização).
   const modelo = await carregarModelo(admin, campanha.organization_id, campanha.meta_template_id);
   if (!modelo || !isStatusSendable(modelo.status)) {
+    const motivo = motivoDoStatusDoModelo(modelo?.status);
+    if (modelo && motivo) {
+      const detalhe = fraseDaPausa(motivo, { modelo: `${modelo.name} (${modelo.language})` });
+      await pausarAutomaticamente(admin, campanha.organization_id, [campanha.id], motivo, detalhe, agora);
+      return { placar, concluida: false, detalhe: `pausada:${motivo}` };
+    }
     return { placar, concluida: false, detalhe: "modelo_indisponivel" };
   }
 
@@ -264,15 +273,41 @@ async function rodarUmaCampanhaOficial(
   );
 
   // ─── Os números: do pool, oficiais, no ar e da conta do modelo ───
-  const numeros = await numerosOficiais(admin, campanha, modelo);
-  if (numeros.length === 0) return { placar, concluida: false, detalhe: "canal:sem_numero_oficial" };
+  const doPool = await numerosOficiais(admin, campanha, modelo);
+  if (doPool.length === 0) return { placar, concluida: false, detalhe: "canal:sem_numero_oficial" };
 
-  // ─── A reserva ───
-  const { data: reservados, error } = await admin.rpc("fn_campanha_reservar_lote", {
-    p_campaign_id: campanha.id,
-    p_limite: folga,
-    p_agora: agora.toISOString(),
-  });
+  // ─── Qualidade vermelha pausa ───
+  // O webhook de qualidade pausa na hora (issue #9); aqui é a rede de segurança
+  // para a qualidade lida sem webhook (reconexão). Um número vermelho no pool
+  // pausa a campanha inteira: continuar pelos outros seria seguir mandando o
+  // mesmo conteúdo que está sendo denunciado.
+  const vermelho = doPool.find((n) => ehQualidadeVermelha(n.qualidade));
+  if (vermelho) {
+    const detalhe = fraseDaPausa("qualidade_vermelha", { numero: vermelho.apelido });
+    await pausarAutomaticamente(admin, campanha.organization_id, [campanha.id], "qualidade_vermelha", detalhe, agora);
+    return { placar, concluida: false, detalhe: "pausada:qualidade_vermelha" };
+  }
+  const numeros = doPool.map((n) => n.id);
+
+  // ─── A reserva, dentro do limite do portfólio ───
+  // O limite é do portfólio, não do número nem da campanha: a conta junta os
+  // envios de modelo de todos os números dele — inclusive de outra organização
+  // da instalação, se o portfólio for o mesmo —, e a reserva acontece sob trava
+  // no banco (0539): duas campanhas do mesmo portfólio nunca somam mais que ele.
+  const portfolio = await portfolioDaCampanha(admin, campanha);
+  const { data: reservados, error } = Number.isFinite(portfolio.teto)
+    ? await admin.rpc("fn_campanha_reservar_lote_no_portfolio", {
+        p_campaign_id: campanha.id,
+        p_limite: folga,
+        p_agora: agora.toISOString(),
+        p_sessoes: portfolio.sessoes,
+        p_teto: portfolio.teto,
+      })
+    : await admin.rpc("fn_campanha_reservar_lote", {
+        p_campaign_id: campanha.id,
+        p_limite: folga,
+        p_agora: agora.toISOString(),
+      });
   if (error) {
     logger.warn("[campanha oficial] reserva do lote falhou", { campanha: campanha.id, motivo: error.message });
     return { placar, concluida: false, detalhe: `erro_na_reserva:${error.message.slice(0, 40)}` };
@@ -594,26 +629,48 @@ async function bloqueioDeMarketingAte(
   return ultimo ? new Date(new Date(ultimo.last_attempt_at).getTime() + ESPERA_DO_LIMITE_DE_MARKETING_MS) : null;
 }
 
-/** Os números do pool que podem mandar ESTE modelo agora. */
+interface NumeroDoPool {
+  id: string;
+  qualidade: string | null;
+  /** Como o operador reconhece o número: apelido + telefone. */
+  apelido: string;
+}
+
+/** Os números do pool que podem mandar ESTE modelo agora, com a qualidade de cada um. */
 async function numerosOficiais(
   admin: SupabaseClient,
   campanha: CampanhaOficialRow,
   modelo: ModeloDaCampanha,
-): Promise<string[]> {
+): Promise<NumeroDoPool[]> {
   const pool = await numerosDaCampanha(admin, campanha);
   const { data } = await admin
     .from("channel_sessions")
-    .select("id, provider, status, meta_waba_id")
+    .select("id, provider, status, meta_waba_id, meta_qualidade, display_name, phone_number")
     .eq("organization_id", campanha.organization_id)
     .in("id", pool);
-  const linhas = (data ?? []) as Array<{ id: string; provider: string; status: string; meta_waba_id: string | null }>;
+  const linhas = (data ?? []) as Array<{
+    id: string;
+    provider: string;
+    status: string;
+    meta_waba_id: string | null;
+    meta_qualidade: string | null;
+    display_name: string | null;
+    phone_number: string | null;
+  }>;
   // Na ordem do pool (principal primeiro), para o rodízio ser estável.
-  return pool.filter((id) => {
+  const numeros: NumeroDoPool[] = [];
+  for (const id of pool) {
     const l = linhas.find((x) => x.id === id);
-    return (
-      !!l && l.provider === CHANNEL_PROVIDER_META && l.status === "WORKING" && l.meta_waba_id === modelo.waba_id
-    );
-  });
+    if (!l || l.provider !== CHANNEL_PROVIDER_META || l.status !== "WORKING" || l.meta_waba_id !== modelo.waba_id) {
+      continue;
+    }
+    numeros.push({
+      id,
+      qualidade: l.meta_qualidade,
+      apelido: [l.display_name, l.phone_number].filter(Boolean).join(" ") || "oficial",
+    });
+  }
+  return numeros;
 }
 
 /**

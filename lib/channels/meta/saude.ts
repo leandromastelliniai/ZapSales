@@ -52,6 +52,11 @@ export function tamanhoDoLimite(faixa: string | null): number | null {
   return Number(m[1]) * (m[2] ? 1000 : 1);
 }
 
+/** A qualidade é vermelha? É o que pausa as campanhas do número (issue #9). */
+export function ehQualidadeVermelha(q: string | null | undefined): boolean {
+  return (q ?? "").trim().toUpperCase() === "RED";
+}
+
 function ordemDaQualidade(q: string | null): number | null {
   return q ? (ORDEM_DA_QUALIDADE[q.toUpperCase()] ?? null) : null;
 }

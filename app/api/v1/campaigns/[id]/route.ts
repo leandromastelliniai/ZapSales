@@ -16,8 +16,9 @@ import { fail, ok } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { carregarCampanha } from "@/lib/campanhas/acoes";
 import { ehEditavel, ehTerminal } from "@/lib/campanhas/maquina-de-estados";
-import { recusaDaConexaoComModelo } from "@/lib/campanhas/modelo-da-campanha";
+import { recusaDaConexaoComModelo, recusaDoNumeroDeAtendimento } from "@/lib/campanhas/modelo-da-campanha";
 import { gravarPool, lerPoolExtra } from "@/lib/campanhas/pool-de-numeros";
+import { usoDoPortfolio } from "@/lib/campanhas/portfolio-da-campanha";
 import { editarCampanhaSchema } from "@/lib/campanhas/schemas";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { requireSupportWrite } from "@/lib/impersonate/support";
@@ -32,7 +33,8 @@ const COLUNAS =
   "snapshot_excluded, scheduled_at, prepared_at, started_at, paused_at, completed_at, " +
   "cancelled_at, failure_code, intervalo_segundos, janela_inicio_hora, janela_fim_hora, " +
   "teto_diario, teto_horario, pipeline_id, stage_id, agent_id, meta_template_id, template_variables, " +
-  "created_at, created_by";
+  "numero_de_atendimento_id, pausa_motivo, pausa_detalhe, risco_de_banimento_aceito_em, " +
+  "risco_de_banimento_aceito_por, created_at, created_by";
 
 export async function GET(
   _req: NextRequest,
@@ -55,8 +57,15 @@ export async function GET(
 
   // O pool vem junto: a tela precisa dele para mostrar por quantos números a
   // campanha fala, e uma segunda chamada para isso seria round-trip à toa.
-  const extras = await lerPoolExtra(createAdminClient(), authz.org.orgId, id);
-  return ok({ ...(data as object), channel_session_ids: extras }, { requestId });
+  const admin = createAdminClient();
+  const extras = await lerPoolExtra(admin, authz.org.orgId, id);
+  // Campanha oficial: quanto do limite diário do PORTFÓLIO já foi usado (issue
+  // #9) — é o que explica uma campanha "em andamento" que parou de enviar.
+  const linha = data as unknown as { channel_session_id: string; meta_template_id: string | null };
+  const portfolio = linha.meta_template_id
+    ? await usoDoPortfolio(admin, { channel_session_id: linha.channel_session_id })
+    : null;
+  return ok({ ...(data as object), channel_session_ids: extras, portfolio }, { requestId });
 }
 
 export async function PATCH(
@@ -159,6 +168,7 @@ export async function PATCH(
     "agent_id",
     "meta_template_id",
     "template_variables",
+    "numero_de_atendimento_id",
   ] as const) {
     if (entrada[campo] !== undefined) mudanca[campo] = entrada[campo];
   }
@@ -169,6 +179,9 @@ export async function PATCH(
   if (
     (entrada.message_body !== undefined && entrada.message_body !== campanha.message_body) ||
     (entrada.meta_template_id !== undefined && entrada.meta_template_id !== campanha.meta_template_id) ||
+    // O número de atendimento muda o botão que o contato recebe.
+    (entrada.numero_de_atendimento_id !== undefined &&
+      entrada.numero_de_atendimento_id !== campanha.numero_de_atendimento_id) ||
     // `jsonb` devolve as chaves em outra ordem: compara o conteúdo, não o texto.
     (entrada.template_variables !== undefined &&
       !isDeepStrictEqual(entrada.template_variables, campanha.template_variables ?? {}))
@@ -183,6 +196,20 @@ export async function PATCH(
       supabase,
       authz.org.orgId,
       entrada.channel_session_id ?? campanha.channel_session_id,
+      entrada.meta_template_id === undefined ? campanha.meta_template_id : entrada.meta_template_id,
+    );
+    if (recusa) return fail("campanha_conteudo_invalido", t(recusa), 422, { requestId });
+  }
+
+  // Modo "dois números" (issue #9): confere o par que VAI ficar gravado — trocar
+  // só o modelo também pode tirar o botão wa.me.
+  if (entrada.numero_de_atendimento_id !== undefined || entrada.meta_template_id !== undefined) {
+    const recusa = await recusaDoNumeroDeAtendimento(
+      supabase,
+      authz.org.orgId,
+      entrada.numero_de_atendimento_id === undefined
+        ? campanha.numero_de_atendimento_id
+        : entrada.numero_de_atendimento_id,
       entrada.meta_template_id === undefined ? campanha.meta_template_id : entrada.meta_template_id,
     );
     if (recusa) return fail("campanha_conteudo_invalido", t(recusa), 422, { requestId });

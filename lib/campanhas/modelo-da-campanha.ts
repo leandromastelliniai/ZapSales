@@ -10,11 +10,12 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { CHANNEL_PROVIDER_META } from "@/lib/channels/capabilities";
+import { CHANNEL_PROVIDER_META, transportaMensagem } from "@/lib/channels/capabilities";
 import { renderTemplateBody } from "@/lib/channels/meta/render-template";
 import { isStatusSendable } from "@/lib/channels/meta/template-binding";
 import { deriveTemplateContract, type TemplateContract } from "@/lib/channels/meta/template-contract";
 
+import { recusaDoBotaoWaMe } from "./dois-numeros";
 import { problemasDoMapa, type MapaDeVariaveis } from "./variaveis-do-modelo";
 
 export interface ModeloDaCampanha {
@@ -123,4 +124,54 @@ export function recusaDoModelo(m: ModeloDaCampanha | null, mapa: MapaDeVariaveis
     return `O mapa de variáveis tem campos que este modelo não usa (${desconhecidas.join(", ")}). Revise as variáveis.`;
   }
   return null;
+}
+
+/**
+ * O número de atendimento do modo "dois números" (issue #9): um número desta
+ * organização, conectado por QR code (é ele que conversa fora da API Oficial),
+ * com o telefone que o botão wa.me abre.
+ */
+export async function numeroDeAtendimento(
+  admin: SupabaseClient,
+  organizationId: string,
+  numeroId: string,
+): Promise<{ ok: true; telefone: string | null } | { ok: false; motivo: string }> {
+  const { data } = await admin
+    .from("channel_sessions")
+    .select("provider, phone_number")
+    .eq("organization_id", organizationId)
+    .eq("id", numeroId)
+    .maybeSingle();
+  const linha = data as { provider?: string; phone_number?: string | null } | null;
+  if (!linha) return { ok: false, motivo: "O número de atendimento escolhido não existe nesta organização." };
+  if (!transportaMensagem(linha.provider) || linha.provider === CHANNEL_PROVIDER_META) {
+    return {
+      ok: false,
+      motivo:
+        "O número de atendimento é o que recebe a conversa fora da API Oficial — escolha um número conectado por QR code.",
+    };
+  }
+  return { ok: true, telefone: linha.phone_number ?? null };
+}
+
+/**
+ * O modo "dois números" cabe nesta campanha? `null` = sim. Só com modelo (o
+ * botão é do modelo), com número de QR code desta organização, e com o botão
+ * wa.me do modelo abrindo esse número.
+ */
+export async function recusaDoNumeroDeAtendimento(
+  admin: SupabaseClient,
+  organizationId: string,
+  numeroId: string | null,
+  modeloId: string | null,
+): Promise<string | null> {
+  if (!numeroId) return null;
+  if (!modeloId) {
+    return "O modo dois números manda o modelo pelo número oficial — escolha um modelo aprovado antes do número de atendimento.";
+  }
+  const numero = await numeroDeAtendimento(admin, organizationId, numeroId);
+  if (!numero.ok) return numero.motivo;
+  const modelo = await carregarModelo(admin, organizationId, modeloId);
+  if (!modelo) return "O modelo escolhido não existe nesta organização.";
+  return recusaDoBotaoWaMe(modelo.components, numero.telefone);
 }

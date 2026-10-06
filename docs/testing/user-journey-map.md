@@ -3364,3 +3364,50 @@ importa: `update of status` dispara mesmo sem mudança de valor, e o webhook sem
 - mensagem de campanha que ficou `queued` (canal sem credencial na hora) deixa o destinatário em
   `sending`, ligado a ela: a campanha só conclui quando a mensagem sair ou for dada como falha.
   Reenfileirar mandaria em dobro; marcar falha mentiria se ela sair.
+
+## J45 — Proteções e modos de envio das campanhas `[P0]` (2026-10-06, issue #9)
+
+Mesma fronteira da J44: o falso Graph na saída (agora com um segundo número que envia, de outra
+organização do mesmo portfólio), webhooks assinados na rota real (qualidade do número, status e
+categoria do modelo), a ingestão real do número de QR code (`dispatchWahaEvent`) e as rotas do app.
+As rodadas usam o relógio REAL com janela 0–24: a conta do limite compara `messages.created_at`
+(relógio do banco) com o `agora` da rodada, e avançar 25 h é o "dia seguinte" da conta.
+
+Spec: `tests/invariants/protecoes-das-campanhas.test.ts`; regra do portfólio em
+`lib/campanhas/portfolio.test.ts`; motivos e frases da pausa em `lib/campanhas/pausa-automatica.test.ts`;
+botão wa.me em `lib/campanhas/dois-numeros.test.ts`; variável do sistema na tela em
+`components/campanhas/MensagemOficial.test.tsx`.
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J45.1 | A conexão guarda o portfólio | o número conectado pela API grava `meta_portfolio_id` do `owner_business_info` da WABA | **PASS (invariante)** |
+| J45.2 | Duas campanhas, duas organizações, números e WABAs diferentes, o mesmo portfólio na faixa de 50 | 40 + 40 contatos: saem exatamente 50 somados (A 40, B 10); a página de B mostra `50 de 50`; duas reservas simultâneas no portfólio cheio não levam ninguém; 25 h depois os 30 restantes saem sozinhos | **PASS (invariante)** — a simultaneidade só é medida de verdade no Postgres do CI (no PGlite as conexões dividem uma sessão) |
+| J45.3 | Modelo rejeitado, pausado, desativado e recategorizado (webhook) | cada um pausa a campanha dele com `pausa_motivo` e a frase com o nome do modelo (e o motivo da Meta / "utilidade para marketing"); a campanha de outro modelo segue `running`; `campaign.auto_paused` na auditoria; a reentrega não repete efeito | **PASS (invariante)** |
+| J45.4 | Retomar | com o modelo ainda rejeitado → 422; a recategorizada retoma e o motivo some | **PASS (invariante)** |
+| J45.5 | Modelo pausado sem webhook (sincronização) | a rodada pausa a campanha com `modelo_pausado` | **PASS (invariante)** |
+| J45.6 | Qualidade vermelha (webhook `FLAGGED`, a Graph diz `RED`) | as campanhas oficiais do número pausam com `qualidade_vermelha` e o número nomeado; nada da outra organização pausa; retomar com o número vermelho → 409 "vermelha"; verde de novo → retoma; vermelho lido sem webhook → a rodada pausa | **PASS (invariante)** |
+| J45.7 | Campanha por número de QR code sem o aceite | iniciar e agendar → 422 `campanha_risco_nao_aceito`; aceitar grava quem e quando, audita `campaign.ban_risk_accepted` uma vez só (repetir não audita de novo); depois inicia; a cópia não herda o aceite; campanha oficial não tem risco a aceitar (409) | **PASS (invariante)** |
+| J45.8 | Modo dois números | modelo sem botão wa.me → 422; número de atendimento oficial → 422; com `https://wa.me/{{1}}` o envio leva o botão com o telefone do número de QR code, sem o operador dar fonte à variável | **PASS (invariante)** |
+| J45.9 | Quem clica e escreve no número de QR code | a mensagem entra no MESMO contato da campanha (nenhuma ficha nova) e a resposta marca o destinatário como `replied` | **PASS (invariante)** |
+| J45.10 | As proteções pela tela, como um leigo | aviso de risco com a caixa "Entendi o risco", cartão "Pausada automaticamente", limite do portfólio e o seletor "Quem responde fala com qual número?" numa instalação fresca | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
+
+Sabotagem medida, um desligamento por vez: reservar sem o limite do portfólio derruba a J45.2; tirar
+a pausa do webhook de modelo derruba a J45.3 e a J45.4; tirar a pausa do webhook de qualidade
+derruba a J45.6; tirar o portão do aceite derruba a J45.7; não preencher a variável do botão com o
+número de atendimento derruba a J45.8 e a J45.9. Rodou no PGlite desta máquina (21 casos), junto da
+J41 (19), J42 (20), J43 (23) e J44 (29, com o caso do QR code agora aceitando o risco antes de
+iniciar). Não é o gate: o `test:db` do CI é.
+
+**Decisões que valem dizer:**
+- Uma organização tem UM número oficial (a conexão atualiza a linha que existe). Dois números do
+  mesmo portfólio são, então, de organizações diferentes da instalação, e o grupo do portfólio
+  cruza tenants — só contagem e faixa atravessam. A trava da reserva é única da instalação.
+- Portfólio desconhecido (número conectado antes desta versão) junta o número com os oficiais da
+  mesma organização e os da mesma WABA; faixa desconhecida vale 250 (a inicial da Meta). Os dois
+  erram para mandar menos.
+- A conta é conservadora: modelo que saiu dentro da janela de atendimento também conta, e contato
+  que já recebeu modelo hoje conta de novo na reserva.
+- Um número vermelho no pool pausa a campanha inteira, não só tira o número do rodízio.
+
+**Fora do #9:** custo, teto de gasto e as 1.000 grátis (issue #10, que soma `teto_de_gasto` ao
+mesmo `pausa_motivo`); a resposta caindo no funil e no agente com o contexto (issue #11).

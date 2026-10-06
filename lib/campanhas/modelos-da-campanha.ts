@@ -11,6 +11,7 @@ import { isStatusSendable } from "@/lib/channels/meta/template-binding";
 import { describeAddress, type SlotExpects } from "@/lib/channels/meta/template-contract";
 import { lerConteudo } from "@/lib/channels/template-conteudo";
 
+import { botaoWaMe } from "./dois-numeros";
 import { contratoDoModelo, type ModeloDaCampanha } from "./modelo-da-campanha";
 
 export interface VariavelDoModelo {
@@ -32,6 +33,12 @@ export interface ModeloParaCampanha {
   /** O corpo aprovado, com os `{{…}}` — o operador escolhe pelo conteúdo, não pelo nome técnico. */
   texto: string;
   variaveis: VariavelDoModelo[];
+  /**
+   * O botão de link que abre conversa no WhatsApp (`wa.me`) — é o que o modo
+   * "dois números" exige (issue #9). `slot` é a variável que o sistema preenche
+   * com o número de atendimento; `numero_fixo`, o número que a URL fixa abre.
+   */
+  botao_wa_me: { slot: string | null; numero_fixo: string | null } | null;
 }
 
 export function modelosParaCampanha(
@@ -63,6 +70,10 @@ export function modelosParaCampanha(
       category: l.category,
       texto: lerConteudo(l.components).body?.trim() ?? "",
       variaveis,
+      botao_wa_me: (() => {
+        const b = botaoWaMe(l.components);
+        return b ? { slot: b.slot, numero_fixo: b.numeroFixo } : null;
+      })(),
     });
   }
   return saida;

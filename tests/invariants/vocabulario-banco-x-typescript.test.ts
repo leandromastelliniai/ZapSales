@@ -434,6 +434,17 @@ const PARES: Array<{
     arquivo: "lib/organizacao/operante.ts",
     simbolo: "TIPOS_DE_SUSPENSAO",
   },
+  {
+    tabela: "campaigns",
+    coluna: "pausa_motivo",
+    // lib/campanhas/pausa-automatica.ts → MOTIVOS_DA_PAUSA (tupla `as const`).
+    // Nasce no MESMO commit da migration 0539. O motivo é gravado pela pausa
+    // automática (webhook e rodada) e lido pela tela; um motivo novo só no
+    // TypeScript viraria `23514` dentro do UPDATE da pausa — e a campanha
+    // seguiria enviando, que é o contrário do que a pausa existe para fazer.
+    arquivo: "lib/campanhas/pausa-automatica.ts",
+    simbolo: "MOTIVOS_DA_PAUSA",
+  },
 ];
 
 /** Tira um nível de parênteses externos, se ele envolver a expressão inteira. */

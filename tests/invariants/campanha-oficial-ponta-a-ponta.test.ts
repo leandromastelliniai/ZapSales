@@ -778,6 +778,8 @@ describe("8 · o modo WAHA não muda", () => {
     expect(criada.status).toBe(201);
     const id = (await json<{ id: string }>(criada)).data.id;
     expect((await acao(id, "preparar")).status).toBe(200);
+    // Campanha por número de QR code só inicia com o aviso de risco aceito (issue #9).
+    expect((await acao(id, "aceitar-risco")).status).toBe(200);
     expect((await acao(id, "iniciar")).status).toBe(200);
 
     await rodada(emMinutos(60));

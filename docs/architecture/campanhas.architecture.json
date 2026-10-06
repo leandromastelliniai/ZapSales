@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Campanhas — da lista escolhida até a resposta que volta",
-    "subtitle": "Modo WAHA: o ritmo é do número (channel_knobs + pacing_ledger). Modo oficial: modelo aprovado em lotes, sem anti-ban (issue #8)",
+    "subtitle": "Modo WAHA: o ritmo é do número (channel_knobs + pacing_ledger). Modo oficial: modelo aprovado em lotes, sem anti-ban (issue #8). Proteções (issue #9): limite do portfólio, pausa automática com motivo, aceite do risco no QR code e o modo dois números",
     "output": "campanhas.html",
     "quality_profile": "standard"
   },
@@ -230,6 +230,42 @@
       "type": "external",
       "label": "webhook da Meta (status assinado) — entregue, lido e a falha que chega depois"
     }
+,
+    {
+      "id": "aviso-risco",
+      "lane": "tela",
+      "col": 4,
+      "type": "ui",
+      "label": "aviso de risco de banimento (QR code) antes de iniciar/agendar; cartão 'Pausada automaticamente' e o limite do portfólio na página"
+    },
+    {
+      "id": "portfolio",
+      "lane": "motor",
+      "col": 5,
+      "type": "logic",
+      "label": "portfolio.ts + fn_campanha_reservar_lote_no_portfolio — contatos únicos em 24 h no portfólio inteiro, reserva sob trava única"
+    },
+    {
+      "id": "dois-numeros",
+      "lane": "api",
+      "col": 6,
+      "type": "logic",
+      "label": "dois-numeros.ts — botão wa.me do modelo abre o número de QR code; a variável do botão sai desse número"
+    },
+    {
+      "id": "pausa-automatica",
+      "lane": "retorno",
+      "col": 6,
+      "type": "logic",
+      "label": "pausa-automatica.ts — qualidade vermelha e modelo rejeitado/pausado/desativado/recategorizado pausam com pausa_motivo + pausa_detalhe; audita campaign.auto_paused"
+    },
+    {
+      "id": "channel-sessions",
+      "lane": "dados",
+      "col": 5,
+      "type": "database",
+      "label": "channel_sessions — meta_portfolio_id (da WABA, na conexão), meta_qualidade, meta_limite_de_mensagens"
+    }
   ],
   "edges": [
     { "id": "lista-abre-nova", "from": "lista", "to": "nova", "label": "Nova campanha" },
@@ -274,6 +310,18 @@
     { "id": "webhook-carimba", "from": "webhook-meta", "to": "messages", "label": "statuses: delivered_at / read_at / failed" },
     { "id": "webhook-falha-tardia", "from": "webhook-meta", "to": "falha-oficial", "label": "failed de mensagem de campanha" },
     { "id": "falha-recoloca", "from": "falha-oficial", "to": "campaign-recipients", "label": "volta à fila, opted_out ou failed com o motivo" },
-    { "id": "falha-recusa-marketing", "from": "falha-oficial", "to": "elegibilidade", "label": "131050: consent.marketing.declined_at tira o contato das próximas" }
+    { "id": "falha-recusa-marketing", "from": "falha-oficial", "to": "elegibilidade", "label": "131050: consent.marketing.declined_at tira o contato das próximas" },
+    { "id": "rodada-pede-portfolio", "from": "rodada-oficial", "to": "portfolio", "label": "quanto cabe no limite do portfólio agora" },
+    { "id": "portfolio-le-numeros", "from": "portfolio", "to": "channel-sessions", "label": "números do mesmo portfólio (inclusive de outra organização) e a menor faixa" },
+    { "id": "portfolio-conta", "from": "portfolio", "to": "messages", "label": "modelos que saíram nas últimas 24 h" },
+    { "id": "portfolio-reserva", "from": "portfolio", "to": "campaign-recipients", "label": "reserva só o que cabe (SKIP LOCKED, sob trava)" },
+    { "id": "webhook-pausa", "from": "webhook-meta", "to": "pausa-automatica", "label": "qualidade vermelha / modelo rejeitado, pausado, desativado, recategorizado" },
+    { "id": "rodada-pausa", "from": "rodada-oficial", "to": "pausa-automatica", "label": "rede de segurança: status do modelo e qualidade lidos sem webhook" },
+    { "id": "pausa-grava", "from": "pausa-automatica", "to": "campaigns", "label": "paused + pausa_motivo + pausa_detalhe" },
+    { "id": "detalhe-mostra-pausa", "from": "campaigns", "to": "aviso-risco", "label": "o motivo da pausa e o uso do limite na página" },
+    { "id": "aviso-aceita", "from": "aviso-risco", "to": "rota-acao", "label": "aceitar-risco → risco_de_banimento_aceito_em/_por + campaign.ban_risk_accepted" },
+    { "id": "criar-confere-dois-numeros", "from": "rota-criar", "to": "dois-numeros", "label": "numero_de_atendimento_id confere o botão wa.me" },
+    { "id": "dois-numeros-preenche", "from": "dois-numeros", "to": "preparacao", "label": "variável do botão = telefone do número de QR code" },
+    { "id": "resposta-pelo-contato", "from": "dois-numeros", "to": "resposta", "label": "quem responde no QR code cai no mesmo contato; a resposta conta pela ficha" }
   ]
 }
