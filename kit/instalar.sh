@@ -1,32 +1,43 @@
 #!/usr/bin/env bash
-# kit/instalar.sh — instala (ou atualiza) o ZapSales numa VPS que JÁ RODA outros
-# apps, sem afetá-los (issue #3, modo "convivendo com outros apps").
+# kit/instalar.sh — instala (ou atualiza) o ZapSales numa VPS. Dois modos, que o
+# kit escolhe sozinho pelo dono das portas 80/443:
+#
+#   limpa       (issue #12) ninguém atende as portas: a VPS é só do ZapSales, e
+#               o Caddy da stack as ocupa e tira o certificado HTTPS sozinho.
+#   convivendo  (issue #3) um Caddy ou Nginx do sistema já serve outros sites:
+#               a stack escuta só no 127.0.0.1 e o proxy ganha UM bloco.
 #
 #   sudo ZAPSALES_DOMINIO=zapsales.suaempresa.com ZAPSALES_EMAIL=voce@suaempresa.com \
 #        kit/instalar.sh
 #
+# Numa VPS que ainda não tem o código, o comando único é o kit/obter.sh (baixa
+# a versão publicada para /opt/zapsales e chama este arquivo). Guia de cada
+# pergunta: docs/runbooks/instalacao-vps-limpa.md.
+#
 # Sem as variáveis, o kit pergunta. Rodar de novo é seguro e é como se
 # atualiza: segredos nunca são regerados, o bloco do proxy é substituído (não
-# duplicado), o baseline.sql é reaplicado e o primeiro administrador não é
-# recriado.
+# duplicado), o baseline.sql é reaplicado, o primeiro administrador não é
+# recriado e o modo não muda sozinho.
 #
 # O que ele faz, em ordem:
-#   1. confere a máquina e descobre o proxy que já atende as portas 80/443;
-#   2. fotografa os sites que já estão no ar e passa a vigiá-los a cada 5 s;
+#   1. confere a máquina e decide o modo pelo dono das portas 80/443;
+#   2. (convivendo) fotografa os sites que já estão no ar e os vigia a cada 5 s;
 #   3. gera o .env (segredos só na primeira vez);
 #   4. prepara as imagens (puxa do registro ou constrói — ZAPSALES_IMAGENS);
-#   5. sobe o Supabase, aplica o schema, sobe o resto da stack — tudo no 127.0.0.1;
+#   5. sobe o Supabase, aplica o schema, sobe o resto da stack;
 #   6. cria o primeiro administrador (só na primeira vez);
-#   7. acrescenta UM bloco ao proxy do sistema e recarrega;
+#   7. (convivendo) acrescenta UM bloco ao proxy do sistema e recarrega;
 #   8. agenda os backups;
-#   9. prova: domínio responde, nenhuma porta nossa fora do loopback, sites
-#      vizinhos responderam antes, durante e depois.
+#   9. prova: o domínio responde por HTTPS com certificado válido, nenhuma porta
+#      nossa fora do esperado e, no convivendo, os vizinhos seguiram no ar.
 #
 # Variáveis aceitas (todas opcionais na segunda rodada — o .env lembra):
 #   ZAPSALES_DOMINIO       domínio do ZapSales (o DNS já tem de apontar para cá)
 #   ZAPSALES_EMAIL         e-mail do primeiro administrador e do aviso de certificado
-#   ZAPSALES_SENHA         senha do primeiro administrador (padrão: gerada)
 #   ZAPSALES_EMPRESA       nome da organização (padrão: "Minha Empresa")
+#   ZAPSALES_IDIOMA        pt-BR | es | en — idioma com que a empresa nasce (padrão: pt-BR)
+#   ZAPSALES_SENHA         senha do primeiro administrador (padrão: gerada)
+#   ZAPSALES_MODO          limpa | convivendo (padrão: o kit decide pelas portas)
 #   ZAPSALES_IMAGENS       registro | construir (padrão: registro)
 #   ZAPSALES_VERSAO        versão das imagens no registro (padrão: a do package.json)
 #   ZAPSALES_IGNORAR_DNS=1 instala mesmo com o DNS ainda não apontado
@@ -84,11 +95,31 @@ verificar_maquina() {
 }
 
 PROXY=""
+MODO=""
 CADDYFILE_SISTEMA=""
 
+# O docker-proxy nas portas 80/443 é o Caddy da NOSSA stack? É o caso da segunda
+# rodada do modo limpa — e só ele: um contêiner de outro projeto segue alheio.
+portas_sao_do_nosso_caddy() {
+  docker ps --filter "label=com.docker.compose.project=zapsales" \
+    --filter "label=com.docker.compose.service=caddy" --format '{{.Ports}}' 2>/dev/null \
+    | grep -qE '(0\.0\.0\.0|\[::\]|:::):(80|443)->'
+}
+
 detectar_o_proxy() {
-  passo "Procurando o proxy que já atende as portas 80/443"
+  passo "Procurando quem atende as portas 80/443"
   PROXY="$(ss -ltnp | detectar_proxy)"
+  if [ "$PROXY" = "docker" ] && portas_sao_do_nosso_caddy; then PROXY="zapsales"; fi
+  local decisao
+  decisao="$(decidir_modo "$PROXY" "$(env_ler "$ENV_ARQ" ZAPSALES_MODO)" "${ZAPSALES_MODO:-}")"
+  case "$decisao" in
+    erro:*) falha "${decisao#erro:}" ;;
+  esac
+  MODO="$decisao"
+  if [ "$MODO" = "limpa" ]; then
+    msg "  modo VPS limpa: as portas 80/443 ficam com o Caddy do ZapSales, que emite o certificado HTTPS sozinho."
+    return
+  fi
   case "$PROXY" in
     caddy-host)
       CADDYFILE_SISTEMA="$(systemctl show caddy -p ExecStart --value 2>/dev/null | grep -oE -- '--config [^ ;]+' | awk '{print $2}' | head -1)"
@@ -100,22 +131,17 @@ detectar_o_proxy() {
       command -v nginx >/dev/null || falha "Nginx escuta nas portas, mas o comando nginx não está no PATH."
       msg "  Nginx do sistema."
       ;;
-    docker)
-      falha "As portas 80/443 são de um contêiner Docker (Traefik, Caddy em contêiner, painel de hospedagem...). Este kit ainda só sabe se acoplar a Caddy ou Nginx instalados no sistema."
-      ;;
-    nenhum)
-      falha "Ninguém atende as portas 80/443: esta VPS não tem outros sites. O modo 'VPS limpa' (o ZapSales com o próprio proxy) é a issue #12 e ainda não está neste kit."
-      ;;
-    *)
-      falha "Proxy não suportado nas portas 80/443: ${PROXY#outro:}. O kit sabe trabalhar com Caddy ou Nginx do sistema."
-      ;;
   esac
+  msg "  modo convivendo: o ZapSales escuta só no 127.0.0.1 e o proxy do sistema ganha um bloco."
 }
 
 # ─── 2. A configuração ───────────────────────────────────────────────────────
 
 DOMINIO=""
 EMAIL=""
+EMPRESA=""
+IDIOMA=""
+SENHA=""
 
 perguntar() { # "pergunta" — só pergunta com terminal; sem ele devolve vazio
   local valor=""
@@ -134,7 +160,48 @@ ler_configuracao() {
   EMAIL="${ZAPSALES_EMAIL:-$(env_ler "$ENV_ARQ" ACME_EMAIL)}"
   [ -n "$EMAIL" ] || EMAIL="$(perguntar "E-mail do primeiro administrador")"
   [[ "$EMAIL" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]] || falha "E-mail inválido: '$EMAIL'."
-  msg "  domínio: $DOMINIO · administrador: $EMAIL"
+
+  # Nome e idioma da empresa só valem na criação do primeiro administrador; o
+  # .env os lembra para uma rodada que falhou antes disso não perguntar de novo.
+  EMPRESA="${ZAPSALES_EMPRESA:-$(env_ler "$ENV_ARQ" ZAPSALES_EMPRESA)}"
+  [ -n "$EMPRESA" ] || EMPRESA="$(perguntar "Nome da sua empresa [Minha Empresa]")"
+  EMPRESA="${EMPRESA:-Minha Empresa}"
+
+  if [ -n "${ZAPSALES_IDIOMA:-}" ] && [ -z "$(idioma_valido "$ZAPSALES_IDIOMA")" ]; then
+    falha "ZAPSALES_IDIOMA='$ZAPSALES_IDIOMA' — use pt-BR, es ou en."
+  fi
+  IDIOMA="$(idioma_valido "${ZAPSALES_IDIOMA:-$(env_ler "$ENV_ARQ" APP_LOCALE)}")"
+  while [ -z "$IDIOMA" ]; do
+    local resposta
+    resposta="$(perguntar "Idioma do sistema — 1) Português  2) Español  3) English [1]")"
+    # Enter sem nada (ou sem terminal, onde `perguntar` devolve vazio) é o padrão.
+    [ -n "$resposta" ] || resposta=1
+    IDIOMA="$(idioma_valido "$resposta")"
+    [ -n "$IDIOMA" ] || aviso "Não entendi '$resposta'. Responda 1, 2 ou 3."
+  done
+
+  # A senha só é perguntada na primeira instalação (sem .env ainda) e só com
+  # terminal: o produto ainda não tem tela de troca de senha, e o "esqueci a
+  # senha" depende de e-mail configurado — então quem instala escolhe agora, ou
+  # aceita uma gerada. Ela nunca vai para o .env.
+  SENHA="${ZAPSALES_SENHA:-}"
+  if [ -z "$SENHA" ] && [ ! -f "$ENV_ARQ" ] && [ -t 0 ]; then
+    SENHA="$(perguntar_senha)"
+  fi
+  msg "  domínio: $DOMINIO · administrador: $EMAIL · empresa: $EMPRESA · idioma: $IDIOMA"
+}
+
+# perguntar_senha — lê sem mostrar na tela, duas vezes. Vazio = gerar uma.
+perguntar_senha() {
+  local a b
+  while :; do
+    read -r -s -p "Senha do administrador (mínimo 8 caracteres; Enter = gerar uma forte): " a; printf '\n' >&2
+    [ -n "$a" ] || { printf ''; return; }
+    if [ "${#a}" -lt 8 ]; then aviso "Curta demais: use pelo menos 8 caracteres, como o login pede."; continue; fi
+    read -r -s -p "Repita a senha: " b; printf '\n' >&2
+    [ "$a" = "$b" ] && { printf '%s' "$a"; return; }
+    aviso "As duas não são iguais. De novo."
+  done
 }
 
 conferir_dns() {
@@ -173,6 +240,8 @@ sondar() { # HOST — código HTTP pelo proxy local, sem depender do DNS de fora
 }
 
 fotografar_vizinhos() {
+  # No modo limpa não há vizinho a proteger: ninguém atendia as portas web.
+  [ "$MODO" = "convivendo" ] || return 0
   passo "Sites que já estão no ar nesta VPS"
   listar_vizinhos
   if [ "${#VIZINHOS[@]}" -eq 0 ]; then msg "  nenhum além do ZapSales."; return; fi
@@ -244,6 +313,11 @@ preparar_env() {
   env_definir "$ENV_ARQ" COMPOSE_PROJECT_NAME zapsales
   env_definir "$ENV_ARQ" DOMAIN "$DOMINIO"
   env_definir "$ENV_ARQ" ACME_EMAIL "$EMAIL"
+  env_definir "$ENV_ARQ" ZAPSALES_MODO "$MODO"
+  # Semente do primeiro administrador; o app não lê estas duas em runtime
+  # (.env.example). Ficam para uma rodada que falhou antes de criá-lo.
+  env_definir "$ENV_ARQ" ZAPSALES_EMPRESA "$EMPRESA"
+  env_definir "$ENV_ARQ" APP_LOCALE "$IDIOMA"
   env_definir "$ENV_ARQ" NEXT_PUBLIC_APP_URL "$url"
   env_definir "$ENV_ARQ" NEXT_PUBLIC_ADMIN_URL "$url"
   env_definir "$ENV_ARQ" NEXT_PUBLIC_SUPABASE_URL "$url"
@@ -256,8 +330,11 @@ preparar_env() {
   env_definir "$ENV_ARQ" WAHA_WEBHOOK_REQUIRE_SIGNATURE "true"
   env_definir "$ENV_ARQ" UPSTASH_REDIS_REST_URL "http://srh:80"
 
-  # A porta do loopback: escolhida uma vez, e mantida (o proxy do sistema aponta para ela).
-  env_garantir "$ENV_ARQ" ZAPSALES_PORTA_LOCAL "$(ss -ltn | porta_livre 8088)"
+  # A porta do loopback: escolhida uma vez, e mantida (o proxy do sistema aponta
+  # para ela). Só existe no modo convivendo; no limpa o Caddy usa 80/443.
+  if [ "$MODO" = "convivendo" ]; then
+    env_garantir "$ENV_ARQ" ZAPSALES_PORTA_LOCAL "$(ss -ltn | porta_livre 8088)"
+  fi
 
   # Segredos do Supabase.
   env_garantir "$ENV_ARQ" POSTGRES_PASSWORD "$(segredo_hex 24)"
@@ -310,7 +387,6 @@ preparar_env() {
 
 # ─── 4. As imagens ───────────────────────────────────────────────────────────
 
-ARQUIVOS_COMPOSE="docker-compose.prod.yml:docker-compose.supabase.yml:docker-compose.convivio.yml"
 
 revisao_do_codigo() {
   if git -C "$RAIZ" rev-parse --short HEAD >/dev/null 2>&1; then git -C "$RAIZ" rev-parse --short HEAD
@@ -320,7 +396,8 @@ revisao_do_codigo() {
 }
 
 preparar_imagens() {
-  local modo versao
+  local modo versao compose
+  compose="$(arquivos_compose "$MODO")"
   modo="${ZAPSALES_IMAGENS:-$(env_ler "$ENV_ARQ" ZAPSALES_IMAGENS)}"
   modo="${modo:-registro}"
   env_definir "$ENV_ARQ" ZAPSALES_IMAGENS "$modo"
@@ -328,7 +405,7 @@ preparar_imagens() {
     registro)
       passo "Imagens: puxando do registro"
       versao="${ZAPSALES_VERSAO:-$(sed -nE 's/^ *"version": *"([^"]+)".*/\1/p' "$RAIZ/package.json" | head -1)}"
-      env_definir "$ENV_ARQ" COMPOSE_FILE "$ARQUIVOS_COMPOSE"
+      env_definir "$ENV_ARQ" COMPOSE_FILE "$compose"
       # Tag de VERSÃO, imutável — nunca latest/stable (doutrina de packaging, invariante 3).
       env_definir "$ENV_ARQ" APP_IMAGE "$REGISTRO_IMAGENS/zapsales:$versao"
       env_definir "$ENV_ARQ" WORKER_IMAGE "$REGISTRO_IMAGENS/zapsales-worker:$versao"
@@ -341,7 +418,7 @@ preparar_imagens() {
       aviso "Imagem construída na VPS é exceção (docs/runbooks/deploy.md §4): ela existe só neste disco. Volte para 'registro' quando houver versão publicada acessível."
       local rev
       rev="$(revisao_do_codigo)"
-      env_definir "$ENV_ARQ" COMPOSE_FILE "$ARQUIVOS_COMPOSE:docker-compose.build.yml"
+      env_definir "$ENV_ARQ" COMPOSE_FILE "$compose:docker-compose.build.yml"
       env_definir "$ENV_ARQ" APP_VERSION "$rev"
       env_definir "$ENV_ARQ" APP_IMAGE "zapsales-app:$rev"
       env_definir "$ENV_ARQ" WORKER_IMAGE "zapsales-worker:$rev"
@@ -393,14 +470,14 @@ criar_primeiro_admin() {
     msg "  já existe — nada a fazer (rodar o kit de novo nunca troca a senha de ninguém)."
     return
   fi
-  local senha="${ZAPSALES_SENHA:-$(segredo_b64 18)}"
+  local senha="${SENHA:-$(segredo_b64 18)}"
   dc run --rm --no-deps \
     -e NEXT_PUBLIC_SUPABASE_URL="http://caddy:8000" \
     -e OWNER_EMAIL="$EMAIL" -e OWNER_PASSWORD="$senha" \
-    -e OWNER_ORG_NAME="${ZAPSALES_EMPRESA:-Minha Empresa}" -e APP_LOCALE="pt-BR" \
+    -e OWNER_ORG_NAME="$EMPRESA" -e APP_LOCALE="$IDIOMA" \
     worker pnpm exec tsx scripts/bootstrap-owner.ts
   (umask 077 && printf 'endereco=https://%s\nemail=%s\nsenha=%s\n' "$DOMINIO" "$EMAIL" "$senha" > "$ESTADO/primeiro-acesso")
-  msg "  criado. Credenciais em $ESTADO/primeiro-acesso (só o root lê) — troque a senha no primeiro login."
+  msg "  criado. Credenciais em $ESTADO/primeiro-acesso (só o root lê)."
 }
 
 # ─── 7. O proxy do sistema ───────────────────────────────────────────────────
@@ -481,6 +558,11 @@ configurar_nginx_do_sistema() {
 }
 
 configurar_proxy() {
+  if [ "$MODO" = "limpa" ]; then
+    passo "Proxy e HTTPS"
+    msg "  o Caddy do ZapSales atende 80/443 e pede o certificado ao Let's Encrypt sozinho (e o renova)."
+    return
+  fi
   passo "Acrescentando o ZapSales ao proxy do sistema"
   local porta
   porta="$(env_ler "$ENV_ARQ" ZAPSALES_PORTA_LOCAL)"
@@ -525,8 +607,11 @@ EOF
 
 provar() {
   passo "Provando"
-  local cod i
-  for i in $(seq 1 30); do
+  # No modo limpa o primeiro certificado é pedido ao Let's Encrypt agora, e o
+  # desafio HTTP precisa chegar de fora na porta 80: dá mais tempo.
+  local cod i tentativas=30
+  [ "$MODO" = "limpa" ] && tentativas=60
+  for i in $(seq 1 "$tentativas"); do
     # Pelo proxy DESTA máquina (--resolve), com o certificado conferido: prova
     # o bloco, o TLS e a stack sem depender do caminho de fora (NAT, DNS em
     # propagação).
@@ -534,17 +619,28 @@ provar() {
     [ "$cod" = "307" ] && break
     sleep 4
   done
-  [ "$cod" = "307" ] && msg "  https://$DOMINIO/ → 307 (redireciona para o login)." \
-    || falha "https://$DOMINIO/ respondeu '$cod' em vez de 307."
-
-  # Nenhuma porta de contêiner nosso fora do loopback.
-  local expostas
-  expostas="$(docker ps --filter "label=com.docker.compose.project=zapsales" --format '{{.Names}} {{.Ports}}' \
-    | tr ',' '\n' | grep -E '(0\.0\.0\.0|\[::\]|:::)[0-9]*:?[0-9]+->' || true)"
-  if [ -n "$expostas" ]; then
-    falha "Porta do ZapSales exposta fora do loopback: $expostas"
+  if [ "$cod" != "307" ]; then
+    if [ "$MODO" = "limpa" ]; then
+      falha "https://$DOMINIO/ respondeu '$cod' em vez de 307. Se é o certificado: confira que o DNS aponta para esta VPS e que o firewall do painel da hospedagem libera as portas 80 e 443 (docker compose logs caddy mostra o pedido ao Let's Encrypt). Rodar o kit de novo é seguro."
+    fi
+    falha "https://$DOMINIO/ respondeu '$cod' em vez de 307."
   fi
-  msg "  nenhuma porta do ZapSales aceita conexão de fora (só 127.0.0.1:$(env_ler "$ENV_ARQ" ZAPSALES_PORTA_LOCAL))."
+  msg "  https://$DOMINIO/ → 307 (redireciona para o login), com certificado válido."
+
+  # Nenhuma porta de contêiner nosso fora do esperado: no convivendo, nenhuma
+  # fora do loopback; no limpa, só as 80/443 do Caddy.
+  local expostas
+  expostas="$(docker ps --filter "label=com.docker.compose.project=zapsales" \
+    --format '{{.Label "com.docker.compose.service"}} {{.Ports}}' | portas_publicas)"
+  [ "$MODO" = "limpa" ] && expostas="$(printf '%s\n' "$expostas" | tirar_as_portas_web_do_caddy)"
+  if [ -n "$expostas" ]; then
+    falha "Porta do ZapSales exposta fora do esperado: $expostas"
+  fi
+  if [ "$MODO" = "limpa" ]; then
+    msg "  só o Caddy aceita conexão de fora, nas portas 80 e 443; banco, WhatsApp e o resto ficam na rede interna."
+  else
+    msg "  nenhuma porta do ZapSales aceita conexão de fora (só 127.0.0.1:$(env_ler "$ENV_ARQ" ZAPSALES_PORTA_LOCAL))."
+  fi
 }
 
 resumo() {
@@ -552,10 +648,11 @@ resumo() {
   msg "  ZapSales: https://$DOMINIO"
   if [ -s "$ESTADO/primeiro-acesso" ]; then
     msg "  Primeiro acesso: sudo cat $ESTADO/primeiro-acesso"
-    msg "  (depois de trocar a senha no app, apague o arquivo: sudo rm $ESTADO/primeiro-acesso)"
+    msg "  (guarde a senha num cofre de senhas e apague o arquivo: sudo rm $ESTADO/primeiro-acesso)"
   fi
   msg "  Logs:       cd $RAIZ && docker compose logs -f app"
-  msg "  Atualizar:  traga o código novo para $RAIZ e rode este kit de novo."
+  msg "  Atualizar:  curl -fsSL https://raw.githubusercontent.com/leandromastelliniai/ZapSales/main/kit/obter.sh | sudo bash"
+  msg "              (ou traga o código novo para $RAIZ e rode este kit de novo)"
   msg "  Backup:     sudo $KIT/backup.sh status"
 }
 

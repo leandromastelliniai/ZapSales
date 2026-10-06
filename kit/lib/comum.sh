@@ -60,3 +60,17 @@ env_garantir() {
 exigir_root() {
   [ "$(id -u)" -eq 0 ] || falha "Rode como root (sudo $0)."
 }
+
+# idioma_valido BRUTO — o código do idioma servido, ou vazio. Aceita o jeito
+# como uma pessoa responde ("en", "EN", "english", "espanhol", "1"…). Os códigos
+# são os idiomas visíveis do registro (lib/i18n/registro.ts), e quem garante que
+# não divergem é tests/unit/instalador-oferece-os-idiomas-servidos.test.ts. O
+# bootstrap-owner fecha para pt-BR diante de qualquer outra coisa, então errar
+# aqui nunca grava lixo.
+idioma_valido() {
+  case "$(printf '%s' "$1" | tr 'A-Z' 'a-z' | tr -d '[:space:]')" in
+    1|pt|pt-br|ptbr|portugues|português|portuguese) printf 'pt-BR' ;;
+    2|es|espanhol|español|espanol|spanish) printf 'es' ;;
+    3|en|ingles|inglês|english) printf 'en' ;;
+  esac
+}

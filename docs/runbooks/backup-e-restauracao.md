@@ -82,10 +82,11 @@ Registre a data e o resultado do ensaio no fim deste arquivo.
 ### Desastre — a VPS foi perdida
 
 Numa VPS nova, com o código em `/opt/zapsales` e o DNS já apontando para ela. O kit instala
-o Docker se faltar; o que ele **ainda não** faz é subir o próprio proxy — o modo "VPS limpa" é
-a issue #12. Até lá, a VPS nova precisa de um Caddy ou Nginx do sistema nas portas 80/443
-(`apt install caddy` basta) antes do passo 2, senão a restauração dos dados termina e o
-`kit/instalar.sh` final para dizendo que não há proxy.
+o Docker se faltar e, numa VPS nova sem nada nas portas 80/443, sobe o próprio proxy com
+HTTPS (modo "VPS limpa", [`instalacao-vps-limpa.md`](./instalacao-vps-limpa.md)). Restaurando
+uma instalação que era `convivendo`, o `.env` do backup traz `ZAPSALES_MODO=convivendo`: suba
+antes o Caddy ou Nginx do sistema na VPS nova, ou rode o passo final com `ZAPSALES_MODO=limpa`
+para o ZapSales ficar com as portas.
 
 **Este caminho ainda não foi executado de ponta a ponta** — o ensaio (acima) exercita a mesma
 restauração de banco e mídias, mas não a troca de máquina.
