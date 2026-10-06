@@ -5,7 +5,9 @@
  *   - arquivo vencido sai e a MENSAGEM fica (texto, horário, status);
  *   - arquivo recente não sai;
  *   - órfão de conversa apagada sai, órfão recente espera a carência de 1 dia;
- *   - avatar em uso e cabeçalho de modelo (`org/templates/`) NUNCA saem;
+ *   - avatar em uso e cabeçalho de modelo EM USO (`org/templates/`, citado em
+ *     `meta_templates.header_media`) não saem — o não citado é de
+ *     `poda-de-midia-cabecalho-de-modelo.test.ts` (#21);
  *   - a segunda rodada não enfileira de novo (idempotência);
  *   - anon/authenticated não executam a função.
  */
@@ -20,6 +22,7 @@ const CONVERSA = "42700000-0000-4000-8000-000000000004";
 const CONVERSA_APAGADA = "42700000-0000-4000-8000-00000000dead";
 const MSG_VELHA = "42700000-0000-4000-8000-000000000010";
 const MSG_NOVA = "42700000-0000-4000-8000-000000000011";
+const MODELO_DO_CANAL = "42700000-0000-4000-8000-000000000020";
 
 const caminho = (resto: string) => `${ORG}/${resto}`;
 const VELHO = caminho(`${CONVERSA}/velho.mp4`);
@@ -48,6 +51,7 @@ beforeEach(() => {
     delete from conversations where organization_id = '${ORG}';
     delete from channel_sessions where organization_id = '${ORG}';
     delete from contacts where organization_id = '${ORG}';
+    delete from meta_templates where organization_id = '${ORG}';
     insert into organizations (id, slug, legal_name, display_name, media_retention_days)
       values ('${ORG}', 'org-midia-427', 'Org Midia LTDA', 'Org Midia', 60)
       on conflict (id) do update set media_retention_days = 60;
@@ -63,6 +67,9 @@ beforeEach(() => {
               'olha este vídeo', 'external_device', now() - interval '100 days', now() - interval '100 days', '${VELHO}'),
              ('${MSG_NOVA}', '${ORG}', '${CONVERSA}', '${SESSAO}', '${CONTATO}', 'image', 'inbound', 'delivered',
               null, 'external_device', now() - interval '10 days', now() - interval '10 days', '${NOVO}');
+    insert into meta_templates (id, organization_id, waba_id, name, language, status, components, contract_hash, header_media)
+      values ('${MODELO_DO_CANAL}', '${ORG}', 'waba-427', 'promo', 'pt_BR', 'APPROVED', '[]'::jsonb, 'h-427',
+              jsonb_build_object('header:1', jsonb_build_object('path', '${MODELO}', 'mime_type', 'image/png', 'file_name', 'cabecalho.png')));
     ${objeto(VELHO, 100)}
     ${objeto(NOVO, 10)}
     ${objeto(ORFAO, 5)}

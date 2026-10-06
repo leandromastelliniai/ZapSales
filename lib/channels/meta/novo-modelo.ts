@@ -76,9 +76,10 @@ const TIPOS_DE_ARQUIVO = Object.keys(MIDIAS_DO_CABECALHO) as [
 
 /**
  * Onde a cópia mora no bucket `whatsapp-media`: `<org>/templates/<uuid>.<ext>`.
- * A pasta `templates/` é a que a retenção de mídia NUNCA poda
- * (`fn_enfileirar_midia_vencida`, passo 2) — o cabeçalho é reusado a cada
- * disparo, por meses. O caminho é gerado pela rota de upload; aqui só a forma.
+ * A retenção de mídia (`fn_enfileirar_midia_vencida`, passo 2) só apaga daqui
+ * o arquivo com mais de 7 dias que nenhum `meta_templates.header_media` cita
+ * (migration 0542, #21) — o cabeçalho em uso é reusado a cada disparo, por
+ * meses, e nunca sai. O caminho é gerado pela rota de upload; aqui só a forma.
  */
 export const CAMINHO_DA_MIDIA =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/templates\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|mp4|pdf)$/;
