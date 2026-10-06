@@ -25,13 +25,12 @@ import { embedText } from "@/lib/ai/embed";
 import { MODELO_DE_EMBEDDING_DO_GOOGLE } from "@/lib/ai/embeddings/chave";
 import { getBudgetStatus, type BudgetStatus } from "@/lib/ai/budget/check";
 import {
-  AVISO_CORPO,
-  AVISO_TITULO,
-  BLOQUEIO_TITULO,
   corpoDoBloqueio,
   decidirOrcamento,
   HANDOFF_REASON_ORCAMENTO,
+  textosDoOrcamento,
 } from "@/lib/agent-engine/edge/llm/orcamento";
+import { idiomaPeloCliente } from "@/lib/i18n/aviso-no-idioma";
 import { computeCost } from "@/lib/ai/cost";
 import { silencioVigente } from "@/lib/inbox/comando-da-conversa";
 import { logInvocation } from "@/lib/ai/log-invocation";
@@ -474,12 +473,17 @@ async function vetoPorTetoDeGasto(alvo: {
     return null;
   }
 
+  // Os dois itens saem no idioma da organização: a Central os mostra como
+  // foram gravados.
+  const idioma = await idiomaPeloCliente(admin, orgId);
+  const textos = textosDoOrcamento(idioma);
+
   if (veredito.acao === "avisar_e_seguir") {
     await abrirItemDeOrcamento(admin, orgId, {
       kind: "budget_warning",
       severity: "warn",
-      title: AVISO_TITULO,
-      body: AVISO_CORPO,
+      title: textos.avisoTitulo,
+      body: textos.avisoCorpo,
     });
     logger.warn("[ai-response] gasto de IA passou do aviso — a resposta SEGUE", {
       organization_id: orgId,
@@ -493,8 +497,8 @@ async function vetoPorTetoDeGasto(alvo: {
   await abrirItemDeOrcamento(admin, orgId, {
     kind: "budget_exceeded",
     severity: "critical",
-    title: BLOQUEIO_TITULO,
-    body: corpoDoBloqueio(status.current_month_consumed_cents, status.monthly_limit_cents),
+    title: textos.bloqueioTitulo,
+    body: corpoDoBloqueio(status.current_month_consumed_cents, status.monthly_limit_cents, idioma),
   });
 
   // ── A CONVERSA VAI PARA A FILA HUMANA, IGUAL AO ENGINE ────────────────────

@@ -23,6 +23,9 @@ import {
 } from "@/lib/messaging/media/escada-de-transcricao";
 import { logger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { idiomaPeloCliente, preencher } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
+import type { Idioma } from "@/lib/i18n/idiomas";
 import { motivoDaRecusaDeDestino } from "@/lib/automation/destinos-internos-autorizados";
 import { DETALHE_TECNICO } from "@/lib/event-log/aviso-de-evento-morto";
 import { MENSAGEM_REDIGIDA } from "@/lib/lgpd/cascata";
@@ -291,7 +294,7 @@ export async function deriveMessageMedia(row: EventRow): Promise<HandlerResult> 
       await avisarMidiaNaoLida(
         msg.organization_id,
         rotuloDoTipo,
-        decisao.motivo,
+        decisao.frase ?? decisao.motivo,
         "Cadastre a chave do provedor de conversa da organização (Provedores de IA) ou a chave OpenAI que transcreve — depois disso a próxima nota de voz volta a virar texto.",
       );
       return { consumer_key, status: "ok", detail: `transcricao_indisponivel: ${decisao.origem}` };
@@ -340,7 +343,10 @@ export async function deriveMessageMedia(row: EventRow): Promise<HandlerResult> 
       await avisarMidiaNaoLida(
         msg.organization_id,
         rotuloDoTipo,
-        motivo,
+        {
+          chave: "o modelo devolveu a transcrição do áudio vazia ({origem}: {motivo})",
+          valores: { origem: decisao.origem, motivo: decisao.motivo },
+        },
         "O provedor respondeu sem texto. Confira o modelo em Provedores de IA: se ele aceita áudio mas devolve vazio, troque por outro modelo com capacidade audio.",
       );
       return { consumer_key, status: "ok", detail: "transcricao_vazia" };
@@ -524,10 +530,20 @@ function buildDeriveDeps(
       // `{image:false}` por conservadorismo — afirmar ao operador que ele "não
       // enxerga imagens" seria gravar uma alegação que ninguém verificou (e
       // era o que acontecia com todo modelo da OpenRouter).
+      // A frase vai como chave do dicionário (o aviso sai no idioma da
+      // organização); sem modelo nomeado, a variante sem marcador.
+      const modelo = llm.defaultModel;
       const motivo = visao.sabemos
-        ? `o modelo ${llm.defaultModel ?? "configurado"} não enxerga imagens`
-        : `não sei se o modelo ${llm.defaultModel ?? "configurado"} enxerga imagens, ` +
-          `então não arrisquei enviar a foto — escolha um modelo do catálogo em Agente de IA → Provedores`;
+        ? modelo
+          ? { chave: "o modelo {modelo} não enxerga imagens", valores: { modelo } }
+          : "o modelo configurado não enxerga imagens"
+        : modelo
+          ? {
+              chave:
+                "não sei se o modelo {modelo} enxerga imagens, então não arrisquei enviar a foto — escolha um modelo do catálogo em Agente de IA → Provedores",
+              valores: { modelo },
+            }
+          : "não sei se o modelo configurado enxerga imagens, então não arrisquei enviar a foto — escolha um modelo do catálogo em Agente de IA → Provedores";
       await avisarMidiaNaoLida(orgId, "imagem", motivo);
       return MARCADOR_NAO_LIDA;
     }
@@ -563,7 +579,10 @@ function buildDeriveDeps(
     }
     const factory = registry[llm.provider];
     if (!factory) {
-      await avisarMidiaNaoLida(orgId, "imagem", `o provedor ${llm.provider} não está disponível nesta instalação`);
+      await avisarMidiaNaoLida(orgId, "imagem", {
+        chave: "o provedor {provedor} não está disponível nesta instalação",
+        valores: { provedor: llm.provider },
+      });
       return MARCADOR_NAO_LIDA;
     }
     const res = await generateText({
@@ -666,25 +685,39 @@ export { MARCADOR_NAO_LIDA };
  * fazer, em português; a frase crua do provedor, quando existe, no fim e
  * rotulada (`DETALHE_TECNICO`) — mesma regra do aviso de evento morto.
  */
-export function textoDoAvisoDeMidiaNaoLida(aviso: {
-  tipo: string;
-  motivo: string;
-  consequencia: string;
-  detalheTecnico?: string;
-}): { title: string; body: string } {
+export function textoDoAvisoDeMidiaNaoLida(
+  aviso: {
+    tipo: string;
+    motivo: FraseDoAviso;
+    consequencia: string;
+    detalheTecnico?: string;
+  },
+  /** O da organização: a Central mostra o aviso como foi gravado. */
+  idioma: Idioma = "pt-BR",
+): { title: string; body: string } {
+  const t = (texto: string) => traduzir(texto, idioma);
+  const motivo =
+    typeof aviso.motivo === "string" ? t(aviso.motivo) : preencher(t(aviso.motivo.chave), aviso.motivo.valores);
   return {
-    title: `O agente não conseguiu ler ${aviso.tipo} que o cliente enviou`,
+    title: preencher(t("O agente não conseguiu ler {tipo} que o cliente enviou"), { tipo: t(aviso.tipo) }),
     body:
-      `Motivo: ${aviso.motivo}. ${aviso.consequencia} ` +
-      `Para resolver, ajuste o modelo desse ponto em Agente de IA → Provedores, ou cadastre a chave necessária em Credenciais.` +
-      (aviso.detalheTecnico ? ` ${DETALHE_TECNICO} ${aviso.detalheTecnico}` : ""),
+      `${preencher(t("Motivo: {motivo}."), { motivo })} ${t(aviso.consequencia)} ` +
+      t("Para resolver, ajuste o modelo desse ponto em Agente de IA → Provedores, ou cadastre a chave necessária em Credenciais.") +
+      (aviso.detalheTecnico ? ` ${t(DETALHE_TECNICO)} ${aviso.detalheTecnico}` : ""),
   };
 }
+
+/**
+ * O motivo do aviso: a frase pronta (que é a própria chave do dicionário), ou a
+ * chave com `{marcadores}` e os valores — quando ela leva um dado, como o nome
+ * do modelo, e por isso não casaria com chave nenhuma depois de montada.
+ */
+type FraseDoAviso = string | { chave: string; valores: Record<string, string> };
 
 async function avisarMidiaNaoLida(
   organizationId: string,
   tipo: string,
-  motivo: string,
+  motivo: FraseDoAviso,
   /**
    * O que aconteceu com o atendimento. O padrão vale para as recusas, que
    * entregam o marcador ao agente; a falha permanente não entrega nada.
@@ -713,7 +746,10 @@ async function avisarMidiaNaoLida(
       organization_id: organizationId,
       kind: "midia_nao_lida",
       severity: "warn",
-      ...textoDoAvisoDeMidiaNaoLida({ tipo, motivo, consequencia, detalheTecnico }),
+      ...textoDoAvisoDeMidiaNaoLida(
+        { tipo, motivo, consequencia, detalheTecnico },
+        await idiomaPeloCliente(admin, organizationId),
+      ),
     });
     // E o retorno é CONFERIDO. O supabase-js devolve `{ error }` em vez de
     // lançar, então o `catch` abaixo era inalcançável para erro de banco: a

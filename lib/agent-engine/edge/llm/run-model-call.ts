@@ -21,20 +21,21 @@ import type pg from 'pg';
 import { z } from 'zod';
 
 import { PONTO_POR_ID } from '@/lib/ai/pontos/registro';
+import { idiomaPeloPool, preencher } from '@/lib/i18n/aviso-no-idioma';
+import { traduzir } from '@/lib/i18n/dicionario';
+import { IDIOMAS, type Idioma } from '@/lib/i18n/idiomas';
 import { scrubMessage } from '@/lib/sentry/scrub';
 
 import type { Logger } from '../../obs/logger';
 import { decidirParaOSeam } from './binding-do-ponto';
 import { resolveOrgLlmConfig, type LlmEdgeConfig, type OrcamentoDaOrg } from './credentials';
 import {
-  AVISO_CORPO,
-  AVISO_TITULO,
-  BLOQUEIO_TITULO,
   corpoDoBloqueio,
   decidirOrcamento,
   normalizarModoDeOrcamento,
   LIMIAR_PADRAO_PCT,
   SQL_ORCAMENTO,
+  textosDoOrcamento,
   type ChaveDeOrcamento,
 } from './orcamento';
 import { costCents } from './pricing';
@@ -134,37 +135,63 @@ export const TITULO_ENDERECO_SEM_CHAVE_DA_EMPRESA =
 export const TITULO_ENDERECO_SEM_CHAVE_PRAZO =
   `A IA vai deixar de usar o endereço próprio desta empresa sem a chave dela em ${prazoLegivel()}`;
 
+/**
+ * Os dois títulos no idioma da organização — a Central mostra o aviso como foi
+ * gravado. As constantes acima seguem sendo o português.
+ */
+export function tituloDoAvisoDeEnderecoSemChave(degrau: 'avisa' | 'recusa', idioma: Idioma): string {
+  return degrau === 'recusa'
+    ? traduzir('A IA recusou usar o endereço próprio desta empresa sem a chave dela', idioma)
+    : preencher(
+        traduzir('A IA vai deixar de usar o endereço próprio desta empresa sem a chave dela em {data}', idioma),
+        { data: prazoLegivel() },
+      );
+}
+
 /** O corpo do aviso — só o HOST do endereço, nunca a URL inteira. */
-export function corpoDoAvisoDeEnderecoSemChave(d: {
-  purpose: string;
-  provider: string;
-  baseUrl: string;
-  /** `avisa` antes do prazo (a chamada seguiu), `recusa` depois dele. */
-  degrau: 'avisa' | 'recusa';
-}): string {
-  const ponto = PONTO_POR_ID.get(d.purpose)?.rotulo ?? d.purpose;
+export function corpoDoAvisoDeEnderecoSemChave(
+  d: {
+    purpose: string;
+    provider: string;
+    baseUrl: string;
+    /** `avisa` antes do prazo (a chamada seguiu), `recusa` depois dele. */
+    degrau: 'avisa' | 'recusa';
+  },
+  idioma: Idioma = 'pt-BR',
+): string {
+  const t = (texto: string) => traduzir(texto, idioma);
+  const registro = PONTO_POR_ID.get(d.purpose);
+  const ponto = registro ? traduzir(registro.rotulo, idioma) : d.purpose;
   // Só o host: uma URL pode carregar usuário e senha (`https://u:s@host`) ou um
   // token na query, e este corpo é lido por qualquer pessoa da equipe.
-  let destino = 'um endereço próprio';
+  let destino = t('um endereço próprio');
   try {
-    destino = `um endereço próprio (${new URL(d.baseUrl).host})`;
+    destino = preencher(t('um endereço próprio ({host})'), { host: new URL(d.baseUrl).host });
   } catch {
     // Endereço que nem é URL: o aviso segue sem o host, que é detalhe.
   }
   return (
-    `O ponto "${ponto}" está configurado em Agente de IA › Provedores para ${destino}, ` +
-    `mas esta empresa não tem chave de ${d.provider} cadastrada e validada. ` +
-    `A chave de IA da instalação — a que paga a conta de todas as empresas deste servidor — ` +
-    `não é enviada a um endereço escolhido por uma empresa. ` +
+    preencher(
+      t(
+        'O ponto "{ponto}" está configurado em Agente de IA › Provedores para {destino}, mas esta empresa não tem chave de {provedor} cadastrada e validada. A chave de IA da instalação — a que paga a conta de todas as empresas deste servidor — não é enviada a um endereço escolhido por uma empresa.',
+      ),
+      { ponto, destino, provedor: d.provider },
+    ) +
+    ' ' +
     (d.degrau === 'recusa'
-      ? `A chamada foi recusada antes de sair. Enquanto isso não for corrigido, as chamadas desse ponto ` +
-        `continuam recusadas; quando o ponto faz parte do atendimento, o agente deixa de responder aos ` +
-        `clientes desta empresa. `
-      : `A chamada SEGUIU desta vez, mas isso tem prazo: a partir de ${prazoLegivel()} ela passa a ser ` +
-        `recusada, e quando o ponto faz parte do atendimento o agente deixa de responder aos clientes ` +
-        `desta empresa. Corrija antes dessa data. `) +
-    `Para resolver: cadastre a chave da empresa em Agente de IA › Provedores, ` +
-    `ou tire o endereço próprio para voltar ao provedor padrão da instalação.`
+      ? t(
+          'A chamada foi recusada antes de sair. Enquanto isso não for corrigido, as chamadas desse ponto continuam recusadas; quando o ponto faz parte do atendimento, o agente deixa de responder aos clientes desta empresa.',
+        )
+      : preencher(
+          t(
+            'A chamada SEGUIU desta vez, mas isso tem prazo: a partir de {data} ela passa a ser recusada, e quando o ponto faz parte do atendimento o agente deixa de responder aos clientes desta empresa. Corrija antes dessa data.',
+          ),
+          { data: prazoLegivel() },
+        )) +
+    ' ' +
+    t(
+      'Para resolver: cadastre a chave da empresa em Agente de IA › Provedores, ou tire o endereço próprio para voltar ao provedor padrão da instalação.',
+    )
   );
 }
 
@@ -319,12 +346,16 @@ async function aplicarOrcamento(d: {
   }
 
   const inicio = Date.now();
+  // Os itens da Central saem no idioma da organização (a tela os mostra como
+  // foram gravados). Nunca lança: na dúvida, português.
+  const idioma = await idiomaPeloPool(d.db, d.organizationId);
+  const textos = textosDoOrcamento(idioma);
   let linha: LinhaDoOrcamento | undefined;
   try {
     const { rows } = await d.db.query<LinhaDoOrcamento>(SQL_ORCAMENTO, [
       d.organizationId,
-      AVISO_TITULO,
-      AVISO_CORPO,
+      textos.avisoTitulo,
+      textos.avisoCorpo,
     ]);
     linha = rows[0];
   } catch (err) {
@@ -382,7 +413,7 @@ async function aplicarOrcamento(d: {
        select 1 from agent_inbox_items
        where organization_id = $1 and kind = 'budget_exceeded' and status = 'open'
      )`,
-    [d.organizationId, BLOQUEIO_TITULO, corpoDoBloqueio(gastoCents, tetoCents)],
+    [d.organizationId, textos.bloqueioTitulo, corpoDoBloqueio(gastoCents, tetoCents, idioma)],
   );
   // A recusa vira LINHA em llm_calls. A tela /app/ai/runs nasceu porque
   // "llm_calls só registrava sucesso — a tabela ficava vazia exatamente no caso
@@ -455,22 +486,29 @@ async function registrarRecusaDeEnderecoSemChave(d: {
   };
 
   try {
+    // No idioma da organização; a dedup casa o título em TODO idioma, senão
+    // trocar o idioma abriria um segundo aviso do mesmo fato.
+    const idioma = await idiomaPeloPool(d.db, d.input.tenantId);
     await d.db.query(
       `insert into agent_inbox_items (organization_id, kind, severity, title, body)
        select $1, 'other', 'critical', $2, $3
        where not exists (
          select 1 from agent_inbox_items
-         where organization_id = $1 and kind = 'other' and title = $2 and status = 'open'
+         where organization_id = $1 and kind = 'other' and title = any($4::text[]) and status = 'open'
        )`,
       [
         d.input.tenantId,
-        d.degrau === 'recusa' ? TITULO_ENDERECO_SEM_CHAVE_DA_EMPRESA : TITULO_ENDERECO_SEM_CHAVE_PRAZO,
-        corpoDoAvisoDeEnderecoSemChave({
-          purpose: d.purpose,
-          provider: d.provider,
-          baseUrl: d.baseUrl,
-          degrau: d.degrau,
-        }),
+        tituloDoAvisoDeEnderecoSemChave(d.degrau, idioma),
+        corpoDoAvisoDeEnderecoSemChave(
+          {
+            purpose: d.purpose,
+            provider: d.provider,
+            baseUrl: d.baseUrl,
+            degrau: d.degrau,
+          },
+          idioma,
+        ),
+        [...new Set(IDIOMAS.map((i) => tituloDoAvisoDeEnderecoSemChave(d.degrau, i)))],
       ],
     );
   } catch (err) {

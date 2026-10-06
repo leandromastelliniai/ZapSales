@@ -23,6 +23,8 @@ import { ok, fail } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { logger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { leitorDeIdiomaPeloCliente } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
 import { autorizaCron } from "@/lib/auth/cron-auth";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +64,8 @@ async function handle(req: NextRequest): Promise<Response> {
 
   const conversations = (due ?? []) as DueConversation[];
   let reopened = 0;
+  // O aviso sai no idioma de cada organização: a Central o mostra como foi gravado.
+  const idiomaDe = leitorDeIdiomaPeloCliente(admin);
 
   for (const c of conversations) {
     // Comparar como Date, não string: dois timestamptz ISO com formatos sutilmente
@@ -94,7 +98,7 @@ async function handle(req: NextRequest): Promise<Response> {
         organization_id: c.organization_id,
         kind: "snooze_expired",
         severity: "warn",
-        title: "Lead não respondeu no prazo",
+        title: traduzir("Lead não respondeu no prazo", await idiomaDe(c.organization_id)),
         ref_kind: "conversation",
         ref_id: c.id,
       });

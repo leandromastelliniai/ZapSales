@@ -60,6 +60,10 @@
  * com o texto antigo deixa de deduplicar UMA vez, e o efeito é um aviso a mais,
  * nunca um a menos.
  */
+import { preencher } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { IDIOMAS, type Idioma } from "@/lib/i18n/idiomas";
+
 
 /**
  * O rótulo que separa o que a pessoa lê do que o suporte precisa. Um só, para
@@ -123,13 +127,31 @@ const REARME_GENERICO =
   "(a IA que deixa de responder um cliente abre o seu próprio): " +
   "depois de corrigida a causa, marque-o como resolvido para voltar a ser avisado.";
 
-export function avisoDeEventoMorto(evento: EventoMorto): { title: string; body: string } {
+/**
+ * No `idioma` da organização: a Central mostra o aviso como foi gravado. As
+ * frases acima são as chaves do dicionário; o tipo do evento e o motivo cru
+ * atravessam como vieram — são o detalhe técnico, para quem der suporte.
+ */
+export function avisoDeEventoMorto(evento: EventoMorto, idioma: Idioma = "pt-BR"): { title: string; body: string } {
+  const t = (texto: string) => traduzir(texto, idioma);
   return {
-    title: evento.efeito?.titulo ?? TITULO_GENERICO,
+    title: t(evento.efeito?.titulo ?? TITULO_GENERICO),
     body:
-      `${evento.efeito?.consequencia ?? CONSEQUENCIA_GENERICA} ` +
-      `${evento.efeito?.rearme ?? REARME_GENERICO} ` +
-      `${DETALHE_TECNICO} evento ${evento.eventType}, ${evento.tentativas} tentativas; ` +
-      `motivo: ${evento.motivo.slice(0, 400)}`,
+      `${t(evento.efeito?.consequencia ?? CONSEQUENCIA_GENERICA)} ` +
+      `${t(evento.efeito?.rearme ?? REARME_GENERICO)} ` +
+      `${t(DETALHE_TECNICO)} ` +
+      preencher(t("evento {tipo}, {tentativas} tentativas; motivo: {motivo}"), {
+        tipo: evento.eventType,
+        tentativas: evento.tentativas,
+        motivo: evento.motivo.slice(0, 400),
+      }),
   };
 }
+
+/**
+ * Um título de família em TODO idioma visível — a chave de dedup: o aviso nasce
+ * no idioma da organização, e trocar o idioma não pode abrir um segundo nem
+ * deixar o aberto de fora da exclusão do outro dreno.
+ */
+export const tituloEmTodoIdioma = (titulo: string): string[] =>
+  Array.from(new Set(IDIOMAS.map((idioma) => traduzir(titulo, idioma))));

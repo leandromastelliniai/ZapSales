@@ -20,6 +20,8 @@ import { ok, fail } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { logger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { idiomaPeloCliente, preencher } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
 import { autorizaCron } from "@/lib/auth/cron-auth";
 
 export const dynamic = "force-dynamic";
@@ -102,14 +104,23 @@ export async function recuperarPropostasTravadas(
     revertidas += n;
     organizacoesComAviso += 1;
 
+    // No idioma da organização: a Central mostra o aviso como foi gravado.
+    const idioma = await idiomaPeloCliente(admin, orgId);
     const { error: inboxErr } = await admin.from("agent_inbox_items").insert({
       organization_id: orgId,
       kind: "proposta_travada",
       severity: "critical",
-      title: n === 1 ? "Uma proposta não confirmou o envio" : `${n} propostas não confirmaram o envio`,
-      body:
-        `Ficaram mais de ${STUCK_AFTER_MS / 60000} minutos em envio e voltaram a rascunho, com o número mantido. ` +
-        `Verifique a conexão do WhatsApp e reenvie manualmente — nada foi reenviado sozinho.`,
+      title:
+        n === 1
+          ? traduzir("Uma proposta não confirmou o envio", idioma)
+          : preencher(traduzir("{n} propostas não confirmaram o envio", idioma), { n }),
+      body: preencher(
+        traduzir(
+          "Ficaram mais de {minutos} minutos em envio e voltaram a rascunho, com o número mantido. Verifique a conexão do WhatsApp e reenvie manualmente — nada foi reenviado sozinho.",
+          idioma,
+        ),
+        { minutos: STUCK_AFTER_MS / 60000 },
+      ),
       // "proposal" é a chave de `REFERENCIAS_DE_AVISO` (lib/ai/inbox-destino.ts)
       // — não o nome da tabela. Errar aqui faz o botão "Abrir proposta" nunca
       // aparecer (falha fechada, sem erro visível).

@@ -8,6 +8,8 @@ import { logger } from "@/lib/logger";
 import { modulosLigados, type ModuloOpcional } from "@/lib/instalacao/modulos";
 import { capacidadesLigadas } from "@/lib/organizacao/capacidades";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { leitorDeIdiomaPeloCliente, preencher } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 const PISO_DE_ACEITE = 0.3;
@@ -36,6 +38,8 @@ async function rodar(admin: ReturnType<typeof createAdminClient>, requestId: str
   if (orgsErr) throw new Error(`query_orgs_failed: ${orgsErr.message}`);
 
   let avisadas = 0;
+  // O aviso sai no idioma de cada organização: a Central o mostra como foi gravado.
+  const idiomaDe = leitorDeIdiomaPeloCliente(admin);
   for (const orgId of organizacoesComPropostas(orgs ?? [], await modulosLigados(admin))) {
     const org = { id: orgId };
     const { data: propostas, error: propErr } = await admin
@@ -60,10 +64,14 @@ async function rodar(admin: ReturnType<typeof createAdminClient>, requestId: str
       .eq("status", "open")
       .maybeSingle();
     if (!existente) {
+      const idioma = await idiomaDe(org.id);
       const { error: inboxErr } = await admin.from("agent_inbox_items").insert({
         organization_id: org.id, kind: "proposal_acceptance_rate_drop", severity: "warn",
-        title: "A taxa de aceite de propostas caiu",
-        body: `${Math.round(taxa * 100)}% das propostas decididas nos últimos 30 dias foram aceitas — abaixo do piso de ${Math.round(PISO_DE_ACEITE * 100)}%.`,
+        title: traduzir("A taxa de aceite de propostas caiu", idioma),
+        body: preencher(
+          traduzir("{taxa}% das propostas decididas nos últimos 30 dias foram aceitas — abaixo do piso de {piso}%.", idioma),
+          { taxa: Math.round(taxa * 100), piso: Math.round(PISO_DE_ACEITE * 100) },
+        ),
       });
       if (inboxErr) {
         logger.error("[proposal-acceptance-rate] aviso na Central falhou", { error: inboxErr.message, organization_id: org.id, requestId });

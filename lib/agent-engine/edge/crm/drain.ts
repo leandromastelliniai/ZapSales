@@ -20,7 +20,8 @@ import { insertInboxItem } from '../../db/repository';
 import type { Logger } from '../../obs/logger';
 import { enqueueJob } from '../../queue/queue';
 import { decidirRajada, debounceEfetivo } from './debounce';
-import { avisoDeEventoMorto, IA_QUE_NAO_RESPONDEU } from '@/lib/event-log/aviso-de-evento-morto';
+import { avisoDeEventoMorto, IA_QUE_NAO_RESPONDEU, tituloEmTodoIdioma } from '@/lib/event-log/aviso-de-evento-morto';
+import { idiomaPeloPool } from '@/lib/i18n/aviso-no-idioma';
 import { TIPOS_DERIVAVEIS, DERIVACAO_TERMINADA } from '@/lib/messaging/media/derivable';
 import { haQuemAtendaASessao } from '@/lib/ai/agents/quem-atende-a-sessao';
 import { decidirElegibilidadeDaConversa } from '@/lib/ai/elegibilidade/consulta-pg';
@@ -157,18 +158,29 @@ async function avisarDespachoMorto(
   motivo: string,
   log: Logger,
 ): Promise<void> {
-  const { title, body } = avisoDeEventoMorto({
-    eventType: 'ai_agent.dispatch_requested',
-    // `attempts` já foi incrementado no claim: é a contagem com esta tentativa.
-    tentativas: event.attempts,
-    motivo,
-    efeito: IA_QUE_NAO_RESPONDEU,
-  });
   try {
+    // No idioma da organização (a Central mostra o aviso como foi gravado); o
+    // dedupe casa o título em TODO idioma.
+    const { title, body } = avisoDeEventoMorto(
+      {
+        eventType: 'ai_agent.dispatch_requested',
+        // `attempts` já foi incrementado no claim: é a contagem com esta tentativa.
+        tentativas: event.attempts,
+        motivo,
+        efeito: IA_QUE_NAO_RESPONDEU,
+      },
+      await idiomaPeloPool(pool, event.organization_id),
+    );
     await insertInboxItem(
       pool,
       event.organization_id,
-      { kind: 'event_dead', severity: 'critical', title, body },
+      {
+        kind: 'event_dead',
+        severity: 'critical',
+        title,
+        body,
+        titulosEquivalentes: tituloEmTodoIdioma(IA_QUE_NAO_RESPONDEU.titulo),
+      },
       'kind_e_titulo',
     );
   } catch (err) {

@@ -23,6 +23,9 @@
  * sem base legal.
  */
 import type pg from 'pg';
+import { idiomaPeloPool } from '@/lib/i18n/aviso-no-idioma';
+import { traduzir } from '@/lib/i18n/dicionario';
+
 import type { Logger } from '../../obs/logger';
 
 /** Base legal de um contato para prospecção (LGPD art. 7º). */
@@ -117,15 +120,20 @@ export async function escalateLgpdVeto(
   log: Logger,
 ): Promise<void> {
   const isAnon = input.code === 'lgpd_anonymized';
+  // No idioma da organização: a Central mostra o aviso como foi gravado.
+  const idioma = await idiomaPeloPool(db, input.tenantId);
   const title = isAnon
-    ? 'Contato anonimizado — envio bloqueado por LGPD'
-    : 'Base legal ausente/inválida — 1º toque bloqueado por LGPD';
+    ? traduzir('Contato anonimizado — envio bloqueado por LGPD', idioma)
+    : traduzir('Base legal ausente/inválida — 1º toque bloqueado por LGPD', idioma);
   const body = isAnon
-    ? 'O contato deste lead está anonimizado no CRM (anonimização é irreversível): nenhum envio ' +
-      'pode ir a ele. Confira o cadastro no CRM — se for engano, reverta a anonimização lá.'
-    : 'O 1º toque de prospecção a este lead foi bloqueado por falta de base legal válida ' +
-      '(consent concedido, ou legitimate_interest com LIA; origem "import" exige prova). ' +
-      'Registre a base legal no CRM antes de prospectar este contato.';
+    ? traduzir(
+        'O contato deste lead está anonimizado no CRM (anonimização é irreversível): nenhum envio pode ir a ele. Confira o cadastro no CRM — se for engano, reverta a anonimização lá.',
+        idioma,
+      )
+    : traduzir(
+        'O 1º toque de prospecção a este lead foi bloqueado por falta de base legal válida (consent concedido, ou legitimate_interest com LIA; origem "import" exige prova). Registre a base legal no CRM antes de prospectar este contato.',
+        idioma,
+      );
   try {
     await db.query(
       `insert into agent_inbox_items (organization_id, kind, severity, title, body, ref_kind, ref_id)

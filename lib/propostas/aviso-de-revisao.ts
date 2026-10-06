@@ -2,6 +2,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { nomeDoContato } from "@/lib/contacts/rotulo-do-contato";
+import { idiomaPeloCliente, preencher } from "@/lib/i18n/aviso-no-idioma";
+import { traduzir } from "@/lib/i18n/dicionario";
+import type { Idioma } from "@/lib/i18n/idiomas";
 import { logger } from "@/lib/logger";
 import { montarDocumentoDaProposta, type PropostaParaDocumento } from "./documento/documento-da-proposta";
 import type { ContatoParaDocumento } from "./documento/montar-dados";
@@ -17,9 +20,12 @@ export const EVENTO_PROPOSTA_PRONTA_PARA_REVISAO = "proposal.ready_for_review";
 
 const TITULO_MAXIMO = 80;
 
-export function tituloDoAviso(titulo: string | null, cliente: string | null): string {
-  const nome = (titulo ?? "").trim().slice(0, TITULO_MAXIMO) || "sem título";
-  return cliente ? `Proposta «${nome}» de ${cliente} está pronta para revisão` : `Proposta «${nome}» está pronta para revisão`;
+/** No `idioma` da organização: a Central mostra o aviso como foi gravado. */
+export function tituloDoAviso(titulo: string | null, cliente: string | null, idioma: Idioma = "pt-BR"): string {
+  const nome = (titulo ?? "").trim().slice(0, TITULO_MAXIMO) || traduzir("sem título", idioma);
+  return cliente
+    ? preencher(traduzir("Proposta «{nome}» de {cliente} está pronta para revisão", idioma), { nome, cliente })
+    : preencher(traduzir("Proposta «{nome}» está pronta para revisão", idioma), { nome });
 }
 
 async function contatoDaProposta(
@@ -68,13 +74,17 @@ export async function avisarQuePropostaPrecisaDeRevisao(
       .maybeSingle();
     const proposta = linha as { titulo: string | null; lead_id: string | null; contact_id: string | null } | null;
     const cliente = nomeDoContato(await contatoDaProposta(supabase, organizationId, proposta?.contact_id ?? null));
+    const idioma = await idiomaPeloCliente(supabase, organizationId);
 
     const { error } = await supabase.from("agent_inbox_items").insert({
       organization_id: organizationId,
       kind: "proposta_pronta_para_revisao",
       severity: "warn",
-      title: tituloDoAviso(proposta?.titulo ?? null, cliente),
-      body: "A IA rascunhou esta proposta. Confirme o modelo, preencha o que falta no documento e confira os preços antes de enviar.",
+      title: tituloDoAviso(proposta?.titulo ?? null, cliente, idioma),
+      body: traduzir(
+        "A IA rascunhou esta proposta. Confirme o modelo, preencha o que falta no documento e confira os preços antes de enviar.",
+        idioma,
+      ),
       ref_kind: "proposal",
       ref_id: propostaId,
       status: "open",

@@ -67,6 +67,8 @@ import type { ProviderRegistry } from '../edge/llm/providers';
 import { HANDOFF_REASON_ORCAMENTO } from '../edge/llm/orcamento';
 import { abreAvisoDoEspelhoRecusado, mirrorLeadStageToCrm } from '../edge/crm/move-lead-stage';
 import { insertInboxItem } from '../db/repository';
+import { idiomaPeloPool } from '@/lib/i18n/aviso-no-idioma';
+import { traduzir } from '@/lib/i18n/dicionario';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { moverLeadParaEtapaDeHandoff } from '@/lib/leads/handoff-stage-move';
 import { detectUrgencySignal } from '../guardrails/sinal-de-urgencia';
@@ -530,6 +532,22 @@ const inboundTurnPayloadSchema = z
     crm_event_id: z.string().uuid(),
   })
   .passthrough();
+
+/**
+ * Título e bloqueio do caso que o fail-safe do guardrail abre sozinho, no
+ * idioma da organização: as telas de casos e a Central os mostram como foram
+ * gravados. Nunca lança — na dúvida, português.
+ */
+async function casoDoFailSafe(pool: pg.Pool, tenantId: string): Promise<{ title: string; blocker: string }> {
+  const idioma = await idiomaPeloPool(pool, tenantId);
+  return {
+    title: traduzir('Atendimento que precisa de um humano', idioma),
+    blocker: traduzir(
+      'Aberto automaticamente: a IA prometeu envolver um humano e não abriu o caso (fail-safe do guardrail).',
+      idioma,
+    ),
+  };
+}
 
 /**
  * O evento já traz o id exato da mensagem que acordou o agente. Ler o "último
@@ -3287,6 +3305,7 @@ async function executarTurnoDoAgente(
             if (casePromiseVetoCount < 2) {
               return { ok: false, error: { code: chain.code, message: chain.message } };
             }
+            const caso = await casoDoFailSafe(pool, tenantId);
             const auto = await openCase(
               pool,
               {
@@ -3295,10 +3314,9 @@ async function executarTurnoDoAgente(
                 agentId: agentConfig?.agentId ?? null,
               },
               {
-                title: 'Atendimento que precisa de um humano',
+                title: caso.title,
                 summary: body, // a mensagem-promessa que a IA tentou enviar
-                blocker:
-                  'Aberto automaticamente: a IA prometeu envolver um humano e não abriu o caso (fail-safe do guardrail).',
+                blocker: caso.blocker,
                 source: 'guardrail_autofallback',
                 contextSnapshot: buildCaseContextSnapshot(),
               },
@@ -4518,17 +4536,19 @@ async function executarTurnoDoAgente(
         const promessas = promessasEmAberto(content.declaracao ?? null);
         if (promessas.length > 0) {
           try {
+            // No idioma da organização: a Central mostra o aviso como foi gravado.
+            const idiomaDoAviso = await idiomaPeloPool(pool, tenantId);
             await insertInboxItem(
               pool,
               tenantId,
               {
                 kind: 'promise_unfulfilled',
                 severity: 'warn',
-                title: 'Um retorno prometido a um cliente ficou sem dono',
-                body:
-                  'O assistente prometeu algo a esta pessoa nesta conversa e o passo que registra ' +
-                  'o cumprimento não chegou a ser agendado. Abra a conversa, veja o que foi ' +
-                  'combinado e cumpra você mesmo.',
+                title: traduzir('Um retorno prometido a um cliente ficou sem dono', idiomaDoAviso),
+                body: traduzir(
+                  'O assistente prometeu algo a esta pessoa nesta conversa e o passo que registra o cumprimento não chegou a ser agendado. Abra a conversa, veja o que foi combinado e cumpra você mesmo.',
+                  idiomaDoAviso,
+                ),
                 refKind: 'conversation',
                 refId: input.conversationId,
               },

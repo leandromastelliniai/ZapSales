@@ -49,6 +49,16 @@ function dublePool(rowCount = 1) {
   return { db, executados };
 }
 
+/**
+ * O INSERT do aviso — antes dele vem a leitura do idioma da organização (o
+ * aviso nasce no idioma de quem vai lê-lo), então a posição não é a primeira.
+ */
+function doInsert(executados: Executado[]): Executado {
+  const insert = executados.find((e) => e.sql.includes("insert into agent_inbox_items"));
+  if (!insert) throw new Error("o aviso não foi inserido");
+  return insert;
+}
+
 const BASE = {
   tenantId: ORG,
   channelSessionId: CANAL,
@@ -63,7 +73,7 @@ describe("aviso de janela fechada", () => {
     const { db, executados } = dublePool();
     await avisarJanelaFechada(db as never, BASE);
 
-    const { sql, params } = executados[0]!;
+    const { sql, params } = doInsert(executados);
     expect(sql).toContain("insert into agent_inbox_items");
     // O dedup é o que separa um aviso de uma tempestade: sem o `not exists`,
     // cada mensagem recebida no domingo abriria um item.
@@ -106,7 +116,7 @@ describe("aviso de janela fechada", () => {
     const { db, executados } = dublePool();
     await avisarJanelaFechada(db as never, BASE);
 
-    const corpo = String(executados[0]!.params[2]);
+    const corpo = String(doInsert(executados).params[2]);
     // Sem a hora de volta, o aviso informa um problema e nenhuma decisão.
     // Formato ISO-like (`sv-SE`): o corpo é persistido e o produto tem duas
     // línguas — data em pt-BR apareceria em português para quem lê em espanhol.
@@ -128,7 +138,7 @@ describe("aviso de janela fechada", () => {
     const { db, executados } = dublePool();
     await avisarJanelaFechada(db as never, { ...BASE, domingoDesligado: false });
 
-    const corpo = String(executados[0]!.params[2]);
+    const corpo = String(doInsert(executados).params[2]);
     expect(corpo).not.toContain("Enviar aos domingos");
     expect(corpo).toMatch(/não é preciso fazer nada/i);
   });

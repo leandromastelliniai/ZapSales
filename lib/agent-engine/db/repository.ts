@@ -187,7 +187,20 @@ export type InboxDedupe = 'kind' | 'kind_e_ref' | 'kind_e_titulo' | 'kind_ref_e_
 export async function insertInboxItem(
   db: Pick<pg.Pool, "query">,
   tenantId: string | null, // null = plataforma (ex.: infra)
-  input: { kind: InboxKind; title: string; severity?: InboxItemRow['severity']; body?: string; refKind?: string; refId?: string },
+  input: {
+    kind: InboxKind;
+    title: string;
+    severity?: InboxItemRow['severity'];
+    body?: string;
+    refKind?: string;
+    refId?: string;
+    /**
+     * Para o dedupe por título: os OUTROS nomes do mesmo aviso — o título em
+     * cada idioma, já que o aviso nasce no idioma da organização. Sem isto o
+     * dedupe casa só `title`.
+     */
+    titulosEquivalentes?: readonly string[];
+  },
   dedupe?: InboxDedupe,
 ): Promise<InboxItemRow | null> {
   const valores = [
@@ -222,13 +235,14 @@ export async function insertInboxItem(
              and kind = $2
              and status = 'open'
              and ($8 = false or (ref_kind is not distinct from $6 and ref_id is not distinct from $7))
-             and ($9 = false or title = $4)
+             and ($9 = false or ${input.titulosEquivalentes ? 'title = any($10::text[])' : 'title = $4'})
         )
        returning *`,
       [
         ...valores,
         dedupe === 'kind_e_ref' || dedupe === 'kind_ref_e_titulo',
         dedupe === 'kind_e_titulo' || dedupe === 'kind_ref_e_titulo',
+        ...(input.titulosEquivalentes ? [[...new Set([input.title, ...input.titulosEquivalentes])]] : []),
       ],
     );
     return rows[0] ?? null;

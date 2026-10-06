@@ -45,6 +45,9 @@
  * clone que ainda não a aplicou. Quem distingue este aviso dos outros é o
  * `ref_kind`, que é texto livre.
  */
+import { idiomaPeloPool, preencher } from '@/lib/i18n/aviso-no-idioma';
+import { traduzir } from '@/lib/i18n/dicionario';
+
 import type { Queryable } from '../queue/queue';
 
 /** O `ref_kind` que identifica este aviso — a chave de dedup e de resolução. */
@@ -90,14 +93,21 @@ export async function avisarJanelaFechada(
     timeStyle: 'short',
   }).format(input.abertura);
 
-  const porque = input.domingoDesligado
-    ? `Este número está com **envio aos domingos desligado**, e a janela de horário é ${input.janela} ` +
-      `(fuso ${input.timezone}).`
-    : `A janela de envio deste número é ${input.janela} (fuso ${input.timezone}), e agora está fechada.`;
+  // No idioma da organização: a Central mostra o aviso como foi gravado.
+  const idioma = await idiomaPeloPool(db, input.tenantId);
+  const t = (texto: string) => traduzir(texto, idioma);
+  const valores = { janela: input.janela, fuso: input.timezone, quando };
+
+  const porque = preencher(
+    input.domingoDesligado
+      ? t('Este número está com **envio aos domingos desligado**, e a janela de horário é {janela} (fuso {fuso}).')
+      : t('A janela de envio deste número é {janela} (fuso {fuso}), e agora está fechada.'),
+    valores,
+  );
 
   const oQueFazer = input.domingoDesligado
-    ? 'Se quiser que o agente responda aos domingos, ligue "Enviar aos domingos" em Conexões › Anti-ban.'
-    : 'Não é preciso fazer nada: as respostas saem sozinhas na abertura.';
+    ? t('Se quiser que o agente responda aos domingos, ligue "Enviar aos domingos" em Conexões › Anti-ban.')
+    : t('Não é preciso fazer nada: as respostas saem sozinhas na abertura.');
 
   const { rowCount } = await db.query(
     `insert into agent_inbox_items (organization_id, kind, severity, title, body, ref_kind, ref_id)
@@ -112,9 +122,13 @@ export async function avisarJanelaFechada(
      )`,
     [
       input.tenantId,
-      'As respostas da IA estão esperando a janela de envio abrir',
-      `${porque} Quem escrever agora recebe resposta a partir de ${quando}. ` +
-        `Nenhuma mensagem se perde — os turnos ficam na fila e saem na abertura. ${oQueFazer}`,
+      t('As respostas da IA estão esperando a janela de envio abrir'),
+      `${porque} ` +
+        preencher(
+          t('Quem escrever agora recebe resposta a partir de {quando}. Nenhuma mensagem se perde — os turnos ficam na fila e saem na abertura.'),
+          valores,
+        ) +
+        ` ${oQueFazer}`,
       REF_KIND_JANELA,
       input.channelSessionId,
     ],

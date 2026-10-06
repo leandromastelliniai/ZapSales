@@ -27,6 +27,10 @@
  * descoberta vem pelo cliente dele. Os custos não são simétricos, e a ordem das
  * recusas abaixo é essa assimetria escrita.
  */
+import { preencher } from '@/lib/i18n/aviso-no-idioma';
+import { tagDeIdioma } from '@/lib/i18n/datas';
+import { traduzir } from '@/lib/i18n/dicionario';
+import type { Idioma } from '@/lib/i18n/idiomas';
 
 /**
  * Piso do teto: US$ 1,00/mês. Abaixo disto o número não é orçamento de um agente
@@ -73,6 +77,25 @@ export const AVISO_CORPO =
 export const BLOQUEIO_TITULO = 'O limite de gasto com IA foi atingido';
 
 /**
+ * Os mesmos textos no idioma da organização — a Central mostra o item como foi
+ * gravado, sem `t()`. As constantes acima seguem sendo o português (a chave).
+ */
+export function textosDoOrcamento(idioma: Idioma): {
+  avisoTitulo: string;
+  avisoCorpo: string;
+  bloqueioTitulo: string;
+} {
+  return {
+    avisoTitulo: traduzir('O gasto de IA passou do aviso que você definiu', idioma),
+    avisoCorpo: traduzir(
+      'A IA continua respondendo normalmente — isto é o aviso, não a parada. Veja quanto já foi gasto e ajuste o limite em Uso de IA › Orçamento.',
+      idioma,
+    ),
+    bloqueioTitulo: traduzir('O limite de gasto com IA foi atingido', idioma),
+  };
+}
+
+/**
  * Razão gravada em `conversations.last_handoff_reason` quando o teto de gasto
  * interrompe o atendimento. Constante exportada porque quem for procurar "por
  * que esta conversa foi parar na fila humana" busca por este valor no banco.
@@ -87,8 +110,8 @@ export const BLOQUEIO_TITULO = 'O limite de gasto com IA foi atingido';
 export const HANDOFF_REASON_ORCAMENTO = 'orcamento_de_ia';
 
 /** Escreve dólar, porque o número É dólar (`pricing.ts` calcula em USD). */
-function emDolares(cents: number): string {
-  return `US$ ${(cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+function emDolares(cents: number, idioma: Idioma): string {
+  return `US$ ${(cents / 100).toLocaleString(tagDeIdioma(idioma), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /**
@@ -102,16 +125,14 @@ function emDolares(cents: number): string {
  * é `lib/escalacao/retomada.ts`, acionado por um botão POR CONVERSA. Subir o
  * teto evita paradas NOVAS; ele não devolve a IA a nenhuma conversa já parada.
  */
-export function corpoDoBloqueio(gastoCents: number, tetoCents: number): string {
+export function corpoDoBloqueio(gastoCents: number, tetoCents: number, idioma: Idioma = 'pt-BR'): string {
   const pct = tetoCents > 0 ? Math.round((gastoCents / tetoCents) * 100) : 0;
-  return (
-    `O gasto de IA deste mês chegou a ${emDolares(gastoCents)} de um limite de ${emDolares(tetoCents)} (${pct}%), ` +
-    'e você escolheu que a IA parasse ao chegar nele. ' +
-    'As conversas que estavam sendo atendidas foram para a FILA DE ATENDIMENTO HUMANO — ' +
-    'ninguém ficou sem próximo passo, mas alguém precisa responder. ' +
-    'Aumentar o limite ou desligar a parada em Uso de IA › Orçamento evita paradas NOVAS; ' +
-    'cada conversa já parada volta ao automático pelo botão "Devolver ao automático" ' +
-    'no cabeçalho dela.'
+  return preencher(
+    traduzir(
+      'O gasto de IA deste mês chegou a {gasto} de um limite de {teto} ({pct}%), e você escolheu que a IA parasse ao chegar nele. As conversas que estavam sendo atendidas foram para a FILA DE ATENDIMENTO HUMANO — ninguém ficou sem próximo passo, mas alguém precisa responder. Aumentar o limite ou desligar a parada em Uso de IA › Orçamento evita paradas NOVAS; cada conversa já parada volta ao automático pelo botão "Devolver ao automático" no cabeçalho dela.',
+      idioma,
+    ),
+    { gasto: emDolares(gastoCents, idioma), teto: emDolares(tetoCents, idioma), pct },
   );
 }
 

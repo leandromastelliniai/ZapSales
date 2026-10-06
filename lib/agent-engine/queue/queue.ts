@@ -16,6 +16,9 @@
  */
 import type { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 
+import { traduzir } from '@/lib/i18n/dicionario';
+import { IDIOMAS } from '@/lib/i18n/idiomas';
+
 export type JobKind =
   | 'inbound_turn'
   | 'followup_turn'
@@ -281,6 +284,35 @@ export async function completeJob<T = void>(
 }
 
 /**
+ * O título e o rótulo do motivo do `job_dead`, por idioma — o aviso nasce
+ * dentro do SQL (uma linha por job morto, de qualquer organização), então o
+ * texto vai como mapa `{idioma: frase}` e o statement escolhe pelo
+ * `organizations.locale` de cada linha, caindo no português. A Central mostra
+ * o aviso como foi gravado.
+ */
+function textosDoJobDead(): string {
+  return JSON.stringify(
+    Object.fromEntries(
+      IDIOMAS.map((idioma) => [
+        idioma,
+        {
+          titulo: traduzir('Job descartado após esgotar tentativas', idioma),
+          motivo: traduzir('Motivo:', idioma),
+        },
+      ]),
+    ),
+  );
+}
+
+/** O pedaço do statement que escolhe o texto do idioma da organização de `u`. */
+function textoDoJobDeadNoIdioma(param: string, campo: 'titulo' | 'motivo'): string {
+  return `coalesce(
+                (${param}::jsonb -> (select o.locale from organizations o where o.id = u.organization_id)) ->> '${campo}',
+                (${param}::jsonb -> 'pt-BR') ->> '${campo}'
+              )`;
+}
+
+/**
  * Devolve o job à fila após falha (attempts já foi incrementado no claim). Excedeu
  * `max_attempts` → 'dead' + escalação humana em agent_inbox_items (kind='job_dead'), no
  * MESMO statement (atômico). Devolve null se o lease já não era deste worker.
@@ -315,21 +347,21 @@ export async function failJob(
      ),
      alert as (
        insert into agent_inbox_items (organization_id, kind, severity, title, body, ref_kind, ref_id)
-       select organization_id, 'job_dead', 'critical',
-              'Job descartado após esgotar tentativas',
+       select u.organization_id, 'job_dead', 'critical',
+              ${textoDoJobDeadNoIdioma('$5', 'titulo')},
               -- O erro que matou o job vai JUNTO. Antes o corpo era só
               -- 'kind=...; attempts=5' e jogava fora a única informação que
               -- resolveria: o aviso existia, e não dizia nada. Caso real desta
               -- VPS: 16 alertas críticos idênticos enquanto o erro guardado em
               -- last_error dizia exatamente o que configurar.
-              'kind=' || kind || '; attempts=' || attempts
-                || coalesce(chr(10) || 'Motivo: ' || left(last_error, 400), ''),
-              'job_queue', id
-       from updated
-       where status = 'dead'
+              'kind=' || u.kind || '; attempts=' || u.attempts
+                || coalesce(chr(10) || ${textoDoJobDeadNoIdioma('$5', 'motivo')} || ' ' || left(u.last_error, 400), ''),
+              'job_queue', u.id
+       from updated u
+       where u.status = 'dead'
      )
      select * from updated`,
-    [jobId, workerId, normalizeError(error), acquiredAt ?? null],
+    [jobId, workerId, normalizeError(error), acquiredAt ?? null, textosDoJobDead()],
   );
   return rows[0] ?? null;
 }
@@ -414,21 +446,21 @@ export async function reapExpiredJobs(
      ),
      alert as (
        insert into agent_inbox_items (organization_id, kind, severity, title, body, ref_kind, ref_id)
-       select organization_id, 'job_dead', 'critical',
-              'Job descartado após esgotar tentativas',
+       select u.organization_id, 'job_dead', 'critical',
+              ${textoDoJobDeadNoIdioma('$2', 'titulo')},
               -- O erro que matou o job vai JUNTO. Antes o corpo era só
               -- 'kind=...; attempts=5' e jogava fora a única informação que
               -- resolveria: o aviso existia, e não dizia nada. Caso real desta
               -- VPS: 16 alertas críticos idênticos enquanto o erro guardado em
               -- last_error dizia exatamente o que configurar.
-              'kind=' || kind || '; attempts=' || attempts
-                || coalesce(chr(10) || 'Motivo: ' || left(last_error, 400), ''),
-              'job_queue', id
-       from expired
-       where status = 'dead'
+              'kind=' || u.kind || '; attempts=' || u.attempts
+                || coalesce(chr(10) || ${textoDoJobDeadNoIdioma('$2', 'motivo')} || ' ' || left(u.last_error, 400), ''),
+              'job_queue', u.id
+       from expired u
+       where u.status = 'dead'
      )
      select id, status from expired`,
-    [opts.visibilityTimeoutMs],
+    [opts.visibilityTimeoutMs, textosDoJobDead()],
   );
   return {
     revived: rows.filter((r) => r.status === 'pending').length,
