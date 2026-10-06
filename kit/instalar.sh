@@ -334,6 +334,12 @@ preparar_imagens() {
       env_definir "$ENV_ARQ" WORKER_IMAGE "$REGISTRO_IMAGENS/zapsales-worker:$versao"
       env_definir "$ENV_ARQ" SCHEDULER_IMAGE "$REGISTRO_IMAGENS/zapsales-scheduler:$versao"
       for s in APP WORKER SCHEDULER; do env_definir "$ENV_ARQ" "${s}_PULL_POLICY" missing; done
+      # A imagem publicada já carrega a própria versão (ENV APP_VERSION do
+      # build). Um APP_VERSION no .env — o que o modo `construir` grava — entra
+      # pelo `env_file` e passa por cima dela: o app novo responderia em
+      # /api/v1/health a versão da imagem ANTERIOR, e o deploy que confere a
+      # versão no ar (kit/deploy/implantar.sh) concluiria que a troca não pegou.
+      env_remover "$ENV_ARQ" APP_VERSION
       dc pull --quiet app worker scheduler || falha "Não consegui puxar as imagens da versão $versao. Se o registro é privado, faça 'docker login ghcr.io' antes; se a versão não foi publicada, use ZAPSALES_IMAGENS=construir."
       ;;
     construir)

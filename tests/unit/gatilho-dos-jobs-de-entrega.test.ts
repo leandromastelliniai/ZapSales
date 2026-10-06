@@ -143,6 +143,21 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
       "imagens de fundo que ninguém executou — o defeito da #648, de volta e em silêncio.",
   },
 
+  // O ÚLTIMO elo da cadeia: o topo da `main` indo para a produção. É o único job
+  // deste mapa cuja condição DEVE poder desligá-lo — `vars.DEPLOY_AUTOMATICO` é o
+  // interruptor de emergência do dono, e num fork ou clone a variável não existe.
+  // Por isso a expressão inteira está congelada aqui: um `&& false` colado nela
+  // desligaria o deploy em silêncio, e trocar o interruptor por outro nome o
+  // ligaria em todo fork que por acaso definisse aquele nome.
+  "deploy.yml::implantar": {
+    condicao:
+      "vars.DEPLOY_AUTOMATICO == 'sim' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.event == 'push')",
+    efeito:
+      "Este job leva o topo da `main` para a produção quando as quatro verificações do " +
+      "commit estão verdes. Desligado por uma condição, ele vira `skipped` e a produção " +
+      "congela na última versão sem nada ficar vermelho — o merge parece ter ido ao ar e não foi.",
+  },
+
   "publish-image.yml::imagens-ok": {
     condicao: "always()",
     efeito:

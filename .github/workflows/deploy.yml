@@ -1,0 +1,142 @@
+name: deploy
+
+# Deploy automático: o topo da `main` vai para a produção quando — e só quando —
+# as quatro verificações de push daquele commit estão verdes.
+#
+#   merge na main ─┬─ ci ─────────────┐
+#                  ├─ e2e ────────────┤  cada conclusão acorda este workflow;
+#                  ├─ perf ───────────┤  ele implanta quando as QUATRO do topo
+#                  └─ imagens (GHCR) ─┘  da main estão `success`
+#                                     │
+#                                     ▼
+#           ssh zapsales-deploy@VPS "implantar <sha>"   (kit/deploy/porta.sh)
+#                                     │
+#                                     ▼
+#     kit/deploy/implantar.sh: procedência → imagens sha-<commit> → kit/instalar.sh
+#     → prova (versão no /api/v1/health, saúde não piora, 2 min sem reinício)
+#     → falhou? volta sozinho para a versão anterior
+#
+# A regra de quando implantar mora em scripts/deploy/pode-implantar.mjs (e o
+# porquê de perguntar sempre pelo TOPO da main, no cabeçalho dele). Não depende
+# da proteção de branch: em 2026-10-05 a `main` não tinha proteção nenhuma, e o
+# deploy exige as verificações do próprio commit mesmo assim.
+#
+# Configuração (Settings › Environments › producao e Settings › Variables):
+#   vars.DEPLOY_AUTOMATICO       'sim' liga. Qualquer outra coisa desliga — é o
+#                                interruptor de emergência, e não passa por PR.
+#                                Num fork ou clone ele não existe: o job é pulado.
+#   vars.DEPLOY_URL              https://<domínio> (o link do ambiente no GitHub)
+#   vars.DEPLOY_SSH_HOST         IP ou nome da VPS
+#   vars.DEPLOY_SSH_KNOWN_HOSTS  a chave de HOST da VPS (ssh-keyscan), conferida
+#                                com StrictHostKeyChecking — sem ela, quem
+#                                sequestrasse o DNS/IP receberia a conexão
+#   secrets.DEPLOY_SSH_KEY       chave privada do usuário zapsales-deploy
+#                                (segredo do ambiente `producao`, não do repo)
+#
+# Lado da VPS e o passo a passo: docs/runbooks/deploy.md.
+
+on:
+  workflow_run:
+    workflows: ["ci", "e2e", "perf", "Publicar imagem Docker (GHCR)"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  implantar:
+    if: vars.DEPLOY_AUTOMATICO == 'sim' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    # Um deploy por vez, e NUNCA cancelado no meio: cancelar o runner derruba o
+    # SSH, e embora a troca na VPS continue sozinha (ela roda numa unidade do
+    # systemd), o GitHub deixaria de ver o resultado. O GitHub guarda uma rodada
+    # pendente por grupo; como toda rodada pergunta pelo topo da main, descartar
+    # a pendente anterior não perde deploy nenhum. No job, não no workflow:
+    # razão em tests/unit/concorrencia-so-nos-jobs-pesados.test.ts.
+    concurrency:
+      group: deploy-producao
+      cancel-in-progress: false
+    timeout-minutes: 60
+    environment:
+      name: producao
+      url: ${{ vars.DEPLOY_URL }}
+    permissions:
+      contents: read
+      # Ler as execuções das quatro verificações do commit.
+      actions: read
+      # Abrir a issue quando o deploy falha e fechá-la quando volta ao normal.
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts/deploy
+          sparse-checkout-cone-mode: false
+
+      - name: O topo da main pode ir para a produção?
+        id: gate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/deploy/pode-implantar.mjs
+
+      - name: Implantar na VPS
+        id: vps
+        if: steps.gate.outputs.veredito == 'implantar'
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ vars.DEPLOY_SSH_KNOWN_HOSTS }}
+          HOST: ${{ vars.DEPLOY_SSH_HOST }}
+          SHA: ${{ steps.gate.outputs.sha }}
+        run: |
+          set -uo pipefail
+          umask 077
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/deploy"
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts_deploy"
+          rc=0
+          ssh -i "$HOME/.ssh/deploy" -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts_deploy" \
+            -o ServerAliveInterval=30 -o ServerAliveCountMax=10 \
+            "zapsales-deploy@${HOST}" "implantar ${SHA}" || rc=$?
+          rm -f "$HOME/.ssh/deploy"
+          echo "codigo=${rc}" >> "$GITHUB_OUTPUT"
+          # Os códigos são os de kit/deploy/implantar.sh.
+          case "$rc" in
+            0)  echo "::notice::${SHA::7} está no ar." ;;
+            1)  echo "::error::A VPS recusou o deploy de ${SHA::7} antes de mexer em qualquer coisa. Leia o log acima." ;;
+            2)  echo "::error::${SHA::7} falhou na prova e a produção VOLTOU sozinha para a versão anterior." ;;
+            3)  echo "::error::${SHA::7} falhou e a VOLTA TAMBÉM FALHOU. A produção precisa de alguém agora." ;;
+            75) echo "::error::Outro deploy estava em andamento na VPS." ;;
+            *)  echo "::error::O SSH terminou com código ${rc} (conexão, chave ou host)." ;;
+          esac
+          exit "$rc"
+
+      - name: Avisar numa issue que o deploy falhou
+        if: failure() && steps.vps.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          CODIGO: ${{ steps.vps.outputs.codigo }}
+          SHA: ${{ steps.gate.outputs.sha }}
+          RODADA: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          case "$CODIGO" in
+            2) o_que="A versão \`${SHA::7}\` foi instalada, **falhou na prova** e a produção **voltou sozinha** para a versão anterior. O banco não volta (o schema é aditivo); o kit fez um dump antes de aplicar o schema." ;;
+            3) o_que="🚨 **URGENTE:** a versão \`${SHA::7}\` falhou e **a volta para a anterior também falhou**. A produção pode estar fora do ar." ;;
+            *) o_que="O deploy de \`${SHA::7}\` não aconteceu (código ${CODIGO:-?}). Nada foi alterado na VPS." ;;
+          esac
+          corpo="$(printf '%s\n\n- Rodada: %s\n- Log completo na VPS: `/var/log/zapsales/deploy-*-%s.log`\n- Próximos deploys seguem automáticos: um conserto mesclado na main vai para a produção do mesmo jeito.\n' "$o_que" "$RODADA" "${SHA::7}")"
+          titulo="Deploy automático falhou"
+          n="$(gh issue list --state open --search "\"$titulo\" in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$n" ]; then gh issue comment "$n" --body "$corpo"; else gh issue create --title "$titulo" --body "$corpo"; fi
+
+      - name: Fechar a issue de deploy quebrado
+        if: success() && steps.vps.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ steps.gate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          for n in $(gh issue list --state open --search '"Deploy automático falhou" in:title' --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "Resolvido: \`${SHA::7}\` está no ar e passou na prova."
+          done

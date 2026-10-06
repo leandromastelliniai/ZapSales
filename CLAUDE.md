@@ -247,6 +247,17 @@ de emergência e é dívida: existe só naquele disco e qualquer `up -d` sem
 `worker`, `scheduler`) são imagens publicadas, e um teste reprova o retorno de
 serviço construído na VPS.
 
+**A produção do projeto se atualiza sozinha.** Merge na `main` → quando `ci`, `e2e`,
+`perf` e a publicação das imagens daquele commit estão verdes, o
+`.github/workflows/deploy.yml` chama a VPS por SSH (usuário `zapsales-deploy`, que só
+executa `implantar <sha>`), e o `kit/deploy/implantar.sh` puxa as imagens
+`sha-<commit>`, roda o kit, prova a versão no `/api/v1/health` e **volta sozinho** para a
+versão anterior se a prova falhar. Não publique à mão (`git archive | ssh`) por cima
+disso: o deploy recusa revisão no ar que não esteja na história da `main`. O
+interruptor é `vars.DEPLOY_AUTOMATICO` (`sim` liga). Para saber se está ligado:
+`gh variable get DEPLOY_AUTOMATICO`. Mudou algo em `kit/deploy/`? Rode de novo
+`kit/deploy/instalar-acesso.sh` na VPS — o roteiro instalado é uma cópia.
+
 Depois de qualquer deploy, confirme que o domínio responde **307** (redireciona
 pro login) e não 404. Verificações e o caso de build local em
 `docs/runbooks/deploy.md`. O kit de instalação na VPS é o `kit/instalar.sh` — instala E

@@ -58,9 +58,87 @@ commit → push → PR → merge na main → CI publica imagem → VPS puxa
    tag `v*`) e publica **três** imagens — `zapsales`, `zapsales-worker` e
    `zapsales-scheduler` — sempre na mesma versão. O build pesado roda nos
    runners do GitHub, nunca na VPS do usuário.
-3. **Deploy na VPS.** É o `kit/instalar.sh` rodado de novo, não um `up -d` na
-   mão: ele grava as três imagens no `.env`, puxa (ou constrói) e reaplica o
-   `baseline.sql` antes de recriar o app.
+3. **Deploy na VPS — automático.** Quando `ci`, `e2e`, `perf` e a publicação
+   das imagens do commit estão verdes, o `.github/workflows/deploy.yml` leva o
+   topo da `main` para a produção (seção 3.1). Por baixo, é o `kit/instalar.sh`
+   rodado de novo, não um `up -d` na mão: ele grava as três imagens no `.env`,
+   puxa e reaplica o `baseline.sql` antes de recriar o app.
+
+---
+
+## 3.1 Deploy automático
+
+```
+merge na main ─┬─ ci ─────────────┐   cada conclusão acorda o deploy.yml;
+               ├─ e2e ────────────┤   ele segue quando as QUATRO do topo
+               ├─ perf ───────────┤   da main estão verdes
+               └─ imagens (GHCR) ─┘   (scripts/deploy/pode-implantar.mjs)
+                                  │
+       ssh zapsales-deploy@VPS "implantar <sha>"   ← a chave só faz isto
+                                  │
+   kit/deploy/implantar.sh (root, numa unidade do systemd):
+     1. procedência   o commit está na main e é mais novo que o do ar
+     2. imagens       puxa zapsales*:sha-<commit> e confere a revisão gravada nelas
+     3. troca         código do commit + kit/instalar.sh (dump, schema, up -d, 307)
+     4. prova         /api/v1/health responde a versão NOVA, nenhuma dependência
+                      que estava ok piorou, app/worker/agendador saudáveis e sem
+                      reiniciar por 2 min
+     5. volta         falhou em 3 ou 4? código e imagens anteriores de volta
+```
+
+**O que NÃO volta: o banco.** O schema só cresce (doutrina de migrations), então o
+app anterior roda sobre ele. O kit faz um dump antes de aplicar o schema
+(`kit/backup.sh status`), que é o caminho manual se um dia isso não bastar.
+
+**Resultados** (código do SSH, aparece no job e numa issue):
+
+| código | significado | o que fazer |
+|---|---|---|
+| 0 | no ar e provado (ou já estava nesta versão) | nada — a issue de falha, se houver, fecha sozinha |
+| 1 | recusado **antes** de tocar em algo (commit fora da main, rebaixamento, imagem ausente) | ler o log do job |
+| 2 | instalou, **falhou na prova e voltou** sozinho | consertar na main; o próximo merge implanta |
+| 3 | falhou e **a volta também falhou** | olhar a VPS agora: `cd /opt/zapsales && docker compose ps` |
+| 75 | outro deploy estava rodando na VPS | rodar de novo (Actions › deploy › Run workflow) |
+
+Log completo de cada deploy na VPS: `/var/log/zapsales/deploy-<data>-<sha>.log`;
+histórico em uma linha por deploy: `/var/lib/zapsales-deploy/historico`.
+
+**Desligar em emergência:** Settings › Variables › `DEPLOY_AUTOMATICO` ≠ `sim`
+(ou `gh variable set DEPLOY_AUTOMATICO --body nao`). Não passa por PR, vale no
+próximo gatilho. **Reimplantar o topo da main:** Actions › deploy › Run workflow.
+
+### Configuração (uma vez)
+
+Na VPS, como root, a partir de uma cópia do repositório:
+
+```bash
+sudo kit/deploy/instalar-acesso.sh /caminho/deploy.pub
+```
+
+Cria o usuário `zapsales-deploy` (senha travada, fora do grupo `docker`), instala
+`porta.sh`/`implantar.sh` em `/usr/local/lib/zapsales-deploy/` (root:root), um sudoers
+de **um** comando e o `authorized_keys` com `restrict,command=` — a chave não abre
+terminal, não faz túnel e só consegue pedir `implantar <sha de 40>`. A VPS não guarda
+segredo nenhum: repositório e imagens são públicos. **Rodar de novo é como se atualiza
+o roteiro** depois de mexer em `kit/deploy/` — o que está instalado é uma cópia, e um
+deploy nunca troca o roteiro que o comanda.
+
+No GitHub: ambiente `producao` com o segredo `DEPLOY_SSH_KEY` (chave privada) e as
+variáveis `DEPLOY_SSH_HOST`, `DEPLOY_SSH_KNOWN_HOSTS` (saída de `ssh-keyscan -t ed25519
+<host>`, conferida com `StrictHostKeyChecking=yes`), `DEPLOY_URL` e, por último,
+`DEPLOY_AUTOMATICO=sim`. Num fork ou clone nada disso existe e o job é pulado.
+
+### Ensaio da volta
+
+Como root na VPS, com um commit da main mais novo que o do ar:
+
+```bash
+sudo ZAPSALES_DEPLOY_SIMULAR_FALHA=1 /usr/local/lib/zapsales-deploy/implantar.sh implantar <sha>
+# esperado: instala, prova, simula a falha, volta — código 2 e a versão anterior no /api/v1/health
+```
+
+O gancho não é alcançável pela chave de deploy: a porta não repassa ambiente e o
+sudo o zera.
 
 > **`latest` não é a última release.** Ele é publicado a partir da branch default, então
 > segue o **topo da `main`** — código ainda não lançado. Quem quer a última release usa

@@ -56,6 +56,17 @@ env_garantir() {
   env_definir "$arq" "$chave" "$valor"
 }
 
+# env_remover ARQUIVO CHAVE — apaga a linha da chave (mantém dono e modo). Só
+# para CONFIGURAÇÃO que deixou de valer — nunca para segredo.
+env_remover() {
+  local arq="$1" chave="$2" tmp
+  [ -f "$arq" ] || return 0
+  tmp="$(mktemp "${arq}.XXXXXX")"
+  CHAVE="$chave" awk 'index($0, ENVIRON["CHAVE"] "=") != 1' "$arq" > "$tmp"
+  chmod --reference="$arq" "$tmp" 2>/dev/null || chmod 600 "$tmp"
+  mv "$tmp" "$arq"
+}
+
 # exigir_root — o kit mexe em /etc, no Docker e no proxy do sistema.
 exigir_root() {
   [ "$(id -u)" -eq 0 ] || falha "Rode como root (sudo $0)."
