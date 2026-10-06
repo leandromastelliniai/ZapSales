@@ -67,6 +67,14 @@ export interface OpcoesDoFalsoGraph {
    * Graph confere (HMAC-SHA256 do token com o segredo) e recusa o que não bate.
    */
   appSecret?: string;
+  /**
+   * Outros números que ENVIAM por este falso Graph (`POST /{número}/messages`) —
+   * o número de outra organização do mesmo portfólio (issue #9). A conexão pela
+   * API continua sendo só a de `phoneNumberId`.
+   */
+  numerosExtras?: string[];
+  /** O portfólio de negócio dono da WABA (`owner_business_info.id`). Ausente = `portfolio-<waba>`. */
+  portfolioId?: string;
   /** O que a troca do código do Embedded Signup devolve como token de negócio. */
   tokenDoEmbeddedSignup?: string;
   /**
@@ -90,8 +98,10 @@ export interface FalsoGraph {
   chamadas: ChamadaAoGraph[];
   /** A próxima chamada que casar recebe esta resposta (fila: uma vez por regra). */
   programar(casamento: CasamentoDeChamada, resposta: RespostaDoGraph): void;
-  /** As chamadas à API de mensagens (`POST /{número}/messages`). */
+  /** As chamadas à API de mensagens (`POST /{número}/messages`) do número principal. */
   envios(): ChamadaAoGraph[];
+  /** As chamadas à API de mensagens de UM número (o principal ou um dos extras). */
+  enviosDe(numero: string): ChamadaAoGraph[];
   /** As criações de modelo (`POST /{waba}/message_templates`). */
   modelosCriados(): ChamadaAoGraph[];
   /** O segundo passo do upload retomável (`POST /upload:…`), com o arquivo. */
@@ -198,6 +208,8 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
           business_verification_status: "verified",
           account_review_status: "APPROVED",
           primary_funding_id: "998877",
+          // O portfólio de negócio dono da WABA (issue #9).
+          owner_business_info: { id: opcoes.portfolioId ?? `portfolio-${wabaId}`, name: "Portfólio de Teste" },
           health_status: {
             can_send_message: "AVAILABLE",
             entities: [
@@ -224,7 +236,10 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
         corpo: { access_token: opcoes.tokenDoEmbeddedSignup ?? "EAAG-token-do-embedded-signup", token_type: "bearer" },
       };
     }
-    if (c.metodo === "POST" && c.caminho === `/${phoneNumberId}/messages`) {
+    const numeroQueEnvia = [phoneNumberId, ...(opcoes.numerosExtras ?? [])].find(
+      (n) => c.caminho === `/${n}/messages`,
+    );
+    if (c.metodo === "POST" && numeroQueEnvia) {
       // O "digitando"/lido não devolve mensagem — só sucesso.
       if (c.corpo?.status === "read") return { status: 200, corpo: { success: true } };
       contadorDeMensagens += 1;
@@ -368,6 +383,7 @@ export async function subirFalsoGraph(opcoes: OpcoesDoFalsoGraph): Promise<Falso
     programar: (casamento, resposta) => programadas.push({ casamento, resposta }),
     envios: () =>
       chamadas.filter((c) => c.metodo === "POST" && c.caminho === `/${opcoes.phoneNumberId}/messages`),
+    enviosDe: (numero) => chamadas.filter((c) => c.metodo === "POST" && c.caminho === `/${numero}/messages`),
     modelosCriados: () =>
       chamadas.filter((c) => c.metodo === "POST" && c.caminho === `/${opcoes.wabaId}/message_templates`),
     arquivosEnviados: () => chamadas.filter((c) => c.metodo === "POST" && c.caminho.startsWith("/upload:")),

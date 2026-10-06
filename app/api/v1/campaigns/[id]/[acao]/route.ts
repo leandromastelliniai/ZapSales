@@ -1,6 +1,7 @@
 /**
  * POST /api/v1/campaigns/:id/:acao — preparar, iniciar, agendar, pausar,
- * retomar, cancelar, duplicar e testar.
+ * retomar, cancelar, duplicar, testar e aceitar-risco (o aviso de risco de
+ * banimento do modo de texto livre, issue #9).
  *
  * ═══ Por que UMA rota e não oito ═══
  *
@@ -23,6 +24,7 @@ import { audit } from "@/lib/audit";
 import type { AuditAction } from "@/lib/audit/actions";
 import { requireRole } from "@/lib/auth/require-role";
 import {
+  aceitarRiscoAcao,
   agendarAcao,
   cancelarAcao,
   carregarCampanha,
@@ -50,6 +52,7 @@ const ACOES = [
   "cancelar",
   "duplicar",
   "testar",
+  "aceitar-risco",
 ] as const;
 
 type Acao = (typeof ACOES)[number];
@@ -126,6 +129,13 @@ export async function POST(
     case "duplicar": {
       desfecho = await duplicarAcao(admin, campanha, authz.user.id);
       acaoAuditada = "campaign.duplicated";
+      break;
+    }
+    case "aceitar-risco": {
+      const r = await aceitarRiscoAcao(admin, campanha, authz.user.id, agora);
+      desfecho = r;
+      // Aceite repetido não audita de novo: vale o primeiro, que já está no log.
+      acaoAuditada = r.ok && !r.jaAceito ? "campaign.ban_risk_accepted" : null;
       break;
     }
     case "testar": {

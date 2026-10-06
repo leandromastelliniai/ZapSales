@@ -522,7 +522,12 @@ describe("POST /api/v1/channels/official — conectar registra o webhook", () =>
     expect(registroGravado.registrado).toBe(true);
     expect(registroGravado.erro).toBeNull();
     expect(registroGravado.url).toContain(`/api/v1/webhooks/meta/${PATH_TOKEN}`);
-    expect(registro.meta[1]!.corpo).toEqual({
+    // Achada pelo MÉTODO, não pela posição: a conexão também lê o portfólio da
+    // WABA (issue #9), e a ordem das leituras não é o que este caso promete.
+    const registroDoWebhook = registro.meta.find(
+      (c) => c.metodo === "POST" && c.url.includes(`/${NUMERO}`),
+    );
+    expect(registroDoWebhook!.corpo).toEqual({
       webhook_configuration: {
         override_callback_uri: registroGravado.url,
         verify_token: VERIFY,

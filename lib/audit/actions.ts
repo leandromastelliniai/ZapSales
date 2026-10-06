@@ -914,6 +914,13 @@ export const AUDIT_ACTIONS = [
   "campaign.resumed",
   "campaign.cancelled",
   "campaign.duplicated",
+  // Proteções da campanha (issue #9). A pausa que o SISTEMA fez (qualidade
+  // vermelha do número, modelo rejeitado/pausado/desativado/recategorizado), sem
+  // ator humano, com o motivo no metadata; e o aceite do aviso de risco de
+  // banimento do modo de texto livre — decisão consciente que precisa de
+  // "quem aceitou, e quando?".
+  "campaign.auto_paused",
+  "campaign.ban_risk_accepted",
   // Rodada do cron que MEXEU em alguma campanha (enviou, pulou, concluiu,
   // promoveu agendada). Rodada vazia não audita — o critério do `CLAUDE.md`.
   "cron.campaign_worker",

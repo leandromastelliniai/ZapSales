@@ -274,6 +274,9 @@ export const ApiErrorCodes = {
   campanha_agenda_invalida: "campanha_agenda_invalida", // 422: data no passado
   campanha_conteudo_invalido: "campanha_conteudo_invalido", // 422: texto vazio ou variável que não existe
   campanha_base_legal_invalida: "campanha_base_legal_invalida", // 422: interesse legítimo sem referência da LIA
+  // 422: campanha por número de QR code sem o aceite do aviso de risco de
+  // banimento (issue #9). A ação `aceitar-risco` grava o aceite.
+  campanha_risco_nao_aceito: "campanha_risco_nao_aceito",
 
   // 500 / upstream
   internal_error: "internal_error",

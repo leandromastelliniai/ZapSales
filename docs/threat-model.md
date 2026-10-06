@@ -233,6 +233,19 @@ Não avaliado por falta de execução/instância:
   de existir junto com o arquivo (a rota apaga o anterior na troca).
 - Escopo do service role key no Supabase e rotação de chaves.
 - Efetividade do `beforeSend` do Sentry contra PII real.
+- Limite do portfólio da Meta (issue #9), MEDIDO e DECLARADO: é a única leitura **entre
+  organizações** deliberada do motor de campanhas. Uma organização tem um número oficial, então
+  dois números do mesmo portfólio de negócio da Meta são de organizações diferentes da
+  instalação — e o limite diário é da Meta, por portfólio. `lib/campanhas/portfolio-da-campanha.ts`
+  lê `channel_sessions` sem filtro de organização (só id, organização, WABA, portfólio e faixa) e
+  `fn_portfolio_contatos_alcancados` conta contatos alcançados nos números do grupo. O que
+  atravessa a fronteira é **uma contagem e uma faixa**: o campo `portfolio` do
+  `GET /api/v1/campaigns/:id` mostra a um gerente da organização A quantos contatos únicos o
+  portfólio inteiro alcançou em 24 h (incluindo os de B) e a faixa da Meta. Nenhum contato,
+  texto, campanha ou identificador de B sai. O grupo é decidido pelo `meta_portfolio_id` que a
+  própria Meta devolve para a WABA (`owner_business_info`, lido com a credencial do número), e
+  pela WABA — que a conexão confere contra o token (`numeroPertenceAWaba`) —, nunca por dado do
+  corpo. Quem for dono do mesmo portfólio na Meta já vê esse número no WhatsApp Manager.
 
 ---
 

@@ -23,12 +23,13 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { campanhasDoNumero, fraseDaPausa, pausarAutomaticamente } from "@/lib/campanhas/pausa-automatica";
 import { logger } from "@/lib/logger";
 
 import { REF_KIND_SESSAO } from "../health";
 import { resolveMetaCreds } from "./credentials";
 import { graphBaseUrl } from "./graph-base";
-import { avisoDeSaude, PREFIXO_DO_AVISO_DE_QUALIDADE, type EstadoDeSaude } from "./saude";
+import { apelidoDoNumero, avisoDeSaude, ehQualidadeVermelha, PREFIXO_DO_AVISO_DE_QUALIDADE, type EstadoDeSaude } from "./saude";
 import type { BusinessCapabilityEvent, NumberQualityEvent } from "./webhook";
 
 export { avisoDeSaude, limiteDoPortfolio, tamanhoDoLimite, type EstadoDeSaude } from "./saude";
@@ -155,7 +156,24 @@ export async function aplicarEventoDeSaude(
       );
     }
 
-    const apelido = [sessao.display_name, sessao.phone_number].filter(Boolean).join(" ") || "oficial";
+    const apelido = apelidoDoNumero(sessao);
+
+    // Qualidade VERMELHA pausa as campanhas oficiais que falam por este número
+    // (issue #9), com o motivo na campanha. Toda entrega vermelha, e não só a
+    // queda: a pausa só alcança o que está rodando, então repetir não repete
+    // efeito — e uma campanha retomada à força enquanto vermelho para de novo.
+    if (ehQualidadeVermelha(depois.qualidade)) {
+      const campanhas = await campanhasDoNumero(admin, sessao.organization_id, sessao.id);
+      await pausarAutomaticamente(
+        admin,
+        sessao.organization_id,
+        campanhas,
+        "qualidade_vermelha",
+        fraseDaPausa("qualidade_vermelha", { numero: apelido }),
+        agora,
+      );
+    }
+
     const aviso = avisoDeSaude(antes, depois, apelido);
     if (!aviso) return "atualizado";
 

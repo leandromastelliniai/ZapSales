@@ -24,7 +24,17 @@ import { baseLegalValida, motivoParaExcluir, recusouMarketing } from "./elegibil
 import { ehStatusDaCampanha, podeTransitar } from "./maquina-de-estados";
 import { prepararCampanha } from "./preparacao";
 import { nomeDoContato } from "@/lib/contacts/rotulo-do-contato";
-import { carregarModelo, contratoDoModelo, ehOficial, recusaDoModelo, textoDoModelo } from "./modelo-da-campanha";
+import {
+  carregarModelo,
+  contratoDoModelo,
+  ehOficial,
+  numeroDeAtendimento,
+  recusaDoModelo,
+  textoDoModelo,
+} from "./modelo-da-campanha";
+import { mapaComNumeroDeAtendimento, recusaDoBotaoWaMe } from "./dois-numeros";
+import { apelidoDoNumero, ehQualidadeVermelha } from "@/lib/channels/meta/saude";
+import { numerosDaCampanha } from "./rodada";
 import type { ConteudoOficial } from "./preparacao";
 import { renderizar } from "./renderizador";
 import type { StatusDaCampanha } from "./tipos";
@@ -52,6 +62,13 @@ export interface CampanhaCarregada {
   /** Com modelo, a campanha é OFICIAL (migration 0538). */
   meta_template_id: string | null;
   template_variables: unknown;
+  /** Por que o sistema pausou sozinho (migration 0539); nulo = pausa manual ou nenhuma. */
+  pausa_motivo: string | null;
+  pausa_detalhe: string | null;
+  /** Aceite do aviso de risco de banimento do modo de texto livre (0539). */
+  risco_de_banimento_aceito_em: string | null;
+  /** Modo "dois números": o número de QR code que o botão wa.me abre (0539). */
+  numero_de_atendimento_id: string | null;
 }
 
 export type Recusa = { ok: false; codigo: ApiErrorCode; mensagem: string; status: number };
@@ -61,7 +78,8 @@ const COLUNAS =
   "id, organization_id, name, status, channel_session_id, message_body, base_legal, lia_ref, " +
   "audience_filter, audience_version, content_version, scheduled_at, description, " +
   "intervalo_segundos, janela_inicio_hora, janela_fim_hora, teto_diario, teto_horario, " +
-  "meta_template_id, template_variables";
+  "meta_template_id, template_variables, pausa_motivo, pausa_detalhe, risco_de_banimento_aceito_em, " +
+  "numero_de_atendimento_id";
 
 export async function carregarCampanha(
   admin: SupabaseClient,
@@ -116,12 +134,112 @@ async function conteudoOficial(
 ): Promise<{ ok: true; oficial: ConteudoOficial | null } | Recusa> {
   if (!ehOficial(c)) return { ok: true, oficial: null };
   const modelo = await carregarModelo(admin, c.organization_id, c.meta_template_id!);
-  const mapa = mapaGuardado(c.template_variables);
+  let mapa = mapaGuardado(c.template_variables);
+  // Modo "dois números": o botão wa.me do modelo tem de abrir o número de
+  // atendimento — e, quando a URL é dinâmica, a variável dele SAI desse número.
+  if (modelo && c.numero_de_atendimento_id) {
+    const doAtendimento = await numeroDeAtendimento(admin, c.organization_id, c.numero_de_atendimento_id);
+    if (!doAtendimento.ok) {
+      return { ok: false, codigo: "campanha_conteudo_invalido", mensagem: doAtendimento.motivo, status: 422 };
+    }
+    const recusa = recusaDoBotaoWaMe(modelo.components, doAtendimento.telefone);
+    if (recusa || !doAtendimento.telefone) {
+      return { ok: false, codigo: "campanha_conteudo_invalido", mensagem: recusa ?? "Número de atendimento sem telefone.", status: 422 };
+    }
+    mapa = mapaComNumeroDeAtendimento(modelo.components, mapa, doAtendimento.telefone);
+  }
   const motivo = recusaDoModelo(modelo, mapa);
   if (motivo || !modelo) {
     return { ok: false, codigo: "campanha_conteudo_invalido", mensagem: motivo ?? "Modelo indisponível.", status: 422 };
   }
   return { ok: true, oficial: { modelo, mapa } };
+}
+
+/**
+ * Campanha do modo de texto livre (número de QR code) só inicia ou agenda depois
+ * de alguém aceitar o aviso de risco de banimento (issue #9). O teste não passa
+ * por aqui: uma mensagem para um contato escolhido não é disparo em massa.
+ */
+function riscoNaoAceito(c: CampanhaCarregada): Recusa | null {
+  if (ehOficial(c) || c.risco_de_banimento_aceito_em) return null;
+  return {
+    ok: false,
+    codigo: "campanha_risco_nao_aceito",
+    mensagem:
+      "Disparar em massa por um número conectado por QR code arrisca o banimento do número. " +
+      "Leia e aceite o aviso de risco antes de iniciar ou agendar esta campanha.",
+    status: 422,
+  };
+}
+
+/**
+ * Campanha oficial não (re)começa com número de qualidade vermelha no pool: a
+ * pausa automática voltaria na primeira rodada, e cada envio no meio disso piora
+ * a situação do número com a Meta (issue #9).
+ */
+async function recusaPorQualidade(admin: SupabaseClient, c: CampanhaCarregada): Promise<Recusa | null> {
+  if (!ehOficial(c)) return null;
+  const pool = await numerosDaCampanha(admin, c);
+  const { data } = await admin
+    .from("channel_sessions")
+    .select("id, meta_qualidade, display_name, phone_number")
+    .eq("organization_id", c.organization_id)
+    .in("id", pool);
+  const vermelho = ((data ?? []) as Array<{
+    meta_qualidade: string | null;
+    display_name: string | null;
+    phone_number: string | null;
+  }>).find((n) => ehQualidadeVermelha(n.meta_qualidade));
+  if (!vermelho) return null;
+  const apelido = apelidoDoNumero(vermelho);
+  return {
+    ok: false,
+    codigo: "campanha_canal_indisponivel",
+    mensagem:
+      `A qualidade do número ${apelido} está vermelha na Meta. Espere ela voltar a amarelo ou verde ` +
+      "antes de retomar — ou tire o número da campanha numa cópia.",
+    status: 409,
+  };
+}
+
+/**
+ * O aceite do aviso de risco de banimento (issue #9). Grava quem e quando na
+ * campanha; repetir não regrava (vale o primeiro aceite) e devolve
+ * `jaAceito: true` para a rota não auditar duas vezes.
+ */
+export async function aceitarRiscoAcao(
+  admin: SupabaseClient,
+  c: CampanhaCarregada,
+  autorId: string,
+  agora: Date,
+): Promise<Desfecho<{ jaAceito: boolean }>> {
+  if (ehOficial(c)) {
+    return {
+      ok: false,
+      codigo: "campanha_estado_invalido",
+      mensagem: "Campanha pela API Oficial não tem risco de banimento a aceitar.",
+      status: 409,
+    };
+  }
+  if (c.risco_de_banimento_aceito_em) return { ok: true, jaAceito: true };
+  const { data, error } = await admin
+    .from("campaigns")
+    .update({ risco_de_banimento_aceito_em: agora.toISOString(), risco_de_banimento_aceito_por: autorId })
+    .eq("organization_id", c.organization_id)
+    .eq("id", c.id)
+    .is("risco_de_banimento_aceito_em", null)
+    .select("id");
+  // Falha de gravação NÃO é "já aceito": o operador seguiria achando que o
+  // aceite ficou registrado, e a campanha seguiria recusando iniciar.
+  if (error) {
+    return {
+      ok: false,
+      codigo: "internal_error",
+      mensagem: `Não foi possível registrar o aceite: ${error.message}`,
+      status: 500,
+    };
+  }
+  return { ok: true, jaAceito: (data ?? []).length === 0 };
 }
 
 /** O que toda campanha precisa ter antes de qualquer envio — inclusive o de teste. */
@@ -261,11 +379,13 @@ export async function iniciarAcao(
   c: CampanhaCarregada,
   agora: Date,
 ): Promise<Desfecho<{ retomada: boolean }>> {
-  const recusa = recusaDeTransicao(c.status, "running") ?? faltaParaEnviar(c);
+  const recusa = recusaDeTransicao(c.status, "running") ?? faltaParaEnviar(c) ?? riscoNaoAceito(c);
   if (recusa) return recusa;
   // O modelo pode ter sido pausado ou rejeitado na Meta entre preparar e iniciar.
   const conteudo = await conteudoOficial(admin, c);
   if (!conteudo.ok) return conteudo;
+  const vermelho = await recusaPorQualidade(admin, c);
+  if (vermelho) return vermelho;
 
   const { count } = await admin
     .from("campaign_recipients")
@@ -289,6 +409,8 @@ export async function iniciarAcao(
       started_at: agora.toISOString(),
       paused_at: null,
       scheduled_at: null,
+      pausa_motivo: null,
+      pausa_detalhe: null,
     })
     .eq("id", c.id)
     .eq("status", c.status)
@@ -303,10 +425,12 @@ export async function agendarAcao(
   quando: Date,
   agora: Date,
 ): Promise<Desfecho> {
-  const recusa = recusaDeTransicao(c.status, "scheduled") ?? faltaParaEnviar(c);
+  const recusa = recusaDeTransicao(c.status, "scheduled") ?? faltaParaEnviar(c) ?? riscoNaoAceito(c);
   if (recusa) return recusa;
   const conteudo = await conteudoOficial(admin, c);
   if (!conteudo.ok) return conteudo;
+  const vermelho = await recusaPorQualidade(admin, c);
+  if (vermelho) return vermelho;
   if (quando.getTime() <= agora.getTime()) {
     return {
       ok: false,
@@ -317,7 +441,13 @@ export async function agendarAcao(
   }
   const { data } = await admin
     .from("campaigns")
-    .update({ status: "scheduled", scheduled_at: quando.toISOString(), paused_at: null })
+    .update({
+      status: "scheduled",
+      scheduled_at: quando.toISOString(),
+      paused_at: null,
+      pausa_motivo: null,
+      pausa_detalhe: null,
+    })
     .eq("id", c.id)
     .eq("status", c.status)
     .select("id");
@@ -334,7 +464,8 @@ export async function pausarAcao(
   if (recusa) return recusa;
   const { data } = await admin
     .from("campaigns")
-    .update({ status: "paused", paused_at: agora.toISOString() })
+    // Pausa do operador: nenhum motivo automático fica pendurado nela.
+    .update({ status: "paused", paused_at: agora.toISOString(), pausa_motivo: null, pausa_detalhe: null })
     .eq("id", c.id)
     .eq("status", c.status)
     .select("id");
@@ -394,6 +525,9 @@ export async function duplicarAcao(
       // O modelo e o mapa vão junto: a cópia de uma campanha oficial é oficial.
       meta_template_id: c.meta_template_id,
       template_variables: mapaGuardado(c.template_variables),
+      numero_de_atendimento_id: c.numero_de_atendimento_id,
+      // O aceite do risco de banimento NÃO vem junto: a cópia é uma intenção
+      // nova, e o aceite é sobre ESTA campanha.
       created_by: autorId,
       // Nada de destinatário, resultado, agenda ou carimbo de execução: a cópia
       // é uma INTENÇÃO nova, e herdar números faria a tela mostrar entrega de

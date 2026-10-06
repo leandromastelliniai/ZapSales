@@ -138,6 +138,9 @@ function campanha(id: string, org: string, status: "running" | "scheduled", orgS
     status,
     scheduled_at: ONTEM,
     started_at: status === "running" ? ONTEM : null,
+    // Campanha de QR code com o aviso de risco aceito (issue #9): sem ele a
+    // agendada pausa em vez de ser promovida, e não é isso que este arquivo mede.
+    risco_de_banimento_aceito_em: ONTEM,
     organizations: { status: orgStatus },
   };
 }
