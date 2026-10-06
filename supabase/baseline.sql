@@ -44821,6 +44821,169 @@ end; $$;
 revoke execute on function public.fn_upsert_meta_contact(uuid, text, text, text, text) from public, anon, authenticated;
 grant execute on function public.fn_upsert_meta_contact(uuid, text, text, text, text) to service_role;
 
+-- ---- campanha oficial (migration 0538) ----
+-- Espelho idempotente. Racional completo no arquivo da migration: modelo e mapa
+-- de variáveis na campanha, reserva em lote com SKIP LOCKED e o ack que lê
+-- delivered_at/read_at do canal oficial.
+alter table public.campaigns
+  add column if not exists meta_template_id uuid,
+  add column if not exists template_variables jsonb not null default '{}'::jsonb;
+
+alter table public.campaigns drop constraint if exists campaigns_template_variables_objeto;
+alter table public.campaigns
+  add constraint campaigns_template_variables_objeto
+  check (jsonb_typeof(template_variables) = 'object');
+
+create unique index if not exists meta_templates_org_id_uniq
+  on public.meta_templates (organization_id, id);
+
+alter table public.campaigns drop constraint if exists campaigns_modelo_org_fk;
+alter table public.campaigns
+  add constraint campaigns_modelo_org_fk
+  foreign key (organization_id, meta_template_id)
+  references public.meta_templates (organization_id, id);
+
+-- As campanhas de um modelo — o que a pausa por modelo rejeitado (issue #9) consulta.
+create index if not exists idx_campaigns_modelo
+  on public.campaigns (meta_template_id)
+  where meta_template_id is not null;
+
+comment on column public.campaigns.meta_template_id is
+  'Modelo aprovado da Meta que a campanha envia (issue #8). Com ele a campanha é OFICIAL (lotes paralelos, sem ritmo anti-ban); sem ele, é do modo WAHA (texto em message_body). O modo é calculado daqui — não há coluna de modo.';
+comment on column public.campaigns.template_variables is
+  'De onde sai cada variável do modelo, por slotKey (lib/channels/meta/build-components.ts): {tipo:contato,campo} | {tipo:campo_personalizado,chave} | {tipo:fixo,valor}. Schema central: mapaDeVariaveisSchema (lib/campanhas/variaveis-do-modelo.ts).';
+
+create or replace function public.fn_campanha_reservar_lote(
+  p_campaign_id uuid,
+  p_limite integer,
+  p_agora timestamptz
+)
+returns table (
+  id uuid,
+  contact_id uuid,
+  recipient_address text,
+  attempt_count integer,
+  variables jsonb,
+  rendered_body text
+)
+language sql
+security invoker
+set search_path = public, pg_temp
+as $$
+  with alvo as (
+    select r.id
+      from public.campaign_recipients r
+     where r.campaign_id = p_campaign_id
+       and r.status = 'pending'
+       and (r.next_attempt_at is null or r.next_attempt_at <= p_agora)
+     order by r.created_at, r.id
+     limit greatest(p_limite, 0)
+     for update of r skip locked
+  )
+  update public.campaign_recipients r
+     set status = 'sending',
+         sending_at = p_agora,
+         last_attempt_at = p_agora,
+         attempt_count = r.attempt_count + 1
+    from alvo
+   where r.id = alvo.id
+  returning r.id, r.contact_id, r.recipient_address, r.attempt_count, r.variables, r.rendered_body;
+$$;
+
+comment on function public.fn_campanha_reservar_lote(uuid, integer, timestamptz) is
+  'Campanha oficial (issue #8): reserva até p_limite destinatários pendentes e vencidos (pending → sending, attempt_count + 1) com FOR UPDATE SKIP LOCKED. Dois workers nunca pegam o mesmo destinatário.';
+
+revoke execute on function public.fn_campanha_reservar_lote(uuid, integer, timestamptz) from public, anon, authenticated;
+grant execute on function public.fn_campanha_reservar_lote(uuid, integer, timestamptz) to service_role;
+
+create or replace function public.fn_campanha_sincroniza_ack() returns trigger
+  language plpgsql
+  security definer
+  set search_path to 'public'
+as $$
+declare
+  -- O status EFETIVO da mensagem: o canal oficial grava entrega e leitura nas
+  -- colunas de carimbo e mantém `status = 'sent'`; o WAHA grava no `status`.
+  v_novo text := case
+    when new.status = 'failed' then 'failed'
+    when new.status = 'read' or (new.status in ('sent', 'delivered') and new.read_at is not null) then 'read'
+    when new.status = 'delivered' or (new.status = 'sent' and new.delivered_at is not null) then 'delivered'
+    else new.status end;
+  v_velho text := case
+    when old.status = 'failed' then 'failed'
+    when old.status = 'read' or (old.status in ('sent', 'delivered') and old.read_at is not null) then 'read'
+    when old.status = 'delivered' or (old.status = 'sent' and old.delivered_at is not null) then 'delivered'
+    else old.status end;
+  -- O destinatário que a mensagem diz ser o dela. Texto que não é uuid vira
+  -- NULL: um metadata torto não pode abortar a gravação do ack.
+  v_destinatario uuid := case
+    when new.metadata->>'campaign_recipient_id' ~ '^[0-9a-fA-F-]{36}$'
+      then (new.metadata->>'campaign_recipient_id')::uuid
+    end;
+begin
+  if v_novo is not distinct from v_velho then
+    return new;
+  end if;
+
+  update public.campaign_recipients r
+     set message_id = coalesce(r.message_id, new.id),
+         delivered_at = case
+           when v_novo in ('delivered', 'read')
+             then coalesce(r.delivered_at, new.delivered_at, now())
+           else r.delivered_at end,
+         read_at = case
+           when v_novo = 'read' then coalesce(r.read_at, new.read_at, now())
+           else r.read_at end,
+         sent_at = case
+           when v_novo in ('sent', 'delivered', 'read')
+             then coalesce(r.sent_at, new.sent_at, now())
+           else r.sent_at end,
+         status = case
+           when r.status in ('replied', 'opted_out', 'cancelled') then r.status
+           when v_novo = 'read' then 'read'
+           when v_novo = 'delivered' and r.status in ('queued', 'sending', 'sent') then 'delivered'
+           when v_novo = 'sent' and r.status in ('queued', 'sending') then 'sent'
+           when v_novo = 'failed' and r.status in ('queued', 'sending', 'sent') then 'failed'
+           else r.status end,
+         last_error_code = case
+           when v_novo = 'failed' then coalesce(new.error_code, r.last_error_code)
+           else r.last_error_code end,
+         last_error_detail = case
+           when v_novo = 'failed' then coalesce(new.error_message, r.last_error_detail)
+           else r.last_error_detail end,
+         updated_at = now()
+   where r.message_id = new.id
+      -- O ack que chega ANTES de o worker gravar `message_id` (a Meta aceitou e
+      -- já mandou entregue/lido/falhou enquanto o worker ainda não voltou da
+      -- chamada): o destinatário é achado pelo `campaign_recipient_id` que a
+      -- própria mensagem carrega. Só ack ASSÍNCRONO (com `external_id`): o
+      -- desfecho síncrono do envio é do worker, que o grava com o relógio dele.
+      or (r.message_id is null
+          and r.status = 'sending'
+          and v_novo in ('delivered', 'read', 'failed')
+          and new.external_id is not null
+          and r.organization_id = new.organization_id
+          and r.id = v_destinatario);
+
+  return new;
+end
+$$;
+
+comment on function public.fn_campanha_sincroniza_ack() is
+  'Trigger de messages: leva o ack do canal (sent/delivered/read/failed) ao campaign_recipients daquela mensagem — por message_id, ou pelo campaign_recipient_id da mensagem quando o ack assíncrono chega antes de o worker gravar o vínculo. Lê o status efetivo (status, delivered_at, read_at). Status analítico nunca retrocede.';
+
+revoke execute on function public.fn_campanha_sincroniza_ack() from public, anon, authenticated;
+grant execute on function public.fn_campanha_sincroniza_ack() to service_role;
+
+drop trigger if exists trg_messages_sincroniza_campanha on public.messages;
+create trigger trg_messages_sincroniza_campanha
+  after update of status, delivered_at, read_at on public.messages
+  for each row
+  when (new.direction = 'outbound')
+  execute function public.fn_campanha_sincroniza_ack();
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria

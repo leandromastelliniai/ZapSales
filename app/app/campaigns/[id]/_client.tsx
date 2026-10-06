@@ -29,6 +29,7 @@ import {
   useDestinatarios,
   useEditarCampanha,
   useMetricasDaCampanha,
+  useModelosDaCampanha,
   type AcaoDeCampanha,
   type CampanhaDetalhada,
 } from "@/hooks/campanhas/useCampanhas";
@@ -39,11 +40,13 @@ import { useT } from "@/hooks/i18n/useT";
 import { ArrowBendUpLeft } from "@/lib/ui/icons";
 import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
 import { TEXTO_DA_EXCLUSAO } from "@/lib/campanhas/tipos";
+import { tagDeIdioma } from "@/lib/i18n/datas";
+import { useIdioma } from "@/lib/i18n/IdiomaProvider";
 
 export function DetalheDaCampanha({ id }: { id: string }) {
   const t = useT();
   const campanha = useCampanha(id);
-  const metricas = useMetricasDaCampanha(id, campanha.data?.status);
+  const metricas = useMetricasDaCampanha(id, campanha.data);
   const [filtroDeStatus, setFiltroDeStatus] = useState("");
   const destinatarios = useDestinatarios(id, { status: filtroDeStatus || undefined });
   const acao = useAcaoDeCampanha(id);
@@ -216,7 +219,11 @@ export function DetalheDaCampanha({ id }: { id: string }) {
 
       <Card className="space-y-2 p-4">
         <h2 className="font-medium">{t("Mensagem")}</h2>
-        <p className="whitespace-pre-wrap text-sm">{c.message_body}</p>
+        {c.meta_template_id ? (
+          <ModeloDaCampanha campanha={c} />
+        ) : (
+          <p className="whitespace-pre-wrap text-sm">{c.message_body}</p>
+        )}
         <p className="text-xs text-muted-foreground">
           {t("Base legal")}: {c.base_legal === "consent" ? t("consentimento") : t("interesse legítimo")}
           {c.lia_ref ? ` (${c.lia_ref})` : ""}
@@ -254,10 +261,11 @@ export function DetalheDaCampanha({ id }: { id: string }) {
                 <span className="min-w-0 truncate">
                   {rotuloDoContato(d.contacts, t)}
                 </span>
-                <span className="shrink-0 text-muted-foreground">
+                <span className="shrink-0 text-right text-muted-foreground">
                   {d.eligibility_status === "excluded"
                     ? t(d.legenda_da_exclusao ?? rotuloDoMotivo(d.exclusion_reason))
                     : t(ROTULO_DO_DESTINATARIO[d.status] ?? d.status)}
+                  <MotivoDaFalha destinatario={d} />
                 </span>
               </div>
             ))}
@@ -277,6 +285,85 @@ export function DetalheDaCampanha({ id }: { id: string }) {
         )}
       </Card>
     </div>
+  );
+}
+
+/**
+ * O modelo aprovado de uma campanha OFICIAL (issue #8): nome, texto e de onde
+ * vem cada variável. Modelo que saiu da lista de aprovados (pausado, rejeitado)
+ * aparece como tal — é o motivo de a campanha não estar enviando.
+ */
+function ModeloDaCampanha({ campanha }: { campanha: CampanhaDetalhada }) {
+  const t = useT();
+  const modelos = useModelosDaCampanha(campanha.channel_session_id);
+  const modelo = modelos.data?.modelos.find((m) => m.id === campanha.meta_template_id);
+  if (modelos.isPending) return <Skeleton className="h-12 w-full" />;
+  if (!modelo) {
+    return (
+      <p className="text-sm text-warning-fg">
+        {t("O modelo desta campanha não está mais aprovado na Meta. Nada sai por ele até voltar a ser aprovado.")}
+      </p>
+    );
+  }
+  const mapa = campanha.template_variables ?? {};
+  return (
+    <div className="space-y-2 text-sm">
+      <p>
+        {t("Modelo aprovado")}: <span className="font-mono">{modelo.name}</span> ({modelo.language})
+      </p>
+      <p className="whitespace-pre-wrap rounded-md border border-border bg-surface-elevated p-3">{modelo.texto}</p>
+      {modelo.variaveis.length > 0 && (
+        <ul className="space-y-1 text-muted-foreground">
+          {modelo.variaveis.map((v) => {
+            const f = mapa[v.chave];
+            const origem = !f
+              ? t("sem fonte")
+              : f.tipo === "fixo"
+                ? `“${f.valor}”`
+                : f.tipo === "campo_personalizado"
+                  ? `${t("campo personalizado")} ${f.chave}`
+                  : t(ORIGEM_DO_CAMPO[f.campo] ?? f.campo);
+            return (
+              <li key={v.chave}>
+                <span className="font-mono">{v.rotulo}</span> ← {origem}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+const ORIGEM_DO_CAMPO: Record<string, string> = {
+  nome: "nome completo do contato",
+  primeiro_nome: "primeiro nome do contato",
+  telefone: "telefone do contato",
+  email: "e-mail do contato",
+};
+
+/**
+ * Por que este destinatário falhou, ou quando ele tenta de novo — a frase do
+ * mapa de erros da Meta, nunca o código cru.
+ */
+function MotivoDaFalha({
+  destinatario: d,
+}: {
+  destinatario: { status: string; last_error_detail?: string | null; next_attempt_at?: string | null };
+}) {
+  const t = useT();
+  const idioma = useIdioma();
+  if (!d.last_error_detail || !["failed", "pending", "opted_out"].includes(d.status)) return null;
+  return (
+    <span className="block max-w-xs whitespace-normal text-xs">
+      {t(d.last_error_detail)}
+      {d.status === "pending" && d.next_attempt_at
+        ? ` ${t("Nova tentativa em")} ${new Date(d.next_attempt_at).toLocaleString(tagDeIdioma(idioma), {
+            dateStyle: "short",
+            timeStyle: "short",
+          })}.`
+        : ""}
+    </span>
   );
 }
 

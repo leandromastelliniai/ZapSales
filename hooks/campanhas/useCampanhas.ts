@@ -11,6 +11,9 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { apiClient } from "@/lib/api/client";
 import type { ContagemDaCampanha, TaxasDaCampanha } from "@/lib/campanhas/metricas";
+import type { ModeloParaCampanha } from "@/lib/campanhas/modelos-da-campanha";
+import { painelAindaMuda } from "@/lib/campanhas/painel-ao-vivo";
+import type { MapaDeVariaveis } from "@/lib/campanhas/variaveis-do-modelo";
 import type { StatusDaCampanha } from "@/lib/campanhas/tipos";
 
 export interface CampanhaDaLista {
@@ -50,6 +53,9 @@ export interface CampanhaDetalhada extends CampanhaDaLista {
   janela_fim_hora: number | null;
   teto_diario: number | null;
   teto_horario: number | null;
+  /** Com modelo, a campanha é OFICIAL (issue #8); sem ele, é do modo WAHA. */
+  meta_template_id?: string | null;
+  template_variables?: MapaDeVariaveis;
 }
 
 export interface Destinatario {
@@ -65,6 +71,10 @@ export interface Destinatario {
   delivered_at: string | null;
   read_at: string | null;
   replied_at: string | null;
+  /** Código e motivo legível da última falha; com `next_attempt_at`, quando tenta de novo. */
+  last_error_code?: string | null;
+  last_error_detail?: string | null;
+  next_attempt_at?: string | null;
   contacts: { name: string | null; display_name: string | null } | null;
 }
 
@@ -84,12 +94,6 @@ export interface PreviaDaAudiencia {
   legenda: Record<string, string>;
 }
 
-/** Campanha que ainda vai mudar sozinha — é quem justifica reconsultar. */
-const EM_MOVIMENTO: ReadonlySet<StatusDaCampanha> = new Set([
-  "preparing",
-  "running",
-  "scheduled",
-]);
 
 export function useCampanhas(filtros: { status?: string; limit?: number }) {
   return useInfiniteQuery({
@@ -117,16 +121,19 @@ export function useCampanha(id: string) {
   return useQuery({
     queryKey: ["campanha", id],
     queryFn: async () => (await apiClient.get<{ data: CampanhaDetalhada }>(`/api/v1/campaigns/${id}`)).data,
-    refetchInterval: (q) => (q.state.data && EM_MOVIMENTO.has(q.state.data.status) ? 10_000 : false),
+    refetchInterval: (q) => (q.state.data && painelAindaMuda(q.state.data, new Date()) ? 10_000 : false),
   });
 }
 
-export function useMetricasDaCampanha(id: string, status?: StatusDaCampanha) {
+export function useMetricasDaCampanha(
+  id: string,
+  campanha?: { status: StatusDaCampanha; completed_at: string | null },
+) {
   return useQuery({
     queryKey: ["campanha-metricas", id],
     queryFn: async () =>
       (await apiClient.get<{ data: Metricas }>(`/api/v1/campaigns/${id}/metrics`)).data,
-    refetchInterval: status && EM_MOVIMENTO.has(status) ? 10_000 : false,
+    refetchInterval: () => (campanha && painelAindaMuda(campanha, new Date()) ? 10_000 : false),
   });
 }
 
@@ -182,6 +189,8 @@ export function usePreviaDaAudiencia() {
       audience_filter: Record<string, unknown>;
       message_body: string;
       campaign_id?: string;
+      meta_template_id?: string;
+      template_variables?: MapaDeVariaveis;
     }) => (await apiClient.post<{ data: PreviaDaAudiencia }>("/api/v1/campaigns/preview", corpo)).data,
     onError: (err) => showApiError(err),
   });
@@ -207,5 +216,22 @@ export function useEditarCampanha(id: string) {
       void qc.invalidateQueries({ queryKey: ["campanhas"] });
     },
     onError: (err) => showApiError(err),
+  });
+}
+
+/**
+ * Os modelos aprovados que o número escolhido pode mandar (issue #8). `oficial:
+ * false` = número do modo WAHA, e a tela mostra o campo de texto.
+ */
+export function useModelosDaCampanha(channelSessionId: string | null) {
+  return useQuery({
+    queryKey: ["campanha-modelos", channelSessionId],
+    enabled: !!channelSessionId,
+    queryFn: async () =>
+      (
+        await apiClient.get<{ data: { oficial: boolean; modelos: ModeloParaCampanha[] } }>(
+          `/api/v1/campaigns/modelos?channel_session_id=${channelSessionId}`,
+        )
+      ).data,
   });
 }

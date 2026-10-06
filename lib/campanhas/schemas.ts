@@ -6,6 +6,7 @@
 import { z } from "zod";
 
 import { filtroDeAudienciaSchema } from "./audiencia";
+import { mapaDeVariaveisSchema } from "./variaveis-do-modelo";
 
 /**
  * O ritmo próprio. Todos opcionais e anuláveis: `null` devolve a decisão ao
@@ -44,6 +45,14 @@ const baseDaCampanha = {
   pipeline_id: z.string().uuid().nullable().optional(),
   stage_id: z.string().uuid().nullable().optional(),
   agent_id: z.string().uuid().nullable().optional(),
+  /**
+   * O modelo aprovado da Meta (migration 0538). Com ele a campanha é OFICIAL e
+   * `message_body` não é usado; sem ele, é do modo de texto livre. Modelo exige conexão do
+   * canal oficial, e conexão oficial exige modelo — conferido na rota, que sabe o provedor.
+   */
+  meta_template_id: z.string().uuid().nullable().optional(),
+  /** De onde vem cada variável do modelo, por slotKey (`lib/campanhas/variaveis-do-modelo.ts`). */
+  template_variables: mapaDeVariaveisSchema.optional(),
 };
 
 export const criarCampanhaSchema = z
@@ -84,6 +93,8 @@ export const editarCampanhaSchema = z
     pipeline_id: baseDaCampanha.pipeline_id,
     stage_id: baseDaCampanha.stage_id,
     agent_id: baseDaCampanha.agent_id,
+    meta_template_id: baseDaCampanha.meta_template_id,
+    template_variables: baseDaCampanha.template_variables,
   })
   .merge(ritmoSchema);
 
@@ -91,6 +102,9 @@ export const previaSchema = z.object({
   audience_filter: filtroDeAudienciaSchema,
   message_body: z.string().max(4096).default(""),
   campaign_id: z.string().uuid().optional(),
+  /** Campanha oficial: a prévia conta quem fica sem valor para alguma variável do modelo. */
+  meta_template_id: z.string().uuid().optional(),
+  template_variables: mapaDeVariaveisSchema.optional(),
 });
 
 export const criarTemplateSchema = z.object({

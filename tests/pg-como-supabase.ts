@@ -18,8 +18,9 @@
  *    organizações é medido pelos invariantes que usam papel restrito — não aqui.
  * 2. **Rede.** Timeout, retry e erro de transporte não existem neste caminho.
  * 3. **A superfície inteira do PostgREST.** Só o que está implementado abaixo:
- *    `select/insert/update/upsert` com `eq`, `order`, `limit`, `maybeSingle`, `single` e
- *    embed to-one (`alias:coluna_fk(colunas)`, traduzido para subquery). Um
+ *    `select/insert/update/upsert/delete` com `eq`, `order`, `limit`, `maybeSingle`,
+ *    `single`, contagem `count: "exact"` e embed to-one (`alias:coluna_fk(colunas)`,
+ *    com `!inner` e filtro `alias.coluna`, traduzido para subquery). Um
  *    método não implementado **estoura** em vez de ser ignorado em silêncio —
  *    ver `naoImplementado`. Silêncio aqui viraria teste verde medindo nada.
  *
@@ -147,12 +148,59 @@ interface Embed {
   alias: string;
   colunaFk: string;
   colunas: string;
+  /**
+   * `alias:coluna_fk!inner(colunas)` — só volta a linha que TEM o embed, e o
+   * filtro `.eq("alias.coluna", v)` corta pela coluna do embutido. Nasceu pelo
+   * motor de campanhas, que filtra `organizations.status` dentro da consulta
+   * (`lib/campanhas/rodada.ts`) para o corte acontecer antes do `limit`.
+   */
+  inner: boolean;
 }
 
 function lerEmbed(pedaco: string): Embed | null {
-  const m = /^\s*([A-Za-z0-9_]+)\s*:\s*([A-Za-z0-9_]+)\s*\(([^]*)\)\s*$/.exec(pedaco);
-  if (!m) return null;
-  return { alias: m[1]!, colunaFk: m[2]!, colunas: m[3]! };
+  const m = /^\s*([A-Za-z0-9_]+)\s*:\s*([A-Za-z0-9_]+)(!inner)?\s*\(([^]*)\)\s*$/.exec(pedaco);
+  if (m) return { alias: m[1]!, colunaFk: m[2]!, colunas: m[4]!, inner: m[3] === "!inner" };
+  // Forma curta `contacts(colunas)`: o PostgREST acha a FK sozinho. Aqui ela é
+  // a convenção do schema — a tabela no singular + `_id` (`contact_id`). Se a
+  // coluna não existir, o Postgres ESTOURA com o nome dela, nunca em silêncio.
+  // Nasceu pela lista de destinatários da campanha.
+  const curta = /^\s*([A-Za-z0-9_]+)s(!inner)?\s*\(([^]*)\)\s*$/.exec(pedaco);
+  if (!curta) return null;
+  return { alias: `${curta[1]!}s`, colunaFk: `${curta[1]!}_id`, colunas: curta[3]!, inner: curta[2] === "!inner" };
+}
+
+/** Os embeds de uma projeção — o filtro `alias.coluna` e o `!inner` precisam deles. */
+function embedsDe(colunas: string): Embed[] {
+  if (colunas.trim() === "*") return [];
+  return fatiarNoTopo(colunas)
+    .map((p) => lerEmbed(p))
+    .filter((e): e is Embed => e !== null);
+}
+
+/**
+ * A coluna de um filtro como expressão SQL. `alias.coluna` vira a subquery do
+ * embutido (to-one); o resto, a coluna da linha, entre aspas.
+ */
+function colunaDoFiltro(coluna: string, embeds: Embed[]): string {
+  const ponto = coluna.indexOf(".");
+  if (ponto < 0) return `"${coluna}"`;
+  const alias = coluna.slice(0, ponto);
+  const e = embeds.find((x) => x.alias === alias);
+  if (!e) return naoImplementado(`filtro em '${coluna}' sem o embed '${alias}' no select`);
+  return `(select "${coluna.slice(ponto + 1)}" from public."${e.alias}" where "id" = linha."${e.colunaFk}")`;
+}
+
+/** Um filtro `[op, coluna, valor]` como SQL, empurrando o valor em `valores`. */
+function filtroSql(op: string, coluna: string, v: unknown, valores: unknown[]): string {
+  // `is` não gasta placeholder: a palavra entra inline.
+  if (op === "is") return `${coluna} is ${literalDeIs(v)}`;
+  if (op === "is not") return `${coluna} is not ${literalDeIs(v)}`;
+  valores.push(v);
+  // `= any` recebe o array inteiro num placeholder só; os demais operadores
+  // são infixos comuns.
+  if (op === "= any") return `${coluna} = any($${valores.length})`;
+  if (op === "not = any") return `not (${coluna} = any($${valores.length}))`;
+  return `${coluna} ${op} $${valores.length}`;
 }
 
 function embedSql(e: Embed, aliasExterno: string): string {
@@ -187,14 +235,24 @@ function projecaoSql(colunas: string, aliasExterno: string): { sql: string; temE
 class ConsultaPg<T> implements PromiseLike<RespostaFalsa<T[]>> {
   /** [operador, coluna, valor] — o operador entra porque `.lt`/`.gt` existem. */
   private filtros: Array<[string, string, unknown]> = [];
-  private ordem: { coluna: string; asc: boolean } | null = null;
+  private ordens: Array<{ coluna: string; asc: boolean }> = [];
   private teto: number | null = null;
 
   constructor(
     private readonly pool: pg.Pool,
     private readonly tabela: string,
     private readonly colunas: string,
-  ) {}
+    /**
+     * `select(cols, { count: "exact", head: true })` — a contagem que o PostgREST
+     * devolve em `count`. Com `head`, `data` é `null`. Nasceu pelo motor de
+     * campanhas, que decide "concluir" e "já enviou" por contagem.
+     */
+    private readonly contagem: { count?: string; head?: boolean } = {},
+  ) {
+    if (contagem.count !== undefined && contagem.count !== "exact") {
+      naoImplementado(`select com count '${contagem.count}'`);
+    }
+  }
 
   eq(coluna: string, valor: unknown): this {
     this.filtros.push(["=", coluna, valor]);
@@ -273,8 +331,24 @@ class ConsultaPg<T> implements PromiseLike<RespostaFalsa<T[]>> {
     return this;
   }
 
+  /** Mais de um `order` encadeado vira `order by a, b` — a ordem estável da audiência usa dois. */
   order(coluna: string, opts?: { ascending?: boolean }): this {
-    this.ordem = { coluna, asc: opts?.ascending !== false };
+    this.ordens.push({ coluna, asc: opts?.ascending !== false });
+    return this;
+  }
+
+  /**
+   * `overlaps` (`&&`) e `contains` (`@>`) — arrays. Nasceram pela audiência da
+   * campanha, que recorta por etiqueta (`tags && {outubro}`). Um filtro de
+   * etiqueta ignorado mandaria a campanha para a organização inteira.
+   */
+  overlaps(coluna: string, valores: readonly unknown[]): this {
+    this.filtros.push(["&&", coluna, [...valores]]);
+    return this;
+  }
+
+  contains(coluna: string, valores: readonly unknown[]): this {
+    this.filtros.push(["@>", coluna, [...valores]]);
     return this;
   }
 
@@ -302,33 +376,49 @@ class ConsultaPg<T> implements PromiseLike<RespostaFalsa<T[]>> {
     return this;
   }
 
-  /** Presentes para ESTOURAR: o código que os usar precisa de implementação real. */
-  neq(): never {
-    return naoImplementado("neq");
+  /** `<>` — a regra das 24 h do 131049 exclui o próprio destinatário da busca. */
+  neq(coluna: string, valor: unknown): this {
+    this.filtros.push(["<>", coluna, valor]);
+    return this;
+  }
+
+  /** O `where` (filtros + `!inner`), sem projeção, ordem nem teto. */
+  private onde(valores: unknown[]): string[] {
+    const embeds = embedsDe(this.colunas);
+    const onde = this.filtros.map(([op, c, v]) => filtroSql(op, colunaDoFiltro(c, embeds), v, valores));
+    for (const e of embeds.filter((x) => x.inner)) {
+      onde.push(`exists (select 1 from public."${e.alias}" where "id" = linha."${e.colunaFk}")`);
+    }
+    return onde;
   }
 
   private montar(): { texto: string; valores: unknown[] } {
     const valores: unknown[] = [];
-    const onde = this.filtros.map(([op, c, v]) => {
-      // `is` não gasta placeholder: a palavra entra inline.
-      if (op === "is") return `"${c}" is ${literalDeIs(v)}`;
-      if (op === "is not") return `"${c}" is not ${literalDeIs(v)}`;
-      valores.push(v);
-      // `= any` recebe o array inteiro num placeholder só; os demais operadores
-      // são infixos comuns.
-      if (op === "= any") return `"${c}" = any($${valores.length})`;
-      if (op === "not = any") return `not ("${c}" = any($${valores.length}))`;
-      return `"${c}" ${op} $${valores.length}`;
-    });
+    const onde = this.onde(valores);
     const projecao = projecaoSql(this.colunas, "linha");
-    let texto = `select ${projecao.sql} from public."${this.tabela}"`;
-    // O alias só entra quando há embed: a subquery precisa apontar para a
-    // coluna de FK DA LINHA EXTERNA, e sem alias a referência seria ambígua.
-    if (projecao.temEmbed) texto += " linha";
+    // Alias sempre: a subquery do embed (e o filtro por coluna do embutido)
+    // aponta para a coluna de FK DA LINHA EXTERNA.
+    let texto = `select ${projecao.sql} from public."${this.tabela}" linha`;
     if (onde.length > 0) texto += ` where ${onde.join(" and ")}`;
-    if (this.ordem) texto += ` order by "${this.ordem.coluna}" ${this.ordem.asc ? "asc" : "desc"}`;
+    if (this.ordens.length > 0) {
+      texto += ` order by ${this.ordens.map((o) => `"${o.coluna}" ${o.asc ? "asc" : "desc"}`).join(", ")}`;
+    }
     if (this.teto !== null) texto += ` limit ${this.teto}`;
     return { texto, valores };
+  }
+
+  /** A contagem de `count: "exact"`: os mesmos filtros, sem teto — como o PostgREST. */
+  private async contar(): Promise<{ n: number; error: ErroPg | null }> {
+    const valores: unknown[] = [];
+    const onde = this.onde(valores);
+    let texto = `select count(*)::int as n from public."${this.tabela}" linha`;
+    if (onde.length > 0) texto += ` where ${onde.join(" and ")}`;
+    try {
+      const r = await this.pool.query<{ n: number }>(texto, valores);
+      return { n: r.rows[0]?.n ?? 0, error: null };
+    } catch (e) {
+      return { n: 0, error: erroDe(e) };
+    }
   }
 
   private async linhas(): Promise<{ rows: T[]; error: ErroPg | null }> {
@@ -371,6 +461,16 @@ class ConsultaPg<T> implements PromiseLike<RespostaFalsa<T[]>> {
     aoResolver?: ((v: RespostaFalsa<T[]>) => R1 | PromiseLike<R1>) | null,
     aoRejeitar?: ((r: unknown) => R2 | PromiseLike<R2>) | null,
   ): PromiseLike<R1 | R2> {
+    if (this.contagem.count === "exact") {
+      return this.contar()
+        .then(async ({ n, error }) => {
+          if (error) return { data: null, error, count: null };
+          if (this.contagem.head) return { data: null, error: null, count: n };
+          const r = await this.linhas();
+          return r.error ? { data: null, error: r.error, count: null } : { data: r.rows, error: null, count: n };
+        })
+        .then(aoResolver as never, aoRejeitar);
+    }
     return this.linhas()
       .then(({ rows, error }) => (error ? { data: null, error } : { data: rows, error: null }))
       .then(aoResolver, aoRejeitar);
@@ -383,7 +483,13 @@ class InsercaoPg<T> implements PromiseLike<RespostaFalsa<null>> {
   constructor(
     private readonly pool: pg.Pool,
     private readonly tabela: string,
-    private readonly linha: Record<string, unknown>,
+    /**
+     * Uma linha ou uma LISTA — o insert em lote do PostgREST. Nasceu pela
+     * preparação da campanha, que congela os destinatários em lotes de 500.
+     * Linhas de colunas diferentes ESTOURAM: o PostgREST preencheria a falta com
+     * o default, e adivinhar aqui mediria outra coisa.
+     */
+    private readonly linhas: Record<string, unknown> | Array<Record<string, unknown>>,
   ) {}
 
   select(colunas = "*"): this {
@@ -392,12 +498,27 @@ class InsercaoPg<T> implements PromiseLike<RespostaFalsa<null>> {
   }
 
   private montar(): { texto: string; valores: unknown[] } {
-    const chaves = Object.keys(this.linha);
+    const lista = Array.isArray(this.linhas) ? this.linhas : [this.linhas];
+    const chaves = Object.keys(lista[0] ?? {});
+    for (const l of lista) {
+      const outras = Object.keys(l);
+      if (outras.length !== chaves.length || outras.some((k) => !chaves.includes(k))) {
+        naoImplementado("insert com linhas de colunas diferentes");
+      }
+    }
     // jsonb/array vão como parâmetro — ver `parametro`.
-    const valores = chaves.map((k) => parametro(this.linha[k]));
-    const marcas = chaves.map((_, i) => `$${i + 1}`).join(", ");
+    const valores: unknown[] = [];
+    const tuplas = lista.map(
+      (l) =>
+        `(${chaves
+          .map((k) => {
+            valores.push(parametro(l[k]));
+            return `$${valores.length}`;
+          })
+          .join(", ")})`,
+    );
     const texto =
-      `insert into public."${this.tabela}" (${chaves.map((k) => `"${k}"`).join(", ")}) values (${marcas})` +
+      `insert into public."${this.tabela}" (${chaves.map((k) => `"${k}"`).join(", ")}) values ${tuplas.join(", ")}` +
       (this.colunasDeVolta ? ` returning ${colunasSql(this.colunasDeVolta)}` : "");
     return { texto, valores };
   }
@@ -471,6 +592,18 @@ class AtualizacaoPg<T> implements PromiseLike<RespostaFalsa<unknown>> {
     return this;
   }
 
+  /** `.in()` na ESCRITA — a promoção de agendadas atualiza só os ids escolhidos. */
+  in(coluna: string, valores: readonly unknown[]): this {
+    this.filtros.push(["= any", coluna, [...valores]]);
+    return this;
+  }
+
+  /** `<>` na ESCRITA — o webhook da Meta não reescreve mensagem que já falhou. */
+  neq(coluna: string, valor: unknown): this {
+    this.filtros.push(["<>", coluna, valor]);
+    return this;
+  }
+
   /** `.not(coluna, operador, valor)` — a negação textual do PostgREST. */
   not(coluna: string, operador: string, valor: unknown): this {
     if (operador === "in") {
@@ -502,17 +635,12 @@ class AtualizacaoPg<T> implements PromiseLike<RespostaFalsa<unknown>> {
       valores.push(parametro(this.patch[k]));
       return `"${k}" = $${valores.length}`;
     });
-    const onde = this.filtros.map(([op, c, v]) => {
-      // `is` não gasta placeholder: a palavra entra inline.
-      if (op === "is") return `"${c}" is ${literalDeIs(v)}`;
-      if (op === "is not") return `"${c}" is not ${literalDeIs(v)}`;
-      valores.push(v);
-      if (op === "not = any") return `not ("${c}" = any($${valores.length}))`;
-      return `"${c}" ${op} $${valores.length}`;
-    });
-    let texto = `update public."${this.tabela}" set ${sets.join(", ")}`;
+    const onde = this.filtros.map(([op, c, v]) => filtroSql(op, `"${c}"`, v, valores));
+    // Alias na escrita também: o `returning` pode trazer embed (o webhook da
+    // Meta devolve o telefone do contato junto da mensagem que falhou).
+    let texto = `update public."${this.tabela}" linha set ${sets.join(", ")}`;
     if (onde.length > 0) texto += ` where ${onde.join(" and ")}`;
-    if (this.colunasDeVolta) texto += ` returning ${colunasSql(this.colunasDeVolta)}`;
+    if (this.colunasDeVolta) texto += ` returning ${projecaoSql(this.colunasDeVolta, "linha").sql}`;
     return { texto, valores };
   }
 
@@ -563,6 +691,44 @@ class AtualizacaoPg<T> implements PromiseLike<RespostaFalsa<unknown>> {
           ({ data: pediuRetorno ? r.rows : null, error: null }) as RespostaFalsa<unknown>,
       )
       .catch((e: unknown) => ({ data: null, error: erroDe(e) }) as RespostaFalsa<unknown>)
+      .then(aoResolver, aoRejeitar);
+  }
+}
+
+/**
+ * DELETE com filtros — `.delete().eq(a, b)`. Nasceu pela preparação da campanha,
+ * que apaga a lista anterior antes de reconstruí-la. Sem filtro ESTOURA: um
+ * delete sem `where` apagaria a tabela inteira, e o PostgREST também o recusa.
+ */
+class ExclusaoPg implements PromiseLike<RespostaFalsa<null>> {
+  private filtros: Array<[string, string, unknown]> = [];
+
+  constructor(
+    private readonly pool: pg.Pool,
+    private readonly tabela: string,
+  ) {}
+
+  eq(coluna: string, valor: unknown): this {
+    this.filtros.push(["=", coluna, valor]);
+    return this;
+  }
+
+  in(coluna: string, valores: readonly unknown[]): this {
+    this.filtros.push(["= any", coluna, [...valores]]);
+    return this;
+  }
+
+  then<R1 = RespostaFalsa<null>, R2 = never>(
+    aoResolver?: ((v: RespostaFalsa<null>) => R1 | PromiseLike<R1>) | null,
+    aoRejeitar?: ((r: unknown) => R2 | PromiseLike<R2>) | null,
+  ): PromiseLike<R1 | R2> {
+    if (this.filtros.length === 0) naoImplementado("delete sem filtro");
+    const valores: unknown[] = [];
+    const onde = this.filtros.map(([op, c, v]) => filtroSql(op, `"${c}"`, v, valores));
+    return this.pool
+      .query(`delete from public."${this.tabela}" where ${onde.join(" and ")}`, valores)
+      .then(() => ({ data: null, error: null }) as RespostaFalsa<null>)
+      .catch((e: unknown) => ({ data: null, error: erroDe(e) }) as RespostaFalsa<null>)
       .then(aoResolver, aoRejeitar);
   }
 }
@@ -648,6 +814,18 @@ async function chamarRpc(
   });
   const nomeados = chaves.map((k, i) => `${k} => $${i + 1}`).join(", ");
   try {
+    // Função que devolve CONJUNTO (`returns table`/`setof`) volta como lista de
+    // linhas, como o PostgREST devolve. Nasceu pela reserva em lote da campanha
+    // oficial (`fn_campanha_reservar_lote`, migration 0538).
+    const conjunto = await pool.query<{ proretset: boolean }>(
+      `select p.proretset from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+        where n.nspname = 'public' and p.proname = $1 limit 1`,
+      [nome],
+    );
+    if (conjunto.rows[0]?.proretset) {
+      const conj = await pool.query(`select * from public."${nome}"(${nomeados})`, valores);
+      return { data: conj.rows, error: null };
+    }
     const r = await pool.query(`select public."${nome}"(${nomeados}) as valor`, valores);
     return { data: (r.rows[0] as { valor: unknown } | undefined)?.valor ?? null, error: null };
   } catch (e) {
@@ -664,10 +842,12 @@ export function pgComoSupabase(pool: pg.Pool): SupabaseClient {
   return {
     from(tabela: string) {
       return {
-        select: (colunas = "*") => new ConsultaPg(pool, tabela, colunas),
-        insert: (linha: Record<string, unknown>) => new InsercaoPg(pool, tabela, linha),
+        select: (colunas = "*", opcoes?: { count?: string; head?: boolean }) =>
+          new ConsultaPg(pool, tabela, colunas, opcoes ?? {}),
+        insert: (linhas: Record<string, unknown> | Array<Record<string, unknown>>) =>
+          new InsercaoPg(pool, tabela, linhas),
         update: (patch: Record<string, unknown>) => new AtualizacaoPg(pool, tabela, patch),
-        delete: () => naoImplementado("delete"),
+        delete: () => new ExclusaoPg(pool, tabela),
         upsert: (linhas: Record<string, unknown> | Array<Record<string, unknown>>, opcoes?: { onConflict?: string }) => {
           if (!opcoes?.onConflict) return naoImplementado("upsert sem onConflict");
           return new UpsertPg(

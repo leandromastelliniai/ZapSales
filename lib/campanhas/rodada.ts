@@ -124,6 +124,9 @@ export async function rodarUmaRodadaDeCampanha(
     .from("campaigns")
     .select(COLUNAS_DA_CAMPANHA_COM_EMBED)
     .eq("status", "running")
+    // Campanha com modelo é OFICIAL (issue #8) e tem rodada própria, em lotes
+    // e sem o ritmo anti-ban — `./rodada-oficial.ts`. Esta é a do modo de texto livre.
+    .is("meta_template_id", null)
     .eq("organizations.status", STATUS_OPERANTE)
     .order("started_at", { ascending: true })
     .limit(NUMEROS_POR_RODADA * 3);
@@ -187,7 +190,7 @@ export async function rodarUmaRodadaDeCampanha(
  * rodada concorrente não promove duas vezes). A lista que vai na URL é a das
  * campanhas a promover, com teto — nunca a das orgs paradas, que não tem teto.
  */
-async function promoverAgendadas(
+export async function promoverAgendadas(
   admin: SupabaseClient,
   agora: Date,
 ): Promise<number> {
@@ -598,7 +601,10 @@ export async function reservarDestinatario(
  * segue falando pelo número principal em vez de parar. Rodízio é otimização;
  * parar de enviar por causa dela seria o remédio pior que a doença.
  */
-async function numerosDaCampanha(admin: SupabaseClient, campanha: CampanhaRow): Promise<string[]> {
+export async function numerosDaCampanha(
+  admin: SupabaseClient,
+  campanha: Pick<CampanhaRow, "id" | "organization_id" | "channel_session_id">,
+): Promise<string[]> {
   const { data, error } = await admin
     .from("campaign_channel_sessions")
     .select("channel_session_id")
@@ -623,9 +629,9 @@ async function numerosDaCampanha(admin: SupabaseClient, campanha: CampanhaRow): 
  * A conversa mais recente ganha: se ela falou com dois números da empresa, o
  * último é o que ela tem na cabeça.
  */
-async function numeroDoHistorico(
+export async function numeroDoHistorico(
   admin: SupabaseClient,
-  campanha: CampanhaRow,
+  campanha: Pick<CampanhaRow, "organization_id">,
   contactId: string,
 ): Promise<string | null> {
   const { data } = await admin

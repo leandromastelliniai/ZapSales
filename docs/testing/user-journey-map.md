@@ -3302,3 +3302,65 @@ da fase de campanhas, junto com o uso da cópia de `header_media` em cada dispar
 
 Sabotagem medida: tirar o aviso da Central e a escrita da categoria derruba seis
 casos da J43 (J43.5, J43.6 e a parte de isolamento que depende da recategorização).
+
+## J44 — Campanha pela API Oficial, ponta a ponta `[P0]` (2026-10-05, issue #8)
+
+Mesma fronteira da J41: o falso Graph na saída, o webhook de status assinado na rota real na
+entrada, o baseline aplicado e as rotas do app. O worker é dirigido por PASSOS com relógio
+controlado (`rodarUmaRodadaOficial(db, agora)`), o mesmo que o laço do worker e o cron chamam.
+
+Spec: `tests/invariants/campanha-oficial-ponta-a-ponta.test.ts`; política de erro em
+`lib/campanhas/falha-oficial.test.ts`; mapa de variáveis em `lib/campanhas/variaveis-do-modelo.test.ts`;
+tela em `components/campanhas/MensagemOficial.test.tsx`; laço do worker em
+`lib/campanhas/laco-oficial.test.ts`.
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J44.1 | Criar, preparar e iniciar uma campanha com modelo de texto e variáveis por contato | o falso Graph recebe um `type: template` por elegível, com `{{1}}` = primeiro nome de cada um e `{{2}}` = texto fixo; o painel conta 2 enviados; sem ninguém em voo, a campanha ainda espera 15 min pelo aviso da Meta (1 min depois segue `running`) e só então conclui | **PASS (invariante, relógio controlado)** |
+| J44.2 | Descadastrado, bloqueado, quem recusou marketing, suprimido e sem o dado da variável | ficam de fora com o motivo (`opt_out`, `recusou_marketing`, `suprimido`, `variavel_ausente`); quem pede para parar DEPOIS da preparação é pulado na hora do envio | **PASS (invariante)** |
+| J44.3 | Base legal | interesse legítimo sem LIA e campanha sem base legal → 422; com LIA → 201 | **PASS (invariante)** |
+| J44.4 | Pausar, retomar, cancelar e clonar no modo oficial | pausada não envia, retomada envia; cancelada não envia e os pendentes ficam cancelados; o clone traz o mesmo modelo e o mesmo mapa e envia ao ser iniciado | **PASS (invariante)** |
+| J44.5 | Status do webhook | `delivered` e `read` chegam ao destinatário e às métricas; `delivered` atrasado depois do `read` não rebaixa; `failed` com 131026 aparece com o motivo do mapa de erros | **PASS (invariante)** |
+| J44.6 | Erro temporário (130429) | volta para a fila com `next_attempt_at` = agora + 1 min e o motivo legível; antes disso não sai; depois, sai | **PASS (invariante, relógio controlado)** |
+| J44.7 | 131049 pelo webhook | com uma rodada do worker ENTRE o envio e o aviso (a ordem real — a campanha não conclui com o aviso a caminho), o destinatário volta para a fila só depois de 24 h contadas do ENVIO; uma SEGUNDA campanha para o mesmo contato também espera até completar 24 h do primeiro envio, e sai depois | **PASS (invariante, relógio controlado)** |
+| J44.8 | 131050 na hora do envio | destinatário `opted_out`, `consent.marketing.declined_at` gravado no contato com uma linha `lgpd.consent_changed` na auditoria, e a próxima campanha o deixa de fora como `recusou_marketing` | **PASS (invariante)** |
+| J44.9 | Erro definitivo (131026) | `failed` com o motivo legível, sem nova tentativa, e a campanha conclui | **PASS (invariante)** |
+| J44.10 | Agendamento e janela | agendada só é promovida quando a hora chega; fora da janela 9h–18h (fuso da organização) não envia, dentro envia; campanha sem janela própria herda a do número (7h–22h por padrão) | **PASS (invariante, relógio controlado)** |
+| J44.11 | O modo WAHA | modelo da Meta por número WAHA → 422; número oficial SEM modelo → 422 na criação e na edição (pela API, não só pela tela); a rodada oficial não toca na campanha de texto do WAHA (`rodada.ts` agora filtra `meta_template_id is null`) | **PASS (invariante)**; testes do motor WAHA inalterados |
+| J44.12 | A outra organização | não lê o painel da campanha de A e não cria campanha com o número ou o modelo de A | **PASS (invariante)** |
+| J44.13 | O que a tela usa | lista de modelos aprovados do número oficial com as variáveis (WAHA → `oficial: false`); prévia com modelo conta `variavel_ausente`; envio de teste manda o modelo com os valores do contato | **PASS (invariante)** |
+| J44.14 | Escolher o modelo e a fonte de cada variável | o texto aparece como vai chegar (`Oi [primeiro nome], sua oferta de outubro chegou.`); campo personalizado pede o nome do campo; salvar só libera com todas as variáveis com fonte | **PASS (jsdom)** |
+| J44.16 | Worker cai depois de reservar o lote e antes de criar a mensagem | depois de 10 min o destinatário volta à fila e sai uma vez só (antes disso, nada) | **PASS (invariante, relógio controlado)** |
+| J44.17 | Worker cai depois de a Meta aceitar e antes de ligar o destinatário | o id determinístico da mensagem acha o envio: o destinatário passa a enviado e a Meta não recebe outra | **PASS (invariante)** |
+| J44.18 | `delivered` chega antes de o worker gravar o vínculo com a mensagem | o trigger acha o destinatário pelo `campaign_recipient_id` da mensagem (só ack assíncrono, com `wamid`) e não perde a entrega | **PASS (invariante)** |
+| J44.15 | A campanha oficial pela tela, como um leigo | conectar o número, criar a campanha com modelo, iniciar e ver entregue/lido no painel numa instalação fresca | **PENDENTE pela tela** — sem Docker na máquina desta sessão (DoD 12) |
+
+**Como os invariantes rodaram nesta máquina sem Docker.** Um Postgres em WASM (PGlite, com
+pgvector, pgcrypto, uuid-ossp, citext e pg_trgm) aplicou o prelúdio do `scripts/test-db.sh` e o
+`baseline.sql` e foi servido pelo protocolo do Postgres. O invariante da J44 passou inteiro ali
+(28 casos), e também o da J41 (19), o da J42 (20) e o da J43 (23). Não é o gate: o `test:db` do CI
+é. Arquivos que dependem de `docker exec … psql` ou de várias conexões ao mesmo tempo não rodam
+nesse arranjo.
+
+**O adaptador `pgComoSupabase` cresceu** pelo motor de campanhas, que nunca tinha rodado nele:
+`overlaps`, `contains`, `neq`, mais de um `order`, contagem `count: "exact"`, `delete`, insert em
+lote, `update … in`, embed `!inner` com filtro pela coluna do embutido, embed curto
+(`contacts(…)`), `returning` com embed e `rpc` de função que devolve conjunto. Cada um tem caso em
+`tests/invariants/pg-como-supabase.test.ts`.
+
+Sabotagem medida: desligar a regra das 24 h entre campanhas derruba a J44.7; voltar o gatilho a
+comparar só `status` derruba a J44.5; desligar a recuperação de travados derruba a J44.16 e a
+J44.17; tirar do gatilho o vínculo pelo `campaign_recipient_id` derruba a J44.18. A lista de colunas do `update of` sozinha NÃO é o que
+importa: `update of status` dispara mesmo sem mudança de valor, e o webhook sempre escreve `status`.
+
+**Fora do #8, e dito aqui para ninguém supor que está coberto:**
+- limite diário do portfólio, pausa por qualidade vermelha ou por modelo rejeitado/pausado e o
+  aviso de risco do WAHA são da issue #9 (hoje a rodada só deixa de enviar quando o modelo não está
+  aprovado, sem pausar a campanha);
+- custo, teto de gasto e as 1.000 grátis são da issue #10;
+- resposta da campanha caindo no funil e no agente é da issue #11;
+- modelo com cabeçalho de mídia recebe o link público como texto fixo; a cópia de `header_media`
+  ainda não é usada no disparo, e a oferta por tempo limitado ainda não manda o prazo;
+- mensagem de campanha que ficou `queued` (canal sem credencial na hora) deixa o destinatário em
+  `sending`, ligado a ela: a campanha só conclui quando a mensagem sair ou for dada como falha.
+  Reenfileirar mandaria em dobro; marcar falha mentiria se ela sair.

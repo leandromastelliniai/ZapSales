@@ -14,6 +14,7 @@ import type { NextRequest } from "next/server";
 import { fail, ok } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { requireSupportWrite } from "@/lib/impersonate/support";
+import { carregarModelo } from "@/lib/campanhas/modelo-da-campanha";
 import { preverAudiencia } from "@/lib/campanhas/preparacao";
 import { previaSchema } from "@/lib/campanhas/schemas";
 import { TEXTO_DA_EXCLUSAO } from "@/lib/campanhas/tipos";
@@ -48,6 +49,16 @@ export async function POST(req: NextRequest): Promise<Response> {
   // do corpo): a prévia varre contatos da organização inteira, inclusive os que
   // o usuário não veria por outro caminho — e é isso que ela precisa contar.
   const admin = createAdminClient();
+  // Campanha oficial: o modelo da organização da sessão, e o mapa do corpo.
+  let modelo = null;
+  if (parsed.data.meta_template_id) {
+    modelo = await carregarModelo(admin, authz.org.orgId, parsed.data.meta_template_id);
+    if (!modelo) {
+      return fail("campanha_conteudo_invalido", t("O modelo escolhido não existe nesta organização."), 422, {
+        requestId,
+      });
+    }
+  }
   try {
     const resumo = await preverAudiencia(admin, {
       organizationId: authz.org.orgId,
@@ -55,6 +66,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       corpo: parsed.data.message_body,
       agora: new Date(),
       campanhaId: parsed.data.campaign_id,
+      ...(modelo ? { oficial: { modelo, mapa: parsed.data.template_variables ?? {} } } : {}),
     });
     return ok(
       {

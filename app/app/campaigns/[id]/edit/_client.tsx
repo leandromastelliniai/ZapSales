@@ -26,11 +26,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { useCampanha, useEditarCampanha, usePreviaDaAudiencia } from "@/hooks/campanhas/useCampanhas";
+import { MensagemOficial, mapaCompleto, mapaDoModelo } from "@/components/campanhas/MensagemOficial";
+import {
+  useCampanha,
+  useEditarCampanha,
+  useModelosDaCampanha,
+  usePreviaDaAudiencia,
+} from "@/hooks/campanhas/useCampanhas";
 import { channelLabel, useChannelSessions } from "@/hooks/channels/useChannelSessions";
 import { useT } from "@/hooks/i18n/useT";
 import { useAgentesPublicados, useEtapas, useFunis } from "@/hooks/campanhas/useDestinoDaCampanha";
 import { DESCRICAO_DA_VARIAVEL, VARIAVEIS_DA_CAMPANHA } from "@/lib/campanhas/renderizador";
+import type { MapaDeVariaveis } from "@/lib/campanhas/variaveis-do-modelo";
 
 export function EditarCampanha({ id }: { id: string }) {
   const t = useT();
@@ -53,6 +60,14 @@ export function EditarCampanha({ id }: { id: string }) {
   const [etapa, setEtapa] = useState("");
   const [agente, setAgente] = useState("");
   const [carregado, setCarregado] = useState(false);
+  const [modeloId, setModeloId] = useState("");
+  const [mapa, setMapa] = useState<MapaDeVariaveis>({});
+
+  // Número oficial manda modelo aprovado (issue #8); o de QR code, texto livre.
+  const modelosDoNumero = useModelosDaCampanha(canal || null);
+  const oficial = modelosDoNumero.data?.oficial === true;
+  const modelos = modelosDoNumero.data?.modelos ?? [];
+  const modelo = modelos.find((m) => m.id === modeloId);
 
   const funis = useFunis();
   const etapas = useEtapas(funil || null);
@@ -76,6 +91,8 @@ export function EditarCampanha({ id }: { id: string }) {
     setFunil(c.pipeline_id ?? "");
     setEtapa(c.stage_id ?? "");
     setAgente(c.agent_id ?? "");
+    setModeloId(c.meta_template_id ?? "");
+    setMapa(c.template_variables ?? {});
     setCarregado(true);
   }, [campanha.data, carregado]);
 
@@ -135,10 +152,14 @@ export function EditarCampanha({ id }: { id: string }) {
     );
   }
 
+  const conteudo = oficial
+    ? { message_body: null, meta_template_id: modeloId || null, template_variables: mapaDoModelo(modelo, mapa) }
+    : { message_body: texto.trim(), meta_template_id: null, template_variables: {} };
+
   const podeSalvar =
     nome.trim() !== "" &&
     canal !== "" &&
-    texto.trim() !== "" &&
+    (oficial ? mapaCompleto(modelo, mapa) : texto.trim() !== "") &&
     temCriterio &&
     (baseLegal !== "legitimate_interest" || liaRef.trim() !== "");
 
@@ -163,7 +184,12 @@ export function EditarCampanha({ id }: { id: string }) {
             id="e-canal"
             className="h-9 w-full rounded-md border border-border bg-surface px-2 text-sm"
             value={canal}
-            onChange={(e) => setCanal(e.target.value)}
+            onChange={(e) => {
+              setCanal(e.target.value);
+              // Modelo é da conta do número: trocar de número zera a escolha.
+              setModeloId("");
+              setMapa({});
+            }}
           >
             {(canais.data ?? []).map((s) => (
               <option key={s.id} value={s.id}>
@@ -248,7 +274,19 @@ export function EditarCampanha({ id }: { id: string }) {
             type="button"
             variant="outline"
             disabled={!temCriterio || previa.isPending}
-            onClick={() => previa.mutate({ audience_filter: filtro, message_body: texto, campaign_id: id })}
+            onClick={() =>
+              previa.mutate(
+                oficial && modeloId
+                  ? {
+                      audience_filter: filtro,
+                      message_body: "",
+                      campaign_id: id,
+                      meta_template_id: modeloId,
+                      template_variables: mapaDoModelo(modelo, mapa),
+                    }
+                  : { audience_filter: filtro, message_body: texto, campaign_id: id },
+              )
+            }
           >
             {previa.isPending ? t("Contando…") : t("Ver quantas pessoas")}
           </Button>
@@ -326,26 +364,42 @@ export function EditarCampanha({ id }: { id: string }) {
 
       <Card className="space-y-4 p-4">
         <h2 className="font-medium">{t("Mensagem")}</h2>
-        <Textarea
-          rows={6}
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          aria-label={t("Texto da mensagem")}
-        />
-        <ul className="space-y-1 text-sm text-muted-foreground">
-          {VARIAVEIS_DA_CAMPANHA.map((v) => (
-            <li key={v}>
-              <button
-                type="button"
-                className="rounded-md bg-surface-elevated px-1 font-mono text-xs"
-                onClick={() => setTexto((atual) => `${atual}{{${v}}}`)}
-              >
-                {`{{${v}}}`}
-              </button>{" "}
-              — {t(DESCRICAO_DA_VARIAVEL[v])}
-            </li>
-          ))}
-        </ul>
+        {oficial ? (
+          <MensagemOficial
+            modelos={modelos}
+            carregando={modelosDoNumero.isPending}
+            modeloId={modeloId}
+            onModelo={(novo) => {
+              setModeloId(novo);
+              setMapa((atual) => mapaDoModelo(modelos.find((m) => m.id === novo), atual));
+            }}
+            mapa={mapa}
+            onMapa={setMapa}
+          />
+        ) : (
+          <>
+            <Textarea
+              rows={6}
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              aria-label={t("Texto da mensagem")}
+            />
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              {VARIAVEIS_DA_CAMPANHA.map((v) => (
+                <li key={v}>
+                  <button
+                    type="button"
+                    className="rounded-md bg-surface-elevated px-1 font-mono text-xs"
+                    onClick={() => setTexto((atual) => `${atual}{{${v}}}`)}
+                  >
+                    {`{{${v}}}`}
+                  </button>{" "}
+                  — {t(DESCRICAO_DA_VARIAVEL[v])}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </Card>
 
       <div className="flex items-center justify-end gap-2">
@@ -358,7 +412,7 @@ export function EditarCampanha({ id }: { id: string }) {
             await salvar.mutateAsync({
               name: nome.trim(),
               channel_session_id: canal,
-              message_body: texto.trim(),
+              ...conteudo,
               base_legal: baseLegal,
               lia_ref: liaRef.trim() || null,
               audience_filter: filtro,

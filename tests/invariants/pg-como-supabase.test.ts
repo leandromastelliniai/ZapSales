@@ -415,8 +415,104 @@ describe("UPSERT e lista de objetos em jsonb — pela sincronização de modelos
 });
 
 describe("o que NÃO está implementado estoura", () => {
-  it("método ausente lança em vez de devolver vazio — vazio silencioso é teste verde medindo nada", () => {
-    expect(() => db.from("crm_pipelines").delete()).toThrow(/não está implementado/);
-    expect(() => db.from("crm_pipelines").select("id").neq("id", "x")).toThrow(/não está implementado/);
+  it("forma ausente lança em vez de devolver vazio — vazio silencioso é teste verde medindo nada", async () => {
+    expect(() => db.from("crm_pipelines").select("id", { count: "planned" })).toThrow(/não está implementado/);
+    // Delete sem filtro apagaria a tabela inteira: estoura, como o PostgREST recusa.
+    await expect(db.from("crm_pipelines").delete()).rejects.toThrow(/não está implementado/);
+  });
+});
+
+describe("pela campanha oficial (issue #8): conjunto, contagem, embed !inner, lote e rpc de conjunto", () => {
+  const CONTATO_A = "ada57e00-0000-4000-8000-0000000000c1";
+  const CONTATO_B = "ada57e00-0000-4000-8000-0000000000c2";
+
+  beforeAll(async () => {
+    const { error } = await db.from("contacts").insert([
+      { id: CONTATO_A, organization_id: ORG, name: "Com etiqueta", tags: ["vip"], source: "manual" },
+      { id: CONTATO_B, organization_id: ORG, name: "Sem etiqueta", tags: ["frio"], source: "manual" },
+    ]);
+    expect(error).toBeNull();
+    await pool.query(
+      `create or replace function public.fn_teste_do_adaptador_conjunto(p_ate int)
+       returns table (n int, dobro int) language sql as $$ select g, g * 2 from generate_series(1, p_ate) g $$`,
+    );
+  });
+
+  afterAll(async () => {
+    await pool.query("drop function if exists public.fn_teste_do_adaptador_conjunto(int)");
+  });
+
+  it("`overlaps` recorta por etiqueta — ignorado, a campanha iria para a organização inteira", async () => {
+    const { data } = await db.from("contacts").select("id").eq("organization_id", ORG).overlaps("tags", ["vip"]);
+    expect((data as Array<{ id: string }>).map((c) => c.id)).toEqual([CONTATO_A]);
+  });
+
+  it("`neq` exclui de verdade", async () => {
+    const { data } = await db.from("contacts").select("id").eq("organization_id", ORG).neq("id", CONTATO_A);
+    expect((data as Array<{ id: string }>).map((c) => c.id)).toEqual([CONTATO_B]);
+  });
+
+  it("dois `order` viram `order by a, b` — o segundo desempata, não substitui", async () => {
+    const { data: padrao } = await db
+      .from("crm_pipelines")
+      .select("name, slug")
+      .eq("organization_id", ORG)
+      .eq("is_default", true)
+      .maybeSingle();
+    const { name: nomeDoPadrao, slug } = padrao as { name: string; slug: string };
+    const { data } = await db
+      .from("crm_pipelines")
+      .select("name")
+      .eq("organization_id", ORG)
+      .in("slug", ["zulu", "alfa", "bravo", slug])
+      .order("is_default", { ascending: false })
+      .order("position", { ascending: false });
+    // O padrão primeiro (a 1ª chave decide); os três extras por position
+    // decrescente (a 2ª desempata). Só a 2ª poria o padrão no fim; só a 1ª
+    // deixaria os extras na ordem do heap (Zulu, Alfa, Bravo).
+    expect((data as Array<{ name: string }>).map((x) => x.name)).toEqual([nomeDoPadrao, "Alfa", "Bravo", "Zulu"]);
+  });
+
+  it("`count: exact, head: true` conta pelos filtros, sem teto, e não traz linha", async () => {
+    const r = (await db
+      .from("crm_pipelines")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", ORG)
+      .in("slug", ["zulu", "alfa", "bravo"])
+      .limit(1)) as { data: unknown; count: number | null };
+    expect(r.data).toBeNull();
+    expect(r.count).toBe(3);
+  });
+
+  it("embed `!inner` com filtro pela coluna do embutido corta as linhas", async () => {
+    const casa = await db
+      .from("crm_pipelines")
+      .select("name, organizations:organization_id!inner(slug)")
+      .eq("organization_id", ORG)
+      .in("slug", ["zulu", "alfa", "bravo"])
+      .eq("organizations.slug", "org-adaptador");
+    const naoCasa = await db
+      .from("crm_pipelines")
+      .select("name, organizations:organization_id!inner(slug)")
+      .eq("organization_id", ORG)
+      .eq("organizations.slug", "outra-org");
+    expect((casa.data as unknown[]).length).toBe(3);
+    expect(naoCasa.data).toEqual([]);
+  });
+
+  it("`delete` apaga só o que o filtro alcança", async () => {
+    await db.from("contacts").delete().eq("organization_id", ORG).eq("id", CONTATO_B);
+    const { data } = await db.from("contacts").select("id").eq("organization_id", ORG);
+    expect((data as Array<{ id: string }>).map((c) => c.id)).toEqual([CONTATO_A]);
+  });
+
+  it("rpc de função que devolve CONJUNTO volta como lista de linhas", async () => {
+    const { data, error } = await db.rpc("fn_teste_do_adaptador_conjunto", { p_ate: 3 });
+    expect(error).toBeNull();
+    expect(data).toEqual([
+      { n: 1, dobro: 2 },
+      { n: 2, dobro: 4 },
+      { n: 3, dobro: 6 },
+    ]);
   });
 });
