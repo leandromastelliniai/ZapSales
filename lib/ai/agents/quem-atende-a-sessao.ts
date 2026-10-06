@@ -110,6 +110,41 @@ export async function haQuemAtendaASessao(
 }
 
 /**
+ * A CAMPANHA QUE CRIOU ESTA CONVERSA TEM AGENTE QUE PODE ATENDER? (issue #11)
+ *
+ * O degrau 0 de `resolveTurnAgent` entrega o turno ao agente da campanha antes
+ * do roteador e do agente do número — mas o dreno perguntava só pelo NÚMERO, e
+ * pulava o turno quando o número não tinha agente publicado. A campanha que
+ * declarava agente num número atendido por gente ficava sem resposta.
+ *
+ * Mesma campanha que `agenteDaCampanhaDaConversa` escolhe (a mais recente desta
+ * conversa com agente) e o mesmo "pode executar" do portão acima: não arquivado,
+ * com a versão apontada publicada.
+ */
+export async function haAgenteDaCampanhaNaConversa(
+  db: Pick<pg.Pool, "query">,
+  organizationId: string,
+  conversationId: string,
+): Promise<boolean> {
+  const { rows } = await db.query<{ pode: boolean }>(
+    `select exists(
+       select 1
+         from (select c.agent_id
+                 from campaign_recipients r
+                 join campaigns c on c.id = r.campaign_id and c.organization_id = r.organization_id
+                where r.organization_id = $1 and r.conversation_id = $2 and c.agent_id is not null
+                order by r.sent_at desc nulls last
+                limit 1) campanha
+         join ai_agents a on a.id = campanha.agent_id and a.organization_id = $1
+         join ai_agent_versions v on v.id = a.published_version_id
+        where a.archived_at is null and v.status = 'published'
+     ) as pode`,
+    [organizationId, conversationId],
+  );
+  return rows[0]?.pode === true;
+}
+
+/**
  * HÁ QUEM ATENDA EM ALGUM NÚMERO DA ORGANIZAÇÃO, sem os pausados? — o portão
  * que o worker do Jev pede (`haQuemAtendaASessao(..., { ignorarPausados: true })`),
  * sem fixar o número. É a pergunta do cartão do Jev para as tarefas de pedido

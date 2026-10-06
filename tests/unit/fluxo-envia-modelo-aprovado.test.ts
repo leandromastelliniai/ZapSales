@@ -102,6 +102,8 @@ interface Cenario {
   modelo?: { status: string; texto?: string };
   /** último inbound da conversa, em horas atrás (`null` = nunca escreveu) */
   ultimoInboundHa?: number | null;
+  /** último inbound num instante FIXO — para os casos de relógio controlado */
+  ultimoInboundEm?: Date;
 }
 
 function fakePool(c: Cenario) {
@@ -119,9 +121,8 @@ function fakePool(c: Cenario) {
     if (/from message_templates/.test(sql)) return { rows: c.texto ? [{ body: c.texto }] : [] };
     if (/from channel_sessions s/.test(sql)) {
       const ha = c.ultimoInboundHa;
-      return {
-        rows: [{ provider: "meta_cloud", last_inbound_at: ha === null || ha === undefined ? null : new Date(Date.now() - ha * HORA) }],
-      };
+      const ultimo = c.ultimoInboundEm ?? (ha === null || ha === undefined ? null : new Date(Date.now() - ha * HORA));
+      return { rows: [{ provider: "meta_cloud", last_inbound_at: ultimo }] };
     }
     if (/from conversations/.test(sql)) return { rows: [{ id: CONVERSA, channel_session_id: CANAL, archived_at: null }] };
     return { rows: [] };
@@ -129,10 +130,11 @@ function fakePool(c: Cenario) {
   return { query } as never;
 }
 
-function deps() {
+function deps(clock?: () => Date) {
   const send = vi.fn(async (_input: Record<string, unknown>) => ({ ok: true }));
   const completeFollowupTurn = vi.fn(async () => undefined);
   const d = {
+    ...(clock ? { clock } : {}),
     log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
     crmCfg: {},
     llmCfg: {},
@@ -232,5 +234,42 @@ describe("plano B da mensagem por IA (`fallback_template_id`)", () => {
     await criarHandler(d)(job(PASSO_IA), fakePool({ texto: "oi", ultimoInboundHa: 30 }), { workerId: "w1" });
 
     expect(runAgentTurn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("janela fechada SEM modelo configurado — a IA não envia modelo por conta própria (issue #11)", () => {
+  const ULTIMO_INBOUND = new Date("2026-10-01T09:00:00Z");
+  const PASSO_SO_IA = { prompt_hint: "Retomá la charla" };
+
+  it("⭐ 24 h e um minuto depois: o passo é pulado com o motivo, e nem a IA nem a cadeia são chamadas", async () => {
+    const { d, completeFollowupTurn } = deps(() => new Date(ULTIMO_INBOUND.getTime() + 24 * HORA + 60_000));
+    await criarHandler(d)(job(PASSO_SO_IA), fakePool({ ultimoInboundEm: ULTIMO_INBOUND }), { workerId: "w1" });
+
+    expect(runAgentTurn).not.toHaveBeenCalled();
+    expect(runBeforeSend).not.toHaveBeenCalled();
+    const r = resultado(completeFollowupTurn);
+    expect(r.kind).toBe("skipped");
+    expect(r.reason).toMatch(/não envia modelo por conta própria/);
+  });
+
+  it("controle: 23 h depois, a janela está aberta e a IA escreve", async () => {
+    const { d } = deps(() => new Date(ULTIMO_INBOUND.getTime() + 23 * HORA));
+    await criarHandler(d)(job(PASSO_SO_IA), fakePool({ ultimoInboundEm: ULTIMO_INBOUND }), { workerId: "w1" });
+
+    expect(runAgentTurn).toHaveBeenCalledTimes(1);
+  });
+
+  it("com o modelo configurado, fora da janela sai SÓ ele — o modelo escolhido por uma pessoa", async () => {
+    const { d, send } = deps(() => new Date(ULTIMO_INBOUND.getTime() + 30 * HORA));
+    await criarHandler(d)(
+      job({ ...PASSO_SO_IA, fallback_template_id: MODELO_ID }),
+      fakePool({ modelo: { status: "APPROVED" }, ultimoInboundEm: ULTIMO_INBOUND }),
+      { workerId: "w1" },
+    );
+
+    expect(runAgentTurn).not.toHaveBeenCalled();
+    expect(send.mock.calls[0]![0].template).toEqual({ name: "recordatorio_pico", language: "es", values: {} });
+    // O modelo configurado NÃO é marcado como escolhido pelo agente — é o que o gate deixa passar.
+    expect(runBeforeSend.mock.calls[0]![0].templateDoAgente).toBeUndefined();
   });
 });

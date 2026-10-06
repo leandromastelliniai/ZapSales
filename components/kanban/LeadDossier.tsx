@@ -1,5 +1,6 @@
 "use client";
 
+import { campanhaDaMarca, campanhaDaUltimaResposta } from "@/lib/campanhas/origem-do-lead";
 import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
 import { useRef } from "react";
 
@@ -64,6 +65,9 @@ export function LeadDossier({
   const timeline = useLeadTimeline(open ? lead.id : null, lead.contact_id);
   const owner = resolveLeadOwner(lead, ownerNames);
   const score = lead.score ?? null;
+  // Nasceu da campanha (a marca) ou foi movido por ela (a timeline).
+  const campanha =
+    campanhaDaMarca(lead.source, lead.source_metadata) ?? campanhaDaUltimaResposta(timeline.itens);
   // N1 — o atalho "Nova proposta" é manager+ (mesmo gate do envio, mesma
   // régua do BulkActionBar). O dossiê não tinha nenhuma checagem de papel;
   // esta é a primeira, no padrão já estabelecido do kanban.
@@ -100,6 +104,13 @@ export function LeadDossier({
             ownerName={owner.name}
             agentVersion={owner.agentVersion}
           />
+          {campanha && (
+            // De onde o negócio veio (issue #11): o card que a campanha gerou é o
+            // que transforma "taxa de resposta" em "quanto isso vendeu".
+            <span className="text-text-muted" data-testid="origem-campanha">
+              {t("Campanha")}: {campanha.nome}
+            </span>
+          )}
           {score && (
             // O MESMO componente do card, não uma cópia do medidor.
             // "Superfície nova herda as decisões da antiga" só vale como

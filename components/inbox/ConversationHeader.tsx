@@ -1,4 +1,5 @@
 "use client";
+import { CampanhaDeOrigem } from "./CampanhaDeOrigem";
 import { useState, type RefObject } from "react";
 import { useT } from "@/hooks/i18n/useT";
 import Link from "next/link";
@@ -211,6 +212,7 @@ export function ConversationHeader({
             <OwnerBadge ownerKind={null} ownerName={null} />
           )}
         </div>
+        <CampanhaDeOrigem conversationId={conversation.id} />
         {phone && (
           <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-muted-foreground">
             <Phone size={11} weight="regular" aria-hidden /> {phone}
