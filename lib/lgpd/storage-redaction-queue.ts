@@ -15,6 +15,11 @@
  * templates right before removal: the retention sweep reads `meta_templates`
  * in its own snapshot, so a template written during the sweep neither holds
  * the path there nor finds a `pending` row for the trigger to clear.
+ *
+ * Message media under `<org>/<conversation>/` follows the same design (issue
+ * #40): a message that starts citing the path clears its row (migration 0544),
+ * and the retention row is checked against the conversation's messages right
+ * before removal, for the message written during the sweep.
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -66,6 +71,43 @@ async function citedByTemplate(admin: AdminClient, row: QueueRow): Promise<boole
         (slot as { path?: unknown }).path === row.object_path,
     ),
   );
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/**
+ * Does a message of the row's conversation cite this object? Only for retention
+ * rows (`request_id` null) in a conversation folder, `<org>/<conversation>/` —
+ * the folder the retention sweep (step 2) treats as message media.
+ *
+ * The conversation comes from the path, which is what keeps this lookup on the
+ * conversation index (`media_storage_path` has none, and `messages` is the
+ * biggest table): the send route only accepts a path inside the message's own
+ * conversation (`isMediaPathOwnedBy`). Throws when the messages can't be read,
+ * so the row goes through the retry path.
+ */
+async function citedByMessage(admin: AdminClient, row: QueueRow): Promise<boolean> {
+  if (row.request_id !== null || row.bucket !== "whatsapp-media") return false;
+  const [org, conversationId] = row.object_path.split("/");
+  if (org !== row.organization_id || !conversationId || !UUID.test(conversationId)) return false;
+
+  const { data, error } = await admin
+    .from("messages")
+    .select("id")
+    .eq("organization_id", row.organization_id)
+    .eq("conversation_id", conversationId)
+    .eq("media_storage_path", row.object_path)
+    .limit(1);
+  if (error) throw new Error(`message_citation_check_failed: ${error.message}`);
+
+  return (data ?? []).length > 0;
+}
+
+/** Why the row's object must stay in the bucket, or null when nothing cites it. */
+async function citation(admin: AdminClient, row: QueueRow): Promise<string | null> {
+  if (await citedByTemplate(admin, row)) return "citado_por_modelo";
+  if (await citedByMessage(admin, row)) return "citado_por_mensagem";
+  return null;
 }
 
 const MAX_ATTEMPTS = 3;
@@ -127,13 +169,14 @@ export async function drainStorageRedactionQueue(
     }
 
     try {
-      if (await citedByTemplate(admin, row)) {
+      const citedBy = await citation(admin, row);
+      if (citedBy) {
         await admin
           .from("storage_redaction_queue")
           .update({
             status: "skipped",
             processed_at: new Date().toISOString(),
-            error_message: "citado_por_modelo",
+            error_message: citedBy,
           })
           .eq("id", row.id);
         stats.skipped++;

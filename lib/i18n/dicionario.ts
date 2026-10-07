@@ -5496,6 +5496,9 @@ export const DICIONARIO: Traducoes = {
   "Janela de 24 horas fechada: texto livre é recusado pela plataforma (131047). Envie um modelo aprovado ou aguarde o cliente escrever.": {
     es: "Ventana de 24 horas cerrada: la plataforma rechaza el texto libre (131047). Envía una plantilla aprobada o espera a que el cliente escriba.",
   },
+  "O arquivo não está mais guardado. Envie o arquivo de novo e crie a mensagem com o caminho novo.": {
+    es: "El archivo ya no está guardado. Sube el archivo de nuevo y crea el mensaje con la ruta nueva.",
+  },
   "Quando um lead ganhar uma tag": { es: "Cuando un lead reciba una etiqueta" },
   "Quando um contato ganhar uma tag": { es: "Cuando un contacto reciba una etiqueta" },
   "alterado pelo assistente": { es: "cambiado por el asistente" },

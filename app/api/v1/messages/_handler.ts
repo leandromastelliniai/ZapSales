@@ -54,6 +54,7 @@ import { aplicarAssinatura, configAssinatura, linhaDeAssinatura } from "@/lib/me
 import { nomeDoContato } from "@/lib/contacts/rotulo-do-contato";
 import { nomesDosAtendentes } from "@/lib/users/nome-do-atendente";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/logger";
 import type { Message } from "@/lib/types/messaging";
 
 type SB = SupabaseClient;
@@ -539,6 +540,49 @@ export async function sendMessageHandler(
       ctx.requestId,
       "media_storage_path fora da conversa.",
     );
+  }
+
+  // ─── O arquivo ainda está no bucket? (issue #40) ───────────────────────────
+  //
+  // O arquivo sobe antes, por `conversations/[id]/media`, e a mensagem vem
+  // depois. Quem guarda o caminho e envia mais de 1 dia depois — o integrador,
+  // por token — pode chegar com um arquivo que a poda já levou como órfão
+  // (`fn_enfileirar_midia_vencida`, passo 2). Sem esta recusa a mensagem nascia
+  // apontando para nada: "Mídia indisponível" na tela e nada para o canal.
+  //
+  // O caminho `pending` na fila de remoção NÃO é recusado: a mensagem gravada
+  // logo abaixo o tira da fila (gatilho da migration 0544), e a foto de
+  // catálogo reaproveita o mesmo caminho a cada reenvio (`fotos-do-produto.ts`).
+  //
+  // `exists` só devolve `false` no 400/404 do Storage; outra falha lança, e
+  // aí o envio segue — a assinatura da URL, mais abaixo, já registra a falha
+  // na própria mensagem (`storage_sign_failed`).
+  if (input.media_storage_path) {
+    let noBucket = true;
+    try {
+      const { data } = await createAdminClient()
+        .storage.from("whatsapp-media")
+        .exists(input.media_storage_path);
+      noBucket = data;
+    } catch (err) {
+      logger.warn("[messages] media availability check failed", {
+        organization_id: c.organization_id,
+        request_id: ctx.requestId,
+        error_message: err instanceof Error ? err.message : String(err),
+      });
+    }
+    if (!noBucket) {
+      throw new ApiError(
+        422,
+        "media_unavailable",
+        { media_storage_path: input.media_storage_path },
+        ctx.requestId,
+        traduzir(
+          "O arquivo não está mais guardado. Envie o arquivo de novo e crie a mensagem com o caminho novo.",
+          ctx.idioma ?? "pt-BR",
+        ),
+      );
+    }
   }
 
   // Só `media_url` (sem `media_storage_path`) é baixada pelo gateway: é esse o
