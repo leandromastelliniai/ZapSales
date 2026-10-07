@@ -67,6 +67,9 @@ fi
 : "${REPO:?REPO=dono/repo}"
 TOPO="$(gh api "repos/$REPO/commits/main" --jq .sha)"
 CANDIDATO="${CANDIDATO:-$TOPO}"
+# O sha sai já, antes da consulta que pode falhar: a issue de falha do portão
+# diz qual commit não chegou a ser tentado (a #37 saiu com `?`).
+[ -n "${GITHUB_OUTPUT:-}" ] && printf 'sha=%s\n' "$CANDIDATO" >> "$GITHUB_OUTPUT"
 resposta="$(gh api "repos/$REPO/actions/runs?head_sha=$CANDIDATO&event=push&branch=main&per_page=100" \
   | TOPO="$TOPO" CANDIDATO="$CANDIDATO" decidir | tr -d '\r')"
 
@@ -75,7 +78,7 @@ motivo="${resposta#*: }"
 [ "$decisao" = "implantar" ] && motivo="topo da main com ci, e2e, perf e imagens verdes"
 printf 'Candidato %s → %s (%s)\n' "$CANDIDATO" "$decisao" "$motivo"
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
-  { printf 'decisao=%s\n' "$decisao"; printf 'motivo=%s\n' "$motivo"; printf 'sha=%s\n' "$CANDIDATO"; } >> "$GITHUB_OUTPUT"
+  { printf 'decisao=%s\n' "$decisao"; printf 'motivo=%s\n' "$motivo"; } >> "$GITHUB_OUTPUT"
 fi
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   printf '### Portão da implantação\n\n`%s` → **%s** — %s\n' "$CANDIDATO" "$decisao" "$motivo" >> "$GITHUB_STEP_SUMMARY"

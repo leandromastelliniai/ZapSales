@@ -69,16 +69,24 @@ igual "ci verde de outro commit não conta" "esperar: ci ainda não rodou neste 
 DE_BRANCH="$(runs "$(run 1 ci.yml completed success push "$SHA" feat/x)" "$(run 2 e2e.yml completed success)" "$(run 3 perf.yml completed success)" "$(run 4 publish-image.yml completed success)")"
 igual "ci verde de outra branch não conta" "esperar: ci ainda não rodou neste commit" "$(decidir "$SHA" "$SHA" "$DE_BRANCH")"
 
-echo "resposta grande da API (a real: 100 execuções)"
-# O primeiro uso real morreu com 141 (SIGPIPE): candidato superado → o python
-# decidia sem ler a entrada, e o `gh api` morria escrevendo num cano fechado. O
-# controle pequeno não pega isto — cabe no buffer do cano.
-GRANDE="$(runs $(for i in $(seq 1 600); do printf '%s ' "$(run $((100 + i)) ci.yml completed success)"; done))"
-[ "${#GRANDE}" -gt 65536 ] && ok "a resposta de controle passa do buffer do cano (${#GRANDE} bytes)" || nok "a resposta de controle é pequena demais para medir"
-printf '%s' "$GRANDE" | TOPO="$OUTRO" CANDIDATO="$SHA" bash scripts/implantacao/portao.sh --decidir > /dev/null
-igual "candidato superado com resposta grande: quem escreve não morre (SIGPIPE) e o portão sai 0" "0 0" "${PIPESTATUS[*]}"
-printf '%s' "$GRANDE" | CANDIDATO="abc" TOPO="abc" bash scripts/implantacao/portao.sh --decidir > /dev/null
-igual "candidato inválido com resposta grande: idem" "0 0" "${PIPESTATUS[*]}"
+echo "resposta maior que o buffer do cano"
+# Por que existe: ver o comentário sobre `sys.stdin.read()` em portao.sh. As
+# respostas acima cabem no buffer do cano (64 KiB) e não pegam o defeito; estas
+# 600 execuções sintéticas passam dele com folga.
+grande=()
+for i in $(seq 1 600); do grande+=("$(run $((100 + i)) ci.yml completed success)"); done
+GRANDE="$(runs "${grande[@]}")"
+igual "a resposta de controle passa do buffer do cano" "sim" \
+  "$([ "${#GRANDE}" -gt 65536 ] && echo sim || echo "não (${#GRANDE} bytes)")"
+decidir_grande() { # topo candidato → a decisão e a saída de cada etapa do cano
+  printf '%s' "$GRANDE" | TOPO="$1" CANDIDATO="$2" bash scripts/implantacao/portao.sh --decidir | tr -d '\r\n'
+  printf ' [cano: %s]' "${PIPESTATUS[*]}"
+}
+igual "candidato superado: decide nao, e quem escreve não morre (SIGPIPE)" \
+  "nao: $SHA não é mais o topo da main (o topo é $OUTRO) [cano: 0 0 0]" "$(decidir_grande "$OUTRO" "$SHA")"
+igual "candidato inválido: idem" "nao: candidato inválido: 'abc' [cano: 0 0 0]" "$(decidir_grande "abc" "abc")"
+igual "topo da main: lê a resposta inteira e decide por ela" \
+  "esperar: e2e ainda não rodou neste commit [cano: 0 0 0]" "$(decidir_grande "$SHA" "$SHA")"
 
 echo "re-execução: vale a mais recente"
 REEXEC_VERDE="$(runs "$(run 1 ci.yml completed failure)" "$(run 9 ci.yml completed success)" "$(run 2 e2e.yml completed success)" "$(run 3 perf.yml completed success)" "$(run 4 publish-image.yml completed success)")"
