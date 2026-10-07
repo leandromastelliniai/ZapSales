@@ -27,13 +27,17 @@ decidir() {
   TOPO="${TOPO:-}" CANDIDATO="${CANDIDATO:-}" EXIGIDOS="$EXIGIDOS" python3 -I -X utf8 -c '
 import json, os, re, sys
 
+# A entrada é lida INTEIRA antes de qualquer decisão. Sair sem ler mata quem
+# escreve no cano (SIGPIPE, 141) — e com pipefail o portão inteiro cai. Foi o
+# primeiro uso real: candidato superado, resposta da API maior que o buffer.
+bruto = sys.stdin.read()
 topo, cand = os.environ["TOPO"], os.environ["CANDIDATO"]
 if not re.fullmatch(r"[0-9a-f]{40}", cand):
     print(f"nao: candidato inválido: {cand!r}"); sys.exit(0)
 if topo != cand:
     print(f"nao: {cand} não é mais o topo da main (o topo é {topo})"); sys.exit(0)
 try:
-    execucoes = json.load(sys.stdin)["workflow_runs"]
+    execucoes = json.loads(bruto)["workflow_runs"]
 except Exception:
     print("nao: não consegui ler as execuções do GitHub"); sys.exit(0)
 

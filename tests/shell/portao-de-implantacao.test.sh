@@ -69,6 +69,17 @@ igual "ci verde de outro commit não conta" "esperar: ci ainda não rodou neste 
 DE_BRANCH="$(runs "$(run 1 ci.yml completed success push "$SHA" feat/x)" "$(run 2 e2e.yml completed success)" "$(run 3 perf.yml completed success)" "$(run 4 publish-image.yml completed success)")"
 igual "ci verde de outra branch não conta" "esperar: ci ainda não rodou neste commit" "$(decidir "$SHA" "$SHA" "$DE_BRANCH")"
 
+echo "resposta grande da API (a real: 100 execuções)"
+# O primeiro uso real morreu com 141 (SIGPIPE): candidato superado → o python
+# decidia sem ler a entrada, e o `gh api` morria escrevendo num cano fechado. O
+# controle pequeno não pega isto — cabe no buffer do cano.
+GRANDE="$(runs $(for i in $(seq 1 600); do printf '%s ' "$(run $((100 + i)) ci.yml completed success)"; done))"
+[ "${#GRANDE}" -gt 65536 ] && ok "a resposta de controle passa do buffer do cano (${#GRANDE} bytes)" || nok "a resposta de controle é pequena demais para medir"
+printf '%s' "$GRANDE" | TOPO="$OUTRO" CANDIDATO="$SHA" bash scripts/implantacao/portao.sh --decidir > /dev/null
+igual "candidato superado com resposta grande: quem escreve não morre (SIGPIPE) e o portão sai 0" "0 0" "${PIPESTATUS[*]}"
+printf '%s' "$GRANDE" | CANDIDATO="abc" TOPO="abc" bash scripts/implantacao/portao.sh --decidir > /dev/null
+igual "candidato inválido com resposta grande: idem" "0 0" "${PIPESTATUS[*]}"
+
 echo "re-execução: vale a mais recente"
 REEXEC_VERDE="$(runs "$(run 1 ci.yml completed failure)" "$(run 9 ci.yml completed success)" "$(run 2 e2e.yml completed success)" "$(run 3 perf.yml completed success)" "$(run 4 publish-image.yml completed success)")"
 igual "falha antiga, re-execução verde implanta" "implantar" "$(decidir "$SHA" "$SHA" "$REEXEC_VERDE")"
