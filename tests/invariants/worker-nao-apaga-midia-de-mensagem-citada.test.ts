@@ -128,6 +128,9 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
+  await pool.query(`delete from storage_redaction_queue where organization_id = $1`, [ORG]);
+  await pool.query(`delete from messages where organization_id = $1`, [ORG]);
+  await pool.query(`delete from lgpd_requests where id = $1`, [PEDIDO_LGPD]);
   await pool.end();
 });
 

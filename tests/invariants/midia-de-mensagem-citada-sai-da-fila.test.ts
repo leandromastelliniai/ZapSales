@@ -19,7 +19,7 @@
  *     devolve à poda na rodada seguinte;
  *   - `messages` é tabela quente: o gatilho só dispara para linha com mídia.
  */
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
 import { lastLine, sql } from "./gov-helpers";
 
@@ -94,6 +94,17 @@ beforeEach(() => {
       values ('${ORG}', 'whatsapp-media', '${FALHOU}', 'failed', 3, now(), 'storage_remove_failed');
     insert into storage_redaction_queue (organization_id, request_id, bucket, object_path)
       values ('${ORG}', '${PEDIDO_LGPD}', 'whatsapp-media', '${DO_PEDIDO_LGPD}');
+  `);
+});
+
+// A poda conta o banco INTEIRO (`poda-de-midia*.test.ts` congela as contagens):
+// nada deste arquivo pode sobrar para a rodada de outro.
+afterAll(() => {
+  sql(`
+    delete from storage_redaction_queue where organization_id in ('${ORG}', '${OUTRA_ORG}');
+    delete from storage.objects where name like '${ORG}/%' or name like '${OUTRA_ORG}/%';
+    delete from messages where organization_id = '${ORG}';
+    delete from lgpd_requests where id = '${PEDIDO_LGPD}';
   `);
 });
 
