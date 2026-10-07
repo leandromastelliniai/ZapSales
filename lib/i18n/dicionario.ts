@@ -9596,6 +9596,9 @@ export const DICIONARIO: Traducoes = {
   "Não entendi o que mudar nesta etapa.": { es: "No entendí qué cambiar en esta etapa." },
   "Não entendi o que mudar neste funil.": { es: "No entendí qué cambiar en este embudo." },
   "Não é possível revogar o próprio acesso.": { es: "No puedes revocar tu propio acceso." },
+  "Não deu para conferir o arquivo do cabeçalho. Tente de novo.": {
+    es: "No fue posible verificar el archivo del encabezado. Inténtalo de nuevo.",
+  },
   "Não foi possível gravar o dado.": { es: "No fue posible guardar el dato." },
   "Não há agenda do Google conectada para esta pessoa.": { es: "Esta persona no tiene un Google Calendar conectado." },
   "Não há proposta pendente para este negócio.": { es: "No hay una propuesta pendiente para este negocio." },
@@ -9609,6 +9612,9 @@ export const DICIONARIO: Traducoes = {
   "Número de WhatsApp não encontrado nesta organização.": { es: "Número de WhatsApp no encontrado en esta organización." },
   "O arquivo enviado é grande demais (máx. 5 MB por skill).": {
     es: "El archivo enviado es demasiado grande (máx. 5 MB por skill).",
+  },
+  "O arquivo do cabeçalho não está mais guardado. Escolha o arquivo de novo e envie.": {
+    es: "El archivo del encabezado ya no está guardado. Elige el archivo de nuevo y envíalo.",
   },
   "O evento original deste run foi removido.": { es: "El evento original de esta ejecución fue eliminado." },
   "O fim do período precisa ser depois do começo.": { es: "El fin del período debe ser posterior al inicio." },

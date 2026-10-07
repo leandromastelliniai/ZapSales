@@ -22,6 +22,8 @@ vi.mock("@/hooks/channels/useTemplates", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
+import { ApiError } from "@/lib/api/types";
+
 import { EditorDeModelo } from "./EditorDeModelo";
 
 /** `{{` é sintaxe do user-event; o texto vai pelo `change` cru. */
@@ -219,6 +221,31 @@ describe("EditorDeModelo", () => {
     const doc = within(screen.getByTestId("preview-do-modelo")).getByTestId("preview-midia");
     expect(doc).toHaveAttribute("data-formato", "DOCUMENT");
     expect(doc).toHaveTextContent("catalogo.pdf");
+  });
+
+  it("arquivo que saiu do armazenamento (issue #30): o campo pede o arquivo de novo e o envio não se repete", async () => {
+    mutateAsync.mockRejectedValueOnce(
+      new ApiError(
+        422,
+        "validation_failed",
+        { problemas: [{ campo: "header.media", motivo: "midia_indisponivel" }] },
+        "req-30",
+        "O arquivo do cabeçalho não está mais guardado. Escolha o arquivo de novo e envie.",
+      ),
+    );
+    render(<EditorDeModelo onFechar={() => {}} />);
+    digitar("modelo-nome", "vitrine");
+    digitar("modelo-corpo", "Chegou a coleção nova.");
+    await userEvent.click(screen.getByTestId("modelo-cabecalho-IMAGE"));
+    await escolherArquivo("modelo-cabecalho-midia", "vitrine.png", "image/png");
+
+    await userEvent.click(screen.getByTestId("btn-enviar-modelo"));
+    expect(await screen.findByText("Escolha o arquivo do cabeçalho.")).toBeInTheDocument();
+    expect(screen.queryByTestId("modelo-cabecalho-midia-nome")).not.toBeInTheDocument();
+
+    // O caminho velho saiu do estado: enviar de novo não repete a mesma recusa.
+    await userEvent.click(screen.getByTestId("btn-enviar-modelo"));
+    expect(mutateAsync).toHaveBeenCalledTimes(1);
   });
 
   it("cabeçalho escolhido sem arquivo: a recusa aparece no campo e nada é enviado", async () => {

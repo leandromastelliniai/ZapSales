@@ -45512,6 +45512,43 @@ create unique index if not exists agent_inbox_atendimento_gratis_unico
 
 notify pgrst, 'reload schema';
 
+-- ---- cabeçalho citado por modelo sai da fila de remoção (migration 0543) ----
+-- Espelho idempotente. Racional completo no arquivo da migration: o modelo que
+-- passa a citar um caminho de `<org>/templates/` enfileirado pela poda (0542)
+-- tira da fila a linha `pending` de retenção, na mesma organização. O worker
+-- reivindica a linha e confere a citação antes de apagar, e a rota de criação
+-- recusa caminho que já saiu.
+-- Só a FUNÇÃO mora aqui, antes da varredura de anon; o GATILHO fica no fim do
+-- arquivo, depois do bloco da 0537 que cria `meta_templates.header_media`.
+create or replace function public.fn_cabecalho_citado_sai_da_fila()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if jsonb_typeof(new.header_media) is distinct from 'object' then
+    return null;
+  end if;
+
+  update public.storage_redaction_queue q
+     set status = 'skipped',
+         processed_at = now(),
+         error_message = 'citado_por_modelo'
+    from jsonb_each(new.header_media) h
+   where jsonb_typeof(h.value) = 'object'
+     and q.object_path = h.value ->> 'path'
+     and q.bucket = 'whatsapp-media'
+     and q.organization_id = new.organization_id
+     and q.request_id is null
+     and q.status = 'pending';
+
+  return null;
+end;
+$$;
+
+revoke execute on function public.fn_cabecalho_citado_sai_da_fila() from public, anon, authenticated;
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria
@@ -47656,3 +47693,11 @@ alter table public.platform_settings
 alter table public.platform_settings drop constraint if exists platform_settings_cotacao_check;
 alter table public.platform_settings
   add constraint platform_settings_cotacao_check check (cotacao_usd_brl is null or cotacao_usd_brl > 0);
+
+-- ---- gatilho do cabeçalho citado (migration 0543) ----
+-- A função está antes da varredura de anon (nenhuma função nasce depois dela);
+-- o gatilho fica aqui porque `update of header_media` exige a coluna da 0537.
+drop trigger if exists trg_meta_templates_cabecalho_citado on public.meta_templates;
+create trigger trg_meta_templates_cabecalho_citado
+  after insert or update of header_media on public.meta_templates
+  for each row execute function public.fn_cabecalho_citado_sai_da_fila();
