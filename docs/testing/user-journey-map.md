@@ -3534,3 +3534,31 @@ quatro rotas excluídas, nenhum registro, e a resposta vem da autenticação da 
 
 **Não coberto:** anexo de 12 MB na conversa e no cabeçalho de modelo pela tela (exigem conversa e
 canal oficial, que o banco do CI não tem); medem o mesmo mecanismo do caso do acervo.
+
+## J49 — Mídia subida antes e enviada depois `[P1]` (2026-10-07, issue #40)
+
+**Achado:** o envio de mídia tem dois passos — o arquivo sobe por
+`POST /api/v1/conversations/<id>/media` e a mensagem vem depois, por `POST /api/v1/messages`, com o
+`media_storage_path`. A poda diária enfileira o arquivo de `<org>/<conversa>/` que nenhuma mensagem
+cita há 1 dia, e nada o tirava da fila quando uma mensagem passava a citá-lo. O integrador que
+guarda o caminho e envia depois recebia 201 e uma mensagem com "Mídia indisponível". Pelo composer
+da tela o risco é pequeno (a mensagem vem logo depois do upload). Mesmo desenho da J43.18 (#30).
+
+| Caso | Spec | Estado |
+|---|---|---|
+| A mensagem gravada com um caminho `pending` na fila tira a linha de retenção (`skipped`, `citado_por_mensagem`), no INSERT e no UPDATE de `media_storage_path`; a não citada continua; linha `failed`, de pedido LGPD ou de outra organização não é tocada; quem larga o caminho o devolve à poda; mensagem sem mídia não dispara o gatilho | `tests/invariants/midia-de-mensagem-citada-sai-da-fila.test.ts` | **PASS (invariante, PGlite)**; o gate pg15/pg17 é o `invariants` do CI |
+| O worker não apaga o arquivo citado antes da rodada, enfileirado depois da citação (a poda lê `messages` no snapshot dela) ou citado no meio da rodada; apaga o da mídia vencida e o da cascata LGPD | `tests/invariants/worker-nao-apaga-midia-de-mensagem-citada.test.ts` | **PASS (invariante, PGlite)** |
+| Caminho que já saiu do bucket: 422 `media_unavailable`, nenhuma linha nasce, nada vai ao canal; Storage que não responde à conferência não barra o envio | `tests/unit/messages-handler-desfechos.test.ts` (6c, 6d) | unit |
+
+**Decisão:** o caminho `pending` NÃO é recusado na criação, ao contrário do modelo (#30). A foto
+de catálogo reaproveita o mesmo caminho por conversa (`catalogo-<arquivo>`) a cada reenvio; a
+mensagem gravada tira o caminho da fila pelo gatilho. O preço é uma janela maior que a da #30: a
+mensagem criada entre a conferência do worker e o `remove` recebe 201 e fica sem o arquivo. E a
+conferência do worker filtra pela conversa do caminho (é o que a mantém no índice): a mensagem
+gravada durante a poda e movida por uma mescla de contatos antes do worker não é vista.
+
+**Custo do gatilho em `messages`** (medido no PGlite, Postgres em WASM, mais lento que o nativo):
+~50–60 µs por mensagem **com mídia** (uma sonda no índice único da fila), contra ~3 ms do insert
+de mensagem; mensagem de texto não chama a função (`when media_storage_path is not null`).
+
+**Não coberto:** pela tela. O composer cria a mensagem logo após o upload; o caso é o da API.

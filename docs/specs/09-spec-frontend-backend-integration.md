@@ -622,6 +622,7 @@ Matriz definitiva. Toda toast/banner/redirect que renderiza por causa de `ApiErr
 | 422 | `validation_error` | Inline form errors via `error.details.fieldErrors` | `<FormField error>` | "Verifique os campos destacados." |
 | 422 | `lost_reason_required` | Inline form error | FormField error | "Selecione um motivo pra fechar." |
 | 422 | `phone_must_be_e164` | Inline form error | FormField error | "Telefone no formato +5511999998888." |
+| 422 | `media_unavailable` | `POST /api/v1/messages` com `media_storage_path` cujo arquivo já saiu do bucket (poda de órfãos, 1 dia) — nenhuma linha nasce; `details.media_storage_path` diz qual (#40) | `<ApiErrorToast>` | "O arquivo não está mais guardado. Envie o arquivo de novo e crie a mensagem com o caminho novo." |
 | 429 | `rate_limited` | Toast warning + auto-retry (já no client) | `toast.warning()` | "Muitas requisições. Tentando de novo em {retry_after}s..." |
 | 500 | `internal_error` ou `unknown` | Error boundary | `<ErrorBoundary>` | "Algo quebrou aqui. Estamos vendo. ID: {requestId}" |
 | 503 | qualquer | Toast + offline banner | `<OfflineBanner>` | "Sistema instável. Tentando reconectar..." |
