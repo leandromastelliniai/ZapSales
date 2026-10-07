@@ -118,7 +118,7 @@ Contrato completo em [`docs/specs/07-spec-events-workers.md`](docs/specs/07-spec
 | `workers/`              | Workers de `event_log` + crons                                                                                  |
 | `components/`, `hooks/` | React compartilhado; convenções nos README de cada pasta                                                        |
 | `supabase/migrations/`  | Schema versionado (`MANIFEST.md` = histórico); `supabase/baseline.sql` é o que o self-host aplica              |
-| `kit/`                  | Kit da VPS: `obter.sh` (comando único), `instalar.sh` (instala e atualiza), `backup.sh`, `restaurar.sh` — modos VPS limpa (#12) e convivendo (#3) |
+| `kit/`                  | Kit da VPS: `obter.sh` (comando único), `instalar.sh` (instala e atualiza), `backup.sh`, `restaurar.sh` — modos VPS limpa (#12) e convivendo (#3); `implantar.sh`, implantação contínua (#24) |
 | `scripts/`              | CLIs de operação e QA — ver `scripts/README.md`                                                                 |
 | `tests/`                | `unit/`, `invariants/`, `e2e/`, `shell/`, `journeys/`, `fixtures/`                                              |
 | `docs/`                 | Doutrina, PRDs, specs, regras de negócio, runbooks, design system — entrada em `docs/index.md`                  |
@@ -306,6 +306,10 @@ server; segredo em query string; `throw` cru na borda da API.
   contêiner `healthy` (o healthcheck é um probe TCP interno). O `kit/instalar.sh` grava o
   `COMPOSE_FILE` no `.env` para todo `up -d` subir o mesmo conjunto. Runbook:
   [`docs/runbooks/deploy.md`](docs/runbooks/deploy.md).
+- **Produção do projeto: implantação contínua** — o merge na `main` chega sozinho à VPS
+  (`.github/workflows/implantar.yml` → `kit/implantar.sh`, issue #24), pela imagem imutável
+  `sha-<commit>`, com recusa antes de tocar, prova e volta automática. Interruptor sem PR:
+  `vars.DEPLOY_AUTOMATICO` (só `ligado` implanta). Runbook: `docs/runbooks/deploy.md` §5.
 - **Env vars** — nova variável entra em `.env.example` **e** em `lib/env.ts`. Nunca leia nem logue
   valor de `.env*`; só `.env.example` é template. Segredo/token só em header, nunca em query string.
 - **Gerados — não edite** — `lib/database.types.ts`, `graphify-out/`, `pnpm-lock.yaml`, `.next/`.

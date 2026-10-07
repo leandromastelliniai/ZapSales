@@ -253,6 +253,12 @@ de emergência e é dívida: existe só naquele disco e qualquer `up -d` sem
 `worker`, `scheduler`) são imagens publicadas, e um teste reprova o retorno de
 serviço construído na VPS.
 
+Na produção do próprio projeto o "a VPS puxa" é automático (issue #24): `implantar.yml` leva o
+topo da `main` à VPS quando `ci`, `e2e`, `perf` e a publicação das imagens ficam verdes, pela
+etiqueta imutável `sha-<commit>`, e `kit/implantar.sh` recusa, prova e volta sozinho. Interruptor
+de emergência sem PR: a variável `DEPLOY_AUTOMATICO` (só `ligado` implanta). Falha abre issue com
+o rótulo `implantacao-falhou`. Runbook: `docs/runbooks/deploy.md` §5.
+
 Depois de qualquer deploy, confirme que o domínio responde **307** (redireciona
 pro login) e não 404. Verificações e o caso de build local em
 `docs/runbooks/deploy.md`. O kit de instalação na VPS é o `kit/instalar.sh` — instala E
