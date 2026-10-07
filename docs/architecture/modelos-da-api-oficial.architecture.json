@@ -137,7 +137,7 @@
       "lane": "banco",
       "col": 2,
       "type": "database",
-      "label": "Storage whatsapp-media <org>/templates/<uuid>.<ext> (a retenção não poda)"
+      "label": "Storage whatsapp-media <org>/templates/<uuid>.<ext> (a retenção só poda o que nenhum modelo cita, com mais de 7 dias)"
     }
   ],
   "edges": [

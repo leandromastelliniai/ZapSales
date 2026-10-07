@@ -16,8 +16,9 @@
  * A Meta guarda só a amostra; o arquivo de cada DISPARO vai em cada envio. Por
  * isso a rota de upload também guarda uma cópia (que as campanhas oficiais vão
  * usar no disparo; hoje só a lista de modelos a lê) no bucket `whatsapp-media`, em
- * `<org>/templates/<uuid>.<ext>` — a pasta que a retenção de mídia nunca poda —,
- * e o espelho do modelo registra o caminho por slot (`midiasDoModelo`).
+ * `<org>/templates/<uuid>.<ext>`, e o espelho do modelo registra o caminho por
+ * slot (`midiasDoModelo`). A retenção de mídia só apaga dessa pasta o arquivo
+ * com mais de 7 dias que nenhum modelo cita (migration 0542, #21).
  *
  * O token vai SEMPRE em cabeçalho, nunca na URL (CLAUDE.md, API key em query
  * string). Nada aqui lança: rede caída é um desfecho com nome.

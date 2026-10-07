@@ -3294,6 +3294,7 @@ Spec: `tests/invariants/modelos-do-canal-oficial.test.ts`; editor e preview em
 | J43.14 | Caminho de mídia de outra organização no corpo da criação | 422 `midia_de_outra_organizacao`, sem ida à Meta e sem linha no espelho | invariante escrito (CI) |
 | J43.15 | A lista mostra o arquivo guardado no slot de mídia | "Arquivo enviado na criação do modelo:" com link assinado de 1 h | **PASS (jsdom)** — `TemplatesClient.test.tsx`; GET no invariante (CI) |
 | J43.16 | Os formatos ricos pela tela, como um leigo | criar imagem, carrossel e oferta numa instalação fresca e ver o preview | **PENDENTE pela tela** — mesmo motivo da J43.8 |
+| J43.17 | Arquivo de cabeçalho que nenhum modelo cita (issue #21) | a poda diária enfileira o de `<org>/templates/` com mais de 7 dias que nenhum slot de nenhum `meta_templates.header_media` cita, e conta em `orfas`; o citado (inclusive em `card0:header:1`) fica; o recente espera; trocar o cabeçalho ou apagar o modelo libera o anterior; slot malformado não derruba a rodada | **PASS (invariante)** — `tests/invariants/poda-de-midia-cabecalho-de-modelo.test.ts`, rodado nesta máquina num Postgres 17 em WASM (PGlite) com o baseline aplicado em instalação e atualização; o gate pg15/pg17 é o `invariants` do CI |
 
 **Fora do #7, e dito aqui para ninguém supor que está coberto:** o ENVIO de um modelo com
 oferta por tempo limitado ainda não manda o parâmetro `limited_time_offer` (`expiration_time_ms`)

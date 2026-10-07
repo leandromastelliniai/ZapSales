@@ -39087,15 +39087,18 @@ grant  execute on function public.fn_expurgar_candidatos_do_golden(int,int) to s
 -- ---- a retenção de mídia passa a existir (migration 0432) ----
 -- ---- a fila de remoção de mídia deixa de ser eterna (migration 0434) ----
 -- ---- a contagem do expurgo volta para o retorno (migration 0435) ----
--- Ver o cabeçalho das DUAS migrations: a 0432 enfileira arquivo vencido e
+-- ---- os órfãos da pasta de cabeçalho de modelo entram na poda (migration 0542) ----
+-- Ver o cabeçalho das migrations: a 0432 enfileira arquivo vencido e
 -- órfão na mesma fila da LGPD (o cron storage-redaction remove pelo Storage
 -- API); a 0434 (#1739) reabre `deleted`/`skipped` quando o mesmo caminho
 -- volta a existir e expurga linha `deleted` com mais de 90 dias; a 0435
 -- (#1765) devolve a contagem desse expurgo, que antes não aparecia nem no
--- retorno nem na trilha. O corpo abaixo é a 0435 EDITADA NO LUGAR — ele tem
--- de casar com o da última migration, senão quem instala pelo kit self-host
--- fica com outra função de quem aplica a cadeia
--- (apendice-do-baseline-nao-diverge-da-cadeia).
+-- retorno nem na trilha; a 0483 acrescenta o passo 2b (bucket da nota
+-- interna); a 0542 (#21) põe a pasta `org/templates/` no passo 2, segurada
+-- por `meta_templates.header_media` e com 7 dias de carência. O corpo abaixo
+-- é a 0542 EDITADA NO LUGAR — ele tem de casar com o da última migration,
+-- senão quem instala pelo kit self-host fica com outra função de quem aplica
+-- a cadeia (apendice-do-baseline-nao-diverge-da-cadeia).
 create or replace function public.fn_enfileirar_midia_vencida(p_limite integer default 500)
 returns jsonb
 language plpgsql
@@ -39186,24 +39189,45 @@ begin
   )
   select count(*) into v_vencidas from limpas;
 
-  -- 2. ÓRFÃOS: arquivo que nada no banco aponta — o rastro de conversa apagada.
-  --    Só as duas pastas que o CRM grava por mensagem e por contato:
-  --    `org/<conversa>/…` e `org/avatars/…`. `org/templates/…` (cabeçalho de
-  --    modelo) NUNCA entra: quem o usa guarda o link, não o caminho. Um dia de
-  --    carência cobre o envio que sobe o arquivo antes de gravar a mensagem.
+  -- 2. ÓRFÃOS: arquivo que nada no banco aponta. Três pastas, cada uma com a
+  --    referência que segura o caminho e a carência do seu upload:
+  --      · `org/<conversa>/…` (mensagem) e `org/avatars/…` (contato): um dia,
+  --        que cobre o envio que sobe o arquivo antes de gravar a mensagem;
+  --      · `org/templates/…` (cabeçalho de modelo, 0542 / #21): SETE dias. O
+  --        editor sobe o arquivo antes de o modelo existir, e o operador pode
+  --        levar dias para submeter. Quem segura o caminho é QUALQUER slot de
+  --        QUALQUER `meta_templates.header_media` (`{ slot: { path, … } }`) —
+  --        é o arquivo que o próximo disparo assina. Sem isto, trocar o arquivo
+  --        no editor, abandonar o editor ou recriar um modelo desativado
+  --        deixava o anterior no bucket para sempre.
+  --    Valor malformado num slot não derruba a rodada: `->>` em escalar dá
+  --    null, e null não segura caminho nenhum.
   with orfaos as (
     select o.name as caminho, split_part(o.name, '/', 1)::uuid as org
       from storage.objects o
      where o.bucket_id = 'whatsapp-media'
-       and o.created_at < now() - interval '1 day'
        and split_part(o.name, '/', 1) ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
        and exists (select 1 from public.organizations g where g.id::text = split_part(o.name, '/', 1))
        and (
-         split_part(o.name, '/', 2) ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-         or split_part(o.name, '/', 2) = 'avatars'
+         (
+           (
+             split_part(o.name, '/', 2) ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+             or split_part(o.name, '/', 2) = 'avatars'
+           )
+           and o.created_at < now() - interval '1 day'
+         )
+         or (
+           split_part(o.name, '/', 2) = 'templates'
+           and o.created_at < now() - interval '7 days'
+         )
        )
        and not exists (select 1 from public.messages m where m.media_storage_path = o.name)
        and not exists (select 1 from public.contacts c where c.avatar_storage_path = o.name)
+       and not exists (
+         select 1 from public.meta_templates t
+          cross join lateral jsonb_each(t.header_media) h
+          where h.value ->> 'path' = o.name
+       )
        -- Só linha EM CURSO segura o caminho (`pending`, ou `failed` que ainda
        -- é o registro de uma remoção não feita). Linha `deleted`/`skipped`
        -- NÃO bloqueia mais: é justamente o caso do avatar reaproveitado

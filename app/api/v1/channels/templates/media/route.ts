@@ -11,9 +11,9 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
  *     a Meta guarda só a amostra, e é daqui que o disparo das campanhas vai
  *     tirar o arquivo (hoje só a lista de modelos o lê).
  *
- * A Meta vem primeiro: se ela recusar, nada fica no storage (a pasta de modelos
- * não é podada pela retenção, e um arquivo ali sem modelo seria custo para
- * sempre). Se o storage falhar depois, sobra só o handle na Meta, que expira
+ * A Meta vem primeiro: se ela recusar, nada fica no storage (um arquivo ali sem
+ * modelo ocuparia a cota até a retenção apagá-lo, 7 dias depois — migration
+ * 0542). Se o storage falhar depois, sobra só o handle na Meta, que expira
  * sozinho, e a nova tentativa é segura.
  *
  * Devolve o `handle`, o caminho, o tipo e um link assinado curto para o preview

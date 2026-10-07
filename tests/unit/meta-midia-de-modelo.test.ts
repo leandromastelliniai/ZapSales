@@ -87,7 +87,7 @@ describe("farejarArquivo — o tipo pelo conteúdo, não pelo nome", () => {
 });
 
 describe("caminho no storage", () => {
-  it("mora em <org>/templates/, a pasta que a retenção de mídia não poda", () => {
+  it("mora em <org>/templates/, a pasta que a retenção só poda quando nenhum modelo cita o arquivo", () => {
     const caminho = caminhoDaMidia(ORG, "video/mp4");
     expect(caminho).toMatch(new RegExp(`^${ORG}/templates/[0-9a-f-]{36}\\.mp4$`));
     expect(caminho).toMatch(CAMINHO_DA_MIDIA);
