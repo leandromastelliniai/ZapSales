@@ -36,8 +36,12 @@ const URL_ASSINADA_DO_PROPRIO_STORAGE = `${env.NEXT_PUBLIC_SUPABASE_URL}/storage
 const signedUrl = vi.fn<() => Promise<{ data: { signedUrl: string } | null; error: { message: string } | null }>>(
   async () => ({ data: { signedUrl: 'https://signed.example/a.jpg' }, error: null }),
 );
+// A conferência de que o arquivo ainda está no bucket (issue #40), antes de a linha nascer.
+const exists = vi.fn<() => Promise<{ data: boolean; error: { message: string } | null }>>(
+  async () => ({ data: true, error: null }),
+);
 vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => ({ storage: { from: () => ({ createSignedUrl: signedUrl }) } }),
+  createAdminClient: () => ({ storage: { from: () => ({ createSignedUrl: signedUrl, exists }) } }),
 }));
 // Audit é fire-and-forget e escreve em outra tabela; fora do escopo dos desfechos.
 vi.mock('@/lib/audit', () => ({ audit: vi.fn(async () => {}) }));
@@ -118,6 +122,8 @@ afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   signedUrl.mockResolvedValue({ data: { signedUrl: 'https://signed.example/a.jpg' }, error: null });
+  exists.mockReset();
+  exists.mockResolvedValue({ data: true, error: null });
 });
 
 describe('sendMessageHandler — os 6 desfechos do envio', () => {
@@ -382,6 +388,43 @@ describe('sendMessageHandler — os 6 desfechos do envio', () => {
     expect(msg.error_code).toBe('storage_sign_failed');
     expect(msg.error_message).toContain('no_object');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // Issue #40: quem sobe o arquivo e só cria a mensagem depois que a poda o
+  // levou (1 dia órfão) recebia 201, e a mensagem nascia apontando para nada —
+  // "Mídia indisponível" na tela. A recusa vem antes de a linha existir.
+  it('6c. mídia que já saiu do bucket: 422 media_unavailable, nenhuma linha nasce', async () => {
+    wahaConfigured(true);
+    exists.mockResolvedValue({ data: false, error: { message: 'Object not found' } });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const duble = criarDubleDoHandler({ conversation: conversationRow() });
+
+    const envio = sendMessageHandler(
+      duble.supabase,
+      ctx,
+      textInput({ type: 'image', body: undefined, media_storage_path: `${ORG}/${CONV}/a.jpg`, media_mime: 'image/jpeg' }),
+    );
+
+    await expect(envio).rejects.toMatchObject({ status: 422, code: 'media_unavailable' });
+    expect(exists).toHaveBeenCalledWith(`${ORG}/${CONV}/a.jpg`);
+    expect(duble.capturas.inserts.messages).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('6d. o Storage não responde à conferência: o envio segue (a assinatura decide)', async () => {
+    wahaConfigured(true);
+    exists.mockRejectedValue(new Error('storage down'));
+    const fetchMock = vi.fn(async (..._args: unknown[]) => Response.json({ id: { _serialized: 'MEDIA2' } }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const msg = await sendMessageHandler(
+      dubleDo(conversationRow()),
+      ctx,
+      textInput({ type: 'image', body: undefined, media_storage_path: `${ORG}/${CONV}/a.jpg`, media_mime: 'image/jpeg' }),
+    );
+
+    expect(msg.status).toBe('sent');
   });
 
   // A ORDEM entre os desfechos é comportamento, não detalhe: se o pre-check de
