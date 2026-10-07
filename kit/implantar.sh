@@ -81,9 +81,10 @@ instalar_comando() {
 
 acesso() {
   exigir_root
-  local chave="${1:-}" host="${2:-}" casa
-  [[ "$chave" =~ ^(ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)\ [A-Za-z0-9+/=]+(\ [^[:cntrl:]]*)?$ ]] \
-    || falha "Passe a chave PÚBLICA, numa linha: sudo kit/implantar.sh acesso \"ssh-ed25519 AAAA… comentario\""
+  local chave host="${2:-}" casa
+  chave="$(chave_publica_limpa "${1:-}")"
+  [ -n "$chave" ] \
+    || falha "Passe a chave PÚBLICA (ed25519 ou ecdsa), numa linha: sudo kit/implantar.sh acesso \"\$(cat implantar.pub)\""
   command -v python3 >/dev/null || falha "python3 não está instalado (a implantação lê JSON com ele)."
   instalar_comando
   passo "Usuário $USUARIO"
@@ -139,30 +140,56 @@ entrar_pelo_ssh() {
   exec sudo -n "$COMANDO" "$sha"
 }
 
-# A implantação roda DESTACADA (sessão própria, saída num arquivo): se a conexão
-# do GitHub cair no meio, ela termina — e volta, se for o caso — sozinha. A
-# frente só acompanha o registro e devolve o código de saída.
+# A implantação roda numa UNIDADE PRÓPRIA do systemd (systemd-run): fora da
+# sessão SSH e com ambiente limpo. Se a conexão do GitHub cair no meio, ela
+# termina — e volta, se for o caso — sozinha; quem chamou só deixa de ver o
+# registro. Sem systemd (contêiner de teste), cai para uma sessão destacada.
+#
+# O token vai por um arquivo só do root, apagado pelo executor ao lê-lo — nunca
+# pelo ambiente da unidade, que `systemctl show` mostra a qualquer usuário.
 frente() {
-  local sha="$1" token="" registro situacao pid
+  local sha="$1" token="" carimbo registro situacao arq_token unidade codigo
   sha_valido "$sha" || { aviso "sha inválido: '$sha'"; exit 2; }
   # O token chega pela entrada padrão, nunca pela linha de comando (que
   # qualquer usuário da máquina lê em /proc).
   if [ ! -t 0 ]; then IFS= read -r -t 10 token || true; fi
   install -d -m 700 "$CORRIDA"
   mkdir -p "$LOGS"
-  registro="$LOGS/implantar-$(date -u +%Y%m%dT%H%M%SZ)-${sha:0:7}.log"
-  situacao="$CORRIDA/$sha.$$.saida"
+  carimbo="$(date -u +%Y%m%dT%H%M%SZ)"
+  registro="$LOGS/implantar-$carimbo-${sha:0:7}.log"
+  situacao="$CORRIDA/$carimbo-$$.saida"
+  arq_token="$CORRIDA/$carimbo-$$.token"
+  unidade="zapsales-implantar-$carimbo-$$"
   rm -f "$situacao"
-  ZAPSALES_TOKEN_GITHUB="$token" setsid "$COMANDO" --executar "$sha" "$situacao" > "$registro" 2>&1 < /dev/null &
-  pid=$!
+  (umask 077 && printf '%s' "$token" > "$arq_token")
   token=""
-  tail -n +1 -f --pid="$pid" "$registro" 2>/dev/null || true
-  wait "$pid" 2>/dev/null || true
-  local codigo
-  codigo="$(cat "$situacao" 2>/dev/null || echo 4)"
+  : > "$registro"
+  local extra=()
+  [ -z "${ZAPSALES_ENSAIAR_VOLTA:-}" ] || extra+=(--setenv=ZAPSALES_ENSAIAR_VOLTA="$ZAPSALES_ENSAIAR_VOLTA")
+  [ -z "${ZAPSALES_OBSERVAR_S:-}" ] || extra+=(--setenv=ZAPSALES_OBSERVAR_S="$ZAPSALES_OBSERVAR_S")
+  if command -v systemd-run >/dev/null && [ -d /run/systemd/system ]; then
+    systemd-run --quiet --collect --unit="$unidade" \
+      --property=StandardOutput="append:$registro" --property=StandardError="append:$registro" \
+      --setenv=PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" --setenv=HOME=/root "${extra[@]}" \
+      "$COMANDO" --executar "$sha" "$situacao" "$arq_token"
+    tail -n +1 -F "$registro" 2>/dev/null &
+    local tp=$!
+    while systemctl is-active --quiet "$unidade"; do sleep 2; done
+    sleep 1
+    kill "$tp" 2>/dev/null || true
+    wait "$tp" 2>/dev/null || true
+  else
+    env -u SUDO_USER -u SUDO_UID -u SUDO_GID -u SUDO_COMMAND \
+      setsid "$COMANDO" --executar "$sha" "$situacao" "$arq_token" > "$registro" 2>&1 < /dev/null &
+    local pid=$!
+    tail -n +1 -f --pid="$pid" "$registro" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+  fi
+  rm -f "$arq_token"
+  codigo="$(tr -d '[:space:]' < "$situacao" 2>/dev/null || true)"
   rm -f "$situacao"
   msg "registro completo na VPS: $registro"
-  exit "$codigo"
+  exit "${codigo:-4}"
 }
 
 # ─── O executor ──────────────────────────────────────────────────────────────
@@ -453,12 +480,20 @@ podar() {
 }
 
 executar() {
-  SHA="$1"
-  SITUACAO="$2"
+  SHA="${1:-}"
+  local situacao="${2:-}" arq_token="${3:-}"
+  # Uso INTERNO: só a frente chega aqui, numa unidade do systemd (ambiente
+  # limpo). Pelo sudo, os dois caminhos seriam escolhidos por quem chama, e o
+  # trap de saída grava num deles como root.
+  [ -z "${SUDO_USER:-}" ] || falha "--executar é interno; use: zapsales-implantar <sha>"
+  sha_valido "$SHA" || falha "sha inválido."
+  case "$situacao" in "$CORRIDA"/*.saida) ;; *) falha "arquivo de saída fora de $CORRIDA." ;; esac
+  case "$arq_token" in "$CORRIDA"/*.token) ;; *) falha "arquivo do token fora de $CORRIDA." ;; esac
+  SITUACAO="$situacao"
   trap ao_sair_executor EXIT
   trap 'ao_errar $LINENO' ERR
-  TOKEN="${ZAPSALES_TOKEN_GITHUB:-}"
-  unset ZAPSALES_TOKEN_GITHUB
+  TOKEN="$(cat "$arq_token" 2>/dev/null || true)"
+  rm -f "$arq_token"
   exigir_root
   command -v python3 >/dev/null || recusar "python3 não está instalado."
   install -d -m 700 "$CORRIDA" "$ESTADO"
@@ -484,6 +519,13 @@ executar() {
   TOKEN=""
   passo "Implantado: ${SHA:0:7} está no ar em https://$DOMINIO"
 }
+
+# O usuário da implantação, pelo sudo, só alcança `<sha>` — mesmo que um dia
+# tenha um terminal, `acesso` e `instalar-comando` não são dele.
+if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" = "$USUARIO" ] && ! sha_valido "${1:-}"; then
+  printf 'Recusado: o único comando aceito é "implantar <sha de 40 caracteres>".\n' >&2
+  exit 2
+fi
 
 case "${1:-}" in
   acesso)            shift; acesso "$@" ;;
