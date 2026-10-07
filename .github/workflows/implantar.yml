@@ -1,0 +1,167 @@
+name: implantar
+
+# Implantação contínua da produção (issue #24): merge na `main` vai sozinho
+# para a VPS, com validação rigorosa e volta automática.
+#
+# Quem decide QUANDO é este workflow; quem decide SE é a VPS. Cada metade
+# confere por conta própria e nenhuma confia na outra:
+#
+#   portao     só o TOPO da main, com ci, e2e, perf e a publicação das imagens
+#              verdes NAQUELE commit, por push — perguntado à API de execuções
+#              (scripts/implantacao/portao.sh). Não depende da proteção da
+#              branch, que este repositório não tem. Dispara a cada um dos
+#              quatro que termina; os primeiros recebem "esperar", o último
+#              implanta.
+#   implantar  `ssh zapsales-deploy@vps "implantar <sha>"`. A chave só alcança
+#              esse comando (kit/implantar.sh acesso), o host é conferido por
+#              chave fixa, e a VPS recusa — antes de tocar em qualquer coisa —
+#              commit fora da main, rebaixamento e imagem cuja revisão não bate.
+#              Depois de instalar ela prova (saúde com a versão nova, nenhuma
+#              dependência pior, 2 min sem reinício) e, se algo falha, VOLTA
+#              sozinha para a versão anterior. O banco é aditivo e não volta.
+#
+# Falha abre uma issue (rótulo `implantacao-falhou`); a implantação seguinte
+# que passa a fecha. Runbook: docs/runbooks/deploy.md §5.
+#
+# Interruptor de emergência, sem PR: a variável do repositório
+# DEPLOY_AUTOMATICO (Settings › Secrets and variables › Actions › Variables).
+# Só `ligado` implanta. Desligado por padrão — num fork, ou antes de a VPS ser
+# preparada, o workflow não faz nada.
+#
+# Segredos: DEPLOY_SSH_KEY (privada), DEPLOY_SSH_KNOWN_HOSTS (a linha que
+# `kit/implantar.sh acesso` imprime), DEPLOY_SSH_HOST.
+
+on:
+  workflow_run:
+    workflows: [ci, e2e, perf, "Publicar imagem Docker (GHCR)"]
+    types: [completed]
+    branches: [main]
+  # Reimplantar o topo da main à mão (o mesmo portão vale).
+  workflow_dispatch: {}
+
+# Uma implantação por vez, e nenhuma cancelada no meio: cancelar o job não
+# para o que a VPS está fazendo, só deixa o GitHub sem saber como terminou.
+concurrency:
+  group: implantar-producao
+  cancel-in-progress: false
+
+jobs:
+  portao:
+    # `head_repository` igual ao repositório: um PR de fork cuja branch se chama
+    # `main` passa pelo filtro `branches` do workflow_run, e não passa daqui.
+    if: vars.DEPLOY_AUTOMATICO == 'ligado' && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      decisao: ${{ steps.portao.outputs.decisao }}
+      sha: ${{ steps.portao.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts/implantacao
+
+      - name: O topo da main está verde?
+        id: portao
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          # Vazio no workflow_dispatch: o candidato passa a ser o topo da main.
+          CANDIDATO: ${{ github.event.workflow_run.head_sha }}
+        run: bash scripts/implantacao/portao.sh
+
+  implantar:
+    needs: [portao]
+    if: needs.portao.outputs.decisao == 'implantar'
+    runs-on: ubuntu-latest
+    # Kit (dump + baseline + subida) e 2 min de observação cabem com folga;
+    # a VPS termina sozinha mesmo que o job seja interrompido.
+    timeout-minutes: 60
+    # `packages: read` e `contents: read` são do token que vai para a VPS, que o
+    # usa para perguntar ao GitHub e puxar a imagem — e que expira com o job.
+    # `issues: write` abre e fecha a issue de falha.
+    permissions:
+      contents: read
+      packages: read
+      issues: write
+    env:
+      SHA: ${{ needs.portao.outputs.sha }}
+      ROTULO: implantacao-falhou
+    steps:
+      - name: Chave e host fixos
+        env:
+          CHAVE: ${{ secrets.DEPLOY_SSH_KEY }}
+          CONHECIDOS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+          HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+        run: |
+          set -euo pipefail
+          for v in CHAVE CONHECIDOS HOST; do
+            [ -n "${!v}" ] || { echo "::error::Segredo ausente para $v (DEPLOY_SSH_KEY, DEPLOY_SSH_KNOWN_HOSTS, DEPLOY_SSH_HOST)."; exit 1; }
+          done
+          install -d -m 700 ~/.ssh
+          (umask 077 && printf '%s\n' "$CHAVE" > ~/.ssh/implantar)
+          printf '%s\n' "$CONHECIDOS" > ~/.ssh/implantar_known_hosts
+
+      - name: Implantar na VPS
+        id: vps
+        env:
+          HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          # O token vai pela entrada padrão (nunca pela linha de comando).
+          # StrictHostKeyChecking=yes com o known_hosts do segredo: host com
+          # outra chave é recusado, nunca aceito na primeira vez.
+          printf '%s\n' "$TOKEN" | ssh -T \
+            -i ~/.ssh/implantar -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/implantar_known_hosts" \
+            -o ServerAliveInterval=30 -o ServerAliveCountMax=6 \
+            "zapsales-deploy@$HOST" "implantar $SHA" 2>&1 | tee "$RUNNER_TEMP/implantar.log"
+          codigo="${PIPESTATUS[1]}"
+          echo "codigo=$codigo" >> "$GITHUB_OUTPUT"
+          exit "$codigo"
+
+      - name: Abrir (ou atualizar) a issue de falha
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CODIGO: ${{ steps.vps.outputs.codigo }}
+          EXECUCAO: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          case "${CODIGO:-}" in
+            2) o_que="**recusada** — nada foi alterado na produção" ;;
+            3) o_que="**falhou e voltou sozinha** para a versão anterior (o banco, aditivo, ficou)" ;;
+            4) o_que="**falhou e a volta também falhou** — a produção precisa de alguém agora" ;;
+            *) o_que="não chegou ao fim (código ${CODIGO:-nenhum}: a conexão com a VPS, a chave ou o host)" ;;
+          esac
+          {
+            printf 'A implantação de `%s` na produção %s.\n\n' "$SHA" "$o_que"
+            printf 'Execução: %s\n\n' "$EXECUCAO"
+            printf 'O registro completo do kit fica só na VPS (`/var/log/zapsales/implantar-*`). Últimas linhas daqui:\n\n'
+            printf '```\n'
+            tail -n 40 "$RUNNER_TEMP/implantar.log" 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' || true
+            printf '```\n\nEsta issue fecha sozinha na próxima implantação que passar.\n'
+          } > "$RUNNER_TEMP/corpo.md"
+          gh label create "$ROTULO" --repo "$REPO" --color B60205 \
+            --description "A implantação contínua da produção falhou (implantar.yml)" 2>/dev/null || true
+          numero="$(gh issue list --repo "$REPO" --label "$ROTULO" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$numero" ]; then
+            gh issue comment "$numero" --repo "$REPO" --body-file "$RUNNER_TEMP/corpo.md"
+          else
+            gh issue create --repo "$REPO" --label "$ROTULO" \
+              --title "Implantação na produção falhou" --body-file "$RUNNER_TEMP/corpo.md"
+          fi
+
+      - name: Fechar a issue de falha
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          for numero in $(gh issue list --repo "$REPO" --label "$ROTULO" --state open --json number --jq '.[].number'); do
+            gh issue close "$numero" --repo "$REPO" --comment "Resolvida: \`$SHA\` foi implantado e passou nas provas."
+          done

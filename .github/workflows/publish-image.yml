@@ -247,6 +247,12 @@ jobs:
             # inteira depende — `latest` = topo da main, `stable` = última
             # release — e fazia `latest` oscilar entre os dois.
             type=raw,value=latest,enable=${{ github.ref_type == 'branch' && github.ref_name == 'main' }}
+            # `sha-<commit inteiro>`: a etiqueta IMUTÁVEL que a implantação
+            # contínua da produção puxa (issue #24, kit/implantar.sh). Só na
+            # main: num push de tag o mesmo commit seria reconstruído com outro
+            # APP_VERSION ("1.2.3" em vez do sha curto) e a etiqueta mudaria de
+            # conteúdo depois de publicada.
+            type=sha,prefix=sha-,format=long,enable=${{ github.ref_type == 'branch' && github.ref_name == 'main' }}
             # `stable` NÃO sai daqui, e a razão é a issue #488. Ele já saiu: era
             # mais um `type=raw` nesta lista, e por isso CADA imagem movia o
             # canal sozinha, ao terminar, sem saber se as irmãs conseguiram.
@@ -333,6 +339,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable=${{ github.ref_type == 'branch' && github.ref_name == 'main' }}
+            type=sha,prefix=sha-,format=long,enable=${{ github.ref_type == 'branch' && github.ref_name == 'main' }}
 
       - name: Unir AMD64 e ARM64 em cada tag
         env:

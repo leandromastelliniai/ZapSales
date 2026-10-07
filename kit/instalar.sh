@@ -39,7 +39,8 @@
 #   ZAPSALES_SENHA         senha do primeiro administrador (padrão: gerada)
 #   ZAPSALES_MODO          limpa | convivendo (padrão: o kit decide pelas portas)
 #   ZAPSALES_IMAGENS       registro | construir (padrão: registro)
-#   ZAPSALES_VERSAO        versão das imagens no registro (padrão: a do package.json)
+#   ZAPSALES_VERSAO        versão das imagens no registro (padrão: a do commit, `sha-<commit>`,
+#                          se a implantação contínua a instalou; senão a do package.json)
 #   ZAPSALES_IGNORAR_DNS=1 instala mesmo com o DNS ainda não apontado
 set -Eeuo pipefail
 
@@ -429,8 +430,22 @@ preparar_imagens() {
   case "$modo" in
     registro)
       passo "Imagens: puxando do registro"
-      versao="${ZAPSALES_VERSAO:-$(sed -nE 's/^ *"version": *"([^"]+)".*/\1/p' "$RAIZ/package.json" | head -1)}"
+      versao="${ZAPSALES_VERSAO:-}"
+      # A implantação contínua (kit/implantar.sh) instala a imagem do commit,
+      # `sha-<commit>`, e grava o commit em .zapsales-revisao. Rodar o kit à mão
+      # depois disso, sobre o MESMO código, mantém a mesma imagem — cair na
+      # versão do package.json poria a última release sobre um banco mais novo.
+      if [ -z "$versao" ]; then
+        case "$(env_ler "$ENV_ARQ" APP_IMAGE)" in
+          *":sha-$(revisao_do_codigo)") versao="sha-$(revisao_do_codigo)" ;;
+        esac
+      fi
+      versao="${versao:-$(sed -nE 's/^ *"version": *"([^"]+)".*/\1/p' "$RAIZ/package.json" | head -1)}"
       env_definir "$ENV_ARQ" COMPOSE_FILE "$compose"
+      # APP_VERSION só serve ao build na VPS. Deixado no .env, o `env_file` do
+      # compose o passa por cima da versão gravada na imagem, e /api/v1/health
+      # responderia o commit da última imagem construída aqui.
+      env_remover "$ENV_ARQ" APP_VERSION
       # Tag de VERSÃO, imutável — nunca latest/stable (doutrina de packaging, invariante 3).
       env_definir "$ENV_ARQ" APP_IMAGE "$REGISTRO_IMAGENS/zapsales:$versao"
       env_definir "$ENV_ARQ" WORKER_IMAGE "$REGISTRO_IMAGENS/zapsales-worker:$versao"
@@ -693,5 +708,9 @@ criar_primeiro_admin
 configurar_proxy
 agendar_backups
 provar
+# O comando da implantação contínua (kit/implantar.sh) acompanha o código: cada
+# rodada bem-sucedida o reinstala. Ele só aceita conexão do GitHub depois de
+# `kit/implantar.sh acesso`, que é decisão do operador.
+"$KIT/implantar.sh" instalar-comando
 relatar_vizinhos
 resumo
