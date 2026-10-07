@@ -185,7 +185,8 @@ bastariam para um segredo da produção virar texto público. São duas camadas
 2. **Redação de tudo o que sai**, para o que a primeira deixar passar: tokens do GitHub
    (`ghp_`, `ghs_`, `github_pat_`…), `zps_`, `Bearer …`, JWT, `sk-…`, credencial em URL
    (`postgres://usuario:senha@`) e `NOME=valor` quando o nome tem forma de segredo viram
-   `[redigido]`. O workflow aplica a mesma redação de novo antes do `tee`.
+   `[redigido]`. O workflow aplica a mesma redação de novo antes do `tee`. A lista acima é um
+   resumo; a que vale é o código: `sed -n '/^redigir()/,/^}/p' kit/lib/implantar.sh`.
 
 A prova é `tests/shell/kit-implantar-saida.test.sh` (`pnpm test:shell`). O comando instalado na
 VPS só se atualiza pelo próprio kit, no meio de uma implantação: a **primeira** depois de uma

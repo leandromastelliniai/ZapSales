@@ -202,7 +202,11 @@ públicos, é irreversível. O histórico git herdado ainda carrega os PNGs da o
 Não é argumento contra a doutrina de evidência visual, que é boa. É argumento para um passo
 de revisão de PII antes do commit — e `gitleaks` não pega isso, porque não lê imagem.
 
-### T9 — O CI como superfície: ação de terceiros e log público 🟢 MITIGADO — CONFIRMADO
+### T9 — O CI como superfície: ação de terceiros e log público 🟢 MITIGADO — CONFIRMADO por teste, falta a implantação real
+
+As duas camadas estão provadas por teste; a prova pela implantação real (o log do job
+`implantar` mostrando só etapas, e `/var/log/zapsales/implantar-*` completo na VPS) só existe
+depois do merge, e está pedida no critério de aceite da issue #39.
 
 O repositório é **público**, e o CI tem segredos que alcançam a produção: `DEPLOY_SSH_KEY`
 (chega à VPS pelo `implantar.yml`), o token de publicação no GHCR e o token de um GitHub App.
@@ -288,7 +292,7 @@ Não avaliado por falta de execução/instância:
 | T5 | 3 secrets fora do `.env.example` | 🟠 | trivial |
 | T7 | Sem scan de secret no CI + 116 PNGs de evidência sem revisão de PII | 🟡 | baixo |
 | T6 | Guard de SSRF existe; o E2E que o prova não roda no CI | 🟢 | baixo |
-| T9 | CI público: ações por hash e log da VPS só com etapas redigidas (#39) | 🟢 | feito — cercas no `test:unit` e no `test:shell` |
+| T9 | CI público: ações por hash e log da VPS só com etapas redigidas (#39) | 🟢 | feito por teste (`test:unit` e `test:shell`); falta a prova de uma implantação real |
 
 **Conclusão honesta:** os *mecanismos* de segurança deste projeto são acima da média para
 um CRM open-source — HMAC em tempo constante em toda borda, fail-closed nos crons, hash de

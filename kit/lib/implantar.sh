@@ -134,15 +134,17 @@ usar_saida_de_etapa() {
   msg()   { _etapa "$*"; }
   passo() { _etapa ""; _etapa "▶ $*"; }
   aviso() { _etapa "⚠ $*" >&2; }
-  falha() { _etapa ""; _etapa "✖ $*" >&2; exit 1; }
+  falha() { { _etapa ""; _etapa "✖ $*"; } >&2; exit 1; }
 }
 
 # titulos_do_kit — lê a saída bruta do kit/instalar.sh e devolve, como etapa,
-# só os títulos dos passos dele (`▶ …`, frases fixas do próprio kit).
+# só os títulos dos passos dele: a linha que COMEÇA com `▶ ` (o `passo` de
+# kit/lib/comum.sh, frases fixas do kit). Uma linha bruta com `▶ ` no meio
+# não é título e fica só no registro do kit.
 titulos_do_kit() {
   local l
-  sed -u 's/\x1b\[[0-9;]*[A-Za-z]//g' | while IFS= read -r l; do
-    case "$l" in *"▶ "*) msg "  kit: ${l#*▶ }" ;; esac
+  sed -u 's/\x1b\[[0-9;]*[A-Za-z]//g' | while IFS= read -r l || [ -n "$l" ]; do
+    case "$l" in "▶ "*) msg "  kit: ${l#"▶ "}" ;; esac
   done
   return 0
 }
@@ -161,21 +163,24 @@ etapas_do_registro() {
 # para o que a camada 1 deixar passar (um segredo interpolado numa etapa). O
 # nome da variável e a forma da URL ficam: o motivo continua legível.
 #   GitHub (ghp_ ghs_ gho_ ghu_ ghr_ github_pat_) · bearer da API (zps_) ·
-#   JWT (as chaves do Supabase) · sk-… (Anthropic, OpenAI) · Bearer/Basic ·
-#   credencial em URL (postgres://usuario:senha@) · chave privada PEM ·
-#   NOME=valor / NOME: valor quando o nome tem forma de segredo (é o que cobre
-#   os nomes de .env.example e do .env que o kit grava).
+#   JWT (as chaves do Supabase) · sk-… (Anthropic, OpenAI) · Bearer/Basic
+#   seguido de algo com cara de credencial (8+ caracteres) · credencial em URL
+#   (postgres://usuario:senha@, inclusive senha com @) · chave privada PEM,
+#   do BEGIN ao END · NOME=valor, NOME: valor e "nome": "valor" quando o nome
+#   tem forma de segredo (é o que cobre os nomes de .env.example e do .env que
+#   o kit grava). A lista em vigor é este corpo, não a documentação.
 redigir() {
-  local nome='[A-Za-z0-9_]*(KEY|SECRET|TOKEN|PASSWORD|PASSWD|SENHA|DSN|CREDENTIAL|DB_URL|DB_ADMIN_URL|DATABASE_URL)[A-Za-z0-9_]*'
+  local nome='[A-Za-z0-9_]*(KEY|SECRET|TOKEN|PASSWORD|PASSWD|_PASS|_PWD|SENHA|DSN|CREDENTIAL|DB_URL|DB_ADMIN_URL|DATABASE_URL)[A-Za-z0-9_]*'
   sed -u -E \
-    -e "s/\b($nome)([[:space:]]*[=:][[:space:]]*)(\"[^\"]*\"|'[^']*'|[^[:space:]\"',;]+)/\1\3[redigido]/Ig" \
-    -e 's#([A-Za-z][A-Za-z0-9+.-]*://)[^/@[:space:]]+@#\1[redigido]@#g' \
+    -e "s/\b($nome)([\"']?[[:space:]]*[=:][[:space:]]*)(\"[^\"]*\"|'[^']*'|[^[:space:]\"',;]+)/\1\3[redigido]/Ig" \
+    -e 's#([A-Za-z][A-Za-z0-9+.-]*://)[^/[:space:]]+@#\1[redigido]@#g' \
     -e 's/\b(gh[pousr]_|github_pat_)[A-Za-z0-9_]{8,}/[redigido]/g' \
     -e 's/\bzps_[A-Za-z0-9_-]{8,}/[redigido]/g' \
     -e 's/eyJ[A-Za-z0-9_-]{8,}(\.[A-Za-z0-9_-]*)*/[redigido]/g' \
     -e 's/(^|[^A-Za-z0-9_-])sk-[A-Za-z0-9_-]{8,}/\1[redigido]/g' \
-    -e 's/\b(bearer|basic)([[:space:]]+)[^[:space:]"'"'"',;]+/\1\2[redigido]/Ig' \
-    -e 's/-----BEGIN [A-Z ]*PRIVATE KEY-----.*/[redigido]/'
+    -e 's#\b(bearer|basic)([[:space:]]+)[A-Za-z0-9._~+/=-]{8,}#\1\2[redigido]#Ig' \
+    -e 's/-----BEGIN [A-Z ]*PRIVATE KEY-----.*-----END [A-Z ]*PRIVATE KEY-----/[redigido]/' \
+    -e '/-----BEGIN [A-Z ]*PRIVATE KEY-----/,/-----END [A-Z ]*PRIVATE KEY-----/s/.*/[redigido]/'
 }
 
 # saida_para_o_ssh — as duas camadas, em fluxo (linha a linha: a sessão mostra

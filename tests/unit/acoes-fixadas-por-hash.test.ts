@@ -61,7 +61,7 @@ function arquivosVigiados(): string[] {
 /** `uses:` como CHAVE do YAML (com ou sem `- `). Linha de comentário não conta. */
 const LINHA_USES = /^\s*(?:-\s+)?uses:\s*["']?([^\s"'#]+)["']?\s*(#.*)?$/;
 const FIXADA = /^[\w.-]+\/[\w.-]+(?:\/[\w./-]+)?@[0-9a-f]{40}$/;
-const COMENTARIO_DE_VERSAO = /^#\s*v\d+(?:\.\d+){0,2}\b/;
+const COMENTARIO_DE_VERSAO = /^#\s*v\d+\.\d+\.\d+\b/;
 const DOCKER_COM_DIGEST = /^docker:\/\/[^\s@]+@sha256:[0-9a-f]{64}$/;
 
 interface Referencia {
@@ -116,6 +116,8 @@ describe("a régua (controles)", () => {
   it("reprova hash sem o comentário de versão, branch e hash abreviado", () => {
     expect(reprovadas(`      - uses: actions/checkout@${HASH}`)).toHaveLength(1);
     expect(reprovadas("      - uses: actions/checkout@main # v7")).toHaveLength(1);
+    // Só o major no comentário não diz qual versão o hash é.
+    expect(reprovadas(`      - uses: actions/checkout@${HASH} # v7`)).toHaveLength(1);
     expect(reprovadas("      - uses: actions/checkout@3d3c42e # v7.0.1")).toHaveLength(1);
   });
 

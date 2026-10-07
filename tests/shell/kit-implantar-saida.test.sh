@@ -91,8 +91,19 @@ REG="$TMP/implantar.log"
   msg "reinício durante a observação: antes [app aaa 0
 worker bbb 0] · agora [app aaa 1]"
   # O que o kit/instalar.sh imprime vira título, e só o título sai.
-  printf 'Pulling app ... %s\n\033[32m▶ Subindo o app, o worker, o agendador\033[0m\nSUPABASE_SERVICE_ROLE_KEY=%s\n' \
+  # Só o que COMEÇA com `▶ ` é título: uma linha bruta com `▶ ` no meio, não.
+  # E a última linha sem quebra no fim também é lida.
+  printf 'Pulling app ... %s\n\033[32m▶ Subindo o app, o worker, o agendador\033[0m\nSUPABASE_SERVICE_ROLE_KEY=%s\nerro do psql ▶ senha-solta-no-meio\n\033[32m▶ Pronto\033[0m' \
     "${SEGREDOS[1]}" "${SEGREDOS[6]}" | titulos_do_kit
+  # Chave privada citada numa etapa de várias linhas: o corpo inteiro sai.
+  msg "  chave lida: -----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAACorpoDaChavePrivada
+-----END OPENSSH PRIVATE KEY-----
+  depois da chave a etapa continua"
+  # JSON, senha com @, e nomes com _PASS / _PWD.
+  msg '  resposta: {"api_key": "valor-json-secreto", "password":"outro-json-secreto"}'
+  msg "  url: postgres://postgres:p@ss-com-arroba@db:5432/postgres"
+  msg "  estado: SMTP_PASS=valor-pass-secreto DB_PWD=valor-pwd-secreto"
   voltar_simulado() { _etapa ""; _etapa "✖ FALHOU: dependência que estava ok piorou: redis" >&2; }
   voltar_simulado 2>&1
   passo "Implantado: 0123456 está no ar em https://crm.exemplo.com.br"
@@ -107,6 +118,8 @@ contem "título do kit chega como etapa" "$SAIDA" "kit: Subindo o app, o worker,
 contem "a falha chega" "$SAIDA" "✖ FALHOU: dependência que estava ok piorou: redis"
 contem "a conclusão chega" "$SAIDA" "▶ Implantado: 0123456 está no ar em https://crm.exemplo.com.br"
 contem "a 2ª linha de uma etapa de várias linhas chega" "$SAIDA" "worker bbb 0] · agora [app aaa 1]"
+contem "a última linha do kit, sem quebra no fim, chega" "$SAIDA" "kit: Pronto"
+nao_contem "linha bruta do kit com ▶ no meio não vira título" "$SAIDA" "senha-solta-no-meio"
 nao_contem "saída bruta não sai, nem a que imita etapa" "$SAIDA" "etapa falsa vinda do docker"
 nao_contem "saída bruta do docker não sai" "$SAIDA" "Pulling app"
 nao_contem "a marca não chega à saída" "$SAIDA" "$MARCA_DE_ETAPA"
@@ -124,6 +137,14 @@ done
 nao_contem "valor entre aspas sai inteiro" "$SAIDA" "e-segredo-aspas"
 contem "a forma da URL fica, sem a credencial" "$SAIDA" "postgresql://[redigido]@db:5432/postgres"
 contem "Bearer fica, sem o valor" "$SAIDA" "Bearer [redigido]"
+nao_contem "o corpo da chave privada não sai" "$SAIDA" "CorpoDaChavePrivada"
+contem "a etapa segue depois do fim da chave" "$SAIDA" "depois da chave a etapa continua"
+nao_contem "chave de JSON com aspas sai redigida" "$SAIDA" "valor-json-secreto"
+nao_contem "chave de JSON colada (\"password\":\"…\") sai redigida" "$SAIDA" "outro-json-secreto"
+nao_contem "senha com @ sai inteira" "$SAIDA" "ss-com-arroba"
+contem "e o host da URL fica" "$SAIDA" "postgres://[redigido]@db:5432/postgres"
+nao_contem "NOME_PASS=… sai redigido" "$SAIDA" "valor-pass-secreto"
+nao_contem "NOME_PWD=… sai redigido" "$SAIDA" "valor-pwd-secreto"
 
 echo "redação não estraga etapa comum"
 for l in \
@@ -133,7 +154,9 @@ for l in \
   "  nenhuma dependência piorou (redis supabase waha ok)." \
   "  de volta em 0123456: serviços saudáveis, https://crm.exemplo.com.br/ → 307." \
   "registro completo na VPS: /var/log/zapsales/implantar-20261007T120000Z-0123456.log" \
-  "  task-runner e risk-score não são segredo"; do
+  "  task-runner e risk-score não são segredo" \
+  "  o passo: basic setup do proxy, e o bearer sem valor nenhum" \
+  "  passo: conferindo"; do
   r="$(printf '%s\n' "$l" | redigir)"
   if [ "$r" = "$l" ]; then ok "intacta: ${l:0:48}…"; else nok "alterada: [$l] → [$r]"; fi
 done
