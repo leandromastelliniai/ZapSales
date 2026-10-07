@@ -25,8 +25,13 @@ updates:
       # Minor e patch dentro do 22 continuam entrando pelo grupo acima.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+  # As ações entram fixadas pelo hash do commit com `# vN.M.P` ao lado (issue
+  # #39, cerca em tests/unit/acoes-fixadas-por-hash.test.ts): o Dependabot lê o
+  # comentário e propõe hash e versão novos juntos. `directory: "/"` só alcança
+  # .github/workflows/ — sem a segunda entrada, a ação composta de
+  # .github/actions/ ficaria congelada no hash de hoje.
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories: ["/", "/.github/actions/*"]
     schedule:
       interval: "weekly"
     # O mesmo prazo de 7 dias da entrada npm, pelo mesmo motivo (issue #41).

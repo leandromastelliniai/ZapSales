@@ -247,6 +247,38 @@ Não avaliado por falta de execução/instância:
   pela WABA — que a conexão confere contra o token (`numeroPertenceAWaba`) —, nunca por dado do
   corpo. Quem for dono do mesmo portfólio na Meta já vê esse número no WhatsApp Manager.
 
+### T9 — O CI como superfície: ação de terceiros e log público 🟢 MITIGADO — CONFIRMADO por teste, falta a implantação real
+
+As duas camadas estão provadas por teste; a prova pela implantação real (o log do job
+`implantar` mostrando só etapas, e `/var/log/zapsales/implantar-*` completo na VPS) só existe
+depois do merge, e está pedida no critério de aceite da issue #39.
+
+O repositório é **público**, e o CI tem segredos que alcançam a produção: `DEPLOY_SSH_KEY`
+(chega à VPS pelo `implantar.yml`), o token de publicação no GHCR e o token de um GitHub App.
+Duas portas, as duas fechadas na issue #39:
+
+- **Ação de terceiros com etiqueta móvel.** `uses: dono/acao@v7` executa o commit para onde a
+  etiqueta apontar hoje — e quem controla o repositório da ação a move sem PR deste lado
+  (`tj-actions/changed-files`, 2025). Toda ação remota em `.github/workflows/` e
+  `.github/actions/` entra fixada pelo hash de 40 caracteres, com `# vN.M.P` ao lado para o
+  Dependabot seguir propondo atualizações (`directories` inclui `/.github/actions/*`). Cerca:
+  `tests/unit/acoes-fixadas-por-hash.test.ts`, que reprova etiqueta, branch, hash abreviado,
+  hash sem a versão e `docker://` sem digest.
+- **Log da implantação publicado.** O log de um job é público, a cauda dele vira corpo da
+  issue `implantacao-falhou` sem máscara nenhuma, e a máscara do Actions não conhece nenhum
+  segredo da VPS. A VPS devolve pelo SSH só as linhas de etapa que o próprio
+  `kit/implantar.sh` escreveu, redigidas por formato (os formatos em vigor:
+  `sed -n '/^redigir()/,/^}/p' kit/lib/implantar.sh`); o workflow redige de novo antes do
+  `tee`, e grava a cauda também quando a implantação falha. O registro completo fica só em `/var/log/zapsales/implantar-*`. Prova:
+  `tests/shell/kit-implantar-saida.test.sh`.
+
+**O que NÃO está coberto:** a redação é por FORMATO. Um segredo sem formato reconhecível (uma
+senha solta numa etapa, sem `NOME=` ao lado) passa pela segunda camada — quem o segura é a
+primeira, que só deixa sair linha escrita pelo próprio `kit/implantar.sh`. Por isso nenhuma
+etapa nova deve interpolar saída de comando nem conteúdo do `.env`. E a ação fixada pelo hash
+continua sendo código de terceiro: o hash garante que é o mesmo código que foi revisado no PR
+do Dependabot, não que ele é benigno.
+
 ---
 
 ## 3. Sumário de prioridade
@@ -260,6 +292,7 @@ Não avaliado por falta de execução/instância:
 | T5 | 3 secrets fora do `.env.example` | 🟠 | trivial |
 | T7 | Sem scan de secret no CI + 116 PNGs de evidência sem revisão de PII | 🟡 | baixo |
 | T6 | Guard de SSRF existe; o E2E que o prova não roda no CI | 🟢 | baixo |
+| T9 | CI público: ações por hash e log da VPS só com etapas redigidas (#39) | 🟢 | feito por teste (`test:unit` e `test:shell`); falta a prova de uma implantação real |
 
 **Conclusão honesta:** os *mecanismos* de segurança deste projeto são acima da média para
 um CRM open-source — HMAC em tempo constante em toda borda, fail-closed nos crons, hash de
