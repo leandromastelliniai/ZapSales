@@ -9,6 +9,7 @@ depois desse prazo, um envio que a Meta tinha recusado, podia ficar com um model
 arquivo de cabeçalho já tinha sido apagado pela limpeza diária de mídia. A Meta aprovava, porque
 guarda a própria cópia, mas a campanha que usasse o modelo não tinha o arquivo para enviar.
 
-Agora, quando um modelo passa a usar um arquivo que estava na fila de limpeza, o arquivo sai da
-fila. Se o arquivo já tiver sido apagado, o editor avisa antes de enviar à Meta e pede que você
-escolha o arquivo de novo.
+Agora a limpeza confere, antes de apagar, se algum modelo usa o arquivo, e não apaga o que estiver
+em uso. Se você enviar um modelo com um arquivo que já foi apagado ou que está prestes a ser, o
+editor avisa antes de mandar à Meta, limpa o campo do cabeçalho e pede que você escolha o arquivo
+de novo.

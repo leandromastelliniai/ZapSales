@@ -44,6 +44,7 @@ import {
   type DesfechoDaSubmissao,
   type ModeloSubmetido,
 } from "@/lib/channels/meta/submeter-modelo";
+import { logger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -104,6 +105,7 @@ async function midiasIndisponiveis(
   const disponiveis = await Promise.all(
     campos.map(async ([, path]) => {
       if (pendentes.has(path)) return false;
+      // `exists` só devolve `false` no 400/404 do Storage; outra falha lança.
       const { data } = await admin.storage.from(BUCKET_DA_MIDIA_DE_MODELO).exists(path);
       return data;
     }),
@@ -183,7 +185,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   let indisponiveis: string[];
   try {
     indisponiveis = await midiasIndisponiveis(admin, parsed.data, orgId);
-  } catch {
+  } catch (err) {
+    logger.warn("[templates-submit] media availability check failed", {
+      organization_id: orgId,
+      request_id: requestId,
+      error_message: err instanceof Error ? err.message : String(err),
+    });
     return fail("internal_error", "Não deu para conferir o arquivo do cabeçalho. Tente de novo.", 500, {
       requestId,
     });

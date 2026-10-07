@@ -10,6 +10,11 @@
  * a row can leave the queue in the meantime — a template that starts citing a
  * `<org>/templates/` file marks its row `skipped` (migration 0543, issue #30) —
  * and removing from the stale batch would delete the file the template signs.
+ *
+ * A retention row under `<org>/templates/` is also checked against the
+ * templates right before removal: the retention sweep reads `meta_templates`
+ * in its own snapshot, so a template written during the sweep neither holds
+ * the path there nor finds a `pending` row for the trigger to clear.
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -25,9 +30,42 @@ export interface DrainStats {
 interface QueueRow {
   id: string;
   organization_id: string;
+  request_id: string | null;
   bucket: string;
   object_path: string;
   attempts: number;
+}
+
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+/**
+ * Does any template of the row's organization cite this object? Only for
+ * retention rows (`request_id` null) in the template header folder — an LGPD
+ * cascade is never held back by a template.
+ *
+ * Same rule as the SQL of migrations 0542/0543 (`header_media -> slot ->>
+ * 'path'`), deliberately looser than `lerMidiasGuardadas`: keeping a file by
+ * mistake costs storage, deleting one by mistake breaks a campaign. Throws when
+ * the templates can't be read, so the row goes through the retry path.
+ */
+async function citedByTemplate(admin: AdminClient, row: QueueRow): Promise<boolean> {
+  if (row.request_id !== null || row.bucket !== "whatsapp-media") return false;
+  if (!row.object_path.startsWith(`${row.organization_id}/templates/`)) return false;
+
+  const { data, error } = await admin
+    .from("meta_templates")
+    .select("header_media")
+    .eq("organization_id", row.organization_id);
+  if (error) throw new Error(`template_citation_check_failed: ${error.message}`);
+
+  return (data ?? []).some(({ header_media }) =>
+    Object.values((header_media ?? {}) as Record<string, unknown>).some(
+      (slot) =>
+        typeof slot === "object" &&
+        slot !== null &&
+        (slot as { path?: unknown }).path === row.object_path,
+    ),
+  );
 }
 
 const MAX_ATTEMPTS = 3;
@@ -49,7 +87,7 @@ export async function drainStorageRedactionQueue(
 
   const { data: rows, error } = await admin
     .from("storage_redaction_queue")
-    .select("id, organization_id, bucket, object_path, attempts")
+    .select("id, organization_id, request_id, bucket, object_path, attempts")
     .eq("status", "pending")
     .order("enqueued_at", { ascending: true })
     .limit(limit);
@@ -89,6 +127,19 @@ export async function drainStorageRedactionQueue(
     }
 
     try {
+      if (await citedByTemplate(admin, row)) {
+        await admin
+          .from("storage_redaction_queue")
+          .update({
+            status: "skipped",
+            processed_at: new Date().toISOString(),
+            error_message: "citado_por_modelo",
+          })
+          .eq("id", row.id);
+        stats.skipped++;
+        continue;
+      }
+
       const { error: removeErr } = await admin.storage
         .from(row.bucket)
         .remove([row.object_path]);

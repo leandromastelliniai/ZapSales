@@ -33,6 +33,7 @@ vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => quem.db }));
 import { drainStorageRedactionQueue } from "@/lib/lgpd/storage-redaction-queue";
 
 const ORG = "43100000-0000-4000-8000-000000000001";
+const OUTRA_ORG = "43100000-0000-4000-8000-000000000002";
 const MODELO = "43100000-0000-4000-8000-0000000000a1";
 const BUCKET = "whatsapp-media";
 
@@ -128,6 +129,43 @@ describe("drainStorageRedactionQueue — cabeçalho citado por modelo", () => {
       error_message: "citado_por_modelo",
     });
     expect(stats).toMatchObject({ attempted: 0, deleted: 0 });
+  });
+
+  it("enfileirado DEPOIS de o modelo citar: o worker confere e não o apaga", async () => {
+    // A poda lê `meta_templates` no snapshot dela: o modelo gravado durante a
+    // rodada não segura o caminho ali, e o gatilho, que roda antes de a linha
+    // da poda existir, não tem o que tirar da fila. Quem segura é o worker.
+    await citar(PRIMEIRO);
+    await enfileirar(PRIMEIRO);
+
+    const stats = await drainStorageRedactionQueue({ limit: 10 });
+
+    expect(noBucket(PRIMEIRO)).toBe(true);
+    expect(await linha(PRIMEIRO)).toEqual({
+      status: "skipped",
+      error_message: "citado_por_modelo",
+    });
+    expect(stats).toEqual({ attempted: 1, deleted: 0, failed: 0, skipped: 1 });
+  });
+
+  it("o caminho que outra organização cita não segura o arquivo desta", async () => {
+    await pool.query(
+      `insert into organizations (id, slug, legal_name, display_name)
+       values ($1, 'org-worker-431-b', 'Outra Worker LTDA', 'Outra Worker') on conflict (id) do nothing`,
+      [OUTRA_ORG],
+    );
+    await pool.query(`delete from meta_templates where organization_id = $1`, [OUTRA_ORG]);
+    await pool.query(
+      `insert into meta_templates (organization_id, waba_id, name, language, status, components, contract_hash, header_media)
+       values ($1, 'waba-431-b', 'alheio_431', 'pt_BR', 'PENDING', '[]'::jsonb, 'h-431-b', $2::jsonb)`,
+      [OUTRA_ORG, JSON.stringify({ "header:1": { path: PRIMEIRO } })],
+    );
+    await enfileirar(PRIMEIRO);
+
+    await drainStorageRedactionQueue({ limit: 10 });
+
+    expect(noBucket(PRIMEIRO)).toBe(false);
+    expect((await linha(PRIMEIRO)).status).toBe("deleted");
   });
 
   it("citado no meio da rodada, depois de o lote ser lido: o worker não o apaga", async () => {

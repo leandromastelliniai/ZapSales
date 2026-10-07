@@ -24,12 +24,22 @@
 --     qualquer escritor da coluna, não só a rota do editor. `skipped` não
 --     prende o caminho: se o modelo largar o arquivo, o passo 2 da poda o vê
 --     órfão de novo e o `on conflict` o reabre (`skipped` → `pending`).
---   · NO WORKER: só apaga a linha que ainda está `pending` no momento de
---     apagar — o lote é lido de uma vez e processado em sequência, e este
---     gatilho pode tirar a linha da fila no meio dele.
---   · NA ROTA DE CRIAÇÃO: recusa (422) o caminho que já saiu do bucket ou que
---     está `pending` — o caso em que o arquivo já foi apagado não tem conserto
---     no banco, e o operador precisa enviar o arquivo de novo.
+--   · NO WORKER (`lib/lgpd/storage-redaction-queue.ts`): reivindica cada
+--     linha (`update … where status = 'pending'`) antes de apagar — o lote é
+--     lido de uma vez, e este gatilho pode tirar a linha da fila no meio dele —
+--     e, na linha de retenção de `<org>/templates/`, confere de novo se algum
+--     modelo da organização cita o caminho. Esta conferência cobre o que o
+--     gatilho não alcança: a poda lê `meta_templates` no snapshot dela, e o
+--     modelo gravado durante a rodada não acha linha `pending` para tirar.
+--   · NA ROTA DE CRIAÇÃO: recusa (422 `midia_indisponivel`) o caminho que já
+--     saiu do bucket ou que está `pending`, antes de ir à Meta — o arquivo já
+--     apagado não tem conserto no banco. O editor limpa o campo e pede o
+--     arquivo de novo.
+--
+-- Resta uma janela de uma chamada ao Storage: o modelo gravado entre a
+-- reivindicação/conferência do worker e o `remove`. É a mesma ordem de grandeza
+-- de qualquer verificação feita antes de um efeito externo, e fechá-la pediria
+-- trava entre o worker e a gravação do modelo.
 --
 -- Fica de fora, de propósito:
 --   · linha de pedido LGPD (`request_id` não nulo): a cascata do titular não é

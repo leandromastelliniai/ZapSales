@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useSubmitTemplate } from "@/hooks/channels/useTemplates";
 import { useT } from "@/hooks/i18n/useT";
+import { ApiError } from "@/lib/api/types";
 import {
   MIDIAS_DO_CABECALHO,
   novoModeloSchema,
@@ -117,6 +118,24 @@ function problemasDoEstado(estado: NovoModelo): Problema[] {
     if (i.code === "too_big") return { campo, frase: "Texto longo demais para este campo." };
     return { campo, frase: "Valor inválido." };
   });
+}
+
+/**
+ * Os campos cuja mídia a rota recusou por não estar mais guardada (422
+ * `midia_indisponivel`, issue #30) — vazio para qualquer outra recusa.
+ */
+function camposDeMidiaIndisponivel(err: unknown): Set<string> {
+  if (!(err instanceof ApiError) || err.status !== 422) return new Set();
+  const problemas = (err.details as { problemas?: unknown } | undefined)?.problemas;
+  if (!Array.isArray(problemas)) return new Set();
+  return new Set(
+    problemas
+      .filter((p): p is { campo: string; motivo: string } =>
+        Boolean(p && typeof p === "object" && "campo" in p && "motivo" in p),
+      )
+      .filter((p) => p.motivo === "midia_indisponivel")
+      .map((p) => p.campo),
+  );
 }
 
 const VAZIO: NovoModelo = {
@@ -267,11 +286,32 @@ export function EditorDeModelo({ onFechar }: { onFechar: () => void }) {
   async function enviar() {
     setTentou(true);
     if (problemas.length > 0) return;
-    const r = await submeter.mutateAsync(modelo);
+    let r: Awaited<ReturnType<typeof submeter.mutateAsync>>;
+    try {
+      r = await submeter.mutateAsync(modelo);
+    } catch (err) {
+      // O aviso da recusa já saiu pelo `onError` do hook. Aqui só o arquivo
+      // que saiu do armazenamento (issue #30): o caminho velho deixa o estado,
+      // e o campo volta a pedir o arquivo em vez de repetir a mesma recusa.
+      esquecerMidiasIndisponiveis(err);
+      return;
+    }
     toast.success(
       `${t("Modelo enviado para aprovação da Meta.")} ${t("Situação:")} ${r.data.status}`,
     );
     onFechar();
+  }
+
+  function esquecerMidiasIndisponiveis(err: unknown) {
+    const campos = camposDeMidiaIndisponivel(err);
+    if (campos.size === 0) return;
+    setModelo((m) => ({
+      ...m,
+      header: m.header && campos.has("header.media") ? { ...m.header, media: null } : m.header,
+      cards: m.cards.map((c, i) =>
+        campos.has(`cards.${i}.header.media`) ? { ...c, header: { ...c.header, media: null } } : c,
+      ),
+    }));
   }
 
   const carrossel = modelo.kind === "CAROUSEL";
