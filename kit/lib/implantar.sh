@@ -106,3 +106,78 @@ dependencias_que_pioraram() {
 # mais nova) e imprime as N últimas. São as que têm imagem e código guardados
 # para uma volta.
 versoes_a_guardar() { sed '/^$/d' | tail -n "${1:-3}"; }
+
+# ─── O que sai pelo SSH (issue #39) ──────────────────────────────────────────
+#
+# O repositório é público: o que a frente devolve pelo SSH vai para o log do
+# job `implantar` (que qualquer pessoa lê) e para o corpo da issue
+# `implantacao-falhou`. A máscara do Actions não conhece nenhum segredo da VPS.
+# O registro completo fica só em /var/log/zapsales/implantar-*; pela sessão
+# saem só as linhas que o executor escreveu, e redigidas.
+
+# MARCA_DE_ETAPA — prefixo de toda linha que o executor escreve por conta
+# própria. Saída bruta (docker, psql, curl, kit/instalar.sh) não o tem e fica
+# só no registro, mesmo quando imita uma etapa.
+MARCA_DE_ETAPA='[implantar] '
+
+# _etapa TEXTO — uma linha marcada por linha de TEXTO (um motivo pode citar um
+# estado de várias linhas, e a 2ª linha sem marca sumiria da saída).
+_etapa() {
+  local l
+  while IFS= read -r l || [ -n "$l" ]; do printf '%s%s\n' "$MARCA_DE_ETAPA" "$l"; done <<< "${1:-}"
+}
+
+# usar_saida_de_etapa — troca msg/passo/aviso/falha (kit/lib/comum.sh) por
+# versões que marcam cada linha, sem cor: o registro é arquivo, e a sessão é
+# log de CI. Só o executor chama; acesso e frente seguem com as de comum.sh.
+usar_saida_de_etapa() {
+  msg()   { _etapa "$*"; }
+  passo() { _etapa ""; _etapa "▶ $*"; }
+  aviso() { _etapa "⚠ $*" >&2; }
+  falha() { _etapa ""; _etapa "✖ $*" >&2; exit 1; }
+}
+
+# titulos_do_kit — lê a saída bruta do kit/instalar.sh e devolve, como etapa,
+# só os títulos dos passos dele (`▶ …`, frases fixas do próprio kit).
+titulos_do_kit() {
+  local l
+  sed -u 's/\x1b\[[0-9;]*[A-Za-z]//g' | while IFS= read -r l; do
+    case "$l" in *"▶ "*) msg "  kit: ${l#*▶ }" ;; esac
+  done
+  return 0
+}
+
+# etapas_do_registro — camada 1: do registro, só as linhas marcadas, sem a
+# marca e sem código de cor ou \r. `sed -u`: linha a linha, sem esperar
+# encher buffer. A regex é MARCA_DE_ETAPA escapada à mão — se as duas
+# divergirem, nenhuma etapa sai, e tests/shell/kit-implantar-saida.test.sh
+# reprova.
+etapas_do_registro() {
+  sed -u -n -e '/^\[implantar\] /!d' -e 's/^\[implantar\] //' \
+    -e 's/\x1b\[[0-9;]*[A-Za-z]//g' -e 's/\r//g' -e p
+}
+
+# redigir — camada 2: troca por [redigido] os formatos conhecidos de segredo,
+# para o que a camada 1 deixar passar (um segredo interpolado numa etapa). O
+# nome da variável e a forma da URL ficam: o motivo continua legível.
+#   GitHub (ghp_ ghs_ gho_ ghu_ ghr_ github_pat_) · bearer da API (zps_) ·
+#   JWT (as chaves do Supabase) · sk-… (Anthropic, OpenAI) · Bearer/Basic ·
+#   credencial em URL (postgres://usuario:senha@) · chave privada PEM ·
+#   NOME=valor / NOME: valor quando o nome tem forma de segredo (é o que cobre
+#   os nomes de .env.example e do .env que o kit grava).
+redigir() {
+  local nome='[A-Za-z0-9_]*(KEY|SECRET|TOKEN|PASSWORD|PASSWD|SENHA|DSN|CREDENTIAL|DB_URL|DB_ADMIN_URL|DATABASE_URL)[A-Za-z0-9_]*'
+  sed -u -E \
+    -e "s/\b($nome)([[:space:]]*[=:][[:space:]]*)(\"[^\"]*\"|'[^']*'|[^[:space:]\"',;]+)/\1\3[redigido]/Ig" \
+    -e 's#([A-Za-z][A-Za-z0-9+.-]*://)[^/@[:space:]]+@#\1[redigido]@#g' \
+    -e 's/\b(gh[pousr]_|github_pat_)[A-Za-z0-9_]{8,}/[redigido]/g' \
+    -e 's/\bzps_[A-Za-z0-9_-]{8,}/[redigido]/g' \
+    -e 's/eyJ[A-Za-z0-9_-]{8,}(\.[A-Za-z0-9_-]*)*/[redigido]/g' \
+    -e 's/(^|[^A-Za-z0-9_-])sk-[A-Za-z0-9_-]{8,}/\1[redigido]/g' \
+    -e 's/\b(bearer|basic)([[:space:]]+)[^[:space:]"'"'"',;]+/\1\2[redigido]/Ig' \
+    -e 's/-----BEGIN [A-Z ]*PRIVATE KEY-----.*/[redigido]/'
+}
+
+# saida_para_o_ssh — as duas camadas, em fluxo (linha a linha: a sessão mostra
+# a implantação andando).
+saida_para_o_ssh() { etapas_do_registro | redigir; }
