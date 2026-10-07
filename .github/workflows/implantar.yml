@@ -142,7 +142,9 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
       ROTULO: implantacao-falhou
-      SHA: ${{ needs.portao.outputs.sha }}
+      # Se o portão caiu antes de saber o candidato (a API do topo da main
+      # falhou), vale o commit que disparou esta execução.
+      SHA: ${{ needs.portao.outputs.sha || github.event.workflow_run.head_sha }}
       PORTAO: ${{ needs.portao.result }}
       RESULTADO: ${{ needs.implantar.result }}
       CODIGO: ${{ needs.implantar.outputs.codigo }}

@@ -27,13 +27,17 @@ decidir() {
   TOPO="${TOPO:-}" CANDIDATO="${CANDIDATO:-}" EXIGIDOS="$EXIGIDOS" python3 -I -X utf8 -c '
 import json, os, re, sys
 
+# A entrada é lida INTEIRA antes de qualquer decisão. Sair sem ler mata quem
+# escreve no cano (SIGPIPE, 141) — e com pipefail o portão inteiro cai. Foi o
+# primeiro uso real: candidato superado, resposta da API maior que o buffer.
+bruto = sys.stdin.read()
 topo, cand = os.environ["TOPO"], os.environ["CANDIDATO"]
 if not re.fullmatch(r"[0-9a-f]{40}", cand):
     print(f"nao: candidato inválido: {cand!r}"); sys.exit(0)
 if topo != cand:
     print(f"nao: {cand} não é mais o topo da main (o topo é {topo})"); sys.exit(0)
 try:
-    execucoes = json.load(sys.stdin)["workflow_runs"]
+    execucoes = json.loads(bruto)["workflow_runs"]
 except Exception:
     print("nao: não consegui ler as execuções do GitHub"); sys.exit(0)
 
@@ -63,6 +67,9 @@ fi
 : "${REPO:?REPO=dono/repo}"
 TOPO="$(gh api "repos/$REPO/commits/main" --jq .sha)"
 CANDIDATO="${CANDIDATO:-$TOPO}"
+# O sha sai já, antes da consulta que pode falhar: a issue de falha do portão
+# diz qual commit não chegou a ser tentado (a #37 saiu com `?`).
+[ -n "${GITHUB_OUTPUT:-}" ] && printf 'sha=%s\n' "$CANDIDATO" >> "$GITHUB_OUTPUT"
 resposta="$(gh api "repos/$REPO/actions/runs?head_sha=$CANDIDATO&event=push&branch=main&per_page=100" \
   | TOPO="$TOPO" CANDIDATO="$CANDIDATO" decidir | tr -d '\r')"
 
@@ -71,7 +78,7 @@ motivo="${resposta#*: }"
 [ "$decisao" = "implantar" ] && motivo="topo da main com ci, e2e, perf e imagens verdes"
 printf 'Candidato %s → %s (%s)\n' "$CANDIDATO" "$decisao" "$motivo"
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
-  { printf 'decisao=%s\n' "$decisao"; printf 'motivo=%s\n' "$motivo"; printf 'sha=%s\n' "$CANDIDATO"; } >> "$GITHUB_OUTPUT"
+  { printf 'decisao=%s\n' "$decisao"; printf 'motivo=%s\n' "$motivo"; } >> "$GITHUB_OUTPUT"
 fi
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   printf '### Portão da implantação\n\n`%s` → **%s** — %s\n' "$CANDIDATO" "$decisao" "$motivo" >> "$GITHUB_STEP_SUMMARY"
