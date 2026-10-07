@@ -38,7 +38,8 @@ const FALHOU = pasta(ORG, 104);
 const DO_PEDIDO_LGPD = pasta(ORG, 105);
 const DA_OUTRA_ORG = pasta(OUTRA_ORG, 106);
 
-const midia = (path: string) => JSON.stringify({ path, mime_type: "image/png", file_name: "a.png" });
+const midia = (path: string) =>
+  JSON.stringify({ path, mime_type: "image/png", file_name: "a.png" });
 
 const linha = (p: string) =>
   lastLine(
@@ -48,7 +49,8 @@ const linha = (p: string) =>
     ),
   );
 
-const rodarPoda = () => JSON.parse(lastLine(sql(`select public.fn_enfileirar_midia_vencida(500)::text`)));
+const rodarPoda = () =>
+  JSON.parse(lastLine(sql(`select public.fn_enfileirar_midia_vencida(500)::text`)));
 
 function citar(headerMedia: string): void {
   sql(`insert into meta_templates (id, organization_id, waba_id, name, language, status, components, contract_hash, header_media)

@@ -65,7 +65,11 @@ async function citar(p: string): Promise<void> {
   await pool.query(
     `insert into meta_templates (id, organization_id, waba_id, name, language, status, components, contract_hash, header_media)
      values ($1, $2, 'waba-431', 'cabecalho_431', 'pt_BR', 'PENDING', '[]'::jsonb, 'h-431', $3::jsonb)`,
-    [MODELO, ORG, JSON.stringify({ "header:1": { path: p, mime_type: "image/png", file_name: "a.png" } })],
+    [
+      MODELO,
+      ORG,
+      JSON.stringify({ "header:1": { path: p, mime_type: "image/png", file_name: "a.png" } }),
+    ],
   );
 }
 
@@ -119,7 +123,10 @@ describe("drainStorageRedactionQueue — cabeçalho citado por modelo", () => {
     const stats = await drainStorageRedactionQueue({ limit: 10 });
 
     expect(noBucket(PRIMEIRO)).toBe(true);
-    expect(await linha(PRIMEIRO)).toEqual({ status: "skipped", error_message: "citado_por_modelo" });
+    expect(await linha(PRIMEIRO)).toEqual({
+      status: "skipped",
+      error_message: "citado_por_modelo",
+    });
     expect(stats).toMatchObject({ attempted: 0, deleted: 0 });
   });
 

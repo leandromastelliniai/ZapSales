@@ -137,7 +137,7 @@
       "lane": "banco",
       "col": 2,
       "type": "database",
-      "label": "Storage whatsapp-media <org>/templates/<uuid>.<ext> (a retenção só poda o que nenhum modelo cita, com mais de 7 dias)"
+      "label": "Storage whatsapp-media <org>/templates/<uuid>.<ext> (a retenção só poda o que nenhum modelo cita, com mais de 7 dias; o modelo que passa a citar tira o caminho da fila — 0543)"
     }
   ],
   "edges": [
@@ -214,6 +214,12 @@
       "from": "bucket",
       "to": "lista",
       "label": "link assinado de 1 h do arquivo guardado"
+    },
+    {
+      "id": "e25",
+      "from": "submit",
+      "to": "bucket",
+      "label": "o arquivo ainda existe e não está na fila de remoção? senão 422 midia_indisponivel (#30)"
     }
   ]
 }
