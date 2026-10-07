@@ -104,10 +104,11 @@ export const LOGOTIPO = {
 
 /**
  * As cores da marca do produto, por tema — os mesmos graus da régua
- * (`regua-do-produto.ts`): sálvia 600/400 para o símbolo, neutro 900/0 para
- * o nome e neutro 600/300 para o "CRM". Copiadas dos SVGs de `docs/brand/`.
+ * (`regua-do-produto.ts`): violeta 600/400 para o símbolo, neutro 900/50 para
+ * o nome e neutro 600/300 para o "CRM". Desde 07/10/2026 a paleta é a Futuristas
+ * (o desenho do balão é o mesmo; só as cores mudaram).
  */
 export const CORES_DA_MARCA = {
-  claro: { simbolo: "#506d48", nome: "#1c1a16", sufixo: "#5d594f" },
-  escuro: { simbolo: "#82a077", nome: "#f5f4ef", sufixo: "#8e8b7f" },
+  claro: { simbolo: "#773df9", nome: "#151a2e", sufixo: "#4b5373" },
+  escuro: { simbolo: "#9e8aff", nome: "#eef0f7", sufixo: "#a3abc6" },
 } as const;

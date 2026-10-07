@@ -14,6 +14,7 @@ import * as path from "node:path";
 import { test, expect, type Page } from "./helpers/test";
 
 import { lerCreds, loginComoAdmin } from "./helpers/login-admin";
+import { menuExpandido } from "./helpers/menu-expandido";
 import { afirmarAdminDeTenantPuro } from "./utils/precondicao";
 
 let creds = lerCreds();
@@ -83,7 +84,42 @@ async function expectSemOverflowHorizontal(page: Page, contexto: string): Promis
 // testes que já estavam verdes passaram a estourar 30 s.
 test.describe.configure({ timeout: 120_000 });
 
+// ── O padrão é o trilho ──────────────────────────────────────────────────────
+// Desde a direção "Linha do Funil" (07/10/2026) quem nunca mexeu no menu o vê
+// RECOLHIDO: só ícones, o nome de cada destino no `title`. Este caso mede o
+// padrão sem cookie nenhum; os demais desta spec medem o menu EXPANDIDO, que é
+// o que quem clica em "Expandir sidebar" vê — por isso gravam o cookie antes.
+test.describe("o menu nasce recolhido", () => {
+  test("sem preferência salva, o sidebar é um trilho de ícones com nome acessível", async ({ page }) => {
+    await loginAdmin(page);
+    const nav = sidebar(page);
+    await expect(nav).toBeVisible();
+
+    const m = await nav.evaluate((el) => {
+      const aside = el.closest("aside") ?? el;
+      const links = [...el.querySelectorAll("a")];
+      return {
+        largura: aside.getBoundingClientRect().width,
+        links: links.length,
+        semNome: links.filter((a) => !(a.getAttribute("title") || a.getAttribute("aria-label") || a.textContent?.trim())).length,
+        titulos: el.querySelectorAll("h2").length,
+      };
+    });
+    expect(m.largura, "o trilho recolhido tem 64px (w-16)").toBeLessThanOrEqual(72);
+    expect(m.links, "guarda de vacuidade: o trilho tem destinos").toBeGreaterThan(4);
+    expect(m.semNome, "todo destino do trilho precisa de nome (title)").toBe(0);
+    expect(m.titulos, "recolhido não mostra títulos de grupo").toBe(0);
+    await expect(page.getByRole("button", { name: "Expandir sidebar" })).toBeVisible();
+  });
+});
+
 test.describe("navegação agrupada", () => {
+  // O menu EXPANDIDO é o que estes casos medem: a preferência gravada por
+  // `toggleSidebar` ("0" = expandido) vem antes do login.
+  test.beforeEach(async ({ context, baseURL }) => {
+    await menuExpandido(context, baseURL);
+  });
+
   test("o sidebar tem hierarquia: grupos na ordem de uso", async ({ page }) => {
     await loginAdmin(page);
 

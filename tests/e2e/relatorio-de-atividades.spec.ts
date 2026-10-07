@@ -45,6 +45,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { expect, test, type Page } from "./helpers/test";
+import { menuExpandido } from "./helpers/menu-expandido";
 import { createClient } from "@supabase/supabase-js";
 
 import { carregarEnvLocal } from "../../scripts/lib/env-de-teste";
@@ -200,6 +201,13 @@ test.describe("Relatório de atividades — o período, pela tela", () => {
   // Fuso FIXO: a série diária é agrupada no fuso de quem lê, e um spec que
   // herdasse o fuso da máquina mediria coisas diferentes em máquinas diferentes.
   test.use({ timezoneId: "America/Sao_Paulo" });
+
+  // A porta de Atividades se acha pelo `<h2>` do grupo acima dela: esta spec
+  // mede o menu EXPANDIDO; desde 07/10/2026 o padrão é o trilho recolhido,
+  // que não desenha título de grupo nenhum.
+  test.beforeEach(async ({ context, baseURL }) => {
+    await menuExpandido(context, baseURL);
+  });
 
   test.beforeAll(async () => {
     if (!fs.existsSync(CREDS_PATH)) {

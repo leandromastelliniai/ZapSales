@@ -27,6 +27,13 @@ export type Branding = {
   logoDarkUrl?: string | null;
   /** Primeira letra do nome — usada onde só cabe um caractere (sidebar recolhida). */
   initial: string;
+  /**
+   * O ícone da aba que o operador SUBIU em `/admin/marca` (`favicon_path`), ou
+   * `null`/ausente quando não há arquivo. É o que a barra lateral RECOLHIDA mostra
+   * no lugar da inicial: desde 07/10/2026 o menu nasce recolhido, e o logo largo do
+   * revendedor só aparece expandido.
+   */
+  iconUrl?: string | null;
 };
 
 /**

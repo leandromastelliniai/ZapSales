@@ -1,3 +1,5 @@
+> **Substituída em 07/10/2026** pela [Paleta Futuristas](./02-palette-futuristas.md). Este documento fica como histórico.
+
 # 02 — Paleta Sage
 
 > **Source of truth:** `app/design/lib/tokens.ts` → `PALETTES.sage`

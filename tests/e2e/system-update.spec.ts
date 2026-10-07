@@ -37,6 +37,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { test, expect, type Page, type APIRequestContext } from "./helpers/test";
+import { menuExpandido } from "./helpers/menu-expandido";
 
 import { generateTotp, msUntilNextTotpWindow } from "./utils/totp";
 
@@ -515,7 +516,11 @@ test("quando o host não conseguiu comparar, a tela não diz que está em dia", 
 test("instalação à frente da versão publicada não vira tela quebrada nem alarme", async ({
   page,
   request,
+  baseURL,
 }) => {
+  // Lê "versão abc1234" no rodapé do menu LARGO: desde 07/10/2026 o padrão é o
+  // trilho recolhido, cujo rodapé mostra só o número.
+  await menuExpandido(page.context(), baseURL);
   // `off_release` com `latest_version` vazio: o agente não anuncia uma tag que
   // já está contida no HEAD (instalá-la seria retroceder) nem uma que ele não
   // consegue comparar. Não é defeito — e a tela não pode tratar como se fosse.
