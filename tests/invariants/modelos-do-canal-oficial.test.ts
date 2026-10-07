@@ -794,6 +794,74 @@ describe("7 · templates avançados: mídia, carrossel, oferta e flow (issue #7)
     expect(await midiasGuardadasNoEspelho("midia_alheia")).toBeUndefined();
   });
 
+  // Issue #30: o editor aberto mais de 7 dias, ou a retentativa de um envio
+  // recusado, traz de volta um caminho que a retenção já apagou ou enfileirou.
+  // A Meta aprovaria (ela guarda a amostra) e o espelho citaria um arquivo que
+  // a campanha não acha.
+  it("cabeçalho que já saiu do bucket volta 422 pedindo o arquivo de novo, sem ir à Meta nem ao espelho", async () => {
+    como(ORG_A, USER_A);
+    const fotos = [
+      await subirMidia(arquivoDeTeste(ASSINATURAS.jpeg, 300), "fica.jpg", "IMAGE"),
+      await subirMidia(arquivoDeTeste(ASSINATURAS.jpeg, 300), "apagada.jpg", "IMAGE"),
+    ];
+    storage.objetos.delete(`whatsapp-media/${fotos[1]!.path}`);
+    falso.limpar();
+
+    const res = await criar({
+      kind: "CAROUSEL",
+      name: "carrossel_sem_arquivo",
+      language: "pt_BR",
+      category: "MARKETING",
+      body: "Separei ofertas para você.",
+      cards: fotos.map((f, i) => ({
+        header: { format: "IMAGE", media: semPreview(f) },
+        body: `Produto ${i + 1}.`,
+        buttons: [{ type: "QUICK_REPLY", text: "Quero" }],
+      })),
+    });
+
+    expect(res.status).toBe(422);
+    const corpo = (await res.json()) as {
+      error: { message: string; details: { problemas: Array<{ campo: string; motivo: string }> } };
+    };
+    expect(corpo.error.message).toBe(
+      "O arquivo do cabeçalho não está mais guardado. Escolha o arquivo de novo e envie.",
+    );
+    expect(corpo.error.details.problemas).toEqual([
+      { campo: "cards.1.header.media", motivo: "midia_indisponivel" },
+    ]);
+    expect(falso.modelosCriados()).toEqual([]);
+    expect(await midiasGuardadasNoEspelho("carrossel_sem_arquivo")).toBeUndefined();
+  });
+
+  it("cabeçalho na fila de remoção volta 422 pedindo o arquivo de novo, sem ir à Meta", async () => {
+    como(ORG_A, USER_A);
+    const foto = await subirMidia(arquivoDeTeste(ASSINATURAS.png, 200), "na_fila.png", "IMAGE");
+    await pool.query(
+      `insert into storage_redaction_queue (organization_id, bucket, object_path) values ($1, 'whatsapp-media', $2)`,
+      [ORG_A, foto.path],
+    );
+    falso.limpar();
+
+    const res = await criar({
+      name: "cabecalho_na_fila",
+      language: "pt_BR",
+      category: "MARKETING",
+      header: { format: "IMAGE", media: semPreview(foto) },
+      body: "Chegou a novidade da semana.",
+    });
+
+    expect(res.status).toBe(422);
+    expect(JSON.stringify(await res.json())).toContain("midia_indisponivel");
+    expect(falso.modelosCriados()).toEqual([]);
+    // A linha da fila não é tocada pela recusa: o arquivo segue o destino dele.
+    const { rows } = await pool.query(
+      `select status from storage_redaction_queue where object_path = $1`,
+      [foto.path],
+    );
+    expect(rows[0].status).toBe("pending");
+  });
+
   it("arquivo que não serve de cabeçalho (GIF) volta 415 e não vai à Meta nem ao storage", async () => {
     como(ORG_A, USER_A);
     falso.limpar();

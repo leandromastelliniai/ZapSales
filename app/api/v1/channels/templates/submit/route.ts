@@ -10,7 +10,11 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
  *
  * A mídia chega já enviada pela rota irmã (`../media`, issue #7): o `handle` da
  * Meta e o caminho da cópia no storage. O caminho vem do corpo, então é
- * conferido contra a organização da SESSÃO antes de ir para o espelho.
+ * conferido contra a organização da SESSÃO antes de ir para o espelho — e
+ * conferido no bucket (issue #30): o editor aberto mais de 7 dias, ou a
+ * retentativa de um envio recusado, traz um caminho que a retenção (0542) já
+ * apagou ou enfileirou. A Meta aprovaria, porque guarda a própria amostra, e o
+ * espelho citaria um arquivo que o disparo não acha.
  * O que só a Meta sabe recusar volta 422 `meta_template_refused` com a frase dela.
  *
  * Mesmo papel e mesma trava de suporte das irmãs (`../route.ts`): modelo é
@@ -29,7 +33,10 @@ import { fail, ok } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { resolveMetaCreds } from "@/lib/channels/meta/credentials";
-import { caminhoEhDaOrganizacao } from "@/lib/channels/meta/midia-de-modelo";
+import {
+  BUCKET_DA_MIDIA_DE_MODELO,
+  caminhoEhDaOrganizacao,
+} from "@/lib/channels/meta/midia-de-modelo";
 import { novoModeloSchema, type NovoModelo } from "@/lib/channels/meta/novo-modelo";
 import { metaSessionForOrg } from "@/lib/channels/meta/session";
 import {
@@ -52,11 +59,56 @@ const ENDPOINT = "/api/v1/channels/templates/submit";
  * foi forjado, e gravá-lo poria no espelho daqui o arquivo de outra empresa.
  */
 function midiasAlheias(m: NovoModelo, orgId: string): string[] {
+  return midiasDoCorpo(m)
+    .filter(([, path]) => !caminhoEhDaOrganizacao(path, orgId))
+    .map(([campo]) => campo);
+}
+
+/** Cada mídia do corpo, como `[campo do editor, caminho no storage]`. */
+function midiasDoCorpo(m: NovoModelo): Array<[string, string]> {
   const campos: Array<[string, string | undefined]> = [
     ["header.media", m.header?.media?.path],
     ...m.cards.map((c, i): [string, string | undefined] => [`cards.${i}.header.media`, c.header.media?.path]),
   ];
-  return campos.filter(([, path]) => path && !caminhoEhDaOrganizacao(path, orgId)).map(([campo]) => campo);
+  return campos.filter((c): c is [string, string] => Boolean(c[1]));
+}
+
+/**
+ * Os campos de mídia cujo arquivo não serve mais (issue #30): saiu do bucket,
+ * ou está `pending` na fila de remoção — o worker pode apagá-lo enquanto a
+ * Meta revisa. Quem resolve é o operador, enviando o arquivo de novo: um
+ * caminho novo nasce fora da fila e com a carência inteira. Lança quando não
+ * dá para conferir; nada foi à Meta, e tentar de novo é seguro.
+ */
+async function midiasIndisponiveis(
+  admin: ReturnType<typeof createAdminClient>,
+  m: NovoModelo,
+  orgId: string,
+): Promise<string[]> {
+  const campos = midiasDoCorpo(m);
+  if (campos.length === 0) return [];
+
+  const { data: naFila, error } = await admin
+    .from("storage_redaction_queue")
+    .select("object_path")
+    .eq("organization_id", orgId)
+    .eq("bucket", BUCKET_DA_MIDIA_DE_MODELO)
+    .eq("status", "pending")
+    .in(
+      "object_path",
+      campos.map(([, path]) => path),
+    );
+  if (error) throw new Error(error.message);
+  const pendentes = new Set((naFila ?? []).map((r) => r.object_path));
+
+  const disponiveis = await Promise.all(
+    campos.map(async ([, path]) => {
+      if (pendentes.has(path)) return false;
+      const { data } = await admin.storage.from(BUCKET_DA_MIDIA_DE_MODELO).exists(path);
+      return data;
+    }),
+  );
+  return campos.filter((_, i) => !disponiveis[i]).map(([campo]) => campo);
 }
 
 /** A recusa atravessa o `comIdempotencia` como exceção — assim ela não vira recibo. */
@@ -126,10 +178,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return fail("validation_failed", "Idempotency-Key deve ser UUID", 400, { requestId });
   }
 
+  const admin = createAdminClient();
+
+  let indisponiveis: string[];
+  try {
+    indisponiveis = await midiasIndisponiveis(admin, parsed.data, orgId);
+  } catch {
+    return fail("internal_error", "Não deu para conferir o arquivo do cabeçalho. Tente de novo.", 500, {
+      requestId,
+    });
+  }
+  if (indisponiveis.length > 0) {
+    return fail(
+      "validation_failed",
+      "O arquivo do cabeçalho não está mais guardado. Escolha o arquivo de novo e envie.",
+      422,
+      {
+        requestId,
+        details: { problemas: indisponiveis.map((campo) => ({ campo, motivo: "midia_indisponivel" })) },
+      },
+    );
+  }
+
   const sessao = await metaSessionForOrg(orgId);
   if (!sessao?.wabaId) return fail("invalid_request", "no_meta_channel", 400, { requestId });
 
-  const admin = createAdminClient();
   // A credencial da SESSÃO, com o ambiente de reserva — a mesma porta do sync e do envio.
   const creds = await resolveMetaCreds(admin, {
     organizationId: orgId,

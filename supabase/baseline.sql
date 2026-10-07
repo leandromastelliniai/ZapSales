@@ -47656,3 +47656,42 @@ alter table public.platform_settings
 alter table public.platform_settings drop constraint if exists platform_settings_cotacao_check;
 alter table public.platform_settings
   add constraint platform_settings_cotacao_check check (cotacao_usd_brl is null or cotacao_usd_brl > 0);
+
+-- ---- cabeçalho citado por modelo sai da fila de remoção (migration 0543) ----
+-- Espelho idempotente. Racional completo no arquivo da migration: o modelo que
+-- passa a citar um caminho de `<org>/templates/` enfileirado pela poda (0542)
+-- tira da fila a linha `pending` de retenção, na mesma organização. O worker só
+-- apaga linha ainda `pending`, e a rota de criação recusa caminho que já saiu.
+create or replace function public.fn_cabecalho_citado_sai_da_fila()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if jsonb_typeof(new.header_media) is distinct from 'object' then
+    return null;
+  end if;
+
+  update public.storage_redaction_queue q
+     set status = 'skipped',
+         processed_at = now(),
+         error_message = 'citado_por_modelo'
+    from jsonb_each(new.header_media) h
+   where jsonb_typeof(h.value) = 'object'
+     and q.object_path = h.value ->> 'path'
+     and q.bucket = 'whatsapp-media'
+     and q.organization_id = new.organization_id
+     and q.request_id is null
+     and q.status = 'pending';
+
+  return null;
+end;
+$$;
+
+revoke execute on function public.fn_cabecalho_citado_sai_da_fila() from public, anon, authenticated;
+
+drop trigger if exists trg_meta_templates_cabecalho_citado on public.meta_templates;
+create trigger trg_meta_templates_cabecalho_citado
+  after insert or update of header_media on public.meta_templates
+  for each row execute function public.fn_cabecalho_citado_sai_da_fila();

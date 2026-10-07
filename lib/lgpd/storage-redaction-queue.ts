@@ -2,9 +2,14 @@
  * Storage redaction queue — drains `storage_redaction_queue` rows enqueued by
  * the cascade RPC and removes the underlying objects from Supabase Storage.
  *
- * Idempotent: rows are claimed by status transition pending → processing
- * (we set processed_at + attempts++) and finalized to deleted | failed |
- * skipped. Re-runs ignore terminal rows.
+ * Idempotent: each row is claimed right before its object is removed
+ * (`attempts++` only while the row is still `pending`) and finalized to
+ * deleted | failed | skipped. Re-runs ignore terminal rows.
+ *
+ * The claim matters because the batch is read once and processed in sequence:
+ * a row can leave the queue in the meantime — a template that starts citing a
+ * `<org>/templates/` file marks its row `skipped` (migration 0543, issue #30) —
+ * and removing from the stale batch would delete the file the template signs.
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -61,6 +66,27 @@ export async function drainStorageRedactionQueue(
   for (const row of queueRows) {
     stats.attempted++;
     const nextAttempts = row.attempts + 1;
+
+    const { data: claimed, error: claimErr } = await admin
+      .from("storage_redaction_queue")
+      .update({ attempts: nextAttempts })
+      .eq("id", row.id)
+      .eq("status", "pending")
+      .select("id");
+    if (claimErr) {
+      // Nothing was removed: the row stays `pending` for the next run.
+      logger.warn("[lgpd-redact-worker] queue claim failed", {
+        queue_id: row.id,
+        organization_id: row.organization_id,
+        error_message: claimErr.message,
+      });
+      continue;
+    }
+    if (!claimed || claimed.length === 0) {
+      // Left the queue after the batch was read; whoever moved it set the status.
+      stats.skipped++;
+      continue;
+    }
 
     try {
       const { error: removeErr } = await admin.storage

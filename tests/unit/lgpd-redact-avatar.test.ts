@@ -73,11 +73,13 @@ vi.mock("@/lib/supabase/admin", () => ({
           inserts.push({ tabela, payload, opcoes });
           return { error: erroDoInsert };
         }),
+      // Devolve a linha tocada: o worker reivindica cada linha com
+      // `update().eq("status", "pending").select("id")` antes de apagar (#30).
       update: (patch: Record<string, unknown>) =>
         chain(async () => {
           ops.push(`update:${tabela}`);
           updates.push({ tabela, patch });
-          return { error: null };
+          return { data: [{ id: "linha" }], error: null };
         }),
     }),
     storage: {
@@ -206,7 +208,7 @@ describe("drainStorageRedactionQueue — o arquivo sai do bucket", () => {
 
     expect(removes).toEqual([{ bucket: "whatsapp-media", caminhos: [CAMINHO] }]);
     expect(stats).toMatchObject({ attempted: 1, deleted: 1, failed: 0 });
-    expect(updates.find((u) => u.tabela === "storage_redaction_queue")?.patch).toMatchObject({
+    expect(updates.find((u) => u.tabela === "storage_redaction_queue" && "status" in u.patch)?.patch).toMatchObject({
       status: "deleted",
     });
   });
@@ -220,7 +222,7 @@ describe("drainStorageRedactionQueue — o arquivo sai do bucket", () => {
     const stats = await drainStorageRedactionQueue({ limit: 10 });
 
     expect(stats).toMatchObject({ attempted: 1, skipped: 1, deleted: 0 });
-    expect(updates.find((u) => u.tabela === "storage_redaction_queue")?.patch).toMatchObject({
+    expect(updates.find((u) => u.tabela === "storage_redaction_queue" && "status" in u.patch)?.patch).toMatchObject({
       status: "skipped",
     });
   });
