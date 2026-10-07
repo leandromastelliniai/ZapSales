@@ -30,6 +30,7 @@ import * as path from "node:path";
 import { test, expect, type Page } from "./helpers/test";
 
 import { lerCreds, loginComoAdmin } from "./helpers/login-admin";
+import { menuExpandido } from "./helpers/menu-expandido";
 
 let creds = lerCreds();
 const EVIDENCE = path.join(process.cwd(), ".superpowers", "evidence");
@@ -80,6 +81,13 @@ async function escolherPerfil(page: Page, perfil: "Completa" | "Simplificada"): 
   // acontecer antes de a action gravar, e o teste mediria o estado anterior.
   await expect(page.getByText(/menu lateral da empresa salvo/i)).toBeVisible({ timeout: 15_000 });
 }
+
+// Esta spec mede o menu EXPANDIDO; desde 07/10/2026 o padrão é o trilho recolhido:
+// `itensDoMenu` conta o TEXTO dos links, e recolhido eles só têm ícone e `title`
+// — a lista viria vazia, e o caso reprovaria na guarda de vacuidade.
+test.beforeEach(async ({ context, baseURL }) => {
+  await menuExpandido(context, baseURL);
+});
 
 test.afterAll(async ({ browser }) => {
   // Rede de segurança: se um caso falhar no meio, a organização não pode ficar

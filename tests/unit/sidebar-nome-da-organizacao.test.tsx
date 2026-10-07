@@ -186,3 +186,41 @@ describe("o logo na barra lateral", () => {
     expect(screen.getByText("Sistema do Revendedor")).toBeTruthy();
   });
 });
+
+/**
+ * O menu nasce RECOLHIDO desde 07/10/2026, e recolhido a barra não desenha o logo
+ * largo. Sem isto, a marca do revendedor sumiria do menu padrão e sobraria a inicial.
+ */
+describe("recolhida, a marca do revendedor é o ícone que ele subiu", () => {
+  const ICONE = "https://cdn.exemplo.test/icone-do-revendedor.png";
+
+  afterEach(() => {
+    marcaDaInstalacao = { name: "Sistema do Revendedor", logoUrl: null, initial: "S" };
+  });
+
+  it("com ícone subido, desenha o ícone no lugar da inicial", () => {
+    marcaDaInstalacao = { ...marcaDaInstalacao, iconUrl: ICONE };
+    contexto = { user: usuario, activeOrg: org };
+    const { container } = renderSidebar({ collapsed: true });
+    expect(container.querySelector(`img[src="${ICONE}"]`)).not.toBeNull();
+    expect(screen.queryByText("S")).toBeNull();
+  });
+
+  it("com logo da organização, o ícone do revendedor NÃO entra — seria a marca errada", () => {
+    marcaDaInstalacao = { ...marcaDaInstalacao, iconUrl: ICONE };
+    contexto = {
+      user: usuario,
+      activeOrg: { ...org, marca: { nome: "Loja da Ana", logoUrl: "https://cdn.exemplo.test/ana.png" } },
+    };
+    const { container } = renderSidebar({ collapsed: true });
+    expect(container.querySelector(`img[src="${ICONE}"]`)).toBeNull();
+    expect(screen.getByText("L")).toBeTruthy();
+  });
+
+  it("sem ícone subido, continua a inicial (guarda de vacuidade)", () => {
+    contexto = { user: usuario, activeOrg: org };
+    const { container } = renderSidebar({ collapsed: true });
+    expect(container.querySelector("img")).toBeNull();
+    expect(screen.getByText("S")).toBeTruthy();
+  });
+});

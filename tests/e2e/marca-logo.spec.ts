@@ -74,6 +74,7 @@ import * as zlib from "node:zlib";
 
 import { test, expect, type Page, type Browser, type Locator } from "./helpers/test";
 
+import { menuExpandido } from "./helpers/menu-expandido";
 import { generateTotp, msUntilNextTotpWindow } from "./utils/totp";
 import { TAMANHO_MAXIMO_DO_LOGO } from "@/lib/branding/logo";
 import { lerPng, montarPng, ruidoQuantizado } from "../helpers/png-sintetico";
@@ -736,6 +737,16 @@ test.describe("o logo subido pela tela chega à tela", () => {
    * caso faz, e o teto dele acompanha o trabalho.
    */
   test.setTimeout(180_000);
+
+  // Esta spec mede o menu EXPANDIDO; desde 07/10/2026 o padrão é o trilho recolhido:
+  // recolhida, a barra NÃO desenha o `<img>` do logo enviado — só a inicial do
+  // nome (`Sidebar.tsx`, `(logo || logoEscuro) && !collapsed`). O que se prova
+  // aqui é a camada certa chegando ao `<img>`, e ele só existe com a barra larga.
+  // Só o `context` do caso precisa: os contextos extras (dono, fachada, afterAll)
+  // sobem arquivo ou olham o `/login`, e nenhum deles mede a barra.
+  test.beforeEach(async ({ context, baseURL }) => {
+    await menuExpandido(context, baseURL);
+  });
 
   test("(1) o dono do servidor sobe o logo e ele aparece na barra lateral", async ({ page }) => {
     // ESTE CASO NÃO USA `subirLogoDaCamada`, de propósito: a subida é o que ele

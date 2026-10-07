@@ -32,6 +32,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { expect, test, type Locator, type Page } from "./helpers/test";
+import { menuExpandido } from "./helpers/menu-expandido";
 import { createClient } from "@supabase/supabase-js";
 
 import { carregarEnvLocal } from "../../scripts/lib/env-de-teste";
@@ -489,6 +490,14 @@ test.describe("Quadro do funil — agir em vários cards de uma vez", () => {
    */
   test.describe("o quadro cabe na tela", () => {
     test.use({ viewport: { width: 820, height: 600 } });
+
+    // A fixture depende da barra ABERTA: esta spec mede o menu EXPANDIDO; desde 07/10/2026 o padrão é o trilho recolhido.
+    // Com o trilho de 64px sobram 708px para o quadro, duas etapas de 20rem
+    // (684px com o respiro) passam a caber lado a lado, e "o quadro rola de lado"
+    // reprovaria como fixture — não como defeito.
+    test.beforeEach(async ({ context, baseURL }) => {
+      await menuExpandido(context, baseURL);
+    });
 
     test("a barra lateral fica no pé da tela e o nome da etapa não some ao rolar", async ({ page }) => {
       await login(page, creds.users.manager!.email, creds.password);

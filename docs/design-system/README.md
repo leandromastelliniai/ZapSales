@@ -3,7 +3,8 @@
 > **Versão:** v1.0 (lockada em 2026-04-28)
 > **Status:** Ativa
 > **Direção:** Soft-tech / calmo, anti-genérico
-> **Stack visual:** Sage + Atkinson Hyperlegible + IBM Plex Mono + Aerada + Phosphor (duotone)
+> **Stack visual:** Futuristas (noite + violeta, escuro padrão) + Atkinson Hyperlegible + IBM Plex Mono + Aerada + Phosphor (duotone)
+> **Paleta trocada em 07/10/2026:** a Sage deu lugar à [Paleta Futuristas](./02-palette-futuristas.md), por decisão do dono do produto. Onde um documento desta pasta ainda citar a Sage, vale a Futuristas.
 
 Esta pasta é a **fonte canônica** da linguagem visual do ZapSales. Toda decisão de UI deve consultar estes documentos antes de implementação. Quando houver conflito entre código e doc, **a doc vence** — ajuste o código.
 
@@ -13,7 +14,8 @@ Esta pasta é a **fonte canônica** da linguagem visual do ZapSales. Toda decis�
 |---|-----------|-------------|
 | 00 | [Overview](./00-overview.md) | Filosofia, princípios, referências |
 | 01 | [Foundation Tokens](./01-foundation-tokens.md) | Spacing, radius, shadow, motion, z-index |
-| 02 | [Paleta Sage](./02-palette-sage.md) | 22 stops com hex (light + dark), estados, contraste |
+| 02 | [Paleta Futuristas](./02-palette-futuristas.md) | Violeta da marca, papéis da Inbox (IA, humano, funil, ação), escuro padrão |
+| 02 (histórico) | [Paleta Sage](./02-palette-sage.md) | A paleta anterior, substituída em 07/10/2026 |
 | 03 | [Tipografia](./03-typography.md) | Atkinson Hyperlegible, escala, IBM Plex Mono |
 | 04 | [Densidade Aerada](./04-density-aerada.md) | Row 56 / gap 24, quando overrider |
 | 05 | [Iconografia Phosphor](./05-iconography-phosphor.md) | Duotone, mapeamento por feature |
@@ -26,7 +28,7 @@ Esta pasta é a **fonte canônica** da linguagem visual do ZapSales. Toda decis�
 
 | Decisão | Onde está canonizada | Quando consultar |
 |---------|----------------------|------------------|
-| Cor (hex, stop, estado) | `02-palette-sage.md` + `app/design/lib/tokens.ts` | Sempre que precisar referenciar uma cor |
+| Cor (hex, stop, estado) | `02-palette-futuristas.md` + `app/globals.css` | Sempre que precisar referenciar uma cor |
 | Spacing / radius / shadow | `01-foundation-tokens.md` + `app/design/lib/tokens.ts` | Toda vez que escrever CSS de layout |
 | Tamanho/peso de texto | `03-typography.md` | Ao criar headers, body, dados, captions |
 | Altura de linha de inbox / kanban / tabela | `04-density-aerada.md` | Ao desenhar listas e grids |

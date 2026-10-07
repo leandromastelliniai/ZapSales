@@ -5,7 +5,7 @@ import { Toaster } from "sonner";
 import { coresDaBarraDoNavegador } from "@/lib/branding/barra-do-navegador";
 import { MarcaDaInstalacaoProvider } from "@/lib/branding/contexto";
 import { cssDaMarca } from "@/lib/branding/css";
-import { iconeDaAba } from "@/lib/branding/icone";
+import { iconeDaAba, iconeSubido } from "@/lib/branding/icone";
 import {
   marcaDaInstalacao,
   motivoDoFallback,
@@ -120,7 +120,9 @@ export const viewport: Viewport = {
 
 // Inline FOUC-prevention. Conteúdo é string literal estática (zero input do usuário),
 // portanto seguro. Lê localStorage + prefers-color-scheme antes do primeiro paint.
-const THEME_INIT_SCRIPT = `(function(){try{var s=localStorage.getItem('zapsales-theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;var r=(s==='dark'||s==='light')?s:((s==='system'||!s)&&d?'dark':'light');document.documentElement.setAttribute('data-theme',r);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
+// Sem escolha salva, o padrão é o ESCURO (`TEMA_PADRAO` em lib/theme.tsx); só quem
+// escolheu "system" segue o sistema operacional.
+const THEME_INIT_SCRIPT = `(function(){try{var s=localStorage.getItem('zapsales-theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;var r=(s==='dark'||s==='light')?s:(s==='system'?(d?'dark':'light'):'dark');document.documentElement.setAttribute('data-theme',r);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
 
 /**
  * Motivos já registrados neste processo. `EstiloDaMarca` roda em TODA
@@ -258,7 +260,7 @@ async function MarcaNoNavegador() {
  * mesma resposta antes de o documento ser liberado.
  */
 async function MarcaDosClientComponents({ children }: { children: React.ReactNode }) {
-  const { marca } = await marcaResolvida();
+  const { linha, marca } = await marcaResolvida();
   // Só os três campos de `Branding`: `marca` carrega junto `cor`, `origens` e
   // `motivos`, que são diagnóstico do servidor e não têm leitor no navegador —
   // mandá-los engordaria o payload do RSC de TODA página com dado que ninguém lê.
@@ -269,6 +271,7 @@ async function MarcaDosClientComponents({ children }: { children: React.ReactNod
         logoUrl: marca.logoUrl,
         logoDarkUrl: marca.logoDarkUrl,
         initial: marca.initial,
+        iconUrl: iconeSubido(linha?.favicon_path),
       }}
     >
       {children}
