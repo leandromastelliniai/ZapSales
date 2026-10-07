@@ -166,9 +166,31 @@ recusada — o merge seguinte é implantado logo depois.
 Código 4 é "falhou e a volta também falhou" — alguém precisa olhar agora.
 
 Toda falha (2, 3, 4, ou a conexão que não chegou) abre a issue com o rótulo
-`implantacao-falhou`; a implantação seguinte que passa a fecha. O registro completo do kit fica
-**só na VPS** (`/var/log/zapsales/implantar-*-kit.log`): ele traz o e-mail do administrador e os
-domínios dos sites vizinhos, e o log do Actions de um repositório público é público.
+`implantacao-falhou`; a implantação seguinte que passa a fecha.
+
+**O registro completo fica só na VPS**, em `/var/log/zapsales/implantar-*` — o da implantação
+(`implantar-<data>-<commit>.log`) e o do kit (`…-kit.log`). É lá que se lê o motivo de uma falha.
+Pelo SSH saem **só as etapas**, e é isso que o log do job `implantar` e a cauda da issue mostram.
+O porquê: o repositório é público, então o log do Actions é público, e a cauda vai para o corpo
+de uma issue sem máscara nenhuma. A máscara automática do Actions só cobre os segredos que o
+GitHub conhece — nenhum da VPS (`.env`, chaves do Supabase, `WAHA_API_KEY`, chaves de IA, a
+string de conexão do Postgres). O kit traz ainda o e-mail do administrador e os domínios dos
+sites vizinhos. Um `docker compose` verboso ou um erro do `psql` que ecoe a URL de conexão
+bastariam para um segredo da produção virar texto público. São duas camadas
+(`kit/lib/implantar.sh`, issue #39):
+
+1. **A VPS decide o que sai.** Só as linhas que o próprio `kit/implantar.sh` escreveu (marcadas
+   com `[implantar] ` no registro) passam; saída bruta de `docker`, `psql`, `curl` ou
+   `kit/instalar.sh` fica no registro. Do kit, sai só o título de cada passo (`kit: …`).
+2. **Redação de tudo o que sai**, para o que a primeira deixar passar: tokens do GitHub
+   (`ghp_`, `ghs_`, `github_pat_`…), `zps_`, `Bearer …`, JWT, `sk-…`, credencial em URL
+   (`postgres://usuario:senha@`) e `NOME=valor` quando o nome tem forma de segredo viram
+   `[redigido]`. O workflow aplica a mesma redação de novo antes do `tee`. A lista acima é um
+   resumo; a que vale é o código: `sed -n '/^redigir()/,/^}/p' kit/lib/implantar.sh`.
+
+A prova é `tests/shell/kit-implantar-saida.test.sh` (`pnpm test:shell`). O comando instalado na
+VPS só se atualiza pelo próprio kit, no meio de uma implantação: a **primeira** depois de uma
+mudança aqui ainda roda a frente antiga — e para essa só vale a redação do workflow.
 
 ### Preparar (uma vez)
 
