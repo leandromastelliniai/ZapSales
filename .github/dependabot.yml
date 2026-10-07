@@ -4,6 +4,15 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # Espera 7 dias antes de propor uma versão (issue #41). Pacote comprometido
+    # no npm e ação comprometida no GitHub costumam ser descobertos e retirados
+    # em poucos dias; sem o prazo, o PR chega no dia da publicação e entra com o
+    # CI verde, e as imagens desta `main` são as que toda VPS de cliente puxa.
+    # Os ALERTAS DE SEGURANÇA não esperam: o prazo só vale para atualização de
+    # versão. Uma regra só, nas duas entradas — cerca em
+    # tests/unit/dependabot-tem-cooldown.test.ts.
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     groups:
       minor-and-patch:
@@ -20,3 +29,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # O mesmo prazo de 7 dias da entrada npm, pelo mesmo motivo (issue #41).
+    cooldown:
+      default-days: 7
