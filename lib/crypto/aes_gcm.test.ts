@@ -25,13 +25,13 @@ const SEGREDO = "sk-ant-api03-coração-🔐-ÁÉÍÓÚ-çã";
 
 /** O erro que `decryptKey` lança, ou falha o teste se ela não lançar. */
 function recusa(input: Parameters<typeof decryptKey>[0]): Error {
+  let texto: string;
   try {
-    const texto = decryptKey(input);
-    throw new Error(`decifrou o que devia recusar (${texto.length} chars)`);
+    texto = decryptKey(input);
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith("decifrou o que devia recusar")) throw e;
     return e as Error;
   }
+  throw new Error(`decifrou o que devia recusar (${texto.length} chars)`);
 }
 
 /** Nada do segredo, da etiqueta nem do IV — em claro, hex ou base64. */
@@ -67,6 +67,7 @@ describe("a etiqueta tem de ter exatamente 16 bytes", () => {
     const tag = Buffer.concat([s.tag, Buffer.from([0])]);
     const erro = recusa({ ...s, tag });
     expect(erro.message).toMatch(/etiqueta/i);
+    expect(erro.message).toContain("16");
     semMaterial(erro, s, [tag]);
   });
 

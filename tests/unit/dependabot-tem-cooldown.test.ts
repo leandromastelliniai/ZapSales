@@ -108,16 +108,28 @@ describe("a régua (controles)", () => {
 
   it("reprova `default-days: 0` e `cooldown` sem `default-days`", () => {
     expect(semPrazo(COM_PRAZO.replace("default-days: 7", "default-days: 0"))).toHaveLength(1);
-    expect(
-      semPrazo(COM_PRAZO.replace("default-days: 7", "semver-major-days: 30")),
-    ).toHaveLength(1);
+    expect(semPrazo(COM_PRAZO.replace("default-days: 7", "semver-major-days: 30"))).toHaveLength(1);
   });
 
-  it("não aceita `cooldown` de outra entrada nem de comentário", () => {
+  it("não aceita `cooldown` de outra entrada", () => {
     const vizinha = COM_PRAZO.replace("    cooldown:\n      default-days: 7\n", "");
     expect(semPrazo(vizinha)).toEqual([expect.stringContaining('"npm"')]);
-    const comentado = vizinha.replace('    directory: "/"', '    directory: "/"\n    # cooldown:');
-    expect(semPrazo(comentado)).toHaveLength(1);
+  });
+
+  it("não aceita `default-days` comentado", () => {
+    const comentado = COM_PRAZO.replace(
+      "    cooldown:\n      default-days: 7\n",
+      "    cooldown:\n      # default-days: 7\n      semver-major-days: 30\n",
+    );
+    expect(semPrazo(comentado)).toEqual([expect.stringContaining('"npm"')]);
+  });
+
+  it("aceita comentário no fim da linha (é o que a limpeza de comentários compra)", () => {
+    const anotado = COM_PRAZO.replace(
+      "    cooldown:\n      default-days: 7\n",
+      "    cooldown: # issue #41\n      default-days: 7 # uma semana\n",
+    );
+    expect(semPrazo(anotado)).toEqual([]);
   });
 });
 
@@ -128,6 +140,15 @@ describe("o dependabot.yml deste repositório", () => {
     expect(entradas(texto).map((e) => e.ecossistema)).toEqual(
       expect.arrayContaining(["npm", "github-actions"]),
     );
+  });
+
+  it("lê toda entrada que o arquivo declara, nenhuma fica de fora do regex", () => {
+    // Entrada escrita com outra chave antes de `package-ecosystem` não casa com
+    // INICIO_DE_ENTRADA e sumiria da lista em silêncio, com o gate verde.
+    const declaradas = texto
+      .split(/\r?\n/)
+      .filter((l) => /^\s*(?:-\s+)?package-ecosystem:/.test(l)).length;
+    expect(entradas(texto)).toHaveLength(declaradas);
   });
 
   it("toda entrada espera antes de propor uma versão", () => {
