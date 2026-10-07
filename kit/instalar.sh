@@ -435,9 +435,13 @@ preparar_imagens() {
       # `sha-<commit>`, e grava o commit em .zapsales-revisao. Rodar o kit à mão
       # depois disso, sobre o MESMO código, mantém a mesma imagem — cair na
       # versão do package.json poria a última release sobre um banco mais novo.
-      if [ -z "$versao" ]; then
+      # O commit vem do .zapsales-revisao, que é quem a implantação grava, e não
+      # do `git HEAD`: num clone, o código sobreposto pela implantação não move o HEAD.
+      local rev_implantada
+      rev_implantada="$(tr -d '[:space:]' < "$RAIZ/.zapsales-revisao" 2>/dev/null || true)"
+      if [ -z "$versao" ] && [ -n "$rev_implantada" ]; then
         case "$(env_ler "$ENV_ARQ" APP_IMAGE)" in
-          *":sha-$(revisao_do_codigo)") versao="sha-$(revisao_do_codigo)" ;;
+          *":sha-$rev_implantada") versao="sha-$rev_implantada" ;;
         esac
       fi
       versao="${versao:-$(sed -nE 's/^ *"version": *"([^"]+)".*/\1/p' "$RAIZ/package.json" | head -1)}"
@@ -451,7 +455,15 @@ preparar_imagens() {
       env_definir "$ENV_ARQ" WORKER_IMAGE "$REGISTRO_IMAGENS/zapsales-worker:$versao"
       env_definir "$ENV_ARQ" SCHEDULER_IMAGE "$REGISTRO_IMAGENS/zapsales-scheduler:$versao"
       for s in APP WORKER SCHEDULER; do env_definir "$ENV_ARQ" "${s}_PULL_POLICY" missing; done
-      dc pull --quiet app worker scheduler || falha "Não consegui puxar as imagens da versão $versao. Se o registro é privado, faça 'docker login ghcr.io' antes; se a versão não foi publicada, use ZAPSALES_IMAGENS=construir."
+      # Etiqueta `sha-<commit>` é imutável: já no disco, não há o que puxar — e
+      # a implantação contínua chega aqui sem credencial do registro.
+      if [[ "$versao" == sha-* ]] && docker image inspect \
+          "$REGISTRO_IMAGENS/zapsales:$versao" "$REGISTRO_IMAGENS/zapsales-worker:$versao" \
+          "$REGISTRO_IMAGENS/zapsales-scheduler:$versao" >/dev/null 2>&1; then
+        msg "  as três imagens $versao já estão nesta máquina."
+      else
+        dc pull --quiet app worker scheduler || falha "Não consegui puxar as imagens da versão $versao. Se o registro é privado, faça 'docker login ghcr.io' antes; se a versão não foi publicada, use ZAPSALES_IMAGENS=construir."
+      fi
       ;;
     construir)
       passo "Imagens: construindo nesta VPS (ZAPSALES_IMAGENS=construir)"
@@ -710,7 +722,8 @@ agendar_backups
 provar
 # O comando da implantação contínua (kit/implantar.sh) acompanha o código: cada
 # rodada bem-sucedida o reinstala. Ele só aceita conexão do GitHub depois de
-# `kit/implantar.sh acesso`, que é decisão do operador.
-"$KIT/implantar.sh" instalar-comando
+# `kit/implantar.sh acesso`, que é decisão do operador. Falhar aqui não desfaz
+# uma instalação que acabou de passar nas provas.
+"$KIT/implantar.sh" instalar-comando || aviso "Não consegui instalar o comando zapsales-implantar (só a implantação contínua depende dele)."
 relatar_vizinhos
 resumo

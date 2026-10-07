@@ -267,6 +267,16 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
       "viu o topo da main com ci, e2e, perf e as imagens verdes; trocar a condição por outra " +
       "implantaria sem esse portão.",
   },
+  "implantar.yml::avisar": {
+    condicao:
+      "always() && (needs.portao.result == 'failure' || needs.implantar.result == 'success' || " +
+      "needs.implantar.result == 'failure' || needs.implantar.result == 'cancelled')",
+    efeito:
+      "Este job abre a issue `implantacao-falhou` quando o portão quebra ou a implantação não " +
+      "passa, e a fecha na seguinte que passa — o aviso que a issue #24 exige. Precisa de " +
+      "`always()` para ler o resultado dos outros dois; sem uma das condições, uma falha " +
+      "(portão, implantação, cancelamento) passaria em silêncio.",
+  },
   "relogio.yml::tick": {
     condicao: "vars.RELOGIO_LIGADO == '1' || github.event_name == 'workflow_dispatch'",
     efeito:

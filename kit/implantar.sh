@@ -18,7 +18,7 @@
 #
 # Três formas de chamar:
 #
-#   sudo kit/implantar.sh acesso "ssh-ed25519 AAAA… github-implantar"
+#   sudo kit/implantar.sh acesso "ssh-ed25519 AAAA… github-implantar" [endereço público]
 #       Prepara a VPS uma vez: instala o comando, cria o usuário zapsales-deploy
 #       com a chave (sem terminal, sem túnel, um comando só) e imprime a linha
 #       de known_hosts que vai para o segredo do GitHub.
@@ -81,7 +81,7 @@ instalar_comando() {
 
 acesso() {
   exigir_root
-  local chave="${1:-}" casa
+  local chave="${1:-}" host="${2:-}" casa
   [[ "$chave" =~ ^(ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)\ [A-Za-z0-9+/=]+(\ [^[:cntrl:]]*)?$ ]] \
     || falha "Passe a chave PÚBLICA, numa linha: sudo kit/implantar.sh acesso \"ssh-ed25519 AAAA… comentario\""
   command -v python3 >/dev/null || falha "python3 não está instalado (a implantação lê JSON com ele)."
@@ -118,11 +118,12 @@ acesso() {
   msg "  $regra"
 
   passo "Para os segredos do GitHub (Settings › Secrets and variables › Actions)"
-  local ip
-  ip="$(hostname -I | awk '{print $1}')"
-  msg "  DEPLOY_SSH_HOST         $ip"
+  # O endereço público pode não ser o primeiro de `hostname -I` (rede privada,
+  # IPv6): passe-o como segundo argumento quando for o caso. Porta 22.
+  [ -n "$host" ] || host="$(hostname -I | awk '{print $1}')"
+  msg "  DEPLOY_SSH_HOST         $host"
   msg "  DEPLOY_SSH_KNOWN_HOSTS  (a linha abaixo, inteira)"
-  msg "$ip $(cut -d' ' -f1-2 /etc/ssh/ssh_host_ed25519_key.pub)"
+  msg "$host $(cut -d' ' -f1-2 /etc/ssh/ssh_host_ed25519_key.pub)"
   msg "  DEPLOY_SSH_KEY          a chave PRIVADA que corresponde à pública passada aqui"
   msg "  E a variável DEPLOY_AUTOMATICO=ligado liga a implantação automática."
 }
@@ -150,7 +151,7 @@ frente() {
   install -d -m 700 "$CORRIDA"
   mkdir -p "$LOGS"
   registro="$LOGS/implantar-$(date -u +%Y%m%dT%H%M%SZ)-${sha:0:7}.log"
-  situacao="$CORRIDA/$sha.saida"
+  situacao="$CORRIDA/$sha.$$.saida"
   rm -f "$situacao"
   ZAPSALES_TOKEN_GITHUB="$token" setsid "$COMANDO" --executar "$sha" "$situacao" > "$registro" 2>&1 < /dev/null &
   pid=$!
@@ -159,6 +160,7 @@ frente() {
   wait "$pid" 2>/dev/null || true
   local codigo
   codigo="$(cat "$situacao" 2>/dev/null || echo 4)"
+  rm -f "$situacao"
   msg "registro completo na VPS: $registro"
   exit "$codigo"
 }
@@ -173,7 +175,7 @@ CONF_DOCKER=""
 TOCOU=0
 SAUDE_ANTES=""
 
-recusar() { printf '\n\033[31m✖ RECUSADO: %s\033[0m\n  Nada foi alterado.\n' "$*" >&2; exit 2; }
+recusar() { printf '\n\033[31m✖ RECUSADO: %s\033[0m\n  Nada foi alterado na instalação.\n' "$*" >&2; exit 2; }
 
 # github CAMINHO — GET na API do repositório. O token vai por arquivo de
 # configuração na entrada padrão do curl, não por argumento.
@@ -195,9 +197,16 @@ try: print(json.load(sys.stdin).get("status",""))
 except Exception: pass' | tr -d '\r' || true
 }
 
-saude() {
-  curl -s --max-time 10 --resolve "$DOMINIO:443:127.0.0.1" "https://$DOMINIO/api/v1/health" 2>/dev/null || true
+# local_https CAMINHO [args do curl] — pelo proxy DESTA máquina, com o
+# certificado conferido, sem depender do DNS de fora.
+local_https() {
+  local caminho="$1"; shift
+  curl -s --max-time 10 --resolve "$DOMINIO:443:127.0.0.1" "$@" "https://$DOMINIO$caminho" 2>/dev/null || true
 }
+
+saude() { local_https /api/v1/health; }
+
+id_do_servico() { (cd "$RAIZ" && docker compose ps -q "$1" 2>/dev/null | head -1) || true; }
 
 imagem() { printf '%s/%s:sha-%s' "$REGISTRO_IMAGENS" "$1" "$2"; }
 
@@ -239,6 +248,14 @@ conferir_imagens() {
     [ "$rev" = "$SHA" ] || recusar "a imagem $img diz ser do commit '${rev:-nenhum}', não de $SHA."
     msg "  $n: revisão confere."
   done
+  # O login acaba aqui. O token é o do job do GitHub e é revogado quando o job
+  # termina — se a conexão cair, um `pull` mais adiante com a credencial morta
+  # seria recusado até para imagem pública, e uma versão boa voltaria à toa. O
+  # kit não precisa dele: as três imagens já estão no disco, e etiqueta `sha-`
+  # é imutável (kit/instalar.sh não a puxa de novo).
+  rm -rf "$CONF_DOCKER"
+  CONF_DOCKER=""
+  unset DOCKER_CONFIG
 }
 
 baixar_codigo() {
@@ -265,7 +282,7 @@ guardar_o_que_esta_no_ar() {
   if [ ! -f "$VERSOES/$ATUAL/kit/instalar.sh" ]; then
     local tmp
     tmp="$(mktemp -d "$VERSOES/.guardando.XXXXXX")"
-    tar -C "$RAIZ" --exclude=./.env -cf - . | tar -xf - -C "$tmp"
+    copiar_arvore "$RAIZ" "$tmp"
     rm -rf "${VERSOES:?}/$ATUAL"
     mv "$tmp" "$VERSOES/$ATUAL"
   fi
@@ -273,8 +290,14 @@ guardar_o_que_esta_no_ar() {
   msg "  .env e código guardados; saúde de antes: $(deps_ok "$SAUDE_ANTES" | tr '\n' ' ')"
 }
 
-copiar_codigo() { # SHA — sobrepõe o código daquela versão em $RAIZ (o .env fica)
-  tar -C "$VERSOES/$1" --exclude=./.env -cf - . | tar -xf - -C "$RAIZ"
+# copiar_arvore DE PARA — sobrepõe, sem o .env. Sobrepõe e não espelha: arquivo
+# que só existe numa versão fica para trás depois de trocar (inofensivo — o
+# compose e o kit só leem os arquivos que a versão em vigor nomeia), e um
+# espelho com remoção apagaria o que mora em $RAIZ sem ser do repositório.
+copiar_arvore() { tar -C "$1" --exclude=./.env -cf - . | tar -xf - -C "$2"; }
+
+copiar_codigo() { # SHA — o código daquela versão em $RAIZ (o .env fica)
+  copiar_arvore "$VERSOES/$1" "$RAIZ"
   printf '%s\n' "$1" > "$RAIZ/.zapsales-revisao"
 }
 
@@ -284,14 +307,15 @@ instalar() {
   copiar_codigo "$SHA"
   # O registro inteiro do kit fica SÓ na VPS: ele traz o e-mail do
   # administrador e os domínios dos sites vizinhos, e o log de um workflow de
-  # repositório público é público. Ao GitHub vão só os títulos dos passos.
+  # repositório público é público. Ao GitHub vão só os títulos dos passos do
+  # kit e as linhas deste script (commit, domínio, dependências, motivo).
   local reg_kit rc_arq
   reg_kit="$LOGS/implantar-$(date -u +%Y%m%dT%H%M%SZ)-${SHA:0:7}-kit.log"
   rc_arq="$CORRIDA/$SHA.kit"
   rm -f "$rc_arq"
   msg "  registro completo do kit (só na VPS): $reg_kit"
-  # O kit herda o DOCKER_CONFIG (o login acima), mas não o token — já fora do
-  # ambiente. O trap ERR sai do grupo: a falha do kit é tratada abaixo, uma vez.
+  # O kit não recebe o token nem o login (já apagados). O trap ERR sai do grupo:
+  # a falha do kit é tratada abaixo, uma vez.
   { trap - ERR; set +e
     ZAPSALES_IMAGENS=registro ZAPSALES_VERSAO="sha-$SHA" bash "$RAIZ/kit/instalar.sh" < /dev/null 2>&1
     printf '%s\n' "$?" > "$rc_arq"
@@ -302,7 +326,7 @@ instalar() {
 estado_dos_servicos() { # "serviço id reinícios" por linha
   local s id
   for s in app worker scheduler; do
-    id="$(cd "$RAIZ" && docker compose ps -q "$s" 2>/dev/null | head -1)"
+    id="$(id_do_servico "$s")"
     [ -n "$id" ] || { printf '%s ausente 0\n' "$s"; continue; }
     printf '%s %s\n' "$s" "$(docker inspect -f '{{.Id}} {{.RestartCount}}' "$id" 2>/dev/null || echo "ausente 0")"
   done
@@ -311,7 +335,7 @@ estado_dos_servicos() { # "serviço id reinícios" por linha
 servicos_saudaveis() {
   local s id estado
   for s in app worker scheduler; do
-    id="$(cd "$RAIZ" && docker compose ps -q "$s" 2>/dev/null | head -1)"
+    id="$(id_do_servico "$s")"
     [ -n "$id" ] || return 1
     estado="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$id" 2>/dev/null || true)"
     [ "$estado" = "healthy" ] || [ "$estado" = "running" ] || return 1
@@ -334,7 +358,14 @@ provar() {
   [ -z "${piores// /}" ] || voltar "dependência que estava ok piorou: $piores"
   msg "  nenhuma dependência piorou ($(deps_ok "$s" | tr '\n' ' ')ok)."
 
-  servicos_saudaveis || voltar "app, worker ou agendador não estão saudáveis."
+  # O worker tem healthcheck com início de 20 s e intervalo de 30 s: logo depois
+  # do kit ele ainda pode estar `starting`, o que não é falha.
+  local espera=0
+  until servicos_saudaveis; do
+    [ "$espera" -lt 180 ] || voltar "app, worker ou agendador não ficaram saudáveis em 180s."
+    sleep 5
+    espera=$((espera + 5))
+  done
   local base agora t=0
   base="$(estado_dos_servicos)"
   msg "  observando app, worker e agendador por ${OBSERVAR_S}s (saudáveis e sem reinício)…"
@@ -363,24 +394,34 @@ voltar() {
   (cd "$RAIZ" && docker compose up -d --remove-orphans) || ok=0
   local cod=""
   for _ in $(seq 1 60); do
-    servicos_saudaveis && cod="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 --resolve "$DOMINIO:443:127.0.0.1" "https://$DOMINIO/" || true)"
+    servicos_saudaveis && cod="$(local_https / -o /dev/null -w '%{http_code}')"
     [ "$cod" = "307" ] && break
     sleep 4
   done
   [ "$cod" = "307" ] || ok=0
+  # A versão que respondia antes tem de voltar a responder (quando havia uma).
+  local v_antes v_agora=""
+  v_antes="$(versao_da_saude "$SAUDE_ANTES")"
+  if [ -n "$v_antes" ]; then
+    v_agora="$(versao_da_saude "$(saude)")"
+    [ "$v_agora" = "$v_antes" ] || ok=0
+  fi
   if [ "$ok" = "1" ]; then
-    msg "  de volta em ${ATUAL:0:7}: serviços saudáveis e https://$DOMINIO/ → 307."
+    msg "  de volta em ${ATUAL:0:7}: serviços saudáveis, https://$DOMINIO/ → 307${v_antes:+, /api/v1/health responde $v_antes}."
     exit 3
   fi
-  aviso "A VOLTA TAMBÉM FALHOU (https://$DOMINIO/ → '${cod:-nada}'). Veja: cd $RAIZ && docker compose ps"
+  aviso "A VOLTA TAMBÉM FALHOU (https://$DOMINIO/ → '${cod:-nada}', versão '${v_agora:-?}' em vez de '${v_antes:-?}'). Veja: cd $RAIZ && docker compose ps"
   exit 4
 }
 
 # Erro inesperado (comando que falhou sob set -e) depois de tocar também volta.
 ao_errar() {
   local linha="$1"
+  # Com `set -E` o trap vale também dentro de $(...). Lá ele só sai com erro: a
+  # atribuição no shell de cima falha e o trap de lá decide — uma vez.
+  if [ "${BASH_SUBSHELL:-0}" -gt 0 ]; then exit 1; fi
   if [ "$TOCOU" = "1" ]; then voltar "erro inesperado na linha $linha de kit/implantar.sh."; fi
-  printf '\n\033[31m✖ RECUSADO: erro inesperado na linha %s, antes de alterar qualquer coisa.\033[0m\n' "$linha" >&2
+  printf '\n\033[31m✖ RECUSADO: erro inesperado na linha %s, antes de alterar a instalação.\033[0m\n' "$linha" >&2
   exit 2
 }
 
@@ -435,7 +476,11 @@ executar() {
   # alcançável como root na própria VPS — pela chave do GitHub o sudo limpa o
   # ambiente, e esta variável nunca chega aqui.
   if [ "${ZAPSALES_ENSAIAR_VOLTA:-}" = "1" ]; then voltar "ensaio da volta (ZAPSALES_ENSAIAR_VOLTA=1)."; fi
-  podar
+  # Daqui em diante a versão nova está aprovada: nenhum erro da arrumação a
+  # derruba.
+  trap - ERR
+  TOCOU=0
+  podar || aviso "a arrumação das versões antigas falhou; a implantação vale."
   TOKEN=""
   passo "Implantado: ${SHA:0:7} está no ar em https://$DOMINIO"
 }

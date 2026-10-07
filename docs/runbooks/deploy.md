@@ -154,7 +154,15 @@ metade confia na outra.
 | app, worker e agendador saudáveis e sem reinício por 2 min | não é um crashloop lento | volta, código 3 |
 
 **A volta** põe de volta o código, o `.env` e as imagens da versão anterior e confere o
-307 no domínio. **O banco não volta**: o baseline é aditivo e o código anterior roda sobre ele.
+307 no domínio e, quando havia uma, a versão que `/api/v1/health` respondia antes. **O banco não
+volta**: o baseline é aditivo e o código anterior roda sobre ele. Também ficam como a versão nova
+deixou: o bloco do proxy do sistema (igual entre versões), o próprio comando
+`zapsales-implantar` e arquivos que só a versão nova tinha (o código é sobreposto, não
+espelhado — o compose e o kit só leem o que a versão em vigor nomeia).
+
+A VPS confere que o commit **está na história** da `main`; que ele é o **topo** é o portão do
+workflow quem confere. Um merge que entre entre o portão e a VPS não faz a implantação ser
+recusada — o merge seguinte é implantado logo depois.
 Código 4 é "falhou e a volta também falhou" — alguém precisa olhar agora.
 
 Toda falha (2, 3, 4, ou a conexão que não chegou) abre a issue com o rótulo
@@ -168,8 +176,11 @@ domínios dos sites vizinhos, e o log do Actions de um repositório público é 
 2. Na VPS, depois de o código desta versão estar em `/opt/zapsales`:
 
    ```bash
-   sudo /opt/zapsales/kit/implantar.sh acesso "$(cat implantar.pub)"
+   sudo /opt/zapsales/kit/implantar.sh acesso "$(cat implantar.pub)" [endereço público da VPS]
    ```
+
+   Sem o endereço, vale o primeiro de `hostname -I` — que pode ser de rede privada ou IPv6.
+   A porta é a 22.
 
    Cria o usuário `zapsales-deploy` (sem senha), autoriza a chave com
    `restrict,command="/usr/local/sbin/zapsales-implantar"` — sem terminal, sem túnel, sem
