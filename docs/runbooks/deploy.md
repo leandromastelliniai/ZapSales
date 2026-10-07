@@ -2,7 +2,7 @@
 
 O caminho normal de deploy **não constrói nada na VPS**: o CI publica a imagem no
 GHCR e a VPS só puxa. Construir localmente é exceção de emergência, e tem custo —
-está documentado no fim.
+está documentado no §4.
 
 ---
 
@@ -61,7 +61,8 @@ commit → push → PR → merge na main → CI publica imagem → VPS puxa
    runners do GitHub, nunca na VPS do usuário.
 3. **Deploy na VPS.** É o `kit/instalar.sh` rodado de novo, não um `up -d` na
    mão: ele grava as três imagens no `.env`, puxa (ou constrói) e reaplica o
-   `baseline.sql` antes de recriar o app.
+   `baseline.sql` antes de recriar o app. Na produção do projeto este passo é
+   automático — ver §5.
 
 > **`latest` não é a última release.** Ele é publicado a partir da branch default, então
 > segue o **topo da `main`** — código ainda não lançado. Quem quer a última release usa
@@ -120,3 +121,95 @@ stack em operação, não o WAHA isolado — e a folga existe justamente porque 
 parcela por sessão não é conhecida com precisão.
 
 Ao terminar, feche o ciclo — merge na `main` e volte a VPS pra imagem oficial.
+
+---
+
+## 5. Implantação contínua (a produção do projeto)
+
+Na VPS de produção do próprio projeto o passo 3 acima é automático (issue #24): o merge na
+`main` chega sozinho à produção, com validação e volta automática. Para um self-hoster nada
+muda — o kit só instala o comando, que fica inerte até alguém autorizar uma chave.
+
+### Como funciona
+
+```
+merge na main → ci, e2e, perf e publicação das imagens terminam
+  → implantar.yml: o portão confere (topo da main, os quatro verdes neste commit)
+  → ssh zapsales-deploy@vps "implantar <sha>"   (um comando só, host por chave fixa)
+  → a VPS confere de novo, instala, prova — e volta sozinha se algo falhar
+```
+
+Quem decide **quando** é o workflow (`.github/workflows/implantar.yml` +
+`scripts/implantacao/portao.sh`); quem decide **se** é a VPS (`kit/implantar.sh`). Nenhuma
+metade confia na outra.
+
+| etapa (na VPS) | o que prova | se falhar |
+|---|---|---|
+| o commit está na `main`? (perguntado à API do GitHub) | ninguém implanta uma branch | recusa, código 2 |
+| avança em relação ao que está no ar? | nada de rebaixamento nem desvio | recusa, código 2 |
+| as três imagens `sha-<commit>` existem e têm `org.opencontainers.image.revision` = commit? | a imagem é a daquele código | recusa, código 2 |
+| `kit/instalar.sh` com `ZAPSALES_VERSAO=sha-<commit>` (dump do banco antes do baseline) | o mesmo caminho de uma atualização manual | volta, código 3 |
+| `/api/v1/health` responde a versão nova | o app no ar é o novo | volta, código 3 |
+| nenhuma dependência que estava `ok` antes piorou | supabase, redis, waha | volta, código 3 |
+| app, worker e agendador saudáveis e sem reinício por 2 min | não é um crashloop lento | volta, código 3 |
+
+**A volta** põe de volta o código, o `.env` e as imagens da versão anterior e confere o
+307 no domínio e, quando havia uma, a versão que `/api/v1/health` respondia antes. **O banco não
+volta**: o baseline é aditivo e o código anterior roda sobre ele. Também ficam como a versão nova
+deixou: o bloco do proxy do sistema (igual entre versões), o próprio comando
+`zapsales-implantar` e arquivos que só a versão nova tinha (o código é sobreposto, não
+espelhado — o compose e o kit só leem o que a versão em vigor nomeia).
+
+A VPS confere que o commit **está na história** da `main`; que ele é o **topo** é o portão do
+workflow quem confere. Um merge que entre entre o portão e a VPS não faz a implantação ser
+recusada — o merge seguinte é implantado logo depois.
+Código 4 é "falhou e a volta também falhou" — alguém precisa olhar agora.
+
+Toda falha (2, 3, 4, ou a conexão que não chegou) abre a issue com o rótulo
+`implantacao-falhou`; a implantação seguinte que passa a fecha. O registro completo do kit fica
+**só na VPS** (`/var/log/zapsales/implantar-*-kit.log`): ele traz o e-mail do administrador e os
+domínios dos sites vizinhos, e o log do Actions de um repositório público é público.
+
+### Preparar (uma vez)
+
+1. Gere um par de chaves só para isto, fora da VPS: `ssh-keygen -t ed25519 -N "" -C github-implantar -f implantar`.
+2. Na VPS, depois de o código desta versão estar em `/opt/zapsales`:
+
+   ```bash
+   sudo /opt/zapsales/kit/implantar.sh acesso "$(cat implantar.pub)" [endereço público da VPS]
+   ```
+
+   Sem o endereço, vale o primeiro de `hostname -I` — que pode ser de rede privada ou IPv6.
+   A porta é a 22.
+
+   Cria o usuário `zapsales-deploy` (sem senha), autoriza a chave com
+   `restrict,command="/usr/local/sbin/zapsales-implantar"` — sem terminal, sem túnel, sem
+   encaminhamento —, dá `sudo` só para esse comando e imprime a linha de `known_hosts`.
+3. No GitHub (Settings › Secrets and variables › Actions): segredos `DEPLOY_SSH_KEY` (o
+   conteúdo de `implantar`, a privada), `DEPLOY_SSH_KNOWN_HOSTS` (a linha impressa) e
+   `DEPLOY_SSH_HOST`; variável `DEPLOY_AUTOMATICO=ligado`.
+4. Apague a chave privada do disco local.
+
+A VPS precisa saber qual commit está no ar: `/opt/zapsales/.zapsales-revisao` com o sha
+**inteiro**. Sem ele a implantação recusa (não há como recusar rebaixamento nem voltar).
+
+### Desligar numa emergência (sem PR)
+
+Troque a variável `DEPLOY_AUTOMATICO` para qualquer valor diferente de `ligado`. O workflow
+continua rodando a cada merge, mas o portão nem começa. Uma implantação já em andamento termina
+(e volta, se for o caso) sozinha — cancelar o job não para a VPS.
+
+### À mão
+
+```bash
+sudo zapsales-implantar <sha>                          # o mesmo caminho, de dentro da VPS
+sudo ZAPSALES_ENSAIAR_VOLTA=1 zapsales-implantar <sha> # instala, prova e VOLTA de propósito
+```
+
+O ensaio da volta só existe como root na própria VPS: pela chave do GitHub o `sudo` limpa o
+ambiente e a variável nunca chega. Reimplantar o topo da `main` pelo GitHub: Actions ›
+implantar › Run workflow (o mesmo portão vale).
+
+Depois da implantação contínua, rodar `kit/instalar.sh` à mão sobre o mesmo código mantém a
+imagem `sha-<commit>` — não cai na versão do `package.json`, que poria a última release sobre um
+banco mais novo.

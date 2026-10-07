@@ -56,6 +56,19 @@ env_garantir() {
   env_definir "$arq" "$chave" "$valor"
 }
 
+# env_remover ARQUIVO CHAVE — tira a linha da chave. Só para configuração que
+# deixou de valer (ex.: APP_VERSION de uma imagem construída na VPS, que o
+# `env_file` do compose passaria por cima da versão gravada na imagem).
+env_remover() {
+  local arq="$1" chave="$2" tmp
+  [ -f "$arq" ] || return 0
+  [ -n "$(env_ler "$arq" "$chave")" ] || grep -q "^${chave}=" "$arq" || return 0
+  tmp="$(mktemp "${arq}.XXXXXX")"
+  CHAVE="$chave" awk 'index($0, ENVIRON["CHAVE"] "=") != 1' "$arq" > "$tmp"
+  chmod --reference="$arq" "$tmp" 2>/dev/null || chmod 600 "$tmp"
+  mv "$tmp" "$arq"
+}
+
 # exigir_root — o kit mexe em /etc, no Docker e no proxy do sistema.
 exigir_root() {
   [ "$(id -u)" -eq 0 ] || falha "Rode como root (sudo $0)."

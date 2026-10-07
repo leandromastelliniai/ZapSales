@@ -248,6 +248,35 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
       "boas-vindas de robô; sem a de dono, o fork de cada self-hoster herda um bot que fala pela " +
       "gente no repositório dele, prometendo um prazo que ninguém lá concordou em cumprir.",
   },
+  "implantar.yml::portao": {
+    condicao:
+      "vars.DEPLOY_AUTOMATICO == 'ligado' && (github.event_name == 'workflow_dispatch' || " +
+      "(github.event.workflow_run.event == 'push' && " +
+      "github.event.workflow_run.head_repository.full_name == github.repository))",
+    efeito:
+      "Este é o portão da implantação contínua da produção (issue #24). `DEPLOY_AUTOMATICO` é o " +
+      "interruptor de emergência DELIBERADO, desligado por padrão (fork, VPS ainda não preparada). " +
+      "As outras duas condições barram o que não é push na main deste repositório: sem a de " +
+      "`head_repository`, um PR de fork com branch chamada `main` passaria pelo filtro do " +
+      "workflow_run. Não é check obrigatório: pular aqui só deixa de implantar.",
+  },
+  "implantar.yml::implantar": {
+    condicao: "needs.portao.outputs.decisao == 'implantar'",
+    efeito:
+      "Este job leva o commit à VPS. Ele só roda quando o portão (scripts/implantacao/portao.sh) " +
+      "viu o topo da main com ci, e2e, perf e as imagens verdes; trocar a condição por outra " +
+      "implantaria sem esse portão.",
+  },
+  "implantar.yml::avisar": {
+    condicao:
+      "always() && (needs.portao.result == 'failure' || needs.implantar.result == 'success' || " +
+      "needs.implantar.result == 'failure' || needs.implantar.result == 'cancelled')",
+    efeito:
+      "Este job abre a issue `implantacao-falhou` quando o portão quebra ou a implantação não " +
+      "passa, e a fecha na seguinte que passa — o aviso que a issue #24 exige. Precisa de " +
+      "`always()` para ler o resultado dos outros dois; sem uma das condições, uma falha " +
+      "(portão, implantação, cancelamento) passaria em silêncio.",
+  },
   "relogio.yml::tick": {
     condicao: "vars.RELOGIO_LIGADO == '1' || github.event_name == 'workflow_dispatch'",
     efeito:
