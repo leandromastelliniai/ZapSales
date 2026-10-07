@@ -46,6 +46,18 @@ id"
 verdade "sha_valido aceita 40 hex" sha_valido "$SHA"
 falso "sha_valido recusa 39" sha_valido "${SHA:1}"
 
+echo "chave pública — o arquivo .pub como ele chega"
+CHAVE="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPkVSPqZvciP1AzuT10dvPSYf github-implantar"
+igual "chave limpa passa igual" "$CHAVE" "$(chave_publica_limpa "$CHAVE")"
+igual "quebra de linha do Windows (\\r\\n) sai — foi o que o primeiro uso real trouxe" \
+  "$CHAVE" "$(chave_publica_limpa "$CHAVE"$'\r\n')"
+igual "espaço nas pontas sai" "$CHAVE" "$(chave_publica_limpa "  $CHAVE  ")"
+igual "chave RSA é recusada" "" "$(chave_publica_limpa "ssh-rsa AAAAB3Nza x")"
+igual "chave PRIVADA é recusada" "" "$(chave_publica_limpa "-----BEGIN OPENSSH PRIVATE KEY-----")"
+igual "duas chaves (duas linhas) são recusadas" "" "$(chave_publica_limpa "$CHAVE"$'\n'"$CHAVE")"
+igual "opções de authorized_keys embutidas são recusadas" "" \
+  "$(chave_publica_limpa "command=\"/bin/bash\" $CHAVE")"
+
 echo "compare do GitHub — o sha está na main?"
 verdade "identical: é o topo da main" sha_esta_na_main identical
 verdade "ahead: a main já andou além dele" sha_esta_na_main ahead

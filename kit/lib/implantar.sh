@@ -24,6 +24,18 @@ sha_do_comando() {
   printf '%s\n' "${BASH_REMATCH[1]}"
 }
 
+# chave_publica_limpa TEXTO — a chave pública como vai para o authorized_keys,
+# ou vazio se não for UMA chave ed25519/ecdsa. O `.pub` gerado no Windows chega
+# com `\r\n` no fim (foi o primeiro uso real); isso e espaço nas pontas saem.
+# Opções embutidas (`command=…`) são recusadas: quem as escreve é o kit.
+chave_publica_limpa() {
+  local c
+  c="$(printf '%s' "${1:-}" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+  case "$c" in *$'\n'*) return 0 ;; esac
+  [[ "$c" =~ ^(ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)\ [A-Za-z0-9+/=]+(\ [^[:cntrl:]]*)?$ ]] || return 0
+  printf '%s\n' "$c"
+}
+
 # sha_esta_na_main STATUS — STATUS é o `status` de GET /compare/<sha>...main.
 # `identical` (é o topo) e `ahead` (a main já andou além dele) dizem que o sha
 # é ancestral da main. Qualquer outra coisa, inclusive vazio, é "não".
