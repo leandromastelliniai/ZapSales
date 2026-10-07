@@ -3552,7 +3552,10 @@ da tela o risco é pequeno (a mensagem vem logo depois do upload). Mesmo desenho
 
 **Decisão:** o caminho `pending` NÃO é recusado na criação, ao contrário do modelo (#30). A foto
 de catálogo reaproveita o mesmo caminho por conversa (`catalogo-<arquivo>`) a cada reenvio; a
-mensagem gravada tira o caminho da fila pelo gatilho.
+mensagem gravada tira o caminho da fila pelo gatilho. O preço é uma janela maior que a da #30: a
+mensagem criada entre a conferência do worker e o `remove` recebe 201 e fica sem o arquivo. E a
+conferência do worker filtra pela conversa do caminho (é o que a mantém no índice): a mensagem
+gravada durante a poda e movida por uma mescla de contatos antes do worker não é vista.
 
 **Custo do gatilho em `messages`** (medido no PGlite, Postgres em WASM, mais lento que o nativo):
 ~50–60 µs por mensagem **com mídia** (uma sonda no índice único da fila), contra ~3 ms do insert

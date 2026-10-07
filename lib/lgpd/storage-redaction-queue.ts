@@ -20,6 +20,9 @@
  * #40): a message that starts citing the path clears its row (migration 0544),
  * and the retention row is checked against the conversation's messages right
  * before removal, for the message written during the sweep.
+ *
+ * Both checks only hold back retention rows (`request_id` null) in
+ * `whatsapp-media`: an LGPD cascade is never held back by a citation.
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -54,7 +57,6 @@ type AdminClient = ReturnType<typeof createAdminClient>;
  * the templates can't be read, so the row goes through the retry path.
  */
 async function citedByTemplate(admin: AdminClient, row: QueueRow): Promise<boolean> {
-  if (row.request_id !== null || row.bucket !== "whatsapp-media") return false;
   if (!row.object_path.startsWith(`${row.organization_id}/templates/`)) return false;
 
   const { data, error } = await admin
@@ -83,11 +85,13 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
  * The conversation comes from the path, which is what keeps this lookup on the
  * conversation index (`media_storage_path` has none, and `messages` is the
  * biggest table): the send route only accepts a path inside the message's own
- * conversation (`isMediaPathOwnedBy`). Throws when the messages can't be read,
- * so the row goes through the retry path.
+ * conversation (`isMediaPathOwnedBy`). Known gap: a contact merge
+ * (`fn_mesclar_contatos`) moves messages to the surviving conversation with
+ * their old paths, so a message written during the sweep AND merged before
+ * this run is not seen here. Throws when the messages can't be read, so the
+ * row goes through the retry path.
  */
 async function citedByMessage(admin: AdminClient, row: QueueRow): Promise<boolean> {
-  if (row.request_id !== null || row.bucket !== "whatsapp-media") return false;
   const [org, conversationId] = row.object_path.split("/");
   if (org !== row.organization_id || !conversationId || !UUID.test(conversationId)) return false;
 
@@ -105,6 +109,7 @@ async function citedByMessage(admin: AdminClient, row: QueueRow): Promise<boolea
 
 /** Why the row's object must stay in the bucket, or null when nothing cites it. */
 async function citation(admin: AdminClient, row: QueueRow): Promise<string | null> {
+  if (row.request_id !== null || row.bucket !== "whatsapp-media") return null;
   if (await citedByTemplate(admin, row)) return "citado_por_modelo";
   if (await citedByMessage(admin, row)) return "citado_por_mensagem";
   return null;

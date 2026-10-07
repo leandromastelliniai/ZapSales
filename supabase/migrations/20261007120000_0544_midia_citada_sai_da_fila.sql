@@ -29,10 +29,13 @@
 --     `on conflict` o reabre (`skipped` → `pending`).
 --   · NO WORKER: já reivindica cada linha (`update … where status = 'pending'`)
 --     antes de apagar (0543); agora também confere, na linha de retenção de
---     `<org>/<conversa>/`, se alguma mensagem da organização cita o caminho.
---     Cobre o que este gatilho não alcança: a poda lê `messages` no snapshot
---     dela, e a mensagem gravada durante a rodada não acha linha `pending`
---     para tirar.
+--     `<org>/<conversa>/`, se alguma mensagem DAQUELA conversa cita o caminho
+--     (o filtro pela conversa é o que mantém a consulta no índice; não há
+--     índice em `media_storage_path`). Cobre o que este gatilho não alcança:
+--     a poda lê `messages` no snapshot dela, e a mensagem gravada durante a
+--     rodada não acha linha `pending` para tirar. Não cobre a mensagem dessa
+--     rodada que uma mescla de contatos (`fn_mesclar_contatos`) moveu para
+--     outra conversa antes de o worker chegar.
 --   · NA ROTA DE ENVIO: recusa (422 `media_unavailable`) o caminho que já saiu
 --     do bucket — o arquivo apagado não tem conserto no banco. O caminho
 --     `pending` NÃO é recusado, ao contrário da rota de modelo da #30: a foto
@@ -51,7 +54,10 @@
 -- grava null, e o `when` a descarta).
 --
 -- Resta uma janela de uma chamada ao Storage: a mensagem gravada entre a
--- reivindicação/conferência do worker e o `remove`. É a mesma da 0543.
+-- conferência do worker e o `remove`. É MAIOR que a da 0543: lá a rota recusa
+-- o caminho `pending` (a reivindicação do worker deixa a linha `pending`), e
+-- aqui não recusa, pelo motivo da foto de catálogo acima. Nessa janela a rota
+-- responde 201 e o arquivo sai.
 --
 -- Fica de fora, de propósito:
 --   · linha de pedido LGPD (`request_id` não nulo): a cascata do titular não é

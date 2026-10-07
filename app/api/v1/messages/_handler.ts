@@ -554,16 +554,16 @@ export async function sendMessageHandler(
   // logo abaixo o tira da fila (gatilho da migration 0544), e a foto de
   // catálogo reaproveita o mesmo caminho a cada reenvio (`fotos-do-produto.ts`).
   //
-  // `exists` só devolve `false` no 400/404 do Storage; outra falha lança, e
-  // aí o envio segue — a assinatura da URL, mais abaixo, já registra a falha
-  // na própria mensagem (`storage_sign_failed`).
+  // `exists` devolve `false` no 400/404 do Storage — os dois viram esta
+  // recusa; outra falha lança, e aí o envio segue: a assinatura da URL, mais
+  // abaixo, já registra a falha na própria mensagem (`storage_sign_failed`).
   if (input.media_storage_path) {
-    let noBucket = true;
+    let aindaGuardado = true;
     try {
       const { data } = await createAdminClient()
         .storage.from("whatsapp-media")
         .exists(input.media_storage_path);
-      noBucket = data;
+      aindaGuardado = data;
     } catch (err) {
       logger.warn("[messages] media availability check failed", {
         organization_id: c.organization_id,
@@ -571,7 +571,7 @@ export async function sendMessageHandler(
         error_message: err instanceof Error ? err.message : String(err),
       });
     }
-    if (!noBucket) {
+    if (!aindaGuardado) {
       throw new ApiError(
         422,
         "media_unavailable",
