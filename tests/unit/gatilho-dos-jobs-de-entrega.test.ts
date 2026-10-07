@@ -205,6 +205,13 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
       "três dias atrás mergeado com número duplicado, e a descoberta vira o `db push` de um " +
       "self-hoster.",
   },
+  "segredos.yml::varredura": {
+    condicao: null,
+    efeito:
+      "Este job roda o gitleaks nos commits que o PR ou o push traz. O repositório é público " +
+      "e a `main` nunca é reescrita: desligá-lo deixa um segredo commitado chegar à `main` " +
+      "sem aviso, e daí ele é publicado para sempre.",
+  },
   "ci.yml::invariants-alcance": {
     condicao: null,
     efeito:
