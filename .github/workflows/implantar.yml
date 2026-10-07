@@ -130,6 +130,11 @@ jobs:
           # O token vai pela entrada padrão (nunca pela linha de comando).
           # StrictHostKeyChecking=yes com o known_hosts do segredo: host com
           # outra chave é recusado, nunca aceito na primeira vez.
+          # `set +e`: o `run:` sem `shell:` roda como `bash -e`, e com pipefail
+          # um ssh que sai 2/3/4 encerrava o passo AQUI — antes de gravar
+          # codigo= e a cauda, e a issue de falha saía vazia. O código é lido
+          # do PIPESTATUS e devolvido no `exit` do fim.
+          set +e
           printf '%s\n' "$TOKEN" | ssh -T \
             -i ~/.ssh/implantar -o IdentitiesOnly=yes -o BatchMode=yes \
             -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/implantar_known_hosts" \

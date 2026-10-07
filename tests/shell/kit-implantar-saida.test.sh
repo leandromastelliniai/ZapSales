@@ -104,6 +104,18 @@ b3BlbnNzaC1rZXktdjEAAAAACorpoDaChavePrivada
   msg '  resposta: {"api_key": "valor-json-secreto", "password":"outro-json-secreto"}'
   msg "  url: postgres://postgres:p@ss-com-arroba@db:5432/postgres"
   msg "  estado: SMTP_PASS=valor-pass-secreto DB_PWD=valor-pwd-secreto"
+  # Achados da revisão: nome de segredo seguido de Bearer, valor com , e ;,
+  # aspa que não fecha, senha com / na URL.
+  msg "  cabeçalho: TOKEN: Bearer valorAposOBearer9876"
+  msg "  estado: POSTGRES_PASSWORD=abc,valor-depois-da-virgula;valor-depois-do-pv"
+  msg "  estado: SMTP_PASSWORD=\"aspa que nunca fecha"
+  msg "  url: postgres://postgres:pa/ss-com-barra@db:5432/postgres"
+  # Chave com o BEGIN e sem o END (truncada): o corpo sai redigido, e a saída
+  # NÃO some daí em diante — a linha seguinte é o diagnóstico.
+  msg "  chave truncada: -----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEAcorpoDaChaveTruncada0123456789abcdefABCDEF
+MIIEpAIBAAKCAQEAfimCurto=="
+  msg "  a etapa depois da chave truncada chega: sim"
   voltar_simulado() { _etapa ""; _etapa "✖ FALHOU: dependência que estava ok piorou: redis" >&2; }
   voltar_simulado 2>&1
   passo "Implantado: 0123456 está no ar em https://crm.exemplo.com.br"
@@ -145,6 +157,15 @@ nao_contem "senha com @ sai inteira" "$SAIDA" "ss-com-arroba"
 contem "e o host da URL fica" "$SAIDA" "postgres://[redigido]@db:5432/postgres"
 nao_contem "NOME_PASS=… sai redigido" "$SAIDA" "valor-pass-secreto"
 nao_contem "NOME_PWD=… sai redigido" "$SAIDA" "valor-pwd-secreto"
+nao_contem "NOME: Bearer x — o token depois do Bearer não sai" "$SAIDA" "valorAposOBearer9876"
+nao_contem "valor com vírgula sai inteiro" "$SAIDA" "valor-depois-da-virgula"
+nao_contem "valor com ponto e vírgula sai inteiro" "$SAIDA" "valor-depois-do-pv"
+nao_contem "aspa que não fecha: o valor sai inteiro" "$SAIDA" "aspa que nunca fecha"
+nao_contem "senha com / na URL sai inteira" "$SAIDA" "ss-com-barra"
+contem "e o host da URL com / na senha fica" "$SAIDA" "postgres://[redigido]@db:5432/postgres"
+nao_contem "o corpo da chave sem END não sai" "$SAIDA" "corpoDaChaveTruncada"
+nao_contem "nem a última linha curta do corpo" "$SAIDA" "fimCurto"
+contem "chave sem END não engole a saída seguinte" "$SAIDA" "a etapa depois da chave truncada chega: sim"
 
 echo "redação não estraga etapa comum"
 for l in \
@@ -186,6 +207,25 @@ if grep -E '\| *tee ' "$WF" | grep -qv '| redigir | tee'; then nok "implantar.ym
 else ok "nenhum tee no workflow sem redigir antes"; fi
 if grep -qE 'tail -n [0-9]+ "\$RUNNER_TEMP/implantar\.log"' "$WF"; then ok "a cauda da issue sai do arquivo redigido"
 else nok "a cauda (CAUDA) não sai mais de \$RUNNER_TEMP/implantar.log"; fi
+
+echo "o passo do workflow grava a cauda também quando a implantação falha"
+# O `run:` sem `shell:` roda como `bash -e`: com pipefail, um ssh que sai 2/3/4
+# matava o passo NO pipeline, antes de gravar codigo= e a cauda — a issue de
+# falha saía vazia justo quando é lida. Aqui o corpo do passo roda de verdade,
+# sob `bash -e`, com um ssh falso que devolve uma etapa e sai 3.
+SIM="$TMP/passo.sh"
+{
+  echo 'ssh() { cat > /dev/null; printf "✖ FALHOU: simulado\n"; return 3; }'
+  sed -n '/name: Implantar na VPS/,/exit "\$codigo"/p' "$WF" \
+    | sed -n '/^        run: |$/,$p' | sed '1d; s/^          //'
+} > "$SIM"
+OUT="$TMP/github_output"; : > "$OUT"
+( export GITHUB_OUTPUT="$OUT" RUNNER_TEMP="$TMP" HOME="$TMP" TOKEN=x HOST=h SHA=s; bash -e "$SIM" ) > /dev/null 2>&1
+rc=$?
+if grep -q 'redigir | tee' "$SIM"; then ok "o corpo do passo foi extraído do workflow"; else nok "não achei o corpo do passo 'Implantar na VPS'"; fi
+if [ "$rc" = "3" ]; then ok "o passo sai com o código do ssh (3)"; else nok "o passo saiu $rc, esperado 3"; fi
+contem "a falha grava codigo=3" "$(cat "$OUT")" "codigo=3"
+contem "a falha grava a cauda" "$(cat "$OUT")" "✖ FALHOU: simulado"
 
 if [ "$fail" -ne 0 ]; then echo "FALHOU"; exit 1; fi
 echo "ok"
