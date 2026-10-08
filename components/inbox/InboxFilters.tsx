@@ -340,10 +340,66 @@ export function InboxFilters({ value, onChange }: Props) {
   }, [searchInput]);
 
   return (
-    <div className="border-b border-border bg-background">
-      <div className="space-y-2 px-3 pt-3 pb-2">
-        <div className="flex items-center gap-2">
-          <div className="relative min-w-0 flex-1">
+    <div className="border-b border-border bg-surface">
+      <Tabs
+        value={value.tab}
+        onValueChange={(v) => onChange({ ...value, tab: v as InboxTab })}
+        className="px-3 pt-3"
+      >
+        <div className="flex items-center gap-1">
+          {moreTabs.left ? (
+            <button
+              type="button"
+              onClick={() => moveTab(-1)}
+              aria-label={t("Aba anterior")}
+              className="flex w-4 shrink-0 items-center justify-center text-text-muted hover:text-text focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <CaretLeft size={13} aria-hidden />
+            </button>
+          ) : (
+            <span className="w-4 shrink-0" aria-hidden />
+          )}
+          <TabsList
+            ref={tabsListRef}
+            onScroll={updateMoreTabs}
+            className="h-auto min-w-0 flex-1 justify-between gap-1 rounded-none bg-transparent p-0 [scrollbar-width:none]"
+          >
+            {tabs.map((tab) => {
+              const meta = INBOX_TABS.find((t) => t.value === tab)!;
+              const count = countFor[tab];
+              return (
+                <TabsTrigger
+                  key={tab}
+                  value={tab}
+                  className="shrink-0 gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-text-muted hover:text-text data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none"
+                >
+                  {t(meta.label)}
+                  {typeof count === "number" && count > 0 && (
+                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-funil px-1.5 text-[11px] font-semibold tabular-nums text-acao-fg">
+                      {count}
+                    </span>
+                  )}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+          {moreTabs.right ? (
+            <button
+              type="button"
+              onClick={() => moveTab(1)}
+              aria-label={t("Próxima aba")}
+              className="flex w-4 shrink-0 items-center justify-center text-text-muted hover:text-text focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <CaretRight size={13} aria-hidden />
+            </button>
+          ) : (
+            <span className="w-4 shrink-0" aria-hidden />
+          )}
+        </div>
+      </Tabs>
+      <div className="space-y-2 px-3 pt-3 pb-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-0 basis-full">
             <MagnifyingGlass
               size={15}
               weight="regular"
@@ -360,7 +416,7 @@ export function InboxFilters({ value, onChange }: Props) {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t("Buscar por nome, telefone ou última mensagem…")}
-              className="h-9 rounded-full border-transparent bg-surface-elevated pl-9 text-sm shadow-none focus-visible:border-border focus-visible:bg-background"
+              className="h-10 rounded-lg border-border bg-bg pl-9 text-sm shadow-none focus-visible:border-accent focus-visible:bg-bg"
               aria-label={t("Buscar conversas")}
             />
           </div>
@@ -376,7 +432,7 @@ export function InboxFilters({ value, onChange }: Props) {
               "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               value.onlyUnread
                 ? "border-accent bg-accent text-accent-foreground"
-                : "border-border bg-transparent text-text-muted hover:bg-surface-elevated",
+                : "border-border bg-transparent text-text hover:bg-surface-elevated",
             )}
           >
             {t("Não lidos")}
@@ -393,7 +449,7 @@ export function InboxFilters({ value, onChange }: Props) {
               "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               value.onlyGroups
                 ? "border-accent bg-accent text-accent-foreground"
-                : "border-border bg-transparent text-text-muted hover:bg-surface-elevated",
+                : "border-border bg-transparent text-text hover:bg-surface-elevated",
             )}
           >
             {t("Grupos")}
@@ -537,60 +593,6 @@ export function InboxFilters({ value, onChange }: Props) {
 
       {/* As setas aparecem só quando há abas fora da área visível; a faixa e o
           sublinhado continuam com a altura compacta do Inbox. */}
-      <Tabs
-        value={value.tab}
-        onValueChange={(v) => onChange({ ...value, tab: v as InboxTab })}
-        className="px-3"
-      >
-        <div className="flex items-center gap-1">
-          {moreTabs.left ? (
-            <button
-              type="button"
-              onClick={() => moveTab(-1)}
-              aria-label={t("Aba anterior")}
-              className="flex w-4 shrink-0 items-center justify-center text-text-muted hover:text-text focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <CaretLeft size={13} aria-hidden />
-            </button>
-          ) : (
-            <span className="w-4 shrink-0" aria-hidden />
-          )}
-          <TabsList
-            ref={tabsListRef}
-            onScroll={updateMoreTabs}
-            className="h-auto min-w-0 flex-1 justify-between gap-2 rounded-none bg-transparent p-0 [scrollbar-width:none]"
-          >
-            {tabs.map((tab) => {
-              const meta = INBOX_TABS.find((t) => t.value === tab)!;
-              const count = countFor[tab];
-              return (
-                <TabsTrigger
-                  key={tab}
-                  value={tab}
-                  className="shrink-0 gap-1 rounded-none border-b-2 border-transparent px-0 pb-2 pt-1 text-xs font-medium text-text-muted data-[state=active]:border-accent data-[state=active]:bg-transparent data-[state=active]:text-text data-[state=active]:shadow-none"
-                >
-                  {t(meta.label)}
-                  {typeof count === "number" && count > 0 && (
-                    <span className="text-[11px] tabular-nums text-text-subtle">{count}</span>
-                  )}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-          {moreTabs.right ? (
-            <button
-              type="button"
-              onClick={() => moveTab(1)}
-              aria-label={t("Próxima aba")}
-              className="flex w-4 shrink-0 items-center justify-center text-text-muted hover:text-text focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <CaretRight size={13} aria-hidden />
-            </button>
-          ) : (
-            <span className="w-4 shrink-0" aria-hidden />
-          )}
-        </div>
-      </Tabs>
     </div>
   );
 }

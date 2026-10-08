@@ -104,6 +104,29 @@ export function ReplyReviewPanel({
     stale: "Sugestão obsoleta: a conversa mudou",
     failed: "Não foi possível concluir a sugestão ou o envio",
   };
+  // Sem sugestão em andamento, a assistência é só o convite: uma linha discreta
+  // acima do campo, e não um bloco inteiro roubando altura da conversa (a tela
+  // "poluída" era uma das dores do dono). O bloco completo volta assim que há
+  // uma sugestão para revisar.
+  if (!draft) {
+    return (
+      // Na linha das abas (Responder / Nota interna), à direita: o composer é
+      // `relative` e as abas deixam o canto livre.
+      <section className="absolute right-4 top-1 z-10" aria-label={t("Assistência do agente")}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 gap-1.5 px-2 text-xs text-ia hover:text-ia"
+          disabled={disabled || busy}
+          onClick={generate}
+        >
+          {t(busy ? "Preparando…" : "Sugerir resposta")}
+        </Button>
+      </section>
+    );
+  }
+
   return (
     <section
       className="mb-3 space-y-2 rounded-md border bg-muted/30 p-3"

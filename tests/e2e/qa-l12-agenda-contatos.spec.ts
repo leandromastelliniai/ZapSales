@@ -6,6 +6,7 @@
  * seletor de contas é dedução a partir da documentação dele — fica NÃO MEDIDO.
  */
 import { test } from "./helpers/test";
+import { abrirFichaDaConversa } from "./helpers/ficha-da-conversa";
 
 import {
   abreConversa,
@@ -317,6 +318,10 @@ test.describe("Lote 12 — #907 o nome editado vence o nome do perfil do WhatsAp
     await abreConversa(page, conversaId);
     await expect(page.getByText(`Maria Silva ${S}`).first()).toBeVisible({ timeout: 60_000 });
     await page.waitForLoadState("networkidle").catch(() => {});
+    // O "painel" desde a direção "Linha do Funil" (07/10/2026) é a FICHA numa
+    // gaveta — sem abri-la, o texto lido abaixo não teria o painel, e a asserção
+    // "em canto nenhum do Inbox" mediria menos do que diz.
+    await abrirFichaDaConversa(page);
     const inbox = await page.locator("body").innerText();
     registra(`#907 inbox · "Maria Silva" = ${inbox.includes(`Maria Silva ${S}`)} · "Ze do Pix" = ${inbox.includes(`Ze do Pix ${S}`)}`);
     expect(inbox).toContain(`Maria Silva ${S}`);

@@ -24,6 +24,7 @@
 import { randomInt, randomUUID } from "node:crypto";
 
 import { test, type Page } from "./helpers/test";
+import { abrirFichaDaConversa, fecharFichaDaConversa } from "./helpers/ficha-da-conversa";
 
 import {
   abreConversa,
@@ -209,12 +210,19 @@ test.describe("filtro por marcador, pela tela", () => {
     await page.getByRole("tab", { name: /^Todas/ }).click();
 
     // 1. Caixa da CONVERSA, pelo editor da conversa.
+    // Os dois editores de tag moram na FICHA, que virou gaveta na direção "Linha
+    // do Funil" (07/10/2026). Aberta, ela cobre a lista e a barra de filtros —
+    // por isso a spec a fecha antes de trocar de conversa e antes do seletor.
+    await abrirFichaDaConversa(page);
     await marcar(page, "Adicionar tag à conversa", `/conversations/${a.conversa}`, tagDaConversa);
+    await fecharFichaDaConversa(page);
 
     // 2. Caixa do CONTATO, noutra conversa — sem recarregar.
     await irPelaLista(page, nomeContato, b.conversa);
+    await abrirFichaDaConversa(page);
     await page.getByRole("button", { name: "Tags do contato", exact: true }).click();
     await marcar(page, "Adicionar tag ao contato", "/contacts/", tagDoContato);
+    await fecharFichaDaConversa(page);
 
     // 3. O seletor oferece a UNIÃO dos dois vocabulários.
     const seletor = page.getByRole("button", { name: "Filtrar por tag" });
@@ -380,12 +388,19 @@ test.describe("filtro por marcador, pela tela", () => {
     await page.getByRole("tab", { name: /^Todas/ }).click();
 
     // 1. Caixa da CONVERSA, pelo editor da conversa.
+    // Os dois editores de tag moram na FICHA, que virou gaveta na direção "Linha
+    // do Funil" (07/10/2026). Aberta, ela cobre a lista e a barra de filtros —
+    // por isso a spec a fecha antes de trocar de conversa e antes do seletor.
+    await abrirFichaDaConversa(page);
     await marcar(page, "Adicionar tag à conversa", `/conversations/${a.conversa}`, tagDaConversa);
+    await fecharFichaDaConversa(page);
 
     // 2. Caixa do CONTATO, noutra conversa — sem recarregar.
     await irPelaLista(page, nomeContato, b.conversa);
+    await abrirFichaDaConversa(page);
     await page.getByRole("button", { name: "Tags do contato", exact: true }).click();
     await marcar(page, "Adicionar tag ao contato", "/contacts/", tagDoContato);
+    await fecharFichaDaConversa(page);
 
     // 3. O seletor oferece a UNIÃO dos dois vocabulários.
     const seletor = page.getByRole("button", { name: "Filtrar por tag" });
@@ -505,6 +520,8 @@ test.describe("filtro por marcador, pela tela", () => {
     // Marca pelo Inbox: a PESSOA em "Tags do contato", e a CONVERSA à parte.
     await login(page, c.users.manager!.email, c.password);
     await abreConversa(page, alvo.conversa);
+    // Os editores de tag moram na ficha, que virou gaveta na direção "Linha do Funil".
+    await abrirFichaDaConversa(page);
     await page.getByRole("button", { name: "Tags do contato", exact: true }).click();
     await marcar(page, "Adicionar tag ao contato", "/contacts/", tagDoContato);
     await marcar(page, "Adicionar tag à conversa", `/conversations/${alvo.conversa}`, soNaConversa);

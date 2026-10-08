@@ -14,6 +14,7 @@
 import { randomInt, randomUUID } from "node:crypto";
 
 import { expect, test } from "./helpers/test";
+import { abrirFichaDaConversa } from "./helpers/ficha-da-conversa";
 import { abreConversa, admin, captura, creds, insere, login, registra, type Creds } from "./qa-l12-comum";
 
 const SUFIXO = `${Date.now()}`.slice(-7);
@@ -114,7 +115,11 @@ test.describe("Etapa do negócio pela conversa", () => {
     await abreConversa(page, conversaId);
     await expect(page.getByText(`Cliente Etapa ${SUFIXO}`).first()).toBeVisible({ timeout: 60_000 });
 
-    const bloco = page.locator('[data-testid="inbox-etapa-do-negocio"]');
+    // Desde a direção "Linha do Funil" (07/10/2026) o seletor de etapa mora na
+    // FICHA, que virou gaveta (a coluna da direita deixou de existir). A spec a
+    // abre pelo botão "Ficha completa", como o atendente faria.
+    const ficha = await abrirFichaDaConversa(page);
+    const bloco = ficha.locator('[data-testid="inbox-etapa-do-negocio"]');
     await expect(bloco).toBeVisible({ timeout: 30_000 });
     const seletor = bloco.getByTestId("inbox-etapa-select");
     await expect(seletor).toContainText("Datos incompletos");
@@ -150,7 +155,7 @@ test.describe("Etapa do negócio pela conversa", () => {
 
     // A tela relê o resumo: o seletor e a linha "Funil · Etapa" dizem a etapa nova.
     await expect(seletor).toContainText("Pedido confirmado", { timeout: 30_000 });
-    await expect(page.locator('[data-testid="inbox-campos-lead"]')).toContainText(`Pedidos ${SUFIXO} · Pedido confirmado`);
+    await expect(ficha.locator('[data-testid="inbox-campos-lead"]')).toContainText(`Pedidos ${SUFIXO} · Pedido confirmado`);
     await captura(page, "etapa-03-movido");
   });
 });

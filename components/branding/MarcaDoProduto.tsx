@@ -1,4 +1,9 @@
 import { LOGOTIPO, SIMBOLO } from "@/lib/branding/desenho";
+import {
+  PROPORCAO_DA_FUTURISTAS,
+  TracosDaFuturistas,
+  VIEWBOX_DA_FUTURISTAS,
+} from "@/components/branding/AssinaturaFuturistas";
 import { cn } from "@/lib/utils";
 
 /**
@@ -79,11 +84,30 @@ export function LogotipoDoProduto({ nome, className, decorativo = false }: Props
           <path key={g.transform} transform={g.transform} d={g.d} />
         ))}
       </g>
-      <g className={SUFIXO_CLARO_ESCURO}>
-        {LOGOTIPO.sufixo.map((g) => (
-          <path key={g.transform} transform={g.transform} d={g.d} />
-        ))}
-      </g>
+      {/* "by Futuristas" no lugar do antigo "CRM" (decisão do dono, 07/10/2026):
+          o "by" na cor do sufixo, o logo oficial da Futuristas na cor do nome,
+          com os quadradinhos no violeta dela. Dentro do MESMO SVG — os testes de
+          marca leem o logotipo como uma imagem só, rotulada com o nome. */}
+      <text
+        className={SUFIXO_CLARO_ESCURO}
+        x={268}
+        y={212}
+        fontSize={38}
+        fontWeight={500}
+      >
+        by
+      </text>
+      <svg
+        x={318}
+        y={170}
+        height={50}
+        width={50 * PROPORCAO_DA_FUTURISTAS}
+        viewBox={VIEWBOX_DA_FUTURISTAS}
+        className={NOME_CLARO_ESCURO}
+        aria-hidden
+      >
+        <TracosDaFuturistas />
+      </svg>
     </svg>
   );
 }

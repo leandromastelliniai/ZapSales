@@ -1,5 +1,4 @@
 "use client";
-import { CampanhaDeOrigem } from "./CampanhaDeOrigem";
 import { useState, type RefObject } from "react";
 import { useT } from "@/hooks/i18n/useT";
 import Link from "next/link";
@@ -16,8 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { JanelaSelo } from "@/components/inbox/JanelaSelo";
-import { ChannelLogo } from "@/components/inbox/ChannelLogo";
-import { Phone, ArrowRight, MagnifyingGlass } from "@/lib/ui/icons";
+import { ChipDeComando } from "@/components/inbox/visual/QuemAtende";
+import { ArrowRight, MagnifyingGlass } from "@/lib/ui/icons";
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { useClaimConversation } from "@/hooks/inbox/useClaimConversation";
 import { useReleaseConversation } from "@/hooks/inbox/useReleaseConversation";
@@ -29,14 +28,12 @@ import {
 import { useResumeAiAttendance } from "@/hooks/inbox/useResumeAiAttendance";
 import { usePauseAiAttendance } from "@/hooks/inbox/usePauseAiAttendance";
 import { useAutomaticoAtivo } from "@/hooks/ai/useAutomaticoAtivo";
-import { OwnerBadge } from "@/components/kanban/OwnerBadge";
-import { comandoDaConversa, ROTULO_DO_MOTIVO } from "@/lib/inbox/comando-da-conversa";
+import { comandoDaConversa, esperaDaConversa, ROTULO_DO_MOTIVO } from "@/lib/inbox/comando-da-conversa";
 import { ReassignDialog } from "@/components/inbox/ReassignDialog";
 import { SnoozeButton } from "@/components/inbox/SnoozeButton";
 import { DialButton } from "@/components/voice/DialButton";
 import type { ConversationWithContact } from "@/hooks/inbox/useConversationsRealtime";
 import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
-import { phoneForDisplay } from "@/lib/channels/phone-variants";
 
 interface Props {
   conversation: ConversationWithContact;
@@ -103,7 +100,6 @@ export function ConversationHeader({
 
   const c = conversation.contacts ?? null;
   const displayName = rotuloDoContato(c, t);
-  const phone = c?.phone_number ? phoneForDisplay(c.phone_number) : null;
   const status = conversation.status;
   const isMineAssigned = conversation.assigned_to_user_id === user.id;
   const isOpen = status === "open" || conversation.assigned_to_user_id == null;
@@ -179,45 +175,41 @@ export function ConversationHeader({
     // de antes (uma linha), e quando aperta a barra desce para a linha de baixo.
     // Nenhuma ação some — um menu "mais" esconderia o "Lembrar" que a spec
     // `canais-baseline` clica, e, pior, esconderia ação de quem atende.
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-4 py-3">
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <ChannelLogo channel={conversation.channel_sessions} size={20} />
-          <h2 className="min-w-0 truncate text-sm font-semibold" title={displayName}>{displayName}</h2>
-          <Badge variant="outline" className="h-4 shrink-0 px-1.5 text-[10px]">
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-surface px-4 py-2">
+      {/*
+        QUEM ESTÁ NO COMANDO, num chip só, com nome, desde quando e quem passou
+        (direção "Linha do Funil"). A identidade do cliente — nome, telefone,
+        campanha — subiu para a faixa da jornada, acima desta barra.
+        O `data-testid` é contrato: `inbox-quem-manda.spec.ts` lê o comando aqui.
+      */}
+      {/* A linha inteira para QUEM ATENDE: o chip não divide espaço com os botões
+          (cortado, ele perdia justo o "transferida pela IA"). */}
+      <div className="flex min-w-0 basis-full flex-wrap items-center gap-2">
+        <span data-testid="comando-da-conversa" className="min-w-0 max-w-full">
+          <ChipDeComando
+            comando={comando}
+            desde={conversation.assigned_at ?? null}
+            transferidaPelaIa={comando.quem === "humano" && Boolean(conversation.last_handoff_at)}
+            esperaDesde={esperaDaConversa(conversation)}
+          />
+        </span>
+        {status !== "open" ? (
+          <Badge variant="outline" className="h-5 shrink-0 px-2 text-[11px]">
             {t(STATUS_LABEL[status] ?? status)}
           </Badge>
-          {/* Ao lado do estado, não escondido num painel: a pergunta "dá para
-              escrever agora?" se faz ANTES de digitar, não depois de receber um
-              `failed` com um código de cinco dígitos. */}
-          <JanelaSelo
-            provider={conversation.channel_sessions?.provider ?? null}
-            lastInboundAt={conversation.last_inbound_at}
-          />
-        </div>
-
-        {/* QUEM ESTÁ NO COMANDO, com nome e por GEOMETRIA — disco cheio para
-            pessoa, anel vazado para o automático. É o mesmo componente do card do
-            funil e do dossiê: um terceiro jeito de dizer "quem manda", por cor ou
-            por texto, faria a mesma pergunta ter três respostas diferentes na
-            mesma tela. Cor não sobrevive ao daltonismo nem ao teste do metro. */}
-        <div className="mt-1 flex items-center gap-2" data-testid="comando-da-conversa">
-          {comando.quem === "humano" ? (
-            <OwnerBadge ownerKind="user" ownerName={comando.nome ?? t("Atendente")} />
-          ) : comando.quem === "automatico" ? (
-            <OwnerBadge ownerKind="ai" ownerName={t("Automático")} />
-          ) : (
-            // `ninguem`, `aguardando` e `encerrada` sem dono caem aqui: o disco
-            // TRACEJADO do OwnerBadge, que é como o funil já desenha "ninguém".
-            <OwnerBadge ownerKind={null} ownerName={null} />
-          )}
-        </div>
-        <CampanhaDeOrigem conversationId={conversation.id} />
-        {phone && (
-          <p className="mt-0.5 flex min-w-0 items-center gap-1 truncate text-xs text-muted-foreground">
-            <Phone size={11} weight="regular" aria-hidden /> {phone}
-          </p>
+        ) : null}
+        {/* "Dá para escrever agora?" se pergunta ANTES de digitar. */}
+        <JanelaSelo
+          provider={conversation.channel_sessions?.provider ?? null}
+          lastInboundAt={conversation.last_inbound_at}
+        />
+        {motivo !== null && (
+          <Badge variant="outline" className="h-5 w-fit max-w-full truncate px-2 text-[11px]"
+            title={t(ROTULO_DO_MOTIVO[motivo])} data-testid="badge-atendimento-humano">
+            {t(ROTULO_DO_MOTIVO[motivo])}
+          </Badge>
         )}
+        <h2 className="sr-only">{displayName}</h2>
       </div>
 
       {/* `shrink-0` saiu daqui: era ele que impunha o piso de largura. Agora a
@@ -228,7 +220,8 @@ export function ConversationHeader({
           barra inteira para baixo. Ela também não é `shrink-0`, pelo mesmo
           motivo da barra. */}
       <div className="flex min-w-0 flex-col items-end gap-1">
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+      {/* Botões compactos (h-8): a barra divide a linha com o chip de comando. */}
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 [&>button]:h-8 [&>button]:px-2.5 [&>button]:text-xs [&>a]:h-8 [&>a]:text-xs">
         {/* Primeira da barra e sem rótulo escrito: é ferramenta de LEITURA, não
             ação de atendimento, e não muda de lugar com o estado da conversa.
             Só o ícone porque a barra já quebrou a caixa útil em 1280px uma vez
@@ -252,7 +245,9 @@ export function ConversationHeader({
         {!conversation.is_group && c?.id && (
           <DialButton contactId={c.id} hasPhone={!!c.phone_number} />
         )}
-        {isOpen && (
+        {/* Assumir a própria conversa não muda nada: o botão some quando ela já é
+            de quem está olhando (antes aparecia ao lado de "Liberar"). */}
+        {isOpen && !isMineAssigned && (
           <Button
             size="sm"
             variant="default"
@@ -374,19 +369,13 @@ export function ConversationHeader({
             {arquivar.isPending ? t("Arquivando...") : t("Arquivar")}
           </Button>
         )}
-        {/* `xl:hidden` porque a partir de 1280px o painel lateral de CRM entra
-            na tela — e ele já tem um "Ver contato", para o MESMO contato, a um
-            palmo de distância. Duas portas idênticas na mesma tela não são
-            redundância inofensiva: são a linha a mais que empurrava a barra de
-            ações para uma segunda fileira justo na largura mais apertada.
-            Medido: sem a duplicata, os botões voltam a caber em UMA linha em
-            1280px.
-
-            Abaixo de 1280 o painel não existe, e aí esta é a única porta para o
-            contato — por isso a condição é a mesma do painel, e não um valor
-            escolhido à parte. Não é esconder ação; é não repeti-la. */}
+        {/* Visível em toda largura. Até 07/10/2026 ele tinha `xl:hidden`, porque
+            a partir de 1280px o painel lateral de CRM entrava na tela com um
+            "Ver contato" próprio. Na direção "Linha do Funil" a ficha virou
+            gaveta, fechada até alguém abrir: esta voltou a ser a única porta
+            direta para o contato em qualquer largura. */}
         {c?.id && (
-          <Button asChild size="sm" variant="ghost" className="xl:hidden">
+          <Button asChild size="sm" variant="ghost">
             <Link href={`/app/contacts/${c.id}`} className="flex items-center gap-1">
               {t("Ver contato")}
               <ArrowRight size={12} weight="regular" aria-hidden />
@@ -399,12 +388,6 @@ export function ConversationHeader({
             Sem esta marca, a conversa em que o robô está calado tem exatamente
             a mesma cara de uma conversa normal. O testid é contrato:
             `escalacao-ciclo.spec.ts` o clica. */}
-        {motivo !== null && (
-          <Badge variant="outline" className="h-4 w-fit max-w-full truncate px-1.5 text-[10px]"
-            title={t(ROTULO_DO_MOTIVO[motivo])} data-testid="badge-atendimento-humano">
-            {t(ROTULO_DO_MOTIVO[motivo])}
-          </Badge>
-        )}
       </div>
       <ReassignDialog
         conversationId={conversation.id}
