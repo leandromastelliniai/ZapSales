@@ -167,7 +167,11 @@ test.describe("acervo de conhecimento", () => {
     // chave. Afirmar só o negativo passaria com a tela em branco.
     const semChave = page.getByTestId("conhecimento-sem-chave");
     const comChave = page.getByTestId("conhecimento-chave-ok");
-    await expect(semChave.or(comChave)).toBeVisible();
+    // `.first()`: durante o streaming do `next start` o mesmo bloco existe por
+    // um instante DUAS vezes (o segmento oculto que o Next ainda vai trocar de
+    // lugar), e o modo estrito reprova na primeira sondagem. O snapshot do trace
+    // no momento da falha tem UMA cópia só (PR #54, 08/10/2026).
+    await expect(semChave.or(comChave).first()).toBeVisible();
 
     if (await semChave.isVisible()) {
       // O aviso não é um beco: o conserto abre na própria tela.
@@ -192,7 +196,7 @@ test.describe("acervo de conhecimento", () => {
     await expect(
       semChaveLoc.or(page.getByTestId("conhecimento-chave-ok")).or(
         page.getByTestId("conhecimento-chave-conferindo"),
-      ),
+      ).first(), // `.first()`: ver o caso anterior — cópia transitória do streaming.
     ).toBeVisible({ timeout: 30_000 });
 
     const semChave = await semChaveLoc.isVisible();

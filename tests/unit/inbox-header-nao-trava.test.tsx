@@ -152,8 +152,14 @@ describe("header do inbox — não trava a largura da tela", () => {
 
     const barra = barraDeAcoes();
     expect(barra.contains(selo), "o selo voltou para a linha das ações").toBe(false);
-    const linhaDoNome = screen.getByRole("heading", { name: "Fulana" }).parentElement as HTMLElement;
-    expect(linhaDoNome.contains(selo), "o selo voltou para a linha do nome").toBe(false);
+    // Desde a direção "Linha do Funil" (07/10/2026) o nome visível mora na faixa
+    // da jornada, acima do cabeçalho; aqui fica só o <h2> para leitor de tela. O
+    // selo vive na LINHA DO COMANDO (quem atende), que ocupa a largura inteira
+    // (`basis-full`) — então ele não divide fileira com as ações.
+    const linhaDoComando = screen.getByTestId("comando-da-conversa").parentElement as HTMLElement;
+    expect(linhaDoComando.contains(selo), "o selo saiu da linha de quem atende").toBe(true);
+    expect(linhaDoComando.className, "a linha do comando voltou a dividir fileira").toContain("basis-full");
+    expect(linhaDoComando.contains(barra), "as ações entraram na linha do comando").toBe(false);
 
     for (const rotulo of ["Liberar", "Devolver ao automático", "Transferir", "Lembrar", "Fechar", "Arquivar"]) {
       const botao = screen.getByRole("button", { name: rotulo });
@@ -162,18 +168,17 @@ describe("header do inbox — não trava a largura da tela", () => {
     expect(screen.queryByRole("button", { name: "Mais ações" }), "ação de quem atende escondida num menu").toBeNull();
   });
 
-  it('"Ver contato" existe no DOM e só se cala onde há outra porta', () => {
+  it('"Ver contato" existe e não se cala em largura nenhuma', () => {
     renderHeader();
-    // Ele NÃO sai do markup: some por CSS a partir de `xl`, exatamente a largura
-    // em que o painel lateral entra na tela com um "Ver contato" próprio. A
-    // distinção importa — remover do DOM tiraria a ação de quem usa 1024px, que
-    // é onde o painel não existe e esta é a única porta para o contato.
+    // Até 07/10/2026 ele sumia por CSS a partir de `xl`, a largura em que o
+    // painel lateral entrava na tela com um "Ver contato" próprio. Na direção
+    // "Linha do Funil" o painel virou gaveta, que não está na tela até alguém
+    // abrir — então, com `xl:hidden`, quem usa tela larga perdia a porta direta
+    // para o contato. A condição de esconder era a do painel; sem painel, não
+    // há o que repetir.
     const link = screen.getByText("Ver contato").closest("a, button") as HTMLElement;
     expect(link, "o link para o contato sumiu do markup").toBeTruthy();
     const classes = `${link.className} ${link.parentElement?.className ?? ""}`;
-    expect(
-      classes,
-      "sem `xl:hidden`, a duplicata volta e o header ganha uma segunda linha em 1280px",
-    ).toContain("xl:hidden");
+    expect(classes, "o link voltou a se esconder numa largura").not.toMatch(/(^|\s)(\w+:)?hidden/);
   });
 });

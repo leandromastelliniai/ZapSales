@@ -296,7 +296,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
     <>
       <div
         className={cn(
-          "relative border-t border-border bg-background px-3 py-2",
+          "relative border-t border-border bg-surface px-4 pt-1.5 pb-3",
           mode === "note" && "border-warning/40 bg-warning-bg",
         )}
       >
@@ -332,15 +332,15 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
             </p>
           </div>
         )}
-        <div className="mb-1.5 flex gap-1">
+        <div className="mb-1.5 flex gap-4 border-b border-border pr-40">
           <button
             type="button"
             onClick={() => setMode("reply")}
             className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+              "-mb-px border-b-2 px-1 pb-1.5 text-sm font-medium transition-colors",
               mode === "reply"
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-muted",
+                ? "border-accent text-accent"
+                : "border-transparent text-muted-foreground hover:text-text",
             )}
           >
             {t("Responder")}
@@ -349,10 +349,10 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
             type="button"
             onClick={() => setMode("note")}
             className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+              "-mb-px border-b-2 px-1 pb-1.5 text-sm font-medium transition-colors",
               mode === "note"
-                ? "bg-warning text-warning-fg"
-                : "text-muted-foreground hover:bg-muted",
+                ? "border-warning text-warning-fg"
+                : "border-transparent text-muted-foreground hover:text-text",
             )}
           >
             {t("Nota interna")}
@@ -388,38 +388,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
             </button>
           </div>
         )}
-        <div className="flex items-end gap-2">
-          {/* O "+" existe nos DOIS modos desde a F3 da #1863: em "Nota interna"
-              ele abre o mesmo menu, com as DUAS primeiras opções — foto/vídeo e
-              documento — porque a nota passou a aceitar anexo. A terceira
-              (Contato) some: cartão de contato é `type: "contact"`, uma MENSAGEM
-              para o cliente, e nota com cartão de contato não existe. O `disabled`
-              continua o de sempre: em modo nota `respostaBarrada` é só
-              `isDisabled`, e a janela fechada barra a resposta, não a nota. */}
-          <AttachMenu
-            disabled={respostaBarrada}
-            onPick={escolherArquivo}
-            onPickContact={mode === "reply" ? () => setContactPickerOpen(true) : undefined}
-          />
-          <EmojiButton
-            disabled={isDisabled}
-            onPick={(emoji) => {
-              const ta = taRef.current;
-              if (!ta) {
-                setText((t) => t + emoji);
-                return;
-              }
-              const start = ta.selectionStart ?? text.length;
-              const end = ta.selectionEnd ?? text.length;
-              const next = text.slice(0, start) + emoji + text.slice(end);
-              setText(next);
-              requestAnimationFrame(() => {
-                ta.focus();
-                ta.selectionStart = ta.selectionEnd = start + emoji.length;
-                autoresize();
-              });
-            }}
-          />
+        <div className="rounded-xl border border-border bg-bg px-3 py-1.5 focus-within:border-accent">
           <textarea
             ref={taRef}
             value={text}
@@ -452,26 +421,62 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
                 : t("Enter envia · Shift+Enter quebra linha")
             }
             className={cn(
-              "max-h-40 min-h-9 flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm",
-              "placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-hidden",
+              "max-h-40 min-h-8 w-full resize-none bg-transparent px-1 py-1 text-sm",
+              "placeholder:text-muted-foreground focus:outline-hidden",
             )}
             disabled={mode === "note" ? isDisabled : respostaBarrada}
             aria-label={t("Mensagem")}
           />
-          {text.trim() || mode === "note" ? (
+          <div className="-mx-1 flex h-9 items-center gap-1">
+          {/* O "+" existe nos DOIS modos desde a F3 da #1863: em "Nota interna"
+              ele abre o mesmo menu, com as DUAS primeiras opções — foto/vídeo e
+              documento — porque a nota passou a aceitar anexo. A terceira
+              (Contato) some: cartão de contato é `type: "contact"`, uma MENSAGEM
+              para o cliente, e nota com cartão de contato não existe. O `disabled`
+              continua o de sempre: em modo nota `respostaBarrada` é só
+              `isDisabled`, e a janela fechada barra a resposta, não a nota. */}
+          <AttachMenu
+            disabled={respostaBarrada}
+            onPick={escolherArquivo}
+            onPickContact={mode === "reply" ? () => setContactPickerOpen(true) : undefined}
+          />
+          <EmojiButton
+            disabled={isDisabled}
+            onPick={(emoji) => {
+              const ta = taRef.current;
+              if (!ta) {
+                setText((t) => t + emoji);
+                return;
+              }
+              const start = ta.selectionStart ?? text.length;
+              const end = ta.selectionEnd ?? text.length;
+              const next = text.slice(0, start) + emoji + text.slice(end);
+              setText(next);
+              requestAnimationFrame(() => {
+                ta.focus();
+                ta.selectionStart = ta.selectionEnd = start + emoji.length;
+                autoresize();
+              });
+            }}
+          />
+            <span className="flex-1" aria-hidden />
+            {!text.trim() && mode === "reply" && active ? (
+              <AudioRecorder conversationId={conversationId} disabled={respostaBarrada} />
+            ) : null}
+            {/* A ação principal da tela, e por isso a única em verde-limão
+                (`--color-acao`). À vista mesmo com o campo vazio: o botão diz
+                onde a resposta sai; desabilitado, ele não manda nada vazio. */}
             <Button
               type="button"
-              size="icon"
-              className="h-9 w-9 shrink-0"
+              className="h-8 shrink-0 gap-2 bg-acao px-4 font-semibold text-acao-fg hover:bg-acao-hover"
               onClick={handleSubmit}
               disabled={(mode === "note" ? isDisabled : respostaBarrada) || !text.trim()}
               aria-label={t("Enviar")}
             >
               <PaperPlaneTilt size={16} weight="fill" aria-hidden />
+              {t("Enviar")}
             </Button>
-          ) : (
-            active && <AudioRecorder conversationId={conversationId} disabled={respostaBarrada} />
-          )}
+          </div>
         </div>
       </div>
       <AttachmentPreviewDialog

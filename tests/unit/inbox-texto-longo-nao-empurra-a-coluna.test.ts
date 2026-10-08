@@ -35,6 +35,7 @@ import { describe, expect, it } from "vitest";
 
 const PAINEL = "components/inbox/CRMSidePanel.tsx";
 const LAYOUT = "components/inbox/InboxLayout.tsx";
+const FAIXA = "components/inbox/visual/FaixaDaJornada.tsx";
 const PASTA_INBOX = "components/inbox";
 
 /** Toda quebra forçada aceita pelo projeto. `wrap-anywhere` é a preferida. */
@@ -114,14 +115,18 @@ describe("inbox — texto longo não empurra a coluna (#1802)", () => {
     // Coluna da conversa — protegida pelo f7b1ef4, é a que o #1802 aponta.
     expect(fonte).toMatch(/h-full min-h-0 min-w-0 flex-col md:flex/);
 
-    // Coluna do CRM, trilha fixa do grid: min-w-0 como defesa uniforme com a
-    // coluna da conversa (o transbordo do fato ficava dentro do painel).
-    // O wrapper da coluna é o único <div> com `xl:block` no arquivo: é ele que
-    // o grid conta como item da terceira track. (O outro render do painel é o
-    // Sheet do celular, que não participa do grid.)
-    const coluna = fonte.split("\n").find((l) => l.includes("xl:block"));
-    expect(coluna, "não achei a coluna do CRM no layout").toBeDefined();
-    expect(coluna, "a coluna do CRM (a última do grid) precisa de min-w-0").toContain("min-w-0");
-    expect(coluna).toContain("hidden");
+    // A coluna do CRM saiu do grid na direção "Linha do Funil" (07/10/2026): a
+    // ficha virou gaveta (Sheet), que não participa do grid. Quem ocupou o lugar
+    // dela é a FAIXA DA JORNADA, no topo da conversa — e é ela agora que não
+    // pode largar a página com um nome de funil ou um próximo passo longo: toda
+    // trilha que cresce com texto começa em zero (`minmax(0,…)`).
+    expect(fonte, "a coluna do CRM voltou ao grid: reveja esta régua").not.toMatch(/xl:block/);
+    const grade = ler(FAIXA).match(/grid min-w-0 grid-cols-\[([^\]]+)\]/)?.[1];
+    expect(grade, `não achei a grade da faixa em ${FAIXA}`).toBeDefined();
+    for (const trilha of grade!.split("_")) {
+      // `auto` (a foto) e `1px` (os divisores) não crescem com o texto.
+      if (trilha === "auto" || trilha === "1px") continue;
+      expect(trilha, `trilha da faixa sem piso zero: ${trilha}`).toMatch(/^minmax\(0,/);
+    }
   });
 });

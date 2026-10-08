@@ -170,6 +170,12 @@ export const PUBLIC_PATHS: RegExp[] = [
   // dois nomes de propósito: `/^\/legal/` deixaria qualquer sub-path futuro
   // nascer público de carona.
   /^\/legal\/(terms|privacy)$/,
+  // A VITRINE DA INBOX, só em DESENVOLVIMENTO. Ela não lê banco nenhum: os
+  // componentes da Inbox rodam com dados de exemplo e a rede interceptada no
+  // navegador (`app/vitrine-inbox/_rede.ts`). Pública aqui para a comparação
+  // com a imagem aprovada rodar numa máquina sem banco; em produção a linha não
+  // existe e a vitrine fica atrás do login, como a da Agenda.
+  ...(process.env.NODE_ENV === "production" ? [] : [/^\/vitrine-inbox$/]),
 ];
 
 export function isPublicPath(pathname: string): boolean {

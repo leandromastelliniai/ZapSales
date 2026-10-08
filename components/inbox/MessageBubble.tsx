@@ -12,6 +12,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { AvatarDoContato } from "@/components/inbox/visual/AvatarDoContato";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Message } from "@/lib/types/messaging";
 import { lerRemetenteDeGrupo, rotuloDoRemetente } from "@/lib/messaging/remetente-de-grupo";
@@ -48,6 +49,16 @@ interface Props {
   onApagar?: () => Promise<void>;
   onOcultar?: () => Promise<void>;
   onRestaurar?: () => Promise<void>;
+  /**
+   * Quem é o CLIENTE desta conversa, para a foto e o nome das mensagens recebidas.
+   * Ausente = a bolha sai sem foto (comportamento de antes).
+   */
+  cliente?: { nome: string; fotoUrl?: string | null } | null;
+  /**
+   * O nome de quem enviou, quando o fio sabe (o atendente da conversa). Sem
+   * nome, a bolha diz "Atendente"/"Você", como antes.
+   */
+  nomeDoAtendente?: string | null;
 }
 
 function AckIndicator({ status, t }: { status: string; t: (texto: string) => string }) {
@@ -74,6 +85,8 @@ export function MessageBubble({
   onApagar,
   onOcultar,
   onRestaurar,
+  cliente,
+  nomeDoAtendente,
 }: Props) {
   const [editando, setEditando] = useState(false);
   const [texto, setTexto] = useState(message.body ?? "");
@@ -182,6 +195,22 @@ export function MessageBubble({
   // `lerRemetenteDeGrupo` (Task 2): este componente não conhece o formato de
   // `metadata.group_sender`, só o resultado já validado.
   const remetente = !isOutbound ? lerRemetenteDeGrupo(message.metadata) : null;
+  /**
+   * QUEM FALA, e a cor de quem fala (direção "Linha do Funil"): violeta é a IA,
+   * ciano é a pessoa da equipe, o cliente fica sem cor. Todas as bolhas ficam à
+   * esquerda, com a foto de quem escreveu — o lado da tela deixou de ser o
+   * código de quem é quem; a cor e o nome é que dizem.
+   */
+  const falaDaIa = isOutbound && message.sent_via === "ai";
+  const falaDaEquipe =
+    isOutbound && (message.sent_via === "user" || message.sent_via === "crm" || Boolean(message.sent_on_behalf_of_user_id));
+  const nomeDeQuemFala = !isOutbound
+    ? (remetente ? rotuloDoRemetente(remetente) : (cliente?.nome ?? null))
+    : falaDaEquipe && nomeDoAtendente && message.sent_by_user_id && senderLabel !== "Você"
+      ? nomeDoAtendente
+      : senderLabel
+        ? t(senderLabel)
+        : null;
 
   async function salvarEdicao() {
     const novoTexto = texto.trim();
@@ -198,11 +227,29 @@ export function MessageBubble({
   return (
     <div
       data-search-match={searchMatch || undefined}
-      className={cn(
-        "group flex w-full min-w-0 items-center gap-1 px-4 py-1",
-        isOutbound ? "justify-end" : "justify-start",
-      )}
+      className="group flex w-full min-w-0 items-start gap-3 px-4 py-1"
     >
+      {falaDaIa ? (
+        <span
+          aria-hidden
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ia text-bg"
+        >
+          <Robot size={20} weight="fill" />
+        </span>
+      ) : isOutbound ? (
+        <AvatarDoContato
+          // As iniciais são as da PESSOA, mesmo quando o rótulo diz "Você".
+          nome={nomeDoAtendente ?? nomeDeQuemFala ?? t("Atendente")}
+          tamanho="conversa"
+          anel={falaDaEquipe ? "humano" : null}
+        />
+      ) : (
+        <AvatarDoContato
+          nome={nomeDeQuemFala ?? "?"}
+          fotoUrl={remetente ? null : (cliente?.fotoUrl ?? null)}
+          tamanho="conversa"
+        />
+      )}
       <div
         // Identidade, não aparência. O e2e de citação contava bolhas por
         // `[class*='rounded-2xl']`, e qualquer componente novo com a mesma
@@ -210,15 +257,13 @@ export function MessageBubble({
         // fez a spec achar que havia mensagem onde não havia (issue #1318).
         data-testid="message-bubble"
         className={cn(
-          "relative max-w-[75%] min-w-0 text-sm",
+          "relative max-w-[78%] min-w-0 text-sm",
           isBareSticker
             ? "px-0 py-0"
             : cn(
-                "rounded-2xl px-3 py-2 shadow-sm",
+                "rounded-lg border-l-[3px] bg-surface-elevated px-3 py-1.5 text-text",
                 temMenu && "pr-8",
-                isOutbound
-                  ? "rounded-br-sm bg-primary text-primary-foreground"
-                  : "rounded-bl-sm bg-muted text-foreground",
+                falaDaIa ? "border-ia" : falaDaEquipe ? "border-humano" : "border-transparent",
               ),
           isFailed && "border border-destructive",
           // A marca da busca é ANEL, não cor de fundo: o fundo já diz de quem é
@@ -234,7 +279,7 @@ export function MessageBubble({
                 className={cn(
                   "absolute right-1 top-1 z-10 rounded-md p-0.5 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-1",
                   "opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100",
-                  isOutbound ? "text-primary-foreground hover:bg-primary-foreground/15" : "text-muted-foreground hover:bg-background/70",
+                  "text-muted-foreground hover:bg-background/70",
                 )}>
                 <CaretDown size={16} weight="bold" aria-hidden />
               </button>
@@ -293,9 +338,7 @@ export function MessageBubble({
           <div
             className={cn(
               "mb-1 rounded-md border-l-2 px-2 py-1 text-xs",
-              isOutbound
-                ? "border-primary-foreground/50 bg-primary-foreground/10"
-                : "border-primary bg-background/60",
+              "border-accent bg-background/60",
             )}
           >
             <div className="font-medium opacity-80">
@@ -320,18 +363,15 @@ export function MessageBubble({
             </div>
           </div>
         )}
-        {remetente && (
-          <p className="mb-0.5 text-[11px] font-medium text-muted-foreground">
-            {rotuloDoRemetente(remetente)}
+        {nomeDeQuemFala && !isBareSticker && (
+          <p
+            className={cn(
+              "flex items-center gap-1 text-[11px] font-semibold leading-4",
+              falaDaIa ? "text-ia" : falaDaEquipe ? "text-humano" : "text-text-muted",
+            )}
+          >
+            {nomeDeQuemFala}
           </p>
-        )}
-        {senderLabel && (
-          <div className="mb-0.5 flex items-center gap-1 text-[11px] font-semibold opacity-80">
-            {senderLabel === "IA" ? (
-              <Robot size={10} weight="duotone" aria-hidden />
-            ) : null}
-            {senderLabel && t(senderLabel)}
-          </div>
         )}
 
         {editando ? (
@@ -394,8 +434,7 @@ export function MessageBubble({
 
         <div
           className={cn(
-            "mt-1 flex items-center justify-end gap-1 text-[10px]",
-            isOutbound ? "text-primary-foreground" : "text-muted-foreground",
+            "-mt-0.5 flex items-center justify-end gap-1 text-[10px] leading-3 tabular-nums text-text-subtle",
           )}
         >
           {editada && (
