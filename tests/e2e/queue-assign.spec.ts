@@ -97,7 +97,8 @@ test.describe("G5-03 — fila com posição + atribuição", () => {
     // pílula da posição. As duas metades seguem provadas: está na fila, e há
     // quanto tempo espera.
     await expect(queueItem.getByText(/^Na fila/)).toBeVisible();
-    await expect(queueItem.getByTitle(/^Aguardando/)).toBeVisible();
+    // `há`: o selo da foto também tem title "Aguardando atendente".
+    await expect(queueItem.getByTitle(/^Aguardando há/)).toBeVisible();
     await page.screenshot({
       path: path.join(EVIDENCE, "G5-03-queue.png"),
       fullPage: true,

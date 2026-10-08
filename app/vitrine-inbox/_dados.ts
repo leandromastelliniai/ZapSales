@@ -7,7 +7,7 @@
  * reprova qualquer dado de mentira alcançável) e a página que os usa não tem
  * porta na navegação do cliente.
  *
- * As fotos (`./fotos/*.jpg`) são retratos gerados por IA de pessoas que não
+ * As fotos (`public/vitrine-inbox/*.jpg`) são retratos gerados por IA de pessoas que não
  * existem; a origem está gravada no próprio arquivo.
  */
 import type { ConversationWithContact } from "@/hooks/inbox/useConversationsRealtime";
@@ -15,23 +15,17 @@ import type { Message } from "@/lib/types/messaging";
 import type { PassagemDaConversa } from "@/lib/escalacao/cartao-da-passagem";
 import type { EtapaDaLinha } from "@/components/inbox/visual/LinhaDoFunil";
 
-import fotoMariana from "./fotos/mariana.jpg";
-import fotoAnaPaula from "./fotos/ana-paula.jpg";
-import fotoRafael from "./fotos/rafael.jpg";
-import fotoJuliana from "./fotos/juliana.jpg";
-import fotoPedro from "./fotos/pedro.jpg";
-
 export const ORG_ID = "00000000-0000-4000-8000-0000000000aa";
 export const ANA_PAULA_ID = "00000000-0000-4000-8000-0000000000a1";
 export const BRUNO_ID = "00000000-0000-4000-8000-0000000000b1";
 export const CONVERSA_ABERTA = "00000000-0000-4000-8000-00000000c001";
 
 export const FOTOS = {
-  mariana: fotoMariana.src,
-  anaPaula: fotoAnaPaula.src,
-  rafael: fotoRafael.src,
-  juliana: fotoJuliana.src,
-  pedro: fotoPedro.src,
+  mariana: "/vitrine-inbox/mariana.jpg",
+  anaPaula: "/vitrine-inbox/ana-paula.jpg",
+  rafael: "/vitrine-inbox/rafael.jpg",
+  juliana: "/vitrine-inbox/juliana.jpg",
+  pedro: "/vitrine-inbox/pedro.jpg",
 } as const;
 
 /** Um horário de HOJE, para a lista mostrar "14:32" como a imagem aprovada. */

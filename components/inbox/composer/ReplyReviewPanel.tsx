@@ -107,8 +107,9 @@ export function ReplyReviewPanel({
   // Sem sugestão em andamento, a assistência é só o convite: uma linha discreta
   // acima do campo, e não um bloco inteiro roubando altura da conversa (a tela
   // "poluída" era uma das dores do dono). O bloco completo volta assim que há
-  // uma sugestão para revisar.
-  if (!draft) {
+  // uma sugestão para revisar — ou um aviso a dar: rejeitar tira a sugestão da
+  // tela, e a confirmação ("Sugestão rejeitada…") precisa do bloco para aparecer.
+  if (!draft && !notice) {
     return (
       // Na linha das abas (Responder / Nota interna), à direita: o composer é
       // `relative` e as abas deixam o canto livre.
