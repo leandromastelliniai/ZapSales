@@ -13,6 +13,7 @@
  * grava nada.
  */
 import { CONVERSA_ABERTA, LISTA, MENSAGENS, PASSAGENS } from "./_dados";
+import { DEFAULT_CHANNEL_PROVIDER } from "@/lib/channels/capabilities";
 
 function json(corpo: unknown, status = 200): Response {
   return new Response(JSON.stringify(corpo), {
@@ -39,8 +40,7 @@ function respostaDe(url: URL, metodo: string): Response | null {
       data: [
         {
           id: "canal-1",
-          provider: "waha",
-          waha_session_name: "recepcao",
+          provider: DEFAULT_CHANNEL_PROVIDER,
           display_name: "Recepção",
           phone_number: "+55 11 4002-8922",
           status: "WORKING",

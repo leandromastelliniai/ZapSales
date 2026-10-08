@@ -14,6 +14,9 @@ import type { ConversationWithContact } from "@/hooks/inbox/useConversationsReal
 import type { Message } from "@/lib/types/messaging";
 import type { PassagemDaConversa } from "@/lib/escalacao/cartao-da-passagem";
 import type { EtapaDaLinha } from "@/components/inbox/visual/LinhaDoFunil";
+// O canal de exemplo é o padrão (QR code). A constante, e não o nome: só a
+// fronteira de canais nomeia o provider (`pnpm lint:channels`).
+import { DEFAULT_CHANNEL_PROVIDER } from "@/lib/channels/capabilities";
 
 export const ORG_ID = "00000000-0000-4000-8000-0000000000aa";
 export const ANA_PAULA_ID = "00000000-0000-4000-8000-0000000000a1";
@@ -51,7 +54,7 @@ export const ETAPAS: readonly EtapaDaLinha[] = [
   { id: "e6", nome: "Fechado" },
 ];
 
-const CANAL = { phone_number: "+55 11 4002-8922", display_name: "Recepção", provider: "waha" };
+const CANAL = { phone_number: "+55 11 4002-8922", display_name: "Recepção", provider: DEFAULT_CHANNEL_PROVIDER };
 
 function conversa(p: {
   id: string;
