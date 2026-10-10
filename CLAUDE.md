@@ -670,7 +670,7 @@ Etiquetas padrão: needs-triage, needs-info, ready-for-agent, ready-for-human, w
 
 ### Domain docs
 
-Single-context: um `CONTEXT.md` + `docs/adr/` na raiz. See `docs/agents/domain.md`.
+Single-context: um `GLOSSARY.md` + `docs/adr/` na raiz. See `docs/agents/domain.md`.
 
 ---
 
