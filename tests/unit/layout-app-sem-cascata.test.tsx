@@ -77,6 +77,10 @@ const adminClient = {
 vi.mock("@/lib/channels/health", () => ({
   listarConexoesCaidas: () => esperar("conexoes", []),
 }));
+const avisos = vi.hoisted(() => [] as unknown[][]);
+vi.mock("@/lib/logger", () => ({
+  logger: { warn: (...a: unknown[]) => void avisos.push(a), info: () => {}, error: () => {}, debug: () => {} },
+}));
 vi.mock("@/lib/instalacao/modulos", () => ({ modulosLigados: () => esperar("modulos", []) }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => adminClient }));
 vi.mock("@/lib/auth/server", () => ({
@@ -149,6 +153,7 @@ beforeEach(() => {
   estado.temaFalha = false;
   estado.esperas = null;
   estado.iniciadas = [];
+  avisos.length = 0;
 });
 
 describe("layout de /app — consultas independentes em paralelo", () => {
@@ -253,5 +258,26 @@ describe("layout de /app — guardas e redirecionamentos idênticos", () => {
     } finally {
       adminClient.from = antigo;
     }
+  });
+});
+
+describe("layout de /app — tempo da etapa no log do servidor", () => {
+  it("navegação rápida não gera linha de log", async () => {
+    await AppLayout({ children: null });
+    expect(avisos).toEqual([]);
+  });
+
+  it("navegação lenta registra etapa e duração, sem dado do usuário", async () => {
+    const porta = adiavel<void>();
+    estado.esperas = { organizacao: porta.promessa };
+    const agora = vi.spyOn(performance, "now");
+    agora.mockReturnValueOnce(0).mockReturnValue(450);
+    const render = AppLayout({ children: null });
+    await soltarMicrotarefas();
+    porta.resolver();
+    await render;
+    agora.mockRestore();
+    expect(avisos).toHaveLength(1);
+    expect(avisos[0]?.[1]).toEqual({ etapa: "layout", dur_ms: 450 });
   });
 });
