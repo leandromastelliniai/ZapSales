@@ -206,8 +206,10 @@ test.describe("Inbox — a etapa do funil e o nome do agente de IA", () => {
     const t0 = Date.now() - 60_000;
     await falhou(
       "messages",
+      // `metadata` nas DUAS linhas: no insert em lote o PostgREST manda null na
+      // coluna que falta numa linha, e `messages.metadata` é not null.
       (await admin.from("messages").insert([
-        { ...base, direction: "inbound", status: "delivered", sent_via: "external_device", body: "Oi, quero saber o preço", sent_at: new Date(t0).toISOString() },
+        { ...base, direction: "inbound", status: "delivered", sent_via: "external_device", body: "Oi, quero saber o preço", sent_at: new Date(t0).toISOString(), metadata: {} },
         { ...base, direction: "outbound", status: "sent", sent_via: "ai", body: "Claro! Te explico agora.", sent_at: new Date(t0 + 1000).toISOString(), metadata: { ai_actor_id: agenteId } },
       ])).error,
     );
