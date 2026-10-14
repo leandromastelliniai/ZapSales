@@ -199,7 +199,9 @@ test.describe("acervo de conhecimento", () => {
       ).first(), // `.first()`: ver o caso anterior — cópia transitória do streaming.
     ).toBeVisible({ timeout: 30_000 });
 
-    const semChave = await semChaveLoc.isVisible();
+    // `.first()` aqui também: `isVisible()` em modo estrito reprova com a cópia
+    // transitória do streaming (visto no PR #61, depois de ter passado no #54).
+    const semChave = await semChaveLoc.first().isVisible();
     test.skip(
       !semChave,
       "esta organização já tem chave de embedding — o estado 'esperando' não é alcançável aqui",
