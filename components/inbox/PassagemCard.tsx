@@ -6,6 +6,7 @@ import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
+import { MarcoDaPassagem } from "@/components/inbox/visual/QuemAtende";
 import { useT } from "@/hooks/i18n/useT";
 import type { CartaoDaPassagem } from "@/lib/escalacao/cartao-da-passagem";
 import { Robot, Warning } from "@/lib/ui/icons";
@@ -69,11 +70,23 @@ export function PassagemCard({ cartao, contatoId, onAssumir, assumindo }: Props)
   const tituloId = useId();
   const hora = format(new Date(cartao.criadoEm), "dd/MM HH:mm", { locale: localeDaData });
 
+  /*
+   * O MARCO vem primeiro, em toda passagem: a linha de largura total que diz, no
+   * fio, QUANDO a IA passou e PARA QUEM (direção "Linha do Funil"; pedido do dono
+   * de saber "quando foi transferido para um humano e qual é o atendente"). O
+   * cartão com o contexto continua logo abaixo — o marco não substitui o que a IA
+   * deixou para quem assume.
+   */
+  const marco = (
+    <MarcoDaPassagem quando={cartao.criadoEm} para={cartao.assumidaPor} />
+  );
+
   if (cartao.recolhido) {
     return (
-      <div className="flex w-full justify-center px-4 py-1">
+      <div className="flex w-full flex-col gap-1.5 px-4 py-1.5">
+        {marco}
         <details
-          className="w-full max-w-[85%] rounded-xl border border-border bg-muted/40 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-border bg-surface-elevated/60 px-3 py-2 text-sm"
           data-testid="cartao-passagem"
           data-passagem-recolhido="true"
         >
@@ -91,16 +104,45 @@ export function PassagemCard({ cartao, contatoId, onAssumir, assumindo }: Props)
 
   const emAberto = cartao.estado === "aberta";
 
+  // ASSUMIDA, a passagem vira história: o marco já diz quando e para quem, e o
+  // contexto que a IA deixou fica a um clique — sem empurrar a conversa para
+  // fora da tela de quem está atendendo. O "Assumida por" fica no resumo, à
+  // vista (`passagem-com-contexto.spec.ts` lê ali).
+  if (cartao.estado === "reconhecida") {
+    return (
+      <div className="flex w-full flex-col gap-1.5 px-4 py-1.5">
+        {marco}
+        <details
+          data-testid="cartao-passagem"
+          data-passagem-estado={cartao.estado}
+          className="w-full rounded-lg border border-border bg-surface-elevated/60 px-3 py-1.5 text-sm"
+        >
+          <summary className="cursor-pointer text-xs text-muted-foreground">
+            {cartao.assumidaPor
+              ? `${t("Assumida por")} ${cartao.assumidaPor}`
+              : t("Alguém da equipe já assumiu este atendimento.")}
+            {" · "}
+            {t("ver o que a IA passou")}
+          </summary>
+          <div className="mt-2">
+            <Corpo cartao={cartao} tituloId={tituloId} />
+          </div>
+        </details>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex w-full justify-center px-4 py-2">
+    <div className="flex w-full flex-col gap-1.5 px-4 py-2">
+      {marco}
       <article
         aria-labelledby={tituloId}
         data-testid="cartao-passagem"
         data-passagem-estado={cartao.estado}
         className={
           emAberto
-            ? "w-full max-w-[85%] rounded-xl border border-warning/50 bg-warning-bg px-3 py-2.5 text-sm shadow-sm"
-            : "w-full max-w-[85%] rounded-xl border border-border bg-muted/40 px-3 py-2.5 text-sm shadow-sm"
+            ? "w-full rounded-lg border border-funil/50 bg-funil-fundo px-3 py-2.5 text-sm"
+            : "w-full rounded-lg border border-border bg-surface-elevated/60 px-3 py-2.5 text-sm"
         }
       >
         <div className="flex items-start justify-between gap-2">

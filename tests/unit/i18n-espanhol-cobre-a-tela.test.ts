@@ -125,6 +125,7 @@ const PASTAS_IGNORADAS = new Set(["api", "node_modules"]);
 const FORA_DO_PRODUTO: Record<string, string> = {
   "app/design": "vitrine do design system: rota noindex, sem porta na navegação",
   "app/vitrine-agenda": "vitrine do kit visual da Agenda: dado de mentira, noindex",
+  "app/vitrine-inbox": "vitrine da Inbox (direção Linha do Funil): dado de mentira, noindex, sem porta na navegação",
 };
 
 /**

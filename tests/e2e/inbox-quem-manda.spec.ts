@@ -23,6 +23,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { expect, test, type Page } from "./helpers/test";
+import { abrirFichaDaConversa, fecharFichaDaConversa } from "./helpers/ficha-da-conversa";
 import { createClient } from "@supabase/supabase-js";
 
 import { carregarEnvLocal } from "../../scripts/lib/env-de-teste";
@@ -230,7 +231,9 @@ test.describe("Inbox — quem manda nesta conversa", () => {
     await page.goto(`/app/inbox/${conversaId}`);
     const comando = page.getByTestId("comando-da-conversa");
     await expect(comando).toBeVisible({ timeout: 30_000 });
-    await expect(comando).toContainText(/autom/i);
+    // "IA atendendo" desde a direção "Linha do Funil" (escolha do dono); "autom…" era
+    // o rótulo anterior. O que a asserção prova não mudou: a tela diz quem manda.
+    await expect(comando).toContainText(/autom|IA atendendo/i);
     // O CONTROLE: sem silêncio no banco, nada de selo de pausa na tela. Sem esta
     // asserção, o selo do passo (3) não distinguiria "apareceu agora" de "já
     // estava lá desde o começo".
@@ -274,15 +277,20 @@ test.describe("Inbox — quem manda nesta conversa", () => {
     // Sem `if`: com o negócio semeado a linha TEM de aparecer. Uma asserção
     // condicional aqui passaria calada justamente no caso em que a feature não
     // funciona — que é o modo de falha que esta entrega existe para acabar.
-    await expect(page.getByText("Atividade", { exact: true }).first()).toBeVisible({
+    // Desde a direção "Linha do Funil" (07/10/2026) a linha do tempo mora na
+    // FICHA, que virou gaveta: a coluna da direita deixou de existir. Abre-se a
+    // gaveta como o atendente faria, lê-se ali dentro e fecha-se antes do passo (6).
+    const ficha = await abrirFichaDaConversa(page);
+    await expect(ficha.getByText("Atividade", { exact: true }).first()).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.getByText(/Assumiu a conversa/i).first()).toBeVisible({
+    await expect(ficha.getByText(/Assumiu a conversa/i).first()).toBeVisible({
       timeout: 30_000,
     });
     // E com o NOME de quem agiu, não "Você/time" — é a diferença entre saber que
     // uma pessoa mexeu e saber QUAL pessoa.
-    await expect(page.getByText(/Você\/time/).first()).toHaveCount(0);
+    await expect(ficha.getByText(/Você\/time/).first()).toHaveCount(0);
+    await fecharFichaDaConversa(page);
 
     // -----------------------------------------------------------------
     // (6) A VOLTA existe e funciona — o interruptor tem os dois lados.
@@ -292,7 +300,8 @@ test.describe("Inbox — quem manda nesta conversa", () => {
     await voltar.click();
 
     await expect.poll(async () => silencioNoBanco(), { timeout: 30_000 }).toBe("(null)");
-    await expect(comando).toContainText(/autom/i, { timeout: 30_000 });
+    // "IA atendendo" desde a direção "Linha do Funil" — o mesmo rótulo do passo (1).
+    await expect(comando).toContainText(/autom|IA atendendo/i, { timeout: 30_000 });
     await expect(page.getByTestId("badge-atendimento-humano")).toHaveCount(0);
     await captura(page, "3-devolvido-ao-automatico");
   });
@@ -335,7 +344,7 @@ test.describe("Inbox — quem manda nesta conversa", () => {
 
     // Abrindo, a tela diz que ninguém está no comando — nem pessoa, nem automático.
     await naFila.click();
-    await expect(page.getByTestId("comando-da-conversa")).toContainText(/sem respons/i, {
+    await expect(page.getByTestId("comando-da-conversa")).toContainText(/sem respons|sem atendente|na fila/i, {
       timeout: 30_000,
     });
   });

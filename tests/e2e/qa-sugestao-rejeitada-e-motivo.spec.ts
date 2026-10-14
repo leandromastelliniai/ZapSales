@@ -246,12 +246,20 @@ test("rejeitar tira a sugestão da tela e diz que rejeitou; sem agente publicado
       painel(page).getByRole("button", { name: "Rejeitar", exact: true }),
       "a sugestão rejeitada continua oferecendo os botões de decisão",
     ).toHaveCount(0);
+    // O ESTADO NEUTRO, desde a direção "Linha do Funil" (07/10/2026), é só o
+    // convite "Sugerir resposta" na linha das abas — o título "Assistência do
+    // agente" deixou de ser texto visível e ficou como nome da seção.
     await expect(
-      painel(page).getByText("Assistência do agente", { exact: true }),
+      painel(page).getByRole("button", { name: "Sugerir resposta", exact: true }),
       "o painel não voltou ao estado neutro",
     ).toBeVisible();
     // E a confirmação FICA — sem ela, Rejeitar apenas esvaziaria a tela em
     // silêncio, que é o outro meio-conserto que este PR evitou.
+    //
+    // ⚠️ Mantida DE PROPÓSITO na direção "Linha do Funil": o estado neutro
+    // compacto do `ReplyReviewPanel` (sem sugestão → só o botão) volta antes de
+    // desenhar o `notice`. Se esta linha reprovar, o defeito é do produto — a
+    // confirmação sumiu —, e o conserto é no componente, não aqui.
     await expect(
       painel(page).getByText("Sugestão rejeitada. O feedback será usado na próxima sugestão.", {
         exact: true,

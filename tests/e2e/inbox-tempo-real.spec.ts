@@ -327,8 +327,13 @@ test.describe("inbox em tempo real", () => {
     // A seleção é estado LOCAL — a URL não muda (`setSelectedId`, não `router.push`).
     // O sinal de que a conversa abriu é o cabeçalho dela; esperar navegação aqui
     // seria esperar por algo que o app nunca faz.
+    //
+    // `.first()` desde a direção "Linha do Funil" (07/10/2026): o nome do contato
+    // é título em DOIS lugares — o `<h2>` visível da faixa da jornada e o `<h2>`
+    // só-leitor-de-tela do cabeçalho da conversa. Os dois só existem com a
+    // conversa aberta, então qualquer um deles prova o que esta linha prova.
     await expect(
-      page.getByRole("heading", { level: 2, name: fila.contact_name }),
+      page.getByRole("heading", { level: 2, name: fila.contact_name }).first(),
     ).toBeVisible({ timeout: 20_000 });
 
     // Deixa a tela ASSENTAR antes de escrever. Sem isto o refetch inicial

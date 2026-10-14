@@ -9313,5 +9313,18 @@
   "As 1.000 mensagens de atendimento grátis de {mes} deste número acabaram": "This number's 1,000 free service messages for {mes} have run out",
   "Este número já usou 80% das 1.000 mensagens de atendimento grátis de {mes}": "This number has already used 80% of its 1,000 free service messages for {mes}",
   "A partir de agora, cada mensagem de atendimento deste número é cobrada pela Meta até o dia 1 do mês que vem (fuso {fuso}).": "From now on, Meta charges for every service message from this number until the 1st of next month (time zone {fuso}).",
-  "{usadas} de {gratis} usadas. Ao passar de {gratis}, a Meta passa a cobrar cada mensagem de atendimento deste número até o fim do mês (fuso {fuso}).": "{usadas} of {gratis} used. Past {gratis}, Meta starts charging for every service message from this number until the end of the month (time zone {fuso})."
+  "{usadas} de {gratis} usadas. Ao passar de {gratis}, a Meta passa a cobrar cada mensagem de atendimento deste número até o fim do mês (fuso {fuso}).": "{usadas} of {gratis} used. Past {gratis}, Meta starts charging for every service message from this number until the end of the month (time zone {fuso}).",
+  "Ficha completa": "Full profile",
+  "ver o que a IA passou": "see what the AI handed over",
+  "Jornada do cliente": "Customer journey",
+  "Veio da campanha": "Came from the campaign",
+  "Linha do Funil": "Funnel line",
+  "Este contato ainda não está em nenhum funil.": "This contact isn't in any funnel yet.",
+  "IA atendendo": "AI responding",
+  "desde": "since",
+  "transferida pela IA": "handed over by the AI",
+  "Na fila, esperando uma pessoa": "In the queue, waiting for a person",
+  "IA transferiu para": "AI handed over to",
+  "IA passou a conversa para a equipe": "AI handed the conversation to the team",
+  "motivo": "reason"
 }

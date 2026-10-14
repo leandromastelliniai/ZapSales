@@ -13,6 +13,7 @@
 import { randomUUID } from "node:crypto";
 
 import { test } from "./helpers/test";
+import { abrirFichaDaConversa } from "./helpers/ficha-da-conversa";
 import { randomInt } from "node:crypto";
 
 import {
@@ -195,12 +196,20 @@ test.describe("Lote 12 — painel do contato no Inbox", () => {
     registra(`#944 · GET /crm-summary = ${rr.status()}`);
 
     // ── #909: o rótulo do botão é o TÍTULO do diálogo que ele abre ─────────
-    const botao = page.getByRole("button", { name: "Novo Lead" });
+    // Desde a direção "Linha do Funil" (07/10/2026) o painel da conversa é a
+    // FICHA numa gaveta (a coluna da direita deixou de existir): "Novo Lead" e
+    // "Leads recentes" moram nela, e a spec a abre pelo botão "Ficha completa".
+    const ficha = await abrirFichaDaConversa(page);
+    const botao = ficha.getByRole("button", { name: "Novo Lead" });
     await expect(botao).toBeVisible({ timeout: 30_000 });
     registra(`#909 · rótulo do botão = "${await botao.innerText()}"`);
     await captura(page, "909-01-painel-com-botao-novo-lead");
     await botao.click();
-    const dialogo = page.getByRole("dialog");
+    // A gaveta da ficha TAMBÉM é um `dialog` e continua aberta por baixo: o
+    // diálogo medido é o que não é ela.
+    const dialogo = page
+      .getByRole("dialog")
+      .filter({ hasNot: page.getByRole("heading", { name: /^Ficha d(o|el) cont/ }) });
     await expect(dialogo).toBeVisible();
     const titulo = await dialogo.getByRole("heading").first().innerText();
     registra(`#909 · título do diálogo = "${titulo}"`);
@@ -210,7 +219,7 @@ test.describe("Lote 12 — painel do contato no Inbox", () => {
     await expect(dialogo).toHaveCount(0);
 
     // ── #944: Funil · Etapa e o desfecho pelas PALAVRAS FIXAS ─────────────
-    const secao = page.locator('[data-testid="inbox-campos-lead"]');
+    const secao = ficha.locator('[data-testid="inbox-campos-lead"]');
     await expect(secao.getByText("Leads recentes")).toBeVisible();
     const texto = await secao.innerText();
     registra(`#944 · seção "Leads recentes" = ${JSON.stringify(texto)}`);
@@ -249,6 +258,8 @@ test.describe("Lote 12 — painel do contato no Inbox", () => {
     await abreConversa(page, conversaId);
     await expect(page.getByText(`Cliente L12 ${SUFIXO}`).first()).toBeVisible({ timeout: 60_000 });
 
+    // "Tags do contato" mora na ficha, que virou gaveta na direção "Linha do Funil".
+    await abrirFichaDaConversa(page);
     await page.getByRole("button", { name: "Tags do contato", exact: true }).click();
     const rt = await respostaTags;
     const corpoTags = await rt.text();

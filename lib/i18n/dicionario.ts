@@ -14427,6 +14427,20 @@ export const DICIONARIO: Traducoes = {
   "Este número já usou 80% das 1.000 mensagens de atendimento grátis de {mes}": { es: "Este número ya usó el 80% de los 1.000 mensajes de atención gratis de {mes}" },
   "A partir de agora, cada mensagem de atendimento deste número é cobrada pela Meta até o dia 1 do mês que vem (fuso {fuso}).": { es: "A partir de ahora, Meta cobra cada mensaje de atención de este número hasta el día 1 del mes que viene (zona horaria {fuso})." },
   "{usadas} de {gratis} usadas. Ao passar de {gratis}, a Meta passa a cobrar cada mensagem de atendimento deste número até o fim do mês (fuso {fuso}).": { es: "{usadas} de {gratis} usados. Al pasar de {gratis}, Meta empieza a cobrar cada mensaje de atención de este número hasta fin de mes (zona horaria {fuso})." },
+  // ─── Inbox na direção "Linha do Funil" (07/10/2026) ───
+  "Ficha completa": { es: "Ficha completa" },
+  "ver o que a IA passou": { es: "ver lo que la IA traspasó" },
+  "Jornada do cliente": { es: "Recorrido del cliente" },
+  "Veio da campanha": { es: "Vino de la campaña" },
+  "Linha do Funil": { es: "Línea del embudo" },
+  "Este contato ainda não está em nenhum funil.": { es: "Este contacto todavía no está en ningún embudo." },
+  "IA atendendo": { es: "IA atendiendo" },
+  "desde": { es: "desde" },
+  "transferida pela IA": { es: "transferida por la IA" },
+  "Na fila, esperando uma pessoa": { es: "En la fila, esperando a una persona" },
+  "IA transferiu para": { es: "La IA transfirió a" },
+  "IA passou a conversa para a equipe": { es: "La IA pasó la conversación al equipo" },
+  "motivo": { es: "motivo" },
 };
 
 /**
