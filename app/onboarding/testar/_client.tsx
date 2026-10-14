@@ -66,7 +66,10 @@ export function TestarClient({ nome, agenteId, versaoId }: Props) {
       // era outra: a versão não tinha credencial. Mentir sobre a causa manda a
       // pessoa procurar no lugar errado.
       const d = json.data;
-      if (d?.status && d.status !== "completed") {
+      // O sucesso desta rota é `"ok"` (há resposta candidata) e a ausência dela é
+      // `"blocked"` — `"completed"` é o vocabulário de `ai_agent_runs`, outra
+      // tabela. Exigir `"completed"` aqui fazia toda resposta boa virar erro.
+      if (d?.status && d.status !== "ok") {
         setDesfecho({
           tipo: "erro",
           mensagem: d.error_message ?? d.error_code ?? `${t("o ensaio terminou como")} "${d.status}"`,
