@@ -164,16 +164,32 @@ function envolver(alvo: Metodos, nomes: string[], aoChamar: () => void): void {
  * `getUser(jwt)` com token explícito é uma pergunta sobre OUTRO token e sempre vai
  * ao GoTrue.
  */
-export function reaproveitarUsuarioDoProxy(client: { auth: unknown }, user: User): void {
+/**
+ * `createClient()` roda várias vezes por requisição. O "ainda vale" é, portanto,
+ * da REQUISIÇÃO (chaveada pelo objeto de cabeçalhos dela), não de cada cliente:
+ * um `signOut`/`mfa.enroll` no cliente A precisa tirar o repasse do cliente B.
+ */
+const estadoPorRequisicao = new WeakMap<object, { valido: boolean }>();
+
+export function reaproveitarUsuarioDoProxy(
+  client: { auth: unknown },
+  user: User,
+  requisicao: object = client,
+): void {
   const auth = client.auth as Metodos & { mfa?: Metodos };
   const original = auth.getUser;
   if (typeof original !== "function") return;
-  let valido = true;
+  let estado = estadoPorRequisicao.get(requisicao);
+  if (!estado) {
+    estado = { valido: true };
+    estadoPorRequisicao.set(requisicao, estado);
+  }
+  const compartilhado = estado;
   const invalidar = () => {
-    valido = false;
+    compartilhado.valido = false;
   };
   auth.getUser = (...args: unknown[]) =>
-    args[0] || !valido
+    args[0] || !compartilhado.valido
       ? original.apply(auth, args)
       : Promise.resolve({ data: { user }, error: null });
   envolver(auth, MUTADORES, invalidar);

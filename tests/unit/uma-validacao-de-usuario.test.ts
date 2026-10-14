@@ -280,6 +280,20 @@ describe("o cabeçalho de identidade não se forja", () => {
   });
 });
 
+describe("identidade que muda dentro da requisição", () => {
+  it("signOut num cliente tira o repasse dos outros: o getUser seguinte vai ao GoTrue", async () => {
+    await viaProxy("/api/v1/auth/realtime-token", { cookie: cookieDeSessao(SENHA_DO_TOKEN) });
+    const { createClient } = await import("@/lib/supabase/server");
+    const a = await createClient();
+    const b = await createClient();
+    await b.auth.getUser();
+    expect(chamadas.user).toBe(1); // só a do proxy
+    await a.auth.signOut();
+    await b.auth.getUser();
+    expect(chamadas.user).toBe(2); // voltou a perguntar
+  });
+});
+
 describe("tempo por etapa e guardas", () => {
   it("resposta logada traz Server-Timing com proxy e auth; a anônima não precisa", async () => {
     const logada = await viaProxy("/app/inbox", { cookie: cookieDeSessao(SENHA_DO_TOKEN) });

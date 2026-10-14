@@ -80,8 +80,9 @@ async function clienteDeServidor(sameSite: "strict" | "lax") {
   // resultado (`lib/auth/sessao-repassada.ts`). Valor ausente, adulterado ou
   // vencido vira `null` e o `getUser()` segue o caminho de sempre.
   try {
-    const repassado = await lerSessaoRepassada((await headers()).get(CABECALHO_SESSAO));
-    if (repassado) reaproveitarUsuarioDoProxy(client, repassado);
+    const cabecalhos = await headers();
+    const repassado = await lerSessaoRepassada(cabecalhos.get(CABECALHO_SESSAO));
+    if (repassado) reaproveitarUsuarioDoProxy(client, repassado, cabecalhos);
   } catch {
     // Sem escopo de requisição (ou sem o cabeçalho): validação normal no GoTrue.
   }

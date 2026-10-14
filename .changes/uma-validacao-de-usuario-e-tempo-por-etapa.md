@@ -12,3 +12,6 @@ O servidor também deixa de perguntar ao serviço de autenticação quem é o us
 mesma requisição: o proxy valida uma vez e o restante da requisição reaproveita o resultado. A regra
 de segurança continua a mesma — o token é sempre validado no serviço de autenticação, nunca
 confiado a partir do cookie local —, e a chamada por token de servidor (`zps_`) não muda.
+
+O tempo de renderização do layout ainda não aparece no cabeçalho (uma tela não consegue acrescentar
+cabeçalho à resposta depois que ela começou a ser enviada); fica para uma próxima entrega.

@@ -151,7 +151,9 @@ export async function proxy(request: NextRequest) {
   if (isAdminSurface && pathname.startsWith("/admin") && pathname !== "/admin/forbidden") {
     const { data: isAdmin, error } = await supabase.rpc("fn_is_platform_admin");
     if (error || !isAdmin) {
-      return NextResponse.redirect(new URL("/admin/forbidden", request.url));
+      const negado = NextResponse.redirect(new URL("/admin/forbidden", request.url));
+      negado.headers.set("server-timing", servidorTiming(inicio, autenticacaoMs));
+      return negado;
     }
   }
 
