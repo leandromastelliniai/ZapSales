@@ -248,8 +248,9 @@ test.describe("Inbox — a etapa do funil e o nome do agente de IA", () => {
       { timeout: ESPERA },
     );
 
-    // "Todas": a aba que abre por padrão pode não ser a que contém a conversa.
-    await page.getByRole("tab", { name: /^Todas/ }).click();
+    // "Automático": a aba da conversa com a IA no comando. "Todas" não serve —
+    // ela fica oculta para `agent` (visibleInboxTabs), e é como agent que se loga.
+    await page.getByRole("tab", { name: /^Automático/ }).click();
     const linha = page.locator(`button[data-conversation-id="${conversaAutomatica}"]`);
     await expect(
       linha.getByLabel(`Etapa do funil: ${ETAPA_ATUAL}`),
