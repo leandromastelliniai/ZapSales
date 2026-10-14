@@ -267,5 +267,7 @@ export const PASSAGENS: readonly PassagemDaConversa[] = [
     reconhecido_em: hoje(14, 27),
     reconhecido_por: ANA_PAULA_ID,
     reconhecido_por_nome: "Ana Paula",
+    agente_id: "a0000000-0000-4000-8000-000000000001",
+    agente_nome: "Sofia",
   } as unknown as PassagemDaConversa,
 ];

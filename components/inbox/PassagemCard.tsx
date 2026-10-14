@@ -78,7 +78,7 @@ export function PassagemCard({ cartao, contatoId, onAssumir, assumindo }: Props)
    * deixou para quem assume.
    */
   const marco = (
-    <MarcoDaPassagem quando={cartao.criadoEm} para={cartao.assumidaPor} />
+    <MarcoDaPassagem quando={cartao.criadoEm} para={cartao.assumidaPor} de={cartao.agenteNome} />
   );
 
   if (cartao.recolhido) {

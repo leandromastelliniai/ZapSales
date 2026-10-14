@@ -79,11 +79,32 @@ describe("quem atende", () => {
     expect(screen.getByTestId("chip-de-comando").textContent).not.toContain("IA");
   });
 
+  it("o chip nomeia o agente de IA quando a rota o resolveu; sem ele, só IA", () => {
+    const { rerender } = render(<ChipDeComando comando={{ quem: "automatico" }} agente="Sofia" />);
+    expect(screen.getByTestId("chip-de-comando").textContent).toContain("Sofia (IA) atendendo");
+    rerender(<ChipDeComando comando={{ quem: "automatico" }} agente={null} />);
+    expect(screen.getByTestId("chip-de-comando").textContent).toBe("IA atendendo");
+  });
+
   it("o marco da passagem diz a hora e para quem foi", () => {
     render(<MarcoDaPassagem quando="2026-10-07T14:27:00" para="Ana Paula" />);
     const marco = screen.getByTestId("marco-da-passagem");
     expect(marco.textContent).toContain("14:27");
     expect(marco.textContent).toContain("IA transferiu para Ana Paula");
+  });
+
+  it("com o agente conhecido (0545), o marco o nomeia", () => {
+    render(<MarcoDaPassagem quando="2026-10-07T14:27:00" para="Ana Paula" de="Sofia" />);
+    expect(screen.getByTestId("marco-da-passagem").textContent).toContain(
+      "Sofia (IA) transferiu para Ana Paula",
+    );
+  });
+
+  it("agente conhecido e ninguém assumiu ainda: passou para a equipe", () => {
+    render(<MarcoDaPassagem quando="2026-10-07T14:27:00" para={null} de="Sofia" />);
+    expect(screen.getByTestId("marco-da-passagem").textContent).toContain(
+      "Sofia (IA) passou a conversa para a equipe",
+    );
   });
 
   it("iniciais: duas letras, do primeiro e do último nome", () => {

@@ -231,9 +231,10 @@ test.describe("Inbox — quem manda nesta conversa", () => {
     await page.goto(`/app/inbox/${conversaId}`);
     const comando = page.getByTestId("comando-da-conversa");
     await expect(comando).toBeVisible({ timeout: 30_000 });
-    // "IA atendendo" desde a direção "Linha do Funil" (escolha do dono); "autom…" era
-    // o rótulo anterior. O que a asserção prova não mudou: a tela diz quem manda.
-    await expect(comando).toContainText(/autom|IA atendendo/i);
+    // "IA atendendo" desde a direção "Linha do Funil" (escolha do dono), ou
+    // "Sofia (IA) atendendo" quando a rota resolve o agente; "autom…" era o rótulo
+    // anterior. O que a asserção prova não mudou: a tela diz quem manda.
+    await expect(comando).toContainText(/autom|IA\)? atendendo/i);
     // O CONTROLE: sem silêncio no banco, nada de selo de pausa na tela. Sem esta
     // asserção, o selo do passo (3) não distinguiria "apareceu agora" de "já
     // estava lá desde o começo".
@@ -301,7 +302,7 @@ test.describe("Inbox — quem manda nesta conversa", () => {
 
     await expect.poll(async () => silencioNoBanco(), { timeout: 30_000 }).toBe("(null)");
     // "IA atendendo" desde a direção "Linha do Funil" — o mesmo rótulo do passo (1).
-    await expect(comando).toContainText(/autom|IA atendendo/i, { timeout: 30_000 });
+    await expect(comando).toContainText(/autom|IA\)? atendendo/i, { timeout: 30_000 });
     await expect(page.getByTestId("badge-atendimento-humano")).toHaveCount(0);
     await captura(page, "3-devolvido-ao-automatico");
   });

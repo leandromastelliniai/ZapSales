@@ -456,7 +456,7 @@
       "col": 5,
       "type": "table",
       "label": "passagens_de_atendimento",
-      "sublabel": "uma linha por passagem, SEM dedup — lida sob fn_can_view_conversation; o aviso da Central só REMETE a ela"
+      "sublabel": "uma linha por passagem, SEM dedup — lida sob fn_can_view_conversation; o aviso da Central só REMETE a ela; agente_id (0545) diz QUAL agente passou, e o marco o nomeia"
     },
     {
       "id": "passagemReconhece",
@@ -633,6 +633,14 @@
       "type": "service",
       "label": "followup-turn: o passo 'Classificar (IA)' do follow-up (lib/ai/decisao/followup.ts)",
       "sublabel": "só com resposta ao envio do fluxo: a mesma pergunta da IA de sempre (followup_classify), em paralelo — as saídas do passo como opções, sem 'nenhuma', só o texto digitado pelo cliente por scrubMessage (mídia não sai); SÓ OBSERVA nesta versão: a saída que move o fluxo é sempre a da IA de sempre, e ninguém espera por ele"
+    },
+    {
+      "id": "agenteAtual",
+      "lane": "borda",
+      "col": 7,
+      "type": "route",
+      "label": "/api/v1/conversations/[id]/agente-atual",
+      "sublabel": "o agente da ULTIMA resposta da IA (messages.metadata.ai_actor_id), so id e nome; null = o chip diz so IA"
     }
   ],
   "edges": [
@@ -1471,6 +1479,24 @@
       "from": "prazoConfig",
       "to": "atendimentoManual",
       "label": "manual_reply_silence_minutes (5 min a 24 h; null = 60): quanto a IA fica calada depois de uma resposta pelo celular — lido a cada pausa por lerPrazoDoSilencioManualMinutos (diagnóstico por um contribuidor, #2005)"
+    },
+    {
+      "id": "e135",
+      "from": "modelo",
+      "to": "agenteAtual",
+      "label": "cada resposta do turno grava o agente em metadata.ai_actor_id; a rota le a ultima"
+    },
+    {
+      "id": "e136",
+      "from": "agenteAtual",
+      "to": "cabecalho",
+      "label": "o chip diz 'Sofia (IA) atendendo' enquanto a IA tem o comando"
+    },
+    {
+      "id": "e137",
+      "from": "passagemRegistro",
+      "to": "passagemCartao",
+      "label": "agente_id (0545) vira o nome no marco: 'Sofia (IA) transferiu para Ana'"
     }
   ],
   "cards": [

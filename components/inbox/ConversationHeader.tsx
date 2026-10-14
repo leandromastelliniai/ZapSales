@@ -20,6 +20,7 @@ import { ArrowRight, MagnifyingGlass } from "@/lib/ui/icons";
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { useClaimConversation } from "@/hooks/inbox/useClaimConversation";
 import { useReleaseConversation } from "@/hooks/inbox/useReleaseConversation";
+import { useAgenteDaConversa } from "@/hooks/inbox/useAgenteDaConversa";
 import {
   useArchiveConversation,
   useCloseConversation,
@@ -126,6 +127,12 @@ export function ConversationHeader({
     is_group: conversation.is_group ?? false,
     automaticoDaOrg: automaticoDaOrg.data,
   });
+  // Qual agente, quando a IA está no comando: "Sofia (IA) atendendo".
+  const agente = useAgenteDaConversa(
+    conversation.id,
+    comando.quem === "automatico",
+    conversation.last_outbound_at ?? null,
+  );
 
   const encerrada = status === "closed" || status === "archived" || status === "resolved";
   /**
@@ -191,6 +198,7 @@ export function ConversationHeader({
             desde={conversation.assigned_at ?? null}
             transferidaPelaIa={comando.quem === "humano" && Boolean(conversation.last_handoff_at)}
             esperaDesde={esperaDaConversa(conversation)}
+            agente={agente?.nome ?? null}
           />
         </span>
         {status !== "open" ? (
