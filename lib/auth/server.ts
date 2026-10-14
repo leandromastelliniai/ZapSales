@@ -416,16 +416,24 @@ export const exigenciaDeMfa = cache(
   ): Promise<ExigenciaDeMfa> => {
     const admin = createAdminClient();
 
-    let plataformaExige: boolean | null = null;
-    if (isPlatformAdmin && userId) {
-      const { data } = await admin
-        .from("platform_admins")
-        .select("mfa_required")
-        .eq("user_id", userId)
-        .is("revoked_at", null)
-        .maybeSingle();
-      plataformaExige = (data?.mfa_required as boolean | undefined) ?? null;
-    }
+    // As duas leituras são independentes (uma por usuário, outra por organização)
+    // e ambas correm em TODO render do layout: em série, a segunda esperava a
+    // primeira sem precisar dela (#65).
+    const [plataforma, empresa] = await Promise.all([
+      isPlatformAdmin && userId
+        ? admin
+            .from("platform_admins")
+            .select("mfa_required")
+            .eq("user_id", userId)
+            .is("revoked_at", null)
+            .maybeSingle()
+        : null,
+      orgId
+        ? admin.from("organizations").select("settings").eq("id", orgId).maybeSingle()
+        : null,
+    ]);
+    const plataformaExige: boolean | null =
+      (plataforma?.data?.mfa_required as boolean | undefined) ?? null;
 
     let empresaExige = false;
     let papelMinimo: PapelMinimoDeMfa | null = null;
@@ -433,11 +441,7 @@ export const exigenciaDeMfa = cache(
     let mudouEm: Date | null = null;
     let aceitoEm: string | null = null;
     if (orgId) {
-      const { data } = await admin
-        .from("organizations")
-        .select("settings")
-        .eq("id", orgId)
-        .maybeSingle();
+      const data = empresa?.data;
       empresaExige = empresaExigeMfa(data?.settings);
       const cfg = politicaDaEmpresa(data?.settings);
       papelMinimo = cfg.papelMinimo;

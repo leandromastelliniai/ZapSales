@@ -131,7 +131,7 @@ async function drenar(page: Page): Promise<void> {
 
 /** Cadastra a chave da OpenAI pela própria tela de conhecimento. */
 async function cadastrarChavePelaTela(page: Page): Promise<void> {
-  await page.getByTestId("conhecimento-cadastrar-chave").click();
+  await page.getByTestId("conhecimento-cadastrar-chave").first().click();
   await page.getByTestId("conhecimento-chave-input").fill(CHAVE_OPENAI);
   await page.getByTestId("conhecimento-chave-salvar").click();
   // A validação com o provedor é assíncrona: a tela só pode prometer indexação
@@ -173,7 +173,7 @@ test.describe("acervo de conhecimento", () => {
     // no momento da falha tem UMA cópia só (PR #54, 08/10/2026).
     await expect(semChave.or(comChave).first()).toBeVisible();
 
-    if (await semChave.isVisible()) {
+    if (await semChave.first().isVisible()) {
       // O aviso não é um beco: o conserto abre na própria tela.
       await page.getByTestId("conhecimento-cadastrar-chave").click();
       await expect(page.getByTestId("conhecimento-chave-input")).toBeVisible();
@@ -240,7 +240,7 @@ test.describe("acervo de conhecimento", () => {
 
     await page.goto("/app/ai/knowledge/sources");
 
-    if (await page.getByTestId("conhecimento-sem-chave").isVisible()) {
+    if (await page.getByTestId("conhecimento-sem-chave").first().isVisible()) {
       await cadastrarChavePelaTela(page);
     }
 
