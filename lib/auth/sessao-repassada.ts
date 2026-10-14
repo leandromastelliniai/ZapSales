@@ -34,8 +34,8 @@ import { env } from "@/lib/env";
 /** Nome do cabeçalho interno. Só o proxy escreve; todo o resto só lê. */
 export const CABECALHO_SESSAO = "x-zs-sessao";
 
-/** Uma requisição que dura mais que isto volta a validar no GoTrue. */
-const VALIDADE_MS = 120_000;
+/** Uma requisição que dura mais que isto volta a validar no GoTrue (janela máxima de revogação não vista: 30 s). */
+const VALIDADE_MS = 30_000;
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
