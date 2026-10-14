@@ -64,7 +64,8 @@ test.describe("a Agenda como o dono do produto a usa", () => {
     // vitrine, e NINGUÉM o via aqui. Componente provado e não montado é o mesmo
     // que componente ausente, do ponto de vista de quem usa.
     await page.goto("/app/agenda");
-    await expect(page.getByTestId("tela-agenda")).toBeVisible({ timeout: ESPERA });
+    // `.first()`: cópia transitória do streaming — ver "evidência visual".
+    await expect(page.getByTestId("tela-agenda").first()).toBeVisible({ timeout: ESPERA });
 
     const filtro = page.getByTestId("filtro-de-pessoas");
     const avatares = page.locator('[data-testid^="avatar-pessoa-"]');
@@ -142,7 +143,7 @@ test.describe("a Agenda como o dono do produto a usa", () => {
     // e jamais dado de mentira (decisão 18 — o relato de quem vê não é "tem dado
     // de teste na tela", é "estou vendo paciente de outra clínica na minha
     // agenda", e o time queima horas caçando um furo de RLS que não existe).
-    const fonte = await page.getByTestId("tela-agenda").getAttribute("data-fonte");
+    const fonte = await page.getByTestId("tela-agenda").first().getAttribute("data-fonte");
     expect(fonte, "a tela precisa declarar sua fonte no DOM").not.toBeNull();
     expect(
       fonte,
@@ -251,11 +252,16 @@ test.describe("a Agenda como o dono do produto a usa", () => {
     // tela que o cliente abre.
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto("/app/agenda");
-    await expect(page.getByTestId("tela-agenda")).toBeVisible({ timeout: ESPERA });
+    // `.first()`: durante o streaming do `next start` a tela existe por um
+    // instante DUAS vezes (o segmento oculto que o Next ainda vai trocar de
+    // lugar), e o modo estrito reprova na primeira sondagem. Mesma corrida de
+    // `acervo-de-conhecimento.spec.ts`; vista também na branch do Dependabot.
+    const tela = page.getByTestId("tela-agenda").first();
+    await expect(tela).toBeVisible({ timeout: ESPERA });
     await page.screenshot({ path: "evidence/calendario/tela-do-produto-claro.png", fullPage: true });
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByTestId("tela-agenda")).toBeVisible();
+    await expect(tela).toBeVisible();
     await page.screenshot({ path: "evidence/calendario/tela-do-produto-celular.png", fullPage: true });
 
     const estouro = await page.evaluate(
