@@ -28,15 +28,7 @@ import { listarConexoesCaidas, type ConexaoCaida } from "@/lib/channels/health";
 import { VoiceCallProvider } from "@/components/voice/VoiceCallContext";
 import { ProvedorDaOcupacaoDoRodape } from "@/lib/ui/rodape-ocupado";
 import { acessoFoiRevogado } from "@/lib/auth/vinculo-revogado";
-import { logger } from "@/lib/logger";
-
-/**
- * Acima disto o layout registra o próprio tempo. O `Server-Timing` é escrito pelo
- * `proxy` ANTES da renderização e um layout não acrescenta cabeçalho à resposta já
- * em streaming, então o tempo desta etapa vive no log do servidor (#65). Só a
- * navegação lenta é registrada: uma linha por clique seria ruído.
- */
-const LAYOUT_LENTO_MS = 300;
+import { medirLayout } from "@/lib/observability/tempo-do-layout";
 
 /**
  * O tema de extensão que a organização escolheu, serializado, ou `null`.
@@ -75,7 +67,7 @@ async function lerCssDoTemaDaExtensao(
 }
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const inicio = performance.now();
+  const fimDaMedicao = medirLayout();
   const user = await loadAuthUser();
   if (!user) redirect("/login");
 
@@ -290,10 +282,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     </ProvedorDaOcupacaoDoRodape>
   );
 
-  const duracaoMs = performance.now() - inicio;
-  if (duracaoMs >= LAYOUT_LENTO_MS) {
-    logger.warn("[layout] renderização lenta", { etapa: "layout", dur_ms: Math.round(duracaoMs) });
-  }
+  fimDaMedicao();
 
   return (
     // O idioma envolve a árvore inteira e recebe o código PRONTO — ele não
