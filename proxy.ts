@@ -5,6 +5,7 @@ import { env } from "@/lib/env";
 import { fetchDoServidor } from "@/lib/supabase/fetch-do-servidor";
 import { urlDoSupabaseNoServidor } from "@/lib/supabase/url-do-servidor";
 import { isPublicPath } from "@/lib/auth/public-paths";
+import { CABECALHO_SESSAO, assinarSessao } from "@/lib/auth/sessao-repassada";
 import {
   verifyImpersonateCookieEdge,
   IMPERSONATE_COOKIE_NAME_EDGE,
@@ -12,17 +13,36 @@ import {
 
 const COOKIE_NAME = "sb-zapsales-auth";
 
+/** `Server-Timing` (W3C): nomes genéricos, sem detalhe interno. Só em resposta logada. */
+function servidorTiming(inicio: number, autenticacaoMs: number): string {
+  const proxyMs = performance.now() - inicio;
+  return `proxy;dur=${proxyMs.toFixed(1)}, auth;dur=${autenticacaoMs.toFixed(1)}`;
+}
+
 export async function proxy(request: NextRequest) {
-  const response = NextResponse.next({ request: { headers: request.headers } });
+  const inicio = performance.now();
+
+  // O resultado da validação do usuário viaja por este cabeçalho (ver
+  // `lib/auth/sessao-repassada.ts`). Quem o escreve é SÓ este proxy: o que veio de
+  // fora é apagado antes de qualquer decisão, inclusive no caminho público.
+  request.headers.delete(CABECALHO_SESSAO);
 
   // Inject X-Request-Id for downstream correlation (audit log, error wrappers).
   const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
-  response.headers.set("x-request-id", requestId);
 
   const { pathname, search } = request.nextUrl;
   // Expose pathname to Server Components via header (used by onboarding layout).
-  response.headers.set("x-pathname", pathname);
   request.headers.set("x-pathname", pathname);
+
+  // A resposta é criada DEPOIS da validação do usuário: o `NextResponse.next`
+  // copia os cabeçalhos da requisição no momento em que é chamado, e o usuário
+  // assinado (além dos cookies renovados) precisa estar neles.
+  const novaResposta = () => {
+    const r = NextResponse.next({ request: { headers: request.headers } });
+    r.headers.set("x-request-id", requestId);
+    r.headers.set("x-pathname", pathname);
+    return r;
+  };
 
   // EPIC-11: the admin surface is reached by PATH (`/admin/*`) — the self-host kit
   // points `NEXT_PUBLIC_ADMIN_URL` at the same host as the app and maps no `admin.`
@@ -32,8 +52,11 @@ export async function proxy(request: NextRequest) {
   const isAdminSurface = host.startsWith("admin.") || pathname.startsWith("/admin");
 
   if (isPublicPath(pathname)) {
-    return response;
+    return novaResposta();
   }
+
+  // Cookies que o refresh de sessão quer gravar; aplicados à resposta final.
+  const cookiesParaGravar: { name: string; value: string; options: CookieOptions }[] = [];
 
   const supabase = createServerClient(
     // #1082: base na URL pública, endereço interno só no transporte (ver
@@ -55,7 +78,7 @@ export async function proxy(request: NextRequest) {
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
             request.cookies.set(name, value);
-            response.cookies.set(name, value, options);
+            cookiesParaGravar.push({ name, value, options });
           });
         },
       },
@@ -70,9 +93,11 @@ export async function proxy(request: NextRequest) {
   );
 
   // Validate JWT server-side (NEVER use getSession on backend per CLAUDE.md).
+  const inicioDaAutenticacao = performance.now();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const autenticacaoMs = performance.now() - inicioDaAutenticacao;
 
   if (!user) {
     // API routes must respond with JSON envelope (contract: {error:{code,message}})
@@ -103,6 +128,7 @@ export async function proxy(request: NextRequest) {
   // runs in Edge — no DB access, only HMAC + expiry. On any failure we delete
   // the presentation cookie. The database support session remains authoritative:
   // expired/revoked support still blocks the app until explicit exit.
+  let apagarCookieDeSuporte = false;
   if (pathname.startsWith("/app")) {
     const impCookie = request.cookies.get(IMPERSONATE_COOKIE_NAME_EDGE)?.value;
     if (impCookie) {
@@ -114,7 +140,7 @@ export async function proxy(request: NextRequest) {
         console.warn(
           `[middleware] impersonate cookie invalid (${result.reason ?? "unknown"}) — clearing`,
         );
-        response.cookies.delete(IMPERSONATE_COOKIE_NAME_EDGE);
+        apagarCookieDeSuporte = true;
       }
     }
   }
@@ -129,6 +155,14 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // Repassa ao resto da requisição o usuário que o GoTrue acabou de validar.
+  request.headers.set(CABECALHO_SESSAO, await assinarSessao(user));
+  const response = novaResposta();
+  for (const { name, value, options } of cookiesParaGravar) {
+    response.cookies.set(name, value, options);
+  }
+  if (apagarCookieDeSuporte) response.cookies.delete(IMPERSONATE_COOKIE_NAME_EDGE);
+  response.headers.set("server-timing", servidorTiming(inicio, autenticacaoMs));
   return response;
 }
 

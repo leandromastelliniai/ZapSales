@@ -7,10 +7,15 @@
 
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookieSecure } from "@/lib/supabase/cookie-secure";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { env } from "@/lib/env";
 import { fetchDoServidor } from "@/lib/supabase/fetch-do-servidor";
 import { urlDoSupabaseNoServidor } from "@/lib/supabase/url-do-servidor";
+import {
+  CABECALHO_SESSAO,
+  lerSessaoRepassada,
+  reaproveitarUsuarioDoProxy,
+} from "@/lib/auth/sessao-repassada";
 
 /**
  * Tudo o que vale para TODO cookie deste cliente, menos o `sameSite` — que é
@@ -37,7 +42,7 @@ function opcoesDeCookie(sameSite: "strict" | "lax") {
 async function clienteDeServidor(sameSite: "strict" | "lax") {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  const client = createServerClient(
     // #1082: a BASE fica na URL pública, porque é dela que o SDK monta os links
     // que este cliente entrega a terceiros — `signInWithOAuth` → `data.url`
     // (login com Google) e o storage → `signedUrl` (mídia, avatar, PDF da LGPD).
@@ -70,6 +75,17 @@ async function clienteDeServidor(sameSite: "strict" | "lax") {
       cookieOptions: opcoesDeCookie(sameSite),
     },
   );
+
+  // O `proxy` já validou o usuário no GoTrue nesta requisição e assinou o
+  // resultado (`lib/auth/sessao-repassada.ts`). Valor ausente, adulterado ou
+  // vencido vira `null` e o `getUser()` segue o caminho de sempre.
+  try {
+    const repassado = await lerSessaoRepassada((await headers()).get(CABECALHO_SESSAO));
+    if (repassado) reaproveitarUsuarioDoProxy(client, repassado);
+  } catch {
+    // Sem escopo de requisição (ou sem o cabeçalho): validação normal no GoTrue.
+  }
+  return client;
 }
 
 export async function createClient() {

@@ -3562,3 +3562,25 @@ gravada durante a poda e movida por uma mescla de contatos antes do worker não 
 de mensagem; mensagem de texto não chama a função (`when media_storage_path is not null`).
 
 **Não coberto:** pela tela. O composer cria a mensagem logo após o upload; o caso é o da API.
+
+## J50 — Trocar de tela logado, com latência medida `[P0]` (2026-10-14, issues #63/#64)
+
+**Por que P0:** é o gesto mais repetido do produto (cada clique no menu). Em produção, toda tela e
+toda chamada de API de quem está logado levou de 0,3 a 0,7 s só no servidor, e a primeira depois de
+parada, 2 a 3 s; o `GET /auth/v1/user` do GoTrue, chamado várias vezes por requisição, tinha
+mediana de 332 ms e pico de 2,3 s.
+
+**Meta (da #63):** página logada do dashboard com resposta do servidor abaixo de 300 ms na mediana
+depois do aquecimento; primeira requisição a frio abaixo de 1 s.
+
+| Caso | Como se vê | Prova |
+|---|---|---|
+| Página logada do dashboard = no máximo 1 chamada de validação de usuário | GoTrue falso que conta `GET /auth/v1/user` | `tests/unit/uma-validacao-de-usuario.test.ts` (antes da #64: 3 chamadas; depois: 1) |
+| Rota de API por cookie = no máximo 1 chamada | idem | idem (antes: 2; depois: 1) |
+| Rota de API por token `zps_` não faz chamada de sessão de cookie | idem | idem |
+| Cabeçalho de identidade forjado vindo de fora é ignorado | proxy e rota fora do matcher | idem |
+| Resposta logada traz `Server-Timing: proxy;dur=…, auth;dur=…` | aba Rede do navegador | idem (formato) |
+
+**Não coberto ainda:** a medição "antes/depois" de `/user` e do tempo por etapa pela tela, em
+ambiente fresco estilo VPS e em produção (somente leitura) — exige Supabase local e a sessão do dono.
+
