@@ -1187,6 +1187,7 @@ jobs:
         filtro-por-marcador-pela-tela.spec.ts
         fonte-de-captacao-assina-os-envios.spec.ts
         inbox-busca-e-filtros-dizem-a-verdade.spec.ts
+        inbox-funil-e-nome-do-agente.spec.ts
         mapas-em-provedores.spec.ts
         painel-de-configuracao-da-instalacao.spec.ts
         protecao-de-envio-nao-congela-o-padrao.spec.ts

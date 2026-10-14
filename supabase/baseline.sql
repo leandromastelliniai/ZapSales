@@ -47740,3 +47740,18 @@ drop trigger if exists trg_meta_templates_cabecalho_citado on public.meta_templa
 create trigger trg_meta_templates_cabecalho_citado
   after insert or update of header_media on public.meta_templates
   for each row execute function public.fn_cabecalho_citado_sai_da_fila();
+
+-- ---- a passagem guarda o agente de IA (migration 0545) ----
+-- Aditiva: o motor grava o agente que passou a conversa, e a Inbox o nomeia
+-- no marco da passagem. Nula = passagem antiga ou sem agente resolvido.
+alter table public.passagens_de_atendimento
+  add column if not exists agente_id uuid references public.ai_agents(id) on delete set null;
+
+create index if not exists idx_passagens_de_atendimento_agente
+  on public.passagens_de_atendimento (agente_id)
+  where agente_id is not null;
+
+comment on column public.passagens_de_atendimento.agente_id is
+  'O agente de IA que passou a conversa para uma pessoa (migration 0545). Nulo em passagens antigas ou sem agente resolvido; a Inbox então diz só "IA".';
+
+notify pgrst, 'reload schema';

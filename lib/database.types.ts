@@ -8272,6 +8272,7 @@ export type Database = {
       }
       passagens_de_atendimento: {
         Row: {
+          agente_id: string | null
           aviso_motivo_codigo: string | null
           body: string
           caso_id: string | null
@@ -8293,6 +8294,7 @@ export type Database = {
           title: string | null
         }
         Insert: {
+          agente_id?: string | null
           aviso_motivo_codigo?: string | null
           body: string
           caso_id?: string | null
@@ -8314,6 +8316,7 @@ export type Database = {
           title?: string | null
         }
         Update: {
+          agente_id?: string | null
           aviso_motivo_codigo?: string | null
           body?: string
           caso_id?: string | null
@@ -8335,6 +8338,13 @@ export type Database = {
           title?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "passagens_de_atendimento_agente_id_fkey"
+            columns: ["agente_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "passagens_de_atendimento_caso_id_fkey"
             columns: ["caso_id"]

@@ -9326,5 +9326,8 @@
   "Na fila, esperando uma pessoa": "In the queue, waiting for a person",
   "IA transferiu para": "AI handed over to",
   "IA passou a conversa para a equipe": "AI handed the conversation to the team",
+  "transferiu para": "handed over to",
+  "atendendo": "responding",
+  "passou a conversa para a equipe": "handed the conversation to the team",
   "motivo": "reason"
 }

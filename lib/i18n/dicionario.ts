@@ -14440,6 +14440,9 @@ export const DICIONARIO: Traducoes = {
   "Na fila, esperando uma pessoa": { es: "En la fila, esperando a una persona" },
   "IA transferiu para": { es: "La IA transfirió a" },
   "IA passou a conversa para a equipe": { es: "La IA pasó la conversación al equipo" },
+  "transferiu para": { es: "transfirió a" },
+  atendendo: { es: "atendiendo" },
+  "passou a conversa para a equipe": { es: "pasó la conversación al equipo" },
   "motivo": { es: "motivo" },
 };
 

@@ -64,6 +64,9 @@ function respostaDe(url: URL, metodo: string): Response | null {
     return json({ data: PASSAGENS });
   }
   if (caminho.endsWith("/draft-reply")) return json({ data: { drafts: [] } });
+  if (caminho.endsWith("/agente-atual")) {
+    return json({ data: { id: "a0000000-0000-4000-8000-000000000001", nome: "Sofia" } });
+  }
   if (caminho === "/api/v1/ai/automatico-ativo") return json({ data: { ativo: true } });
   if (caminho === "/api/v1/voice/sessions/status") {
     return json({ data: { configured: false, channelSessionId: null, status: null, paired: false, jid: null } });

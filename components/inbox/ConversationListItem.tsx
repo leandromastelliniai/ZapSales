@@ -66,9 +66,9 @@ interface Props {
    */
   fotoUrl?: string | null;
   /**
-   * A etapa do lead na Linha do Funil, para o trecho de linha da conversa. A
-   * lista ainda não traz a etapa por conversa; enquanto não traz, a linha não
-   * aparece.
+   * A etapa do lead na Linha do Funil, para o trecho de linha da conversa.
+   * Ausente = o que a rota da lista calculou (`conversation.funil_do_contato`,
+   * a mesma regra da faixa da jornada). A vitrine passa o de exemplo aqui.
    */
   funil?: { etapas: readonly EtapaDaLinha[]; atualId: string | null } | null;
 }
@@ -127,6 +127,13 @@ export function ConversationListItem({
   const localeDaData = useLocaleDeData();
   const t = useT();
   const c = conversation.contacts ?? null;
+  const doContato = conversation.funil_do_contato;
+  const funilDaLinha =
+    funil !== undefined
+      ? funil
+      : doContato
+        ? { etapas: doContato.etapas, atualId: doContato.etapa_atual_id }
+        : null;
   const displayName = rotuloDoContato(c, t);
   const phoneFallback = c?.phone_number ? phoneForDisplay(c.phone_number) : "??";
   const tags = c?.tags ?? [];
@@ -302,10 +309,10 @@ export function ConversationListItem({
           </span>
         </div>
 
-        {funil && funil.etapas.length > 0 ? (
+        {funilDaLinha && funilDaLinha.etapas.length > 0 ? (
           <LinhaDoFunil
-            etapas={funil.etapas}
-            atualId={funil.atualId}
+            etapas={funilDaLinha.etapas}
+            atualId={funilDaLinha.atualId}
             variante="compacta"
             className="mt-2 max-w-[11rem]"
           />

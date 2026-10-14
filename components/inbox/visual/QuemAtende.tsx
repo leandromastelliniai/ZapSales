@@ -20,10 +20,13 @@ import { AvatarDoContato, iniciaisDe, type SeloDeQuemAtende } from "./AvatarDoCo
  * (`MarcoDaPassagem`). Os três leem o mesmo `Comando` de
  * `lib/inbox/comando-da-conversa.ts` — nenhum recalcula a regra.
  *
- * "IA" aqui é o rótulo curto que o dono escolheu para o agente enquanto a
- * passagem não guarda QUAL agente atendeu (o nome vem num PR seguinte). Os
- * rótulos de ESTADO de `ROTULO_DO_COMANDO` ("Automático atendendo") continuam
- * sendo o contrato das abas e do cabeçalho antigo e não mudam.
+ * "IA" é o rótulo curto que o dono escolheu para o agente. Quando o agente é
+ * conhecido, ele aparece pelo nome: o chip lê `GET /conversations/{id}/agente-atual`
+ * (o agente da última resposta) e o marco lê `passagens_de_atendimento.agente_id`
+ * (migration 0545) — "Sofia (IA) atendendo", "Sofia (IA) transferiu para Ana".
+ * Sem nome, volta a "IA". Os rótulos de ESTADO de `ROTULO_DO_COMANDO`
+ * ("Automático atendendo") continuam sendo o contrato das abas e do cabeçalho
+ * antigo e não mudam.
  */
 
 /** O selo da foto para cada estado do comando (neutro = encerrada ou sem atendente). */
@@ -93,6 +96,8 @@ interface ChipProps {
   /** A pessoa assumiu depois de o automático passar a conversa (`last_handoff_at`). */
   transferidaPelaIa?: boolean;
   esperaDesde?: string | null;
+  /** O agente de IA da última resposta; ausente = "IA atendendo". */
+  agente?: string | null;
   className?: string;
 }
 
@@ -102,6 +107,7 @@ export function ChipDeComando({
   desde,
   transferidaPelaIa,
   esperaDesde,
+  agente,
   className,
 }: ChipProps) {
   const t = useT();
@@ -130,7 +136,9 @@ export function ChipDeComando({
         className={cn(base, "border-ia/60 bg-ia-fundo text-ia", className)}
       >
         <Robot size={16} weight="fill" aria-hidden />
-        <span className="truncate">{t("IA atendendo")}</span>
+        <span className="truncate">
+          {agente ? `${agente} (${t("IA")}) ${t("atendendo")}` : t("IA atendendo")}
+        </span>
       </span>
     );
   }
@@ -166,18 +174,27 @@ interface MarcoProps {
   quando: string;
   /** Quem assumiu; `null` enquanto ninguém pegou. */
   para: string | null;
+  /** O agente de IA que passou (0545); ausente = "IA". */
+  de?: string | null;
   motivo?: string | null;
   className?: string;
 }
 
 /** A linha de largura total que marca, no fio, a troca da IA para uma pessoa. */
-export function MarcoDaPassagem({ quando, para, motivo, className }: MarcoProps) {
+export function MarcoDaPassagem({ quando, para, de, motivo, className }: MarcoProps) {
   const t = useT();
   const locale = useLocaleDeData();
   const hora = format(new Date(quando), "HH:mm", { locale });
-  const frase = para
-    ? `${t("IA transferiu para")} ${para}`
-    : t("IA passou a conversa para a equipe");
+  // Com o nome do agente: "Sofia (IA) transferiu para Ana". Sem ele, a frase
+  // de antes — passagem antiga, agente apagado ou turno sem agente resolvido.
+  const quem = de ? `${de} (${t("IA")})` : null;
+  const frase = quem
+    ? para
+      ? `${quem} ${t("transferiu para")} ${para}`
+      : `${quem} ${t("passou a conversa para a equipe")}`
+    : para
+      ? `${t("IA transferiu para")} ${para}`
+      : t("IA passou a conversa para a equipe");
   return (
     <div
       data-testid="marco-da-passagem"
