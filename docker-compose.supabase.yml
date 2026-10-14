@@ -74,7 +74,17 @@ services:
     image: ${SUPABASE_AUTH_IMAGE:-supabase/gotrue:v2.196.0}
     restart: unless-stopped
     mem_limit: 256m
-    cpus: 0.5
+    # Teto de CPU revisto na #66 (parte 3 da #63). Eram 0,5 — número escrito para
+    # uma VPS de 3,8 GB — e na produção medida (8 núcleos, 32 GB, máquina ociosa)
+    # o GoTrue registrava 9,8% dos períodos de 100 ms LIMITADOS (cpu.stat:
+    # nr_throttled / nr_periods) enquanto o `GET /user` levava 332 ms de mediana
+    # com 1 ms de banco. Meio núcleo, num serviço que valida o usuário de TODA
+    # requisição logada, faz a fila andar de ritmo em ritmo.
+    #
+    # O teto continua existindo (modo "convivendo", issue #3): 2 núcleos é o
+    # mesmo piso do `app` e cabe em qualquer VPS que rode o produto. Quem tem
+    # máquina maior ou menor ajusta no .env, sem editar este arquivo.
+    cpus: ${SUPABASE_AUTH_CPUS:-2}
     depends_on:
       db:
         condition: service_healthy
@@ -84,6 +94,11 @@ services:
       timeout: 5s
       retries: 5
     environment:
+      # Threads do runtime Go, coerentes com o teto de CPU acima. Sem isto o Go
+      # enxerga os 8 núcleos da máquina, cria threads para todos e o cgroup as
+      # limita no meio do período — é o throttling que aparece em cpu.stat.
+      # Se mudar SUPABASE_AUTH_CPUS, mude este junto (inteiro, >= 1).
+      GOMAXPROCS: ${SUPABASE_AUTH_THREADS:-2}
       GOTRUE_API_HOST: 0.0.0.0
       GOTRUE_API_PORT: 9999
       API_EXTERNAL_URL: ${NEXT_PUBLIC_SUPABASE_URL}/auth/v1
@@ -141,7 +156,9 @@ services:
     image: ${SUPABASE_REST_IMAGE:-postgrest/postgrest:v14.17}
     restart: unless-stopped
     mem_limit: 256m
-    cpus: 0.5
+    # Era 0,5 (ver o comentário do `auth`): 2,5% dos períodos limitados na
+    # produção medida. 1 núcleo basta para o PostgREST, que só traduz HTTP em SQL.
+    cpus: ${SUPABASE_REST_CPUS:-1}
     depends_on:
       db:
         condition: service_healthy
@@ -208,7 +225,9 @@ services:
     image: ${SUPABASE_STORAGE_IMAGE:-supabase/storage-api:v1.74.0}
     restart: unless-stopped
     mem_limit: 384m
-    cpus: 0.5
+    # Era 0,5 (ver o comentário do `auth`): 12,3% dos períodos limitados na
+    # produção medida — o maior índice dos três, com o serviço quase parado.
+    cpus: ${SUPABASE_STORAGE_CPUS:-1}
     depends_on:
       db:
         condition: service_healthy

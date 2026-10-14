@@ -3581,6 +3581,14 @@ depois do aquecimento; primeira requisição a frio abaixo de 1 s.
 | Cabeçalho de identidade forjado vindo de fora é ignorado | proxy e rota fora do matcher | idem |
 | Resposta logada traz `Server-Timing: proxy;dur=…, auth;dur=…` | aba Rede do navegador | idem (formato) |
 
+| Os tetos de CPU do login, REST e armazenamento têm padrão >= 1 núcleo, vêm de variável (`SUPABASE_*_CPUS`) e o GoTrue limita as threads (`GOMAXPROCS`) ao mesmo valor; `.env` antigo sem as variáveis segue válido | leitura do compose | `tests/unit/limites-de-recurso-do-compose.test.ts` (#66) |
+| A VPS está sendo limitada por CPU? | `cpu.max` e delta de `nr_throttled`/`throttled_usec` em `cpu.stat`, antes e depois de uma rajada | `docs/runbooks/deploy.md` §6 (manual, somente leitura) |
+| Inbox → menu → outra tela, lendo o `Server-Timing` de cada resposta, antes e depois, em ambiente fresco estilo VPS | aba Rede do navegador | **pendente** — ver abaixo |
+
+**Linha de base de produção (#66, 2026-10-14, somente leitura):** períodos limitados no cgroup,
+acumulado desde o início do container — auth 9,8% · rest 2,5% · storage 12,3% · realtime 1,3% ·
+app 4,8% · db 0,2%. Detalhe e o que foi descartado em `docs/runbooks/deploy.md` §6.
+
 **Não coberto ainda:** a medição "antes/depois" de `/user` e do tempo por etapa pela tela, em
 ambiente fresco estilo VPS e em produção (somente leitura) — exige Supabase local e a sessão do dono.
 

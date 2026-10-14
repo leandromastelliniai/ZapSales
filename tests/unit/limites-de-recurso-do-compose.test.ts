@@ -95,3 +95,43 @@ describe("limites de recurso do que o cliente instala", () => {
     });
   }
 });
+
+/**
+ * CPU DO TRIO DE LOGIN/REST/STORAGE (#66, parte 3 da #63).
+ *
+ * Em produção (8 núcleos, 32 GB, ociosa) os três rodavam com `cpus: 0.5` e o
+ * cgroup limitava de 2,5% a 12,3% dos períodos de 100 ms. O GoTrue valida o
+ * usuário de TODA requisição logada, então meio núcleo vira fila. Este bloco
+ * trava o contrato que a atualização do kit entrega SEM edição manual: teto
+ * com default numérico (um `.env` antigo, sem a variável, continua válido) e
+ * threads do GoTrue coerentes com o teto.
+ */
+describe("CPU do auth, rest e storage (#66)", () => {
+  const servicos = lerServicos(
+    fs.readFileSync(path.join(RAIZ, "docker-compose.supabase.yml"), "utf8"),
+  );
+  const cpusDe = (nome: string) => {
+    const m = semComentarios(servicos.get(nome) ?? "").match(
+      /^\s{4}cpus:\s*\$\{(\w+):-([0-9.]+)\}\s*$/m,
+    );
+    return m ? { variavel: m[1]!, padrao: Number(m[2]) } : null;
+  };
+
+  for (const nome of ["auth", "rest", "storage"]) {
+    it(`${nome}: teto de CPU configurável, com padrão >= 1 núcleo e que cabe numa VPS de 2`, () => {
+      const cpus = cpusDe(nome);
+      expect(cpus, `${nome}: cpus deve ser \${VAR:-numero}`).not.toBeNull();
+      expect(cpus!.variavel).toBe(`SUPABASE_${nome.toUpperCase()}_CPUS`);
+      expect(cpus!.padrao).toBeGreaterThanOrEqual(1);
+      // O Docker recusa subir com cpus > núcleos da máquina; o `app` já exige 2.
+      expect(cpus!.padrao).toBeLessThanOrEqual(2);
+    });
+  }
+
+  it("auth: GOMAXPROCS vem de variável com default inteiro igual ao teto padrão", () => {
+    const bloco = semComentarios(servicos.get("auth") ?? "");
+    const m = bloco.match(/^\s{6}GOMAXPROCS:\s*\$\{SUPABASE_AUTH_THREADS:-(\d+)\}\s*$/m);
+    expect(m, "auth sem GOMAXPROCS=${SUPABASE_AUTH_THREADS:-N}").not.toBeNull();
+    expect(Number(m![1])).toBe(cpusDe("auth")!.padrao);
+  });
+});
