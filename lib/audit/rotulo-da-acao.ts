@@ -39,6 +39,8 @@ export const ACOES_COM_FRASE: Partial<Record<AuditAction, string>> = {
   "token.created": "Criou uma chave de acesso",
   "token.revoked": "Revogou uma chave de acesso",
   "message.sent": "Enviou uma mensagem",
+  "message.received": "Recebeu uma mensagem",
+  "webhook.hmac_invalid": "Recusou um webhook com assinatura inválida",
   "proposal.sent": "Enviou uma proposta",
   "platform_admin.impersonate_started": "O suporte da plataforma entrou na conta",
   "platform_admin.impersonate_ended": "O suporte da plataforma saiu da conta",
