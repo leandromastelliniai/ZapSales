@@ -108,3 +108,27 @@ P9 é feito primeiro na prática (as demais peças nascem nela), mas o PR sai ju
 - **Merge na `main`** dispara deploy automático em produção; o classificador do modo automático pede confirmação do dono
   para `gh pr merge`. Cada PR só pede merge com CI verde.
 - **Marca própria:** pastilhas e selos precisam sobreviver à troca da cor de destaque.
+
+## Estado em 15/10/2026
+
+| Pacote | Estado |
+|---|---|
+| P1 menu expandido | no ar (PR #72) |
+| P2 ícones únicos | no ar (PR #72) |
+| P3/P4/P5 corpo, cabeçalho, "Como funciona" | no ar em Funis e Respostas rápidas (#72); em ~50 telas no PR #74 |
+| P6 peças base (Painel, Selo, avatar de tabela) | PR #74 |
+| P7 ícones próprios (5) | PR #74; **sem prévia aprovada pelo dono ainda** (a folha está em `/vitrine-sistema`) |
+| P8 linguagem | PR #74 (Auditoria, Plano e cobrança, Linha telefônica, Sugestões da IA, Equipe) |
+| P9 vitrine do sistema | no ar em desenvolvimento (#72) |
+| T1 Funis, T2 Contatos (iniciais), T3/T5 Campanhas/Tarefas/Produtos/Respostas, T4 Agenda, T6 Equipe, T7 Conexões, T8 Desempenho/Faturamento/Honorários, T9 Auditoria (cabeçalho e painéis), T10, T11 hubs | PR #74 |
+| T12/T13 Configurações e IA internas | cabeçalho padrão em ~35 telas (PR #74); faltam as que têm cabeçalho dentro de painel cliente (Provedores, Execuções, Extensões, Atualização, Financeiro, Tipos de proposta…) e as telas de detalhe |
+| T15 Login/cadastro | **adiado**: o texto sob "Entrar" é medido por e2e de marca; a tela já está limpa |
+| T15 Onboarding | **não visto**: só aparece numa conta nova (não se cria conta na produção) |
+| T16 Inbox acabamento | a "bolinha sobre o Enviar" que vi nas capturas **não é do app** (é extensão do navegador); aba "Fechadas" rola de propósito (setas) |
+| X1 celular | verificado só na vitrine (390 px: sem estouro, alvos de toque de 44 px); telas reais exigem janela estreita do dono |
+| X2 modo claro | verificado em Contatos, Conexões e Inbox na produção; sem ajuste de profundidade ainda |
+| X3 cores cruas → tokens | PR #74 (403 usos, 69 arquivos, cerca nova) |
+| X4 peso | **#75 no ar**: o dicionário de tradução só vai para quem usa espanhol/inglês (login em português: 1.035 → 464 KB de JS) |
+| X5 documentação | `DESIGN.md`, mapa vivo, fragmentos `.changes/` |
+
+Próximos: medir na produção o efeito do #75; revisar as telas do #74 em produção; telas de detalhe; separar o catálogo `es` do `en` (hoje o espanhol baixa os dois); `Auditoria` com ações em linguagem de gente.
