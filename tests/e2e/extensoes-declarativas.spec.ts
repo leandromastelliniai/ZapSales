@@ -191,7 +191,7 @@ async function provarPapelSemGestao(
 ): Promise<void> {
   const page = await paginaAutenticada(browser, usuario.email, atores!.senha, rotulo, observacoes);
   await page.goto("/app/extensions");
-  await expect(page.getByTestId("extensions-manager")).toBeVisible();
+  await expect(page.getByTestId("extensions-manager").first()).toBeVisible();
   await expect(page.getByTestId(`extension-installed-${installationId}`)).toBeVisible({
     timeout: 30_000,
   });
@@ -674,7 +674,7 @@ test("pacote pós-build atravessa catálogo, tenants, guia e Tarefas com recuper
     );
     await recargaDoContexto;
 
-    await expect(page.getByTestId("extensions-manager")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("extensions-manager").first()).toBeVisible({ timeout: 30_000 });
     await page.getByTestId("tenant-switcher").click();
     await expect(
       page
@@ -749,7 +749,7 @@ test("pacote pós-build atravessa catálogo, tenants, guia e Tarefas com recuper
       404,
       "extension_inactive",
     );
-    await expect(adminB.getByTestId("extension-guide-unavailable")).toBeVisible({
+    await expect(adminB.getByTestId("extension-guide-unavailable").first()).toBeVisible({
       timeout: 30_000,
     });
     await expect(
@@ -823,14 +823,14 @@ test("pacote pós-build atravessa catálogo, tenants, guia e Tarefas com recuper
       });
     expect(padding).toBe("12px");
     await contribution.click();
-    await expect(page.getByTestId("extension-guide")).toBeVisible();
+    await expect(page.getByTestId("extension-guide").first()).toBeVisible();
     await expect(page.getByTestId(`extension-guide-card-${catalogo!.pacote.cardId}`)).toBeVisible();
     await page.screenshot({ path: `${EVIDENCE}/guia.png`, fullPage: true });
 
     staleGuide = await page.context().newPage();
     observarErros(staleGuide, "guia antigo", observacoes);
     await staleGuide.goto(page.url());
-    await expect(staleGuide.getByTestId("extension-guide")).toBeVisible();
+    await expect(staleGuide.getByTestId("extension-guide").first()).toBeVisible();
 
     const openTasks = page.getByTestId(`extension-open-${catalogo!.pacote.cardId}`);
     await expect(openTasks).toBeVisible();
@@ -910,7 +910,7 @@ test("pacote pós-build atravessa catálogo, tenants, guia e Tarefas com recuper
       404,
       "extension_inactive",
     );
-    await expect(staleGuide!.getByTestId("extension-guide-unavailable")).toBeVisible({
+    await expect(staleGuide!.getByTestId("extension-guide-unavailable").first()).toBeVisible({
       timeout: 30_000,
     });
     await expect(

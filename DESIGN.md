@@ -64,6 +64,14 @@ migrar (plano, pacote X1).
 | `NavHub` | `components/shell/NavHub.tsx` | páginas de área (CRM, IA, Análise, Configurações) como lista em painel |
 | Ícones próprios | `components/icons/produto/` | os conceitos do produto que o Phosphor não desenha |
 
+**Duas famílias de tela, e só uma usa o cabeçalho padrão.** Tela de *assunto* (lista, painel, configuração: "Contatos",
+"Meta Ads", "Atualização") abre com `CabecalhoDePagina`: o que ela é, em uma linha, e a ajuda. Tela de *ficha* (um contato,
+uma empresa, uma campanha, uma solicitação de LGPD) mostra a própria coisa — nome, estado e ações — e mantém o seu
+cabeçalho, com o link de volta à lista. Descrever "o que é esta tela" numa ficha seria ruído: o assunto é o nome da pessoa.
+Estados de erro e de carregamento (`SegmentError`) também ficam como estão. Telas que só redirecionam não têm cabeçalho.
+
+**Nunca `<main>` dentro das telas.** O `AppShell` já é o `<main>`; um segundo é um erro de leitor de tela.
+
 Vitrine para ver tudo com dados de exemplo: `/vitrine-sistema` (pública só em desenvolvimento).
 
 ## Ícones

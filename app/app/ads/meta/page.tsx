@@ -26,6 +26,10 @@ import { traduzir } from "@/lib/i18n/dicionario";
 import { existeConexaoDeLeitura } from "@/lib/plataformas-de-anuncio/credenciais-de-leitura";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+
 import { MetaAdsClient } from "./_components/MetaAdsClient";
 
 export const metadata = { title: "Meta Ads" };
@@ -50,23 +54,14 @@ export default async function MetaAdsPage() {
   const podeConectar = (user.is_platform_admin && !user.support) || ROLE_RANK[activeOrg.role] >= ROLE_RANK.admin;
 
   return (
-    /*
-      Superfície clara — mesmo escopo de Desempenho, a vizinha no menu. `-m-6`
-      cancela o respiro do `<main>` do AppShell para o Paper alcançar a borda, e
-      o `p-6` o repõe.
-    */
-    <div
-      data-superficie="clara"
-      className="-m-6 flex min-h-[calc(100%+3rem)] flex-col gap-6 bg-bg p-6 text-text"
-    >
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Meta Ads")}</h1>
-        <p className="max-w-3xl text-sm text-muted-foreground">
-          {t(
-            "O desempenho das campanhas que estão trazendo gente para cá. Os números vêm da plataforma no momento em que você clica em Atualizar — nada fica guardado aqui.",
-          )}
-        </p>
-      </header>
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={t("Meta Ads")}
+        descricao={t(
+          "O desempenho das campanhas que estão trazendo gente para cá. Os números vêm da plataforma no momento em que você clica em Atualizar — nada fica guardado aqui.",
+        )}
+        ajuda={<ComoFunciona chave="meta-ads" pagina={t("Meta Ads")} />}
+      />
 
       {conexao.conectada ? (
         <MetaAdsClient contaPadrao={conexao.contaPadrao} idioma={idioma} />
@@ -92,6 +87,6 @@ export default async function MetaAdsPage() {
           )}
         </div>
       )}
-    </div>
+    </CorpoDaPagina>
   );
 }

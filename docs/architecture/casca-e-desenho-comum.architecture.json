@@ -181,6 +181,20 @@
       "col": 1,
       "type": "service",
       "label": "icones-e-selos-do-produto.test.tsx"
+    },
+    {
+      "id": "vocabulario_auditoria",
+      "lane": "dados",
+      "col": 6,
+      "type": "config",
+      "label": "lib/audit/actions.ts (os códigos de ação que existem)"
+    },
+    {
+      "id": "rotulo_auditoria",
+      "lane": "dados",
+      "col": 7,
+      "type": "lib",
+      "label": "lib/audit/rotulo-da-acao.ts (código vira frase; sem frase, fica o código)"
     }
   ],
   "edges": [
@@ -339,6 +353,18 @@
       "from": "vitrine",
       "to": "painel",
       "label": "painel com cabeçalho e lista encostada nas bordas"
+    },
+    {
+      "id": "26",
+      "from": "vocabulario_auditoria",
+      "to": "rotulo_auditoria",
+      "label": "frase escrita à mão só para código que existe (tipo + teste)"
+    },
+    {
+      "id": "27",
+      "from": "rotulo_auditoria",
+      "to": "tela",
+      "label": "Auditoria mostra frase, nome de quem fez e o código ao lado"
     }
   ]
 }

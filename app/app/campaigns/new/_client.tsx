@@ -15,6 +15,8 @@
  * A prévia do público fica ao lado do filtro, e não depois: o número que o
  * operador precisa ver antes de apertar é "quantas pessoas isto pega".
  */
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -162,13 +164,11 @@ export function NovaCampanha() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Nova campanha")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("Isto cria um rascunho. Nada é enviado antes de você preparar a lista e iniciar.")}
-        </p>
-      </header>
+    <CorpoDaPagina largura="formulario">
+      <CabecalhoDePagina
+        titulo={t("Nova campanha")}
+        descricao={t("Isto cria um rascunho. Nada é enviado antes de você preparar a lista e iniciar.")}
+      />
 
       <Card className="space-y-4 p-4">
         <h2 className="font-medium">{t("Informações")}</h2>
@@ -620,7 +620,7 @@ export function NovaCampanha() {
           {criar.isPending ? t("Salvando…") : t("Salvar rascunho")}
         </Button>
       </div>
-    </div>
+    </CorpoDaPagina>
   );
 }
 

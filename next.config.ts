@@ -91,6 +91,9 @@ const nextConfig: NextConfig = {
       // Medido na produção em 15/10/2026: 570 KB comprimidos no pacote de TODA tela, para quem usa
       // português e não precisa de um byte dele. Cercado por `tests/unit/dicionario-fora-do-cliente.test.ts`.
       "@/lib/i18n/dicionario": { browser: "./lib/i18n/dicionario.cliente.ts" },
+      // O inglês (~0,9 MB) também só existe no servidor: o pedaço em espanhol importa o dicionário e, sem isto,
+      // levava o inglês junto. O inglês do navegador vem de `lib/i18n/catalogos/en.ts`, pelo JSON direto.
+      "@/lib/i18n/en-do-servidor": { browser: "./lib/i18n/en-do-navegador.ts" },
     },
   },
   images: {
