@@ -14465,6 +14465,8 @@ export const DICIONARIO: Traducoes = {
   "perderá o acesso a esta empresa. Esta ação pode ser desfeita reconvidando o membro.": { es: "perderá el acceso a esta empresa. Esta acción se puede deshacer volviendo a invitar al miembro." },
   // ─── CONTATOS (plano visual de 14/10/2026) ───
   "Todas as pessoas que já falaram com você, com busca e filtros.": { es: "Todas las personas que ya hablaron contigo, con búsqueda y filtros." },
+  // ─── AUDITORIA (plano visual de 14/10/2026) ───
+  "ID da requisição": { es: "ID de la solicitud" },
 };
 
 /**
