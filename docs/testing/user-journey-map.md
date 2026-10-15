@@ -3583,6 +3583,7 @@ depois do aquecimento; primeira requisição a frio abaixo de 1 s.
 | Os tetos de CPU do login, REST e armazenamento têm padrão >= 1 núcleo, vêm de variável (`SUPABASE_*_CPUS`) e o GoTrue limita as threads (`GOMAXPROCS`) ao mesmo valor; `.env` antigo sem as variáveis segue válido | leitura do compose | `tests/unit/limites-de-recurso-do-compose.test.ts` (#66) |
 | A VPS está sendo limitada por CPU? | `cpu.max` e delta de `nr_throttled`/`throttled_usec` em `cpu.stat`, antes e depois de uma rajada | `docs/runbooks/deploy.md` §6 (manual, somente leitura) |
 | Inbox → menu → outra tela, lendo o `Server-Timing` de cada resposta, antes e depois, em ambiente fresco estilo VPS | aba Rede do navegador | **pendente** — ver abaixo |
+| Ao abrir uma tela, sons, versão do rodapé e primeiro sinal de presença esperam ~1,5 s e saem da rajada de abertura (a tela de atualização pede a versão na hora; a voz ficou de fora de propósito) | `lib/ui/depois-da-abertura.test.tsx`; aba Rede do navegador logado (#66) | unit + medição em produção |
 
 **Linha de base de produção (#66, 2026-10-14, somente leitura):** períodos limitados no cgroup,
 acumulado desde o início do container — auth 9,8% · rest 2,5% · storage 12,3% · realtime 1,3% ·

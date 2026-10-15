@@ -1,6 +1,8 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 
+import { useDepoisDaAbertura } from "@/lib/ui/depois-da-abertura";
+
 import { apiClient } from "@/lib/api/client";
 import type { RodadaDoBanco } from "@/lib/system/update-run";
 
@@ -60,8 +62,14 @@ export interface SystemVersion {
  * tela de atualização. Poll folgado (5 min) porque o agente do host só reporta
  * a cada 5 min — bater mais rápido não traria informação nova.
  */
-export function useSystemVersion(opts?: { refetchInterval?: number }) {
+export function useSystemVersion(opts?: { refetchInterval?: number; depoisDaAbertura?: boolean }) {
+  // O rodapé da sidebar mostra a versão numa letra miúda: não precisa competir
+  // com as chamadas que preenchem a tela ao abrir (#66). A tela de atualização,
+  // que É a informação, segue pedindo na hora.
+  const liberado = useDepoisDaAbertura();
+  const habilitado = opts?.depoisDaAbertura ? liberado : true;
   return useQuery({
+    enabled: habilitado,
     queryKey: ["system-version"],
     queryFn: async () => {
       const res = await apiClient.get<{ data: SystemVersion }>("/api/v1/system/version");

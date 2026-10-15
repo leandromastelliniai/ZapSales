@@ -11,6 +11,7 @@
  */
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useDepoisDaAbertura } from "@/lib/ui/depois-da-abertura";
 
 import type { AgentInboxItem } from "@/hooks/ai/useAgentInbox";
 import { apiClient } from "@/lib/api/client";
@@ -34,7 +35,11 @@ function tocar(tipo: TipoDeSom, url: string | null): void {
 
 export function useSonsDaCentral(avisos: ReadonlyArray<AgentInboxItem> | undefined): void {
   const vistos = useRef<Set<string> | null>(null);
+  // As URLs dos sons só importam quando um aviso NOVO chega; até lá o som padrão
+  // cobre (ver `tocar`). Pedir depois da abertura tira a chamada da rajada (#66).
+  const liberado = useDepoisDaAbertura();
   const { data: urls } = useQuery({
+    enabled: liberado,
     queryKey: ["settings-sons"],
     queryFn: () => apiClient.get<{ data: UrlsDosSons }>("/api/v1/settings/sons").then((r) => r.data),
     staleTime: 45 * 60_000,
