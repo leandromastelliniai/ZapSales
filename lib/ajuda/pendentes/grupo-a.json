@@ -1,9 +1,0 @@
-[
-  { "chave": "agentes", "pagina": "app/app/ai/agents/page.tsx", "titulo_pt": "Agentes de IA" },
-  { "chave": "fluxos-de-atendimento", "pagina": "app/app/ai/atendimento/page.tsx", "titulo_pt": "Fluxos de atendimento" },
-  { "chave": "follow-ups", "pagina": "app/app/ai/followups/page.tsx", "titulo_pt": "Follow-ups" },
-  { "chave": "roteadores", "pagina": "app/app/ai/routers/page.tsx", "titulo_pt": "Roteadores" },
-  { "chave": "skills", "pagina": "app/app/ai/skills/page.tsx", "titulo_pt": "Skills da IA" },
-  { "chave": "memoria", "pagina": "app/app/ai/memory/page.tsx", "titulo_pt": "Memória da IA" },
-  { "chave": "conhecimento", "pagina": "app/app/ai/knowledge/sources/page.tsx", "titulo_pt": "O que o agente sabe" }
-]
