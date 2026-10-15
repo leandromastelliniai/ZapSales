@@ -14,7 +14,7 @@ import * as path from "node:path";
 import { test, expect, type Page } from "./helpers/test";
 
 import { lerCreds, loginComoAdmin } from "./helpers/login-admin";
-import { menuExpandido } from "./helpers/menu-expandido";
+import { menuExpandido, menuRecolhido } from "./helpers/menu-expandido";
 import { afirmarAdminDeTenantPuro } from "./utils/precondicao";
 
 let creds = lerCreds();
@@ -84,13 +84,13 @@ async function expectSemOverflowHorizontal(page: Page, contexto: string): Promis
 // testes que já estavam verdes passaram a estourar 30 s.
 test.describe.configure({ timeout: 120_000 });
 
-// ── O padrão é o trilho ──────────────────────────────────────────────────────
-// Desde a direção "Linha do Funil" (07/10/2026) quem nunca mexeu no menu o vê
-// RECOLHIDO: só ícones, o nome de cada destino no `title`. Este caso mede o
-// padrão sem cookie nenhum; os demais desta spec medem o menu EXPANDIDO, que é
-// o que quem clica em "Expandir sidebar" vê — por isso gravam o cookie antes.
-test.describe("o menu nasce recolhido", () => {
-  test("sem preferência salva, o sidebar é um trilho de ícones com nome acessível", async ({ page }) => {
+// ── O padrão é o menu expandido ──────────────────────────────────────────────
+// Desde 14/10/2026 quem nunca mexeu no menu o vê EXPANDIDO: ícone + nome, com os títulos de grupo.
+// (Entre 07 e 14/10 o padrão era o trilho de ícones; sem o nome, os três "Ver tudo" eram a mesma
+// seta e ninguém sabia para onde cada ícone levava.) Este caso mede o padrão sem cookie nenhum; o
+// trilho é escolha da pessoa e é medido logo abaixo, com o cookie gravado antes do login.
+test.describe("o menu nasce expandido", () => {
+  test("sem preferência salva, o sidebar mostra ícone e nome, com títulos de grupo", async ({ page }) => {
     await loginAdmin(page);
     const nav = sidebar(page);
     await expect(nav).toBeVisible();
@@ -101,14 +101,47 @@ test.describe("o menu nasce recolhido", () => {
       return {
         largura: aside.getBoundingClientRect().width,
         links: links.length,
+        semTexto: links.filter((a) => !a.textContent?.trim()).length,
+        titulos: el.querySelectorAll("h2").length,
+      };
+    });
+    expect(m.largura, "o menu expandido tem 240px (w-60)").toBeGreaterThanOrEqual(224);
+    expect(m.links, "guarda de vacuidade: o menu tem destinos").toBeGreaterThan(4);
+    expect(m.semTexto, "todo destino mostra o próprio nome").toBe(0);
+    expect(m.titulos, "expandido mostra os títulos de grupo").toBeGreaterThan(0);
+    await expect(page.getByRole("button", { name: "Recolher sidebar" })).toBeVisible();
+  });
+});
+
+test.describe("o menu recolhido, por escolha da pessoa", () => {
+  test.beforeEach(async ({ context, baseURL }) => {
+    await menuRecolhido(context, baseURL);
+  });
+
+  test("é um trilho de ícones com nome acessível, e os três 'Ver tudo' têm ícones diferentes", async ({ page }) => {
+    await loginAdmin(page);
+    const nav = sidebar(page);
+    await expect(nav).toBeVisible();
+
+    const m = await nav.evaluate((el) => {
+      const aside = el.closest("aside") ?? el;
+      const links = [...el.querySelectorAll("a")];
+      const verTudo = links.filter((a) => /^Ver tudo em /.test(a.getAttribute("title") ?? ""));
+      return {
+        largura: aside.getBoundingClientRect().width,
+        links: links.length,
         semNome: links.filter((a) => !(a.getAttribute("title") || a.getAttribute("aria-label") || a.textContent?.trim())).length,
         titulos: el.querySelectorAll("h2").length,
+        verTudo: verTudo.length,
+        iconesDistintos: new Set(verTudo.map((a) => a.querySelector("svg")?.outerHTML ?? "")).size,
       };
     });
     expect(m.largura, "o trilho recolhido tem 64px (w-16)").toBeLessThanOrEqual(72);
     expect(m.links, "guarda de vacuidade: o trilho tem destinos").toBeGreaterThan(4);
     expect(m.semNome, "todo destino do trilho precisa de nome (title)").toBe(0);
     expect(m.titulos, "recolhido não mostra títulos de grupo").toBe(0);
+    expect(m.verTudo, "guarda de vacuidade: há links 'Ver tudo em …'").toBeGreaterThanOrEqual(3);
+    expect(m.iconesDistintos, "cada 'Ver tudo' tem o seu ícone, não a mesma seta").toBe(m.verTudo);
     await expect(page.getByRole("button", { name: "Expandir sidebar" })).toBeVisible();
   });
 });

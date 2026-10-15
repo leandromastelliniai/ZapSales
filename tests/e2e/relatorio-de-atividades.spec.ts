@@ -203,7 +203,7 @@ test.describe("Relatório de atividades — o período, pela tela", () => {
   test.use({ timezoneId: "America/Sao_Paulo" });
 
   // A porta de Atividades se acha pelo `<h2>` do grupo acima dela: esta spec
-  // mede o menu EXPANDIDO; desde 07/10/2026 o padrão é o trilho recolhido,
+  // mede o menu EXPANDIDO; o cookie é gravado de propósito (o padrão passou a ser expandido em 14/10/2026 e já foi o trilho),
   // que não desenha título de grupo nenhum.
   test.beforeEach(async ({ context, baseURL }) => {
     await menuExpandido(context, baseURL);

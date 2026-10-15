@@ -30,8 +30,8 @@ export type Branding = {
   /**
    * O ícone da aba que o operador SUBIU em `/admin/marca` (`favicon_path`), ou
    * `null`/ausente quando não há arquivo. É o que a barra lateral RECOLHIDA mostra
-   * no lugar da inicial: desde 07/10/2026 o menu nasce recolhido, e o logo largo do
-   * revendedor só aparece expandido.
+   * no lugar da inicial: quando a pessoa recolhe o menu (o padrão é expandido desde
+   * 14/10/2026), o logo largo do revendedor dá lugar a ele.
    */
   iconUrl?: string | null;
 };

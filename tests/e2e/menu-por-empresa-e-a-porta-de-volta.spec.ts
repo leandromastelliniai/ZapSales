@@ -82,7 +82,7 @@ async function escolherPerfil(page: Page, perfil: "Completa" | "Simplificada"): 
   await expect(page.getByText(/menu lateral da empresa salvo/i)).toBeVisible({ timeout: 15_000 });
 }
 
-// Esta spec mede o menu EXPANDIDO; desde 07/10/2026 o padrão é o trilho recolhido:
+// Esta spec mede o menu EXPANDIDO; o cookie é gravado de propósito (o padrão passou a ser expandido em 14/10/2026 e já foi o trilho):
 // `itensDoMenu` conta o TEXTO dos links, e recolhido eles só têm ícone e `title`
 // — a lista viria vazia, e o caso reprovaria na guarda de vacuidade.
 test.beforeEach(async ({ context, baseURL }) => {

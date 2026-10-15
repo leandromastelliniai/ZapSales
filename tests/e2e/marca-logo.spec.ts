@@ -738,7 +738,7 @@ test.describe("o logo subido pela tela chega à tela", () => {
    */
   test.setTimeout(180_000);
 
-  // Esta spec mede o menu EXPANDIDO; desde 07/10/2026 o padrão é o trilho recolhido:
+  // Esta spec mede o menu EXPANDIDO; o cookie é gravado de propósito (o padrão passou a ser expandido em 14/10/2026 e já foi o trilho):
   // recolhida, a barra NÃO desenha o `<img>` do logo enviado — só a inicial do
   // nome (`Sidebar.tsx`, `(logo || logoEscuro) && !collapsed`). O que se prova
   // aqui é a camada certa chegando ao `<img>`, e ele só existe com a barra larga.

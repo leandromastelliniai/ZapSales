@@ -126,6 +126,7 @@ const FORA_DO_PRODUTO: Record<string, string> = {
   "app/design": "vitrine do design system: rota noindex, sem porta na navegação",
   "app/vitrine-agenda": "vitrine do kit visual da Agenda: dado de mentira, noindex",
   "app/vitrine-inbox": "vitrine da Inbox (direção Linha do Funil): dado de mentira, noindex, sem porta na navegação",
+  "app/vitrine-sistema": "vitrine das peças da casca (menu, ícones): dado de mentira, noindex, pública só em desenvolvimento, sem porta na navegação",
 };
 
 /**

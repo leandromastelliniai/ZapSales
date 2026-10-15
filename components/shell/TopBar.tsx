@@ -13,7 +13,7 @@ import { useMarcaDaInstalacao } from "@/lib/branding/contexto";
 /**
  * O logotipo do PRODUTO na barra do topo — "ZapSales by Futuristas".
  *
- * Com o menu recolhido (o padrão desde 07/10/2026) a barra lateral só tem
+ * Com o menu recolhido (escolha da pessoa; o padrão é expandido desde 14/10/2026) a barra lateral só tem
  * espaço para o símbolo, e o nome do produto com a assinatura da Futuristas
  * sumiria da tela. Ele aparece aqui só nesse caso, e só quando a marca é a do
  * produto: com marca própria (da instalação ou da organização) quem aparece é

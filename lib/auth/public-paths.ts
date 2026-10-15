@@ -176,6 +176,9 @@ export const PUBLIC_PATHS: RegExp[] = [
   // com a imagem aprovada rodar numa máquina sem banco; em produção a linha não
   // existe e a vitrine fica atrás do login, como a da Agenda.
   ...(process.env.NODE_ENV === "production" ? [] : [/^\/vitrine-inbox$/]),
+  // A VITRINE DO SISTEMA (`app/vitrine-sistema`): as peças da casca com dados de exemplo, sem banco.
+  // Mesmas razões e mesma regra da vitrine acima: pública só em desenvolvimento.
+  ...(process.env.NODE_ENV === "production" ? [] : [/^\/vitrine-sistema$/]),
 ];
 
 export function isPublicPath(pathname: string): boolean {
