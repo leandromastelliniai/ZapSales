@@ -1,3 +1,5 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { requireAuth } from "@/lib/auth/server";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { Card } from "@/components/ui/card";
@@ -50,11 +52,11 @@ export default async function NotificationsPage() {
   const pushPronto = vapidPronto();
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Notificações")}</h1>
-        <p className="text-sm text-muted-foreground">{t("Canais e categorias.")}</p>
-      </header>
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={t("Notificações")}
+        descricao={t("Canais e categorias.")}
+      />
 
       {pushPronto ? (
         <Card
@@ -96,6 +98,6 @@ export default async function NotificationsPage() {
       <NotificationPrefsClient />
 
       <SonsDosAvisos />
-    </div>
+    </CorpoDaPagina>
   );
 }

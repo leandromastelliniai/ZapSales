@@ -1,3 +1,5 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -19,16 +21,14 @@ export default async function RadarPage() {
   const t = (texto: string) => traduzir(texto, idioma);
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Radar de risco")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t(
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={t("Radar de risco")}
+        descricao={t(
             "Demandas abertas que esfriaram e precisam de você. Se o assistente já agendou um retorno, aparece como “em voo”; sem próximo passo, é risco de perder o cliente.",
           )}
-        </p>
-      </header>
+      />
       <RiskRadarList />
-    </div>
+    </CorpoDaPagina>
   );
 }
