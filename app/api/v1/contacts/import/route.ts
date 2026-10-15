@@ -53,6 +53,13 @@ interface ImportSummary {
   imported: number;
   skipped_duplicates: number;
   errors: LinhaErro[];
+  /**
+   * Os contatos que as linhas válidas do arquivo representam: os recém-criados
+   * E os que já existiam. É o que deixa uma campanha falar com "as pessoas
+   * desta planilha" sem depender de etiqueta (a lista subida dentro da campanha).
+   * Sem repetição; contato mesclado devolve o sobrevivente.
+   */
+  contact_ids: string[];
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -76,11 +83,16 @@ export async function POST(req: NextRequest): Promise<Response> {
   const schemaDoPais = contactCreateSchemaDoPais(perfil);
 
   let file: File;
+  // Importação feita de dentro de uma campanha: o WhatsApp é o canal, então
+  // linha sem telefone não serve (e-mail sozinho viraria um contato que a
+  // campanha exclui depois, com o motivo "sem telefone").
+  let exigirTelefone = false;
   try {
     const form = await req.formData();
     const f = form.get("file");
     if (!(f instanceof File)) throw new Error("sem arquivo");
     file = f;
+    exigirTelefone = form.get("exigir_telefone") === "true";
   } catch {
     return fail(
       "validation_failed",
@@ -125,6 +137,9 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
   const header = rows[0]!;
   const mapeado = mapHeader(header, t, doc);
+  if (mapeado.motivo === null && exigirTelefone && mapeado.indices.phone_number === undefined) {
+    mapeado.motivo = t("cabeçalho sem coluna de telefone");
+  }
   if (mapeado.motivo !== null) {
     return fail("validation_failed", `${t("Cabeçalho inválido:")} ${mapeado.motivo}.`, 422, {
       details: { header: header.join(", ") },
@@ -153,6 +168,10 @@ export async function POST(req: NextRequest): Promise<Response> {
       errors.push({ linha, motivo });
       continue;
     }
+    if (exigirTelefone && !contato.phone_number) {
+      errors.push({ linha, motivo: t("linha sem telefone") });
+      continue;
+    }
     if (contato.cpf && !doc.valida(contato.cpf)) {
       // O texto sai do PERFIL: no Brasil continua "CPF inválido: …" (a mesma
       // chave do dicionário), e país sem checksum público diz na mensagem que a
@@ -176,6 +195,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       imported: 0,
       skipped_duplicates: 0,
       errors,
+      contact_ids: [],
     };
     return ok(resumo, { requestId });
   }
@@ -192,33 +212,52 @@ export async function POST(req: NextRequest): Promise<Response> {
     .map((c) => c.contato.email as string | undefined)
     .filter((e): e is string => typeof e === "string");
 
-  const existentes = new Set<string>();
+  // chave ("tel:+55…" / "email:…") → id do contato que já a ocupa. Cadastro
+  // mesclado aponta para o sobrevivente: é ele que responde e que a campanha
+  // precisa alcançar.
+  const existentes = new Map<string, string>();
   if (phones.length > 0) {
     const lookup = [...new Set(phones.flatMap((p) => phoneLookupVariants(p)))];
     const { data } = await supabase
       .from("contacts")
-      .select("phone_number")
+      .select("id, phone_number, is_merged_into")
       .eq("organization_id", orgId)
       .not("phone_number", "is", null)
       .in("phone_number", lookup);
     for (const r of data ?? []) {
-      for (const v of phoneLookupVariants((r as { phone_number: string }).phone_number)) {
-        existentes.add(`tel:${v}`);
+      const linhaDoBanco = r as { id: string; phone_number: string; is_merged_into: string | null };
+      for (const v of phoneLookupVariants(linhaDoBanco.phone_number)) {
+        existentes.set(`tel:${v}`, linhaDoBanco.is_merged_into ?? linhaDoBanco.id);
       }
     }
   }
   if (emails.length > 0) {
     const { data } = await supabase
       .from("contacts")
-      .select("email_normalized")
+      .select("id, email_normalized, is_merged_into")
       .eq("organization_id", orgId)
       .in("email_normalized", emails.map((e) => e.toLowerCase()));
-    for (const r of data ?? []) existentes.add(`email:${(r as { email_normalized: string }).email_normalized}`);
+    for (const r of data ?? []) {
+      const linhaDoBanco = r as { id: string; email_normalized: string; is_merged_into: string | null };
+      existentes.set(`email:${linhaDoBanco.email_normalized}`, linhaDoBanco.is_merged_into ?? linhaDoBanco.id);
+    }
   }
 
   // ─── Insert linha a linha com desfecho individual ─────────────────────────
   let imported = 0;
   let skippedDuplicates = 0;
+  const idsDoArquivo = new Set<string>();
+
+  /** O id do contato que já ocupa o telefone ou o e-mail desta linha, se houver. */
+  const donoDe = (phone?: string, email?: string): string | undefined => {
+    if (phone) {
+      for (const v of phoneLookupVariants(phone)) {
+        const id = existentes.get(`tel:${v}`);
+        if (id) return id;
+      }
+    }
+    return email ? existentes.get(`email:${email.toLowerCase()}`) : undefined;
+  };
 
   for (const { linha, contato } of candidatos) {
     const phone = contato.phone_number as string | undefined;
@@ -226,11 +265,10 @@ export async function POST(req: NextRequest): Promise<Response> {
     // Só contatos existentes ou gravados com sucesso reservam identificadores.
     // Cada repetição chega aqui para ter desfecho; uma linha inválida ou que
     // falhou no insert não pode descartar outra válida do mesmo arquivo.
-    if (
-      (phone && phoneLookupVariants(phone).some((v) => existentes.has(`tel:${v}`))) ||
-      (email && existentes.has(`email:${email.toLowerCase()}`))
-    ) {
+    const dono = donoDe(phone, email);
+    if (dono) {
       skippedDuplicates += 1;
+      idsDoArquivo.add(dono);
       continue;
     }
 
@@ -265,6 +303,10 @@ export async function POST(req: NextRequest): Promise<Response> {
       // Conflito de corrida com os índices únicos = duplicado, não erro.
       if (insErr.code === "23505") {
         skippedDuplicates += 1;
+        // Perdeu a corrida para outro cadastro: busca quem ganhou, para a
+        // pessoa não sumir da lista da campanha.
+        const ganhador = await buscarDono(supabase, orgId, phone, email);
+        if (ganhador) idsDoArquivo.add(ganhador);
         continue;
       }
       errors.push({ linha, motivo: insErr.message });
@@ -272,8 +314,10 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
 
     imported += 1;
-    if (phone) existentes.add(`tel:${phone}`);
-    if (email) existentes.add(`email:${email.toLowerCase()}`);
+    const novoId = (criado as { id: string }).id;
+    idsDoArquivo.add(novoId);
+    if (phone) existentes.set(`tel:${phone}`, novoId);
+    if (email) existentes.set(`email:${email.toLowerCase()}`, novoId);
 
     // Mesmo evento do create unitário — quem consome `contact.created`
     // (workers, métricas) trata importado e manual igual.
@@ -317,6 +361,35 @@ export async function POST(req: NextRequest): Promise<Response> {
     imported,
     skipped_duplicates: skippedDuplicates,
     errors,
+    contact_ids: [...idsDoArquivo],
   };
   return ok(resumo, { requestId });
+}
+
+/** Quem ocupa este telefone ou e-mail agora (só para o caso da corrida de cadastro). */
+async function buscarDono(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
+  phone?: string,
+  email?: string,
+): Promise<string | undefined> {
+  if (phone) {
+    const { data } = await supabase
+      .from("contacts")
+      .select("id, is_merged_into")
+      .eq("organization_id", orgId)
+      .in("phone_number", phoneLookupVariants(phone));
+    const achado = (data ?? [])[0] as { id: string; is_merged_into: string | null } | undefined;
+    if (achado) return achado.is_merged_into ?? achado.id;
+  }
+  if (email) {
+    const { data } = await supabase
+      .from("contacts")
+      .select("id, is_merged_into")
+      .eq("organization_id", orgId)
+      .in("email_normalized", [email.toLowerCase()]);
+    const achado = (data ?? [])[0] as { id: string; is_merged_into: string | null } | undefined;
+    if (achado) return achado.is_merged_into ?? achado.id;
+  }
+  return undefined;
 }

@@ -65,7 +65,7 @@ export function AppShell({ sidebarCollapsed, podeAtender, children }: AppShellPr
         cima da lista.
       */}
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <TopBar />
+        <TopBar mostrarLogotipo={sidebarCollapsed} />
         {/*
           O RODAPÉ DESCONTA O QUE AS PEÇAS FIXAS OCUPAM (issue #1305).
 

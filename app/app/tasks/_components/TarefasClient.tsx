@@ -3,6 +3,9 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import {
   Select,
   SelectContent,
@@ -69,18 +72,22 @@ export function TarefasClient({ podeEditar }: { podeEditar: boolean }) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Tarefas")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t(
-              "O que ficou combinado, com prazo. Tarefa presa a um negócio aparece na linha do tempo dele.",
-            )}
-          </p>
-        </div>
+    <CorpoDaPagina className="gap-4">
+      <CabecalhoDePagina
+        titulo={t("Tarefas")}
+        descricao={t("O que ficou combinado, com prazo. Tarefa presa a um negócio aparece na linha do tempo dele.")}
+        ajuda={<ComoFunciona chave="tarefas" pagina={t("Tarefas")} />}
+        acoes={
+          podeEditar ? (
+            <Button size="sm" className="gap-1.5" onClick={() => abrirNova()}>
+              <Plus size={14} aria-hidden />
+              {t("Nova tarefa")}
+            </Button>
+          ) : null
+        }
+      />
 
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
           <Select
             value={situacao}
             onValueChange={(v) => setSituacao(v as FiltroDeSituacao)}
@@ -139,13 +146,6 @@ export function TarefasClient({ podeEditar }: { podeEditar: boolean }) {
             {t("Atualizar")}
           </Button>
 
-          {podeEditar && (
-            <Button size="sm" className="h-9 gap-1.5 text-xs" onClick={() => abrirNova()}>
-              <Plus size={14} aria-hidden />
-              {t("Nova tarefa")}
-            </Button>
-          )}
-        </div>
       </div>
 
       {falhou ? (
@@ -188,6 +188,6 @@ export function TarefasClient({ podeEditar }: { podeEditar: boolean }) {
         prazoSugerido={prazoSugerido}
         aoSalvar={salvar}
       />
-    </div>
+    </CorpoDaPagina>
   );
 }

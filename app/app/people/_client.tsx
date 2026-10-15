@@ -1,5 +1,8 @@
 "use client";
 
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { MagnifyingGlass, Plus, UserCircle } from "@/lib/ui/icons";
@@ -77,19 +80,18 @@ export function PeopleListClient() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">{t("Pessoas")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("Decisores e contatos — telefones ficam em Contatos.")}
-          </p>
-        </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="mr-2 size-4" />
-          {t("Nova pessoa")}
-        </Button>
-      </div>
+    <CorpoDaPagina className="gap-4">
+      <CabecalhoDePagina
+        titulo={t("Pessoas")}
+        descricao={t("Decisores e contatos — telefones ficam em Contatos.")}
+        ajuda={<ComoFunciona chave="pessoas" pagina={t("Pessoas")} />}
+        acoes={
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="mr-2 size-4" />
+            {t("Nova pessoa")}
+          </Button>
+        }
+      />
 
       <div className="relative max-w-sm">
         <MagnifyingGlass className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
@@ -167,6 +169,6 @@ export function PeopleListClient() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </CorpoDaPagina>
   );
 }

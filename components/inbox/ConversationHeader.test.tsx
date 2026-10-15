@@ -43,6 +43,7 @@ vi.mock("@/hooks/inbox/usePauseAiAttendance", () => ({
 vi.mock("@/hooks/ai/useAutomaticoAtivo", () => ({
   useAutomaticoAtivo: () => ({ data: false }),
 }));
+vi.mock("@/hooks/inbox/useAgenteDaConversa", () => ({ useAgenteDaConversa: () => null }));
 vi.mock("@/components/kanban/OwnerBadge", () => ({ OwnerBadge: () => null }));
 vi.mock("@/components/inbox/ReassignDialog", () => ({ ReassignDialog: () => null }));
 vi.mock("@/components/inbox/SnoozeButton", () => ({ SnoozeButton: () => null }));

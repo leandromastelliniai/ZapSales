@@ -13,6 +13,8 @@
  * mas só ganha o botão onde a tela de destino o aceita — link que morre em /403
  * ensina a não clicar. Atendente e leitor não veem: não decidem nada daqui.
  */
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { LinhaDoRecurso } from "@/components/recursos-opcionais/LinhaDoRecurso";
@@ -77,16 +79,14 @@ export default async function RecursosOpcionaisPage() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-8 overflow-y-auto p-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{traduzir("Recursos opcionais", idioma)}</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          {traduzir(
+    <CorpoDaPagina className="gap-8 overflow-y-auto">
+      <CabecalhoDePagina
+        titulo={traduzir("Recursos opcionais", idioma)}
+        descricao={traduzir(
             "Tudo o que se liga e desliga, num lugar só. Cada recurso continua sendo ligado na tela dele: o botão Ajustar leva até lá.",
             idioma,
           )}
-        </p>
-      </header>
+      />
 
       <section className="space-y-3" aria-labelledby="recursos-modulos">
         <div className="space-y-1">
@@ -146,6 +146,6 @@ export default async function RecursosOpcionaisPage() {
         </div>
         <ul className="space-y-3">{deCadaAgente.map(linha)}</ul>
       </section>
-    </div>
+    </CorpoDaPagina>
   );
 }

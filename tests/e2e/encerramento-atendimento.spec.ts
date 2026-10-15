@@ -4,6 +4,11 @@ import { createServer } from "node:http";
 import { mkdirSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { test, expect, type Page } from "./helpers/test";
+import {
+  abrirFichaDaConversa,
+  fecharFichaDaConversa,
+  gavetaDaFicha,
+} from "./helpers/ficha-da-conversa";
 import { credenciaisSupabaseDeTeste } from "../../scripts/lib/env-de-teste";
 
 const credentials = credenciaisSupabaseDeTeste();
@@ -166,15 +171,25 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
     await page.getByRole("button", { name: "Entrar", exact: true }).click();
     await page.waitForURL(/\/app(?:\/|$)/);
     await abrirConversa(page, conversation);
-    const panel = page.getByTestId("inbox-demandas");
+    // Desde a direção "Linha do Funil" (07/10/2026) demandas, memória e "Novo
+    // Lead" moram na FICHA, que virou gaveta: a coluna da direita deixou de
+    // existir. Os localizadores leem DENTRO da gaveta, e a spec a abre e fecha
+    // como o atendente faria — aberta, ela cobre o cabeçalho (Fechar, Assumir) e
+    // o composer.
+    const panel = gavetaDaFicha(page).getByTestId("inbox-demandas");
+    const memoria = gavetaDaFicha(page).getByTestId("inbox-memoria");
+    await abrirFichaDaConversa(page);
     await expect(panel.getByText("Demanda vigente neste canal")).toBeVisible();
-    await expect(page.getByTestId("inbox-memoria")).toContainText("Preferência de horário");
+    await expect(memoria).toContainText("Preferência de horário");
     // DoD 12 para a issue #908: o rótulo do botão que CRIA o lead provado pela
     // tela, não só em jsdom. O painel é `flex flex-wrap` e o rótulo ficou mais
     // longo — se ele quebrar a fileira ou sumir, é aqui que aparece. Cabe nesta
     // spec, e não numa nova, porque o painel já está montado neste ponto: spec
     // nova custaria mais um login e mais um seed ao relógio do CI.
-    await expect(page.getByRole("button", { name: "Novo Lead", exact: true })).toBeVisible();
+    await expect(
+      gavetaDaFicha(page).getByRole("button", { name: "Novo Lead", exact: true }),
+    ).toBeVisible();
+    await fecharFichaDaConversa(page);
     // Fechar não é mais `window.confirm()` (bloqueado em iframe, ignora o
     // tema) — é o `AlertDialog` da casa. O botão que abre e o que confirma
     // têm o MESMO rótulo "Fechar"; o segundo clique escopado ao
@@ -198,6 +213,7 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
       (await db.from("conversations").select("status").eq("id", conversations[1]).single()).data
         ?.status,
     ).toBe("open");
+    await abrirFichaDaConversa(page);
     await expect(
       panel.getByRole("button", { name: "Encerrar demanda", exact: true }),
     ).toBeVisible();
@@ -209,14 +225,14 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
     await panel.getByLabel("Desfecho da demanda").selectOption("resolvida");
     await panel.getByRole("button", { name: "Confirmar desfecho", exact: true }).click();
     await expect(panel).toContainText("Nenhuma demanda aberta.");
-    await expect(page.getByTestId("inbox-memoria")).toContainText("Histórico encerrado");
+    await expect(memoria).toContainText("Histórico encerrado");
     await inbound("Voltei para novo atendimento");
     await expect(panel.getByText("Demanda vigente neste canal")).toBeVisible();
     await page.goto("/app/inbox?filter=unassigned");
     await page.getByText("Voltei para novo atendimento", { exact: true }).first().click();
-    await expect(
-      page.getByTestId("inbox-demandas").getByText("Demanda vigente neste canal"),
-    ).toBeVisible();
+    await abrirFichaDaConversa(page);
+    await expect(panel.getByText("Demanda vigente neste canal")).toBeVisible();
+    await fecharFichaDaConversa(page);
     const current = await db
       .from("conversations")
       .select("current_demanda_id,status")
@@ -226,7 +242,14 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
     expect(current.data?.status).toBe("open");
     await page.getByRole("button", { name: "Assumir", exact: true }).click();
     await expect(page.getByRole("button", { name: "Liberar", exact: true })).toBeVisible();
+    // "Sem responsável" era o rótulo do `OwnerBadge` sem dono no cabeçalho; desde a
+    // direção "Linha do Funil" o cabeçalho diz quem atende num chip só. A prova é
+    // a mesma: assumida, a conversa deixa de dizer que não tem ninguém.
     await expect(page.getByText("Sem responsável", { exact: true })).toHaveCount(0);
+    await expect(page.getByTestId("comando-da-conversa")).toContainText("Em atendimento");
+    await expect(page.getByTestId("comando-da-conversa")).not.toContainText(
+      /Sem atendente|Na fila/,
+    );
     await page
       .getByRole("textbox", { name: "Mensagem", exact: true })
       .fill("Olá, vamos cuidar deste novo atendimento.");
@@ -235,9 +258,12 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
     await expect(
       page.getByText("Olá, vamos cuidar deste novo atendimento.", { exact: true }).first(),
     ).toBeVisible();
-    const box = await page.getByTestId("inbox-demandas").boundingBox();
+    // A largura do painel de demandas agora é medida na gaveta da ficha.
+    await abrirFichaDaConversa(page);
+    const box = await panel.boundingBox();
     expect(box?.width).toBeGreaterThan(150);
     await page.screenshot({ path: `${evidence}/task4-reaberto-respondido.png`, fullPage: true });
+    await fecharFichaDaConversa(page);
     await page.getByRole("button", { name: "Fechar", exact: true }).click();
     await page
       .getByRole("alertdialog")
@@ -265,13 +291,17 @@ test("fechar canal preserva demanda, desfecho explícito e nova entrada volta à
     await expect(page.getByTestId("inbox-item")).toContainText("Resposta registrada; atendimento mudou");
     await page.screenshot({ path: `${evidence}/task4-caso-obsoleto-aviso.png`, fullPage: true });
     await abrirConversa(page, conversation);
-    await expect(page.getByTestId("inbox-memoria")).toContainText("Histórico encerrado");
+    await abrirFichaDaConversa(page);
+    await expect(memoria).toContainText("Histórico encerrado");
     const language = await db.auth.admin.updateUserById(user, { user_metadata: { locale: "es" } });
     if (language.error) throw language.error;
     await page.reload();
-    await expect(page.getByTestId("inbox-memoria")).toContainText("Historial cerrado — sin tareas pendientes");
-    await expect(page.getByTestId("inbox-memoria")).toContainText("Resuelto");
+    // O recarregamento fecha a gaveta; o botão "Ficha completa" tem o mesmo texto em espanhol.
+    await abrirFichaDaConversa(page);
+    await expect(memoria).toContainText("Historial cerrado — sin tareas pendientes");
+    await expect(memoria).toContainText("Resuelto");
     await page.screenshot({ path: `${evidence}/task4-historico-es.png`, fullPage: true });
+    await fecharFichaDaConversa(page);
     await page.getByRole("button", { name: "Reabrir", exact: true }).click();
     await expect.poll(async () => (await db.from("conversations").select("status").eq("organization_id",org).eq("id",conversation).single()).data?.status).toBe("open");
     await page.getByRole("button", { name: "Cerrar", exact: true }).click();

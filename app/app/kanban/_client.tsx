@@ -6,6 +6,11 @@ import { useActiveOrg } from "@/hooks/auth/AuthProvider";
 import { useT } from "@/hooks/i18n/useT";
 
 import { ImportarLeads } from "./_components/ImportarLeads";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+import { LinhaDoFunil, type EtapaDaLinha } from "@/components/inbox/visual/LinhaDoFunil";
+import { Painel } from "@/components/ui/painel";
 import { EmptyPipeline } from "@/components/empty";
 import {
   AlertDialog,
@@ -90,6 +95,7 @@ export function FunisClient({
   arquivados: arquivadosDoServidor,
   podeGerenciar,
   podeImportar,
+  etapasPorFunil = {},
 }: {
   funis: FunilDaLista[];
   /**
@@ -102,6 +108,8 @@ export function FunisClient({
   podeGerenciar: boolean;
   /** Espelha o `requireRole("agent")` de `POST /api/v1/leads/import`. */
   podeImportar: boolean;
+  /** As etapas de cada funil, na ordem, para desenhar a Linha do Funil na lista. */
+  etapasPorFunil?: Record<string, EtapaDaLinha[]>;
 }) {
   const t = useT();
   /**
@@ -426,9 +434,37 @@ export function FunisClient({
     </div>
   );
 
+  // O cabeçalho é o mesmo nos dois estados (com e sem funil): o que muda é o corpo. As ações ficam no
+  // canto dele, no mesmo lugar de toda tela — antes caíam numa linha solta ABAIXO do título.
+  const cabecalho = (
+    <CabecalhoDePagina
+      titulo={t("Funis")}
+      descricao={t("Os funis pelos quais seus clientes passam, da primeira conversa até fechar negócio.")}
+      ajuda={<ComoFunciona chave="funis" pagina={t("Funis")} />}
+      acoes={
+        podeGerenciar || podeImportar ? (
+          <>
+            {/* A porta da importação fica AQUI, e não numa tela própria: é desta
+                lista que se escolhe o funil, e a planilha precisa de um destino.
+                Uma rota nova exigiria um item de menu para uma coisa que se faz
+                uma vez por mês — ruído permanente para um gesto ocasional. */}
+            {podeImportar && funis.length > 0 ? <ImportarLeads funis={funis} /> : null}
+            {podeGerenciar && novo === null && funis.length > 0 ? (
+              <Button size="sm" onClick={() => setNovo("")} disabled={ocupado} data-testid="novo-funil">
+                <Plus size={16} className="mr-2" aria-hidden /> {t("Novo funil")}
+              </Button>
+            ) : null}
+          </>
+        ) : null
+      }
+    />
+  );
+
   if (funis.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4">
+      <CorpoDaPagina className="gap-4">
+        {cabecalho}
+        <div className="flex flex-1 flex-col items-center justify-center gap-4">
         {formularioDeCriacao}
         {novo === null && (
           // ⚠️ O BOTÃO CRIA AQUI MESMO. O texto anterior mandava "Ir para
@@ -453,27 +489,14 @@ export function FunisClient({
             arquivado — e sem ela a tela mandaria criar um funil novo por cima
             de um arquivo que o usuário não consegue ver. */}
         {gavetaDeArquivados}
-      </div>
+        </div>
+      </CorpoDaPagina>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {(podeGerenciar || podeImportar) && (
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          {/* A porta da importação fica AQUI, e não numa tela própria: é desta
-              lista que se escolhe o funil, e a planilha precisa de um destino.
-              Uma rota nova exigiria um item de menu para uma coisa que se faz
-              uma vez por mês — ruído permanente para um gesto ocasional. */}
-          {podeImportar ? <ImportarLeads funis={funis} /> : null}
-          {podeGerenciar && novo === null ? (
-            <Button onClick={() => setNovo("")} disabled={ocupado} data-testid="novo-funil" className="w-full sm:w-auto">
-              <Plus size={16} className="mr-2" aria-hidden /> {t("Novo funil")}
-            </Button>
-          ) : null}
-        </div>
-      )}
-
+    <CorpoDaPagina className="gap-4">
+      {cabecalho}
       {formularioDeCriacao}
 
       {erro?.id === null && (
@@ -482,7 +505,8 @@ export function FunisClient({
         </p>
       )}
 
-      <ul className="flex flex-col divide-y divide-border rounded-md border border-border">
+      <Painel semRecuo>
+      <ul className="flex flex-col divide-y divide-border">
         {funis.map((funil, i) => {
           const renomeandoAqui = renomeando?.id === funil.id ? renomeando : null;
           const arquivandoAqui = arquivando?.id === funil.id ? arquivando : null;
@@ -631,6 +655,10 @@ export function FunisClient({
                 )}
               </div>
 
+              {(etapasPorFunil[funil.id]?.length ?? 0) > 1 ? (
+                <LinhaDoFunil etapas={etapasPorFunil[funil.id]!} atualId={null} className="pt-1" />
+              ) : null}
+
               {erroDaLinha && (
                 <p className="text-sm leading-relaxed text-destructive" data-testid={`erro-${funil.id}`}>
                   {erroDaLinha}
@@ -686,6 +714,7 @@ export function FunisClient({
           );
         })}
       </ul>
+      </Painel>
 
       {gavetaDeArquivados}
 
@@ -714,6 +743,6 @@ export function FunisClient({
           </Link>
         </p>
       )}
-    </div>
+    </CorpoDaPagina>
   );
 }

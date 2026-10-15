@@ -197,7 +197,7 @@ test.describe("com o navegador em outro fuso que a organização", () => {
     // 2) o que a GRADE mostra com a página viva.
     await page.unroute("**/_next/static/chunks/**");
     await page.goto("/app/agenda");
-    await expect(page.getByTestId("tela-agenda")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("tela-agenda").first()).toBeVisible({ timeout: 30_000 });
     // A grade repinta na hidratação; espera a semana ESTABILIZAR antes de ler,
     // senão o que se compara é o meio da troca.
     await expect

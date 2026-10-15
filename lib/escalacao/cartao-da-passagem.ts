@@ -72,6 +72,9 @@ export interface PassagemDaConversa {
   reconhecido_por: string | null;
   /** Resolvido pelo servidor. `null` é estado DECLARADO (self-host sem service role). */
   reconhecido_por_nome?: string | null;
+  /** O agente de IA que passou a conversa (0545), resolvido pelo servidor. */
+  agente_id?: string | null;
+  agente_nome?: string | null;
 }
 
 /** Quem abriu a conversa, e com quem ela está. */
@@ -128,6 +131,8 @@ export interface CartaoDaPassagem {
   aviso: { avisado: boolean; frase: string | null } | null;
   /** Quem assumiu, quando o servidor resolveu o nome. */
   assumidaPor: string | null;
+  /** O agente de IA que passou a conversa; `null` = a tela diz só "IA". */
+  agenteNome: string | null;
   acao: AcaoDoCartao;
 }
 
@@ -244,6 +249,7 @@ export function montarCartoesDaPassagem(
                   : FRASE_DO_MOTIVO_DO_AVISO[p.aviso_motivo_codigo],
             },
       assumidaPor: estado === "reconhecida" ? (p.reconhecido_por_nome ?? null) : null,
+      agenteNome: p.agente_nome?.trim() || null,
       acao: acaoDe({ estado, anonimizada, optOut, ultima, quem }),
     };
   });

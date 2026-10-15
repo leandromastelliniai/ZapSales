@@ -92,7 +92,13 @@ test.describe("G5-03 — fila com posição + atribuição", () => {
     const queueItem = page.getByRole("button").filter({ hasText: q.contact_name });
     await expect(queueItem).toBeVisible({ timeout: 15_000 });
     await expect(queueItem.getByText(/^\d+º$/)).toBeVisible();
-    await expect(queueItem.getByText(/Aguardando/)).toBeVisible();
+    // Desde a direção "Linha do Funil" (07/10/2026) a linha diz quem atende numa
+    // etiqueta ("Na fila · X") e o "Aguardando há X" passou para o `title` da
+    // pílula da posição. As duas metades seguem provadas: está na fila, e há
+    // quanto tempo espera.
+    await expect(queueItem.getByText(/^Na fila/)).toBeVisible();
+    // `há`: o selo da foto também tem title "Aguardando atendente".
+    await expect(queueItem.getByTitle(/^Aguardando há/)).toBeVisible();
     await page.screenshot({
       path: path.join(EVIDENCE, "G5-03-queue.png"),
       fullPage: true,

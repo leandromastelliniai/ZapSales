@@ -140,7 +140,7 @@ export const NAV_CATALOG = [
     href: "/app/prospecting",
     label: "Prospecção",
     description: "Busque empresas e conduza abordagens graduais com IA.",
-    icon: "Funnel",
+    icon: "Binoculars",
     group: "crm",
     minRole: "admin",
     section: "O dia a dia da venda",
@@ -191,7 +191,7 @@ export const NAV_CATALOG = [
     href: "/app/templates",
     label: "Respostas rápidas",
     description: "Scripts salvos para responder mais rápido, seus ou da equipe.",
-    icon: "FileText",
+    icon: "Lightning",
     group: "atendimento",
     sidebar: true,
   },
@@ -211,7 +211,7 @@ export const NAV_CATALOG = [
     href: "/app/kanban",
     label: "Funis",
     description: "Seus funis de venda — clique em um para abrir o quadro de clientes.",
-    icon: "Kanban",
+    icon: "FunilEmEtapas",
     group: "crm",
     section: "O dia a dia da venda",
     sidebar: true,
@@ -220,15 +220,27 @@ export const NAV_CATALOG = [
     // A campanha vive no CRM e não em Conexões: quem a usa está pensando em
     // QUEM vai falar, não no número que fala. O ritmo (que é de Conexões) ela
     // herda, e só sabe deixar mais devagar.
+    //
+    // ─── O NOME É "Disparo em massa", e o endereço continua /app/campaigns ───
+    // O dono do produto pediu o nome explícito: "Campanhas" não diz, a quem abre
+    // o menu pela primeira vez, que é aqui que se manda mensagem para uma lista
+    // (inclusive uma planilha CSV). A URL não muda — link salvo e histórico
+    // seguem valendo.
+    //
+    // ─── E ESTÁ NO MENU LATERAL desde 2026-10-15 ───
+    // Antes ficava só no hub, e quem procurava o disparo não achava. Entrou no
+    // sidebar do CRM com `minRole: "manager"` (a API da campanha exige manager:
+    // mostrar a quem toma 403 seria uma porta que não abre). O custo de altura é
+    // medido em 900px por `tests/e2e/navegacao.spec.ts`.
     href: "/app/campaigns",
-    label: "Campanhas",
-    description: "Fale com uma lista de contatos que você escolhe, no ritmo do número.",
+    label: "Disparo em massa",
+    description:
+      "Mande uma mensagem para muita gente de uma vez — suba uma planilha CSV ou escolha contatos que já estão aqui.",
     icon: "Megaphone",
     group: "crm",
     section: "O dia a dia da venda",
-    // SÓ NO HUB, como as demais telas de preparação: o quinto item do sidebar do
-    // CRM já fez o menu rolar 13px em 900px (e2e `navegacao.spec.ts`), e a
-    // campanha é montada de vez em quando, não aberta todo dia.
+    minRole: "manager",
+    sidebar: true,
   },
   {
     href: "/app/contacts",
@@ -256,7 +268,7 @@ export const NAV_CATALOG = [
     href: "/app/people",
     label: "Pessoas",
     description: "Decisores e contatos ligados a empresas, com vários telefones.",
-    icon: "UserCircle",
+    icon: "UserList",
     group: "crm",
     section: "O dia a dia da venda",
     minRole: "viewer",
@@ -342,7 +354,7 @@ export const NAV_CATALOG = [
     href: "/app/imports",
     label: "Importações",
     description: "Lotes CSV/XLSX de empresas, pessoas e telefones.",
-    icon: "FileText",
+    icon: "UploadSimple",
     group: "crm",
     section: "Preparar a venda",
     minRole: "manager",
@@ -353,7 +365,7 @@ export const NAV_CATALOG = [
     href: "/app/proposals",
     label: "Propostas",
     description: "Rascunhe, revise e envie propostas comerciais — do orçamento ao aceite.",
-    icon: "FileText",
+    icon: "Signature",
     group: "crm",
     section: "Fechar a venda",
     capacidade: "propostas",
@@ -370,7 +382,7 @@ export const NAV_CATALOG = [
     href: "/app/settings/tenant/agenda",
     label: "Tipos de agendamento",
     description: "O que se pode marcar, quanto dura, onde acontece e quem atende.",
-    icon: "CalendarBlank",
+    icon: "CalendarCheck",
     group: "organizacao",
     // "Sua empresa", junto de Atendimento e Empresa: é configuração do NEGÓCIO,
     // não da conta de quem está logado. O gate `navegacao-registry` cobra a
@@ -385,7 +397,7 @@ export const NAV_CATALOG = [
     href: "/app/settings/tenant/proposals",
     label: "Propostas",
     description: "Configure a validade padrão e condições para propostas comerciais.",
-    icon: "FileText",
+    icon: "Files",
     group: "organizacao",
     section: "Sua empresa",
     minRole: "manager",
@@ -443,7 +455,7 @@ export const NAV_CATALOG = [
     href: "/app/settings/tenant/financeiro",
     label: "Financeiro",
     description: "Contas, formas de pagamento e como cada lançamento é classificado.",
-    icon: "ChartBar",
+    icon: "Wallet",
     group: "organizacao",
     section: "Sua empresa",
     // Leitura para a organização, escrita para manager+ (é a RLS que decide).
@@ -485,7 +497,7 @@ export const NAV_CATALOG = [
     href: "/app/ai/agents",
     label: "Agentes",
     description: "Quem atende por você: instruções, modelo, ferramentas e publicação.",
-    icon: "Robot",
+    icon: "AgenteEmConversa",
     group: "ia",
     section: "Montar o agente",
     minRole: "manager",
@@ -512,7 +524,7 @@ export const NAV_CATALOG = [
     href: "/app/ai/atendimento",
     label: "Fluxos de atendimento",
     description: "Perguntas que a IA conduz durante a conversa, com as respostas guardadas na ficha do cliente.",
-    icon: "ListChecks",
+    icon: "TreeStructure",
     group: "ia",
     section: "Montar o agente",
     minRole: "manager",
@@ -522,7 +534,7 @@ export const NAV_CATALOG = [
     href: "/app/ai/routers",
     label: "Roteadores",
     description: "Qual agente pega qual conversa, e quando o humano assume.",
-    icon: "Signpost",
+    icon: "PassagemParaHumano",
     group: "ia",
     section: "Montar o agente",
     minRole: "manager",
@@ -586,7 +598,7 @@ export const NAV_CATALOG = [
     href: "/app/ai/skills",
     label: "Skills",
     description: "As ações que o agente pode executar sozinho durante o atendimento.",
-    icon: "PuzzlePiece",
+    icon: "MagicWand",
     group: "ia",
     section: "Ensinar o agente",
     minRole: "manager",
@@ -636,7 +648,7 @@ export const NAV_CATALOG = [
     // Órfã: nenhum lugar do app linkava para cá. O flywheel gerava propostas de
     // melhoria do agente e a fila só era vista por quem soubesse a URL.
     href: "/app/ai/proposals",
-    label: "Propostas",
+    label: "Sugestões da IA",
     description: "Melhorias que a IA sugere para si mesma, esperando sua decisão.",
     icon: "Lightbulb",
     group: "ia",
@@ -650,7 +662,7 @@ export const NAV_CATALOG = [
     href: "/app/ai/runs",
     label: "Execuções",
     description: "O que a IA fez — e, quando falhou, o que aconteceu e o que fazer.",
-    icon: "ListChecks",
+    icon: "Pulse",
     group: "ia",
     section: "Acompanhar o agente",
     minRole: "manager",
@@ -723,7 +735,7 @@ export const NAV_CATALOG = [
     href: "/app/faturamento",
     label: "Faturamento",
     description: "Quanto entrou, de que forma, e quanto cada pessoa tem a receber.",
-    icon: "ChartBar",
+    icon: "CurrencyCircleDollar",
     group: "analise",
     section: "Dinheiro",
     minRole: "viewer",
@@ -737,7 +749,7 @@ export const NAV_CATALOG = [
     href: "/app/honorarios",
     label: "Honorários",
     description: "O modelo de cobrança de cada caso e o calendário de parcelas.",
-    icon: "ChartBar",
+    icon: "HandCoins",
     group: "analise",
     section: "Dinheiro",
     minRole: "viewer",
@@ -759,7 +771,7 @@ export const NAV_CATALOG = [
     href: "/app/ads/meta",
     label: "Meta Ads",
     description: "Quanto custou cada resultado das campanhas que trazem gente para cá.",
-    icon: "Megaphone",
+    icon: "Target",
     group: "analise",
     section: "Os números do período",
     // `manager`, e não o `viewer` de Desempenho: aqui não há recorte por
@@ -781,7 +793,13 @@ export const NAV_CATALOG = [
     icon: "ClockCounterClockwise",
     group: "analise",
     section: "Os números do período",
-    sidebar: true,
+    // SEM `sidebar` desde 2026-10-15: foi o item que cedeu o lugar de "Disparo em
+    // massa" no menu lateral. O dono do produto autorizou trocar um item para o
+    // menu não rolar em 900 px — MEDIDO: com os dois, `navegacao.spec.ts` reprova
+    // e `interface-por-empresa.test.ts` (folga 0 com 15 itens) também. Este é de
+    // consulta periódica (relatório do período), não de uso a cada atendimento. A
+    // porta continua: "Ver tudo em Análise" e o ⌘K. Volta ao sidebar no dia em
+    // que o menu ganhar altura.
   },
   {
     // Observabilidade, não configuração: por isso não fica junto dos agentes.
@@ -795,9 +813,9 @@ export const NAV_CATALOG = [
   },
   {
     href: "/app/audit",
-    label: "Audit Log",
-    description: "Quem fez o quê, quando — o histórico que não se apaga.",
-    icon: "ClockCounterClockwise",
+    label: "Auditoria",
+    description: "Quem mudou o quê, e quando — o histórico que não se apaga.",
+    icon: "ListMagnifyingGlass",
     group: "analise",
     section: "O histórico que se consulta",
     minRole: "manager",
@@ -843,7 +861,7 @@ export const NAV_CATALOG = [
     href: "/app/settings/atendimento",
     label: "Distribuição de atendimento",
     description: "Quem recebe cada cliente novo, e o que cada atendente enxerga.",
-    icon: "UsersThree",
+    icon: "Shuffle",
     group: "organizacao",
     section: "Sua empresa",
     minRole: "manager",
@@ -876,7 +894,7 @@ export const NAV_CATALOG = [
     href: "/app/settings/recursos",
     label: "Recursos opcionais",
     description: "Tudo o que se liga e desliga, se está ligado e onde se ajusta.",
-    icon: "ListChecks",
+    icon: "ToggleRight",
     group: "organizacao",
     section: "Sua empresa",
     // `manager`: o gerente decide metade das chaves da lista. Atendente e
@@ -887,7 +905,7 @@ export const NAV_CATALOG = [
     href: "/app/settings/tenant",
     label: "Organização",
     description: "Dados da empresa, retenção de dados e encarregado de LGPD.",
-    icon: "Buildings",
+    icon: "Briefcase",
     group: "organizacao",
     section: "Sua empresa",
     minRole: "admin",
@@ -902,7 +920,7 @@ export const NAV_CATALOG = [
     label: "Conversões",
     description:
       "Devolver ao anúncio as vendas que ele trouxe, e marcar a origem de quem chega pelo site.",
-    icon: "ChartLineUp",
+    icon: "TrendUp",
     group: "organizacao",
     section: "Sua empresa",
     // `admin` pelo mesmo critério das vizinhas: o token grava na conta de
@@ -921,7 +939,7 @@ export const NAV_CATALOG = [
     href: "/app/settings/meta-ads",
     label: "Meta Ads",
     description: "Conectar a conta de anúncios para ler o desempenho das campanhas.",
-    icon: "Megaphone",
+    icon: "Target",
     group: "organizacao",
     section: "Sua empresa",
     // `admin` pelo mesmo critério da vizinha, mesmo o token sendo só de
@@ -946,9 +964,9 @@ export const NAV_CATALOG = [
   },
   {
     href: "/app/settings/billing",
-    label: "Billing",
-    description: "Plano e cobrança.",
-    icon: "Receipt",
+    label: "Plano e cobrança",
+    description: "O plano contratado e as cobranças da sua empresa.",
+    icon: "CreditCard",
     group: "organizacao",
     section: "Sua empresa",
     minRole: "admin",
@@ -973,9 +991,9 @@ export const NAV_CATALOG = [
   },
   {
     href: "/app/settings/voip-trunk",
-    label: "Trunk SIP",
-    description: "Credenciais do provedor SIP para chamadas de voz por IA.",
-    icon: "Phone",
+    label: "Linha telefônica (SIP)",
+    description: "Os dados da operadora de telefonia para a IA fazer e receber chamadas.",
+    icon: "PhoneTransfer",
     group: "organizacao",
     section: "Dados e acesso",
     minRole: "admin",
@@ -1000,7 +1018,7 @@ export const NAV_CATALOG = [
     label: "Dados externos",
     description:
       "Conecte um banco de dados de outro sistema para o agente consultar em tempo real.",
-    icon: "PlugsConnected",
+    icon: "Database",
     group: "organizacao",
     section: "Dados e acesso",
     // SEM `sidebar`: o menu de Organização já estourou a dobra uma vez e hub é

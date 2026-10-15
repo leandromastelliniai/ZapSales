@@ -25,70 +25,70 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /* ─────────────────────────────────────────────────────────────────────────
-   ZapSales — Design System tokens (Sage palette · density Aerada)
-   Source of truth: /app/design/lib/tokens.ts (PALETTES.sage)
+   ZapSales — Design System tokens (Futuristas: noite + violeta · density Aerada)
+   Direção "Linha do Funil" (.impeccable/surfaces). Rampa do violeta = rampaDeSemente("#773df9")
    Light + dark drawn separately (NOT inverted).
    ───────────────────────────────────────────────────────────────────────── */
 
 :root {
   /* Surfaces (light) */
-  --color-bg: #faf9f6;
+  --color-bg: #f5f6fa;
   --color-surface: #ffffff;
-  --color-surface-elevated: #f5f3ee;
-  --color-overlay: rgba(28, 26, 22, 0.42);
+  --color-surface-elevated: #eceef5;
+  --color-overlay: rgba(11, 15, 28, 0.45);
 
   /* Text (light) */
-  --color-text: #1c1a16;
-  --color-text-muted: #5d594f;
-  --color-text-subtle: #7d786c;
+  --color-text: #151a2e;
+  --color-text-muted: #4b5373;
+  --color-text-subtle: #5d6583;
 
   /* Borders (light) */
-  --color-border: #e7e3da;
-  --color-border-strong: #d2cdbf;
+  --color-border: #dde1ec;
+  --color-border-strong: #c5cbdc;
 
-  /* Accent — Sage (11 stops) */
-  --color-accent-50:  #f3f6f1;
-  --color-accent-100: #e4ebe0;
-  --color-accent-200: #c8d6c1;
-  --color-accent-300: #a4ba9a;
-  --color-accent-400: #82a077;
-  --color-accent-500: #67885d;
-  --color-accent-600: #506d48;
-  --color-accent-700: #41573b;
-  --color-accent-800: #374731;
-  --color-accent-900: #2f3c2b;
-  --color-accent-950: #171f15;
+  /* Accent — violeta Futuristas (11 stops, rampaDeSemente("#773df9")) */
+  --color-accent-50:  #f4f3ff;
+  --color-accent-100: #e8e7ff;
+  --color-accent-200: #d2ceff;
+  --color-accent-300: #b7acff;
+  --color-accent-400: #9e8aff;
+  --color-accent-500: #8a68ff;
+  --color-accent-600: #773df9;
+  --color-accent-700: #5d36c0;
+  --color-accent-800: #4b2f98;
+  --color-accent-900: #3e2a7b;
+  --color-accent-950: #1d1141;
   --color-accent: var(--color-accent-600);
   --color-accent-fg: #ffffff;
   --color-accent-soft: var(--color-accent-100);
   --color-accent-hover: var(--color-accent-700);
 
-  /* Neutrals — greige (11 stops, light) */
-  --color-neutral-50:  #faf9f6;
-  --color-neutral-100: #f3f1ec;
-  --color-neutral-200: #e7e3da;
-  --color-neutral-300: #d2cdbf;
-  --color-neutral-400: #a9a395;
-  --color-neutral-500: #7d786c;
-  --color-neutral-600: #5d594f;
-  --color-neutral-700: #46433b;
-  --color-neutral-800: #2e2c26;
-  --color-neutral-900: #1c1a16;
-  --color-neutral-950: #0e0d0a;
+  /* Neutrals — azul-acinzentado (11 stops, light) */
+  --color-neutral-50:  #f5f6fa;
+  --color-neutral-100: #eceef5;
+  --color-neutral-200: #dde1ec;
+  --color-neutral-300: #c5cbdc;
+  --color-neutral-400: #9aa2bb;
+  --color-neutral-500: #6f7896;
+  --color-neutral-600: #4b5373;
+  --color-neutral-700: #363d59;
+  --color-neutral-800: #252b44;
+  --color-neutral-900: #151a2e;
+  --color-neutral-950: #0b0f1c;
 
   /* States (light) */
-  --color-success: #5a8a5f;
-  --color-success-bg: rgba(90, 138, 95, 0.12);
-  --color-success-fg: #41673f;
-  --color-warning: #b07a2b;
-  --color-warning-bg: rgba(176, 122, 43, 0.12);
-  --color-warning-fg: #875a1a;
-  --color-error: #a94a3c;
-  --color-error-bg: rgba(169, 74, 60, 0.12);
-  --color-error-fg: #8a3a2e;
-  --color-info: #4a7a93;
-  --color-info-bg: rgba(74, 122, 147, 0.12);
-  --color-info-fg: #355d72;
+  --color-success: #0f7a55;
+  --color-success-bg: rgba(15, 122, 85, 0.12);
+  --color-success-fg: #0b6447;
+  --color-warning: #a85a00;
+  --color-warning-bg: rgba(168, 90, 0, 0.12);
+  --color-warning-fg: #874800;
+  --color-error: #c8372a;
+  --color-error-bg: rgba(200, 55, 42, 0.12);
+  --color-error-fg: #a42b20;
+  --color-info: #0d7480;
+  --color-info-bg: rgba(13, 116, 128, 0.12);
+  --color-info-fg: #0a5f69;
 
   /* Spacing (4-base) */
   --space-0: 0px;
@@ -142,6 +142,20 @@
   --z-sticky: 30;
   --z-modal: 40;
   --z-toast: 50;
+
+
+  /* Papéis da Inbox (cada matiz, UM significado): IA, atendente humano,
+     linha do funil e fila, ação principal. Fixos de propósito: a cor de
+     destaque do revendedor troca o violeta da marca, não estes. */
+  --color-ia: #6236e8;
+  --color-ia-fundo: rgba(119, 61, 249, 0.12);
+  --color-humano: #0d7480;
+  --color-humano-fundo: rgba(13, 116, 128, 0.12);
+  --color-funil: #b86e00;
+  --color-funil-fundo: rgba(194, 122, 0, 0.14);
+  --color-acao: #c6f432;
+  --color-acao-fg: #151a2e;
+  --color-acao-hover: #b5e61f;
 
   /* shadcn-compat aliases (mantém consumers legados funcionando) */
   --background: var(--color-bg);
@@ -250,47 +264,61 @@
    (lib/branding/css.ts), que só ganha consumidor com a tela de marca.
    ───────────────────────────────────────────────────────────────────────── */
 [data-theme="light"] {
-  --color-bg: #faf9f6;
+  --color-bg: #f5f6fa;
   --color-surface: #ffffff;
-  --color-surface-elevated: #f5f3ee;
-  --color-overlay: rgba(28, 26, 22, 0.42);
-  --color-text: #1c1a16;
-  --color-text-muted: #5d594f;
-  --color-text-subtle: #7d786c;
-  --color-border: #e7e3da;
-  --color-border-strong: #d2cdbf;
+  --color-surface-elevated: #eceef5;
+  --color-overlay: rgba(11, 15, 28, 0.45);
+  --color-text: #151a2e;
+  --color-text-muted: #4b5373;
+  --color-text-subtle: #5d6583;
+  --color-border: #dde1ec;
+  --color-border-strong: #c5cbdc;
   --color-accent: var(--color-accent-600);
   --color-accent-fg: #ffffff;
   --color-accent-soft: var(--color-accent-100);
   --color-accent-hover: var(--color-accent-700);
-  --color-neutral-50: #faf9f6;
-  --color-neutral-100: #f3f1ec;
-  --color-neutral-200: #e7e3da;
-  --color-neutral-300: #d2cdbf;
-  --color-neutral-400: #a9a395;
-  --color-neutral-500: #7d786c;
-  --color-neutral-600: #5d594f;
-  --color-neutral-700: #46433b;
-  --color-neutral-800: #2e2c26;
-  --color-neutral-900: #1c1a16;
-  --color-neutral-950: #0e0d0a;
-  --color-success: #5a8a5f;
-  --color-success-bg: rgba(90, 138, 95, 0.12);
-  --color-success-fg: #41673f;
-  --color-warning: #b07a2b;
-  --color-warning-bg: rgba(176, 122, 43, 0.12);
-  --color-warning-fg: #875a1a;
-  --color-error: #a94a3c;
-  --color-error-bg: rgba(169, 74, 60, 0.12);
-  --color-error-fg: #8a3a2e;
-  --color-info: #4a7a93;
-  --color-info-bg: rgba(74, 122, 147, 0.12);
-  --color-info-fg: #355d72;
+  --color-neutral-50: #f5f6fa;
+  --color-neutral-100: #eceef5;
+  --color-neutral-200: #dde1ec;
+  --color-neutral-300: #c5cbdc;
+  --color-neutral-400: #9aa2bb;
+  --color-neutral-500: #6f7896;
+  --color-neutral-600: #4b5373;
+  --color-neutral-700: #363d59;
+  --color-neutral-800: #252b44;
+  --color-neutral-900: #151a2e;
+  --color-neutral-950: #0b0f1c;
+  --color-success: #0f7a55;
+  --color-success-bg: rgba(15, 122, 85, 0.12);
+  --color-success-fg: #0b6447;
+  --color-warning: #a85a00;
+  --color-warning-bg: rgba(168, 90, 0, 0.12);
+  --color-warning-fg: #874800;
+  --color-error: #c8372a;
+  --color-error-bg: rgba(200, 55, 42, 0.12);
+  --color-error-fg: #a42b20;
+  --color-info: #0d7480;
+  --color-info-bg: rgba(13, 116, 128, 0.12);
+  --color-info-fg: #0a5f69;
   --shadow-xs: 0 1px 2px 0 rgba(20, 18, 14, 0.04);
   --shadow-sm: 0 1px 2px 0 rgba(20, 18, 14, 0.05), 0 1px 1px 0 rgba(20, 18, 14, 0.03);
   --shadow-md: 0 4px 12px -2px rgba(20, 18, 14, 0.06), 0 2px 4px -1px rgba(20, 18, 14, 0.04);
   --shadow-lg: 0 12px 32px -6px rgba(20, 18, 14, 0.10), 0 4px 12px -2px rgba(20, 18, 14, 0.06);
   --shadow-xl: 0 24px 48px -12px rgba(20, 18, 14, 0.16), 0 8px 16px -4px rgba(20, 18, 14, 0.08);
+
+  /* Papéis da Inbox (cada matiz, UM significado): IA, atendente humano,
+     linha do funil e fila, ação principal. Fixos de propósito: a cor de
+     destaque do revendedor troca o violeta da marca, não estes. */
+  --color-ia: #6236e8;
+  --color-ia-fundo: rgba(119, 61, 249, 0.12);
+  --color-humano: #0d7480;
+  --color-humano-fundo: rgba(13, 116, 128, 0.12);
+  --color-funil: #b86e00;
+  --color-funil-fundo: rgba(194, 122, 0, 0.14);
+  --color-acao: #c6f432;
+  --color-acao-fg: #151a2e;
+  --color-acao-hover: #b5e61f;
+
   --background: var(--color-bg);
   --foreground: var(--color-text);
   --card: var(--color-surface);
@@ -328,63 +356,63 @@
 
 [data-theme="dark"] {
   /* Surfaces (dark — drawn) */
-  --color-bg: #161510;
-  --color-surface: #1d1c17;
-  --color-surface-elevated: #272620;
-  --color-overlay: rgba(0, 0, 0, 0.55);
+  --color-bg: #151a2e;
+  --color-surface: #1b2240;
+  --color-surface-elevated: #242c4b;
+  --color-overlay: rgba(5, 8, 18, 0.6);
 
   /* Text (dark) */
-  --color-text: #f5f4ef;
-  --color-text-muted: #8e8b7f;
-  --color-text-subtle: #605e54;
+  --color-text: #eef0f7;
+  --color-text-muted: #a3abc6;
+  --color-text-subtle: #8a93b2;
 
   /* Borders (dark) */
-  --color-border: #33312a;
-  --color-border-strong: #444239;
+  --color-border: #2f3858;
+  --color-border-strong: #3e4870;
 
   /* Accent stays same hex stops; default shifts up for dark contrast */
-  --color-accent-50:  #f3f6f1;
-  --color-accent-100: #e4ebe0;
-  --color-accent-200: #c8d6c1;
-  --color-accent-300: #a4ba9a;
-  --color-accent-400: #82a077;
-  --color-accent-500: #67885d;
-  --color-accent-600: #506d48;
-  --color-accent-700: #41573b;
-  --color-accent-800: #374731;
-  --color-accent-900: #2f3c2b;
-  --color-accent-950: #171f15;
+  --color-accent-50:  #f4f3ff;
+  --color-accent-100: #e8e7ff;
+  --color-accent-200: #d2ceff;
+  --color-accent-300: #b7acff;
+  --color-accent-400: #9e8aff;
+  --color-accent-500: #8a68ff;
+  --color-accent-600: #773df9;
+  --color-accent-700: #5d36c0;
+  --color-accent-800: #4b2f98;
+  --color-accent-900: #3e2a7b;
+  --color-accent-950: #1d1141;
   --color-accent: var(--color-accent-400);
-  --color-accent-fg: #161510;
-  --color-accent-soft: rgba(130, 160, 119, 0.16);
+  --color-accent-fg: #151a2e;
+  --color-accent-soft: rgba(158, 138, 255, 0.16);
   --color-accent-hover: var(--color-accent-300);
 
-  /* Neutrals — greige (11 stops, dark) */
-  --color-neutral-50:  #f5f4ef;
-  --color-neutral-100: #e6e4dc;
-  --color-neutral-200: #bbb8ac;
-  --color-neutral-300: #8e8b7f;
-  --color-neutral-400: #605e54;
-  --color-neutral-500: #444239;
-  --color-neutral-600: #33312a;
-  --color-neutral-700: #272620;
-  --color-neutral-800: #1d1c17;
-  --color-neutral-900: #161510;
-  --color-neutral-950: #0c0b08;
+  /* Neutrals — azul-acinzentado (11 stops, dark) */
+  --color-neutral-50:  #eef0f7;
+  --color-neutral-100: #d6dbea;
+  --color-neutral-200: #b3bad1;
+  --color-neutral-300: #a3abc6;
+  --color-neutral-400: #8a93b2;
+  --color-neutral-500: #3e4870;
+  --color-neutral-600: #2f3858;
+  --color-neutral-700: #242c4b;
+  --color-neutral-800: #1b2240;
+  --color-neutral-900: #151a2e;
+  --color-neutral-950: #0d1120;
 
   /* States (dark) */
-  --color-success: #82a077;
-  --color-success-bg: rgba(130, 160, 119, 0.18);
-  --color-success-fg: #a4ba9a;
-  --color-warning: #d09455;
-  --color-warning-bg: rgba(208, 148, 85, 0.18);
-  --color-warning-fg: #e0ad77;
-  --color-error: #c87263;
-  --color-error-bg: rgba(200, 114, 99, 0.18);
-  --color-error-fg: #d99182;
-  --color-info: #7da9bf;
-  --color-info-bg: rgba(125, 169, 191, 0.18);
-  --color-info-fg: #9bbfd2;
+  --color-success: #34d399;
+  --color-success-bg: rgba(52, 211, 153, 0.16);
+  --color-success-fg: #6ee7b7;
+  --color-warning: #f5a524;
+  --color-warning-bg: rgba(245, 165, 36, 0.16);
+  --color-warning-fg: #fbbf5a;
+  --color-error: #ff6b5e;
+  --color-error-bg: rgba(255, 107, 94, 0.16);
+  --color-error-fg: #ff958b;
+  --color-info: #2ec5d3;
+  --color-info-bg: rgba(46, 197, 211, 0.16);
+  --color-info-fg: #6ad9e3;
 
   /* Shadows — heavier in dark */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.30);
@@ -392,6 +420,20 @@
   --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.45), 0 2px 4px -1px rgba(0, 0, 0, 0.30);
   --shadow-lg: 0 12px 32px -6px rgba(0, 0, 0, 0.55), 0 4px 12px -2px rgba(0, 0, 0, 0.40);
   --shadow-xl: 0 24px 48px -12px rgba(0, 0, 0, 0.65), 0 8px 16px -4px rgba(0, 0, 0, 0.50);
+
+
+  /* Papéis da Inbox (cada matiz, UM significado): IA, atendente humano,
+     linha do funil e fila, ação principal. Fixos de propósito: a cor de
+     destaque do revendedor troca o violeta da marca, não estes. */
+  --color-ia: #9e8aff;
+  --color-ia-fundo: rgba(119, 61, 249, 0.22);
+  --color-humano: #2ec5d3;
+  --color-humano-fundo: rgba(46, 197, 211, 0.16);
+  --color-funil: #f5a524;
+  --color-funil-fundo: rgba(245, 165, 36, 0.16);
+  --color-acao: #c6f432;
+  --color-acao-fg: #151a2e;
+  --color-acao-hover: #d4f75c;
 
   /* shadcn-compat aliases */
   --background: var(--color-bg);
@@ -463,7 +505,7 @@
   --color-text-muted: var(--color-text-muted);
   --color-text-subtle: var(--color-text-subtle);
 
-  /* Accent — Sage */
+  /* Accent — violeta Futuristas (troca com a cor do revendedor) */
   --color-accent: var(--color-accent);
   --color-accent-foreground: var(--color-accent-fg);
   --color-accent-soft: var(--color-accent-soft);
@@ -480,7 +522,19 @@
   --color-accent-900: var(--color-accent-900);
   --color-accent-950: var(--color-accent-950);
 
-  /* Neutrals — greige */
+
+  /* Papéis da Inbox */
+  --color-ia: var(--color-ia);
+  --color-ia-fundo: var(--color-ia-fundo);
+  --color-humano: var(--color-humano);
+  --color-humano-fundo: var(--color-humano-fundo);
+  --color-funil: var(--color-funil);
+  --color-funil-fundo: var(--color-funil-fundo);
+  --color-acao: var(--color-acao);
+  --color-acao-fg: var(--color-acao-fg);
+  --color-acao-hover: var(--color-acao-hover);
+
+  /* Neutrals — azul-acinzentado */
   --color-neutral-50: var(--color-neutral-50);
   --color-neutral-100: var(--color-neutral-100);
   --color-neutral-200: var(--color-neutral-200);

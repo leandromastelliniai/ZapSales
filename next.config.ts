@@ -84,6 +84,18 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react", "lucide-react", "date-fns"],
   },
+  turbopack: {
+    resolveAlias: {
+      // O dicionário de tradução (~2 MB) só existe no SERVIDOR. No navegador, o mesmo import resolve para
+      // a versão leve, que lê o catálogo do idioma carregado sob demanda (`lib/i18n/catalogos.ts`).
+      // Medido na produção em 15/10/2026: 570 KB comprimidos no pacote de TODA tela, para quem usa
+      // português e não precisa de um byte dele. Cercado por `tests/unit/dicionario-fora-do-cliente.test.ts`.
+      "@/lib/i18n/dicionario": { browser: "./lib/i18n/dicionario.cliente.ts" },
+      // O inglês (~0,9 MB) também só existe no servidor: o pedaço em espanhol importa o dicionário e, sem isto,
+      // levava o inglês junto. O inglês do navegador vem de `lib/i18n/catalogos/en.ts`, pelo JSON direto.
+      "@/lib/i18n/en-do-servidor": { browser: "./lib/i18n/en-do-navegador.ts" },
+    },
+  },
   images: {
     // O app não usa next/image de fato (só <img> raw); desligar o otimizador
     // evita exigir o binário `sharp` no runtime do container.

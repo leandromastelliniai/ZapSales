@@ -7,7 +7,7 @@
  * resposta rápida e link, a oferta só copiar código e link. A regra que diz se
  * a combinação vale continua em `problemasDoModelo`; aqui só a edição.
  */
-import { ClipboardList, Copy, ExternalLink, Reply, Trash2 } from "lucide-react";
+import { ClipboardList, Copy, ExternalLink, Phone, Reply, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ type TipoDeBotao = BotaoDoModelo["type"];
 export function botaoNovo(tipo: TipoDeBotao): BotaoDoModelo {
   if (tipo === "QUICK_REPLY") return { type: "QUICK_REPLY", text: "" };
   if (tipo === "URL") return { type: "URL", text: "", url: "https://" };
+  if (tipo === "PHONE_NUMBER") return { type: "PHONE_NUMBER", text: "", phone_number: "+55" };
   if (tipo === "FLOW")
     return { type: "FLOW", text: "", flow_id: "", flow_action: "navigate", navigate_screen: "" };
   return { type: "COPY_CODE", example: "" };
@@ -29,6 +30,7 @@ const ROTULO: Record<TipoDeBotao, string> = {
   QUICK_REPLY: "Resposta rápida",
   URL: "Link",
   COPY_CODE: "Copiar código",
+  PHONE_NUMBER: "Ligar",
   FLOW: "Flow",
 };
 
@@ -36,6 +38,7 @@ const ICONE = {
   QUICK_REPLY: Reply,
   URL: ExternalLink,
   COPY_CODE: Copy,
+  PHONE_NUMBER: Phone,
   FLOW: ClipboardList,
 } as const;
 
@@ -43,6 +46,7 @@ const ID_DO_ADICIONAR: Record<TipoDeBotao, string> = {
   QUICK_REPLY: "btn-add-resposta",
   URL: "btn-add-link",
   COPY_CODE: "btn-add-codigo",
+  PHONE_NUMBER: "btn-add-ligar",
   FLOW: "btn-add-flow",
 };
 
@@ -119,6 +123,23 @@ export function EditorDeBotoes({
                   {t("Para um link diferente por cliente, termine o endereço com {{1}}.")}
                 </span>
               )}
+            </>
+          ) : null}
+          {b.type === "PHONE_NUMBER" ? (
+            <>
+              <Input
+                aria-label={t("Número que o botão liga")}
+                placeholder={t("Número com o código do país, ex.: +5511999998888")}
+                inputMode="tel"
+                value={b.phone_number}
+                onChange={(e) =>
+                  mudarBotao(i, { phone_number: e.target.value.replace(/[^\d+]/g, "") })
+                }
+                data-testid={`${prefixo}botao-telefone`}
+              />
+              <span className="text-xs text-muted-foreground">
+                {t("O cliente toca no botão e o WhatsApp liga para este número.")}
+              </span>
             </>
           ) : null}
           {b.type === "COPY_CODE" ? (

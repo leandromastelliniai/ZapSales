@@ -131,7 +131,7 @@ async function drenar(page: Page): Promise<void> {
 
 /** Cadastra a chave da OpenAI pela própria tela de conhecimento. */
 async function cadastrarChavePelaTela(page: Page): Promise<void> {
-  await page.getByTestId("conhecimento-cadastrar-chave").click();
+  await page.getByTestId("conhecimento-cadastrar-chave").first().click();
   await page.getByTestId("conhecimento-chave-input").fill(CHAVE_OPENAI);
   await page.getByTestId("conhecimento-chave-salvar").click();
   // A validação com o provedor é assíncrona: a tela só pode prometer indexação
@@ -167,11 +167,15 @@ test.describe("acervo de conhecimento", () => {
     // chave. Afirmar só o negativo passaria com a tela em branco.
     const semChave = page.getByTestId("conhecimento-sem-chave");
     const comChave = page.getByTestId("conhecimento-chave-ok");
-    await expect(semChave.or(comChave)).toBeVisible();
+    // `.first()`: durante o streaming do `next start` o mesmo bloco existe por
+    // um instante DUAS vezes (o segmento oculto que o Next ainda vai trocar de
+    // lugar), e o modo estrito reprova na primeira sondagem. O snapshot do trace
+    // no momento da falha tem UMA cópia só (PR #54, 08/10/2026).
+    await expect(semChave.or(comChave).first()).toBeVisible();
 
-    if (await semChave.isVisible()) {
+    if (await semChave.first().isVisible()) {
       // O aviso não é um beco: o conserto abre na própria tela.
-      await page.getByTestId("conhecimento-cadastrar-chave").click();
+      await page.getByTestId("conhecimento-cadastrar-chave").first().click();
       await expect(page.getByTestId("conhecimento-chave-input")).toBeVisible();
       await page.getByTestId("conhecimento-provedor-openrouter").check();
       await expect(page.getByTestId("conhecimento-chave-input")).toHaveAttribute("placeholder", "sk-or-…");
@@ -192,16 +196,18 @@ test.describe("acervo de conhecimento", () => {
     await expect(
       semChaveLoc.or(page.getByTestId("conhecimento-chave-ok")).or(
         page.getByTestId("conhecimento-chave-conferindo"),
-      ),
+      ).first(), // `.first()`: ver o caso anterior — cópia transitória do streaming.
     ).toBeVisible({ timeout: 30_000 });
 
-    const semChave = await semChaveLoc.isVisible();
+    // `.first()` aqui também: `isVisible()` em modo estrito reprova com a cópia
+    // transitória do streaming (visto no PR #61, depois de ter passado no #54).
+    const semChave = await semChaveLoc.first().isVisible();
     test.skip(
       !semChave,
       "esta organização já tem chave de embedding — o estado 'esperando' não é alcançável aqui",
     );
 
-    await page.getByTestId("acervo-adicionar").click();
+    await page.getByTestId("acervo-adicionar").first().click();
     // O diálogo AVISA antes de aceitar: descobrir depois de subir é a pior ordem.
     await expect(page.getByTestId("material-aviso-sem-chave")).toBeVisible();
 
@@ -234,11 +240,11 @@ test.describe("acervo de conhecimento", () => {
 
     await page.goto("/app/ai/knowledge/sources");
 
-    if (await page.getByTestId("conhecimento-sem-chave").isVisible()) {
+    if (await page.getByTestId("conhecimento-sem-chave").first().isVisible()) {
       await cadastrarChavePelaTela(page);
     }
 
-    await page.getByTestId("acervo-adicionar").click();
+    await page.getByTestId("acervo-adicionar").first().click();
     await page.getByTestId("material-nome").fill(NOME_FAQ);
     await page.getByTestId("material-conteudo").fill(CONTEUDO_FAQ);
     await page.getByTestId("material-criar").click();
@@ -263,7 +269,7 @@ test.describe("acervo de conhecimento", () => {
 
     await page.goto("/app/ai/knowledge/sources");
 
-    await page.getByTestId("acervo-adicionar").click();
+    await page.getByTestId("acervo-adicionar").first().click();
     await page.getByTestId("material-tipo-documento").click();
     await page.getByTestId("material-nome").fill(NOME_DOC);
     await page.getByTestId("material-arquivo").setInputFiles({

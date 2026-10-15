@@ -95,3 +95,70 @@ describe("limites de recurso do que o cliente instala", () => {
     });
   }
 });
+
+/**
+ * CPU DO TRIO DE LOGIN/REST/STORAGE (#66, parte 3 da #63).
+ *
+ * Em produção (8 núcleos, 32 GB, ociosa) os três rodavam com `cpus: 0.5` e o
+ * cgroup limitava de 2,5% a 12,3% dos períodos de 100 ms. O GoTrue valida o
+ * usuário de TODA requisição logada, então meio núcleo vira fila. Este bloco
+ * trava o contrato que a atualização do kit entrega SEM edição manual: teto
+ * com default numérico (um `.env` antigo, sem a variável, continua válido) e
+ * threads do GoTrue coerentes com o teto.
+ */
+describe("CPU do auth, rest e storage (#66)", () => {
+  const servicos = lerServicos(
+    fs.readFileSync(path.join(RAIZ, "docker-compose.supabase.yml"), "utf8"),
+  );
+  const cpusDe = (nome: string) => {
+    const m = semComentarios(servicos.get(nome) ?? "").match(
+      /^\s{4}cpus:\s*\$\{(\w+):-([0-9.]+)\}\s*$/m,
+    );
+    return m ? { variavel: m[1]!, padrao: Number(m[2]) } : null;
+  };
+
+  for (const nome of ["auth", "rest", "storage"]) {
+    it(`${nome}: teto de CPU configurável, com padrão >= 1 núcleo e que cabe numa VPS de 2`, () => {
+      const cpus = cpusDe(nome);
+      expect(cpus, `${nome}: cpus deve ser \${VAR:-numero}`).not.toBeNull();
+      expect(cpus!.variavel).toBe(`SUPABASE_${nome.toUpperCase()}_CPUS`);
+      expect(cpus!.padrao).toBeGreaterThanOrEqual(1);
+      // O Docker recusa subir com cpus > núcleos da máquina; o `app` já exige 2.
+      expect(cpus!.padrao).toBeLessThanOrEqual(2);
+    });
+  }
+
+  it("auth: GOMAXPROCS vem de variável com default inteiro igual ao teto padrão", () => {
+    const bloco = semComentarios(servicos.get("auth") ?? "");
+    const m = bloco.match(/^\s{6}GOMAXPROCS:\s*\$\{SUPABASE_AUTH_THREADS:-(\d+)\}\s*$/m);
+    expect(m, "auth sem GOMAXPROCS=${SUPABASE_AUTH_THREADS:-N}").not.toBeNull();
+    expect(Number(m![1])).toBe(cpusDe("auth")!.padrao);
+  });
+});
+
+/**
+ * POOL DE CONEXÕES DO GOTRUE (#66). Sem `GOTRUE_DB_MAX_IDLE_POOL_SIZE` o GoTrue
+ * não mantém conexão ociosa e abre uma NOVA ao Postgres a cada requisição
+ * (~90 ms cada) — era o grosso dos 100–350 ms do `GET /user`.
+ */
+describe("pool de conexões do GoTrue (#66)", () => {
+  const bloco = semComentarios(
+    lerServicos(fs.readFileSync(path.join(RAIZ, "docker-compose.supabase.yml"), "utf8")).get("auth") ?? "",
+  );
+  const padrao = (nome: string) => {
+    const linha = bloco.split(/\r?\n/).find((l) => l.trim().startsWith(`${nome}:`));
+    const m = linha?.match(/:-(\d+)\}\s*$/);
+    return m ? Number(m[1]) : null;
+  };
+
+  it("mantém conexões ociosas (>= 1) e o teto do pool comporta as ociosas", () => {
+    const ociosas = padrao("GOTRUE_DB_MAX_IDLE_POOL_SIZE");
+    const teto = padrao("GOTRUE_DB_MAX_POOL_SIZE");
+    expect(ociosas, "auth sem GOTRUE_DB_MAX_IDLE_POOL_SIZE=${VAR:-N}").not.toBeNull();
+    expect(teto, "auth sem GOTRUE_DB_MAX_POOL_SIZE=${VAR:-N}").not.toBeNull();
+    expect(ociosas!).toBeGreaterThanOrEqual(1);
+    expect(teto!).toBeGreaterThanOrEqual(ociosas!);
+    // O Postgres do Supabase padrão aceita 100 conexões, divididas com os outros serviços.
+    expect(teto!).toBeLessThanOrEqual(30);
+  });
+});

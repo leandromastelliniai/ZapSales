@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+import { Painel } from "@/components/ui/painel";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -18,6 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuditQuery, type AuditFilters } from "@/hooks/audit/useAuditQuery";
+import { useTeamMembers } from "@/hooks/team/useTeamMembers";
+import { atorDaAuditoria, rotuloDaAcao, rotuloDoRecurso } from "@/lib/audit/rotulo-da-acao";
 
 function fmtDate(iso: string, idioma: string): string {
   try {
@@ -53,6 +55,12 @@ export function AuditClient() {
   );
 
   const q = useAuditQuery(filters);
+  // Nome de quem fez: a lista da equipe resolve o id. Se ela não carregar, a tela mostra o começo do id.
+  const equipe = useTeamMembers();
+  const nomes = useMemo(
+    () => new Map((equipe.data?.data ?? []).map((m) => [m.user_id, m.full_name || m.email || ""])),
+    [equipe.data],
+  );
   const rows = useMemo(() => q.data?.pages.flatMap((p) => p.data) ?? [], [q.data]);
 
   function handleExport() {
@@ -66,7 +74,7 @@ export function AuditClient() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card className="p-4">
+      <Painel>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
           <div className="space-y-1">
             <label className="block text-xs text-muted-foreground">{t("Ação contém")}</label>
@@ -98,9 +106,9 @@ export function AuditClient() {
             </Button>
           </div>
         </div>
-      </Card>
+      </Painel>
 
-      <Card>
+      <Painel semRecuo>
         <Table>
           <TableHeader>
             <TableRow>
@@ -108,8 +116,8 @@ export function AuditClient() {
               <TableHead>{t("Ator")}</TableHead>
               <TableHead>{t("Ação")}</TableHead>
               <TableHead>{t("Recurso")}</TableHead>
-              <TableHead>Request ID</TableHead>
-              <TableHead>Metadata</TableHead>
+              <TableHead>{t("ID da requisição")}</TableHead>
+              <TableHead>{t("Detalhes")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -135,19 +143,38 @@ export function AuditClient() {
                   <TableCell className="whitespace-nowrap text-xs">
                     {fmtDate(r.created_at, tagDoIdioma)}
                   </TableCell>
-                  <TableCell className="text-xs font-mono">
-                    {r.acting_as_platform_admin
-                      ? "platform_admin"
-                      : r.actor_user_id
-                        ? r.actor_user_id.slice(0, 8)
-                        : r.actor_api_token_id
-                          ? `token:${r.actor_api_token_id.slice(0, 8)}`
-                          : "system"}
+                  <TableCell className="text-xs">
+                    {(() => {
+                      const ator = atorDaAuditoria(r, (id) => nomes.get(id) || undefined, t);
+                      return (
+                        <>
+                          <span className="font-medium">{ator.nome}</span>
+                          {ator.detalhe ? (
+                            <span className="ml-1 font-mono text-[10px] text-muted-foreground">{ator.detalhe}</span>
+                          ) : null}
+                        </>
+                      );
+                    })()}
                   </TableCell>
-                  <TableCell className="font-mono text-xs">{r.action}</TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {r.resource_type ?? "—"}
-                    {r.resource_id ? `:${r.resource_id.slice(0, 8)}` : ""}
+                  <TableCell className="text-xs">
+                    {rotuloDaAcao(r.action, t) ? (
+                      <>
+                        <span className="font-medium">{rotuloDaAcao(r.action, t)}</span>
+                        <span className="block font-mono text-[10px] text-muted-foreground">{r.action}</span>
+                      </>
+                    ) : (
+                      <span className="font-mono">{r.action}</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {rotuloDoRecurso(r.resource_type, t) ?? (
+                      <span className="font-mono">{r.resource_type ?? "—"}</span>
+                    )}
+                    {r.resource_id ? (
+                      <span className="ml-1 font-mono text-[10px] text-muted-foreground">
+                        {r.resource_id.slice(0, 8)}
+                      </span>
+                    ) : null}
                   </TableCell>
                   <TableCell className="font-mono text-[10px] text-muted-foreground">
                     {r.request_id ? r.request_id.slice(0, 8) : "—"}
@@ -160,7 +187,7 @@ export function AuditClient() {
             )}
           </TableBody>
         </Table>
-      </Card>
+      </Painel>
 
       {q.hasNextPage && (
         <div className="flex justify-center">

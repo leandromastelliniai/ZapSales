@@ -280,6 +280,7 @@ export async function processMessageReceived(row: EventRow): Promise<ProcessResu
         reason: "low_confidence",
         origem: "legado_confianca",
         leadId,
+        agentId: ctx.agent.id,
         metadata: {
           message_id: ctx.message_id,
           outbound_message_id: persisted.outbound_message_id,

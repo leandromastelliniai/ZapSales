@@ -68,3 +68,17 @@ export function iconeDaAba(
   if (caminho.length === 0 || base.length === 0) return ICONE_DESENHADO;
   return urlPublicaDoLogo(caminho, base);
 }
+
+/**
+ * O ícone SUBIDO, ou `null` quando não há arquivo — sem cair no desenhado.
+ *
+ * A barra lateral recolhida usa isto no lugar da inicial. O desenhado (`/icon`)
+ * não serve ali: ele é a mesma inicial que a barra já desenha, só que em imagem.
+ */
+export function iconeSubido(
+  faviconPath: string | null | undefined,
+  base: string = baseDoStorage(),
+): string | null {
+  const url = iconeDaAba(faviconPath, base);
+  return url === ICONE_DESENHADO ? null : url;
+}
