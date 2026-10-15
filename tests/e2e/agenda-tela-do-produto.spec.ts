@@ -48,7 +48,7 @@ test.describe("a Agenda como o dono do produto a usa", () => {
     await item.click();
 
     await expect(page).toHaveURL(/\/app\/agenda/, { timeout: ESPERA });
-    await expect(page.getByTestId("tela-agenda")).toBeVisible();
+    await expect(page.getByTestId("tela-agenda").first()).toBeVisible();
     // `exact` NÃO é adorno aqui, e a linha do link acima já sabia disso. Sem ele
     // o nome casa por substring e o estado VAZIO da agenda ("Sua agenda está
     // livre esta semana") vira um segundo heading — dois elementos, strict mode,
