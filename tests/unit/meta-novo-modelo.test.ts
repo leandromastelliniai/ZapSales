@@ -316,6 +316,7 @@ describe("previewDoModelo", () => {
     expect(p).toEqual({
       tipo: "STANDARD",
       cabecalho: null,
+      cabecalhoDeTexto: null,
       oferta: null,
       cards: [],
       corpo: "Olá Ana, sua oferta de outubro chegou.",

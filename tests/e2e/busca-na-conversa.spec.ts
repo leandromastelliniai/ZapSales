@@ -4,6 +4,7 @@ import * as path from "node:path";
 
 import { createClient } from "@supabase/supabase-js";
 import { test, expect, type Page } from "./helpers/test";
+import { abrirFichaDaConversa } from "./helpers/ficha-da-conversa";
 
 import { credenciaisSupabaseDeTeste } from "../../scripts/lib/env-de-teste";
 
@@ -248,10 +249,18 @@ test.describe("busca dentro da conversa", () => {
       expect(m.marcada, `não marcada: "${m.texto}"`).toBe(false);
       expect(m.anel, `sem anel em "${m.texto}" — box-shadow: ${m.boxShadow}`).toBeNull();
     }
-    // Uma enviada e uma recebida entre as marcadas: o anel nas duas cores de bolha.
-    expect(new Set(comTermo.map((m) => m.fundo)).size, "anel sobre os dois fundos de bolha").toBe(
-      2,
-    );
+    // Uma enviada e uma recebida entre as marcadas: o anel tem de se ver sobre as
+    // duas. Até a direção "Linha do Funil" (07/10/2026) elas tinham fundos
+    // diferentes e a spec contava DOIS fundos; desde então toda bolha tem o MESMO
+    // fundo (`bg-surface-elevated`) e quem fala é dito pelo nome e pela faixa de
+    // cor à esquerda. A pergunta que sobra é a mesma: nenhuma cor de fundo de
+    // bolha da conversa engole o anel.
+    const fundosDasBolhas = new Set(medidas.map((m) => m.fundo));
+    for (const m of comTermo)
+      for (const fundo of fundosDasBolhas)
+        expect(m.anel, `anel de "${m.texto}" da cor de um fundo de bolha (${fundo})`).not.toBe(
+          fundo,
+        );
 
     fs.mkdirSync(EVIDENCE, { recursive: true });
     await page.screenshot({ path: path.join(EVIDENCE, "1-duas-bolhas-marcadas.png") });
@@ -312,7 +321,11 @@ test.describe("perguntar ao acervo no painel da conversa", () => {
     await page.goto(`/app/inbox?id=${conversaA}&filter=all`);
     await expect(bolhas(page)).toHaveCount(MENSAGENS_A.length, { timeout: 30_000 });
 
-    const caixa = page.getByTestId("inbox-acervo");
+    // Desde a direção "Linha do Funil" (07/10/2026) o acervo mora na FICHA, que
+    // virou gaveta (a coluna da direita deixou de existir): abre-se como o
+    // atendente faria, pelo botão "Ficha completa".
+    const ficha = await abrirFichaDaConversa(page);
+    const caixa = ficha.getByTestId("inbox-acervo");
     await caixa.scrollIntoViewIfNeeded();
     await expect(caixa).toBeVisible();
 

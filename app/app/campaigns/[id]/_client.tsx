@@ -109,7 +109,7 @@ export function DetalheDaCampanha({ id }: { id: string }) {
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-text"
         >
           <ArrowBendUpLeft size={14} aria-hidden />
-          {t("Campanhas")}
+          {t("Disparo em massa")}
         </Link>
       </div>
 

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -16,7 +17,6 @@ import {
 } from "@/hooks/channels/useTemplates";
 import { useT } from "@/hooks/i18n/useT";
 
-import { EditorDeModelo } from "./EditorDeModelo";
 
 /**
  * A qualidade que a Meta atribui pelo retorno de quem recebe. Vermelha é o
@@ -171,7 +171,6 @@ export function TemplatesClient() {
   const t = useT();
   const { data, isPending } = useTemplates();
   const sync = useSyncTemplates();
-  const [criando, setCriando] = useState(false);
 
   const waba = data?.data.waba ?? null;
   const templates = data?.data.templates ?? null;
@@ -213,13 +212,11 @@ export function TemplatesClient() {
           <Button variant="outline" onClick={sincronizar} disabled={sync.isPending} data-testid="btn-sync">
             {sync.isPending ? t("Sincronizando…") : t("Sincronizar com a Meta")}
           </Button>
-          <Button onClick={() => setCriando(true)} disabled={criando} data-testid="btn-novo-modelo">
-            {t("Novo modelo")}
+          <Button asChild data-testid="btn-novo-modelo">
+            <Link href="/app/connections/modelos/novo">{t("Novo modelo")}</Link>
           </Button>
         </div>
       </div>
-
-      {criando ? <EditorDeModelo onFechar={() => setCriando(false)} /> : null}
 
       {templates.length === 0 ? (
         <Card className="p-6">

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { ROLE_RANK } from "@/lib/auth/types";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 
 import { MetricsClient } from "./_components/MetricsClient";
 
@@ -20,17 +23,18 @@ export default async function MetricsPage() {
   const t = (texto: string) => traduzir(texto, idioma);
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Desempenho")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {canCompare
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={t("Desempenho")}
+        descricao={
+          canCompare
             ? t("Atrito, funil e performance por atendente nos últimos 30 dias.")
-            : t("Atrito, seu funil e sua performance nos últimos 30 dias.")}
-        </p>
-      </header>
+            : t("Atrito, seu funil e sua performance nos últimos 30 dias.")
+        }
+        ajuda={<ComoFunciona chave="desempenho" pagina={t("Desempenho")} />}
+      />
 
       <MetricsClient canCompare={canCompare} currentUserId={user.id} />
-    </div>
+    </CorpoDaPagina>
   );
 }

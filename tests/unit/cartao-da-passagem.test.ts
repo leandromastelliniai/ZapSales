@@ -97,6 +97,20 @@ describe("cartão da passagem — o estado do episódio", () => {
     expect(c.acao.tipo).toBe("nenhuma");
   });
 
+  it("o cartão carrega o nome do agente que passou (0545); sem ele, nulo", () => {
+    const [com, sem, branco] = montarCartoesDaPassagem(
+      [
+        passagem({ id: "p1", agente_id: "a-1", agente_nome: "Sofia" }),
+        passagem({ id: "p2" }),
+        passagem({ id: "p3", agente_nome: "  " }),
+      ],
+      NINGUEM_ATENDE,
+    );
+    expect(com?.agenteNome).toBe("Sofia");
+    expect(sem?.agenteNome).toBeNull();
+    expect(branco?.agenteNome).toBeNull();
+  });
+
   it("reconhecida SEM dono é devolução ao automático — o episódio fechou e ninguém assumiu", () => {
     // É o par que a 0291 documentou e o CHECK `passagens_reconhecimento_coerente`
     // permite só neste sentido: `reconhecido_em` preenchido com

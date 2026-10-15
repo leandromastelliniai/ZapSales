@@ -130,6 +130,12 @@ export interface HandoffIds {
   leadId: string;
   /** conversations.id — a conversa que transiciona para a fila humana. */
   conversationId: string;
+  /**
+   * O agente de IA da vez (`ai_agents.id`), quando o turno resolveu um. Vai para
+   * `passagens_de_atendimento.agente_id` (0545): é o que deixa a Inbox dizer
+   * QUAL agente passou a conversa. Ausente = a tela diz só "IA".
+   */
+  agentId?: string | null;
 }
 
 /**
@@ -232,6 +238,7 @@ export async function performHumanHandoff(
       origem: opts.passagem.origem,
       motivoCodigo: opts.passagem.motivoCodigo,
       briefing: opts.passagem.briefing,
+      agenteId: ids.agentId ?? null,
       ...(opts.avisoAoLead !== undefined ? { aviso: desfechoDaPassagem(opts.avisoAoLead) } : {}),
     });
     // Falhar fechado na AÇÃO, aberto na INFORMAÇÃO: a passagem já aconteceu

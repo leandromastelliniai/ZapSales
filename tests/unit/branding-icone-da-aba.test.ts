@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { isPublicPath, PUBLIC_PATHS } from "@/lib/auth/public-paths";
-import { ICONE_DESENHADO, iconeDaAba, letraDoIcone } from "@/lib/branding/icone";
+import { ICONE_DESENHADO, iconeDaAba, iconeSubido, letraDoIcone } from "@/lib/branding/icone";
 
 const RAIZ = process.cwd();
 
@@ -117,5 +117,20 @@ describe("ícone da aba subido em /admin/marca (migration 0443)", () => {
   it("sem base de storage conhecida, não monta URL relativa — cai no desenhado", () => {
     // Uma URL relativa (`/storage/v1/...`) iria ao próprio app e voltaria 404.
     expect(iconeDaAba(CAMINHO, "")).toBe("/icon");
+  });
+});
+
+describe("iconeSubido — o ícone da barra lateral recolhida", () => {
+  const BASE = "https://proj.supabase.co";
+  const CAMINHO = "platform/33333333-3333-4333-8333-333333333333.png";
+
+  it("com arquivo, é a mesma URL que a aba usa", () => {
+    expect(iconeSubido(CAMINHO, BASE)).toBe(iconeDaAba(CAMINHO, BASE));
+  });
+
+  it("sem arquivo, é null — nunca o desenhado, que é a inicial que a barra já mostra", () => {
+    expect(iconeSubido(null, BASE)).toBeNull();
+    expect(iconeSubido("  ", BASE)).toBeNull();
+    expect(iconeSubido(CAMINHO, "")).toBeNull();
   });
 });

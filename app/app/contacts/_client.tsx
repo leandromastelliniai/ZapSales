@@ -5,6 +5,10 @@ import { Plus, MagnifyingGlass, UploadSimple, UsersThree } from "@/lib/ui/icons"
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Painel } from "@/components/ui/painel";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
@@ -116,42 +120,36 @@ export function ContactsListClient() {
   );
 
   return (
-    <div className="space-y-4 p-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Contatos")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("Customer 360 — busque, filtre e gerencie contatos.")}
-          </p>
-        </div>
-        {/*
-          A estrutura é a da main (o "Importar CSV" do PR #313); o `shrink-0`
-          vem do PR #267, e vale para os DOIS botões agora: numa tela de 390px
-          uma linha de dois botões sem isso comprime os rótulos.
-        */}
-        <div className="flex shrink-0 items-center gap-2">
-          {/*
-            A porta do recurso de duplicados fica AQUI, na tela que já existe, e
-            não num item de menu novo: quem descobre que tem contato repetido
-            descobre olhando a lista, e a barra lateral não precisa crescer para
-            um trabalho que se faz de vez em quando.
-          */}
-          <Button variant="outline" onClick={() => setDuplicadosOpen(true)}>
-            <UsersThree size={16} weight="bold" aria-hidden />
-            <span>{t("Duplicados")}</span>
-          </Button>
-          <Button variant="outline" onClick={() => setImportOpen(true)}>
-            <UploadSimple size={16} weight="bold" aria-hidden />
-            <span>{t("Importar CSV")}</span>
-          </Button>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus size={16} weight="bold" aria-hidden />
-            <span>{t("Novo contato")}</span>
-          </Button>
-        </div>
-      </header>
+    <CorpoDaPagina className="gap-4">
+      <CabecalhoDePagina
+        titulo={t("Contatos")}
+        descricao={t("Todas as pessoas que já falaram com você, com busca e filtros.")}
+        ajuda={<ComoFunciona chave="contatos" pagina={t("Contatos")} />}
+        acoes={
+          <>
+            {/*
+              A porta do recurso de duplicados fica AQUI, na tela que já existe, e
+              não num item de menu novo: quem descobre que tem contato repetido
+              descobre olhando a lista, e a barra lateral não precisa crescer para
+              um trabalho que se faz de vez em quando.
+            */}
+            <Button variant="outline" size="sm" onClick={() => setDuplicadosOpen(true)}>
+              <UsersThree size={16} weight="bold" aria-hidden />
+              <span>{t("Duplicados")}</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+              <UploadSimple size={16} weight="bold" aria-hidden />
+              <span>{t("Importar CSV")}</span>
+            </Button>
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus size={16} weight="bold" aria-hidden />
+              <span>{t("Novo contato")}</span>
+            </Button>
+          </>
+        }
+      />
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface p-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-2">
         <div className="relative w-full sm:w-72">
           <MagnifyingGlass
             size={16}
@@ -308,14 +306,14 @@ export function ContactsListClient() {
         </Card>
       ) : (
         <>
-          <Card className="overflow-hidden">
+          <Painel semRecuo>
             <ContactsTable
               contacts={allContacts}
               orderBy={orderBy}
               orderDir={orderDir}
               onSort={handleSort}
             />
-          </Card>
+          </Painel>
           <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
             <p className="text-sm text-muted-foreground">
               {allContacts.length} {allContacts.length === 1 ? t("contato") : t("contatos")}
@@ -338,6 +336,6 @@ export function ContactsListClient() {
       <NewContactDialog open={createOpen} onOpenChange={setCreateOpen} />
       <ImportContactsDialog open={importOpen} onOpenChange={setImportOpen} />
       <MergeDialog open={duplicadosOpen} onOpenChange={setDuplicadosOpen} />
-    </div>
+    </CorpoDaPagina>
   );
 }

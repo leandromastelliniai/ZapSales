@@ -1671,7 +1671,7 @@ export async function deteccoesDeterministicasDoAssistido(
         });
     await performHumanHandoff(
       pool,
-      { tenantId, leadId, conversationId },
+      { tenantId, leadId, conversationId, agentId: agent.agentId },
       {
         reason: 'requested_human',
         conversationSummary: briefing.body,
@@ -1704,7 +1704,7 @@ export async function deteccoesDeterministicasDoAssistido(
         });
     await performHumanHandoff(
       pool,
-      { tenantId, leadId, conversationId },
+      { tenantId, leadId, conversationId, agentId: agent.agentId },
       {
         reason: 'suspected_optout',
         conversationSummary: briefing.body,
@@ -2391,7 +2391,7 @@ async function executarTurnoDoAgente(
     });
     await performHumanHandoff(
       pool,
-      { tenantId, leadId, conversationId: input.conversationId },
+      { tenantId, leadId, conversationId: input.conversationId, agentId: agentConfig?.agentId ?? null },
       {
         reason: 'requested_human',
         conversationSummary: briefing.body,
@@ -2430,7 +2430,7 @@ async function executarTurnoDoAgente(
     });
     await performHumanHandoff(
       pool,
-      { tenantId, leadId, conversationId: input.conversationId },
+      { tenantId, leadId, conversationId: input.conversationId, agentId: agentConfig?.agentId ?? null },
       {
         reason: 'suspected_optout',
         conversationSummary: briefing.body,
@@ -3661,7 +3661,7 @@ async function executarTurnoDoAgente(
           // briefing enriquecido não custa uma consulta a mais.
           const res = await applyRequestHumanHandoff(
             pool,
-            { tenantId, leadId, conversationId: input.conversationId },
+            { tenantId, leadId, conversationId: input.conversationId, agentId: agentConfig?.agentId ?? null },
             {
               conversationSummary: buildHandoffSummary(previous),
               contextoDoTurno: { checkpoint: previous, pendentesDoCliente: inboundsPendentes },

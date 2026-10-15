@@ -253,6 +253,12 @@ export interface PassagemNova {
   };
   /** Ausente = ninguém tentou avisar o cliente. */
   aviso?: DesfechoDoAvisoDaPassagem | null;
+  /**
+   * O agente de IA que passou a conversa (`ai_agents.id`, migration 0545).
+   * Ausente ou não-uuid (o motor usa `'agent-engine'` sem agente resolvido) =
+   * coluna nula, e a Inbox diz só "IA".
+   */
+  agenteId?: string | null;
 }
 
 /**
@@ -279,7 +285,10 @@ export interface LinhaDaPassagem {
   tentativas: TentativaDaPassagem[];
   cliente_avisado: boolean | null;
   aviso_motivo_codigo: MotivoDoAviso | null;
+  agente_id: string | null;
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Valida e higieniza — PURA, e é ela que os dois motores compartilham.
@@ -321,6 +330,8 @@ export function prepararLinhaDaPassagem(p: PassagemNova): LinhaDaPassagem {
     cliente_avisado: p.aviso == null ? null : p.aviso.avisado,
     aviso_motivo_codigo:
       p.aviso == null || p.aviso.avisado ? null : (p.aviso.motivoCodigo ?? null),
+    // Só uuid: um id de ator que não é agente derrubaria o INSERT inteiro.
+    agente_id: p.agenteId && UUID.test(p.agenteId) ? p.agenteId : null,
   };
 }
 
@@ -341,6 +352,7 @@ const COLUNAS_DA_PASSAGEM = [
   "tentativas",
   "cliente_avisado",
   "aviso_motivo_codigo",
+  "agente_id",
 ] as const;
 
 /** O mínimo de `pg.Pool` que a escrita usa. Tipado aqui para não arrastar `pg`. */

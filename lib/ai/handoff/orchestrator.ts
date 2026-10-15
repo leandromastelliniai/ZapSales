@@ -100,6 +100,12 @@ export interface TriggerHandoffInput {
   motivoTexto?: string | null;
   leadId?: string | null;
   metadata?: Record<string, unknown>;
+  /**
+   * O agente de IA que passou a conversa (`ai_agents.id`), quando quem chama o
+   * conhece. Vai para `passagens_de_atendimento.agente_id` (0545); ausente = a
+   * Inbox diz só "IA".
+   */
+  agentId?: string | null;
 }
 
 export interface TriggerHandoffResult {
@@ -454,6 +460,7 @@ export async function triggerHandoff(
         motivoCodigo: motivoDaPassagem(input.reason),
         briefing,
         aviso: desfechoDaPassagem(aviso),
+        agenteId: input.agentId ?? null,
       });
       if (!gravou.gravada) {
         logger.warn("[handoff-orchestrator] passagem não registrada", {

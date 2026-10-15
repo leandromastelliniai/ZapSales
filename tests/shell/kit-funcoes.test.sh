@@ -245,6 +245,20 @@ igual "o obter não depende de outro arquivo do kit" "" "$(grep -nE '^[[:space:]
 verdade "obter.sh e instalar.sh são executáveis no git" \
   test "$(git ls-files -s kit/obter.sh kit/instalar.sh | awk '{print $1}' | sort -u)" = "100755"
 
+echo "assinatura do webhook — semente, não recalculada (#58)"
+igual "WAHA Core: não exige assinatura" "false" "$(assinatura_padrao_do_webhook devlikeapro/waha:latest-2026.7.2)"
+igual "WAHA Core ARM: não exige assinatura" "false" "$(assinatura_padrao_do_webhook devlikeapro/waha:noweb-arm-2026.7.2)"
+igual "WAHA Plus: exige assinatura" "true" "$(assinatura_padrao_do_webhook devlikeapro/waha-plus:latest-2026.7.2)"
+igual "sem imagem: não exige (o Core é o padrão do kit)" "false" "$(assinatura_padrao_do_webhook '')"
+envsig="$TMP/sig.env"
+: > "$envsig"
+env_garantir "$envsig" WAHA_WEBHOOK_REQUIRE_SIGNATURE "$(assinatura_padrao_do_webhook devlikeapro/waha:latest-2026.7.2)"
+igual "primeira rodada semeia false no Core" "false" "$(env_ler "$envsig" WAHA_WEBHOOK_REQUIRE_SIGNATURE)"
+env_definir "$envsig" WAHA_WEBHOOK_REQUIRE_SIGNATURE "true"
+env_garantir "$envsig" WAHA_WEBHOOK_REQUIRE_SIGNATURE "$(assinatura_padrao_do_webhook devlikeapro/waha:latest-2026.7.2)"
+igual "a atualização não desfaz o ajuste do operador" "true" "$(env_ler "$envsig" WAHA_WEBHOOK_REQUIRE_SIGNATURE)"
+falso "instalar.sh não recalcula a chave com env_definir"   grep -qE 'env_definir .*WAHA_WEBHOOK_REQUIRE_SIGNATURE' kit/instalar.sh
+
 echo "roteiros do kit — sintaxe"
 for f in kit/*.sh kit/lib/*.sh; do
   verdade "bash -n $f" bash -n "$f"

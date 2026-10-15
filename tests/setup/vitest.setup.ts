@@ -165,3 +165,9 @@ if (typeof document !== "undefined") {
     await new Promise((resolver) => setTimeout(resolver, 0));
   });
 }
+
+// Os catálogos de tradução chegam por import dinâmico no navegador (`lib/i18n/catalogos.ts`); nos testes
+// eles já estão na memória, para `<IdiomaProvider locale="es">` renderizar sincronamente como sempre fez.
+// Vem depois do carregamento do .env porque o dicionário importa módulos que leem variáveis de ambiente.
+const { carregarCatalogo } = await import("@/lib/i18n/catalogos");
+await Promise.all([carregarCatalogo("es"), carregarCatalogo("en")]);

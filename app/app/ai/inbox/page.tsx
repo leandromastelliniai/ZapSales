@@ -1,3 +1,6 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -15,17 +18,16 @@ export default async function AgentInboxPage() {
   const idioma = user.idioma;
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{traduzir("Central de avisos", idioma)}</h1>
-        <p className="text-sm text-muted-foreground">
-          {traduzir(
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={traduzir("Central de avisos", idioma)}
+        ajuda={<ComoFunciona chave="alertas" pagina={traduzir("Central de avisos", idioma)} />}
+        descricao={traduzir(
             "O que o assistente precisou escalar para o time: conexões caídas, tarefas que falharam, atendimentos passados a humanos.",
             idioma,
           )}
-        </p>
-      </header>
+      />
       <AgentInboxList canResolve={canResolve} />
-    </div>
+    </CorpoDaPagina>
   );
 }
