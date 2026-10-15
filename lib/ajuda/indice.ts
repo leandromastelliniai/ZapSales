@@ -12,6 +12,7 @@ import type { AjudaDaPagina } from "./tipos";
  */
 export const INDICE_DE_AJUDA = {
   agenda: () => import("./conteudo/agenda"),
+  conexoes: () => import("./conteudo/conexoes"),
   contatos: () => import("./conteudo/contatos"),
   equipe: () => import("./conteudo/equipe"),
   funis: () => import("./conteudo/funis"),

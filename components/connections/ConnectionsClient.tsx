@@ -288,31 +288,6 @@ export function ConnectionsClient({ wahaConfigured }: { wahaConfigured: boolean 
         {t("Novos canais começam em modo de teste, sem respostas automáticas até você autorizar números ou liberar o público.")}
       </p>
 
-      {list.length > 0 ? (
-        <ParaIntegrar
-          campos={[]}
-          ajuda={
-            <div className="space-y-1.5">
-              <p>
-                {t(
-                  "No canal por QR a credencial é interna desta instalação e não serve para fora. Para ligar outro CRM ao mesmo número, conecte-o por uma sessão própria (novo QR).",
-                )}
-              </p>
-              <p>
-                {t(
-                  "Dois dispositivos vinculados recebem as mesmas mensagens — se os dois tiverem atendimento automático, o cliente pode receber resposta dupla.",
-                )}
-              </p>
-            </div>
-          }
-          aviso={
-            <>
-              {t("Não compartilhe esta sessão.")}{" "}
-              {t("Crie uma conexão separada por QR no outro sistema.")}
-            </>
-          }
-        />
-      ) : null}
       {connectionDetail && <details className="rounded-md border p-3 text-sm"><summary>{t("Detalhes para suporte")}</summary><pre className="mt-2 whitespace-pre-wrap break-words">{connectionDetail}</pre><Button variant="outline" size="sm" onClick={async () => {
         if (await copyToClipboard(connectionDetail)) toast.success(t("Copiado!"));
         else toast.error(t("Não foi possível copiar. Selecione e copie manualmente."));
@@ -490,6 +465,34 @@ export function ConnectionsClient({ wahaConfigured }: { wahaConfigured: boolean 
           onDeleted={handleDeleted}
         />
       )}
+
+      {/* Os dados "para integrar" vêm DEPOIS da lista: quem abre esta tela quer ver o número conectado e a saúde dele.
+          Em cima, o aviso laranja e a caixa de ajuda empurravam o que importa para baixo da dobra. */}
+      {list.length > 0 ? (
+        <ParaIntegrar
+          campos={[]}
+          ajuda={
+            <div className="space-y-1.5">
+              <p>
+                {t(
+                  "No canal por QR a credencial é interna desta instalação e não serve para fora. Para ligar outro CRM ao mesmo número, conecte-o por uma sessão própria (novo QR).",
+                )}
+              </p>
+              <p>
+                {t(
+                  "Dois dispositivos vinculados recebem as mesmas mensagens — se os dois tiverem atendimento automático, o cliente pode receber resposta dupla.",
+                )}
+              </p>
+            </div>
+          }
+          aviso={
+            <>
+              {t("Não compartilhe esta sessão.")}{" "}
+              {t("Crie uma conexão separada por QR no outro sistema.")}
+            </>
+          }
+        />
+      ) : null}
 
       {qr && (
         <QrDialog
