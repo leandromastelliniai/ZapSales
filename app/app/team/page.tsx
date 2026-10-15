@@ -52,7 +52,7 @@ export default async function TeamPage({
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight">{t("Equipe")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("Gestão de membros, roles e atendimento do tenant.")}
+            {t("Quem trabalha aqui, o que cada pessoa pode fazer e como o atendimento é dividido.")}
           </p>
         </div>
         {isAdmin ? (

@@ -14449,6 +14449,20 @@ export const DICIONARIO: Traducoes = {
   "Palavras desta tela": { es: "Palabras de esta pantalla" },
   "Não foi possível carregar a ajuda. Feche e abra de novo.": { es: "No se pudo cargar la ayuda. Ciérrala y ábrela de nuevo." },
   "Os funis pelos quais seus clientes passam, da primeira conversa até fechar negócio.": { es: "Los embudos por los que pasan tus clientes, desde la primera conversación hasta cerrar el negocio." },
+  // ─── LINGUAGEM DE DONO DE NEGÓCIO (plano visual de 14/10/2026) ───
+  "Auditoria": { es: "Auditoría" },
+  "Quem mudou o quê, e quando. O histórico não se apaga. Só gestores veem.": { es: "Quién cambió qué y cuándo. El historial no se borra. Solo lo ven los gestores." },
+  "Quem mudou o quê, e quando — o histórico que não se apaga.": { es: "Quién cambió qué y cuándo: el historial que no se borra." },
+  "Plano e cobrança": { es: "Plan y facturación" },
+  "O plano contratado e as cobranças da sua empresa.": { es: "El plan contratado y los cobros de tu empresa." },
+  "Em breve": { es: "Próximamente" },
+  "Planos e cobrança chegam numa próxima versão.": { es: "Los planes y la facturación llegan en una próxima versión." },
+  "Linha telefônica (SIP)": { es: "Línea telefónica (SIP)" },
+  "Os dados da operadora de telefonia para a IA fazer e receber chamadas.": { es: "Los datos del operador de telefonía para que la IA haga y reciba llamadas." },
+  "Sugestões da IA": { es: "Sugerencias de la IA" },
+  "Quem trabalha aqui, o que cada pessoa pode fazer e como o atendimento é dividido.": { es: "Quién trabaja aquí, qué puede hacer cada persona y cómo se reparte la atención." },
+  "Papel": { es: "Rol" },
+  "perderá o acesso a esta empresa. Esta ação pode ser desfeita reconvidando o membro.": { es: "perderá el acceso a esta empresa. Esta acción se puede deshacer volviendo a invitar al miembro." }
 };
 
 /**

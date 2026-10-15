@@ -91,7 +91,7 @@ describe("CommandPalette", () => {
     const user = userEvent.setup();
     abrir();
     await user.type(screen.getByRole("combobox"), "audit");
-    expect(screen.queryByRole("option", { name: /Audit Log/ })).toBeNull();
+    expect(screen.queryByRole("option", { name: /Auditoria/ })).toBeNull();
   });
 
   it("Enter navega para o item destacado", async () => {

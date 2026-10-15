@@ -636,7 +636,7 @@ export const NAV_CATALOG = [
     // Órfã: nenhum lugar do app linkava para cá. O flywheel gerava propostas de
     // melhoria do agente e a fila só era vista por quem soubesse a URL.
     href: "/app/ai/proposals",
-    label: "Propostas",
+    label: "Sugestões da IA",
     description: "Melhorias que a IA sugere para si mesma, esperando sua decisão.",
     icon: "Lightbulb",
     group: "ia",
@@ -795,8 +795,8 @@ export const NAV_CATALOG = [
   },
   {
     href: "/app/audit",
-    label: "Audit Log",
-    description: "Quem fez o quê, quando — o histórico que não se apaga.",
+    label: "Auditoria",
+    description: "Quem mudou o quê, e quando — o histórico que não se apaga.",
     icon: "ListMagnifyingGlass",
     group: "analise",
     section: "O histórico que se consulta",
@@ -946,8 +946,8 @@ export const NAV_CATALOG = [
   },
   {
     href: "/app/settings/billing",
-    label: "Billing",
-    description: "Plano e cobrança.",
+    label: "Plano e cobrança",
+    description: "O plano contratado e as cobranças da sua empresa.",
     icon: "CreditCard",
     group: "organizacao",
     section: "Sua empresa",
@@ -973,8 +973,8 @@ export const NAV_CATALOG = [
   },
   {
     href: "/app/settings/voip-trunk",
-    label: "Trunk SIP",
-    description: "Credenciais do provedor SIP para chamadas de voz por IA.",
+    label: "Linha telefônica (SIP)",
+    description: "Os dados da operadora de telefonia para a IA fazer e receber chamadas.",
     icon: "PhoneTransfer",
     group: "organizacao",
     section: "Dados e acesso",

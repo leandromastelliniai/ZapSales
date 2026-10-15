@@ -78,7 +78,7 @@ export function TeamMembersClient({ currentUserId, canManage }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>{t("Membro")}</TableHead>
-              <TableHead>Role</TableHead>
+              <TableHead>{t("Papel")}</TableHead>
               <TableHead>{t("Interface")}</TableHead>
               <TableHead>{t("Status")}</TableHead>
               <TableHead>{t("Última atividade")}</TableHead>
@@ -223,7 +223,7 @@ export function TeamMembersClient({ currentUserId, canManage }: Props) {
             <DialogTitle>{t("Revogar acesso")}</DialogTitle>
             <DialogDescription>
               {revokeDialog?.email ?? revokeDialog?.user_id}{" "}
-              {t("perderá acesso ao tenant. Esta ação pode ser desfeita reconvidando o membro.")}
+              {t("perderá o acesso a esta empresa. Esta ação pode ser desfeita reconvidando o membro.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
