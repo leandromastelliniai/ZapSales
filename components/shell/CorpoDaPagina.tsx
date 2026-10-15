@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -33,13 +33,15 @@ export function CorpoDaPagina({
   largura = "lista",
   className,
   children,
+  ...resto
 }: {
   largura?: LarguraDaPagina;
   className?: string;
   children: ReactNode;
-}) {
+} & Omit<HTMLAttributes<HTMLDivElement>, "className" | "children">) {
   return (
     <div
+      {...resto}
       data-largura={largura}
       className={cn("mx-auto flex h-full w-full flex-col gap-6", RESPIRO_LEGADO, LARGURA[largura], className)}
     >
