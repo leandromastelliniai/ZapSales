@@ -449,7 +449,7 @@ itens envelhecem em ritmos diferentes, e o cabeçalho passava a mentir por todos
 ## Regras de segurança
 
 - Sempre `getUser()` no backend. **Nunca `getSession()`** (confia no cookie sem revalidar).
-  O `proxy` valida uma vez e repassa o usuário assinado (30 s, `x-zs-sessao`); ver `lib/auth/sessao-repassada.ts`. Rajada simultânea da mesma sessão = 1 ida (`lib/auth/validacao-em-rajada.ts`).
+  O `proxy` valida uma vez e repassa o usuário assinado (30 s, `x-zs-sessao`); ver `lib/auth/sessao-repassada.ts`.
 - API key/token **nunca** em query string — só header. Plaintext do bearer é mostrado
   **uma vez**; no banco só hash SHA256.
 - HMAC de webhook com `crypto.timingSafeEqual`. Fail-closed quando o secret falta.

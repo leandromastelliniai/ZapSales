@@ -127,6 +127,34 @@
       "label": "navegacao.spec.ts (expandido por padrão; trilho por escolha)"
     },
     {
+      "id": "provedor_idioma",
+      "lane": "ui",
+      "col": 2,
+      "type": "frontend",
+      "label": "IdiomaProvider (suspende até o catálogo do idioma chegar)"
+    },
+    {
+      "id": "catalogos",
+      "lane": "dados",
+      "col": 2,
+      "type": "lib",
+      "label": "lib/i18n/catalogos.ts (es e en por import dinâmico; pt-BR vazio)"
+    },
+    {
+      "id": "dicionario_cliente",
+      "lane": "dados",
+      "col": 3,
+      "type": "lib",
+      "label": "dicionario.cliente.ts (traduzir leve no navegador, via alias do Turbopack)"
+    },
+    {
+      "id": "cerca_dicionario",
+      "lane": "prova",
+      "col": 3,
+      "type": "service",
+      "label": "dicionario-fora-do-cliente.test.ts + idioma-catalogo-sob-demanda.test.tsx"
+    },
+    {
       "id": "icones_proprios",
       "lane": "dados",
       "col": 3,
@@ -248,36 +276,66 @@
     },
     {
       "id": "15",
+      "from": "provedor_idioma",
+      "to": "catalogos",
+      "label": "pede o catálogo do idioma em vigor"
+    },
+    {
+      "id": "16",
+      "from": "dicionario_cliente",
+      "to": "catalogos",
+      "label": "lê o catálogo já carregado"
+    },
+    {
+      "id": "17",
+      "from": "menu",
+      "to": "provedor_idioma",
+      "label": "useT() traduz com o catálogo do provedor"
+    },
+    {
+      "id": "18",
+      "from": "cerca_dicionario",
+      "to": "provedor_idioma",
+      "label": "espanhol espera o catálogo e traduz; português não carrega nada"
+    },
+    {
+      "id": "19",
+      "from": "cerca_dicionario",
+      "to": "dicionario_cliente",
+      "label": "o alias do navegador existe e a assinatura confere"
+    },
+    {
+      "id": "20",
       "from": "icones_proprios",
       "to": "registro",
       "label": "Funis, Agentes e Roteadores usam ícone próprio"
     },
     {
-      "id": "16",
+      "id": "21",
       "from": "vitrine",
       "to": "icones_proprios",
       "label": "prévia ao lado do Phosphor, em 4 pesos"
     },
     {
-      "id": "17",
+      "id": "22",
       "from": "cerca_selo",
       "to": "icones_proprios",
       "label": "tamanho, peso, cor e espelhamento como o Phosphor"
     },
     {
-      "id": "18",
+      "id": "23",
       "from": "cerca_selo",
       "to": "selo",
       "label": "cada significado tem cor própria; só a IA é violeta"
     },
     {
-      "id": "19",
+      "id": "24",
       "from": "vitrine",
       "to": "selo",
       "label": "os seis significados"
     },
     {
-      "id": "20",
+      "id": "25",
       "from": "vitrine",
       "to": "painel",
       "label": "painel com cabeçalho e lista encostada nas bordas"
