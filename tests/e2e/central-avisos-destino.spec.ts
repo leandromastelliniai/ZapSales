@@ -132,8 +132,14 @@ test("agent abre contexto, volta ainda aberto, resolve e reabre; RLS e menu ocul
   }
   const idioma = await db.auth.admin.updateUserById(users[0]!.id, { user_metadata: { locale: "es" } });
   if (idioma.error) throw idioma.error;
-  await page.reload();
-  await expect(row(page, "Conversa própria").getByRole("link", { name: "Abrir conversación" })).toBeVisible();
+  // O idioma vem do usuário que o proxy repassa assinado por até 30 s (`lib/auth/sessao-repassada.ts`, #64):
+  // uma troca feita por fora, com a service role, só aparece na primeira requisição depois dessa janela. Ou
+  // seja, depender de UM reload é uma corrida contra o relógio (falhou em 3 de 5 execuções no CI). Recarrega
+  // até o idioma novo chegar, com teto de 45 s — mais que a janela, menos que o limite do teste.
+  await expect(async () => {
+    await page.reload();
+    await expect(row(page, "Conversa própria").getByRole("link", { name: "Abrir conversación" })).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 45_000 });
   await expect(row(page, "Referência removida")).toContainText("Este contexto no está disponible para ti");
   await page.setViewportSize({ width: 390, height: 844 });
   await evidence(page, info, "mobile");

@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -53,6 +54,7 @@ export default async function TenantSettingsPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Organização", idioma)}
+        ajuda={<ComoFunciona chave="organizacao" pagina={traduzir("Organização", idioma)} />}
         descricao={traduzir("Dados da empresa, retenção de mídia, DPO. Admin only.", idioma)}
       />
       {row && (

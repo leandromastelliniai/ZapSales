@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { requireAuth } from "@/lib/auth/server";
 import { traduzir } from "@/lib/i18n/dicionario";
@@ -55,6 +56,7 @@ export default async function NotificationsPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={t("Notificações")}
+        ajuda={<ComoFunciona chave="notificacoes" pagina={t("Notificações")} />}
         descricao={t("Canais e categorias.")}
       />
 

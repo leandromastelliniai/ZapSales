@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -84,6 +85,7 @@ export default async function AcervoPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={t("O que o agente sabe")}
+        ajuda={<ComoFunciona chave="conhecimento" pagina={t("O que o agente sabe")} />}
         descricao={t(
             "O material do seu negócio que os assistentes consultam antes de responder. Cada assistente escolhe, na tela dele, o que pode ler daqui.",
           )}

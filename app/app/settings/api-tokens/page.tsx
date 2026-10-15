@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -21,6 +22,7 @@ export default async function ApiTokensPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={"API Tokens"}
+        ajuda={<ComoFunciona chave="api-tokens" pagina={"API Tokens"} />}
         descricao={
           <>
             {traduzir("Chaves de acesso para outros sistemas falarem com este. O texto da chave aparece", idioma)}{" "}

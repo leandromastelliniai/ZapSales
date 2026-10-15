@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -153,6 +154,7 @@ export default async function CredentialsPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Chaves de acesso à IA", idioma)}
+        ajuda={<ComoFunciona chave="chaves-de-acesso" pagina={traduzir("Chaves de acesso à IA", idioma)} />}
         descricao={<>{/* Os provedores saem da lista única: escritos à mão, a frase citava
               três quando já eram cinco. */}
           {traduzir(

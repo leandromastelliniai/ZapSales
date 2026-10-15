@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -36,6 +37,7 @@ export default async function EvolutionPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Evolução da IA", idioma)}
+        ajuda={<ComoFunciona chave="evolucao-da-ia" pagina={traduzir("Evolução da IA", idioma)} />}
         descricao={traduzir(
             "O que seu agente aprendeu no período, o que ele fez com isso, o que mudou no seu resultado — e o que ainda está travando.",
             idioma,

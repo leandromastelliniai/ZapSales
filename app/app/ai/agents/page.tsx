@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -58,6 +59,7 @@ export default async function AgentsListPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Agentes de IA", idioma)}
+        ajuda={<ComoFunciona chave="agentes" pagina={traduzir("Agentes de IA", idioma)} />}
         descricao={traduzir("Configure o jeito de atender dos agentes que respondem no WhatsApp.", idioma)}
       />
       <AgentsList initialData={agents} canWrite={canWrite} />

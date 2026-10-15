@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -27,6 +28,7 @@ export default async function LgpdRequestsPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={t("Solicitações LGPD")}
+        ajuda={<ComoFunciona chave="lgpd" pagina={t("Solicitações LGPD")} />}
         descricao={t("Anonimizações e solicitações de dados de titulares. Apenas admins.")}
       />
       <RequestsTable />

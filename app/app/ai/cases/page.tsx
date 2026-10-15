@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -21,6 +22,7 @@ export default async function CasesPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Casos", idioma)}
+        ajuda={<ComoFunciona chave="casos" pagina={traduzir("Casos", idioma)} />}
         descricao={traduzir(
             "Quando a IA trava em algo que só um humano resolve, ela abre um caso aqui — e continua conversando com o cliente enquanto espera sua resposta.",
             idioma,

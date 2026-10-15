@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -35,6 +36,7 @@ export default async function TrunkSettingsPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Linha telefônica (SIP)", idioma)}
+        ajuda={<ComoFunciona chave="linha-telefonica" pagina={traduzir("Linha telefônica (SIP)", idioma)} />}
         descricao={<>{traduzir(
             "Credenciais de registro do seu provedor SIP (Asterisk/AudioSocket). Depois de salvar, aplique o bloco abaixo em",
             idioma,

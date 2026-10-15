@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -93,6 +94,7 @@ export default async function SkillsPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Skills da IA", idioma)}
+        ajuda={<ComoFunciona chave="skills" pagina={traduzir("Skills da IA", idioma)} />}
         descricao={traduzir(
             "Habilidades especializadas que seus agentes carregam só quando a conversa pede — instale prontas do catálogo ou envie a sua.",
             idioma,

@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -20,6 +21,7 @@ export default async function AgentInboxPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Central de avisos", idioma)}
+        ajuda={<ComoFunciona chave="alertas" pagina={traduzir("Central de avisos", idioma)} />}
         descricao={traduzir(
             "O que o assistente precisou escalar para o time: conexões caídas, tarefas que falharam, atendimentos passados a humanos.",
             idioma,

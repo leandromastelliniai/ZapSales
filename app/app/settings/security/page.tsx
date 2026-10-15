@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import {
   requireAuth,
@@ -65,6 +66,7 @@ export default async function SecurityPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Segurança", idioma)}
+        ajuda={<ComoFunciona chave="seguranca" pagina={traduzir("Segurança", idioma)} />}
         descricao={traduzir(
             "A verificação em duas etapas da sua conta, os códigos de recuperação e as sessões abertas.",
             idioma,

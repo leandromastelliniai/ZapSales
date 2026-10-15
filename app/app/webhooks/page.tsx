@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -21,6 +22,7 @@ export default async function WebhooksPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={"Webhooks"}
+        ajuda={<ComoFunciona chave="webhooks" pagina={"Webhooks"} />}
         descricao={traduzir(
             "Receba contatos de fora (landing pages, formulários) e crie automações que agem sozinhas.",
             idioma,

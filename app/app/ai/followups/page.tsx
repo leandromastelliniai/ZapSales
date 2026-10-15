@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -42,6 +43,7 @@ export default async function FollowupFlowsPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={"Follow-ups"}
+        ajuda={<ComoFunciona chave="follow-ups" pagina={"Follow-ups"} />}
         descricao={t("Fluxos automáticos de reengajamento — silêncio, etapa, webhook ou resposta do contato, sem intervenção em cada mensagem.")}
       />
       <Tabs defaultValue="fluxos" className="flex flex-1 flex-col">

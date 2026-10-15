@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -40,6 +41,7 @@ export default async function AtendimentoFlowsPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={t("Fluxos de atendimento")}
+        ajuda={<ComoFunciona chave="fluxos-de-atendimento" pagina={t("Fluxos de atendimento")} />}
         descricao={t(
               "Perguntas que a IA faz durante a conversa, em ordem, e o que fazer ao concluir — os dados ficam guardados por cliente.",
             )}

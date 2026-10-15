@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -60,6 +61,7 @@ export default async function AiUsagePage({ searchParams }: PageProps) {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Uso de IA", idioma)}
+        ajuda={<ComoFunciona chave="uso-e-orcamento" pagina={traduzir("Uso de IA", idioma)} />}
         descricao={traduzir(
             "Quanto a inteligência artificial custou, quantos atendimentos ela fez, quanto demorou para responder e quantas vezes precisou chamar uma pessoa — nos últimos 30 dias.",
             idioma,

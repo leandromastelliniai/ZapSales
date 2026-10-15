@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -48,6 +49,7 @@ export default async function RoutersPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Roteadores", idioma)}
+        ajuda={<ComoFunciona chave="roteadores" pagina={traduzir("Roteadores", idioma)} />}
         descricao={traduzir(
             "Um roteador entende o que o cliente quer e entrega a conversa para o agente certo — plugado em um número de WhatsApp.",
             idioma,

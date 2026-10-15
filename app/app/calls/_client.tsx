@@ -1,4 +1,7 @@
 "use client";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
 import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
 import { useState, type FormEvent } from "react";
 
@@ -135,16 +138,13 @@ export function CallsClient() {
   const [selected, setSelected] = useState<CallRow | null>(null);
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Chamadas")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("Histórico de ligações (voz por IA) com transcrição.")}
-          </p>
-        </div>
-        <DialerDialog />
-      </header>
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={t("Chamadas")}
+        descricao={t("Histórico de ligações (voz por IA) com transcrição.")}
+        ajuda={<ComoFunciona chave="chamadas" pagina={t("Chamadas")} />}
+        acoes={<DialerDialog />}
+      />
 
       <Card className="overflow-hidden">
         {isLoading ? (
@@ -239,6 +239,6 @@ export function CallsClient() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </CorpoDaPagina>
   );
 }

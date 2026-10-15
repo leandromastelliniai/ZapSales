@@ -1,0 +1,11 @@
+[
+  { "chave": "casos", "pagina": "app/app/ai/cases/page.tsx", "titulo_pt": "Casos" },
+  { "chave": "alertas", "pagina": "app/app/ai/inbox/page.tsx", "titulo_pt": "Central de avisos" },
+  { "chave": "aviso-no-whatsapp", "pagina": "app/app/ai/cases/avisos/page.tsx", "titulo_pt": "Aviso no WhatsApp" },
+  { "chave": "sugestoes-da-ia", "pagina": "app/app/ai/proposals/page.tsx", "titulo_pt": "Sugestões da IA" },
+  { "chave": "uso-e-orcamento", "pagina": "app/app/ai/usage/page.tsx", "titulo_pt": "Uso de IA" },
+  { "chave": "evolucao-da-ia", "pagina": "app/app/ai/evolution/page.tsx", "titulo_pt": "Evolução da IA" },
+  { "chave": "chaves-de-acesso", "pagina": "app/app/ai/credentials/page.tsx", "titulo_pt": "Chaves de acesso à IA" },
+  { "chave": "atividades", "pagina": "app/app/activities/page.tsx", "titulo_pt": "Atividades" },
+  { "chave": "radar", "pagina": "app/app/radar/page.tsx", "titulo_pt": "Radar de risco" }
+]

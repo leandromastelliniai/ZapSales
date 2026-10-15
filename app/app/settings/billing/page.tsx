@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -29,6 +30,7 @@ export default async function BillingPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Plano e cobrança", idioma)}
+        ajuda={<ComoFunciona chave="plano-e-cobranca" pagina={traduzir("Plano e cobrança", idioma)} />}
         descricao={traduzir("O plano contratado e as cobranças da sua empresa.", idioma)}
       />
       <Card className="max-w-xl p-6">

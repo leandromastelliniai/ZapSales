@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -97,6 +98,7 @@ export default async function TiposDeAgendamentoPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={t("Tipos de agendamento")}
+        ajuda={<ComoFunciona chave="tipos-de-agendamento" pagina={t("Tipos de agendamento")} />}
         descricao={t("O que se pode marcar, quanto dura e quem atende. É isto que a tela de marcar e o agente de IA oferecem ao cliente.")}
       />
       <TiposDeAgendamentoClient

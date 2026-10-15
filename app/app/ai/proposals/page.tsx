@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -32,6 +33,7 @@ export default async function ProposalsPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Sugestões da IA", idioma)}
+        ajuda={<ComoFunciona chave="sugestoes-da-ia" pagina={traduzir("Sugestões da IA", idioma)} />}
         descricao={traduzir(
             "Próximos passos que o assistente sugeriu e esperam sua decisão. Aprovar e ignorar são registrados — ignorar é uma decisão, não a falta dela.",
             idioma,

@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -62,6 +63,7 @@ export default async function PipelinesSettingsPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Etapas do funil", idioma)}
+        ajuda={<ComoFunciona chave="etapas-do-funil" pagina={traduzir("Etapas do funil", idioma)} />}
         descricao={<>{traduzir("Para onde o agente leva o card em cada passo do atendimento", idioma)}
           {podeEditarConfig
             ? traduzir(", vocabulário, campos personalizados e motivos de perda", idioma)

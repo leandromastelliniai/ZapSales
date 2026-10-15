@@ -14472,6 +14472,8 @@ export const DICIONARIO: Traducoes = {
   "Configure o jeito de atender dos agentes que respondem no WhatsApp.": { es: "Configura la forma de atender de los agentes que responden en WhatsApp." },
   ", vocabulário, campos personalizados e motivos de perda": { es: ", vocabulario, campos personalizados y motivos de pérdida" },
   "Chaves de acesso para outros sistemas falarem com este. O texto da chave aparece": { es: "Claves de acceso para que otros sistemas hablen con este. El texto de la clave aparece" },
+  // ─── PROPOSTAS (plano visual de 14/10/2026) ───
+  "As propostas comerciais enviadas aos seus clientes, com o número e o estado de cada uma.": { es: "Las propuestas comerciales enviadas a tus clientes, con el número y el estado de cada una." },
 };
 
 /**

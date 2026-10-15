@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import type { Metadata } from "next";
 import { requireAuth } from "@/lib/auth/server";
@@ -19,6 +20,7 @@ export default async function ActivitiesReportPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={t("Atividades")}
+        ajuda={<ComoFunciona chave="atividades" pagina={t("Atividades")} />}
         descricao={t("O que aconteceu na operação no período — e quanto disso foi a equipe.")}
       />
 

@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -24,6 +25,7 @@ export default async function RadarPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={t("Radar de risco")}
+        ajuda={<ComoFunciona chave="radar" pagina={t("Radar de risco")} />}
         descricao={t(
             "Demandas abertas que esfriaram e precisam de você. Se o assistente já agendou um retorno, aparece como “em voo”; sem próximo passo, é risco de perder o cliente.",
           )}

@@ -1,4 +1,5 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
@@ -70,6 +71,7 @@ export default async function OrgMemoryPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Memória da IA", idioma)}
+        ajuda={<ComoFunciona chave="memoria" pagina={traduzir("Memória da IA", idioma)} />}
         descricao={traduzir(
             "Regras e aprendizados que TODOS os agentes de IA desta organização seguem em qualquer conversa — não é uma configuração de um agente específico.",
             idioma,

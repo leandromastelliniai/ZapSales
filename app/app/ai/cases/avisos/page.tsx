@@ -23,6 +23,7 @@
  * por ferramenta (`page.title()`), e esta rota entrou na lista dele.
  */
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -52,6 +53,7 @@ export default async function AvisoDeCasoPage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={traduzir("Aviso no WhatsApp", idioma)}
+        ajuda={<ComoFunciona chave="aviso-no-whatsapp" pagina={traduzir("Aviso no WhatsApp", idioma)} />}
         descricao={traduzir(
             "Escolha um número da equipe para receber uma mensagem toda vez que o assistente travar e precisar de uma pessoa.",
             idioma,
