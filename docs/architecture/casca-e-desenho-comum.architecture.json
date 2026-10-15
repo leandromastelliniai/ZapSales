@@ -3,47 +3,284 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Casca e desenho comum",
-    "subtitle": "Menu, cabeçalho de página e ajuda \"Como funciona\" — o que toda tela do app compartilha",
+    "subtitle": "Menu, cabeçalho de página, ajuda \"Como funciona\", ícones próprios, selo e painel — o que toda tela do app compartilha",
     "output": "casca-e-desenho-comum.html",
     "quality_profile": "standard"
   },
   "lanes": [
-    { "id": "dados", "label": "Catálogo e conteúdo" },
-    { "id": "ui", "label": "Casca e telas" },
-    { "id": "prova", "label": "Provas" }
+    {
+      "id": "dados",
+      "label": "Catálogo e conteúdo"
+    },
+    {
+      "id": "ui",
+      "label": "Casca e telas"
+    },
+    {
+      "id": "prova",
+      "label": "Provas"
+    }
   ],
-  "mainPath": ["catalogo", "registro", "menu", "tela"],
+  "mainPath": [
+    "catalogo",
+    "registro",
+    "menu",
+    "tela"
+  ],
   "nodes": [
-    { "id": "catalogo", "lane": "dados", "col": 1, "type": "config", "label": "lib/navigation/catalogo.ts (um ícone por destino)" },
-    { "id": "registro", "lane": "dados", "col": 2, "type": "lib", "label": "registry.ts (mapa de ícones e ICONE_DO_HUB)" },
-    { "id": "cookie", "lane": "ui", "col": 1, "type": "frontend", "label": "Cookie sidebar_collapsed (só \"1\" recolhe)" },
-    { "id": "menu", "lane": "ui", "col": 3, "type": "frontend", "label": "Sidebar: ícone + nome, ou trilho" },
-    { "id": "corpo", "lane": "ui", "col": 3, "type": "frontend", "label": "CorpoDaPagina (duas larguras)" },
-    { "id": "cabecalho", "lane": "ui", "col": 4, "type": "frontend", "label": "CabecalhoDePagina (título, descrição, ação)" },
-    { "id": "ajuda", "lane": "ui", "col": 5, "type": "frontend", "label": "ComoFunciona (painel lateral)" },
-    { "id": "tela", "lane": "ui", "col": 4, "type": "frontend", "label": "Telas que adotam o corpo (Funis, Respostas rápidas)" },
-    { "id": "indice", "lane": "dados", "col": 4, "type": "lib", "label": "lib/ajuda/indice.ts (importação dinâmica por tela)" },
-    { "id": "conteudo", "lane": "dados", "col": 5, "type": "lib", "label": "lib/ajuda/conteudo/* (pt-BR, es, en)" },
-    { "id": "vitrine", "lane": "prova", "col": 3, "type": "frontend", "label": "/vitrine-sistema (dev; atrás do login em produção)" },
-    { "id": "cerca_icones", "lane": "prova", "col": 2, "type": "service", "label": "navegacao-icones-unicos.test.ts" },
-    { "id": "cerca_ajuda", "lane": "prova", "col": 5, "type": "service", "label": "ajuda-da-pagina.test.ts (três idiomas)" },
-    { "id": "e2e_nav", "lane": "prova", "col": 4, "type": "service", "label": "navegacao.spec.ts (expandido por padrão; trilho por escolha)" }
+    {
+      "id": "catalogo",
+      "lane": "dados",
+      "col": 1,
+      "type": "config",
+      "label": "lib/navigation/catalogo.ts (um ícone por destino)"
+    },
+    {
+      "id": "registro",
+      "lane": "dados",
+      "col": 2,
+      "type": "lib",
+      "label": "registry.ts (mapa de ícones e ICONE_DO_HUB)"
+    },
+    {
+      "id": "cookie",
+      "lane": "ui",
+      "col": 1,
+      "type": "frontend",
+      "label": "Cookie sidebar_collapsed (só \"1\" recolhe)"
+    },
+    {
+      "id": "menu",
+      "lane": "ui",
+      "col": 3,
+      "type": "frontend",
+      "label": "Sidebar: ícone + nome, ou trilho"
+    },
+    {
+      "id": "corpo",
+      "lane": "ui",
+      "col": 3,
+      "type": "frontend",
+      "label": "CorpoDaPagina (duas larguras)"
+    },
+    {
+      "id": "cabecalho",
+      "lane": "ui",
+      "col": 4,
+      "type": "frontend",
+      "label": "CabecalhoDePagina (título, descrição, ação)"
+    },
+    {
+      "id": "ajuda",
+      "lane": "ui",
+      "col": 5,
+      "type": "frontend",
+      "label": "ComoFunciona (painel lateral)"
+    },
+    {
+      "id": "tela",
+      "lane": "ui",
+      "col": 4,
+      "type": "frontend",
+      "label": "Telas que adotam o corpo (Funis, Respostas rápidas)"
+    },
+    {
+      "id": "indice",
+      "lane": "dados",
+      "col": 4,
+      "type": "lib",
+      "label": "lib/ajuda/indice.ts (importação dinâmica por tela)"
+    },
+    {
+      "id": "conteudo",
+      "lane": "dados",
+      "col": 5,
+      "type": "lib",
+      "label": "lib/ajuda/conteudo/* (pt-BR, es, en)"
+    },
+    {
+      "id": "vitrine",
+      "lane": "prova",
+      "col": 3,
+      "type": "frontend",
+      "label": "/vitrine-sistema (dev; atrás do login em produção)"
+    },
+    {
+      "id": "cerca_icones",
+      "lane": "prova",
+      "col": 2,
+      "type": "service",
+      "label": "navegacao-icones-unicos.test.ts"
+    },
+    {
+      "id": "cerca_ajuda",
+      "lane": "prova",
+      "col": 5,
+      "type": "service",
+      "label": "ajuda-da-pagina.test.ts (três idiomas)"
+    },
+    {
+      "id": "e2e_nav",
+      "lane": "prova",
+      "col": 4,
+      "type": "service",
+      "label": "navegacao.spec.ts (expandido por padrão; trilho por escolha)"
+    },
+    {
+      "id": "icones_proprios",
+      "lane": "dados",
+      "col": 3,
+      "type": "lib",
+      "label": "components/icons/produto (Funil em etapas, Agente em conversa, Passagem para humano, Fila, Janela de 24h)"
+    },
+    {
+      "id": "selo",
+      "lane": "ui",
+      "col": 2,
+      "type": "frontend",
+      "label": "Selo (a cor diz uma coisa só: IA, humano, funil, concluído, falha)"
+    },
+    {
+      "id": "painel",
+      "lane": "ui",
+      "col": 2,
+      "type": "frontend",
+      "label": "Painel (contêiner no desenho da Inbox)"
+    },
+    {
+      "id": "cerca_selo",
+      "lane": "prova",
+      "col": 1,
+      "type": "service",
+      "label": "icones-e-selos-do-produto.test.tsx"
+    }
   ],
   "edges": [
-    { "id": "0", "from": "catalogo", "to": "registro", "label": "nome do ícone vira componente" },
-    { "id": "1", "from": "registro", "to": "menu", "label": "destinos e ícone do \"Ver tudo\"" },
-    { "id": "2", "from": "cookie", "to": "menu", "label": "estado lido no servidor, sem piscar" },
-    { "id": "3", "from": "menu", "to": "cookie", "label": "Recolher/Expandir grava a escolha" },
-    { "id": "4", "from": "corpo", "to": "tela", "label": "largura e espaçamento únicos" },
-    { "id": "5", "from": "cabecalho", "to": "tela", "label": "título, descrição e ação no mesmo lugar" },
-    { "id": "6", "from": "ajuda", "to": "cabecalho", "label": "botão no canto do cabeçalho" },
-    { "id": "7", "from": "ajuda", "to": "indice", "label": "carrega o texto só ao abrir" },
-    { "id": "8", "from": "indice", "to": "conteudo", "label": "um módulo por tela" },
-    { "id": "9", "from": "cerca_icones", "to": "catalogo", "label": "reprova ícone repetido entre destinos" },
-    { "id": "10", "from": "cerca_icones", "to": "registro", "label": "o hub de cada grupo não repete ícone de tela" },
-    { "id": "11", "from": "cerca_ajuda", "to": "conteudo", "label": "exige os três idiomas e passos iguais" },
-    { "id": "12", "from": "e2e_nav", "to": "menu", "label": "mede padrão expandido e o trilho escolhido" },
-    { "id": "13", "from": "vitrine", "to": "menu", "label": "menu real nos dois estados" },
-    { "id": "14", "from": "vitrine", "to": "ajuda", "label": "painel aberto com texto de exemplo" }
+    {
+      "id": "0",
+      "from": "catalogo",
+      "to": "registro",
+      "label": "nome do ícone vira componente"
+    },
+    {
+      "id": "1",
+      "from": "registro",
+      "to": "menu",
+      "label": "destinos e ícone do \"Ver tudo\""
+    },
+    {
+      "id": "2",
+      "from": "cookie",
+      "to": "menu",
+      "label": "estado lido no servidor, sem piscar"
+    },
+    {
+      "id": "3",
+      "from": "menu",
+      "to": "cookie",
+      "label": "Recolher/Expandir grava a escolha"
+    },
+    {
+      "id": "4",
+      "from": "corpo",
+      "to": "tela",
+      "label": "largura e espaçamento únicos"
+    },
+    {
+      "id": "5",
+      "from": "cabecalho",
+      "to": "tela",
+      "label": "título, descrição e ação no mesmo lugar"
+    },
+    {
+      "id": "6",
+      "from": "ajuda",
+      "to": "cabecalho",
+      "label": "botão no canto do cabeçalho"
+    },
+    {
+      "id": "7",
+      "from": "ajuda",
+      "to": "indice",
+      "label": "carrega o texto só ao abrir"
+    },
+    {
+      "id": "8",
+      "from": "indice",
+      "to": "conteudo",
+      "label": "um módulo por tela"
+    },
+    {
+      "id": "9",
+      "from": "cerca_icones",
+      "to": "catalogo",
+      "label": "reprova ícone repetido entre destinos"
+    },
+    {
+      "id": "10",
+      "from": "cerca_icones",
+      "to": "registro",
+      "label": "o hub de cada grupo não repete ícone de tela"
+    },
+    {
+      "id": "11",
+      "from": "cerca_ajuda",
+      "to": "conteudo",
+      "label": "exige os três idiomas e passos iguais"
+    },
+    {
+      "id": "12",
+      "from": "e2e_nav",
+      "to": "menu",
+      "label": "mede padrão expandido e o trilho escolhido"
+    },
+    {
+      "id": "13",
+      "from": "vitrine",
+      "to": "menu",
+      "label": "menu real nos dois estados"
+    },
+    {
+      "id": "14",
+      "from": "vitrine",
+      "to": "ajuda",
+      "label": "painel aberto com texto de exemplo"
+    },
+    {
+      "id": "15",
+      "from": "icones_proprios",
+      "to": "registro",
+      "label": "Funis, Agentes e Roteadores usam ícone próprio"
+    },
+    {
+      "id": "16",
+      "from": "vitrine",
+      "to": "icones_proprios",
+      "label": "prévia ao lado do Phosphor, em 4 pesos"
+    },
+    {
+      "id": "17",
+      "from": "cerca_selo",
+      "to": "icones_proprios",
+      "label": "tamanho, peso, cor e espelhamento como o Phosphor"
+    },
+    {
+      "id": "18",
+      "from": "cerca_selo",
+      "to": "selo",
+      "label": "cada significado tem cor própria; só a IA é violeta"
+    },
+    {
+      "id": "19",
+      "from": "vitrine",
+      "to": "selo",
+      "label": "os seis significados"
+    },
+    {
+      "id": "20",
+      "from": "vitrine",
+      "to": "painel",
+      "label": "painel com cabeçalho e lista encostada nas bordas"
+    }
   ]
 }
