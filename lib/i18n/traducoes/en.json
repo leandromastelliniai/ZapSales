@@ -9348,5 +9348,9 @@
   "Papel": "Role",
   "perderá o acesso a esta empresa. Esta ação pode ser desfeita reconvidando o membro.": "will lose access to this company. This can be undone by inviting the member again.",
   "Todas as pessoas que já falaram com você, com busca e filtros.": "Everyone who has talked to you, with search and filters.",
-  "ID da requisição": "Request ID"
+  "ID da requisição": "Request ID",
+  "Agentes de IA": "AI agents",
+  "Configure o jeito de atender dos agentes que respondem no WhatsApp.": "Set how the agents that answer on WhatsApp handle customers.",
+  ", vocabulário, campos personalizados e motivos de perda": ", vocabulary, custom fields and loss reasons",
+  "Chaves de acesso para outros sistemas falarem com este. O texto da chave aparece": "Access keys so other systems can talk to this one. The key text appears"
 }

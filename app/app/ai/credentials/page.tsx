@@ -1,3 +1,5 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -148,11 +150,10 @@ export default async function CredentialsPage() {
     ambiente.gateway || Object.values(ambiente.chavesDeProvedor).some(Boolean);
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{traduzir("Chaves de acesso à IA", idioma)}</h1>
-        <p className="text-sm text-muted-foreground">
-          {/* Os provedores saem da lista única: escritos à mão, a frase citava
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={traduzir("Chaves de acesso à IA", idioma)}
+        descricao={<>{/* Os provedores saem da lista única: escritos à mão, a frase citava
               três quando já eram cinco. */}
           {traduzir(
             "A conta de inteligência artificial é sua: você contrata direto com {provedores} e cola a chave aqui. A chave fica guardada criptografada e nunca mais aparece na tela depois de salva — nem para você. O Jev (TypeSafe) não conversa com o cliente: a chave dele serve só para decisões rápidas.",
@@ -162,9 +163,8 @@ export default async function CredentialsPage() {
             new Intl.ListFormat(tagDeIdioma(idioma), { type: "disjunction" }).format(
               PROVEDORES.map((p) => p.rotulo),
             ),
-          )}
-        </p>
-      </header>
+          )}</>}
+      />
       <CredentialsList
         initialData={credentials}
         canWrite={canWrite}
@@ -172,6 +172,6 @@ export default async function CredentialsPage() {
         jev={jev}
         instalacaoTemIa={instalacaoTemIa}
       />
-    </div>
+    </CorpoDaPagina>
   );
 }

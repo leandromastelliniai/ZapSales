@@ -1,3 +1,5 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -35,19 +37,15 @@ export default async function AtendimentoFlowsPage() {
   const canWrite = ROLE_RANK[activeOrg.role] >= ROLE_RANK.manager;
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Fluxos de atendimento")}</h1>
-          <p className="text-sm text-text-muted">
-            {t(
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={t("Fluxos de atendimento")}
+        descricao={t(
               "Perguntas que a IA faz durante a conversa, em ordem, e o que fazer ao concluir — os dados ficam guardados por cliente.",
             )}
-          </p>
-        </div>
-      </header>
+      />
       <ComoUsar t={t} />
       <FlowsList initialData={flows} canWrite={canWrite} surface="atendimento" />
-    </div>
+    </CorpoDaPagina>
   );
 }

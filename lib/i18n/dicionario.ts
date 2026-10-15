@@ -14467,6 +14467,11 @@ export const DICIONARIO: Traducoes = {
   "Todas as pessoas que já falaram com você, com busca e filtros.": { es: "Todas las personas que ya hablaron contigo, con búsqueda y filtros." },
   // ─── AUDITORIA (plano visual de 14/10/2026) ───
   "ID da requisição": { es: "ID de la solicitud" },
+  // ─── TÍTULOS DE TELAS EM PORTUGUÊS CLARO (plano visual de 14/10/2026) ───
+  "Agentes de IA": { es: "Agentes de IA" },
+  "Configure o jeito de atender dos agentes que respondem no WhatsApp.": { es: "Configura la forma de atender de los agentes que responden en WhatsApp." },
+  ", vocabulário, campos personalizados e motivos de perda": { es: ", vocabulario, campos personalizados y motivos de pérdida" },
+  "Chaves de acesso para outros sistemas falarem com este. O texto da chave aparece": { es: "Claves de acceso para que otros sistemas hablen con este. El texto de la clave aparece" },
 };
 
 /**

@@ -19,7 +19,8 @@ export function CabecalhoDePagina({
   acoes,
 }: {
   titulo: string;
-  descricao: string;
+  /** Texto simples ou um trecho com ênfase e código (`<strong>`, `<code>`): o parágrafo é o mesmo. */
+  descricao: ReactNode;
   ajuda?: ReactNode;
   acoes?: ReactNode;
 }) {

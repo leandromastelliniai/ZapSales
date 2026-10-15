@@ -1,3 +1,5 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -53,18 +55,12 @@ export default async function AgentsListPage() {
   const idioma = user.idioma;
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {traduzir("Agents de IA", idioma)}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {traduzir("Configure o comportamento dos agents que respondem no WhatsApp.", idioma)}
-          </p>
-        </div>
-      </header>
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={traduzir("Agentes de IA", idioma)}
+        descricao={traduzir("Configure o jeito de atender dos agentes que respondem no WhatsApp.", idioma)}
+      />
       <AgentsList initialData={agents} canWrite={canWrite} />
-    </div>
+    </CorpoDaPagina>
   );
 }
