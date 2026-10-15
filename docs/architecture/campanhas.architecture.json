@@ -341,6 +341,28 @@
       "type": "logic",
       "label": "registro.ts — 80% e 100% das 1.000 de atendimento grátis viram aviso na Central (atendimento_gratis_do_numero)"
     }
+    ,
+    {
+      "id": "lista-csv",
+      "lane": "tela",
+      "col": 5,
+      "type": "ui",
+      "label": "SubirListaCsv (nova e edição) — planilha modelo, formato do telefone, resumo por linha"
+    },
+    {
+      "id": "importacao-contatos",
+      "lane": "api",
+      "col": 7,
+      "type": "service",
+      "label": "POST /api/v1/contacts/import (exigir_telefone) — devolve contact_ids: novos e já existentes"
+    },
+    {
+      "id": "contatos",
+      "lane": "dados",
+      "col": 7,
+      "type": "database",
+      "label": "contacts — o contato da planilha nasce (source import_csv) ou é reaproveitado"
+    }
   ],
   "edges": [
     { "id": "lista-abre-nova", "from": "lista", "to": "nova", "label": "Nova campanha" },
@@ -413,6 +435,10 @@
     { "id": "webhook-registra-custo", "from": "webhook-meta", "to": "meta-message-costs", "label": "pricing do status: a Meta diz se cobrou; a tabela diz quanto" },
     { "id": "custos-avisam", "from": "meta-message-costs", "to": "aviso-gratis", "label": "mensagem de atendimento cruza 800 ou 1.000 no mês do fuso" },
     { "id": "detalhe-le-custo", "from": "detalhe", "to": "rota-custo", "label": "cartão de custo e aviso de pausa automática" },
-    { "id": "custo-le-tabela", "from": "rota-custo", "to": "meta-pricing-rates", "label": "estimativa da prévia e da campanha preparada" }
+    { "id": "custo-le-tabela", "from": "rota-custo", "to": "meta-pricing-rates", "label": "estimativa da prévia e da campanha preparada" },
+    { "id": "csv-importa", "from": "lista-csv", "to": "importacao-contatos", "label": "multipart do CSV, telefone obrigatório" },
+    { "id": "importacao-grava", "from": "importacao-contatos", "to": "contatos", "label": "cria os novos; os que já existiam voltam pelo id (mesclado → sobrevivente)" },
+    { "id": "csv-vira-filtro", "from": "lista-csv", "to": "rota-criar", "label": "audience_filter.incluir_contatos = ids da planilha" },
+    { "id": "preparacao-le-incluidos", "from": "preparacao", "to": "contatos", "label": "só os ids da lista, quando não há recorte (a consulta principal não roda)" }
   ]
 }

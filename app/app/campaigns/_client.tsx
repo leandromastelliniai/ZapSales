@@ -35,9 +35,9 @@ export function ListaDeCampanhas() {
   return (
     <CorpoDaPagina className="gap-4">
       <CabecalhoDePagina
-        titulo={t("Campanhas")}
+        titulo={t("Disparo em massa")}
         descricao={t("Escolha o público, escreva a mensagem e acompanhe quem recebeu.")}
-        ajuda={<ComoFunciona chave="campanhas" pagina={t("Campanhas")} />}
+        ajuda={<ComoFunciona chave="campanhas" pagina={t("Disparo em massa")} />}
         acoes={
           <>
             <Button variant="outline" size="sm" asChild>
