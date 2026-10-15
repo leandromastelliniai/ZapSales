@@ -4,10 +4,7 @@ import { redirect } from "next/navigation";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/server";
-import { traduzir } from "@/lib/i18n/dicionario";
-import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
-import { ComoFunciona } from "@/components/shell/ComoFunciona";
-import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+import type { EtapaDaLinha } from "@/components/inbox/visual/LinhaDoFunil";
 import { FunisClient, type FunilDaLista } from "./_client";
 
 export const dynamic = "force-dynamic";
@@ -63,26 +60,30 @@ export default async function KanbanPickerPage() {
   // Importar planilha é ESCRITA DE OPERAÇÃO, não configuração: quem atende
   // sobe a lista que recebeu. Espelha o `requireRole("agent")` da rota.
   const podeImportar = ROLE_RANK[activeOrg.role] >= ROLE_RANK.agent;
-  const idioma = user.idioma;
-  const t = (texto: string) => traduzir(texto, idioma);
+  // A Linha do Funil de cada funil na lista: as etapas vivas, na ordem. O filtro de organização NÃO é
+  // redundante com a RLS pelo mesmo motivo da consulta de cima (quem participa de duas organizações).
+  const idsDosFunis = funis.map((f) => f.id);
+  const { data: etapas } = idsDosFunis.length
+    ? await supabase
+        .from("crm_stages")
+        .select("id, pipeline_id, name, is_lost, position")
+        .eq("organization_id", activeOrg.orgId)
+        .eq("is_archived", false)
+        .in("pipeline_id", idsDosFunis)
+        .order("position")
+    : { data: [] };
+  const etapasPorFunil: Record<string, EtapaDaLinha[]> = {};
+  for (const e of etapas ?? []) {
+    (etapasPorFunil[e.pipeline_id] ??= []).push({ id: e.id, nome: e.name, perdida: e.is_lost });
+  }
 
   return (
-    <CorpoDaPagina className="gap-4">
-      {/* Era "Pipelines" — nome de quem construiu o sistema, não de quem
-          vende. Trocar o nome custou quatro assertions em três specs
-          (`rbac-roles`, `invite-lifecycle`, `pipelines-gestao`); todas atualizadas junto. */}
-      <CabecalhoDePagina
-        titulo={t("Funis")}
-        descricao={t("Os funis pelos quais seus clientes passam, da primeira conversa até fechar negócio.")}
-        ajuda={<ComoFunciona chave="funis" pagina={t("Funis")} />}
-      />
-
-      <FunisClient
-        funis={funis}
-        arquivados={arquivados}
-        podeGerenciar={podeGerenciar}
-        podeImportar={podeImportar}
-      />
-    </CorpoDaPagina>
+    <FunisClient
+      funis={funis}
+      arquivados={arquivados}
+      podeGerenciar={podeGerenciar}
+      podeImportar={podeImportar}
+      etapasPorFunil={etapasPorFunil}
+    />
   );
 }
