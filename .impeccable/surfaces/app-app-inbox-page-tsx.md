@@ -39,6 +39,7 @@ O que não se literaliza do comp: o texto e as fotos de exemplo (são dados ilus
 
 - **Fonte (07/10/2026, decisão do dono):** o texto usa Atkinson Hyperlegible, a face que o app já tem, desenhada para leitura fácil. A medição aproximou a letra do comp de Voces/Roboto (empate técnico: distâncias 0,683 / 0,688 / 0,710). As leituras de fonte do gate viram aviso, não bloqueio. Rótulos em caixa alta e números seguem em IBM Plex Mono, como hoje.
 - **Menu (07/10/2026):** o trilho só de ícones vale para o app inteiro nesta rodada.
+  **Revisto em 14/10/2026 (decisão do dono):** o menu abre **expandido** (ícone + nome) em todas as telas; o trilho só de ícones segue disponível por escolha da pessoa (botão Recolher). Sem o nome, os três "Ver tudo" eram a mesma seta.
 - **Prova sem Docker (07/10/2026):** a comparação com o comp roda numa vitrine com dados de exemplo em `/design`; a prova com banco real é o e2e do CI.
 
 ## Decisões em aberto

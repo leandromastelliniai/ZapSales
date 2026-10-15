@@ -3,6 +3,9 @@
 import { AuthProvider } from "@/hooks/auth/AuthProvider";
 import type { ActiveOrg, AuthUser } from "@/lib/auth/types";
 import { Sidebar } from "@/components/shell/Sidebar";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { Button } from "@/components/ui/button";
 import { ICONE_DO_HUB, NAV_DESTINATIONS, NAV_GROUPS } from "@/lib/navigation/registry";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000001";
@@ -69,6 +72,17 @@ export function VitrineDoSistema() {
                 <Sidebar collapsed />
               </div>
             </div>
+          </div>
+        </Quadro>
+
+        <Quadro titulo="Cabeçalho de página, com o botão Como funciona">
+          <div className="rounded-lg border bg-card p-6" data-vitrine="cabecalho">
+            <CabecalhoDePagina
+              titulo="Funis"
+              descricao="Os funis pelos quais seus clientes passam, da primeira conversa até fechar negócio."
+              ajuda={<ComoFunciona chave="funis" pagina="Funis" />}
+              acoes={<Button size="sm">Novo funil</Button>}
+            />
           </div>
         </Quadro>
 

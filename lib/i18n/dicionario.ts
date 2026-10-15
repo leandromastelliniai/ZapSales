@@ -14444,6 +14444,11 @@ export const DICIONARIO: Traducoes = {
   atendendo: { es: "atendiendo" },
   "passou a conversa para a equipe": { es: "pasó la conversación al equipo" },
   "motivo": { es: "motivo" },
+  // ─── CABEÇALHO PADRÃO E "COMO FUNCIONA" (plano visual de 14/10/2026) ───
+  "Passo a passo": { es: "Paso a paso" },
+  "Palavras desta tela": { es: "Palabras de esta pantalla" },
+  "Não foi possível carregar a ajuda. Feche e abra de novo.": { es: "No se pudo cargar la ayuda. Ciérrala y ábrela de nuevo." },
+  "Os funis pelos quais seus clientes passam, da primeira conversa até fechar negócio.": { es: "Los embudos por los que pasan tus clientes, desde la primera conversación hasta cerrar el negocio." },
 };
 
 /**
