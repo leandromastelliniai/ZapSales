@@ -6,8 +6,7 @@ titulo: Disparo em massa no menu lateral, com upload de lista em CSV dentro da c
 
 A tela de campanhas agora se chama **Disparo em massa** e ganhou um lugar no **menu lateral** (para
 gestores e administradores), em vez de ficar escondida atrás de "Ver tudo em CRM". O endereço
-continua o mesmo. Para o menu continuar cabendo em telas de 900 px de altura, **Atividades** saiu do
-menu lateral e segue em "Ver tudo em Análise" e na busca (⌘K).
+continua o mesmo.
 
 Em **Nova campanha**, o bloco **Público** tem agora **Subir uma lista de contatos (CSV)**:
 
