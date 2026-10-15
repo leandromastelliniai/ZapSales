@@ -252,12 +252,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     needsMfaGate = mfaRequired;
   }
 
-  // Read sidebar collapsed state SSR to avoid flash.
-  // O padrão é o TRILHO (só ícones, nome no hover): só quem expandiu de propósito
-  // — cookie "0", gravado por `toggleSidebar` — vê o menu largo. Decisão do dono
-  // (07/10/2026, direção "Linha do Funil"): a Inbox ganha a largura de volta.
+  // Lê o estado do menu no servidor, para não piscar.
+  // O padrão é o menu EXPANDIDO (ícone + nome): só quem recolheu de propósito —
+  // cookie "1", gravado por `toggleSidebar` — vê o trilho de ícones. Decisão do dono
+  // (14/10/2026), que reverte a de 07/10: sem o nome, os três "Ver tudo" eram a mesma
+  // seta e ninguém sabia para onde cada ícone levava.
   const store = await cookiesPromise;
-  const collapsed = store.get("sidebar_collapsed")?.value !== "0";
+  const collapsed = store.get("sidebar_collapsed")?.value === "1";
 
   const impersonating = user.support ? {
     tenantId: user.support.organization_id, tenantName: user.support.name,

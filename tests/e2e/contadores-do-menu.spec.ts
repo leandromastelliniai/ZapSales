@@ -220,7 +220,7 @@ test.describe("contadores do menu", () => {
     await limpar();
   });
 
-  // Esta spec mede o menu EXPANDIDO; desde 07/10/2026 o padrão é o trilho recolhido:
+  // Esta spec mede o menu EXPANDIDO; o cookie é gravado de propósito (o padrão passou a ser expandido em 14/10/2026 e já foi o trilho):
   // recolhido, o selo vira um ponto SEM número (`compacto`), e o `toHaveText`
   // abaixo não teria o que ler.
   test.beforeEach(async ({ context, baseURL }) => {

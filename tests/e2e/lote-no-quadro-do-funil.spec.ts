@@ -491,7 +491,7 @@ test.describe("Quadro do funil — agir em vários cards de uma vez", () => {
   test.describe("o quadro cabe na tela", () => {
     test.use({ viewport: { width: 820, height: 600 } });
 
-    // A fixture depende da barra ABERTA: esta spec mede o menu EXPANDIDO; desde 07/10/2026 o padrão é o trilho recolhido.
+    // A fixture depende da barra ABERTA: esta spec mede o menu EXPANDIDO; o cookie é gravado de propósito (o padrão passou a ser expandido em 14/10/2026 e já foi o trilho).
     // Com o trilho de 64px sobram 708px para o quadro, duas etapas de 20rem
     // (684px com o respiro) passam a caber lado a lado, e "o quadro rola de lado"
     // reprovaria como fixture — não como defeito.
