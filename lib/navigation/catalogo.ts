@@ -793,7 +793,13 @@ export const NAV_CATALOG = [
     icon: "ClockCounterClockwise",
     group: "analise",
     section: "Os números do período",
-    sidebar: true,
+    // SEM `sidebar` desde 2026-10-15: foi o item que cedeu o lugar de "Disparo em
+    // massa" no menu lateral. O dono do produto autorizou trocar um item para o
+    // menu não rolar em 900 px — MEDIDO: com os dois, `navegacao.spec.ts` reprova
+    // e `interface-por-empresa.test.ts` (folga 0 com 15 itens) também. Este é de
+    // consulta periódica (relatório do período), não de uso a cada atendimento. A
+    // porta continua: "Ver tudo em Análise" e o ⌘K. Volta ao sidebar no dia em
+    // que o menu ganhar altura.
   },
   {
     // Observabilidade, não configuração: por isso não fica junto dos agentes.

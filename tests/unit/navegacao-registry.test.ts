@@ -129,7 +129,9 @@ describe("sidebarGroups", () => {
       "/app/kanban",
       // Disparo em massa entrou em 2026-10-15 por pedido do dono do produto: quem
       // procurava o disparo não o achava atrás do hub. A altura em 900px é medida
-      // pelo e2e `navegacao.spec.ts`.
+      // pelo e2e `navegacao.spec.ts`, e o menu só cabe com 15 itens
+      // (`interface-por-empresa.test.ts`): Atividades cedeu o lugar e segue no hub
+      // de Análise e no ⌘K.
       "/app/campaigns",
       "/app/contacts",
       "/app/tasks",

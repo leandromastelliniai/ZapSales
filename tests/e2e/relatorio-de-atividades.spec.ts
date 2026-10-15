@@ -290,25 +290,18 @@ test.describe("Relatório de atividades — o período, pela tela", () => {
 
     await login(page, creds.users.manager!.email, creds.password);
 
+    // A porta é o hub do grupo ("Ver tudo em Análise"), e não o menu lateral:
+    // desde 2026-10-15 o menu cede o lugar a "Disparo em massa" (ele só cabe em
+    // 900 px com 15 itens — `navegacao.spec.ts` e `interface-por-empresa.test.ts`).
+    // Continua sendo porta de verdade: um clique no menu, outro no hub.
     const sidebar = page.getByRole("navigation", { name: "Navegação principal" });
-    const item = sidebar.getByRole("link", { name: "Atividades", exact: true });
+    await sidebar.getByRole("link", { name: "Ver tudo em Análise" }).click({ timeout: 30_000 });
+    await page.waitForURL(/\/app\/analise/, { timeout: 30_000 });
+    const item = page.getByRole("main").getByRole("link", { name: /Atividades/ });
     await expect(item, "tela sem porta é tela que só existe para quem digita a URL").toBeVisible({
       timeout: 30_000,
     });
     expect(await item.getAttribute("href")).toBe("/app/activities");
-
-    // O grupo importa: "Atividades" é irmã de Desempenho e Audit Log, não de
-    // Inbox. Ir parar no grupo errado é a diferença entre achar e caçar.
-    const grupo = await item.evaluate((a) => {
-      let el: Element | null = a;
-      while (el && el.previousElementSibling === null) el = el.parentElement;
-      // sobe até achar o cabeçalho de grupo mais próximo acima
-      const titulos = [...document.querySelectorAll('nav[aria-label="Navegação principal"] h2')];
-      const y = a.getBoundingClientRect().top;
-      const acima = titulos.filter((h) => h.getBoundingClientRect().top < y);
-      return (acima[acima.length - 1]?.textContent ?? "").trim();
-    });
-    expect(grupo, "Atividades pertence ao grupo Análise").toMatch(/an[áa]lise/i);
 
     await item.click();
     await page.waitForURL(/\/app\/activities/, { timeout: 30_000 });
@@ -443,7 +436,9 @@ test.describe("Relatório de atividades — o período, pela tela", () => {
     // rota é `viewer` de propósito: um piso mais alto esconderia da pessoa as
     // atividades dela mesma.
     const sidebar = page.getByRole("navigation", { name: "Navegação principal" });
-    await expect(sidebar.getByRole("link", { name: "Atividades", exact: true })).toBeVisible({
+    await sidebar.getByRole("link", { name: "Ver tudo em Análise" }).click({ timeout: 30_000 });
+    await page.waitForURL(/\/app\/analise/, { timeout: 30_000 });
+    await expect(page.getByRole("main").getByRole("link", { name: /Atividades/ })).toBeVisible({
       timeout: 30_000,
     });
 
