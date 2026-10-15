@@ -12,6 +12,7 @@ const ajuda: AjudaDaPagina = {
     passos: [
       "Para criar, use Nova campanha. Dê um nome, escolha o número que vai enviar, defina o público e escreva a mensagem. Isso só cria um rascunho: nada é enviado ainda.",
       "No público, escolha pelo menos um critério (etiquetas, dias sem conversa ou funil) e use Ver quantas pessoas para conferir quantos recebem e por que alguns ficam de fora. Depois, Salvar rascunho.",
+      "Tem uma planilha de contatos? Em Subir uma lista de contatos (CSV), use Baixar planilha modelo, preencha nome e telefone (o telefone com DDD, de preferência com + e o código do país, como +5511999998888) e use Enviar lista. Quem estiver na planilha entra em Contatos e passa a ser o público desta campanha; linhas com problema aparecem com o número e o motivo, e ficam de fora.",
       "Abra a campanha e use Preparar lista para ver quem entra. Com a lista pronta, aparecem Enviar teste e Iniciar envio.",
       "Com a campanha enviando, use Pausar, Retomar ou Cancelar campanha. Cancelar é definitivo. Acompanhe os números Na lista, Enviadas, Entregues e Responderam.",
       "No alto da lista, o campo Situação filtra as campanhas. O botão Configuração guarda os padrões de ritmo, os textos salvos e a lista de números que nenhuma campanha deve alcançar.",
@@ -29,6 +30,7 @@ const ajuda: AjudaDaPagina = {
     passos: [
       "Para crear una, usa Nueva campaña. Ponle un nombre, elige el número que va a enviar, define el público y escribe el mensaje. Esto solo crea un borrador: todavía no se envía nada.",
       "En el público, elige al menos un criterio (etiquetas, días sin conversación o embudo) y usa Ver cuántas personas para comprobar cuántas reciben y por qué algunas quedan fuera. Después, Guardar borrador.",
+      "¿Tienes una hoja de contactos? En Subir una lista de contactos (CSV), usa Descargar plantilla, completa nombre y teléfono (el teléfono con código de área, de preferencia con + y el código del país, como +5511999998888) y usa Enviar lista. Quien esté en la hoja entra en Contactos y pasa a ser el público de esta campaña; las filas con problema aparecen con el número y el motivo, y quedan fuera.",
       "Abre la campaña y usa Preparar lista para ver quién entra. Con la lista preparada, aparecen Enviar prueba e Iniciar envío.",
       "Con la campaña enviando, usa Pausar, Reanudar o Cancelar campaña. Cancelar es definitivo. Sigue los números En la lista, Enviadas, Entregadas y Respondieron.",
       "En la parte de arriba de la lista, el campo Estado filtra las campañas. El botón Configuración guarda los valores predeterminados de ritmo, los textos guardados y la lista de números que ninguna campaña debe alcanzar.",
@@ -46,6 +48,7 @@ const ajuda: AjudaDaPagina = {
     passos: [
       "To create one, use New campaign. Give it a name, pick the number that will send, define the audience and write the message. This only creates a draft: nothing is sent yet.",
       "In the audience, choose at least one criterion (tags, days without a conversation or pipeline) and use See how many people to check how many will receive it and why some are left out. Then Save draft.",
+      "Have a spreadsheet of contacts? Under Upload a contact list (CSV), use Download template spreadsheet, fill in name and phone (the phone with area code, preferably with + and the country code, like +5511999998888) and use Send list. Everyone in the spreadsheet is added to Contacts and becomes this campaign's audience; rows with problems show up with the row number and the reason, and are left out.",
       "Open the campaign and use Prepare list to see who is in. Once the list is ready, Send test and Start sending appear.",
       "While the campaign is sending, use Pause, Resume or Cancel campaign. Canceling is final. Follow the numbers On the list, Sent, Delivered and Replied.",
       "At the top of the list, the Status field filters the campaigns. The Configuration button holds the default pace, the saved texts and the list of numbers no campaign should reach.",

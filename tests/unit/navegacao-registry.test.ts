@@ -127,6 +127,11 @@ describe("sidebarGroups", () => {
     const crm = sidebarGroups(true, null).find((g) => g.group.id === "crm");
     expect(crm?.items.map((i) => i.href)).toEqual([
       "/app/kanban",
+      // Disparo em massa entrou em 2026-10-15 por pedido do dono do produto: quem
+      // procurava o disparo não o achava atrás do hub. A altura em 900px é medida
+      // pelo e2e `navegacao.spec.ts`; para o menu continuar cabendo, Atividades
+      // (relatório periódico) saiu do sidebar e segue no hub de Análise e no ⌘K.
+      "/app/campaigns",
       "/app/contacts",
       "/app/tasks",
       // "/app/calls" (telefonia por SIP) NÃO entra aqui, e a ausência é a

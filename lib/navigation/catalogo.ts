@@ -220,15 +220,27 @@ export const NAV_CATALOG = [
     // A campanha vive no CRM e não em Conexões: quem a usa está pensando em
     // QUEM vai falar, não no número que fala. O ritmo (que é de Conexões) ela
     // herda, e só sabe deixar mais devagar.
+    //
+    // ─── O NOME É "Disparo em massa", e o endereço continua /app/campaigns ───
+    // O dono do produto pediu o nome explícito: "Campanhas" não diz, a quem abre
+    // o menu pela primeira vez, que é aqui que se manda mensagem para uma lista
+    // (inclusive uma planilha CSV). A URL não muda — link salvo e histórico
+    // seguem valendo.
+    //
+    // ─── E ESTÁ NO MENU LATERAL desde 2026-10-15 ───
+    // Antes ficava só no hub, e quem procurava o disparo não achava. Entrou no
+    // sidebar do CRM com `minRole: "manager"` (a API da campanha exige manager:
+    // mostrar a quem toma 403 seria uma porta que não abre). O custo de altura é
+    // medido em 900px por `tests/e2e/navegacao.spec.ts`.
     href: "/app/campaigns",
-    label: "Campanhas",
-    description: "Fale com uma lista de contatos que você escolhe, no ritmo do número.",
+    label: "Disparo em massa",
+    description:
+      "Mande uma mensagem para muita gente de uma vez — suba uma planilha CSV ou escolha contatos que já estão aqui.",
     icon: "Megaphone",
     group: "crm",
     section: "O dia a dia da venda",
-    // SÓ NO HUB, como as demais telas de preparação: o quinto item do sidebar do
-    // CRM já fez o menu rolar 13px em 900px (e2e `navegacao.spec.ts`), e a
-    // campanha é montada de vez em quando, não aberta todo dia.
+    minRole: "manager",
+    sidebar: true,
   },
   {
     href: "/app/contacts",
@@ -781,7 +793,12 @@ export const NAV_CATALOG = [
     icon: "ClockCounterClockwise",
     group: "analise",
     section: "Os números do período",
-    sidebar: true,
+    // SEM `sidebar` desde 2026-10-15: foi o item que cedeu o lugar de "Disparo em
+    // massa" no menu lateral. O dono do produto autorizou trocar um item para o
+    // menu não rolar em 900px (`tests/e2e/navegacao.spec.ts`), e este é de
+    // consulta periódica (relatório do mês), não de uso a cada atendimento. A
+    // porta continua: "Ver tudo em Análise" e o ⌘K. Volta ao sidebar no dia em
+    // que o menu ganhar altura.
   },
   {
     // Observabilidade, não configuração: por isso não fica junto dos agentes.
