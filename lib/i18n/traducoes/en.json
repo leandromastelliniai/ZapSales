@@ -9353,5 +9353,6 @@
   "Configure o jeito de atender dos agentes que respondem no WhatsApp.": "Set how the agents that answer on WhatsApp handle customers.",
   ", vocabulário, campos personalizados e motivos de perda": ", vocabulary, custom fields and loss reasons",
   "Chaves de acesso para outros sistemas falarem com este. O texto da chave aparece": "Access keys so other systems can talk to this one. The key text appears",
-  "As propostas comerciais enviadas aos seus clientes, com o número e o estado de cada uma.": "The commercial proposals sent to your customers, with each one's number and status."
+  "As propostas comerciais enviadas aos seus clientes, com o número e o estado de cada uma.": "The commercial proposals sent to your customers, with each one's number and status.",
+  "Dados para quem cadastra o aplicativo no Google": "Details for whoever registers the app with Google"
 }

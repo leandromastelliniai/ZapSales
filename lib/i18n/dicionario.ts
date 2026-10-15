@@ -14474,6 +14474,8 @@ export const DICIONARIO: Traducoes = {
   "Chaves de acesso para outros sistemas falarem com este. O texto da chave aparece": { es: "Claves de acceso para que otros sistemas hablen con este. El texto de la clave aparece" },
   // ─── PROPOSTAS (plano visual de 14/10/2026) ───
   "As propostas comerciais enviadas aos seus clientes, com o número e o estado de cada uma.": { es: "Las propuestas comerciales enviadas a tus clientes, con el número y el estado de cada una." },
+  // ─── AGENDA (plano visual de 14/10/2026) ───
+  "Dados para quem cadastra o aplicativo no Google": { es: "Datos para quien registra la aplicación en Google" },
 };
 
 /**
