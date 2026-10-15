@@ -1,3 +1,5 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { LinksRastreaveis } from "./_linksRastreaveis";
 import { listarLinks, metricasLinks } from "@/lib/plataformas-de-anuncio/rastreio/links";
 /**
@@ -233,15 +235,13 @@ export default async function ConversoesPage({
   )}`;
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-y-auto p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Conversões")}</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          {t(
+    <CorpoDaPagina className="overflow-y-auto">
+      <CabecalhoDePagina
+        titulo={t("Conversões")}
+        descricao={t(
             "Quando um negócio que veio de anúncio é marcado como ganho, o valor da venda volta para a plataforma que trouxe o cliente. É esse retorno que ensina o anúncio a procurar mais gente parecida com quem comprou.",
           )}
-        </p>
-      </header>
+      />
 
       <nav className="flex gap-1 border-b" aria-label={t("Seções de conversões")}>
         {(
@@ -566,6 +566,6 @@ export default async function ConversoesPage({
           </section>
         </>
       )}
-    </div>
+    </CorpoDaPagina>
   );
 }
