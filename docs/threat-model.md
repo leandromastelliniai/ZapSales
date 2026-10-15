@@ -247,11 +247,15 @@ Não avaliado por falta de execução/instância:
   pela WABA — que a conexão confere contra o token (`numeroPertenceAWaba`) —, nunca por dado do
   corpo. Quem for dono do mesmo portfólio na Meta já vê esse número no WhatsApp Manager.
 
-### T9 — O CI como superfície: ação de terceiros e log público 🟢 MITIGADO — CONFIRMADO por teste, falta a implantação real
+### T9 — O CI como superfície: ação de terceiros e log público 🟢 MITIGADO — CONFIRMADO por teste e pela produção
 
-As duas camadas estão provadas por teste; a prova pela implantação real (o log do job
-`implantar` mostrando só etapas, e `/var/log/zapsales/implantar-*` completo na VPS) só existe
-depois do merge, e está pedida no critério de aceite da issue #39.
+As duas camadas estão provadas por teste e, em 07/10/2026, pela produção: na implantação de
+`4b01c53` (execução `37629918172` do workflow `implantar`) o log público mostrou só etapas, e o
+registro do kit ficou inteiro só em `/var/log/zapsales/`. Aquela rodada ainda usou o comando
+antigo da VPS — é ela que instala o novo —; o redisparo seguinte (`37631574384`) passou pelo
+comando novo, e a sessão devolveu as etapas sem a marca `[implantar] ` que o registro da VPS
+guarda. Para conferir qualquer implantação, leia o passo "Implantar na VPS" do job `implantar`:
+`gh run view <execução> --log --job <id do job implantar>`.
 
 O repositório é **público**, e o CI tem segredos que alcançam a produção: `DEPLOY_SSH_KEY`
 (chega à VPS pelo `implantar.yml`), o token de publicação no GHCR e o token de um GitHub App.
@@ -292,7 +296,7 @@ do Dependabot, não que ele é benigno.
 | T5 | 3 secrets fora do `.env.example` | 🟠 | trivial |
 | T7 | Sem scan de secret no CI + 116 PNGs de evidência sem revisão de PII | 🟡 | baixo |
 | T6 | Guard de SSRF existe; o E2E que o prova não roda no CI | 🟢 | baixo |
-| T9 | CI público: ações por hash e log da VPS só com etapas redigidas (#39) | 🟢 | feito por teste (`test:unit` e `test:shell`); falta a prova de uma implantação real |
+| T9 | CI público: ações por hash e log da VPS só com etapas redigidas (#39) | 🟢 | feito — teste (`test:unit`, `test:shell`) e implantação real |
 
 **Conclusão honesta:** os *mecanismos* de segurança deste projeto são acima da média para
 um CRM open-source — HMAC em tempo constante em toda borda, fail-closed nos crons, hash de

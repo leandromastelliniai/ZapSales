@@ -23,14 +23,14 @@ Lista canônica do que **não fazer** no ZapSales. Anti-patterns ficam aqui pra 
 ## 3. ❌ Gradient roxo/azul/rosa em hero ou primary button
 
 **Por quê:** símbolo do "AI SaaS 2024". Datado e clichê. Não combina com soft-tech calmo.
-**✅ Sim:** solid `accent-500` (Sage `#67885d`). Profundidade vem de border + shadow neutro, não gradient.
+**✅ Sim:** cor sólida, o violeta da marca (`--color-accent`). Profundidade vem de border + shadow neutro, não gradient.
 
 ---
 
-## 4. ❌ `bg-zinc-900` ou `bg-slate-900` em dark mode
+## 4. ❌ `bg-zinc-900`, `bg-slate-900` ou preto puro em dark mode
 
-**Por quê:** zinc/slate são cool-gray geométricos. A paleta é warm (greige). Misturar quebra coerência.
-**✅ Sim:** `bg: #161510` (warm dark canônico). Ver `02-palette-sage.md`.
+**Por quê:** cinzas genéricos do Tailwind e o preto puro ignoram a paleta. Desde 07/10/2026 o escuro é azul-noite (Futuristas), não greige.
+**✅ Sim:** os tokens `--color-bg` / `--color-surface` (`#151a2e` / `#1b2240`). Ver `02-palette-futuristas.md`.
 
 ---
 
@@ -55,9 +55,9 @@ Lista canônica do que **não fazer** no ZapSales. Anti-patterns ficam aqui pra 
 
 ---
 
-## 8. ❌ Sage accent como bg de toda a sidebar
+## 8. ❌ O violeta da marca como bg de toda a sidebar
 
-**Por quê:** a sidebar é greige (`surface` ou `surface-elevated`). Accent na sidebar fica saturado e cansa em 8h.
+**Por quê:** a sidebar é `surface` ou `surface-elevated`. Accent na sidebar inteira fica saturado e cansa em 8h.
 **✅ Sim:** sidebar `surface`, com hover `accent-soft` em items de nav, active `accent-soft` + text `accent`.
 
 ---
@@ -71,8 +71,8 @@ Lista canônica do que **não fazer** no ZapSales. Anti-patterns ficam aqui pra 
 
 ## 10. ❌ `red-500` puro (#ef4444) pra error
 
-**Por quê:** vermelho saturado em UI calma vira alarme. Quebra o tom soft-tech.
-**✅ Sim:** `error: #a94a3c` (light) ou `#c87263` (dark). Saturação ≤ 55%. Ver `02-palette-sage.md`.
+**Por quê:** vermelho genérico em área grande vira alarme.
+**✅ Sim:** o token `--color-error` (coral: `#c8372a` no claro, `#ff6b5e` no escuro), em ícone, texto e marca pequena; em área grande, `--color-error-bg`. Ver `02-palette-futuristas.md`.
 
 ---
 

@@ -235,3 +235,62 @@ implantar › Run workflow (o mesmo portão vale).
 Depois da implantação contínua, rodar `kit/instalar.sh` à mão sobre o mesmo código mantém a
 imagem `sha-<commit>` — não cai na versão do `package.json`, que poria a última release sobre um
 banco mais novo.
+
+---
+
+## 6. A VPS está sendo limitada por CPU? (somente leitura)
+
+Lentidão que aparece só em algumas requisições, com o banco rápido, pode ser o container esperando
+a CPU que o teto dele não deixa usar. O Docker aplica o teto (`cpus:`) por um cgroup, e o kernel
+conta quantas vezes cortou o container. Nada abaixo altera nada.
+
+```bash
+# 1. onde está o cgroup do container (cgroup v2, o padrão do Ubuntu 22.04+)
+ID=$(docker inspect -f '{{.Id}}' zapsales-auth-1)
+D=/sys/fs/cgroup/system.slice/docker-$ID.scope
+
+# 2. quanto ele PODE usar: "<cota> <período>" em µs. "50000 100000" = 0,5 núcleo; "max" = sem teto
+cat $D/cpu.max
+
+# 3. quantas vezes foi LIMITADO — tire o retrato ANTES e DEPOIS de uma rajada e compare a diferença
+grep -E 'nr_periods|nr_throttled|throttled_usec' $D/cpu.stat
+```
+
+Como ler: `nr_throttled / nr_periods` é a fração de períodos de 100 ms em que o container bateu no
+teto, e `throttled_usec` é o tempo total parado. Os números são **acumulados desde que o container
+subiu** — o que vale é a **diferença** entre dois retratos. Diferença zero numa rajada = o teto não
+é a causa naquele momento. Repita para `zapsales-rest-1`, `zapsales-storage-1` e
+`zapsales-realtime-1` (o nome do projeto pode mudar a depender da instalação: `docker ps`).
+
+Se há limitação real, o ajuste é no `.env`, sem editar compose, e vale na próxima atualização ou em
+`docker compose up -d auth rest storage`:
+
+| variável | padrão | o que muda |
+|---|---|---|
+| `SUPABASE_AUTH_CPUS` | `2` | teto de CPU do login (GoTrue) |
+| `SUPABASE_AUTH_THREADS` | `2` | threads do GoTrue (`GOMAXPROCS`); acompanhe o teto, inteiro ≥ 1 |
+| `SUPABASE_REST_CPUS` | `1` | teto de CPU do PostgREST |
+| `SUPABASE_STORAGE_CPUS` | `1` | teto de CPU do armazenamento |
+
+Um `.env` antigo, sem essas variáveis, usa os padrões — não há o que editar na atualização. O
+Docker se recusa a subir um container com teto maior que os núcleos da máquina; os padrões cabem
+em uma VPS de 2 núcleos.
+
+### Diagnóstico da lentidão de requisição logada (#63, 2026-10-14)
+
+Medido na VPS de produção do projeto (8 núcleos, 32 GB, 25 GB livres, ociosa):
+
+| achado | número | leitura |
+|---|---|---|
+| `GET /auth/v1/user` no log do GoTrue | mediana 332 ms, pico 2,3 s | tempo de relógio do processo |
+| as 5 consultas dessa chamada no banco | ≈ 1 ms no total | **não** é o banco |
+| rotas públicas (login, health) | 50–90 ms | o caminho comum de autenticação é o que pesa |
+| DNS e cada serviço pela rede interna | 1–9 ms | **não** é rede |
+| períodos limitados (histórico acumulado, antes da #66) | auth 9,8% · rest 2,5% · storage 12,3% · realtime 1,3% · db 0,2% · app 4,8% | os três com `cpus: 0.5`; o GoTrue e o Storage com índice relevante |
+| rajada de 12 requisições (parte 1) | 0 limitações | o teto **não** explica aquela rajada, só o histórico |
+| fonte, blur, animação, imagem e JavaScript do tema Futuristas | nenhum acrescentado | o tema **não** é a causa |
+
+Descartados: banco, rede, tema visual, throttling na rajada medida. Tratados: 3 validações de
+usuário por requisição (→ 1, #64), cascata de consultas do layout (#65) e os tetos de CPU acima
+(#66). O que **não** foi medido nesta parte: o log do GoTrue e o delta de `cpu.stat` numa rajada
+*depois* da mudança de tetos — exigem a VPS já atualizada.

@@ -61,7 +61,7 @@ const TETO_DE_PASSAGENS = 20;
 
 /** As colunas que a tela lê. Um literal só — o supabase-js infere a linha do TIPO da string. */
 const COLUNAS =
-  "id, origem, motivo_codigo, title, body, notes, content, tentativas, cliente_avisado, aviso_motivo_codigo, caso_id, criado_em, reconhecido_em, reconhecido_por";
+  "id, origem, motivo_codigo, title, body, notes, content, tentativas, cliente_avisado, aviso_motivo_codigo, caso_id, criado_em, reconhecido_em, reconhecido_por, agente_id";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -110,12 +110,50 @@ export async function GET(_req: NextRequest, { params }: RouteParams): Promise<R
 
   const linhas = data ?? [];
   const nomes = await nomesDosAtendentes(linhas.map((l) => l.reconhecido_por));
+  const agentes = await nomesDosAgentes(
+    supabase,
+    org.orgId,
+    linhas.map((l) => l.agente_id),
+  );
 
   return ok(
     // `reconhecido_por` continua na linha mesmo sem nome: o dono é a VERDADE, o
     // nome é a cortesia. Cair para `null` aqui faria o cartão ler uma passagem
     // assumida como "devolvida ao automático".
-    linhas.map((l) => ({ ...l, reconhecido_por_nome: nomes.get(l.reconhecido_por ?? "") ?? null })),
+    linhas.map((l) => ({
+      ...l,
+      reconhecido_por_nome: nomes.get(l.reconhecido_por ?? "") ?? null,
+      // O nome do agente de IA que passou a conversa (0545). Nulo = passagem
+      // antiga, agente apagado ou sem agente resolvido: a tela diz só "IA".
+      agente_nome: agentes.get(l.agente_id ?? "") ?? null,
+    })),
     { requestId },
   );
+}
+
+/**
+ * Os nomes dos agentes de IA citados nas passagens. Só `id, name`: a policy de
+ * `ai_agents` deixa qualquer membro ler a linha inteira (prompt e config
+ * inclusive), e esta tela não precisa de mais nada. Falha degrada para "IA".
+ */
+async function nomesDosAgentes(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  organizationId: string,
+  ids: ReadonlyArray<string | null>,
+): Promise<Map<string, string>> {
+  const unicos = [...new Set(ids.filter((id): id is string => Boolean(id)))];
+  if (unicos.length === 0) return new Map();
+  const { data, error } = await supabase
+    .from("ai_agents")
+    .select("id, name")
+    .eq("organization_id", organizationId)
+    .in("id", unicos);
+  if (error) {
+    logger.warn("[passagens] nomes dos agentes não carregaram; a tela diz \"IA\"", {
+      organization_id: organizationId,
+      error: error.message,
+    });
+    return new Map();
+  }
+  return new Map((data ?? []).map((a) => [a.id, a.name]));
 }

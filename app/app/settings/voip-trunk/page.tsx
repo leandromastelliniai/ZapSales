@@ -1,3 +1,6 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -30,19 +33,18 @@ export default async function TrunkSettingsPage() {
   const canWrite = ROLE_RANK[activeOrg.role] >= ROLE_RANK.admin;
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{traduzir("Trunk SIP", idioma)}</h1>
-        <p className="text-sm text-muted-foreground">
-          {traduzir(
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={traduzir("Linha telefônica (SIP)", idioma)}
+        ajuda={<ComoFunciona chave="linha-telefonica" pagina={traduzir("Linha telefônica (SIP)", idioma)} />}
+        descricao={<>{traduzir(
             "Credenciais de registro do seu provedor SIP (Asterisk/AudioSocket). Depois de salvar, aplique o bloco abaixo em",
             idioma,
           )}{" "}
           <code>asterisk/pjsip.conf</code>{" "}
-          {traduzir("na VPS — a aplicação ainda é manual.", idioma)}
-        </p>
-      </header>
+          {traduzir("na VPS — a aplicação ainda é manual.", idioma)}</>}
+      />
       <TrunkSettingsClient initialData={(data as TrunkSettingsRow | null) ?? null} canWrite={canWrite} />
-    </div>
+    </CorpoDaPagina>
   );
 }

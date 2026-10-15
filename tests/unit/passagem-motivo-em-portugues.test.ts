@@ -88,6 +88,16 @@ const USO_COMO_CHAVE: Array<{ arquivo: string; codigo: string; razao: string }> 
   // arquivos abaixo exibe motivo de passagem — os dois usam o literal como CHAVE
   // de formulário. O guarda casava a string, não o papel; ele reprovou a main na
   // árvore mesclada do #1180 sem que nenhum dos dois lados tivesse errado.
+  //
+  // A vitrine da Inbox (direção "Linha do Funil", 07/10/2026) imita a RESPOSTA
+  // da API, e a API devolve o código cru: é a entrada dos componentes reais, que
+  // são exatamente onde a tradução por `FRASE_DO_MOTIVO` acontece.
+  {
+    arquivo: "app/vitrine-inbox/_dados.ts",
+    codigo: "requested_human",
+    razao:
+      "fixture que imita a resposta da API (`last_handoff_reason`, `motivo_codigo`) — entrada dos componentes, não texto exibido",
+  },
   {
     arquivo: "app/actions/settings/updateComportamento.ts",
     codigo: "orcamento_de_ia",

@@ -15,11 +15,21 @@ export interface ImportContactsResult {
   imported: number;
   skipped_duplicates: number;
   errors: Array<{ linha: number; motivo: string }>;
+  /** Novos e já existentes: as pessoas do arquivo (a lista subida dentro de uma campanha). */
+  contact_ids: string[];
 }
 
-async function importarCsv(file: File): Promise<ImportContactsResult> {
+export interface ImportContactsInput {
+  file: File;
+  /** Importação feita dentro de uma campanha: linha sem telefone é erro. */
+  exigirTelefone?: boolean;
+}
+
+async function importarCsv(entrada: File | ImportContactsInput): Promise<ImportContactsResult> {
+  const { file, exigirTelefone } = entrada instanceof File ? { file: entrada, exigirTelefone: false } : entrada;
   const form = new FormData();
   form.append("file", file);
+  if (exigirTelefone) form.append("exigir_telefone", "true");
   const res = await fetch("/api/v1/contacts/import", {
     method: "POST",
     headers: { "Idempotency-Key": randomId() },

@@ -19,6 +19,7 @@ import type { Conversation } from "@/lib/types/messaging";
 import { normalizarTermoDeBusca } from "@/lib/inbox/termo-de-busca";
 import { ORDEM_DA_ESPERA, ehAFila } from "@/lib/inbox/comando-da-conversa";
 import { aplicarMarcadores } from "@/lib/inbox/marcador-da-conversa";
+import { buscarFunisDosContatos } from "@/lib/inbox/funil-da-conversa";
 
 /**
  * Prepara o termo digitado para viajar dentro de um `or=` do PostgREST.
@@ -406,7 +407,19 @@ export async function listConversationsHandler(
       ? encodeCursor({ sort: (last[sortCol] as string | null) ?? null, id: last.id })
       : null;
 
-  return { conversations: page, cursor, has_more: hasMore };
+  // A linha do funil de cada conversa: UMA consulta para a página, a mesma regra
+  // da faixa da jornada. Grupo nunca entra em funil, então nem é perguntado.
+  const funis = await buscarFunisDosContatos(
+    supabase,
+    ctx.organization_id,
+    page.filter((c) => !c.is_group).map((c) => c.contact_id),
+  );
+  const conversations = page.map((c) => ({
+    ...c,
+    funil_do_contato: c.is_group ? null : (funis.get(c.contact_id) ?? null),
+  }));
+
+  return { conversations, cursor, has_more: hasMore };
 }
 
 // ---------------------------------------------------------------------------

@@ -1,4 +1,6 @@
 "use client";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
@@ -647,14 +649,13 @@ function DetalhesTecnicos({ texto }: { texto: string | undefined }) {
 function Layout({ titulo, children }: { titulo?: string; children: React.ReactNode }) {
   const t = useT();
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {titulo ?? t("Atualização do sistema")}
-        </h1>
-      </header>
+    <CorpoDaPagina largura="formulario">
+      <CabecalhoDePagina
+        titulo={titulo ?? t("Atualização do sistema")}
+        descricao={t("A versão instalada no servidor e, quando houver uma nova, o que muda nela.")}
+      />
       <Card className="p-6">{children}</Card>
-    </div>
+    </CorpoDaPagina>
   );
 }
 

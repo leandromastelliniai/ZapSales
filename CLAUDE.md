@@ -85,6 +85,12 @@ ZapSales é um CRM de WhatsApp com funil (Kanban), inbox, agentes de IA e campan
 
 ### Auth & RBAC
 - Sempre `getUser()` (valida JWT no backend). NUNCA `getSession()` (confia no cookie local)
+  - **Uma validação por requisição (#64):** quem pergunta ao GoTrue é o `proxy`; ele repassa o usuário
+    assinado (HMAC, 30 s) em `x-zs-sessao` e `createClient()` o reaproveita no `getUser()`. Assinatura
+    ausente, inválida ou vencida volta à validação normal — nunca a confiar. Mudança de identidade na
+    requisição (`signOut`, MFA, `updateUser`) invalida o repasse. Banimento/rebaixamento feito DURANTE
+    uma requisição só é visto na seguinte (janela ≤ 30 s). Chave derivada da service key: não há
+    segredo novo. Detalhes: `lib/auth/sessao-repassada.ts`
 - 4 roles dentro do tenant: `viewer` (1) < `agent` (2) < `manager` (3) < `admin` (4)
 - Super-admin de plataforma é uma role transversal — `is_platform_admin` (decisão final na Spec 01)
 - MFA TOTP é **opcional e ligado por quem administra** — não é mais forçado por papel. Quem exige são duas políticas independentes que SOMAM: `platform_admins.mfa_required` (para o super-admin) e `organizations.settings.security.mfa_required` (com `mfa_required_min_role` escolhendo o nível mínimo — `admin` quando só o booleano legado existe — e `mfa_grace_days` de carência). O padrão de ambas é **não exigir**, e o `bootstrap-owner.ts` grava `false` explícito. Regra pura em `lib/auth/politica-mfa.ts`

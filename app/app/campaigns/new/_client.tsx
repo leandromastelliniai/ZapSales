@@ -15,6 +15,8 @@
  * A prévia do público fica ao lado do filtro, e não depois: o número que o
  * operador precisa ver antes de apertar é "quantas pessoas isto pega".
  */
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -27,6 +29,7 @@ import { DoisNumeros, problemaDoParDoisNumeros } from "@/components/campanhas/Do
 import { MensagemOficial, mapaCompleto, mapaDoModelo } from "@/components/campanhas/MensagemOficial";
 import { CampoDoTetoDeGasto, LinhaDaEstimativa } from "@/components/campanhas/CustoDaCampanha";
 import { RespostaDaCampanha } from "@/components/campanhas/RespostaDaCampanha";
+import { SubirListaCsv } from "@/components/campanhas/SubirListaCsv";
 import { botoesDoModeloEscolhido, precisaDeAgente } from "@/lib/campanhas/resposta-na-tela";
 import type { BotaoDaResposta, QuemAssume } from "@/lib/campanhas/destino-da-resposta";
 import { useCriarCampanha, useModelosDaCampanha, usePreviaDaAudiencia } from "@/hooks/campanhas/useCampanhas";
@@ -56,6 +59,8 @@ export function NovaCampanha() {
   const [semTags, setSemTags] = useState("");
   const [semInteracao, setSemInteracao] = useState("");
   const [limite, setLimite] = useState("100");
+  // Contatos da planilha subida aqui (ids). Somam ao recorte; sozinhos já são um público.
+  const [incluidos, setIncluidos] = useState<string[]>([]);
   const [texto, setTexto] = useState("");
   const [intervalo, setIntervalo] = useState("");
   const [janelaInicio, setJanelaInicio] = useState("");
@@ -103,9 +108,10 @@ export function NovaCampanha() {
       sem_interacao_ha_dias: semInteracao ? Number(semInteracao) : null,
       funis: funilDoPublico ? [funilDoPublico] : [],
       etapas: etapaDoPublico ? [etapaDoPublico] : [],
+      incluir_contatos: incluidos,
       limite: Number(limite) || 100,
     }),
-    [comAlgumaTag, semTags, semInteracao, funilDoPublico, etapaDoPublico, limite],
+    [comAlgumaTag, semTags, semInteracao, funilDoPublico, etapaDoPublico, limite, incluidos],
   );
 
   const temCriterio =
@@ -113,6 +119,7 @@ export function NovaCampanha() {
     filtro.sem_tags.length > 0 ||
     filtro.funis.length > 0 ||
     filtro.etapas.length > 0 ||
+    filtro.incluir_contatos.length > 0 ||
     filtro.sem_interacao_ha_dias !== null;
 
   /** O conteúdo que vai à API e à prévia: modelo + mapa (oficial) ou texto livre. */
@@ -162,13 +169,11 @@ export function NovaCampanha() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Nova campanha")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("Isto cria um rascunho. Nada é enviado antes de você preparar a lista e iniciar.")}
-        </p>
-      </header>
+    <CorpoDaPagina largura="formulario">
+      <CabecalhoDePagina
+        titulo={t("Nova campanha")}
+        descricao={t("Isto cria um rascunho. Nada é enviado antes de você preparar a lista e iniciar.")}
+      />
 
       <Card className="space-y-4 p-4">
         <h2 className="font-medium">{t("Informações")}</h2>
@@ -285,8 +290,14 @@ export function NovaCampanha() {
       <Card className="space-y-4 p-4">
         <h2 className="font-medium">{t("Público")}</h2>
         <p className="text-sm text-muted-foreground">
-          {t("Escolha pelo menos um critério — uma lista sem recorte ninguém confere antes de apertar.")}
+          {t("Escolha pelo menos um critério ou suba uma lista de contatos — um público sem recorte ninguém confere antes de apertar.")}
         </p>
+        <SubirListaCsv incluidos={incluidos} onIncluidos={setIncluidos} />
+        {incluidos.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {t("Os critérios abaixo, se você preencher algum, somam pessoas à lista subida.")}
+          </p>
+        )}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="com-tags">{t("Com alguma destas etiquetas")}</Label>
@@ -620,7 +631,7 @@ export function NovaCampanha() {
           {criar.isPending ? t("Salvando…") : t("Salvar rascunho")}
         </Button>
       </div>
-    </div>
+    </CorpoDaPagina>
   );
 }
 

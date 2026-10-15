@@ -45549,6 +45549,45 @@ $$;
 
 revoke execute on function public.fn_cabecalho_citado_sai_da_fila() from public, anon, authenticated;
 
+-- ---- mídia citada por mensagem sai da fila de remoção (migration 0544) ----
+-- Espelho idempotente. Racional completo no arquivo da migration: a mensagem
+-- que passa a citar um caminho de `<org>/<conversa>/` enfileirado pela poda
+-- (passo 2, 1 dia de carência) tira da fila a linha `pending` de retenção, na
+-- mesma organização. O worker confere a citação antes de apagar, e a rota de
+-- envio recusa caminho que já saiu do bucket.
+-- `messages` é tabela quente: o `when` deixa a mensagem sem mídia fora do
+-- gatilho. Função e gatilho moram aqui, antes da varredura de anon, porque
+-- `media_storage_path` já existe no dump.
+create or replace function public.fn_midia_citada_sai_da_fila()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.storage_redaction_queue q
+     set status = 'skipped',
+         processed_at = now(),
+         error_message = 'citado_por_mensagem'
+   where q.bucket = 'whatsapp-media'
+     and q.object_path = new.media_storage_path
+     and q.organization_id = new.organization_id
+     and q.request_id is null
+     and q.status = 'pending';
+
+  return null;
+end;
+$$;
+
+revoke execute on function public.fn_midia_citada_sai_da_fila() from public, anon, authenticated;
+
+drop trigger if exists trg_messages_midia_citada on public.messages;
+create trigger trg_messages_midia_citada
+  after insert or update of media_storage_path on public.messages
+  for each row
+  when (new.media_storage_path is not null)
+  execute function public.fn_midia_citada_sai_da_fila();
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria
@@ -47701,3 +47740,18 @@ drop trigger if exists trg_meta_templates_cabecalho_citado on public.meta_templa
 create trigger trg_meta_templates_cabecalho_citado
   after insert or update of header_media on public.meta_templates
   for each row execute function public.fn_cabecalho_citado_sai_da_fila();
+
+-- ---- a passagem guarda o agente de IA (migration 0545) ----
+-- Aditiva: o motor grava o agente que passou a conversa, e a Inbox o nomeia
+-- no marco da passagem. Nula = passagem antiga ou sem agente resolvido.
+alter table public.passagens_de_atendimento
+  add column if not exists agente_id uuid references public.ai_agents(id) on delete set null;
+
+create index if not exists idx_passagens_de_atendimento_agente
+  on public.passagens_de_atendimento (agente_id)
+  where agente_id is not null;
+
+comment on column public.passagens_de_atendimento.agente_id is
+  'O agente de IA que passou a conversa para uma pessoa (migration 0545). Nulo em passagens antigas ou sem agente resolvido; a Inbox então diz só "IA".';
+
+notify pgrst, 'reload schema';

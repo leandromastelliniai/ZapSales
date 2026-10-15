@@ -4,10 +4,13 @@ import { redirect } from "next/navigation";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { ROLE_RANK } from "@/lib/auth/types";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { AuditClient } from "./_client";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Audit Log" };
+export const metadata: Metadata = { title: "Auditoria" };
 
 export default async function AuditPage() {
   const user = await requireAuth();
@@ -20,14 +23,13 @@ export default async function AuditPage() {
   const t = (texto: string) => traduzir(texto, user.idioma);
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Audit Log")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {traduzir("Histórico append-only de mutações na organização. Manager+.", idioma)}
-        </p>
-      </header>
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={t("Auditoria")}
+        descricao={t("Quem mudou o quê, e quando. O histórico não se apaga. Só gestores veem.")}
+        ajuda={<ComoFunciona chave="auditoria" pagina={t("Auditoria")} />}
+      />
       <AuditClient />
-    </div>
+    </CorpoDaPagina>
   );
 }

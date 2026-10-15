@@ -12,6 +12,9 @@ import { useT } from "@/hooks/i18n/useT";
 import { addDays, format, startOfDay, startOfMonth, startOfWeek } from "date-fns";
 import * as React from "react";
 
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { AvisoDaConexaoGoogle } from "./_components/AvisoDaConexaoGoogle";
 import { CartaoDaConexaoGoogle } from "./_components/CartaoDaConexaoGoogle";
 
@@ -459,11 +462,12 @@ export function AgendaClient({
         : format(ancora, t("EEEE, d 'de' MMMM"), { locale: localeDaData });
 
   return (
-    <div
+    <CorpoDaPagina
+      largura="total"
       data-testid="tela-agenda"
       data-fonte={agendamentosIniciais.length > 0 ? "api" : "api-sem-dado"}
       data-fuso={fusoDeApresentacao ?? "organizacao"}
-      className="flex h-full flex-col gap-4 p-6"
+      className="gap-4"
     >
       {/*
         Em Suspense porque `useSearchParams` obriga: sem a fronteira, o Next
@@ -475,22 +479,12 @@ export function AgendaClient({
         <EntradaDaAgenda onContext={onContext} />
       </React.Suspense>
 
-      <CartaoDaConexaoGoogle
-        configurado={googleConfigurado}
-        falta={faltaNoGoogle}
-        linkDeConfiguracao={linkDeConfiguracaoDoGoogle}
-        contaConectada={contaConectada}
-        enderecoDeRetorno={enderecoDeRetorno}
-      />
-
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Agenda")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("O que está marcado, com quem, e quem atende — seu e da equipe.")}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
+      <CabecalhoDePagina
+        titulo={t("Agenda")}
+        descricao={t("O que está marcado, com quem, e quem atende — seu e da equipe.")}
+        ajuda={<ComoFunciona chave="agenda" pagina={t("Agenda")} />}
+        acoes={
+          <>
           {/* "Hoje" é o hoje DA ORGANIZAÇÃO. Com `new Date()` o botão desfazia a
               âncora do servidor e devolvia a semana do navegador — o defeito que
               a tela acabou de fechar, a um clique de distância. */}
@@ -551,8 +545,19 @@ export function AgendaClient({
               <span>{t("Novo agendamento")}</span>
             </Button>
           )}
-        </div>
-      </header>
+          </>
+        }
+      />
+
+      {/* O cartão do Google vem DEPOIS do título: em instalação nova ele sempre aparece (a credencial é
+          opcional) e, em cima, empurrava o nome da tela para baixo e lia como a coisa mais importante. */}
+      <CartaoDaConexaoGoogle
+        configurado={googleConfigurado}
+        falta={faltaNoGoogle}
+        linkDeConfiguracao={linkDeConfiguracaoDoGoogle}
+        contaConectada={contaConectada}
+        enderecoDeRetorno={enderecoDeRetorno}
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
@@ -1200,6 +1205,6 @@ export function AgendaClient({
         }}
         className="min-h-0 flex-1"
       />
-    </div>
+    </CorpoDaPagina>
   );
 }

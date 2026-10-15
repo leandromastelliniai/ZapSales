@@ -16,6 +16,7 @@ import {
   FileText,
   Image as ImageIcon,
   List,
+  Phone,
   Play,
   Reply,
   Tag,
@@ -65,6 +66,7 @@ const ICONE_DO_BOTAO = {
   QUICK_REPLY: Reply,
   URL: ExternalLink,
   COPY_CODE: Copy,
+  PHONE_NUMBER: Phone,
   FLOW: ClipboardList,
   VER_TODAS: List,
 } as const;
@@ -203,6 +205,11 @@ export function PreviewDoModeloView({
     <div className="flex flex-col gap-2 rounded-lg bg-muted p-3" data-testid="preview-do-modelo">
       <div className="rounded-lg bg-background shadow-sm">
         {p.cabecalho ? <Midia cabecalho={p.cabecalho} links={links} /> : null}
+        {p.cabecalhoDeTexto ? (
+          <p className="px-3 pt-2 text-sm font-semibold" data-testid="preview-titulo">
+            {p.cabecalhoDeTexto}
+          </p>
+        ) : null}
         {p.oferta ? (
           <div
             className="mx-1 mt-1 flex items-start gap-2 rounded-md bg-muted px-3 py-2"

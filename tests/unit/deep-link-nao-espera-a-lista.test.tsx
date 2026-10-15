@@ -34,7 +34,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * painel fica sem conversa e o caso reprova.
  */
 
-const { ORG, CONVERSA, OUTRA_CONVERSA, CONVERSA_ROW } = vi.hoisted(() => {
+const { ORG, CONVERSA, OUTRA_CONVERSA, CONTATO, CONVERSA_ROW } = vi.hoisted(() => {
   const ORG = "00000000-0000-4000-8000-0000000000aa";
   const CONVERSA = "00000000-0000-4000-8000-0000000000cc";
   const OUTRA_CONVERSA = "00000000-0000-4000-8000-0000000000dd";
@@ -110,12 +110,13 @@ vi.mock("@/hooks/inbox/useCloseConversation", () => ({
   useCloseConversation: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
-/** O painel do contato vira sonda: ele diz de QUAL conversa recebeu objeto. */
-vi.mock("@/components/inbox/CRMSidePanel", () => ({
-  CRMSidePanel: ({ conversation }: { conversation: { id: string } | null }) => (
-    <div data-testid="painel">{conversation ? conversation.id : "sem-conversa"}</div>
-  ),
-}));
+/**
+ * A sonda: ela diz de QUAL conversa a tela recebeu objeto. Até a direção "Linha
+ * do Funil" (07/10/2026) era o painel do contato, na coluna da direita; desde
+ * então a ficha mora numa gaveta que só monta aberta, e quem recebe a conversa
+ * sempre que há uma é o cabeçalho — mesmo `selectedConversation`, mesma prova.
+ */
+vi.mock("@/components/inbox/CRMSidePanel", () => ({ CRMSidePanel: () => null }));
 vi.mock("@/components/inbox/ConversationList", () => ({
   ConversationList: ({ onSelect }: { onSelect: (id: string) => void }) => (
     <>
@@ -127,7 +128,11 @@ vi.mock("@/components/inbox/ConversationList", () => ({
 vi.mock("@/components/inbox/InboxFilters", () => ({ InboxFilters: () => null }));
 vi.mock("@/components/inbox/ChatThread", () => ({ ChatThread: () => null }));
 vi.mock("@/components/inbox/Composer", () => ({ Composer: () => null }));
-vi.mock("@/components/inbox/ConversationHeader", () => ({ ConversationHeader: () => null }));
+vi.mock("@/components/inbox/ConversationHeader", () => ({
+  ConversationHeader: ({ conversation }: { conversation: { id: string } }) => (
+    <div data-testid="painel">{conversation.id}</div>
+  ),
+}));
 vi.mock("@/components/inbox/RetentionNotice", () => ({ RetentionNotice: () => null }));
 vi.mock("@/components/inbox/InboxKeyboardShortcuts", () => ({
   InboxKeyboardShortcuts: () => null,
@@ -167,6 +172,11 @@ describe("deep-link para conversa fora do filtro", () => {
   it("entrega a conversa ao painel do contato com a lista ainda no ar", async () => {
     montar();
     await waitFor(() => expect(screen.getByTestId("painel")).toHaveTextContent(CONVERSA));
+    // E o resumo do contato (a faixa da jornada) já é pedido — era ESTA a
+    // chamada que chegava ~4,7s depois quando a busca esperava a lista.
+    await waitFor(() =>
+      expect(get.mock.calls.map((c) => c[0])).toContain(`/api/v1/contacts/${CONTATO}/crm-summary`),
+    );
   });
 
   it("gera link por conversa e acompanha a volta do navegador", async () => {
@@ -205,6 +215,7 @@ describe("deep-link para conversa fora do filtro", () => {
         <InboxLayout />
       </QueryClientProvider>,
     );
-    await waitFor(() => expect(screen.getByTestId("painel")).toHaveTextContent("sem-conversa"));
+    // Sem conversa na URL não há cabeçalho: a sonda some, em vez de dizer "sem-conversa".
+    await waitFor(() => expect(screen.queryByTestId("painel")).toBeNull());
   });
 });

@@ -66,14 +66,36 @@ export function encryptKey(plaintext: string): EncryptedSecret {
   return { ciphertext, iv, tag, last4 };
 }
 
+/**
+ * Recusa, antes de qualquer operação criptográfica, etiqueta que não tenha 16
+ * bytes e IV que não tenha 12 — o único formato que `encryptKey` produz.
+ *
+ * Sem isto o Node aceita etiqueta de 4, 8 ou 12 bytes, e o prefixo da etiqueta
+ * certa autentica: forjar um segredo por tentativa contra 4 bytes é barato
+ * (issue #41). O `authTagLength` no decifrador é a segunda camada; esta
+ * conferência existe para a mensagem e para não depender de versão do Node.
+ *
+ * A mensagem cita só o campo e os TAMANHOS, nunca conteúdo: um chamador a
+ * repassa para dentro do erro de credencial indisponível.
+ */
 export function decryptKey(input: {
   ciphertext: Buffer;
   iv: Buffer;
   tag: Buffer;
 }): string {
   const { ciphertext, iv, tag } = input;
+  if (tag.length !== TAG_LENGTH_BYTES) {
+    throw new Error(
+      `etiqueta de autenticação com ${tag.length} bytes (esperado: ${TAG_LENGTH_BYTES})`,
+    );
+  }
+  if (iv.length !== IV_LENGTH_BYTES) {
+    throw new Error(`IV com ${iv.length} bytes (esperado: ${IV_LENGTH_BYTES})`);
+  }
   const key = getKey();
-  const decipher = createDecipheriv("aes-256-gcm", key, iv);
+  const decipher = createDecipheriv("aes-256-gcm", key, iv, {
+    authTagLength: TAG_LENGTH_BYTES,
+  });
   decipher.setAuthTag(tag);
   const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
   return plaintext.toString("utf8");

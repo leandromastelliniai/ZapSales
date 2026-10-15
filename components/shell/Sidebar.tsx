@@ -14,7 +14,7 @@ import { VersionFooter } from "@/components/shell/VersionFooter";
 import { LogotipoDoProduto, SimboloDoProduto } from "@/components/branding/MarcaDoProduto";
 import { marcaEhADoProduto } from "@/lib/branding";
 import { useMarcaDaInstalacao } from "@/lib/branding/contexto";
-import { GRUPO_NO_RODAPE, sidebarGroups } from "@/lib/navigation/registry";
+import { GRUPO_NO_RODAPE, ICONE_DO_HUB, sidebarGroups } from "@/lib/navigation/registry";
 
 const CHAVE_GRUPOS_FECHADOS = "sidebar-grupos-fechados";
 
@@ -124,6 +124,9 @@ export function SidebarContent({
   // Só quando NINGUÉM — nem a instalação, nem a organização — pôs marca própria:
   // é a condição de `lib/branding.ts`, avaliada sobre o que a barra vai mostrar.
   const marcaDoProduto = marcaEhADoProduto({ name: nome, logoUrl: logo ?? null });
+  // Só o da INSTALAÇÃO, e só quando a organização não pôs logo próprio: com logo da
+  // organização, o ícone do revendedor seria a marca errada naquela casca.
+  const icone = activeOrg?.marca?.logoUrl ? null : (brand.iconUrl ?? null);
 
   return (
     <>
@@ -179,7 +182,13 @@ export function SidebarContent({
         ) : (
           <span className={cn("font-semibold tracking-tight", collapsed && "sr-only")}>{nome}</span>
         )}
-        {collapsed && !marcaDoProduto && (
+        {collapsed && !marcaDoProduto && icone ? (
+          // O ícone da aba que o operador subiu: com o menu recolhido,
+          // é o que mantém a marca do revendedor visível na barra.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={icone} alt="" aria-hidden className="h-8 w-8 rounded-md object-contain" />
+        ) : null}
+        {collapsed && !marcaDoProduto && !icone && (
           <span aria-hidden className="text-lg font-bold text-primary">
             {/* Spread e não `[0]`: nome começando com emoji ou acento composto
                 quebraria no meio do code point. Mesma regra de `resolveBranding`
@@ -237,6 +246,7 @@ export function SidebarContent({
       <nav className="flex-1 space-y-2 overflow-y-auto p-2" aria-label={t("Navegação principal")}>
         {grupos.map(({ group, items }) => {
           const tituloId = `nav-grupo-${group.id}`;
+          const IconeDoHub = ICONE_DO_HUB[group.id] ?? ArrowRight;
           // Recolhido o sidebar inteiro (rail de 64px), o grupo sempre mostra
           // seus itens — não há onde desenhar cabeçalho nem seta para fechá-lo.
           const aberto = collapsed || !gruposFechados.has(group.id);
@@ -292,7 +302,10 @@ export function SidebarContent({
                           )}
                         >
                           <Icon size={18} weight={isActive ? "fill" : "regular"} aria-hidden />
-                          {!collapsed && <span className="truncate">{t(item.label)}</span>}
+                          {/* Recolhido, o nome continua no link para o leitor de tela: sem ele, o nome
+                              acessível vinha do selo de dentro ("Nenhuma conexão",
+                              "3 conversas esperando…") e não do destino. */}
+                          <span className={collapsed ? "sr-only" : "truncate"}>{t(item.label)}</span>
                           {item.healthDot && (
                             <ConnectionHealthDot
                               className={cn(collapsed ? "absolute top-1.5 right-1.5" : "ml-auto")}
@@ -319,8 +332,8 @@ export function SidebarContent({
                           collapsed && "justify-center px-2",
                         )}
                       >
-                        <ArrowRight size={18} aria-hidden />
-                        {!collapsed && <span className="truncate">{t(group.hub.label)}</span>}
+                        <IconeDoHub size={18} aria-hidden />
+                        <span className={collapsed ? "sr-only" : "truncate"}>{t(group.hub.label)}</span>
                       </Link>
                     </li>
                   )}
@@ -346,7 +359,7 @@ export function SidebarContent({
             )}
           >
             <Gear size={18} aria-hidden />
-            {!collapsed && <span className="truncate">{t(rodape.label)}</span>}
+            <span className={collapsed ? "sr-only" : "truncate"}>{t(rodape.label)}</span>
           </Link>
         )}
         <VersionFooter collapsed={collapsed} onNavigate={onNavigate} />

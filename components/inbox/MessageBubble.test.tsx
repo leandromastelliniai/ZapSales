@@ -159,7 +159,12 @@ describe("MessageBubble — ações sobre mensagem própria", () => {
     const { container } = render(<MessageBubble message={msg({ external_id: "ABC" })} onApagar={vi.fn(async () => undefined)} />);
     const bolha = screen.getByTestId("message-bubble");
     expect(bolha).toContainElement(screen.getByRole("button", { name: "Opções da mensagem" }));
-    expect(container.firstElementChild?.children).toHaveLength(1);
+    // A linha tem a FOTO de quem fala e a bolha — e mais nada: o menu mora dentro
+    // da bolha, não numa coluna ao lado (desde a direção "Linha do Funil", toda
+    // bolha leva a foto de quem escreveu à esquerda).
+    const filhos = Array.from(container.firstElementChild?.children ?? []);
+    expect(filhos).toHaveLength(2);
+    expect(filhos[1]).toBe(bolha);
   });
 });
 
@@ -314,7 +319,7 @@ describe("MessageBubble — contenção de layout e quebra de palavras (#1451)",
     // juntas, vence o break-word e a quebra forçada fica sem efeito.
     expect(p.className).not.toContain("break-words");
 
-    const bolha = p.closest(".max-w-\\[75\\%\\]");
+    const bolha = p.closest(".max-w-\\[78\\%\\]");
     expect(bolha).not.toBeNull();
     expect(bolha?.className).toContain("min-w-0");
 

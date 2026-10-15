@@ -2,8 +2,7 @@
 
 import { toast } from "sonner";
 import { useT } from "@/hooks/i18n/useT";
-import { traduzir } from "@/lib/i18n/dicionario";
-import { idiomaAtual } from "@/lib/i18n/IdiomaProvider";
+import { traduzirFora } from "@/lib/i18n/IdiomaProvider";
 import { ApiError } from "@/lib/api/types";
 
 type Variant = "error" | "warning" | "info";
@@ -169,7 +168,7 @@ function toastFor(err: unknown, t: (texto: string) => string): void {
  * exatamente isto: traduzir sem mudar a assinatura pública da função.
  */
 export function showApiError(err: unknown): void {
-  toastFor(err, (texto) => traduzir(texto, idiomaAtual()));
+  toastFor(err, (texto) => traduzirFora(texto));
 }
 
 export function useApiErrorHandler(): (err: unknown) => void {
