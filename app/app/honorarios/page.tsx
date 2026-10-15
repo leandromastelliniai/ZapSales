@@ -1,3 +1,6 @@
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -24,14 +27,13 @@ export default async function Page() {
   const t = (texto: string) => traduzir(texto, user.idioma);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">{t("Honorários")}</h1>
-        <p className="text-sm text-text-muted">
-          {t("O modelo de cobrança de cada caso e o calendário de parcelas.")}
-        </p>
-      </div>
+    <CorpoDaPagina className="min-h-0 flex-1 gap-4">
+      <CabecalhoDePagina
+        titulo={t("Honorários")}
+        descricao={t("O modelo de cobrança de cada caso e o calendário de parcelas.")}
+        ajuda={<ComoFunciona chave="honorarios" pagina={t("Honorários")} />}
+      />
       <Honorarios podeGerenciar={ROLE_RANK[org.role] >= ROLE_RANK.manager} />
-    </div>
+    </CorpoDaPagina>
   );
 }

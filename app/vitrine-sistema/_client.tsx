@@ -6,6 +6,11 @@ import { Sidebar } from "@/components/shell/Sidebar";
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
 import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { Button } from "@/components/ui/button";
+import { Painel } from "@/components/ui/painel";
+import { Selo, type SignificadoDoSelo } from "@/components/ui/selo";
+import { ICONES_DO_PRODUTO } from "@/components/icons/produto";
+import { ChatCircle, Funnel, Kanban, Robot, Signpost, Tray } from "@/lib/ui/icons";
+import type { IconWeight } from "@phosphor-icons/react";
 import { ICONE_DO_HUB, NAV_DESTINATIONS, NAV_GROUPS } from "@/lib/navigation/registry";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000001";
@@ -83,6 +88,88 @@ export function VitrineDoSistema() {
               ajuda={<ComoFunciona chave="funis" pagina="Funis" />}
               acoes={<Button size="sm">Novo funil</Button>}
             />
+          </div>
+        </Quadro>
+
+        <Quadro titulo="Ícones próprios do produto, ao lado do Phosphor">
+          <div className="space-y-4" data-vitrine="icones-proprios">
+            {(
+              [
+                ["FunilEmEtapas", "a Linha do Funil", [Kanban, Funnel]],
+                ["AgenteEmConversa", "o agente de IA numa conversa", [Robot]],
+                ["PassagemParaHumano", "a IA entrega a conversa a uma pessoa", [Signpost]],
+                ["FilaDeEspera", "quem espera atendimento", [Tray]],
+                ["JanelaDe24h", "a janela de 24 horas da API Oficial", [ChatCircle]],
+              ] as const
+            ).map(([nome, significado, vizinhos]) => {
+              const Proprio = ICONES_DO_PRODUTO[nome];
+              return (
+                <div key={nome} className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-lg border bg-card p-4" data-icone-proprio={nome}>
+                  <div className="w-64">
+                    <p className="text-sm font-semibold">{nome}</p>
+                    <p className="text-xs text-muted-foreground">{significado}</p>
+                  </div>
+                  {(["regular", "bold", "duotone", "fill"] as IconWeight[]).map((peso) => (
+                    <div key={peso} className="flex flex-col items-center gap-2">
+                      <div className="flex items-end gap-3">
+                        <Proprio size={16} weight={peso} aria-hidden />
+                        <Proprio size={24} weight={peso} aria-hidden />
+                        <Proprio size={48} weight={peso} aria-hidden />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground">{peso}</span>
+                    </div>
+                  ))}
+                  <div className="flex flex-col items-center gap-2 border-l pl-8 text-muted-foreground">
+                    <div className="flex items-end gap-3">
+                      {vizinhos.map((Vizinho, i) => (
+                        <Vizinho key={i} size={48} aria-hidden />
+                      ))}
+                    </div>
+                    <span className="text-[11px]">Phosphor, para comparar</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Quadro>
+
+        <Quadro titulo="Selos: a cor diz uma coisa só">
+          <div className="flex flex-wrap gap-2" data-vitrine="selos">
+            {(
+              [
+                ["ia", "IA atendendo"],
+                ["humano", "Em atendimento: Ana Paula"],
+                ["funil", "Na fila · 12 minutos"],
+                ["concluido", "Aceito"],
+                ["falha", "Falhou ao enviar"],
+                ["neutro", "admin"],
+              ] as [SignificadoDoSelo, string][]
+            ).map(([significado, texto]) => (
+              <Selo key={significado} significado={significado}>
+                {texto}
+              </Selo>
+            ))}
+          </div>
+        </Quadro>
+
+        <Quadro titulo="Painel, com cabeçalho e tabela encostada nas bordas">
+          <div className="max-w-3xl" data-vitrine="painel">
+            <Painel titulo="Membros" descricao="Quem trabalha aqui e o que cada pessoa pode fazer." acoes={<Button size="sm">Convidar membros</Button>} semRecuo>
+              <ul className="divide-y divide-border text-sm">
+                {[
+                  ["Ana Paula", "Gestora", "concluido", "Aceito"],
+                  ["Bruno Lima", "Atendente", "funil", "Convite pendente"],
+                ].map(([nome, papel, significado, estado]) => (
+                  <li key={nome} className="flex items-center justify-between gap-3 px-5 py-3">
+                    <div>
+                      <p className="font-medium">{nome}</p>
+                      <p className="text-xs text-muted-foreground">{papel}</p>
+                    </div>
+                    <Selo significado={significado as SignificadoDoSelo}>{estado}</Selo>
+                  </li>
+                ))}
+              </ul>
+            </Painel>
           </div>
         </Quadro>
 

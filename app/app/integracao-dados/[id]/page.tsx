@@ -57,7 +57,7 @@ export default async function ConexaoExternaPage({ params }: { params: Promise<{
       </header>
 
       {!conexao.enabled && (
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+        <div className="rounded-md border border-warning/40 bg-warning-bg p-3 text-sm">
           {traduzir("Esta conexão está desativada. Ative-a na lista para consultar os dados.", idioma)}
         </div>
       )}

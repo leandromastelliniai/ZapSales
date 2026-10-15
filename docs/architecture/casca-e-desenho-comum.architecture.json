@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Casca e desenho comum",
-    "subtitle": "Menu, cabeçalho de página e ajuda \"Como funciona\" — o que toda tela do app compartilha",
+    "subtitle": "Menu, cabeçalho de página, ajuda \"Como funciona\", ícones próprios, selo e painel — o que toda tela do app compartilha",
     "output": "casca-e-desenho-comum.html",
     "quality_profile": "standard"
   },
@@ -153,6 +153,34 @@
       "col": 3,
       "type": "service",
       "label": "dicionario-fora-do-cliente.test.ts + idioma-catalogo-sob-demanda.test.tsx"
+    },
+    {
+      "id": "icones_proprios",
+      "lane": "dados",
+      "col": 3,
+      "type": "lib",
+      "label": "components/icons/produto (Funil em etapas, Agente em conversa, Passagem para humano, Fila, Janela de 24h)"
+    },
+    {
+      "id": "selo",
+      "lane": "ui",
+      "col": 2,
+      "type": "frontend",
+      "label": "Selo (a cor diz uma coisa só: IA, humano, funil, concluído, falha)"
+    },
+    {
+      "id": "painel",
+      "lane": "ui",
+      "col": 2,
+      "type": "frontend",
+      "label": "Painel (contêiner no desenho da Inbox)"
+    },
+    {
+      "id": "cerca_selo",
+      "lane": "prova",
+      "col": 1,
+      "type": "service",
+      "label": "icones-e-selos-do-produto.test.tsx"
     }
   ],
   "edges": [
@@ -275,6 +303,42 @@
       "from": "cerca_dicionario",
       "to": "dicionario_cliente",
       "label": "o alias do navegador existe e a assinatura confere"
+    },
+    {
+      "id": "20",
+      "from": "icones_proprios",
+      "to": "registro",
+      "label": "Funis, Agentes e Roteadores usam ícone próprio"
+    },
+    {
+      "id": "21",
+      "from": "vitrine",
+      "to": "icones_proprios",
+      "label": "prévia ao lado do Phosphor, em 4 pesos"
+    },
+    {
+      "id": "22",
+      "from": "cerca_selo",
+      "to": "icones_proprios",
+      "label": "tamanho, peso, cor e espelhamento como o Phosphor"
+    },
+    {
+      "id": "23",
+      "from": "cerca_selo",
+      "to": "selo",
+      "label": "cada significado tem cor própria; só a IA é violeta"
+    },
+    {
+      "id": "24",
+      "from": "vitrine",
+      "to": "selo",
+      "label": "os seis significados"
+    },
+    {
+      "id": "25",
+      "from": "vitrine",
+      "to": "painel",
+      "label": "painel com cabeçalho e lista encostada nas bordas"
     }
   ]
 }

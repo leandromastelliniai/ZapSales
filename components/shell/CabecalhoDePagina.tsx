@@ -19,7 +19,8 @@ export function CabecalhoDePagina({
   acoes,
 }: {
   titulo: string;
-  descricao: string;
+  /** Texto simples ou um trecho com ênfase e código (`<strong>`, `<code>`): o parágrafo é o mesmo. */
+  descricao: ReactNode;
   ajuda?: ReactNode;
   acoes?: ReactNode;
 }) {
@@ -27,7 +28,7 @@ export function CabecalhoDePagina({
     <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
       <div className="min-w-0 space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight text-balance">{titulo}</h1>
-        <p className="max-w-[65ch] text-sm text-muted-foreground">{descricao}</p>
+        {descricao ? <p className="max-w-[65ch] text-sm text-muted-foreground">{descricao}</p> : null}
       </div>
       {ajuda || acoes ? (
         <div className="flex flex-wrap items-center gap-2">

@@ -1,6 +1,7 @@
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 
 import { type Role } from "@/lib/auth/types";
+import { AgenteEmConversa, FunilEmEtapas, PassagemParaHumano } from "@/components/icons/produto";
 import {
   Bell,
   BookOpen,
@@ -146,6 +147,10 @@ const ICONS = {
   UserList,
   Wallet,
   WebhooksLogo,
+  // ícones próprios do produto (components/icons/produto)
+  AgenteEmConversa,
+  FunilEmEtapas,
+  PassagemParaHumano,
 };
 /**
  * O ícone do link "Ver tudo em …" de cada grupo com hub.

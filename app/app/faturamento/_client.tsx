@@ -375,9 +375,9 @@ function Cartao({
   destaque?: boolean;
 }) {
   return (
-    <div className="rounded-md border border-border p-3">
-      <p className="text-xs text-text-muted">{titulo}</p>
-      <p className={`tabular-nums ${destaque ? "text-xl font-semibold" : "text-lg"}`}>{valor}</p>
+    <div className="rounded-xl border border-border bg-surface p-4">
+      <p className="text-sm text-text-muted">{titulo}</p>
+      <p className={`tabular-nums ${destaque ? "text-2xl font-semibold" : "text-xl"}`}>{valor}</p>
     </div>
   );
 }
@@ -393,7 +393,7 @@ function Tabela({
 }) {
   const temLinha = Array.isArray(children) ? children.length > 0 : Boolean(children);
   return (
-    <section className="rounded-md border border-border p-3">
+    <section className="rounded-xl border border-border bg-surface p-4">
       <h2 className="mb-2 text-sm font-semibold">{titulo}</h2>
       {temLinha ? (
         <table className="w-full text-sm">

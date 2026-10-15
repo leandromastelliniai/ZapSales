@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+import { Painel } from "@/components/ui/painel";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -66,7 +66,7 @@ export function AuditClient() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card className="p-4">
+      <Painel>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
           <div className="space-y-1">
             <label className="block text-xs text-muted-foreground">{t("Ação contém")}</label>
@@ -98,9 +98,9 @@ export function AuditClient() {
             </Button>
           </div>
         </div>
-      </Card>
+      </Painel>
 
-      <Card>
+      <Painel semRecuo>
         <Table>
           <TableHeader>
             <TableRow>
@@ -108,8 +108,8 @@ export function AuditClient() {
               <TableHead>{t("Ator")}</TableHead>
               <TableHead>{t("Ação")}</TableHead>
               <TableHead>{t("Recurso")}</TableHead>
-              <TableHead>Request ID</TableHead>
-              <TableHead>Metadata</TableHead>
+              <TableHead>{t("ID da requisição")}</TableHead>
+              <TableHead>{t("Detalhes")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -160,7 +160,7 @@ export function AuditClient() {
             )}
           </TableBody>
         </Table>
-      </Card>
+      </Painel>
 
       {q.hasNextPage && (
         <div className="flex justify-center">

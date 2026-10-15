@@ -25,6 +25,8 @@
  * as regras dos agentes. Mesmo gate do roteamento de filas — configuração, não
  * atendimento.
  */
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -69,15 +71,13 @@ export default async function TagsPage() {
   const t = (texto: string) => traduzir(texto, idioma);
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-y-auto p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Tags")}</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          {t(
+    <CorpoDaPagina className="overflow-y-auto">
+      <CabecalhoDePagina
+        titulo={t("Tags")}
+        descricao={t(
             "As etiquetas que os agentes, o Inbox e o funil usam nesta organização. Renomear ou juntar corrige também as regras de agente que escrevem a etiqueta, na mesma operação.",
           )}
-        </p>
-      </header>
+      />
 
       {error ? (
         // A falha NÃO vira lista vazia: "nenhuma etiqueta" e "não consegui ler"
@@ -88,6 +88,6 @@ export default async function TagsPage() {
       ) : (
         <PainelDeTags tags={(data ?? []) as LinhaDeVocabulario[]} idioma={idioma} />
       )}
-    </div>
+    </CorpoDaPagina>
   );
 }

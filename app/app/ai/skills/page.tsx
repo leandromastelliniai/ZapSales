@@ -1,3 +1,6 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -88,17 +91,16 @@ export default async function SkillsPage() {
   const idioma = user.idioma;
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{traduzir("Skills da IA", idioma)}</h1>
-        <p className="text-sm text-muted-foreground">
-          {traduzir(
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={traduzir("Skills da IA", idioma)}
+        ajuda={<ComoFunciona chave="skills" pagina={traduzir("Skills da IA", idioma)} />}
+        descricao={traduzir(
             "Habilidades especializadas que seus agentes carregam só quando a conversa pede — instale prontas do catálogo ou envie a sua.",
             idioma,
           )}
-        </p>
-      </header>
+      />
       <SkillsClient initialState={initialState} />
-    </div>
+    </CorpoDaPagina>
   );
 }
