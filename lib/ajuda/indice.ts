@@ -12,6 +12,7 @@ import type { AjudaDaPagina } from "./tipos";
  */
 export const INDICE_DE_AJUDA = {
   contatos: () => import("./conteudo/contatos"),
+  equipe: () => import("./conteudo/equipe"),
   funis: () => import("./conteudo/funis"),
   "respostas-rapidas": () => import("./conteudo/respostas-rapidas"),
 } satisfies Record<string, () => Promise<{ default: AjudaDaPagina }>>;
