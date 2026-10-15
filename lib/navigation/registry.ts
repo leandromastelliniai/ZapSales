@@ -1,6 +1,7 @@
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 
 import { type Role } from "@/lib/auth/types";
+import { AgenteEmConversa, FunilEmEtapas, PassagemParaHumano } from "@/components/icons/produto";
 import {
   Bell,
   BookOpen,
@@ -41,6 +42,31 @@ import {
   Users,
   UsersThree,
   WebhooksLogo,
+  AddressBook,
+  Binoculars,
+  Briefcase,
+  CalendarCheck,
+  ChartPieSlice,
+  CreditCard,
+  CurrencyCircleDollar,
+  Database,
+  Files,
+  HandCoins,
+  Lightning,
+  ListMagnifyingGlass,
+  MagicWand,
+  PhoneTransfer,
+  Pulse,
+  Shuffle,
+  Signature,
+  Sparkle,
+  Target,
+  ToggleRight,
+  TrendUp,
+  TreeStructure,
+  UploadSimple,
+  UserList,
+  Wallet,
 } from "@/lib/ui/icons";
 
 import {
@@ -95,8 +121,50 @@ const ICONS = {
   UserCircle,
   Users,
   UsersThree,
+  AddressBook,
+  Binoculars,
+  Briefcase,
+  CalendarCheck,
+  ChartPieSlice,
+  CreditCard,
+  CurrencyCircleDollar,
+  Database,
+  Files,
+  HandCoins,
+  Lightning,
+  ListMagnifyingGlass,
+  MagicWand,
+  PhoneTransfer,
+  Pulse,
+  Shuffle,
+  Signature,
+  Sparkle,
+  Target,
+  ToggleRight,
+  TrendUp,
+  TreeStructure,
+  UploadSimple,
+  UserList,
+  Wallet,
   WebhooksLogo,
+  // ícones próprios do produto (components/icons/produto)
+  AgenteEmConversa,
+  FunilEmEtapas,
+  PassagemParaHumano,
 };
+/**
+ * O ícone do link "Ver tudo em …" de cada grupo com hub.
+ *
+ * Era a MESMA seta nos três (CRM, IA, Análise) — e com o menu recolhido, sem texto, ninguém
+ * distinguia um do outro. Cada grupo tem o seu, e nenhum repete o ícone de uma tela do menu:
+ * `tests/unit/navegacao-icones-unicos.test.ts` prende as duas coisas.
+ */
+export const ICONE_DO_HUB: Partial<Record<NavGroupId, PhosphorIcon>> = {
+  crm: AddressBook,
+  ia: Sparkle,
+  analise: ChartPieSlice,
+};
+
 export interface NavDestination extends Omit<NavMetadata, "icon"> {
   icon: PhosphorIcon;
 }

@@ -86,3 +86,39 @@ describe("ConversationListItem — bolinha de quem atende", () => {
     expect(screen.queryByRole("img", { name: "Em atendimento" })).toBeNull();
   });
 });
+
+/**
+ * A linha do funil na lista vem da ROTA (`funil_do_contato`), não de prop
+ * montada à mão: antes deste campo a lista real nunca a desenhava, só a vitrine.
+ */
+describe("ConversationListItem — linha do funil vinda da lista", () => {
+  const funil = {
+    nome: "Comercial",
+    etapa_atual_id: "e2",
+    etapas: [
+      { id: "e1", nome: "Novo", perdida: false },
+      { id: "e2", nome: "Proposta", perdida: false },
+      { id: "e3", nome: "Fechado", perdida: false },
+    ],
+  };
+
+  it("desenha a etapa atual do contato", () => {
+    render(
+      <ConversationListItem
+        conversation={{ ...conversaDeExemplo.conversation, funil_do_contato: funil }}
+        {...conversaDeExemplo.props}
+      />,
+    );
+    expect(screen.getByLabelText("Etapa do funil: Proposta")).toBeInTheDocument();
+  });
+
+  it("sem negócio em funil, a linha não aparece", () => {
+    render(
+      <ConversationListItem
+        conversation={{ ...conversaDeExemplo.conversation, funil_do_contato: null }}
+        {...conversaDeExemplo.props}
+      />,
+    );
+    expect(screen.queryByLabelText(/^Etapa do funil/)).toBeNull();
+  });
+});

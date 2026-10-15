@@ -21,7 +21,7 @@ export function VersionFooter({
   onNavigate?: () => void;
 }) {
   const t = useT();
-  const { data } = useSystemVersion();
+  const { data } = useSystemVersion({ depoisDaAbertura: true });
   if (!data?.current_version) return null;
 
   const label = data.current_version.replace(/^v/i, "");

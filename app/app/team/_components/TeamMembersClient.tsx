@@ -11,6 +11,9 @@ import { useChangeRole } from "@/hooks/team/useChangeRole";
 import { useReactivateMember } from "@/hooks/team/useReactivateMember";
 import { useRevokeMember } from "@/hooks/team/useRevokeMember";
 import { Badge } from "@/components/ui/badge";
+import { Painel } from "@/components/ui/painel";
+import { Selo } from "@/components/ui/selo";
+import { AvatarDoContato } from "@/components/inbox/visual/AvatarDoContato";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -73,12 +76,12 @@ export function TeamMembersClient({ currentUserId, canManage }: Props) {
 
   return (
     <>
-      <div className="rounded-md border">
+      <Painel semRecuo>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{t("Membro")}</TableHead>
-              <TableHead>Role</TableHead>
+              <TableHead>{t("Papel")}</TableHead>
               <TableHead>{t("Interface")}</TableHead>
               <TableHead>{t("Status")}</TableHead>
               <TableHead>{t("Última atividade")}</TableHead>
@@ -89,10 +92,18 @@ export function TeamMembersClient({ currentUserId, canManage }: Props) {
             {members.map((m) => (
               <TableRow key={m.user_id}>
                 <TableCell>
-                  <div className="font-medium">
-                    {m.full_name ?? m.email ?? m.user_id.slice(0, 8)}
+                  <div className="flex items-center gap-3">
+                    <AvatarDoContato
+                      nome={m.full_name ?? m.email ?? m.user_id.slice(0, 8)}
+                      tamanho="tabela"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-medium">
+                        {m.full_name ?? m.email ?? m.user_id.slice(0, 8)}
+                      </div>
+                      {m.email ? <div className="text-xs text-muted-foreground">{m.email}</div> : null}
+                    </div>
                   </div>
-                  {m.email ? <div className="text-xs text-muted-foreground">{m.email}</div> : null}
                 </TableCell>
                 <TableCell>
                   {canManage && m.user_id !== currentUserId ? (
@@ -153,11 +164,11 @@ export function TeamMembersClient({ currentUserId, canManage }: Props) {
                     revogado fora e a pessoa simplesmente sumia da equipe.
                   */}
                   {m.revoked_at ? (
-                    <Badge variant="destructive">{t("Revogado")}</Badge>
+                    <Selo significado="falha">{t("Revogado")}</Selo>
                   ) : m.accepted_at ? (
-                    <Badge variant="default">{t("Aceito")}</Badge>
+                    <Selo significado="concluido">{t("Aceito")}</Selo>
                   ) : (
-                    <Badge variant="outline">{t("Pendente")}</Badge>
+                    <Selo significado="funil">{t("Pendente")}</Selo>
                   )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
@@ -208,7 +219,7 @@ export function TeamMembersClient({ currentUserId, canManage }: Props) {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </Painel>
 
       {interfaceMember && (
         <MemberInterfaceDialog
@@ -223,7 +234,7 @@ export function TeamMembersClient({ currentUserId, canManage }: Props) {
             <DialogTitle>{t("Revogar acesso")}</DialogTitle>
             <DialogDescription>
               {revokeDialog?.email ?? revokeDialog?.user_id}{" "}
-              {t("perderá acesso ao tenant. Esta ação pode ser desfeita reconvidando o membro.")}
+              {t("perderá o acesso a esta empresa. Esta ação pode ser desfeita reconvidando o membro.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

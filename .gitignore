@@ -172,3 +172,15 @@ __pycache__/
 
 # Runtime do instalador single-server: Supabase self-hosted, credenciais e dados.
 .runtime/
+
+# Material de marca de terceiros (apresentações, fotos da equipe): só local. O que
+# o design aproveita fica registrado por escrito em docs/design/referencias/README.md.
+docs/design/referencias/*.pdf
+
+# Artefatos de trabalho da skill de design (impeccable): imagens geradas, medições,
+# capturas e as fotos de exemplo em tamanho cheio. Só a configuração e os resumos
+# de tela (`.impeccable/config.json`, `.impeccable/surfaces/`) são versionados.
+.impeccable/*
+!.impeccable/config.json
+!.impeccable/surfaces/
+assets/plates/

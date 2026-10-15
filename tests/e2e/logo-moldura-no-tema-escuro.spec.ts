@@ -76,6 +76,7 @@ import * as zlib from "node:zlib";
 
 import { test, expect, type Page, type Locator } from "./helpers/test";
 
+import { menuExpandido } from "./helpers/menu-expandido";
 import { generateTotp, msUntilNextTotpWindow } from "./utils/totp";
 
 const CREDS_PATH = path.join(process.cwd(), ".e2e-creds.json");
@@ -380,6 +381,14 @@ test.describe("a moldura do logo no tema escuro", () => {
   // BANCO, não a sessão do navegador (as fixtures `page`/`context` são de escopo
   // de teste). Ver o comentário longo em `marca-logo.spec.ts`.
   test.setTimeout(120_000);
+
+  // Esta spec mede o menu EXPANDIDO; o cookie é gravado de propósito (o padrão passou a ser expandido em 14/10/2026 e já foi o trilho):
+  // recolhida, a barra troca o `<img>` do logo pela inicial e o logotipo do
+  // produto pelo símbolo — a moldura e o retângulo do cabeçalho que os casos
+  // 1, 2, 5, 6 e 7 medem são os da barra LARGA.
+  test.beforeEach(async ({ context, baseURL }) => {
+    await menuExpandido(context, baseURL);
+  });
 
   const secret = (): string => {
     const s = creds.dono_totp?.secret;

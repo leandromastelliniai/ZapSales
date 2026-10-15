@@ -1,4 +1,7 @@
 "use client";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { randomId } from "@/lib/random-id";
@@ -277,19 +280,17 @@ export function ProspectingClient() {
     if (excluiu) setConfirmandoExclusao(false);
   }
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4 md:p-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">CRM</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight">{t("Prospecção")}</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            {t("Encontre empresas, aborde aos poucos e acompanhe quem avança na conversa.")}
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => setSettings((s) => !s)}>
-          {t("Configurar busca")}
-        </Button>
-      </header>
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={t("Prospecção")}
+        descricao={t("Encontre empresas, aborde aos poucos e acompanhe quem avança na conversa.")}
+        ajuda={<ComoFunciona chave="prospeccao" pagina={t("Prospecção")} />}
+        acoes={
+          <Button variant="outline" size="sm" onClick={() => setSettings((s) => !s)}>
+            {t("Configurar busca")}
+          </Button>
+        }
+      />
       {(error || query.error) && (
         <div
           role="alert"
@@ -1212,6 +1213,6 @@ export function ProspectingClient() {
           )}
         </div>
       </div>
-    </main>
+    </CorpoDaPagina>
   );
 }

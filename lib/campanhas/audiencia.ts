@@ -73,25 +73,59 @@ export const filtroDeAudienciaSchema = z
     /** Teto do lote. A mesma régua do import de CSV para "quanta gente de uma vez". */
     limite: z.number().int().min(1).max(5000).default(500),
   })
-  .refine(
-    (f) =>
-      f.com_todas_tags.length > 0 ||
-      f.com_alguma_tag.length > 0 ||
-      f.sem_tags.length > 0 ||
-      f.funis.length > 0 ||
-      f.etapas.length > 0 ||
-      f.responsaveis.length > 0 ||
-      f.situacoes_do_negocio.length > 0 ||
-      f.origens.length > 0 ||
-      f.sem_interacao_ha_dias !== null ||
-      f.com_interacao_ha_dias !== null ||
-      f.cadastrado_de !== null ||
-      f.cadastrado_ate !== null ||
-      f.incluir_contatos.length > 0,
-    { message: "Escolha pelo menos um critério — audiência sem recorte não se confere." },
-  );
+  .refine((f) => temRecorte(f) || f.incluir_contatos.length > 0, {
+    message: "Escolha pelo menos um critério — audiência sem recorte não se confere.",
+  });
 
 export type FiltroDeAudiencia = z.infer<typeof filtroDeAudienciaSchema>;
+
+/**
+ * Os campos que `temRecorte` lê, escritos à mão: tipar o parâmetro com
+ * `FiltroDeAudiencia` faria o tipo depender do schema, que usa esta função no
+ * próprio `refine` — referência circular.
+ */
+interface CriteriosDeRecorte {
+  com_todas_tags: readonly string[];
+  com_alguma_tag: readonly string[];
+  sem_tags: readonly string[];
+  funis: readonly string[];
+  etapas: readonly string[];
+  responsaveis: readonly string[];
+  situacoes_do_negocio: readonly string[];
+  origens: readonly string[];
+  sem_interacao_ha_dias: number | null;
+  com_interacao_ha_dias: number | null;
+  cadastrado_de: string | null;
+  cadastrado_ate: string | null;
+}
+
+/**
+ * O filtro tem algum critério de RECORTE — ou seja, algo que estreita os
+ * contatos da organização? `incluir_contatos` NÃO é recorte: é uma lista de
+ * nomes, e por isso não pode estar na conta.
+ *
+ * ⚠️ A diferença importa na consulta (`consulta-de-audiencia.ts`). Um filtro
+ * só com `incluir_contatos` (a lista subida por planilha) passa na validação,
+ * mas não tem nenhum predicado para a consulta principal: ela devolveria os
+ * primeiros `limite` contatos da organização inteira. Quem decide se a
+ * consulta principal roda é esta função.
+ */
+export function temRecorte(f: CriteriosDeRecorte): boolean {
+  return (
+    f.com_todas_tags.length > 0 ||
+    f.com_alguma_tag.length > 0 ||
+    f.sem_tags.length > 0 ||
+    f.funis.length > 0 ||
+    f.etapas.length > 0 ||
+    f.responsaveis.length > 0 ||
+    f.situacoes_do_negocio.length > 0 ||
+    f.origens.length > 0 ||
+    f.sem_interacao_ha_dias !== null ||
+    f.com_interacao_ha_dias !== null ||
+    f.cadastrado_de !== null ||
+    f.cadastrado_ate !== null
+  );
+}
 
 /** Um filtro vazio, para campanha recém-criada. Não passa no `refine` — e é o ponto. */
 export const FILTRO_VAZIO = {

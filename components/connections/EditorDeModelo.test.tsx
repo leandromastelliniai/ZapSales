@@ -142,6 +142,7 @@ describe("EditorDeModelo", () => {
 
   it("“Adicionar variável” acrescenta a próxima da sequência", async () => {
     render(<EditorDeModelo onFechar={() => {}} />);
+    fireEvent.change(screen.getByTestId("modelo-formato"), { target: { value: "POSITIONAL" } });
     digitar("modelo-corpo", "Olá {{1}}, código");
     await userEvent.click(screen.getByTestId("btn-variavel"));
     expect(screen.getByTestId("modelo-corpo")).toHaveValue("Olá {{1}}, código {{2}}");
@@ -149,6 +150,7 @@ describe("EditorDeModelo", () => {
 
   it("“Adicionar variável” entra onde está o cursor, não colada no fim", async () => {
     render(<EditorDeModelo onFechar={() => {}} />);
+    fireEvent.change(screen.getByTestId("modelo-formato"), { target: { value: "POSITIONAL" } });
     digitar("modelo-corpo", "Olá , tudo bem?");
     const corpo = screen.getByTestId("modelo-corpo") as HTMLTextAreaElement;
     corpo.setSelectionRange(4, 4);
@@ -287,7 +289,7 @@ describe("EditorDeModelo", () => {
   it("oferta por tempo limitado: só marketing, o preview mostra a oferta, o prazo e o cupom antes do link", async () => {
     render(<EditorDeModelo onFechar={() => {}} />);
     digitar("modelo-nome", "oferta_relampago");
-    await userEvent.click(screen.getByTestId("modelo-tipo-LIMITED_TIME_OFFER"));
+    fireEvent.change(screen.getByTestId("modelo-tipo"), { target: { value: "LIMITED_TIME_OFFER" } });
     // Utilidade some da lista: a oferta só existe em marketing.
     expect(
       within(screen.getByTestId("modelo-categoria")).queryByRole("option", { name: "Utilidade" }),
@@ -322,7 +324,7 @@ describe("EditorDeModelo", () => {
   it("carrossel: nasce com 2 cards, o preview mostra cada card e o envio leva os cards", async () => {
     render(<EditorDeModelo onFechar={() => {}} />);
     digitar("modelo-nome", "vitrine_carrossel");
-    await userEvent.click(screen.getByTestId("modelo-tipo-CAROUSEL"));
+    fireEvent.change(screen.getByTestId("modelo-tipo"), { target: { value: "CAROUSEL" } });
     expect(screen.getAllByTestId("modelo-card")).toHaveLength(2);
     // Sem rodapé nem botões soltos: no carrossel eles moram nos cards.
     expect(screen.queryByTestId("modelo-rodape")).toBeNull();
@@ -369,7 +371,7 @@ describe("EditorDeModelo", () => {
 
   it("o card novo já nasce com os botões do anterior (a Meta exige os mesmos em todos)", async () => {
     render(<EditorDeModelo onFechar={() => {}} />);
-    await userEvent.click(screen.getByTestId("modelo-tipo-CAROUSEL"));
+    fireEvent.change(screen.getByTestId("modelo-tipo"), { target: { value: "CAROUSEL" } });
     digitar("card-1-botao-texto", "Quero");
     await userEvent.click(screen.getByTestId("btn-add-card"));
     const cards = screen.getAllByTestId("modelo-card");
@@ -380,7 +382,7 @@ describe("EditorDeModelo", () => {
   it("carrossel com cards de botões diferentes: a recusa da Meta aparece antes do envio", async () => {
     render(<EditorDeModelo onFechar={() => {}} />);
     digitar("modelo-nome", "vitrine_carrossel");
-    await userEvent.click(screen.getByTestId("modelo-tipo-CAROUSEL"));
+    fireEvent.change(screen.getByTestId("modelo-tipo"), { target: { value: "CAROUSEL" } });
     digitar("modelo-corpo", "Separei estas ofertas para você.");
     for (const i of [0, 1]) {
       await escolherArquivo(`card-${i}-midia`, `produto_${i + 1}.jpg`, "image/jpeg");

@@ -1,4 +1,6 @@
 "use client";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -43,8 +45,11 @@ export function ProposalsSettingsClient() {
   if (!cfg) return <div className="p-6">{t("Carregando…")}</div>;
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4 p-6">
-      <h1 className="text-xl font-semibold">{t("Propostas")}</h1>
+    <CorpoDaPagina largura="formulario">
+      <CabecalhoDePagina
+        titulo={t("Propostas")}
+        descricao={t("Como as propostas comerciais funcionam nesta organização: validade, condições e avisos.")}
+      />
       <p className="text-sm">
         <Link href="/app/settings/tenant/proposals/modelos" className="underline underline-offset-4">
           {t("Modelos de proposta")}
@@ -89,6 +94,6 @@ export function ProposalsSettingsClient() {
         </div>
       </div>
       <Button onClick={salvar} disabled={salvando}>{salvando ? t("Salvando…") : t("Salvar")}</Button>
-    </div>
+    </CorpoDaPagina>
   );
 }

@@ -14,7 +14,10 @@ services:
   app:
     # Teto de memória — 335 MiB de pico MEDIDO nesta VPS.
     #
-    # Sem ele o contêiner é ilimitado, e numa VPS de 3,8 GB isso não é teoria:
+    # (A VPS de produção do projeto tem 8 núcleos e 32 GB — medido em 2026-10-14. Os
+    # tetos abaixo protegem instalações menores e vizinhos de hospedagem, não esta.)
+    #
+    # Sem ele o contêiner é ilimitado, e numa VPS pequena isso não é teoria:
     # um contêiner ALHEIO (agente da hospedagem, fora deste compose) registrou
     # pico de 3.068 MiB no mesmo host. Quando a RAM acaba, o OOM killer escolhe
     # a vítima por PONTUAÇÃO — quem cresceu mais rápido —, não por importância:
@@ -72,7 +75,7 @@ services:
   worker:
     # Teto de memória — 230 MiB de pico MEDIDO nesta VPS.
     #
-    # Sem ele o contêiner é ilimitado, e numa VPS de 3,8 GB isso não é teoria:
+    # Sem ele o contêiner é ilimitado, e numa VPS pequena isso não é teoria:
     # um contêiner ALHEIO (agente da hospedagem, fora deste compose) registrou
     # pico de 3.068 MiB no mesmo host. Quando a RAM acaba, o OOM killer escolhe
     # a vítima por PONTUAÇÃO — quem cresceu mais rápido —, não por importância:
@@ -132,7 +135,7 @@ services:
   waha:
     # Teto de memória — 893 MiB de pico MEDIDO nesta VPS.
     #
-    # Sem ele o contêiner é ilimitado, e numa VPS de 3,8 GB isso não é teoria:
+    # Sem ele o contêiner é ilimitado, e numa VPS pequena isso não é teoria:
     # um contêiner ALHEIO (agente da hospedagem, fora deste compose) registrou
     # pico de 3.068 MiB no mesmo host. Quando a RAM acaba, o OOM killer escolhe
     # a vítima por PONTUAÇÃO — quem cresceu mais rápido —, não por importância:

@@ -30,6 +30,7 @@ import { LinhaDaEstimativa } from "@/components/campanhas/CustoDaCampanha";
 import { DoisNumeros, problemaDoParDoisNumeros } from "@/components/campanhas/DoisNumeros";
 import { MensagemOficial, mapaCompleto, mapaDoModelo } from "@/components/campanhas/MensagemOficial";
 import { RespostaDaCampanha } from "@/components/campanhas/RespostaDaCampanha";
+import { SubirListaCsv } from "@/components/campanhas/SubirListaCsv";
 import { botoesDoModeloEscolhido, precisaDeAgente } from "@/lib/campanhas/resposta-na-tela";
 import { lerBotoesDaResposta, type BotaoDaResposta, type QuemAssume } from "@/lib/campanhas/destino-da-resposta";
 import {
@@ -59,6 +60,10 @@ export function EditarCampanha({ id }: { id: string }) {
   const [comAlgumaTag, setComAlgumaTag] = useState("");
   const [semTags, setSemTags] = useState("");
   const [semInteracao, setSemInteracao] = useState("");
+  // O filtro como foi gravado: o que esta tela não edita (funil, etapa…) segue como estava.
+  const [filtroGravado, setFiltroGravado] = useState<Record<string, unknown>>({});
+  // Contatos da planilha subida (ids); somam ao recorte.
+  const [incluidos, setIncluidos] = useState<string[]>([]);
   const [limite, setLimite] = useState("100");
   const [texto, setTexto] = useState("");
   const [funil, setFunil] = useState("");
@@ -103,6 +108,8 @@ export function EditarCampanha({ id }: { id: string }) {
     setSemTags(juntar(f.sem_tags));
     setSemInteracao(f.sem_interacao_ha_dias == null ? "" : String(f.sem_interacao_ha_dias));
     setLimite(f.limite == null ? "100" : String(f.limite));
+    setFiltroGravado(f);
+    setIncluidos(Array.isArray(f.incluir_contatos) ? (f.incluir_contatos as string[]) : []);
     setTexto(c.message_body ?? "");
     setFunil(c.pipeline_id ?? "");
     setEtapa(c.stage_id ?? "");
@@ -118,17 +125,22 @@ export function EditarCampanha({ id }: { id: string }) {
 
   const filtro = useMemo(
     () => ({
+      ...filtroGravado,
       com_alguma_tag: listar(comAlgumaTag),
       sem_tags: listar(semTags),
       sem_interacao_ha_dias: semInteracao ? Number(semInteracao) : null,
+      incluir_contatos: incluidos,
       limite: Number(limite) || 100,
     }),
-    [comAlgumaTag, semTags, semInteracao, limite],
+    [filtroGravado, comAlgumaTag, semTags, semInteracao, incluidos, limite],
   );
 
   const temCriterio =
     filtro.com_alguma_tag.length > 0 ||
     filtro.sem_tags.length > 0 ||
+    filtro.incluir_contatos.length > 0 ||
+    temLista(filtroGravado.funis) ||
+    temLista(filtroGravado.etapas) ||
     filtro.sem_interacao_ha_dias !== null;
 
   if (campanha.isLoading || !carregado) {
@@ -255,6 +267,7 @@ export function EditarCampanha({ id }: { id: string }) {
 
       <Card className="space-y-4 p-4">
         <h2 className="font-medium">{t("Público")}</h2>
+        <SubirListaCsv incluidos={incluidos} onIncluidos={setIncluidos} />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="e-com-tags">{t("Com alguma destas etiquetas")}</Label>
@@ -491,6 +504,10 @@ function listar(bruto: string): string[] {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+function temLista(valor: unknown): boolean {
+  return Array.isArray(valor) && valor.length > 0;
 }
 
 function juntar(valor: unknown): string {

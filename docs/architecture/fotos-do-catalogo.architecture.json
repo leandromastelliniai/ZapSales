@@ -104,6 +104,13 @@
       "col": 4,
       "type": "frontend",
       "label": "Inbox mostra a foto enviada"
+    },
+    {
+      "id": "fila",
+      "lane": "data",
+      "col": 4,
+      "type": "database",
+      "label": "storage_redaction_queue — a poda enfileira o arquivo de <org>/<conversa>/ que nenhuma mensagem cita há 1 dia; o worker apaga"
     }
   ],
   "edges": [
@@ -178,6 +185,18 @@
       "from": "auditoria",
       "to": "tela",
       "label": "Configurações › Auditoria lê"
+    },
+    {
+      "id": "12",
+      "from": "handler",
+      "to": "fila",
+      "label": "a mensagem que cita o caminho tira a linha pending da fila (gatilho 0544, #40) — a cópia reaproveitada não é apagada"
+    },
+    {
+      "id": "13",
+      "from": "fila",
+      "to": "copia",
+      "label": "o worker confere se alguma mensagem cita o caminho antes de apagar"
     }
   ]
 }

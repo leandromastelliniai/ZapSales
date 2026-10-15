@@ -24,6 +24,8 @@
  * carrega o sintoma em português de gente — é o que liga uma linha de
  * configuração a algo que a pessoa já viu acontecer no negócio dela.
  */
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -183,17 +185,21 @@ export function PainelDeProvedores() {
   const semChave = dados.credenciais.length === 0;
 
   return (
-    <div className="mx-auto w-full max-w-5xl p-6" data-testid="painel-de-provedores">
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Provedores de IA")}</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          {t("Seu sistema usa inteligência artificial em")} {dados.pontos.length}{" "}
-          {t("lugares diferentes. Aqui você vê qual está atendendo cada um — e troca, se quiser.")}
-        </p>
-      </header>
+    <CorpoDaPagina className="gap-0" data-testid="painel-de-provedores">
+      <div className="mb-6">
+        <CabecalhoDePagina
+          titulo={t("Provedores de IA")}
+          descricao={
+            <>
+              {t("Seu sistema usa inteligência artificial em")} {dados.pontos.length}{" "}
+              {t("lugares diferentes. Aqui você vê qual está atendendo cada um — e troca, se quiser.")}
+            </>
+          }
+        />
+      </div>
 
       {semChave && (
-        <Card className="mb-6 border-amber-500/40 bg-amber-500/5 p-4" data-testid="aviso-sem-chave">
+        <Card className="mb-6 border-warning/40 bg-warning-bg p-4" data-testid="aviso-sem-chave">
           <p className="text-sm">
             {t("Você ainda não cadastrou a chave da sua IA principal, a que conversa com os clientes.")}{" "}
             {/* Só é verdade quando a instalação tem chave; sem ela, a frase
@@ -250,7 +256,7 @@ export function PainelDeProvedores() {
       </div>
 
       <CartaoDeMapas />
-    </div>
+    </CorpoDaPagina>
   );
 }
 
@@ -422,7 +428,7 @@ function ResumoDoGrupo({ pontos }: { pontos: Ponto[] }) {
         ))}
       </div>
       {comAviso > 0 && (
-        <p className="mt-2 text-sm text-amber-600 dark:text-amber-500" data-testid="grupo-com-aviso">
+        <p className="mt-2 text-sm text-warning-fg" data-testid="grupo-com-aviso">
           {comAviso === 1
             ? t("1 ponto deste grupo precisa da sua atenção.")
             : `${comAviso} ${t("pontos deste grupo precisam da sua atenção.")}`}
@@ -541,7 +547,7 @@ function CartaoDoPonto({
       {ponto.avisos.map((a) => (
         <p
           key={a}
-          className="mt-2 rounded-md bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-500"
+          className="mt-2 rounded-md bg-warning-bg p-2 text-xs text-warning-fg"
           data-testid={`aviso-${ponto.id}`}
         >
           {t(a)}

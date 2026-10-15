@@ -128,7 +128,7 @@ describe("Sidebar agrupado", () => {
     // #105, e Conexões é a porta.
     const hubAnalise = screen.getByRole("link", { name: /Ver tudo em Análise/ });
     expect(hubAnalise).toHaveAttribute("href", "/app/analise");
-    expect(screen.queryByRole("link", { name: /Audit Log/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Auditoria/ })).toBeNull();
   });
 
   it("Configurações fica no rodapé, nunca dependendo de scroll", () => {

@@ -33,6 +33,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import { carregarEnvLocal } from "../../scripts/lib/env-de-teste";
 import { lerCreds, loginComoAdmin } from "./helpers/login-admin";
+import { menuExpandido } from "./helpers/menu-expandido";
 import { expect, test, type Page } from "./helpers/test";
 
 const env = carregarEnvLocal();
@@ -217,6 +218,13 @@ test.describe("contadores do menu", () => {
 
   test.afterAll(async () => {
     await limpar();
+  });
+
+  // Esta spec mede o menu EXPANDIDO; o cookie é gravado de propósito (o padrão passou a ser expandido em 14/10/2026 e já foi o trilho):
+  // recolhido, o selo vira um ponto SEM número (`compacto`), e o `toHaveText`
+  // abaixo não teria o que ler.
+  test.beforeEach(async ({ context, baseURL }) => {
+    await menuExpandido(context, baseURL);
   });
 
   test("Casos mostra quantos esperam uma pessoa — o mesmo número da tela, e acompanha o caso", async ({
