@@ -68,7 +68,7 @@ function midiasAlheias(m: NovoModelo, orgId: string): string[] {
 /** Cada mídia do corpo, como `[campo do editor, caminho no storage]`. */
 function midiasDoCorpo(m: NovoModelo): Array<[string, string]> {
   const campos: Array<[string, string | undefined]> = [
-    ["header.media", m.header?.media?.path],
+    ["header.media", m.header && m.header.format !== "TEXT" ? m.header.media?.path : undefined],
     ...m.cards.map((c, i): [string, string | undefined] => [`cards.${i}.header.media`, c.header.media?.path]),
   ];
   return campos.filter((c): c is [string, string] => Boolean(c[1]));
