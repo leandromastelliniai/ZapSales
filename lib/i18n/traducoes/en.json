@@ -9453,5 +9453,11 @@
   "Removeu": "Removed",
   "Suporte da plataforma": "Platform support",
   "Recebeu uma mensagem": "Received a message",
-  "Recusou um webhook com assinatura inválida": "Rejected a webhook with an invalid signature"
+  "Recusou um webhook com assinatura inválida": "Rejected a webhook with an invalid signature",
+  "Quanto gastou por dia (US$)": "How much was spent per day (US$)",
+  "Passou para uma pessoa": "Passed to a person",
+  "Chamada feita": "Outgoing call",
+  "Chamada recebida": "Incoming call",
+  "Em risco": "At risk",
+  "Em voo": "In flight"
 }
