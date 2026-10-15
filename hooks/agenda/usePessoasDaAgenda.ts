@@ -9,8 +9,7 @@ import { ROTA_DA_LISTA_DE_PESSOAS, motivoDaFalhaNaLista } from "@/lib/agenda/lis
 import { trilhasDaEquipe } from "@/lib/agenda/tipos";
 import { apiClient } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/types";
-import { traduzir } from "@/lib/i18n/dicionario";
-import { idiomaAtual } from "@/lib/i18n/IdiomaProvider";
+import { traduzirFora } from "@/lib/i18n/IdiomaProvider";
 
 import type { Pessoa } from "@/components/agenda/tipos";
 
@@ -63,7 +62,7 @@ export function usePessoasDaAgenda() {
         // trata e o que segue funcionando; os outros erros ficam com o aviso
         // padrão, que para eles já é informativo.
         if (err instanceof ApiError && (err.status === 403 || err.status === 401)) {
-          toast.warning(traduzir(motivoDaFalhaNaLista(err.status), idiomaAtual()));
+          toast.warning(traduzirFora(motivoDaFalhaNaLista(err.status)));
         } else {
           showApiError(err);
         }

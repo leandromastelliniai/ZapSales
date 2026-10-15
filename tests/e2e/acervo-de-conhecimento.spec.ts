@@ -175,7 +175,7 @@ test.describe("acervo de conhecimento", () => {
 
     if (await semChave.first().isVisible()) {
       // O aviso não é um beco: o conserto abre na própria tela.
-      await page.getByTestId("conhecimento-cadastrar-chave").click();
+      await page.getByTestId("conhecimento-cadastrar-chave").first().click();
       await expect(page.getByTestId("conhecimento-chave-input")).toBeVisible();
       await page.getByTestId("conhecimento-provedor-openrouter").check();
       await expect(page.getByTestId("conhecimento-chave-input")).toHaveAttribute("placeholder", "sk-or-…");
@@ -207,7 +207,7 @@ test.describe("acervo de conhecimento", () => {
       "esta organização já tem chave de embedding — o estado 'esperando' não é alcançável aqui",
     );
 
-    await page.getByTestId("acervo-adicionar").click();
+    await page.getByTestId("acervo-adicionar").first().click();
     // O diálogo AVISA antes de aceitar: descobrir depois de subir é a pior ordem.
     await expect(page.getByTestId("material-aviso-sem-chave")).toBeVisible();
 
@@ -244,7 +244,7 @@ test.describe("acervo de conhecimento", () => {
       await cadastrarChavePelaTela(page);
     }
 
-    await page.getByTestId("acervo-adicionar").click();
+    await page.getByTestId("acervo-adicionar").first().click();
     await page.getByTestId("material-nome").fill(NOME_FAQ);
     await page.getByTestId("material-conteudo").fill(CONTEUDO_FAQ);
     await page.getByTestId("material-criar").click();
@@ -269,7 +269,7 @@ test.describe("acervo de conhecimento", () => {
 
     await page.goto("/app/ai/knowledge/sources");
 
-    await page.getByTestId("acervo-adicionar").click();
+    await page.getByTestId("acervo-adicionar").first().click();
     await page.getByTestId("material-tipo-documento").click();
     await page.getByTestId("material-nome").fill(NOME_DOC);
     await page.getByTestId("material-arquivo").setInputFiles({

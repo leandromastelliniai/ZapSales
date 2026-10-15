@@ -4,8 +4,7 @@ import { apiClient } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/types";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { toast } from "sonner";
-import { traduzir } from "@/lib/i18n/dicionario";
-import { idiomaAtual } from "@/lib/i18n/IdiomaProvider";
+import { traduzirFora } from "@/lib/i18n/IdiomaProvider";
 
 /**
  * A pré-checagem do handler põe `{ vinculos, por_tabela }` em `error.details`
@@ -30,7 +29,7 @@ export function mensagemDeBloqueioPorVinculo(
 }
 
 function toastDeBloqueioPorVinculo(err: ApiError): boolean {
-  const t = (s: string) => traduzir(s, idiomaAtual());
+  const t = (s: string) => traduzirFora(s);
   const mensagem = mensagemDeBloqueioPorVinculo(err.details, t);
   if (!mensagem) return false;
   toast.error(mensagem, {
