@@ -103,7 +103,7 @@ async function esperarGestao(page: Page): Promise<void> {
 
 async function gestao(page: Page, aba: "Instaladas" | "Catálogo"): Promise<void> {
   await page.goto("/app/extensions");
-  await expect(page.getByTestId("extensions-manager")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("extensions-manager").first()).toBeVisible({ timeout: 30_000 });
   await esperarGestao(page);
   await page.getByRole("tab", { name: aba }).click();
 }
@@ -287,7 +287,7 @@ test("atualiza, desfaz com o catálogo fora do ar, remove e reinstala sem decidi
   await test.step("remove: o guia aberto em A diz que foi removido, e a auditoria de A registra", async () => {
     const guiaAberto = await page.context().newPage();
     await guiaAberto.goto(`/app/extensions/${installationId}`);
-    await expect(guiaAberto.getByTestId("extension-guide")).toBeVisible({ timeout: 30_000 });
+    await expect(guiaAberto.getByTestId("extension-guide").first()).toBeVisible({ timeout: 30_000 });
 
     // Uma página em segundo plano não anima: o Chromium congela os quadros dela, e todo clique
     // espera "estável" para sempre (medido na primeira rodada: 8 min parado na aba Instaladas).
