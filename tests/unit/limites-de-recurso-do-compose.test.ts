@@ -135,3 +135,30 @@ describe("CPU do auth, rest e storage (#66)", () => {
     expect(Number(m![1])).toBe(cpusDe("auth")!.padrao);
   });
 });
+
+/**
+ * POOL DE CONEXÕES DO GOTRUE (#66). Sem `GOTRUE_DB_MAX_IDLE_POOL_SIZE` o GoTrue
+ * não mantém conexão ociosa e abre uma NOVA ao Postgres a cada requisição
+ * (~90 ms cada) — era o grosso dos 100–350 ms do `GET /user`.
+ */
+describe("pool de conexões do GoTrue (#66)", () => {
+  const bloco = semComentarios(
+    lerServicos(fs.readFileSync(path.join(RAIZ, "docker-compose.supabase.yml"), "utf8")).get("auth") ?? "",
+  );
+  const padrao = (nome: string) => {
+    const linha = bloco.split(/\r?\n/).find((l) => l.trim().startsWith(`${nome}:`));
+    const m = linha?.match(/:-(\d+)\}\s*$/);
+    return m ? Number(m[1]) : null;
+  };
+
+  it("mantém conexões ociosas (>= 1) e o teto do pool comporta as ociosas", () => {
+    const ociosas = padrao("GOTRUE_DB_MAX_IDLE_POOL_SIZE");
+    const teto = padrao("GOTRUE_DB_MAX_POOL_SIZE");
+    expect(ociosas, "auth sem GOTRUE_DB_MAX_IDLE_POOL_SIZE=${VAR:-N}").not.toBeNull();
+    expect(teto, "auth sem GOTRUE_DB_MAX_POOL_SIZE=${VAR:-N}").not.toBeNull();
+    expect(ociosas!).toBeGreaterThanOrEqual(1);
+    expect(teto!).toBeGreaterThanOrEqual(ociosas!);
+    // O Postgres do Supabase padrão aceita 100 conexões, divididas com os outros serviços.
+    expect(teto!).toBeLessThanOrEqual(30);
+  });
+});
