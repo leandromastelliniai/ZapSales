@@ -43,7 +43,6 @@ const USUARIO = {
 
 // ─── GoTrue falso ──────────────────────────────────────────────────────────────
 const chamadas = { user: 0, outras: [] as string[] };
-let atrasoDoUserMs = 0;
 let servidor: Server;
 let urlFalsa = "";
 
@@ -56,12 +55,9 @@ function iniciarServidorFalso(): Promise<void> {
     };
     if (caminho.startsWith("/auth/v1/user")) {
       chamadas.user += 1;
-      const valido = req.headers.authorization === `Bearer ${SENHA_DO_TOKEN}`;
-      const responder = () =>
-        valido
-          ? json(200, USUARIO)
-          : json(401, { code: 401, error_code: "bad_jwt", msg: "invalid JWT" });
-      return atrasoDoUserMs > 0 ? void setTimeout(responder, atrasoDoUserMs) : responder();
+      return req.headers.authorization === `Bearer ${SENHA_DO_TOKEN}`
+        ? json(200, USUARIO)
+        : json(401, { code: 401, error_code: "bad_jwt", msg: "invalid JWT" });
     }
     if (caminho.startsWith("/rest/v1/api_tokens") && req.method === "GET") {
       const linha = {
@@ -164,7 +160,6 @@ afterAll(async () => {
 beforeEach(() => {
   chamadas.user = 0;
   chamadas.outras = [];
-  atrasoDoUserMs = 0;
   atual.cookies = new Map();
   atual.headers = new Headers();
 });
@@ -326,35 +321,5 @@ describe("tempo por etapa e guardas", () => {
     const r = await viaProxy("/app/inbox", { cookie: cookieDeSessao("token-revogado") });
     expect(r.resposta.status).toBe(307);
     expect(chamadas.user).toBe(1);
-  });
-});
-
-describe("rajada: requisições simultâneas da mesma sessão (Inbox abre ~15 de uma vez)", () => {
-  it("15 chamadas de API ao mesmo tempo com o mesmo token = 1 ida ao GoTrue, e todas passam", async () => {
-    atrasoDoUserMs = 80; // o GoTrue real leva 100+ ms; sem demora não há sobreposição
-    const cookie = cookieDeSessao(SENHA_DO_TOKEN);
-    const rotas = Array.from({ length: 15 }, (_, i) => `/api/v1/conversations?i=${i}`);
-    const resultados = await Promise.all(rotas.map((r) => viaProxy(r, { cookie })));
-    expect(resultados.every((r) => r.seguiu)).toBe(true);
-    expect(chamadas.user).toBe(1);
-  });
-
-  it("não guarda resultado: depois que a ida termina, a requisição seguinte pergunta de novo", async () => {
-    const cookie = cookieDeSessao(SENHA_DO_TOKEN);
-    await viaProxy("/api/v1/conversations", { cookie });
-    await viaProxy("/api/v1/conversations", { cookie });
-    expect(chamadas.user).toBe(2);
-  });
-
-  it("sessões diferentes ao mesmo tempo NÃO compartilham: o token inválido continua 401", async () => {
-    atrasoDoUserMs = 80;
-    const [boa, ruim] = await Promise.all([
-      viaProxy("/api/v1/conversations", { cookie: cookieDeSessao(SENHA_DO_TOKEN) }),
-      viaProxy("/api/v1/conversations", { cookie: cookieDeSessao("token-invalido") }),
-    ]);
-    expect(boa.seguiu).toBe(true);
-    expect(ruim.seguiu).toBe(false);
-    expect(ruim.resposta.status).toBe(401);
-    expect(chamadas.user).toBe(2);
   });
 });

@@ -91,7 +91,6 @@ ZapSales é um CRM de WhatsApp com funil (Kanban), inbox, agentes de IA e campan
     requisição (`signOut`, MFA, `updateUser`) invalida o repasse. Banimento/rebaixamento feito DURANTE
     uma requisição só é visto na seguinte (janela ≤ 30 s). Chave derivada da service key: não há
     segredo novo. Detalhes: `lib/auth/sessao-repassada.ts`
-  - **Rajada (#66):** requisições SIMULTÂNEAS da mesma sessão (a Inbox abre ~15 de uma vez) dividem uma só ida ao GoTrue — `lib/auth/validacao-em-rajada.ts`. Só o que está em voo é compartilhado: nada é guardado depois, e a chave é o hash dos cookies de sessão, então sessões diferentes nunca se misturam
 - 4 roles dentro do tenant: `viewer` (1) < `agent` (2) < `manager` (3) < `admin` (4)
 - Super-admin de plataforma é uma role transversal — `is_platform_admin` (decisão final na Spec 01)
 - MFA TOTP é **opcional e ligado por quem administra** — não é mais forçado por papel. Quem exige são duas políticas independentes que SOMAM: `platform_admins.mfa_required` (para o super-admin) e `organizations.settings.security.mfa_required` (com `mfa_required_min_role` escolhendo o nível mínimo — `admin` quando só o booleano legado existe — e `mfa_grace_days` de carência). O padrão de ambas é **não exigir**, e o `bootstrap-owner.ts` grava `false` explícito. Regra pura em `lib/auth/politica-mfa.ts`

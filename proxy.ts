@@ -6,7 +6,6 @@ import { fetchDoServidor } from "@/lib/supabase/fetch-do-servidor";
 import { urlDoSupabaseNoServidor } from "@/lib/supabase/url-do-servidor";
 import { isPublicPath } from "@/lib/auth/public-paths";
 import { CABECALHO_SESSAO, assinarSessao } from "@/lib/auth/sessao-repassada";
-import { chaveDaSessao, compartilharEmVoo } from "@/lib/auth/validacao-em-rajada";
 import {
   verifyImpersonateCookieEdge,
   IMPERSONATE_COOKIE_NAME_EDGE,
@@ -95,23 +94,9 @@ export async function proxy(request: NextRequest) {
 
   // Validate JWT server-side (NEVER use getSession on backend per CLAUDE.md).
   const inicioDaAutenticacao = performance.now();
-  // Requisições simultâneas da MESMA sessão (a Inbox dispara ~15 ao abrir) dividem
-  // uma ida ao GoTrue só — ver `lib/auth/validacao-em-rajada.ts`. Os cookies que o
-  // refresh quis gravar viajam junto com o usuário, para quem pegou carona.
-  const validar = async () => {
-    const antes = cookiesParaGravar.length;
-    const {
-      data: { user: validado },
-    } = await supabase.auth.getUser();
-    return { user: validado, cookies: cookiesParaGravar.slice(antes) };
-  };
-  const chave = await chaveDaSessao(request.cookies.getAll(), COOKIE_NAME);
-  const { user, cookies: renovados } = await compartilharEmVoo(chave, validar);
-  for (const c of renovados) {
-    if (cookiesParaGravar.includes(c)) continue;
-    request.cookies.set(c.name, c.value);
-    cookiesParaGravar.push(c);
-  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const autenticacaoMs = performance.now() - inicioDaAutenticacao;
 
   if (!user) {
