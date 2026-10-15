@@ -32,7 +32,7 @@
  * do que estava.
  */
 import type { Idioma } from "./idiomas";
-import CATALOGO_EN from "@/lib/i18n/traducoes/en.servidor";
+import CATALOGO_EN from "@/lib/i18n/en-do-servidor";
 
 /** Os idiomas cujo texto mora num catálogo plano em `traducoes/`, e não aqui. */
 type IdiomaDeCatalogo = "en";

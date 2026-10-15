@@ -93,7 +93,7 @@ const nextConfig: NextConfig = {
       "@/lib/i18n/dicionario": { browser: "./lib/i18n/dicionario.cliente.ts" },
       // O inglês (~0,9 MB) também só existe no servidor: o pedaço em espanhol importa o dicionário e, sem isto,
       // levava o inglês junto. O inglês do navegador vem de `lib/i18n/catalogos/en.ts`, pelo JSON direto.
-      "@/lib/i18n/traducoes/en.servidor": { browser: "./lib/i18n/traducoes/en.vazio.ts" },
+      "@/lib/i18n/en-do-servidor": { browser: "./lib/i18n/en-do-navegador.ts" },
     },
   },
   images: {

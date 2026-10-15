@@ -53,13 +53,13 @@ describe("o dicionário fica fora do pacote do navegador", () => {
 
   it("o inglês também fica fora do pedaço em espanhol: só o servidor lê o JSON pelo módulo trocado no navegador", () => {
     const config = ler("next.config.ts");
-    const m = config.match(/"@\/lib\/i18n\/traducoes\/en\.servidor":\s*\{\s*browser:\s*"\.\/([^"]+)"\s*\}/);
+    const m = config.match(/"@\/lib\/i18n\/en-do-servidor":\s*\{\s*browser:\s*"\.\/([^"]+)"\s*\}/);
     expect(m, "falta o alias do inglês do servidor na condição browser").not.toBeNull();
     expect(() => ler(m![1]!)).not.toThrow();
-    expect(m![1]).toBe("lib/i18n/traducoes/en.vazio.ts");
+    expect(m![1]).toBe("lib/i18n/en-do-navegador.ts");
     // `dicionario.ts` importa o inglês PELO módulo trocável, nunca pelo JSON direto — senão o alias não vale.
     const dicionario = ler("lib/i18n/dicionario.ts");
-    expect(dicionario).toContain('from "@/lib/i18n/traducoes/en.servidor"');
+    expect(dicionario).toContain('from "@/lib/i18n/en-do-servidor"');
     expect(dicionario).not.toMatch(/from\s+["'][^"']*en\.json["']/);
     // O inglês do navegador segue vindo do JSON direto, pelo seu próprio pedaço.
     expect(ler("lib/i18n/catalogos/en.ts")).toMatch(/from\s+["']\.\.\/traducoes\/en\.json["']/);
