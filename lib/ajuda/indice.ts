@@ -11,6 +11,7 @@ import type { AjudaDaPagina } from "./tipos";
  * `tests/unit/ajuda-da-pagina.test.ts` cobra que toda entrada tenha os três idiomas.
  */
 export const INDICE_DE_AJUDA = {
+  contatos: () => import("./conteudo/contatos"),
   funis: () => import("./conteudo/funis"),
   "respostas-rapidas": () => import("./conteudo/respostas-rapidas"),
 } satisfies Record<string, () => Promise<{ default: AjudaDaPagina }>>;

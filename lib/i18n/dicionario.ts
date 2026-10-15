@@ -14462,7 +14462,9 @@ export const DICIONARIO: Traducoes = {
   "Sugestões da IA": { es: "Sugerencias de la IA" },
   "Quem trabalha aqui, o que cada pessoa pode fazer e como o atendimento é dividido.": { es: "Quién trabaja aquí, qué puede hacer cada persona y cómo se reparte la atención." },
   "Papel": { es: "Rol" },
-  "perderá o acesso a esta empresa. Esta ação pode ser desfeita reconvidando o membro.": { es: "perderá el acceso a esta empresa. Esta acción se puede deshacer volviendo a invitar al miembro." }
+  "perderá o acesso a esta empresa. Esta ação pode ser desfeita reconvidando o membro.": { es: "perderá el acceso a esta empresa. Esta acción se puede deshacer volviendo a invitar al miembro." },
+  // ─── CONTATOS (plano visual de 14/10/2026) ───
+  "Todas as pessoas que já falaram com você, com busca e filtros.": { es: "Todas las personas que ya hablaron contigo, con búsqueda y filtros." },
 };
 
 /**

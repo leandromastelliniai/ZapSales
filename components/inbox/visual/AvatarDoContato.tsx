@@ -17,6 +17,8 @@ const TAMANHO = {
   conversa: { caixa: "h-10 w-10 text-xs", canal: 12, selo: "h-4 w-4", icone: 9 },
   faixa: { caixa: "h-16 w-16 text-lg", canal: 16, selo: "h-5 w-5", icone: 11 },
   mini: { caixa: "h-5 w-5 text-[9px]", canal: 0, selo: "", icone: 0 },
+  /** A linha de uma tabela (Contatos, Equipe): só a foto ou as iniciais, sem selos. */
+  tabela: { caixa: "h-8 w-8 text-[11px]", canal: 0, selo: "", icone: 0 },
 } as const;
 
 const COR_DO_SELO: Record<SeloDeQuemAtende, string> = {
