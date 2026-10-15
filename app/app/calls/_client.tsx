@@ -173,7 +173,7 @@ export function CallsClient() {
                   onClick={() => setSelected(call)}
                 >
                   <TableCell>{fmtDate(call.started_at, idioma)}</TableCell>
-                  <TableCell>{call.direction === "outbound" ? t("Saída") : t("Entrada")}</TableCell>
+                  <TableCell>{call.direction === "outbound" ? t("Chamada feita") : t("Chamada recebida")}</TableCell>
                   <TableCell className="font-medium">{counterpartLabel(call)}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{t(STATUS_LABEL[call.status])}</Badge>
@@ -204,7 +204,7 @@ export function CallsClient() {
                 </DialogTitle>
                 <DialogDescription>
                   {fmtDate(selected.started_at, idioma)} ·{" "}
-                  {selected.direction === "outbound" ? t("Saída") : t("Entrada")} ·{" "}
+                  {selected.direction === "outbound" ? t("Chamada feita") : t("Chamada recebida")} ·{" "}
                   {t(STATUS_LABEL[selected.status])}
                 </DialogDescription>
               </DialogHeader>

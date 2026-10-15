@@ -14578,6 +14578,13 @@ export const DICIONARIO: Traducoes = {
   // ─── AUDITORIA: MAIS FRASES (plano visual de 15/10/2026) ───
   "Recebeu uma mensagem": { es: "Recibió un mensaje" },
   "Recusou um webhook com assinatura inválida": { es: "Rechazó un webhook con firma inválida" },
+  // ─── TEXTOS QUE ENGANAVAM (plano visual de 15/10/2026) ───
+  "Quanto gastou por dia (US$)": { es: "Cuánto gastaste por día (US$)" },
+  "Passou para uma pessoa": { es: "Pasó a una persona" },
+  "Chamada feita": { es: "Llamada realizada" },
+  "Chamada recebida": { es: "Llamada recibida" },
+  "Em risco": { es: "En riesgo" },
+  "Em voo": { es: "En curso" },
 };
 
 /**
