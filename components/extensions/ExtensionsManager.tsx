@@ -1,5 +1,7 @@
 "use client";
 
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -17,7 +19,7 @@ import type {
   ExtensionOperationView,
   InstalledExtensionView,
 } from "@/lib/extensions/view";
-import { ArrowsClockwise, CircleNotch, Info, PuzzlePiece, Warning } from "@/lib/ui/icons";
+import { ArrowsClockwise, CircleNotch, Info, Warning } from "@/lib/ui/icons";
 import { requestExtensionApi, type ExtensionApiResult } from "./api-client";
 import {
   CatalogAdmission,
@@ -884,29 +886,13 @@ export function ExtensionsManager({
   const mutationsReady = mutationBlockedReason === undefined;
 
   return (
-    <main
-      className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6"
-      data-testid="extensions-manager"
-    >
-      <header className="relative overflow-hidden rounded-xl border border-border bg-surface p-5 shadow-xs sm:p-7">
-        <div
-          aria-hidden
-          className="absolute -top-16 -right-12 h-40 w-40 rounded-full bg-accent-soft/70 blur-2xl"
-        />
-        <div className="relative flex items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-accent-200 bg-accent-soft text-accent">
-            <PuzzlePiece size={24} weight="duotone" aria-hidden />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{t("Extensões")}</h1>
-            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              {t(
-                "Adicione guias ao CRM sem entregar dados ou executar código de terceiros. Antes de abrir Tarefas, o acesso e a ativação são conferidos novamente.",
-              )}
-            </p>
-          </div>
-        </div>
-      </header>
+    <CorpoDaPagina data-testid="extensions-manager">
+      <CabecalhoDePagina
+        titulo={t("Extensões")}
+        descricao={t(
+          "Adicione guias ao CRM sem entregar dados ou executar código de terceiros. Antes de abrir Tarefas, o acesso e a ativação são conferidos novamente.",
+        )}
+      />
 
       {loadError ? (
         <Card
@@ -1158,7 +1144,7 @@ export function ExtensionsManager({
           ) : null}
         </>
       ) : null}
-    </main>
+    </CorpoDaPagina>
   );
 }
 

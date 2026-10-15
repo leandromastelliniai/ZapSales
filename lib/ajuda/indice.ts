@@ -41,6 +41,7 @@ export const INDICE_DE_AJUDA = {
   lgpd: () => import("./conteudo/lgpd"),
   "linha-telefonica": () => import("./conteudo/linha-telefonica"),
   marca: () => import("./conteudo/marca"),
+  "meta-ads": () => import("./conteudo/meta-ads"),
   memoria: () => import("./conteudo/memoria"),
   notificacoes: () => import("./conteudo/notificacoes"),
   organizacao: () => import("./conteudo/organizacao"),

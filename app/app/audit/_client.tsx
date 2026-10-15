@@ -18,6 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuditQuery, type AuditFilters } from "@/hooks/audit/useAuditQuery";
+import { useTeamMembers } from "@/hooks/team/useTeamMembers";
+import { atorDaAuditoria, rotuloDaAcao, rotuloDoRecurso } from "@/lib/audit/rotulo-da-acao";
 
 function fmtDate(iso: string, idioma: string): string {
   try {
@@ -53,6 +55,12 @@ export function AuditClient() {
   );
 
   const q = useAuditQuery(filters);
+  // Nome de quem fez: a lista da equipe resolve o id. Se ela não carregar, a tela mostra o começo do id.
+  const equipe = useTeamMembers();
+  const nomes = useMemo(
+    () => new Map((equipe.data?.data ?? []).map((m) => [m.user_id, m.full_name || m.email || ""])),
+    [equipe.data],
+  );
   const rows = useMemo(() => q.data?.pages.flatMap((p) => p.data) ?? [], [q.data]);
 
   function handleExport() {
@@ -135,19 +143,38 @@ export function AuditClient() {
                   <TableCell className="whitespace-nowrap text-xs">
                     {fmtDate(r.created_at, tagDoIdioma)}
                   </TableCell>
-                  <TableCell className="text-xs font-mono">
-                    {r.acting_as_platform_admin
-                      ? "platform_admin"
-                      : r.actor_user_id
-                        ? r.actor_user_id.slice(0, 8)
-                        : r.actor_api_token_id
-                          ? `token:${r.actor_api_token_id.slice(0, 8)}`
-                          : "system"}
+                  <TableCell className="text-xs">
+                    {(() => {
+                      const ator = atorDaAuditoria(r, (id) => nomes.get(id) || undefined, t);
+                      return (
+                        <>
+                          <span className="font-medium">{ator.nome}</span>
+                          {ator.detalhe ? (
+                            <span className="ml-1 font-mono text-[10px] text-muted-foreground">{ator.detalhe}</span>
+                          ) : null}
+                        </>
+                      );
+                    })()}
                   </TableCell>
-                  <TableCell className="font-mono text-xs">{r.action}</TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {r.resource_type ?? "—"}
-                    {r.resource_id ? `:${r.resource_id.slice(0, 8)}` : ""}
+                  <TableCell className="text-xs">
+                    {rotuloDaAcao(r.action, t) ? (
+                      <>
+                        <span className="font-medium">{rotuloDaAcao(r.action, t)}</span>
+                        <span className="block font-mono text-[10px] text-muted-foreground">{r.action}</span>
+                      </>
+                    ) : (
+                      <span className="font-mono">{r.action}</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {rotuloDoRecurso(r.resource_type, t) ?? (
+                      <span className="font-mono">{r.resource_type ?? "—"}</span>
+                    )}
+                    {r.resource_id ? (
+                      <span className="ml-1 font-mono text-[10px] text-muted-foreground">
+                        {r.resource_id.slice(0, 8)}
+                      </span>
+                    ) : null}
                   </TableCell>
                   <TableCell className="font-mono text-[10px] text-muted-foreground">
                     {r.request_id ? r.request_id.slice(0, 8) : "—"}

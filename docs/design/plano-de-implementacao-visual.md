@@ -131,4 +131,14 @@ P9 é feito primeiro na prática (as demais peças nascem nela), mas o PR sai ju
 | X4 peso | **#75 no ar**: o dicionário de tradução só vai para quem usa espanhol/inglês (login em português: 1.035 → 464 KB de JS) |
 | X5 documentação | `DESIGN.md`, mapa vivo, fragmentos `.changes/` |
 
-Próximos: medir na produção o efeito do #75; revisar as telas do #74 em produção; telas de detalhe; separar o catálogo `es` do `en` (hoje o espanhol baixa os dois); `Auditoria` com ações em linguagem de gente.
+### Rodada de 15/10/2026 (tarde)
+
+| Item | Estado |
+|---|---|
+| Cabeçalhos que faltavam | Meta Ads (com "Como funciona"), Extensões, Atualização, Nova campanha, Configuração de campanhas, Propostas e Modelos de proposta. Guias de extensão sem `<main>` aninhado. **Fichas (detalhe) ficam como estão, por decisão** (ver `DESIGN.md`); Financeiro mantém o h1 do painel; canal oficial, templates e WhatsApp são só redirecionamentos |
+| Auditoria legível | frase + código, nome de quem fez, tipo do recurso (`lib/audit/rotulo-da-acao.ts`); código sem frase aparece como código |
+| Catálogo `es` sem o `en` | feito: o inglês só existe no servidor e no pedaço do inglês (build: pedaço es 292 KB, en 297 KB, comprimidos, separados) |
+| Onboarding, celular real, aprovação dos ícones próprios | continuam dependendo do dono (conta nova; janela estreita; olhar `/vitrine-sistema`) |
+
+Próximos: medir na produção o efeito do #75 e desta rodada; modo claro (profundidade); remover `RESPIRO_LEGADO` quando
+todas as telas de assunto estiverem no corpo padrão; revisar as afirmações da ajuda que os agentes marcaram como não verificadas.

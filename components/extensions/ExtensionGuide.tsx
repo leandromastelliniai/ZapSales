@@ -1,5 +1,6 @@
 "use client";
 
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -161,22 +162,19 @@ export function ExtensionGuide({
 
   if (loading && !guide) {
     return (
-      <main className="mx-auto w-full max-w-4xl p-4 sm:p-6" data-testid="extension-guide-loading">
+      <CorpoDaPagina largura="formulario" data-testid="extension-guide-loading">
         <Card className="flex items-center gap-3 p-5 text-sm text-muted-foreground">
           <CircleNotch className="animate-spin" aria-hidden />
           {t("Conferindo se o guia continua ativo…")}
         </Card>
-      </main>
+      </CorpoDaPagina>
     );
   }
 
   if (!guide || error) {
     const removed = errorCode === "extension_removed";
     return (
-      <main
-        className="mx-auto w-full max-w-4xl p-4 sm:p-6"
-        data-testid="extension-guide-unavailable"
-      >
+      <CorpoDaPagina largura="formulario" data-testid="extension-guide-unavailable">
         <Card className="border-warning/40 bg-warning-bg p-5 sm:p-6" role="alert">
           <Warning size={24} weight="duotone" aria-hidden className="text-warning-fg" />
           <h1 className="mt-3 text-xl font-semibold">{t("Este guia não está disponível")}</h1>
@@ -203,7 +201,7 @@ export function ExtensionGuide({
             )}
           </div>
         </Card>
-      </main>
+      </CorpoDaPagina>
     );
   }
 
@@ -221,10 +219,7 @@ export function ExtensionGuide({
     selectedCardId !== undefined && !cards.some((card) => card.id === selectedCardId);
 
   return (
-    <main
-      className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-4 sm:p-6"
-      data-testid="extension-guide"
-    >
+    <CorpoDaPagina largura="formulario" data-testid="extension-guide">
       <Link
         href="/app/extensions"
         className="inline-flex w-fit items-center gap-1.5 rounded-sm text-sm font-medium text-muted-foreground hover:text-text focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:outline-hidden"
@@ -356,7 +351,7 @@ export function ExtensionGuide({
           );
         })}
       </div>
-    </main>
+    </CorpoDaPagina>
   );
 }
 
