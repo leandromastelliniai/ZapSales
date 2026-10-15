@@ -18,7 +18,7 @@ import { JANELA_DA_GRADE } from "./GradeDaAgenda";
  */
 export function AgendaCarregando() {
   const t = useT();
-  // `bg-neutral-400` em cada Skeleton, e não o default do primitivo.
+  // `bg-text-subtle` em cada Skeleton, e não o default do primitivo.
   //
   // `components/ui/skeleton.tsx` usa `bg-primary/10` — a accent a 10% —, que dá
   // contraste 1.146:1 sobre o branco: o esqueleto some, e a espera vira uma
@@ -57,7 +57,7 @@ export function AgendaCarregando() {
         <div className="h-8 border-b border-border" />
         {Array.from({ length: linhas }).map((_, i) => (
           <div key={i} className="flex h-12 items-start justify-end border-b border-border/50 p-1">
-            <Skeleton className="h-2.5 w-6 bg-neutral-400" />
+            <Skeleton className="h-2.5 w-6 bg-text-subtle" />
           </div>
         ))}
       </div>
@@ -65,13 +65,13 @@ export function AgendaCarregando() {
         {Array.from({ length: 7 }).map((_, col) => (
           <div key={col} className="min-w-0 flex-1 border-r border-border last:border-r-0">
             <div className="flex h-8 items-center justify-center border-b border-border">
-              <Skeleton className="h-3 w-10 bg-neutral-400" />
+              <Skeleton className="h-3 w-10 bg-text-subtle" />
             </div>
             <div className="space-y-2 p-1.5">
               {/* Alturas diferentes por coluna: um esqueleto perfeitamente
                   regular parece uma tabela, não uma agenda. */}
-              <Skeleton className="h-10 w-full bg-neutral-400" style={{ marginTop: (col % 3) * 28 }} />
-              {col % 2 === 0 && <Skeleton className="h-16 w-full bg-neutral-400" />}
+              <Skeleton className="h-10 w-full bg-text-subtle" style={{ marginTop: (col % 3) * 28 }} />
+              {col % 2 === 0 && <Skeleton className="h-16 w-full bg-text-subtle" />}
             </div>
           </div>
         ))}
