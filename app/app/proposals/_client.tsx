@@ -1,5 +1,8 @@
 "use client";
 
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
@@ -73,15 +76,19 @@ export function ProposalsClient({ podeCriar }: { podeCriar: boolean }) {
   }, [tentativa]);
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4 p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t("Propostas")}</h1>
-        {podeCriar ? (
-          <Button asChild>
-            <Link href="/app/proposals/novo">{t("Nova proposta")}</Link>
-          </Button>
-        ) : null}
-      </header>
+    <CorpoDaPagina className="gap-4">
+      <CabecalhoDePagina
+        titulo={t("Propostas")}
+        descricao={t("As propostas comerciais enviadas aos seus clientes, com o número e o estado de cada uma.")}
+        ajuda={<ComoFunciona chave="propostas" pagina={t("Propostas")} />}
+        acoes={
+          podeCriar ? (
+            <Button size="sm" asChild>
+              <Link href="/app/proposals/novo">{t("Nova proposta")}</Link>
+            </Button>
+          ) : null
+        }
+      />
 
       {carregando ? (
         <p role="status" className="text-sm text-muted-foreground">
@@ -131,7 +138,7 @@ export function ProposalsClient({ podeCriar }: { podeCriar: boolean }) {
                   </td>
                   <td className="p-3">
                     {aguardaRevisao(p) ? (
-                      <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                      <span className="rounded-md bg-warning-bg px-2 py-0.5 text-xs font-medium text-warning-fg">
                         {t("Aguardando revisão")}
                       </span>
                     ) : (
@@ -147,6 +154,6 @@ export function ProposalsClient({ podeCriar }: { podeCriar: boolean }) {
           </table>
         </div>
       )}
-    </div>
+    </CorpoDaPagina>
   );
 }

@@ -1,4 +1,6 @@
 "use client";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -113,13 +115,16 @@ export function ModelosDeProposta() {
   if (!modelos) return <div className="p-6">{t("Carregando…")}</div>;
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 p-6">
-      <h1 className="text-xl font-semibold">{t("Modelos de proposta")}</h1>
+    <CorpoDaPagina largura="formulario">
+      <CabecalhoDePagina
+        titulo={t("Modelos de proposta")}
+        descricao={t("Os modelos que a IA e a equipe usam para montar propostas: crie, personalize ou desligue.")}
+      />
 
       {salvo && !faixaFechada ? (
-        <p role="status" className="flex items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+        <p role="status" className="flex items-center justify-between gap-2 rounded-lg border border-success/40 bg-success-bg p-3 text-sm text-success-fg">
           <span>{t("Modelo «{nome}» salvo.").replace("{nome}", salvo)}</span>
-          <button type="button" aria-label={t("Fechar")} onClick={() => setFaixaFechada(true)} className="rounded-md px-2 py-0.5 hover:bg-green-100">
+          <button type="button" aria-label={t("Fechar")} onClick={() => setFaixaFechada(true)} className="rounded-md px-2 py-0.5 hover:bg-success-bg">
             ×
           </button>
         </p>
@@ -143,7 +148,7 @@ export function ModelosDeProposta() {
           }}
         />
         {ocupado && andamento ? <p role="status" className="text-sm text-muted-foreground">{andamento}</p> : null}
-        {mensagem ? <p role="alert" className="text-sm text-red-700">{mensagem}</p> : null}
+        {mensagem ? <p role="alert" className="text-sm text-error-fg">{mensagem}</p> : null}
       </section>
 
       <section className="flex flex-col gap-2 sm:flex-row sm:items-end">
@@ -218,6 +223,6 @@ export function ModelosDeProposta() {
           </li>
         ))}
       </ul>
-    </div>
+    </CorpoDaPagina>
   );
 }

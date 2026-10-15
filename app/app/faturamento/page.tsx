@@ -4,6 +4,9 @@ import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { moedaDaOrganizacao } from "@/lib/catalogo/moeda-da-org";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { createClient } from "@/lib/supabase/server";
 
 import { Faturamento } from "./_client";
@@ -41,14 +44,13 @@ export default async function Page() {
   const moedaDaOrg = await moedaDaOrganizacao(await createClient(), org.orgId);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">{t("Faturamento")}</h1>
-        <p className="text-sm text-text-muted">
-          {t("Quanto entrou, de que forma, e quanto cada pessoa tem a receber.")}
-        </p>
-      </div>
+    <CorpoDaPagina className="min-h-0 flex-1 gap-4">
+      <CabecalhoDePagina
+        titulo={t("Faturamento")}
+        descricao={t("Quanto entrou, de que forma, e quanto cada pessoa tem a receber.")}
+        ajuda={<ComoFunciona chave="faturamento" pagina={t("Faturamento")} />}
+      />
       <Faturamento podeLancar={ROLE_RANK[org.role] >= ROLE_RANK.agent} moedaDaOrg={moedaDaOrg} />
-    </div>
+    </CorpoDaPagina>
   );
 }

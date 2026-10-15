@@ -1,4 +1,9 @@
 import { LOGOTIPO, SIMBOLO } from "@/lib/branding/desenho";
+import {
+  PROPORCAO_DA_FUTURISTAS,
+  TracosDaFuturistas,
+  VIEWBOX_DA_FUTURISTAS,
+} from "@/components/branding/AssinaturaFuturistas";
 import { cn } from "@/lib/utils";
 
 /**
@@ -6,7 +11,7 @@ import { cn } from "@/lib/utils";
  * ninguém configurou marca própria (`marcaEhADoProduto`, em `lib/branding.ts`).
  *
  * Inline, e não `<img src="/algo.svg">`, por três motivos:
- *  - as cores seguem o TEMA: sálvia mais clara e nome em creme no escuro, como
+ *  - as cores seguem o TEMA: violeta mais claro e nome em branco-gelo no escuro, como
  *    a régua do produto já define — um arquivo estático teria uma cor só;
  *  - nada em `public/`: um `.svg` fixo ali seria servido na instalação de um
  *    revendedor que configurou a marca dele (ver `lib/branding/desenho.ts`);
@@ -26,9 +31,9 @@ type Props = {
   readonly decorativo?: boolean;
 };
 
-const SIMBOLO_CLARO_ESCURO = "fill-[#506d48] dark:fill-[#82a077]";
-const NOME_CLARO_ESCURO = "fill-[#1c1a16] dark:fill-[#f5f4ef]";
-const SUFIXO_CLARO_ESCURO = "fill-[#5d594f] dark:fill-[#8e8b7f]";
+const SIMBOLO_CLARO_ESCURO = "fill-[#773df9] dark:fill-[#9e8aff]";
+const NOME_CLARO_ESCURO = "fill-[#151a2e] dark:fill-[#eef0f7]";
+const SUFIXO_CLARO_ESCURO = "fill-[#4b5373] dark:fill-[#a3abc6]";
 
 // As classes acima repetem os hexes de `CORES_DA_MARCA` porque o Tailwind só
 // gera utilitário para valor LITERAL no fonte. Quem impede os dois de divergirem
@@ -79,11 +84,30 @@ export function LogotipoDoProduto({ nome, className, decorativo = false }: Props
           <path key={g.transform} transform={g.transform} d={g.d} />
         ))}
       </g>
-      <g className={SUFIXO_CLARO_ESCURO}>
-        {LOGOTIPO.sufixo.map((g) => (
-          <path key={g.transform} transform={g.transform} d={g.d} />
-        ))}
-      </g>
+      {/* "by Futuristas" no lugar do antigo "CRM" (decisão do dono, 07/10/2026):
+          o "by" na cor do sufixo, o logo oficial da Futuristas na cor do nome,
+          com os quadradinhos no violeta dela. Dentro do MESMO SVG — os testes de
+          marca leem o logotipo como uma imagem só, rotulada com o nome. */}
+      <text
+        className={SUFIXO_CLARO_ESCURO}
+        x={268}
+        y={212}
+        fontSize={38}
+        fontWeight={500}
+      >
+        by
+      </text>
+      <svg
+        x={318}
+        y={170}
+        height={50}
+        width={50 * PROPORCAO_DA_FUTURISTAS}
+        viewBox={VIEWBOX_DA_FUTURISTAS}
+        className={NOME_CLARO_ESCURO}
+        aria-hidden
+      >
+        <TracosDaFuturistas />
+      </svg>
     </svg>
   );
 }

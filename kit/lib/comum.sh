@@ -116,3 +116,15 @@ idioma_valido() {
     3|en|ingles|inglês|english) printf 'en' ;;
   esac
 }
+
+# assinatura_padrao_do_webhook IMAGEM — o valor inicial de
+# WAHA_WEBHOOK_REQUIRE_SIGNATURE para a imagem do WAHA da instalação. Só o
+# WAHA Plus (devlikeapro/waha-plus) assina as entregas; o Core não (medido em
+# 2026.7.2), e exigir assinatura dele recusa todo evento. Semente da primeira
+# rodada: quem grava é env_garantir, que nunca sobrescreve (#58).
+assinatura_padrao_do_webhook() {
+  case "$1" in
+    devlikeapro/waha-plus*) printf 'true' ;;
+    *) printf 'false' ;;
+  esac
+}

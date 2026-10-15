@@ -147,6 +147,10 @@ entrar_pelo_ssh() {
 #
 # O token vai por um arquivo só do root, apagado pelo executor ao lê-lo — nunca
 # pelo ambiente da unidade, que `systemctl show` mostra a qualquer usuário.
+#
+# O registro inteiro fica em $LOGS. Pela sessão — que vira log PÚBLICO do
+# Actions e corpo de issue — sai só o que saida_para_o_ssh deixa: as linhas que
+# o executor marcou, redigidas (kit/lib/implantar.sh, issue #39).
 frente() {
   local sha="$1" token="" carimbo registro situacao arq_token unidade codigo
   sha_valido "$sha" || { aviso "sha inválido: '$sha'"; exit 2; }
@@ -172,22 +176,23 @@ frente() {
       --property=StandardOutput="append:$registro" --property=StandardError="append:$registro" \
       --setenv=PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" --setenv=HOME=/root "${extra[@]}" \
       "$COMANDO" --executar "$sha" "$situacao" "$arq_token"
-    tail -n +1 -F "$registro" 2>/dev/null &
-    local tp=$!
-    while systemctl is-active --quiet "$unidade"; do sleep 2; done
-    sleep 1
-    kill "$tp" 2>/dev/null || true
-    wait "$tp" 2>/dev/null || true
+    # A unidade não é filha deste shell: um vigia espera ela acabar, e o tail
+    # termina junto com ele (--pid), depois de uma última leitura.
+    ( while systemctl is-active --quiet "$unidade"; do sleep 2; done; sleep 1 ) &
+    local vigia=$!
+    tail -n +1 -F --pid="$vigia" "$registro" 2>/dev/null | saida_para_o_ssh || true
+    wait "$vigia" 2>/dev/null || true
   else
     env -u SUDO_USER -u SUDO_UID -u SUDO_GID -u SUDO_COMMAND \
       setsid "$COMANDO" --executar "$sha" "$situacao" "$arq_token" > "$registro" 2>&1 < /dev/null &
     local pid=$!
-    tail -n +1 -f --pid="$pid" "$registro" 2>/dev/null || true
+    tail -n +1 -F --pid="$pid" "$registro" 2>/dev/null | saida_para_o_ssh || true
     wait "$pid" 2>/dev/null || true
   fi
   rm -f "$arq_token"
   codigo="$(tr -d '[:space:]' < "$situacao" 2>/dev/null || true)"
   rm -f "$situacao"
+  msg "fim: código ${codigo:-4} (0 implantado · 2 recusado · 3 voltou · 4 a volta falhou)"
   msg "registro completo na VPS: $registro"
   exit "${codigo:-4}"
 }
@@ -202,7 +207,7 @@ CONF_DOCKER=""
 TOCOU=0
 SAUDE_ANTES=""
 
-recusar() { printf '\n\033[31m✖ RECUSADO: %s\033[0m\n  Nada foi alterado na instalação.\n' "$*" >&2; exit 2; }
+recusar() { { _etapa ""; _etapa "✖ RECUSADO: $*"; _etapa "  Nada foi alterado na instalação."; } >&2; exit 2; }
 
 # github CAMINHO — GET na API do repositório. O token vai por arquivo de
 # configuração na entrada padrão do curl, não por argumento.
@@ -334,8 +339,9 @@ instalar() {
   copiar_codigo "$SHA"
   # O registro inteiro do kit fica SÓ na VPS: ele traz o e-mail do
   # administrador e os domínios dos sites vizinhos, e o log de um workflow de
-  # repositório público é público. Ao GitHub vão só os títulos dos passos do
-  # kit e as linhas deste script (commit, domínio, dependências, motivo).
+  # repositório público é público. Ao registro da implantação — e dele ao
+  # GitHub — vão só os títulos dos passos do kit (frases fixas), reescritos
+  # como etapa por titulos_do_kit.
   local reg_kit rc_arq
   reg_kit="$LOGS/implantar-$(date -u +%Y%m%dT%H%M%SZ)-${SHA:0:7}-kit.log"
   rc_arq="$CORRIDA/$SHA.kit"
@@ -346,7 +352,7 @@ instalar() {
   { trap - ERR; set +e
     ZAPSALES_IMAGENS=registro ZAPSALES_VERSAO="sha-$SHA" bash "$RAIZ/kit/instalar.sh" < /dev/null 2>&1
     printf '%s\n' "$?" > "$rc_arq"
-  } | tee "$reg_kit" | { grep --line-buffered '▶' || true; }
+  } | tee "$reg_kit" | titulos_do_kit
   [ "$(cat "$rc_arq" 2>/dev/null)" = "0" ] || voltar "o kit/instalar.sh falhou — o motivo está no fim de $reg_kit, na VPS."
 }
 
@@ -412,7 +418,7 @@ provar() {
 # banco fica como está: o baseline é aditivo, e o código anterior roda sobre ele.
 voltar() {
   trap - ERR
-  printf '\n\033[31m✖ FALHOU: %s\033[0m\n' "$*" >&2
+  { _etapa ""; _etapa "✖ FALHOU: $*"; } >&2
   passo "Voltando para ${ATUAL:0:7}"
   local ok=1
   copiar_codigo "$ATUAL" || ok=0
@@ -448,7 +454,7 @@ ao_errar() {
   # atribuição no shell de cima falha e o trap de lá decide — uma vez.
   if [ "${BASH_SUBSHELL:-0}" -gt 0 ]; then exit 1; fi
   if [ "$TOCOU" = "1" ]; then voltar "erro inesperado na linha $linha de kit/implantar.sh."; fi
-  printf '\n\033[31m✖ RECUSADO: erro inesperado na linha %s, antes de alterar a instalação.\033[0m\n' "$linha" >&2
+  { _etapa ""; _etapa "✖ RECUSADO: erro inesperado na linha $linha, antes de alterar a instalação."; } >&2
   exit 2
 }
 
@@ -480,6 +486,9 @@ podar() {
 }
 
 executar() {
+  # Toda linha que o executor escreve sai marcada; o que não tiver a marca
+  # (docker, curl, tar, um erro do bash) fica só no registro, na VPS.
+  usar_saida_de_etapa
   SHA="${1:-}"
   local situacao="${2:-}" arq_token="${3:-}"
   # Uso INTERNO: só a frente chega aqui, numa unidade do systemd (ambiente

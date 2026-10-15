@@ -1,3 +1,6 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { requireAuth } from "@/lib/auth/server";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { Card } from "@/components/ui/card";
@@ -50,16 +53,17 @@ export default async function NotificationsPage() {
   const pushPronto = vapidPronto();
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Notificações")}</h1>
-        <p className="text-sm text-muted-foreground">{t("Canais e categorias.")}</p>
-      </header>
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={t("Notificações")}
+        ajuda={<ComoFunciona chave="notificacoes" pagina={t("Notificações")} />}
+        descricao={t("Canais e categorias.")}
+      />
 
       {pushPronto ? (
         <Card
           data-testid="push-status-pronto"
-          className="border-amber-500/40 bg-amber-50/40 p-4 text-sm dark:bg-amber-900/10"
+          className="border-warning/40 bg-warning-bg p-4 text-sm"
         >
           {t(
             "Email ainda não está disponível. In-app (toast) e Push (Chrome) já funcionam para as cinco categorias, inclusive com a aba fechada.",
@@ -68,7 +72,7 @@ export default async function NotificationsPage() {
       ) : (
         <Card
           data-testid="push-status-faltando-chaves"
-          className="border-amber-500/40 bg-amber-50/40 p-4 text-sm dark:bg-amber-900/10"
+          className="border-warning/40 bg-warning-bg p-4 text-sm"
         >
           <p className="font-medium">
             {t("Nesta instalação, os avisos só aparecem com o site aberto.")}
@@ -96,6 +100,6 @@ export default async function NotificationsPage() {
       <NotificationPrefsClient />
 
       <SonsDosAvisos />
-    </div>
+    </CorpoDaPagina>
   );
 }

@@ -94,7 +94,13 @@ export function CartaoDaConexaoGoogle({
           </a>
         ) : null}
         {enderecoDeRetorno ? (
-          <p className="mt-2 text-xs leading-4 text-text-muted">
+          // Recolhido: é um dado para quem CADASTRA o aplicativo no Google (uma vez, na instalação). Aberto, ele
+          // empurrava a Agenda para baixo e lia como o assunto da tela — num produto que o dono do negócio usa todo dia.
+          <details className="mt-2 text-xs leading-4 text-text-muted">
+            <summary className="cursor-pointer select-none font-medium text-text">
+              {t("Dados para quem cadastra o aplicativo no Google")}
+            </summary>
+          <p className="mt-1">
             {/* ⚠️ ESTE BLOCO EXISTE PORQUE A AUSÊNCIA DELE JÁ CUSTOU UMA SESSÃO.
                 O Google compara o endereço de retorno BYTE A BYTE, e recusa com
                 `redirect_uri_mismatch` — um erro que aponta para o Google e não
@@ -110,6 +116,7 @@ export function CartaoDaConexaoGoogle({
               {enderecoDeRetorno}
             </code>
           </p>
+          </details>
         ) : null}
         <p className="mt-2 text-xs leading-4 text-text-muted">
           {t("Até lá a agenda funciona normalmente, só não troca compromissos com o Google.")}

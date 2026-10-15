@@ -6,6 +6,9 @@ import { toast } from "sonner";
 
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { useT } from "@/hooks/i18n/useT";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api/client";
 import { MAXIMO_DE_FOTOS } from "@/lib/catalogo/fotos";
@@ -295,11 +298,43 @@ export function ProdutosClient({
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl p-6" data-testid="tela-produtos">
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold">{textos.titulo}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{textos.subtitulo}</p>
-      </header>
+    <CorpoDaPagina className="gap-0" data-testid="tela-produtos">
+      <div className="mb-6">
+        <CabecalhoDePagina
+          titulo={textos.titulo}
+          descricao={textos.subtitulo}
+          ajuda={<ComoFunciona chave="produtos" pagina={textos.titulo} />}
+          acoes={
+            podeEditar ? (
+              <>
+                <Button size="sm" onClick={() => setCriando((v) => !v)} data-testid="novo-produto">
+                  {t(criando ? "Cancelar" : "Novo produto")}
+                </Button>
+                <input
+                  ref={arquivoRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  data-testid="arquivo-planilha"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void importar(f);
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={importando}
+                  onClick={() => arquivoRef.current?.click()}
+                  data-testid="importar-planilha"
+                >
+                  {t(importando ? "Importando…" : "Importar planilha")}
+                </Button>
+              </>
+            ) : null
+          }
+        />
+      </div>
 
       <div className="mb-4 flex items-center gap-3">
         <input
@@ -309,32 +344,6 @@ export function ProdutosClient({
           className="h-9 w-full max-w-sm rounded-md border px-3 text-sm"
           data-testid="busca-produto"
         />
-        {podeEditar ? (
-          <>
-            <Button onClick={() => setCriando((v) => !v)} data-testid="novo-produto">
-              {t(criando ? "Cancelar" : "Novo produto")}
-            </Button>
-            <input
-              ref={arquivoRef}
-              type="file"
-              accept=".csv,text/csv"
-              className="hidden"
-              data-testid="arquivo-planilha"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void importar(f);
-              }}
-            />
-            <Button
-              variant="outline"
-              disabled={importando}
-              onClick={() => arquivoRef.current?.click()}
-              data-testid="importar-planilha"
-            >
-              {t(importando ? "Importando…" : "Importar planilha")}
-            </Button>
-          </>
-        ) : null}
       </div>
 
       {podeEditar ? (
@@ -541,6 +550,6 @@ export function ProdutosClient({
           })}
         </ul>
       )}
-    </div>
+    </CorpoDaPagina>
   );
 }

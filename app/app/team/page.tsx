@@ -3,6 +3,9 @@ import Link from "next/link";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,20 +50,19 @@ export default async function TeamPage({
   const isManager = !!activeOrg && ROLE_RANK[activeOrg.role] >= ROLE_RANK.manager;
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Equipe")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("Gestão de membros, roles e atendimento do tenant.")}
-          </p>
-        </div>
-        {isAdmin ? (
-          <Button asChild className="shrink-0">
-            <Link href="/app/team/invite">{t("Convidar membros")}</Link>
-          </Button>
-        ) : null}
-      </header>
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={t("Equipe")}
+        descricao={t("Quem trabalha aqui, o que cada pessoa pode fazer e como o atendimento é dividido.")}
+        ajuda={<ComoFunciona chave="equipe" pagina={t("Equipe")} />}
+        acoes={
+          isAdmin ? (
+            <Button asChild size="sm" className="shrink-0">
+              <Link href="/app/team/invite">{t("Convidar membros")}</Link>
+            </Button>
+          ) : null
+        }
+      />
 
       <Tabs defaultValue={abaInicial} className="flex flex-1 flex-col">
         <TabsList>
@@ -101,6 +103,6 @@ export default async function TeamPage({
           )}
         </TabsContent>
       </Tabs>
-    </div>
+    </CorpoDaPagina>
   );
 }

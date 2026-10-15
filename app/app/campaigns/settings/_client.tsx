@@ -20,6 +20,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,28 +47,26 @@ import { ArrowBendUpLeft } from "@/lib/ui/icons";
 export function ConfiguracaoDeCampanhas() {
   const t = useT();
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-6">
+    <CorpoDaPagina largura="formulario">
       <div>
         <Link
           href="/app/campaigns"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-text"
         >
           <ArrowBendUpLeft size={14} aria-hidden />
-          {t("Campanhas")}
+          {t("Disparo em massa")}
         </Link>
       </div>
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Configuração de campanhas")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("O que vale para todas as campanhas, e não para uma só.")}
-        </p>
-      </header>
+      <CabecalhoDePagina
+        titulo={t("Configuração de campanhas")}
+        descricao={t("O que vale para todas as campanhas, e não para uma só.")}
+      />
 
       <Padroes />
       <AtendimentoGratis />
       <TextosSalvos />
       <ListaDeExclusao />
-    </div>
+    </CorpoDaPagina>
   );
 }
 

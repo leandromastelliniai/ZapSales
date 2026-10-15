@@ -27,6 +27,9 @@
  * tela não é segredo de ninguém — o `manager` sabe que a empresa tem marca, só
  * não é ele quem a troca. Mesma escolha de `settings/tenant/page.tsx`.
  */
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -66,13 +69,12 @@ export default async function MarcaDaOrganizacaoPage() {
   const idioma = user.idioma;
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-y-auto p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{traduzir("Marca", idioma)}</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          {traduzir("O nome e a cor que a sua empresa mostra para quem trabalha aqui dentro.", idioma)}
-        </p>
-      </header>
+    <CorpoDaPagina className="overflow-y-auto">
+      <CabecalhoDePagina
+        titulo={traduzir("Marca", idioma)}
+        descricao={traduzir("O nome e a cor que a sua empresa mostra para quem trabalha aqui dentro.", idioma)}
+        ajuda={<ComoFunciona chave="marca" pagina={traduzir("Marca", idioma)} />}
+      />
 
       <FormularioDaMarcaDaOrganizacao
         gravada={{
@@ -104,6 +106,6 @@ export default async function MarcaDaOrganizacaoPage() {
           APP_ACCENT_HEX: env.APP_ACCENT_HEX,
         }}
       />
-    </div>
+    </CorpoDaPagina>
   );
 }

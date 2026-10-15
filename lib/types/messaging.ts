@@ -3,6 +3,8 @@
  * Espelha o schema do Postgres — atualizar aqui quando a migration mudar.
  */
 
+import type { FunilDaConversa } from "@/lib/inbox/funil-da-conversa";
+
 export interface Conversation {
   id: string;
   organization_id: string;
@@ -63,6 +65,13 @@ export interface Conversation {
    * por resposta no celular (`comandoDaConversa` escolhe o motivo da tela).
    */
   last_handoff_reason?: string | null;
+  /**
+   * Campo CALCULADO pela rota da lista (`lib/inbox/funil-da-conversa.ts`), não
+   * coluna: o funil do lead mais recente do contato, com a mesma regra da faixa
+   * da jornada. Ausente fora da lista (GET de uma conversa, realtime);
+   * `null` quando o contato não tem negócio em funil ativo.
+   */
+  funil_do_contato?: FunilDaConversa | null;
   created_at: string;
   updated_at: string;
 }

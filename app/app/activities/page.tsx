@@ -1,3 +1,6 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import type { Metadata } from "next";
 import { requireAuth } from "@/lib/auth/server";
 import { traduzir } from "@/lib/i18n/dicionario";
@@ -14,15 +17,14 @@ export default async function ActivitiesReportPage() {
   const t = (texto: string) => traduzir(texto, user.idioma);
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Atividades")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("O que aconteceu na operação no período — e quanto disso foi a equipe.")}
-        </p>
-      </header>
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={t("Atividades")}
+        ajuda={<ComoFunciona chave="atividades" pagina={t("Atividades")} />}
+        descricao={t("O que aconteceu na operação no período — e quanto disso foi a equipe.")}
+      />
 
       <ActivityReportClient />
-    </div>
+    </CorpoDaPagina>
   );
 }
