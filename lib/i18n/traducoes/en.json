@@ -9451,5 +9451,7 @@
   "Enviou": "Sent",
   "Instalou": "Installed",
   "Removeu": "Removed",
-  "Suporte da plataforma": "Platform support"
+  "Suporte da plataforma": "Platform support",
+  "Recebeu uma mensagem": "Received a message",
+  "Recusou um webhook com assinatura inválida": "Rejected a webhook with an invalid signature"
 }

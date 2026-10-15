@@ -14575,6 +14575,9 @@ export const DICIONARIO: Traducoes = {
   "Instalou": { es: "Instaló" },
   "Removeu": { es: "Quitó" },
   "Suporte da plataforma": { es: "Soporte de la plataforma" },
+  // ─── AUDITORIA: MAIS FRASES (plano visual de 15/10/2026) ───
+  "Recebeu uma mensagem": { es: "Recibió un mensaje" },
+  "Recusou um webhook com assinatura inválida": { es: "Rechazó un webhook con firma inválida" },
 };
 
 /**
