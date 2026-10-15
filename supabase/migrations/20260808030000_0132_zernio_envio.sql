@@ -9,7 +9,7 @@
 -- não: quem endereça é um id de 24 hex que o INTERMEDIÁRIO inventa e devolve
 -- pelo webhook (`message.received`) — medido contra a API real, não lido da doc:
 --
---   6a76a2dc4b8fe115e5f6c300  ← participante 595981233187
+--   6a76a2dc4b8fe115e5f6c300  ← participante 5959XXXXXXXX (mascarado)
 --
 -- Sem guardar esse id não há como responder DENTRO da janela de 24h: o endpoint
 -- que aceita telefone exige template e devolve TEMPLATE_REQUIRED, que é
