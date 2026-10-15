@@ -30,6 +30,7 @@
 import { useEffect } from "react";
 
 import { deveEmitirSinal, INTERVALO_DO_SINAL_SEGUNDOS } from "@/lib/atendimento/presenca";
+import { depoisDaAbertura } from "@/lib/ui/depois-da-abertura";
 
 /** A rota do emissor. Uma só, e ela escreve uma coluna. */
 export const URL_DO_SINAL_DE_PRESENCA = "/api/v1/attendants/presence";
@@ -66,9 +67,11 @@ export function useSinalDePresenca(ativo: boolean): void {
       });
     };
 
-    // Primeira batida no MOUNT, não no primeiro tique: abrir a tela marca
-    // presença em menos de um segundo, e não no fim do intervalo.
-    bater();
+    // Primeira batida logo depois de a tela abrir, não no primeiro tique: abrir a
+    // tela marca presença em ~1,5 s, e não no fim do intervalo. Esse 1,5 s é de
+    // propósito (#66): a batida é uma escrita que a pessoa não vê, e pedida no
+    // mount ela disputava o servidor com as ~15 chamadas que preenchem a tela.
+    const cancelarPrimeira = depoisDaAbertura(bater);
     const tique = window.setInterval(bater, INTERVALO_DO_SINAL_SEGUNDOS * 1000);
 
     // Voltar para a aba bate na hora. Navegador em segundo plano alinha timers a
@@ -83,6 +86,7 @@ export function useSinalDePresenca(ativo: boolean): void {
 
     return () => {
       parado = true;
+      cancelarPrimeira();
       window.clearInterval(tique);
       document.removeEventListener("visibilitychange", aoVoltar);
     };
