@@ -25,8 +25,8 @@ const request = {
   externalCustomerId: null,
 };
 let rows: Record<string, Row[]>;
-/** 42P01 só para as duas tabelas do módulo — simula instalação sem o módulo. */
-let moduloDesinstalado: boolean;
+/** Erro de tabela ausente só para as duas tabelas do módulo — simula instalação sem o módulo. */
+let moduloDesinstalado: false | "42P01" | "PGRST205";
 /** Erro de leitura que NÃO é "tabela inexistente" numa das tabelas do módulo. */
 let falhaDeLeitura: string | null;
 
@@ -77,7 +77,7 @@ class ReadQuery {
       moduloDesinstalado &&
       (this.table === "honorarios_contratos" || this.table === "honorarios_parcelas")
     ) {
-      return { data: null, error: { code: "42P01", message: "relation does not exist" } };
+      return { data: null, error: { code: moduloDesinstalado, message: "relation does not exist" } };
     }
     const data = (rows[this.table] ?? [])
       .filter((row) => this.filters.every(([key, value]) => row[key] === value))
@@ -163,8 +163,13 @@ describe("LGPD: honorários no pedido de acesso (ADR-0002 D8)", () => {
     ]);
   });
 
-  it("módulo não instalado (42P01) → seção vazia, export não quebra, sem log de ruído", async () => {
-    moduloDesinstalado = true;
+  // PGRST205 é o que o supabase-js devolve de verdade (PostgREST: "Could not find
+  // the table … in the schema cache"); 42P01 é o do Postgres puro. Só o segundo
+  // era tratado, e a prévia de LGPD dava 500 em instalação sem o módulo.
+  it.each(["42P01", "PGRST205"] as const)(
+    "módulo não instalado (%s) → seção vazia, export não quebra, sem log de ruído",
+    async (codigo) => {
+    moduloDesinstalado = codigo;
     const payload = await collectExportData(request);
     expect(payload.honorarios_contratos).toEqual([]);
     expect(payload.honorarios_parcelas).toEqual([]);
@@ -172,7 +177,8 @@ describe("LGPD: honorários no pedido de acesso (ADR-0002 D8)", () => {
     // leitura — logar isso como warn a cada export poluiria o sinal de quem
     // vigia o log procurando defeito de verdade.
     expect(logger.warn).not.toHaveBeenCalled();
-  });
+    },
+  );
 
   it("sem titular, ou titular sem lead: seção vazia e nenhuma consulta ao módulo", async () => {
     const payload = await collectExportData({ ...request, contactId: null });
