@@ -7,7 +7,7 @@ vi.mock("@/lib/ai/agents/publish", () => ({ publishAgentVersion: vi.fn() }));
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { publishAgentVersion } from "@/lib/ai/agents/publish";
-import { applyProposal, composeAppliedPrompt } from "./apply-proposal";
+import { applyProposal, composeAppliedCorrection, composeAppliedPrompt } from "./apply-proposal";
 
 const ORG = "11111111-0000-4000-8000-000000000001";
 const AGENT = "22222222-0000-4000-8000-000000000002";
@@ -208,5 +208,70 @@ describe("applyProposal — guards e fluxo publish-por-ponteiro", () => {
 
     // Valida que NÃO foi criada versão de agent
     expect(publishAgentVersion).not.toHaveBeenCalled();
+  });
+});
+
+describe("correção de resposta (issue #90) — só vale depois do clique, e só no agente de que fala", () => {
+  const OUTRO_AGENTE = "aaaaaaaa-0000-4000-8000-00000000000a";
+  const REGRA =
+    "Se o cliente disser algo como “quanto custa o Pro?”, não responda “não sei”; responda no sentido de: “R$ 99 por mês.”.";
+
+  it("composeAppliedCorrection apende uma seção própria, sem reescrever o prompt base", () => {
+    const out = composeAppliedCorrection("PROMPT BASE\n", `  ${REGRA}  `);
+    expect(out).toBe(`PROMPT BASE\n\n## Correções aprovadas pela equipe\n- ${REGRA}\n`);
+    expect(out.startsWith("PROMPT BASE")).toBe(true);
+  });
+
+  it("proposta de correção de OUTRO agente não se aplica por este (proposal_not_found, nada é criado)", async () => {
+    vi.mocked(publishAgentVersion).mockClear();
+    const admin = stubAdmin({
+      flywheel_distiller_proposals: [
+        { id: PROPOSAL, type: "response_correction", content: REGRA, applied_at: null, agent_id: OUTRO_AGENTE },
+      ],
+    });
+    const r = await applyProposal(admin, { orgId: ORG, agentId: AGENT, proposalId: PROPOSAL, userId: USER });
+    expect(r).toMatchObject({ ok: false, code: "proposal_not_found" });
+    expect(publishAgentVersion).not.toHaveBeenCalled();
+  });
+
+  it("aprovada, vira versão nova com a regra na seção de correções e passa pelo publish por ponteiro", async () => {
+    vi.mocked(publishAgentVersion).mockResolvedValueOnce({
+      ok: true,
+      agent_id: AGENT,
+      version_id: NEW_VERSION,
+      previous_version_id: PUB_VERSION,
+      published_at: "2026-10-15T12:00:00Z",
+    });
+    const base = stubAdmin({
+      flywheel_distiller_proposals: [
+        { id: PROPOSAL, type: "response_correction", content: REGRA, applied_at: null, agent_id: AGENT },
+        {},
+      ],
+      ai_agents: [{ id: AGENT, published_version_id: PUB_VERSION }],
+      ai_agent_versions: [BASE_VERSION, { version_number: 3 }, { id: NEW_VERSION, version_number: 4 }],
+    });
+    const inseridos: Array<Record<string, unknown>> = [];
+    const admin = {
+      from: (table: string) => {
+        const chain = base.from(table) as unknown as Record<string, unknown>;
+        const insert = chain.insert as (p: unknown) => unknown;
+        chain.insert = vi.fn((p: Record<string, unknown>) => {
+          if (table === "ai_agent_versions") inseridos.push(p);
+          return insert(p);
+        });
+        return chain as unknown;
+      },
+    } as unknown as SupabaseClient;
+
+    const r = await applyProposal(admin, { orgId: ORG, agentId: AGENT, proposalId: PROPOSAL, userId: USER });
+
+    expect(r).toEqual({ ok: true, versionId: NEW_VERSION, versionNumber: 4 });
+    expect(inseridos[0]?.system_prompt).toBe(composeAppliedCorrection(BASE_VERSION.system_prompt, REGRA));
+    expect(inseridos[0]).toMatchObject({ status: "draft", created_by: USER });
+    expect(publishAgentVersion).toHaveBeenLastCalledWith(admin, {
+      orgId: ORG,
+      agentId: AGENT,
+      versionId: NEW_VERSION,
+    });
   });
 });

@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "diagram_type": "fluxo",
+  "meta": {
+    "titulo": "Testar o agente em várias trocas e corrigir respostas",
+    "pergunta": "Como a pessoa conversa com o rascunho do agente, vê o que ele gastaria e chamaria, e ensina o que ele errou sem que nada mude sozinho?",
+    "resumo": "A aba Teste guarda a conversa só na tela e manda, a cada troca, o histórico ao preview do agente (o mesmo motor do turno real, sem contato, sem envio). Cada resposta traz tokens, custo e ferramentas, e o custo cai em llm_calls, na régua do orçamento. 'Corrigir esta resposta' — no teste ou numa execução real — cria uma PROPOSTA presa ao agente, com a conversa de origem mascarada; só o clique de aplicar, na aba Propostas, publica uma versão nova."
+  },
+  "lanes": [
+    { "id": "humano", "label": "O que o humano vê" },
+    { "id": "borda", "label": "Borda HTTP" },
+    { "id": "regra", "label": "Regras e motor" },
+    { "id": "dados", "label": "Banco" }
+  ],
+  "mainPath": ["teste", "rota-teste", "preview", "llm-calls", "corrigir", "rota-correcao", "proposta", "aplicar"],
+  "nodes": [
+    {
+      "id": "teste",
+      "lane": "humano",
+      "col": 1,
+      "type": "frontend",
+      "label": "TestPanel",
+      "sublabel": "conversa de várias trocas · tokens, custo e ferramentas por resposta · Reiniciar conversa"
+    },
+    {
+      "id": "execucoes",
+      "lane": "humano",
+      "col": 1,
+      "type": "frontend",
+      "label": "RunDetailDrawer",
+      "sublabel": "aba Execuções · 'Resposta enviada' só em turno de atendimento"
+    },
+    {
+      "id": "corrigir",
+      "lane": "humano",
+      "col": 2,
+      "type": "frontend",
+      "label": "CorrigirResposta",
+      "sublabel": "'o agente só muda depois que você aprovar' dito antes e depois do envio"
+    },
+    {
+      "id": "propostas",
+      "lane": "humano",
+      "col": 5,
+      "type": "frontend",
+      "label": "ProposalsPanel",
+      "sublabel": "mostra a frase que vai entrar e a conversa de origem"
+    },
+    {
+      "id": "rota-teste",
+      "lane": "borda",
+      "col": 2,
+      "type": "api",
+      "label": "POST /ai/agents/[id]/versions/[vid]/test",
+      "sublabel": "admin · history validado por Zod · 422 ai_budget_exhausted"
+    },
+    {
+      "id": "rota-reply",
+      "lane": "borda",
+      "col": 2,
+      "type": "api",
+      "label": "GET /ai/agents/[id]/runs/[callId]/reply",
+      "sublabel": "manager+ · a resposta real e a conversa até ela"
+    },
+    {
+      "id": "rota-correcao",
+      "lane": "borda",
+      "col": 3,
+      "type": "api",
+      "label": "POST /ai/agents/[id]/corrections",
+      "sublabel": "manager+ · Idempotency-Key · org da sessão · só cria proposta"
+    },
+    {
+      "id": "rota-aplicar",
+      "lane": "borda",
+      "col": 5,
+      "type": "api",
+      "label": "POST /ai/agents/[id]/proposals/[pid]/apply",
+      "sublabel": "admin · o portão humano de sempre"
+    },
+    {
+      "id": "cenario",
+      "lane": "regra",
+      "col": 2,
+      "type": "regra",
+      "label": "cenarioDaConversa()",
+      "sublabel": "histórico + mensagem nova, em ordem estrita · teto de trocas"
+    },
+    {
+      "id": "preview",
+      "lane": "regra",
+      "col": 3,
+      "type": "regra",
+      "label": "testAgentVersion → runAgentPreview",
+      "sublabel": "o mesmo core do turno · ferramentas que alteram não executam, viram proposta · registrarChamadaDaPrevia soma tokens e custo"
+    },
+    {
+      "id": "reply-lookup",
+      "lane": "regra",
+      "col": 3,
+      "type": "regra",
+      "label": "respostaDaExecucao()",
+      "sublabel": "busca por proximidade: a 1ª mensagem do agente depois da chamada, presa a org e agente"
+    },
+    {
+      "id": "montar",
+      "lane": "regra",
+      "col": 4,
+      "type": "regra",
+      "label": "montarCorrecao()",
+      "sublabel": "anonymize() na conversa · uma linha, sem aspas retas, com teto — o que se aprova é o que entra"
+    },
+    {
+      "id": "aplicar",
+      "lane": "regra",
+      "col": 5,
+      "type": "regra",
+      "label": "applyProposal + composeAppliedCorrection",
+      "sublabel": "versão nova com a regra no fim do prompt · publicação por ponteiro · recusa proposta de outro agente"
+    },
+    {
+      "id": "llm-calls",
+      "lane": "dados",
+      "col": 3,
+      "type": "tabela",
+      "label": "llm_calls",
+      "sublabel": "purpose=agent_preview · soma em fn_gasto_de_ia_do_mes — a régua do orçamento"
+    },
+    {
+      "id": "orcamento",
+      "lane": "dados",
+      "col": 4,
+      "type": "tabela",
+      "label": "ai_budgets",
+      "sublabel": "modo bloquear recusa o teste antes do provedor, como recusaria um turno"
+    },
+    {
+      "id": "proposta",
+      "lane": "dados",
+      "col": 4,
+      "type": "tabela",
+      "label": "flywheel_distiller_proposals",
+      "sublabel": "type=response_correction · agent_id (FK, cascade) · evidence = conversa mascarada · RLS por organização"
+    },
+    {
+      "id": "versoes",
+      "lane": "dados",
+      "col": 5,
+      "type": "tabela",
+      "label": "ai_agent_versions",
+      "sublabel": "imutável: aplicar cria versão N+1 e flipa o ponteiro"
+    },
+    {
+      "id": "audit",
+      "lane": "dados",
+      "col": 5,
+      "type": "tabela",
+      "label": "api_audit_log",
+      "sublabel": "ai.response_correction_proposed (sem o texto da conversa) · ai.flywheel_proposal_applied"
+    }
+  ],
+  "edges": [
+    { "id": "t1", "from": "teste", "to": "rota-teste", "label": "cada troca manda history + mensagem nova (a conversa vive só na tela)" },
+    { "id": "t2", "from": "rota-teste", "to": "cenario", "label": "monta o contexto simulado" },
+    { "id": "t3", "from": "cenario", "to": "preview", "label": "contexto sem contato, sem conversa, sem envio" },
+    { "id": "t4", "from": "preview", "to": "llm-calls", "label": "cada chamada ao modelo grava custo, com purpose=agent_preview" },
+    { "id": "t5", "from": "llm-calls", "to": "orcamento", "label": "o gasto compara com o teto da organização" },
+    { "id": "t6", "from": "orcamento", "to": "rota-teste", "label": "teto atingido no modo bloquear: recusa antes do provedor → 422 com a causa dita" },
+    { "id": "t7", "from": "rota-teste", "to": "teste", "label": "resposta, tokens, custo, ferramentas e verificações" },
+    { "id": "c1", "from": "teste", "to": "corrigir", "label": "cada resposta do agente oferece Corrigir" },
+    { "id": "c2", "from": "execucoes", "to": "rota-reply", "label": "lê a resposta que a execução enviou" },
+    { "id": "c3", "from": "rota-reply", "to": "reply-lookup", "label": "preso a organização e agente" },
+    { "id": "c4", "from": "execucoes", "to": "corrigir", "label": "o mesmo botão, origem execução (manda só o id da chamada)" },
+    { "id": "c5", "from": "corrigir", "to": "rota-correcao", "label": "texto corrigido + conversa (teste) ou id da chamada (execução)" },
+    { "id": "c6", "from": "rota-correcao", "to": "reply-lookup", "label": "na origem execução, relê a conversa no servidor — nunca confia no cliente" },
+    { "id": "c7", "from": "rota-correcao", "to": "montar", "label": "monta o conteúdo e a evidência" },
+    { "id": "c8", "from": "montar", "to": "proposta", "label": "INSERT pendente, agent_id do path, organization_id da sessão" },
+    { "id": "c9", "from": "rota-correcao", "to": "audit", "label": "só o fato: agente, origem, id da chamada" },
+    { "id": "p1", "from": "proposta", "to": "propostas", "label": "a aba lista as da organização e as DESTE agente" },
+    { "id": "p2", "from": "propostas", "to": "rota-aplicar", "label": "o clique de aplicar é o gate humano" },
+    { "id": "p3", "from": "rota-aplicar", "to": "aplicar", "label": "recusa proposta de outro agente (404)" },
+    { "id": "p4", "from": "aplicar", "to": "versoes", "label": "versão nova + publicação por ponteiro; só aqui o comportamento muda" },
+    { "id": "p5", "from": "aplicar", "to": "proposta", "label": "marca applied_at / applied_version_id / applied_by" },
+    { "id": "p6", "from": "rota-aplicar", "to": "audit", "label": "ai.flywheel_proposal_applied" },
+    { "id": "r1", "from": "versoes", "to": "teste", "label": "laço de retorno: a versão nova é a que o próximo teste exercita" }
+  ],
+  "cards": [
+    {
+      "titulo": "O laço de retorno (invariante 7)",
+      "texto": "Quando o agente erra, a pessoa corrige e isso volta como proposta aprovada por humano — a versão nova é a que o próximo teste exercita (r1). Quando o teste é recusado pelo orçamento, a causa é dita na tela (422 ai_budget_exhausted) e o item aberto na Central é o de sempre; não vira 'confira a credencial'."
+    },
+    {
+      "titulo": "Não-ligação declarada: a conversa de teste não é guardada",
+      "texto": "Não há tabela de conversa simulada: o histórico vive na tela e viaja a cada troca. Reiniciar é esvaziar a lista. Guardar criaria dado de cliente fictício com retenção, LGPD e RLS próprias, sem ninguém que o consuma. A correção carrega a conversa necessária (últimas 12 falas, mascaradas) na evidência da própria proposta."
+    },
+    {
+      "titulo": "Não-ligação declarada: a correção não muda o agente",
+      "texto": "A rota de correção só insere uma proposta pendente — nenhum caminho dela toca ai_agent_versions. O texto que a pessoa vê na proposta é exatamente a linha que entra no prompt se ela aplicar, e a fala do cliente citada entra como dado (uma linha, sem aspas retas, com teto), nunca como estrutura."
+    },
+    {
+      "titulo": "Não-ligação declarada: o tipo e a proposta não ganharam consumidor novo",
+      "texto": "Proposta de correção é de UM agente (agent_id com FK e cascade): a lista filtra por ele e o aplicar a recusa em outro. As propostas do flywheel seguem da organização (agent_id nulo). O teste da aba Teste não é um atendimento: a coluna Tipo de Execuções passou a marcá-lo como teste, e 'corrigir' só se oferece em turno de atendimento."
+    },
+    {
+      "titulo": "Destino (doutrina de extensões)",
+      "texto": "Núcleo. Se nenhuma organização usar o chat de teste nem corrigir uma resposta, a operação comum continua inteira, e nada aqui depende de serviço pago de terceiro além do provedor de IA que o agente já usa."
+    }
+  ]
+}

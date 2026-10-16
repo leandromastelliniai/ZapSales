@@ -6,7 +6,15 @@ export interface ProposalRow {
   id: string;
   run_id: string;
   dataset: string;
-  type: "playbook_bullet" | "golden_case" | "reentry_trigger" | "org_memory_entry";
+  /** `response_correction` é a de "corrigir esta resposta" (#90): sempre de um agente. */
+  type:
+    | "playbook_bullet"
+    | "golden_case"
+    | "reentry_trigger"
+    | "org_memory_entry"
+    | "response_correction";
+  /** Nulo = proposta da organização (as do flywheel). */
+  agent_id?: string | null;
   target: string;
   content: string;
   evidence: Record<string, unknown>;
