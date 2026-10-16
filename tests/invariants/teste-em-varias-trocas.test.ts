@@ -199,6 +199,20 @@ describe("conversa de teste de várias trocas — pelo preview do agente", () =>
     expect(r.usage!.tokensOut).toBeGreaterThanOrEqual(200);
     expect(r.usage!.costCents).toBeGreaterThan(0);
     expect(r.toolCalls?.map((c) => c.tool)).toContain("send_message");
+
+    // O gasto mostrado é o de TODAS as chamadas ao modelo do turno (principal, checkpoint,
+    // conferências), e a fonte independente é a própria `llm_calls` da organização — a mesma
+    // régua do orçamento. Somar só a chamada principal mostrava ~38% disto na produção.
+    const { rows } = await pool.query(
+      `select count(*)::int as chamadas, sum(cost_cents)::float8 as cents,
+              sum(input_tokens)::int as tin, sum(output_tokens)::int as tout
+         from llm_calls where organization_id=$1`,
+      [f.org],
+    );
+    expect(rows[0].chamadas).toBeGreaterThanOrEqual(2);
+    expect(r.usage!.costCents).toBeCloseTo(rows[0].cents, 6);
+    expect(r.usage!.tokensIn).toBe(rows[0].tin);
+    expect(r.usage!.tokensOut).toBe(rows[0].tout);
   });
 
   it("nenhuma mensagem real, job, nota, checkpoint, contato, conversa ou negócio é criado ou alterado, e nada sai pela rede", async () => {
