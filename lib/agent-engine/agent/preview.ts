@@ -44,7 +44,7 @@ export interface PreviewResult {
   proposals: Array<{ tool: string; arguments: unknown }>;
   impediments: Array<{ code: string; message: string }>;
   restrictions: string[];
-  /** O que a chamada principal ao modelo gastou neste turno (soma, se houve mais de uma). */
+  /** O que TODAS as chamadas ao modelo do turno gastaram — ver `medirUsoDoTurno`. */
   usage?: PreviewUsage;
   /** Toda ferramenta que o modelo chamou, na ordem — leituras e propostas de escrita. */
   toolCalls?: Array<{ tool: string; arguments: unknown }>;
@@ -55,28 +55,20 @@ export interface PreviewUsage {
   costCents: number;
 }
 /**
- * Soma ao resultado da prévia o que uma chamada ao modelo gastou e as
- * ferramentas que ela chamou. A tela de teste mostra os dois por resposta; sem
- * isto a rota devolvia zero em tudo e a pessoa não via o custo do que testava.
+ * Acrescenta ao resultado da prévia as ferramentas que uma chamada ao modelo fez, na
+ * ordem. A tela de teste as mostra por resposta.
  *
- * Só a chamada principal entra aqui: o classificador de etapa e a compactação
- * gravam o próprio custo em `llm_calls` (e contam no orçamento), mas não
- * passam por este ponto.
+ * O GASTO não é somado aqui: só a chamada principal passa por este ponto, e o turno
+ * tem outras (checkpoint, classificador de etapa, conferências por modelo). Quem o
+ * mede é `medirUsoDoTurno`, que enxerga todas — a prova na produção mostrou a
+ * diferença (a tela dizia ~38% do gasto real).
  */
 export function registrarChamadaDaPrevia(
   result: PreviewResult,
   call: {
-    usage: { inputTokens: number; outputTokens: number };
-    costCents: number | null;
     result: { steps?: ReadonlyArray<{ toolCalls?: ReadonlyArray<{ toolName: string; input?: unknown }> }> };
   },
 ): void {
-  const antes = result.usage ?? { tokensIn: 0, tokensOut: 0, costCents: 0 };
-  result.usage = {
-    tokensIn: antes.tokensIn + call.usage.inputTokens,
-    tokensOut: antes.tokensOut + call.usage.outputTokens,
-    costCents: antes.costCents + (call.costCents ?? 0),
-  };
   const chamadas = (call.result.steps ?? []).flatMap((s) =>
     (s.toolCalls ?? []).map((c) => ({ tool: c.toolName, arguments: c.input })),
   );

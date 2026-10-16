@@ -164,11 +164,9 @@ describe('conversa de teste de várias trocas', () => {
       ]),
     ).toBe(false);
   });
-  it('soma tokens e custo de cada chamada e lista as ferramentas na ordem em que foram chamadas', () => {
+  it('lista as ferramentas na ordem em que foram chamadas, sem mexer no gasto (que é medido à parte)', () => {
     const r = newPreviewResult();
     registrarChamadaDaPrevia(r, {
-      usage: { inputTokens: 100, outputTokens: 20 },
-      costCents: 0.5,
       result: {
         steps: [
           { toolCalls: [{ toolName: 'search_knowledge', input: { query: 'horário' } }] },
@@ -176,12 +174,8 @@ describe('conversa de teste de várias trocas', () => {
         ],
       },
     });
-    registrarChamadaDaPrevia(r, {
-      usage: { inputTokens: 10, outputTokens: 5 },
-      costCents: 0.25,
-      result: { steps: [{}] },
-    });
-    expect(r.usage).toEqual({ tokensIn: 110, tokensOut: 25, costCents: 0.75 });
+    registrarChamadaDaPrevia(r, { result: { steps: [{}] } });
+    expect(r.usage).toBeUndefined();
     expect(r.toolCalls).toEqual([
       { tool: 'search_knowledge', arguments: { query: 'horário' } },
       { tool: 'send_message', arguments: { body: 'Às nove.' } },
