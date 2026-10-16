@@ -24,6 +24,8 @@ import { useT } from "@/hooks/i18n/useT";
 import type { AgentRow } from "@/hooks/ai/useAgent";
 import type { AgentVersionRow } from "@/hooks/ai/useAgentVersions";
 
+import { FRASE_DO_TEXTO } from "@/lib/ai/resposta-em-audio/frases";
+
 import { RunTrace } from "./RunTrace";
 
 interface Props {
@@ -45,7 +47,12 @@ interface TestResponse {
     latency_ms?: number;
     would_send_to?: { session?: string | null; chat_id?: string | null };
     stub?: boolean;
-    candidates?: Array<{ body: string; trace: Array<{ gate: string; verdict: string }> }>;
+    candidates?: Array<{
+      body: string;
+      trace: Array<{ gate: string; verdict: string }>;
+      /** Em que formato a resposta SAIRIA (resposta em áudio, #91). Só quando o agente pediu áudio. */
+      delivery?: { format: "audio" } | { format: "text"; reason: string };
+    }>;
     proposals?: Array<{ tool: string; arguments: unknown }>;
     impediments?: Array<{ code: string; message: string }>;
     restrictions?: string[];
@@ -140,6 +147,7 @@ export function TestPanel({ agent, draft, published, readOnly }: Props) {
   const [contactName, setContactName] = React.useState("");
   const [contactPhone, setContactPhone] = React.useState("");
   const [pending, setPending] = React.useState(false);
+  const [comoAudio, setComoAudio] = React.useState(false);
   const [result, setResult] = React.useState<TestResponse["data"] | null>(null);
 
   if (!target) {
@@ -165,6 +173,7 @@ export function TestPanel({ agent, draft, published, readOnly }: Props) {
     setResult(null);
     try {
       const body: Record<string, unknown> = { sample_message: message.trim() };
+      if (comoAudio && target.audio_reply_enabled) body.sample_audio = true;
       if (contactName.trim() || contactPhone.trim()) {
         body.sample_contact = {
           ...(contactName.trim() ? { name: contactName.trim() } : {}),
@@ -235,6 +244,21 @@ export function TestPanel({ agent, draft, published, readOnly }: Props) {
             disabled={pending || readOnly}
           />
         </div>
+
+        {target.audio_reply_enabled ? (
+          <div className="flex items-center gap-2" data-testid="teste-como-audio">
+            <input
+              id="test-como-audio"
+              type="checkbox"
+              checked={comoAudio}
+              onChange={(e) => setComoAudio(e.target.checked)}
+              disabled={pending || readOnly}
+            />
+            <Label htmlFor="test-como-audio" className="font-normal">
+              {t("Simular que o cliente mandou esta mensagem como um áudio")}
+            </Label>
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-2">
@@ -317,6 +341,15 @@ export function TestPanel({ agent, draft, published, readOnly }: Props) {
                     "Estado do contato simulado. Canal, opt-out e contexto serão conferidos novamente antes de um envio real.",
                   )}
                 </p>
+                {result.candidates.map((candidate, i) =>
+                  candidate.delivery ? (
+                    <p key={`entrega-${i}`} role="status" data-testid="teste-entrega">
+                      {candidate.delivery.format === "audio"
+                        ? t("Esta resposta SAIRIA em áudio (nota de voz); o texto fica gravado na conversa.")
+                        : `${t("Esta resposta sairia em TEXTO:")} ${t(FRASE_DO_TEXTO[candidate.delivery.reason as keyof typeof FRASE_DO_TEXTO] ?? FRASE_DO_TEXTO.desligado_na_organizacao)}`}
+                    </p>
+                  ) : null,
+                )}
                 {result.candidates.map((candidate, i) => (
                   <details key={i}>
                     <summary>{t("Verificações da resposta")}</summary>

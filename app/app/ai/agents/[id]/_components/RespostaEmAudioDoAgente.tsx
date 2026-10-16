@@ -83,7 +83,7 @@ interface Props {
 
 export function RespostaEmAudioDoAgente({ value, onChange, disabled, riscoDeBanimento }: Props) {
   const t = useT();
-  const [org, setOrg] = React.useState<EstadoDaOrganizacao | null | "erro">(null);
+  const [org, setOrg] = React.useState<EstadoDaOrganizacao | null | "erro" | "sem_acesso">(null);
   const [vozes, setVozes] = React.useState<VozesCarregadas>({ estado: "carregando" });
 
   React.useEffect(() => {
@@ -92,15 +92,19 @@ export function RespostaEmAudioDoAgente({ value, onChange, disabled, riscoDeBani
       const res = await fetch("/api/v1/ai/audio").catch(() => null);
       const corpo = res && res.ok ? await lerJson(res) : null;
       if (!vivo) return;
-      setOrg(corpo?.data ? (corpo.data as EstadoDaOrganizacao) : "erro");
+      // Quem só lê o agente (visualizador) não vê a configuração da organização: não é falha.
+      if (res?.status === 403) return setOrg("sem_acesso");
+      const dados = corpo?.data as EstadoDaOrganizacao | undefined;
+      setOrg(dados?.config ? dados : "erro");
     })();
     return () => {
       vivo = false;
     };
   }, []);
 
-  const provedor = org && org !== "erro" ? org.config.provedor : null;
-  const podeEscolherVoz = provedor === "elevenlabs" && org !== null && org !== "erro" && org.disponivel;
+  const orgLida = org !== null && org !== "erro" && org !== "sem_acesso" ? org : null;
+  const provedor = orgLida ? orgLida.config.provedor : null;
+  const podeEscolherVoz = provedor === "elevenlabs" && orgLida !== null && orgLida.disponivel;
 
   React.useEffect(() => {
     if (!podeEscolherVoz) return;
@@ -146,7 +150,7 @@ export function RespostaEmAudioDoAgente({ value, onChange, disabled, riscoDeBani
         )}
       </p>
 
-      {org === "erro" ? (
+      {org === "sem_acesso" ? null : org === "erro" ? (
         <p className="text-xs text-muted-foreground" data-testid="audio-reply-estado">
           {t("Não consegui consultar o provedor de voz da organização agora.")}
         </p>
@@ -229,7 +233,7 @@ export function RespostaEmAudioDoAgente({ value, onChange, disabled, riscoDeBani
         </div>
       ) : null}
 
-      {value.enabled && provedor === "openai_compativel" && org !== null && org !== "erro" && org.disponivel ? (
+      {value.enabled && provedor === "openai_compativel" && orgLida !== null && orgLida.disponivel ? (
         <p className="text-xs text-muted-foreground">
           {t("A voz e o modelo são os da organização, definidos em Provedores.")}
         </p>

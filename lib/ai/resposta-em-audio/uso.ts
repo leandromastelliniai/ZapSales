@@ -18,6 +18,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { Queryable } from "@/lib/agent-engine/queue/queue";
 import { logger } from "@/lib/logger";
 
 import type { MotivoDeFalhaDeVoz, ProvedorDeVozId } from "./tipos";
@@ -38,30 +39,32 @@ export interface UsoDaVoz {
   falha?: MotivoDeFalhaDeVoz | "armazenamento_falhou";
 }
 
-/** Grava a linha de uso. NUNCA lança: telemetria não derruba a resposta ao cliente. */
-export async function registrarUsoDaVoz(admin: SupabaseClient, u: UsoDaVoz): Promise<void> {
+/**
+ * Grava a linha de uso pelo pool do worker (o mesmo `pg` do resto do motor).
+ * NUNCA lança: telemetria não derruba a resposta ao cliente.
+ */
+export async function registrarUsoDaVoz(db: Queryable, u: UsoDaVoz): Promise<void> {
   try {
-    const { error } = await admin.from("llm_calls").insert({
-      organization_id: u.organizationId,
-      contact_id: u.contactId,
-      job_id: u.jobId,
-      agent_id: u.agentId,
-      purpose: PURPOSE_DA_VOZ,
-      provider: u.provedor,
-      model: u.modelo,
-      input_tokens: u.caracteres,
-      output_tokens: 0,
-      cost_cents: u.falha ? null : u.custoCents,
-      latency_ms: u.latenciaMs,
-      status: u.falha ? "erro" : "ok",
-      error_code: u.falha ?? null,
-    });
-    if (error) {
-      logger.warn("[resposta-em-audio] uso não gravado", {
-        organization_id: u.organizationId,
-        error: error.message,
-      });
-    }
+    await db.query(
+      `insert into llm_calls
+         (organization_id, contact_id, job_id, agent_id, purpose, provider, model,
+          input_tokens, output_tokens, cost_cents, latency_ms, status, error_code)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,0,$9,$10,$11,$12)`,
+      [
+        u.organizationId,
+        u.contactId,
+        u.jobId,
+        u.agentId,
+        PURPOSE_DA_VOZ,
+        u.provedor,
+        u.modelo,
+        u.caracteres,
+        u.falha ? null : u.custoCents,
+        u.latenciaMs,
+        u.falha ? "erro" : "ok",
+        u.falha ?? null,
+      ],
+    );
   } catch (err) {
     logger.warn("[resposta-em-audio] uso não gravado", {
       organization_id: u.organizationId,

@@ -55,6 +55,17 @@ const PARES: Array<{
     simbolo: "ApiDeConversaoGoogle",
   },
   {
+    tabela: "voice_provider_credentials",
+    coluna: "provider",
+    // lib/ai/resposta-em-audio/tipos.ts → PROVEDORES_DE_VOZ (0546, resposta em áudio).
+    // Nasce com o par no mesmo commit da migration: um provedor que entrasse só no
+    // TypeScript faria o `upsert` da chave bater no CHECK (23514) numa tela que o
+    // dono vê como "não consegui gravar a chave"; um que entrasse só no banco seria
+    // uma chave que nenhum adaptador sabe usar.
+    arquivo: "lib/ai/resposta-em-audio/tipos.ts",
+    simbolo: "PROVEDORES_DE_VOZ",
+  },
+  {
     tabela: "extension_operations",
     coluna: "kind",
     // O recibo das extensões (0271). Quatro cópias no TypeScript viraram uma; um kind

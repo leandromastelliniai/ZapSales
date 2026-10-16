@@ -120,7 +120,13 @@ export function CartaoDeRespostaEmAudio() {
       return;
     }
     const corpo = await lerCorpo(res);
-    aplicar(corpo.data as Estado);
+    const dados = corpo.data as Partial<Estado> | undefined;
+    // Resposta que não é o estado (proxy, página de erro) é leitura falha, não cartão vazio.
+    if (!dados?.config || !dados.chaves) {
+      setErroDeCarga(true);
+      return;
+    }
+    aplicar(dados as Estado);
     setErroDeCarga(false);
   }, [aplicar]);
 

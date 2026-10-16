@@ -253,6 +253,16 @@ const PROVA_PROPRIA: readonly Excecao[] = [
       "a chave do Google da organização (0504), que só o servidor lê.",
   },
   {
+    tabela: "voice_provider_credentials",
+    razao:
+      "tests/invariants/credencial-de-voz-e-server-side.test.ts — mesmo desenho da " +
+      "linha de `map_provider_credentials`: privilégio NENHUM para anon e " +
+      "authenticated, `permission denied` sob `set role`, RLS ligada, zero policies, " +
+      "`organization_id` NOT NULL com FK em cascata, e o isolamento entre duas " +
+      "organizações medido. Guarda a chave do provedor de voz da organização (0546, " +
+      "resposta em áudio), que só o servidor lê.",
+  },
+  {
     tabela: "ad_conversion_dispatches",
     razao:
       "tests/invariants/credencial-de-anuncios-e-server-side.test.ts — mesmo " +

@@ -11,6 +11,8 @@ export async function testAgentVersion(
     versionId: string;
     runId: string;
     sampleMessage: string;
+    /** O cliente "mandou" a mensagem como áudio (resposta em áudio, #91). */
+    sampleAudio?: boolean;
     sampleContact?: { name?: string; phone?: string };
     channelId: string | null;
   },
@@ -29,6 +31,7 @@ export async function testAgentVersion(
         direction: "inbound",
         body: input.sampleMessage,
         sent_at: (deps.clock?.() ?? new Date()).toISOString(),
+        ...(input.sampleAudio === true ? { type: "audio" } : {}),
       },
     ],
     input.sampleContact,

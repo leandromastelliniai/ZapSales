@@ -13,6 +13,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+import type { Queryable } from "@/lib/agent-engine/queue/queue";
 import { logger } from "@/lib/logger";
 import { decryptWebhookSecret, encryptWebhookSecret } from "@/lib/webhooks/secrets";
 
@@ -131,4 +132,56 @@ export async function removerChaveDeVoz(
     .select("id");
   if (error) throw new Error(`remoção da chave de voz falhou: ${error.message}`);
   return (data ?? []).length > 0;
+}
+
+// ─── O caminho do MOTOR (pool `pg`) ─────────────────────────────────────────
+//
+// O worker do agente fala com o banco pelo pool `pg`, e não pelo PostgREST. As
+// duas leituras abaixo são as do turno: a mesma tabela, a mesma cifra
+// (`fn_decrypt_oauth`, que o papel do worker pode chamar). A chave em claro só
+// existe na memória do turno.
+
+/** Há chave gravada para o provedor? Nunca lança (`false` na dúvida: o turno cai em texto). */
+export async function chaveDeVozConfiguradaNoBanco(
+  db: Queryable,
+  organizationId: string,
+  provedor: ProvedorDeVozId,
+): Promise<boolean> {
+  try {
+    const { rows } = await db.query(
+      "select 1 from voice_provider_credentials where organization_id = $1 and provider = $2",
+      [organizationId, provedor],
+    );
+    return rows.length > 0;
+  } catch (err) {
+    logger.warn("[resposta-em-audio] consulta da chave falhou", {
+      organization_id: organizationId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return false;
+  }
+}
+
+/** A chave em claro, ou `null` (sem chave, cifra indisponível, leitura falhou). Nunca lança. */
+export async function lerChaveDeVozNoBanco(
+  db: Queryable,
+  organizationId: string,
+  provedor: ProvedorDeVozId,
+): Promise<string | null> {
+  try {
+    const { rows } = await db.query<{ chave: string | null }>(
+      `select public.fn_decrypt_oauth(api_key_encrypted) as chave
+         from voice_provider_credentials
+        where organization_id = $1 and provider = $2`,
+      [organizationId, provedor],
+    );
+    const chave = rows[0]?.chave ?? null;
+    return chave && chave.length > 0 ? chave : null;
+  } catch (err) {
+    logger.warn("[resposta-em-audio] leitura da chave falhou", {
+      organization_id: organizationId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
 }

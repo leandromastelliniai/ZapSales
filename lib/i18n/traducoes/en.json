@@ -9577,5 +9577,15 @@
   "respostas em áudio": "audio replies",
   "sem preço conhecido (informe o preço acima)": "with no known price (enter the price above)",
   "Última falha em conversa real:": "Last failure in a real conversation:",
-  "Quando o cliente manda áudio, o agente pode responder em nota de voz, com a chave de voz da própria empresa.": "When the customer sends audio, the agent can reply with a voice note, using the company's own voice key."
+  "Quando o cliente manda áudio, o agente pode responder em nota de voz, com a chave de voz da própria empresa.": "When the customer sends audio, the agent can reply with a voice note, using the company's own voice key.",
+  "Voz das respostas em áudio": "Voice of audio replies",
+  "Não consegui ler o uso da voz agora.": "I couldn't read the voice usage right now.",
+  "sem preço conhecido": "with no known price",
+  "caíram em texto por falha da voz": "fell back to text because the voice failed",
+  "Limite por resposta:": "Limit per reply:",
+  "caracteres; acima disso a resposta sai como texto.": "characters; above that the reply goes out as text.",
+  "Ajustar em Provedores": "Adjust in Providers",
+  "Simular que o cliente mandou esta mensagem como um áudio": "Simulate that the customer sent this message as an audio",
+  "Esta resposta SAIRIA em áudio (nota de voz); o texto fica gravado na conversa.": "This reply WOULD go out as audio (voice note); the text stays saved in the conversation.",
+  "Esta resposta sairia em TEXTO:": "This reply would go out as TEXT:"
 }

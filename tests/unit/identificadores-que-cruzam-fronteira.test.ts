@@ -162,6 +162,10 @@ const SITES: { arquivo: string; fronteira: string; papel?: "gerador" | "validado
   // Storage — a chave do objeto sai daqui e vira objeto lá.
   { arquivo: "workers/lgpd-export-worker.ts", fronteira: "storage.chave-de-objeto" },
   { arquivo: "workers/media-persist-worker.ts", fronteira: "storage.chave-de-objeto" },
+  // A nota de voz da resposta em áudio (#91): `<org>/<conversa>/resposta-em-audio-<job>-<seq>.ogg`,
+  // dois uuids da linha do job e um inteiro — o id do job passa por `caminhoDaNotaDeVoz`,
+  // que tira tudo que não é [A-Za-z0-9-]. Nada vem do corpo da requisição.
+  { arquivo: "lib/agent-engine/agent/inbound-turn.ts", fronteira: "storage.chave-de-objeto" },
   { arquivo: "lib/ai/skills/install.ts", fronteira: "storage.chave-de-objeto" },
   { arquivo: "app/api/v1/products/[id]/fotos/route.ts", fronteira: "storage.chave-de-objeto" },
   { arquivo: "app/api/v1/cron/contact-avatars/route.ts", fronteira: "storage.chave-de-objeto" },

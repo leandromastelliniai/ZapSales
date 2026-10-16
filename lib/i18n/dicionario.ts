@@ -14705,6 +14705,18 @@ export const DICIONARIO: Traducoes = {
   "Última falha em conversa real:": { es: "Último fallo en una conversación real:" },
   // A resposta em áudio do agente (issue #91): cartão em Provedores, editor do agente e as frases da API.
   "Quando o cliente manda áudio, o agente pode responder em nota de voz, com a chave de voz da própria empresa.": { es: "Cuando el cliente manda audio, el agente puede responder con una nota de voz, con la clave de voz de la propia empresa." },
+  // A resposta em áudio do agente (issue #91): cartão em Provedores, editor do agente e as frases da API.
+  "Voz das respostas em áudio": { es: "Voz de las respuestas en audio" },
+  "Não consegui ler o uso da voz agora.": { es: "No pude leer el uso de la voz ahora." },
+  "sem preço conhecido": { es: "sin precio conocido" },
+  "caíram em texto por falha da voz": { es: "cayeron en texto por falla de la voz" },
+  "Limite por resposta:": { es: "Límite por respuesta:" },
+  "caracteres; acima disso a resposta sai como texto.": { es: "caracteres; por encima de eso la respuesta sale como texto." },
+  "Ajustar em Provedores": { es: "Ajustar en Proveedores" },
+  // A resposta em áudio do agente (issue #91): cartão em Provedores, editor do agente e as frases da API.
+  "Simular que o cliente mandou esta mensagem como um áudio": { es: "Simular que el cliente mandó este mensaje como un audio" },
+  "Esta resposta SAIRIA em áudio (nota de voz); o texto fica gravado na conversa.": { es: "Esta respuesta SALDRÍA en audio (nota de voz); el texto queda guardado en la conversación." },
+  "Esta resposta sairia em TEXTO:": { es: "Esta respuesta saldría en TEXTO:" },
 };
 
 /**

@@ -292,6 +292,8 @@ export const publishSchema = z.object({ version_id: UUID }).strict();
 export const testRunSchema = z
   .object({
     sample_message: z.string().trim().min(1).max(4000),
+    /** Simula que o cliente mandou a mensagem como ÁUDIO — para ver a resposta em áudio (#91). */
+    sample_audio: z.boolean().optional(),
     sample_contact: z
       .object({
         name: z.string().trim().min(1).max(120).optional(),
