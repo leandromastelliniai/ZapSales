@@ -49,6 +49,18 @@ const PARES: Array<{
   simbolo: string;
 }> = [
   {
+    tabela: "lgpd_requests",
+    coluna: "source",
+    arquivo: "lib/lgpd/types.ts",
+    simbolo: "LgpdRequestSource",
+  },
+  {
+    tabela: "lgpd_requests",
+    coluna: "request_type",
+    arquivo: "lib/lgpd/types.ts",
+    simbolo: "LgpdRequestType",
+  },
+  {
     tabela: "ad_platform_connections",
     coluna: "google_api",
     arquivo: "lib/plataformas-de-anuncio/types.ts",

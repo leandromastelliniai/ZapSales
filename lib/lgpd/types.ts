@@ -13,6 +13,17 @@
  */
 export type LgpdRequestType = "data_request" | "redact" | "store_redact";
 
+/**
+ * De onde veio o pedido — os TRÊS valores que o banco aceita
+ * (`lgpd_requests_source_check`, migration 0533). O tipo anterior dizia
+ * `"admin_panel" | "api"`: `admin_panel` o CHECK rejeita (23514 no INSERT), e
+ * `manual` e `support`, que ele aceita, não existiam aqui. Quem escreve o
+ * pedido pelo painel usa `manual`; atendimento de suporte, `support`.
+ * `tests/invariants/vocabulario-banco-x-typescript.test.ts` compara este tipo
+ * com o CHECK.
+ */
+export type LgpdRequestSource = "manual" | "api" | "support";
+
 /** Rótulo em pt-BR — fonte única, para as cinco telas não divergirem. */
 export const LGPD_REQUEST_TYPE_LABELS: Record<LgpdRequestType, string> = {
   data_request: "Solicitação de dados",
@@ -34,7 +45,7 @@ export interface LgpdRequest {
   organization_id: string;
   request_type: LgpdRequestType;
   /** Origin channel that triggered the request. */
-  source: "admin_panel" | "api";
+  source: LgpdRequestSource;
   /** Internal contact id (may be null if contact not yet in CRM — L-03). */
   contact_id: string | null;
   /** External platform customer identifier, when the request came from one. */
