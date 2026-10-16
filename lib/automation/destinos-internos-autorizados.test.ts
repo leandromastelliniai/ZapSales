@@ -127,6 +127,25 @@ describe("os seis casos da decisão 22-d (#1004, item 7)", () => {
     );
   });
 
+  it("2b. `localhost` na instalação: a lista que cobre o loopback o autoriza; sem ela, recusa", async () => {
+    dns.resposta = [{ address: "127.0.0.1", family: 4 }];
+
+    banco.lista = ["127.0.0.0/8"];
+    await expect(motivoDaRecusaDeDestino("http://localhost:9000/stt", "instalacao")).resolves.toBeNull();
+
+    esquecerDestinosInternos(); // a lista fica em memória por 30 s
+    banco.lista = [];
+    await expect(motivoDaRecusaDeDestino("http://localhost:9000/stt", "instalacao")).resolves.toBe(
+      "unsafe_url:private_host",
+    );
+    // E o endereço de uma ORGANIZAÇÃO nunca ganha a exceção.
+    esquecerDestinosInternos();
+    banco.lista = ["127.0.0.0/8"];
+    await expect(motivoDaRecusaDeDestino("http://localhost:9000/stt", "organizacao")).resolves.toBe(
+      "unsafe_url:private_host",
+    );
+  });
+
   it("2. listado, e configurado pela INSTALAÇÃO → passa", async () => {
     banco.lista = ["10.1.0.0/16"];
 

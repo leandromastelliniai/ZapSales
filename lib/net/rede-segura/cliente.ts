@@ -41,6 +41,11 @@ export class ErroDeRedeSegura extends Error {
     this.name = "ErroDeRedeSegura";
     this.codigo = codigo;
   }
+
+  /** A política disse não (`unsafe_url:*`) — diferente de o transporte ter falhado (`net:*`). */
+  get ehRecusa(): boolean {
+    return this.codigo.startsWith("unsafe_url:");
+  }
 }
 
 export type ResolvedorDeNomes = (hostname: string) => Promise<Array<{ address: string; family: number }>>;
@@ -81,7 +86,10 @@ export function validarUrl(bruta: string, politica: PoliticaDeDestino = {}): URL
     if (!politica.julgarLiteralIpv6) throw new ErroDeRedeSegura("unsafe_url:ipv6_literal");
     return url;
   }
-  if (NOME_LOCAL.test(host)) throw new ErroDeRedeSegura("unsafe_url:private_host");
+  // `localhost` é recusado pelo nome, a menos que quem chama traga uma válvula de
+  // IP: aí o nome é resolvido e o endereço (127.0.0.1) é julgado pela válvula —
+  // é o que a lista de destinos internos da instalação sempre fez.
+  if (NOME_LOCAL.test(host) && !politica.ipPermitido) throw new ErroDeRedeSegura("unsafe_url:private_host");
   if (isIPv4(host) && ipEhDeRedeLocal(host) && !politica.ipPermitido?.(host)) {
     throw new ErroDeRedeSegura("unsafe_url:private_host");
   }
@@ -201,7 +209,9 @@ function pedir(
       url,
       {
         method: metodo,
-        headers: { "accept-encoding": "identity", ...headers },
+        // Os cabeçalhos que o `fetch` mandava por conta própria: receptor e WAF que
+        // recusam requisição sem User-Agent continuam atendidos.
+        headers: { "user-agent": "node", accept: "*/*", "accept-encoding": "identity", ...headers },
         agent: false,
         signal: sinal,
         lookup: lookupFixado(host, enderecos),

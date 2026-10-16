@@ -56,7 +56,7 @@ destinos internos que o dono da **instalação** autoriza
 
 | Acesso | Como usa | Perfil |
 |---|---|---|
-| Webhook de saída (`call_webhook`) | `buscarSeguro` | `permitirHttp` só fora de produção; sem lista; 3xx não seguido; corpo da resposta derrubado sem ler. Mantém assinatura HMAC, cabeçalhos e retentativas. **Recusa da política não é retentada.** |
+| Webhook de saída (`call_webhook`) | `buscarSeguro` | `permitirHttp` só fora de produção; **sem lista de destinos internos** (o endereço é de uma organização; antes desta issue o webhook também nunca a consultou); 3xx não seguido; corpo da resposta derrubado sem ler. Mantém assinatura HMAC, cabeçalhos e retentativas. |
 | Download de extensões | `buscarSeguro` | Origem de catálogo: `julgarLiteralIpv6`; exceção HTTP só no loopback de ensaio. |
 | Banco externo | `lookupJulgado` no socket do `pg` + `validarHostDeBanco` | `politicaDoBanco`: a mesma régua **mais a LAN RFC 1918** (Postgres na rede do dono é caso real). |
 | `media_url` (o gateway é quem baixa) | `assertUrlDeMidiaSegura` → `validarUrl` + `resolverEJulgar` | Só **julga**; ver "O que continua de fora". |
@@ -66,7 +66,8 @@ destinos internos que o dono da **instalação** autoriza
 
 Cabia sem risco: `pg` aceita `stream` como função, e o socket que ele devolve conecta com
 `lookup` próprio. O nome segue sendo o do SNI e o da verificação do certificado (o `pg` o usa
-quando o host não é IP), então **TLS não muda**; o pool continua memoizado por
+quando o host não é IP — lido em `pg/lib/connection.js`, `upgradeToSSL`, e não provado por teste de
+conexão TLS real), então **TLS não deve mudar**; o pool continua memoizado por
 `id + versão + host…` e **cada socket novo julga na hora de conectar** — o que também cobre a
 conexão reaberta horas depois, que a checagem antiga nunca viu. A diferença que resta é **de
 perfil, não de mecanismo**: o banco enxerga a LAN privada e o webhook não. Prova:

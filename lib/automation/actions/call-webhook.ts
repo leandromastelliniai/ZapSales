@@ -399,7 +399,7 @@ export async function executeCallWebhook(
     } catch (err) {
       // Recusa da política é definitiva: tentar de novo o mesmo endereço custa
       // 6 s de espera para ouvir a mesma resposta.
-      if (err instanceof ErroDeRedeSegura && err.codigo.startsWith("unsafe_url:")) {
+      if (err instanceof ErroDeRedeSegura && err.ehRecusa) {
         return { type: "call_webhook", status: "failed", error: err.codigo };
       }
       lastError = err instanceof Error ? err.message : String(err);

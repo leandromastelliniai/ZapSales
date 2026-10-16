@@ -125,7 +125,7 @@ export async function downloadArtifact(
     } catch (error) {
       if (error instanceof ErroDeRedeSegura) {
         if (error.codigo === "net:response_too_large") throw new ExtensionError("extension_payload_too_large");
-        if (error.codigo.startsWith("unsafe_url:") && error.codigo !== "unsafe_url:dns_failed") unsafe(error);
+        if (error.ehRecusa && error.codigo !== "unsafe_url:dns_failed") unsafe(error);
         throw new ExtensionError("extension_download_failed", { cause: error });
       }
       throw error;
