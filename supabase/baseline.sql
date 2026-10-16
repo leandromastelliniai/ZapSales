@@ -45588,7 +45588,7 @@ create trigger trg_messages_midia_citada
   when (new.media_storage_path is not null)
   execute function public.fn_midia_citada_sai_da_fila();
 
--- ---- resposta em áudio: a chave de voz e a opção por agente (migration 0546) ----
+-- ---- resposta em áudio: a chave de voz e a opção por agente (migration 0547) ----
 -- Tabela server-side only (RLS sem policies, grants só ao service_role, chave cifrada),
 -- três colunas em ai_agent_versions e a trava de imutabilidade cobrindo-as. Fica ANTES
 -- da VARREDURA anon porque redefine uma função (create or replace); não cria função nova.
@@ -45653,6 +45653,73 @@ comment on column public.ai_agent_versions.audio_reply_model_id is
 -- `tests/unit/trigger-imutavel-cobre-todas-as-colunas-de-conteudo.test.ts`
 -- compara a ÚLTIMA definição que vale contra o conjunto de conteúdo.
 
+-- ---- perfil guiado do agente e temperatura funcional (migration 0546) ----
+-- Colunas da versão (NULL = sem perfil / padrão do modelo) + a trava de
+-- imutabilidade cobrindo-as. Fica ANTES da varredura de anon porque redefine uma
+-- função. Idempotente: add column if not exists e drop constraint if exists
+-- antes de cada add constraint.
+alter table public.ai_agent_versions
+  add column if not exists profile_persona   text,
+  add column if not exists profile_tone      text,
+  add column if not exists profile_objective text,
+  add column if not exists profile_welcome   text,
+  add column if not exists profile_language  text,
+  add column if not exists temperature       numeric(3,2);
+
+-- Vocabulário FECHADO em text + CHECK (não enum): tom em três níveis e os três
+-- idiomas do produto. Os mesmos valores vivem em lib/ai/agents/perfil.ts
+-- (TONS_DO_AGENTE, IDIOMAS_DO_AGENTE), e o invariante
+-- tests/invariants/vocabulario-banco-x-typescript.test.ts cobra as duas listas.
+-- Cada `add constraint` vem logo depois do seu `drop ... if exists`: é o que torna
+-- a migration reaplicável (o update.sh de quem já aplicou a 0546 roda o apêndice
+-- do baseline de novo).
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_profile_tone_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_profile_tone_check
+  check (profile_tone is null or profile_tone = any (array['formal','normal','descontraido']));
+
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_profile_language_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_profile_language_check
+  check (profile_language is null or profile_language = any (array['pt-BR','es','en']));
+
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_profile_persona_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_profile_persona_check
+  check (profile_persona is null or char_length(profile_persona) <= 600);
+
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_profile_objective_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_profile_objective_check
+  check (profile_objective is null or char_length(profile_objective) <= 600);
+
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_profile_welcome_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_profile_welcome_check
+  check (profile_welcome is null or char_length(profile_welcome) <= 500);
+
+-- 0..1: a faixa que TODOS os provedores aceitam (a Anthropic recusa/trunca acima de 1).
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_temperature_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_temperature_check
+  check (temperature is null or (temperature >= 0 and temperature <= 1));
+
+comment on column public.ai_agent_versions.profile_persona is
+  'Perfil guiado (migration 0546): quem o agente é. NULL = sem perfil — o agente recebe só o prompt livre, exatamente como antes.';
+comment on column public.ai_agent_versions.profile_tone is
+  'Perfil guiado: tom de voz em três níveis fechados (formal, normal, descontraido). NULL = não definido.';
+comment on column public.ai_agent_versions.profile_objective is
+  'Perfil guiado: o que o agente persegue na conversa, em uma ou duas frases.';
+comment on column public.ai_agent_versions.profile_welcome is
+  'Perfil guiado: mensagem de boas-vindas para contato novo.';
+comment on column public.ai_agent_versions.profile_language is
+  'Perfil guiado: idioma em que o agente responde (pt-BR, es, en). NULL = não definido.';
+comment on column public.ai_agent_versions.temperature is
+  'Temperatura enviada ao modelo nas respostas deste agente (0 a 1). NULL = padrão do modelo (ou a da organização, se ela configurou uma). É o ÚNICO lugar do valor: o campo ai_agents.config.temperature era decorativo e saiu.';
+
+-- A trava de imutabilidade da versão publicada cobre as seis colunas novas
+-- (o invariante tests/unit/trigger-imutavel-cobre-todas-as-colunas-de-conteudo.test.ts
+-- reprova coluna de conteúdo que ficar de fora).
 create or replace function fn_ai_agent_version_content_immutable() returns trigger
 -- search_path fixo na PRÓPRIA definição: um create or replace sem a cláusula
 -- apaga o alter function ... set search_path da 0521 (invariante
@@ -45690,6 +45757,12 @@ begin
     or new.audio_reply_enabled    is distinct from old.audio_reply_enabled
     or new.audio_reply_voice_id   is distinct from old.audio_reply_voice_id
     or new.audio_reply_model_id   is distinct from old.audio_reply_model_id
+    or new.profile_persona        is distinct from old.profile_persona
+    or new.profile_tone           is distinct from old.profile_tone
+    or new.profile_objective      is distinct from old.profile_objective
+    or new.profile_welcome        is distinct from old.profile_welcome
+    or new.profile_language       is distinct from old.profile_language
+    or new.temperature            is distinct from old.temperature
     or new.version_number         is distinct from old.version_number
     or new.agent_id               is distinct from old.agent_id
     or new.organization_id        is distinct from old.organization_id

@@ -1821,6 +1821,12 @@ export type Database = {
           audio_reply_enabled: boolean
           audio_reply_model_id: string | null
           audio_reply_voice_id: string | null
+          profile_persona: string | null
+          profile_tone: string | null
+          profile_objective: string | null
+          profile_welcome: string | null
+          profile_language: string | null
+          temperature: number | null
           knowledge_source_ids: string[]
           max_steps: number
           model: string
@@ -1863,6 +1869,12 @@ export type Database = {
           audio_reply_enabled?: boolean
           audio_reply_model_id?: string | null
           audio_reply_voice_id?: string | null
+          profile_persona?: string | null
+          profile_tone?: string | null
+          profile_objective?: string | null
+          profile_welcome?: string | null
+          profile_language?: string | null
+          temperature?: number | null
           knowledge_source_ids?: string[]
           max_steps?: number
           model: string
@@ -1905,6 +1917,12 @@ export type Database = {
           audio_reply_enabled?: boolean
           audio_reply_model_id?: string | null
           audio_reply_voice_id?: string | null
+          profile_persona?: string | null
+          profile_tone?: string | null
+          profile_objective?: string | null
+          profile_welcome?: string | null
+          profile_language?: string | null
+          temperature?: number | null
           knowledge_source_ids?: string[]
           max_steps?: number
           model?: string

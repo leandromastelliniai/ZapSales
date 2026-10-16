@@ -135,6 +135,8 @@ fonte só (`lib/onboarding/passos.ts`) — eram três listas que discordavam. Ga
 | J3.13 | A escolha sobrevive ao salvar e recarregar | o servidor aceita a lista (o mesmo teto da tela, `TETO_TOOLS_POR_AGENTE`, fonte única) e o estado volta igual · **PASS** |
 | J3.14 | Ver se o que está ligado está funcionando (aba Capacidades) | usos, falhas, quantos vieram de teste, última vez — e o que fazer com cada número · **PASS** (números escritos pelo emissor real de audit) |
 | J3.15 | O teto recusa a passagem, explicando em português | **PASS** — exercitável desde que o catálogo cresceu (57 capacidades). `capacidades-do-agente.spec.ts` liga "Atender" sobre as 8 do seed e prova a recusa por 1 vaga. A afirmação "não exercitável hoje, com 16 capacidades no catálogo" VENCEU |
+| J3.16 | Criar o agente pelo formulário guiado (persona, tom, objetivo, boas-vindas, idioma), sem escrever prompt (#89) | o formulário vem antes das instruções; agente novo nasce com tom "normal" e o idioma da tela; "Ver como o agente recebe isto" mostra o texto composto · **PASS no componente real** (`tests/unit/perfil-guiado-no-editor.test.tsx` + capturas em `docs/testing/evidencias/89-perfil-guiado/`, página de teste sem login). **Falta**: o caminho criar → salvar → publicar → conversar numa instalação fresca estilo VPS |
+| J3.17 | Agente que existia antes não muda até ser editado; temperatura em branco usa o padrão do modelo (#89) | sem perfil o agente recebe o prompt byte a byte; a temperatura da versão chega ao modelo e vence a da organização · **PASS** (`tests/invariants/perfil-guiado-do-agente-no-turno.test.ts`, versão publicada → turno com modelo falso) |
 
 ## Chaves de acesso à IA `[P0]`
 
@@ -3599,7 +3601,7 @@ Contexto: parte da #86. O agente já entendia o áudio do cliente e nunca respon
 desligado por padrão**, a organização liga o recurso em Agente de IA › Provedores › «Resposta em áudio» (provedor
 compatível com a API de fala da OpenAI, ou ElevenLabs, com a chave de voz da própria empresa) e cada agente decide
 se responde em nota de voz. Tabela `voice_provider_credentials` e colunas `ai_agent_versions.audio_reply_*`
-(migration 0546); regra em `lib/ai/resposta-em-audio/`; mapa em `docs/architecture/resposta-em-audio.architecture.json`.
+(migration 0547); regra em `lib/ai/resposta-em-audio/`; mapa em `docs/architecture/resposta-em-audio.architecture.json`.
 
 Spec: `tests/e2e/resposta-em-audio-pela-tela.spec.ts` (**escrita, não executada** — veja «Não coberto»).
 
@@ -3616,7 +3618,7 @@ Spec: `tests/e2e/resposta-em-audio-pela-tela.spec.ts` (**escrita, não executada
 | J51.9 | Editor do agente em número por QR code | aviso de risco de banimento (lido da capacidade `banRisk` do canal, nunca do nome do provedor) | **PASS (componente)** — `RespostaEmAudioDoAgente.test.tsx` |
 | J51.10 | A tabela não é servida pelo PostgREST; duas organizações com a chave do mesmo provedor não colidem; apagar a organização leva a chave | privilégio NENHUM a `anon`/`authenticated`, `permission denied`, RLS sem policy, unique `(org, provedor)`, cascade | **PASS (invariante, PGlite)** — `tests/invariants/credencial-de-voz-e-server-side.test.ts` |
 | J51.11 | Mudar a voz de uma versão JÁ publicada | recusado (`imutável`); rascunho novo publica normalmente; versão sem menção a áudio nasce DESLIGADA | **PASS (invariante, PGlite)** — `tests/invariants/trava-da-versao-publicada-cobre-resposta-em-audio.test.ts` |
-| J51.12 | Baseline: instalação do zero e reaplicação (atualização) | a 0546 aplica nas duas passadas | **PASS (PGlite, install + update)** |
+| J51.12 | Baseline: instalação do zero e reaplicação (atualização) | a 0547 aplica nas duas passadas | **PASS (PGlite, install + update)** |
 
 **Não coberto ainda:** (a) a prova pela tela em ambiente fresco estilo VPS, sem as chaves opcionais (exige Supabase
 local; esta sessão rodou sem Docker); (b) um áudio real: nenhuma chave de voz nem `ffmpeg` nesta máquina — a

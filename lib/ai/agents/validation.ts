@@ -11,6 +11,11 @@ import { z } from "zod";
 import { VALID_TOOL_IDS } from "@/lib/mcp/tools/catalog";
 import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
 import { IDS_DE_PROVEDOR } from "@/lib/ai/pontos/provedores";
+import {
+  IDIOMAS_DO_AGENTE,
+  LIMITES_DO_PERFIL,
+  TONS_DO_AGENTE,
+} from "@/lib/ai/agents/perfil";
 
 /**
  * Derivado de `lib/ai/pontos/provedores.ts` (a lista única desde a 0127). Como
@@ -102,6 +107,17 @@ const followupPatchSchema = followupConfigObjectSchema
   .partial();
 
 export type FollowupConfig = z.infer<typeof followupConfigSchema>;
+
+/** Campo de texto do perfil: apara, e vazio vira `null`. */
+function perfilTexto(max: number) {
+  return z
+    .string()
+    .trim()
+    .max(max)
+    .nullable()
+    .transform((v) => (v === null || v === "" ? null : v))
+    .default(null);
+}
 
 const versionShapeSchema = z
   .object({
@@ -236,6 +252,21 @@ const versionShapeSchema = z
      * organização é o servidor.
      */
     knowledge_source_ids: z.array(z.string().uuid()).default([]),
+    // ── Perfil guiado (#89) ──────────────────────────────────────────────────
+    // `null` = campo não preenchido; perfil todo nulo = agente sem perfil, que
+    // recebe só o prompt livre, exatamente como antes. Texto vazio vira `null`
+    // (formulário em branco não pode "preencher" o perfil). Tom e idioma são
+    // vocabulário fechado, o mesmo do CHECK do banco.
+    profile_persona: perfilTexto(LIMITES_DO_PERFIL.persona),
+    profile_tone: z.enum(TONS_DO_AGENTE).nullable().default(null),
+    profile_objective: perfilTexto(LIMITES_DO_PERFIL.objetivo),
+    profile_welcome: perfilTexto(LIMITES_DO_PERFIL.boasVindas),
+    profile_language: z.enum(IDIOMAS_DO_AGENTE).nullable().default(null),
+    /**
+     * Temperatura do agente, de 0 a 1. `null` = padrão do modelo (a chamada sai
+     * sem temperatura, ou com a da organização). É o único lugar do valor.
+     */
+    temperature: z.number().min(0).max(1).nullable().default(null),
   })
   .strict();
 
@@ -267,6 +298,12 @@ export const versionPatchSchema = versionShapeSchema
     operator_tool_ids: versionShapeSchema.shape.operator_tool_ids.removeDefault(),
     pipeline_ids: versionShapeSchema.shape.pipeline_ids.removeDefault(),
     knowledge_source_ids: versionShapeSchema.shape.knowledge_source_ids.removeDefault(),
+    profile_persona: versionShapeSchema.shape.profile_persona.removeDefault(),
+    profile_tone: versionShapeSchema.shape.profile_tone.removeDefault(),
+    profile_objective: versionShapeSchema.shape.profile_objective.removeDefault(),
+    profile_welcome: versionShapeSchema.shape.profile_welcome.removeDefault(),
+    profile_language: versionShapeSchema.shape.profile_language.removeDefault(),
+    temperature: versionShapeSchema.shape.temperature.removeDefault(),
   })
   .partial();
 

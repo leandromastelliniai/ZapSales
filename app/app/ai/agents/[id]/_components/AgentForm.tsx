@@ -33,6 +33,13 @@ import {
 import { TokenCounter } from "@/lib/ui/TokenCounter";
 import { Info } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
+import { useIdioma } from "@/lib/i18n/IdiomaProvider";
+import type { Idioma } from "@/lib/i18n/idiomas";
+import {
+  IDIOMAS_DO_AGENTE,
+  LIMITES_DO_PERFIL,
+  perfilPreenchido,
+} from "@/lib/ai/agents/perfil";
 import Link from "next/link";
 
 import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
@@ -58,6 +65,11 @@ import { BasesDoAgente, type MaterialDoAcervo } from "./BasesDoAgente";
 import { FunisDoAgente, type CoberturaPorFunil } from "./FunisDoAgente";
 import { PublishConfirmDialog } from "./PublishConfirmDialog";
 import { ComandosDoCelular } from "./ComandosDoCelular";
+import {
+  PerfilGuiado,
+  perfilDoContrato,
+  type PerfilDoFormulario,
+} from "./PerfilGuiado";
 import {
   saveAgentDraftAction,
   publishAgentAction,
@@ -172,6 +184,18 @@ interface FormState {
   credential_id: string;
   channel_session_id: string;
   system_prompt: string;
+  /**
+   * Perfil guiado (#89). Tudo vazio = agente sem perfil: só o prompt livre.
+   * Chaves PLANAS e com o nome da coluna, de propósito: a cerca "todo campo do
+   * formulário viaja em algum payload" casa FormState com o envio pelo nome.
+   */
+  profile_persona: string;
+  profile_tone: PerfilDoFormulario["tom"];
+  profile_objective: string;
+  profile_welcome: string;
+  profile_language: PerfilDoFormulario["idioma"];
+  /** Temperatura (0 a 1). `null` = padrão do modelo. Campo avançado. */
+  temperature: number | null;
   tool_ids: string[];
   trigger_config: TriggerValue;
   max_steps: number;
@@ -256,8 +280,17 @@ export function buildState(args: {
    * continua sendo o último degrau, para instalação que ainda não escolheu nada.
    */
   provedorPadrao?: string;
+  /**
+   * O idioma da tela de quem está CRIANDO o agente: o perfil de um agente novo
+   * nasce com ele (e tom "normal"), para o dono só ajustar. Agente que já existe
+   * mostra o que a versão tem — vazio, se nunca teve perfil.
+   */
+  idiomaDaTela?: Idioma;
 }): FormState {
-  const { agent, version, t, provedorPadrao } = args;
+  const { agent, version, t, provedorPadrao, idiomaDaTela } = args;
+  const idiomaInicial = (IDIOMAS_DO_AGENTE as readonly string[]).includes(idiomaDaTela ?? "")
+    ? (idiomaDaTela as PerfilDoFormulario["idioma"])
+    : "";
   return {
     name: agent?.name ?? "",
     description: agent?.description ?? "",
@@ -274,6 +307,14 @@ export function buildState(args: {
     system_prompt:
       version?.system_prompt ??
       t("Você é um atendente. Responda de forma educada e clara, em pt-BR."),
+    // Agente novo nasce com tom "normal" e o idioma da tela; o que já existe
+    // mostra o que a versão tem (vazio, se nunca teve perfil).
+    profile_persona: version?.profile_persona ?? "",
+    profile_tone: version ? (version.profile_tone ?? "") : agent ? "" : "normal",
+    profile_objective: version?.profile_objective ?? "",
+    profile_welcome: version?.profile_welcome ?? "",
+    profile_language: version ? (version.profile_language ?? "") : agent ? "" : idiomaInicial,
+    temperature: version?.temperature ?? null,
     tool_ids: version?.tool_ids ?? [],
     trigger_config: (version?.trigger_config as unknown as TriggerValue) ?? DEFAULT_TRIGGER,
     max_steps: version?.max_steps ?? 10,
@@ -334,9 +375,28 @@ function toCadastroPayload(s: FormState) {
   };
 }
 
+/** As chaves planas do estado, no formato que o `PerfilGuiado` segura. */
+function perfilDoFormulario(s: FormState): PerfilDoFormulario {
+  return {
+    persona: s.profile_persona,
+    tom: s.profile_tone,
+    objetivo: s.profile_objective,
+    boasVindas: s.profile_welcome,
+    idioma: s.profile_language,
+  };
+}
+
 function toVersionPayload(s: FormState) {
+  const perfil = perfilDoContrato(perfilDoFormulario(s));
   return {
     system_prompt: s.system_prompt,
+    // "" na tela é "não preenchido", e no contrato é `null` (`perfilDoContrato`).
+    profile_persona: perfil.persona,
+    profile_tone: perfil.tom,
+    profile_objective: perfil.objetivo,
+    profile_welcome: perfil.boasVindas,
+    profile_language: perfil.idioma,
+    temperature: s.temperature,
     provider: s.provider,
     model: s.model,
     // O token é da TELA; o contrato da versão é `null` = chave da instalação.
@@ -375,6 +435,7 @@ function toVersionPayload(s: FormState) {
 
 export function AgentForm(props: Props) {
   const t = useT();
+  const idiomaDaTela = useIdioma();
   const funis = props.funis ?? [];
   const materiais = props.materiais ?? [];
   const router = useRouter();
@@ -389,8 +450,13 @@ export function AgentForm(props: Props) {
       const ref = props.base ?? props.draft ?? props.published;
       return buildState({ agent: props.agent, version: ref, t });
     }
-    return buildState({ version: null, t, provedorPadrao: props.provedorPadrao });
-  }, [isEdit, props, t]);
+    return buildState({
+      version: null,
+      t,
+      provedorPadrao: props.provedorPadrao,
+      idiomaDaTela,
+    });
+  }, [isEdit, props, t, idiomaDaTela]);
 
   const [form, setForm] = React.useState<FormState>(baseline);
   const [saving, setSaving] = React.useState(false);
@@ -402,6 +468,15 @@ export function AgentForm(props: Props) {
    * que salvou um e não o outro.
    */
   const [papel, setPapel] = React.useState<"conversa" | "operacao" | "seguranca">("conversa");
+  /**
+   * O modo avançado (instruções livres + temperatura). Abre sozinho para quem NÃO
+   * tem perfil — o agente que já existia vive nas instruções livres, e escondê-las
+   * seria sumir com o que ele faz —, e fecha para quem tem, porque aí o formulário
+   * guiado é a porta. Erro dentro dele força abrir (ver `avancadoVisivel`).
+   */
+  const [avancadoAberto, setAvancadoAberto] = React.useState(
+    () => !perfilPreenchido(perfilDoContrato(perfilDoFormulario(baseline))),
+  );
 
   /**
    * A pergunta é "salvar mudaria alguma coisa?", e não "os dois objetos são
@@ -457,6 +532,18 @@ export function AgentForm(props: Props) {
       errors.system_prompt =
         `${t("As instruções têm")} ${tamanhoDoPrompt.toLocaleString("pt-BR")} ${t("caracteres, e o máximo é 20.000. Corte")} ` +
         `${(tamanhoDoPrompt - 20000).toLocaleString("pt-BR")} ${t("para conseguir salvar.")}`;
+    // Perfil guiado: a mesma régua de tamanho do servidor (`perfilTexto`, que apara
+    // antes de medir). Mensagem na tela, e não o "Too big" cru do Zod.
+    for (const [campo, chave, limite] of [
+      ["persona", "profile_persona", LIMITES_DO_PERFIL.persona],
+      ["objetivo", "profile_objective", LIMITES_DO_PERFIL.objetivo],
+      ["boasVindas", "profile_welcome", LIMITES_DO_PERFIL.boasVindas],
+    ] as const) {
+      if (perfilDoFormulario(form)[campo].trim().length > limite)
+        errors[chave] = `${t("Pode ter até")} ${limite} ${t("caracteres.")}`;
+    }
+    if (form.temperature !== null && (form.temperature < 0 || form.temperature > 1))
+      errors.temperature = t("A temperatura vai de 0 a 1.");
     if (!form.model) errors.model = t("Escolha o modelo de inteligência artificial.");
     if (!form.credential_id)
       errors.credential_id = t("Escolha a chave de acesso da empresa de inteligência artificial.");
@@ -495,6 +582,9 @@ export function AgentForm(props: Props) {
   }, [form, t]);
 
   const isValid = Object.keys(validation).length === 0;
+  // Erro dentro do modo avançado nunca fica escondido atrás do <details> fechado.
+  const avancadoVisivel =
+    avancadoAberto || !!validation.system_prompt || !!validation.temperature;
 
   /**
    * A dica do botão "Publicar" — uma frase, vinda de UM motivo.
@@ -1117,8 +1207,46 @@ export function AgentForm(props: Props) {
 
         {/* COLUMN 2 */}
         <div className="space-y-4">
-          {/* Prompt */}
-          <Card className="space-y-2 p-4">
+          {/* Perfil guiado (#89) — a porta de entrada; o prompt livre é o modo avançado. */}
+          <PerfilGuiado
+            value={perfilDoFormulario(form)}
+            onChange={(parte) =>
+              patch({
+                ...(parte.persona !== undefined ? { profile_persona: parte.persona } : {}),
+                ...(parte.tom !== undefined ? { profile_tone: parte.tom } : {}),
+                ...(parte.objetivo !== undefined ? { profile_objective: parte.objetivo } : {}),
+                ...(parte.boasVindas !== undefined ? { profile_welcome: parte.boasVindas } : {}),
+                ...(parte.idioma !== undefined ? { profile_language: parte.idioma } : {}),
+              })
+            }
+            instrucoesLivres={form.system_prompt}
+            disabled={disabled}
+            erros={{
+              persona: validation.profile_persona,
+              objetivo: validation.profile_objective,
+              boasVindas: validation.profile_welcome,
+            }}
+          />
+
+          {/* Modo avançado: instruções livres + temperatura */}
+          <Card className="p-4">
+          <details
+            open={avancadoVisivel}
+            onToggle={(e) => {
+              const aberto = (e.currentTarget as HTMLDetailsElement).open;
+              if (aberto !== avancadoAberto) setAvancadoAberto(aberto);
+            }}
+            data-testid="modo-avancado"
+            className="space-y-2"
+          >
+            <summary className="cursor-pointer text-sm font-medium">
+              {t("Avançado: instruções livres e temperatura")}
+            </summary>
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "As instruções livres continuam valendo por inteiro: o perfil acima entra antes delas, e nada do que você escrever aqui é trocado.",
+              )}
+            </p>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium">{t("As instruções dele")}</h3>
               <div className="flex items-center gap-2">
@@ -1168,6 +1296,34 @@ export function AgentForm(props: Props) {
             {validation.system_prompt ? (
               <p className="text-xs text-destructive">{validation.system_prompt}</p>
             ) : null}
+
+            <div className="space-y-1 pt-2">
+              <Label htmlFor="temperature">{t("Temperatura (0 a 1)")}</Label>
+              <Input
+                id="temperature"
+                type="number"
+                min={0}
+                max={1}
+                step={0.1}
+                placeholder={t("Vazio = padrão do modelo")}
+                value={form.temperature === null ? "" : String(form.temperature)}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  patch({ temperature: raw === "" ? null : Number(raw) });
+                }}
+                disabled={disabled}
+                aria-invalid={!!validation.temperature}
+              />
+              {validation.temperature ? (
+                <p className="text-xs text-destructive">{validation.temperature}</p>
+              ) : null}
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  "Perto de 0, as respostas ficam mais previsíveis; perto de 1, mais variadas. Se você não entende o parâmetro, deixe em branco.",
+                )}
+              </p>
+            </div>
+          </details>
           </Card>
 
           {/* Estilo de resposta (split de mensagens — Onda 4) */}

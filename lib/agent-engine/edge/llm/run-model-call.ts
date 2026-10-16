@@ -249,6 +249,14 @@ export interface RunModelCallInput {
   pararQuando?: () => boolean;
   /** Teto por chamada auxiliar; nunca aumenta o limite configurado pela organização. */
   maxOutputTokens?: number;
+  /**
+   * Temperatura PRÓPRIA do agente (`ai_agent_versions.temperature`, 0 a 1). Vence a
+   * da organização (`settings.llm.params.temperature`); `null`/ausente herda a da
+   * organização e, sem ela, o padrão do modelo — a chamada sai como sempre saiu.
+   * Só as chamadas que falam COM o cliente em nome do agente a passam; o
+   * classificador e a compactação seguem com a da organização.
+   */
+  temperature?: number | null;
   /** Cancelamento propagado pelo chamador; a falha continua registrada em llm_calls. */
   abortSignal?: AbortSignal;
   /**
@@ -640,7 +648,8 @@ export async function runModelCall(db: pg.Pool, cfg: LlmEdgeConfig, input: RunMo
   if (!parsedParams.success) {
     throw new Error('params inválidos em organizations.settings.llm.params — corrija a config da org');
   }
-  const { temperature, topP, topK, maxOutputTokens } = parsedParams.data;
+  const { temperature: temperaturaDaOrg, topP, topK, maxOutputTokens } = parsedParams.data;
+  const temperature = input.temperature ?? temperaturaDaOrg;
 
   // ═══ A CHAVE DA INSTALAÇÃO NÃO VAI PARA O ENDEREÇO DA EMPRESA ═══
   //

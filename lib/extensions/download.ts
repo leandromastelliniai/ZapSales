@@ -1,10 +1,6 @@
-import { lookup } from "node:dns/promises";
-import * as http from "node:http";
-import * as https from "node:https";
-import type { LookupAddress, LookupOptions } from "node:dns";
-import type { LookupFunction } from "node:net";
-
 import ipaddr from "ipaddr.js";
+
+import { buscarSeguro, ErroDeRedeSegura, ipEhEspecial, type PoliticaDeDestino } from "@/lib/net/rede-segura";
 
 import { ExtensionError, isExtensionError } from "./errors";
 import { EXTENSION_LIMITS, type CatalogEntry } from "./manifest";
@@ -86,155 +82,19 @@ export function assertCatalogOrigin(origin: string, policy: DownloadPolicy): voi
 }
 
 function isPublicAddress(address: string) {
-  try {
-    return ipaddr.process(address).range() === "unicast";
-  } catch {
-    return false;
-  }
+  return !ipEhEspecial(address);
 }
 
-function waitWithSignal<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
-  if (signal.aborted) return Promise.reject(signal.reason);
-  return new Promise<T>((resolve, reject) => {
-    const aborted = () => reject(signal.reason);
-    signal.addEventListener("abort", aborted, { once: true });
-    promise.then(
-      (value) => {
-        signal.removeEventListener("abort", aborted);
-        resolve(value);
-      },
-      (error) => {
-        signal.removeEventListener("abort", aborted);
-        reject(error);
-      },
-    );
-  });
-}
-
-async function resolvePublicAddresses(hostname: string, signal: AbortSignal) {
-  const literal = hostnameWithoutBrackets(hostname);
-  const addresses: LookupAddress[] = ipaddr.isValid(literal)
-    ? [{ address: literal, family: ipaddr.process(literal).kind() === "ipv4" ? 4 : 6 }]
-    : await waitWithSignal(lookup(literal, { all: true, verbatim: true }), signal);
-
-  if (addresses.length === 0 || addresses.some(({ address }) => !isPublicAddress(address))) {
-    unsafe();
-  }
-  return addresses;
-}
-
-/** O socket recebe somente os endereços já classificados; não há segunda resolução DNS. */
-function pinnedLookup(expectedHostname: string, addresses: LookupAddress[]): LookupFunction {
-  return (hostname, options: LookupOptions, callback) => {
-    if (hostname !== expectedHostname) {
-      callback(Object.assign(new Error("Hostname inesperado."), { code: "EHOSTUNREACH" }), "", 0);
-      return;
-    }
-    if (options.all) {
-      callback(null, addresses);
-      return;
-    }
-    const first = addresses[0];
-    if (!first) {
-      callback(
-        Object.assign(new Error("Sem endereço resolvido."), { code: "EHOSTUNREACH" }),
-        "",
-        0,
-      );
-      return;
-    }
-    callback(null, first.address, first.family);
-  };
-}
-
-async function readResponse(response: http.IncomingMessage, entry: CatalogEntry) {
-  if (response.statusCode !== 200) {
-    response.destroy();
-    throw new ExtensionError("extension_download_failed", {
-      cause: { code: "http_status", status: response.statusCode },
-    });
-  }
-
-  const encoding = response.headers["content-encoding"];
-  if (encoding !== undefined && encoding.trim().toLowerCase() !== "identity") {
-    response.destroy();
-    throw new ExtensionError("extension_download_failed", {
-      cause: { code: "content_encoding" },
-    });
-  }
-
-  const contentLengthHeader = response.headers["content-length"];
-  if (contentLengthHeader !== undefined) {
-    const contentLength = Number(contentLengthHeader);
-    if (!Number.isSafeInteger(contentLength) || contentLength < 0) {
-      response.destroy();
-      throw new ExtensionError("extension_download_failed", {
-        cause: { code: "content_length" },
-      });
-    }
-    if (contentLength > EXTENSION_LIMITS.packageBytes) {
-      response.destroy();
-      throw new ExtensionError("extension_payload_too_large");
-    }
-    if (contentLength > entry.byte_length) {
-      response.destroy();
-      throw new ExtensionError("extension_invalid_package");
-    }
-  }
-
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for await (const chunk of response) {
-    const bytes =
-      typeof chunk === "string" ? new TextEncoder().encode(chunk) : new Uint8Array(chunk);
-    total += bytes.byteLength;
-    if (total > EXTENSION_LIMITS.packageBytes) {
-      response.destroy();
-      throw new ExtensionError("extension_payload_too_large");
-    }
-    if (total > entry.byte_length) {
-      response.destroy();
-      throw new ExtensionError("extension_invalid_package");
-    }
-    chunks.push(bytes);
-  }
-
-  const body = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return body;
-}
-
-function requestBytes(
-  url: URL,
-  entry: CatalogEntry,
-  signal: AbortSignal,
-  lookupFunction?: LookupFunction,
-) {
-  const transport = url.protocol === "https:" ? https : http;
-  return new Promise<Uint8Array>((resolve, reject) => {
-    const request = transport.request(
-      url,
-      {
-        method: "GET",
-        headers: { accept: "application/json", "accept-encoding": "identity" },
-        agent: false,
-        signal,
-        lookup: lookupFunction,
-        ...(url.protocol === "https:" && !ipaddr.isValid(hostnameWithoutBrackets(url.hostname))
-          ? { servername: hostnameWithoutBrackets(url.hostname) }
-          : {}),
-      },
-      (response) => {
-        readResponse(response, entry).then(resolve, reject);
-      },
-    );
-    request.once("error", reject);
-    request.end();
-  });
+/**
+ * O download é a rede segura única (`lib/net/rede-segura`, issue #88) com a
+ * política deste catálogo: HTTPS, sem redirect, sem cookie nem credencial, DNS
+ * preso à conexão, prazo total. A única exceção é a origem local de ensaio,
+ * que só vale em loopback com o app também em loopback.
+ */
+function politicaDoCatalogo(isLocal: boolean): PoliticaDeDestino {
+  return isLocal
+    ? { permitirHttp: true, ipPermitido: (ip) => ip === "127.0.0.1" }
+    : { julgarLiteralIpv6: true };
 }
 
 export async function downloadArtifact(
@@ -242,12 +102,6 @@ export async function downloadArtifact(
   entry: CatalogEntry,
   policy: DownloadPolicy,
 ): Promise<Uint8Array> {
-  const controller = new AbortController();
-  const timeout = setTimeout(
-    () => controller.abort(new Error("Prazo total do download excedido.")),
-    DOWNLOAD_TIMEOUT_MS,
-  );
-
   try {
     if (
       !/^[a-f0-9]{64}$/.test(entry.sha256) ||
@@ -258,19 +112,40 @@ export async function downloadArtifact(
       throw new ExtensionError("extension_invalid_package");
     }
     const { url: originUrl, isLocal } = validateCatalogOrigin(origin, policy);
+    const url = new URL(`/packages/${entry.sha256}.json`, originUrl);
 
-    let lookupFunction: LookupFunction | undefined;
-    if (!isLocal) {
-      const addresses = await resolvePublicAddresses(originUrl.hostname, controller.signal);
-      lookupFunction = pinnedLookup(hostnameWithoutBrackets(originUrl.hostname), addresses);
+    let response;
+    try {
+      response = await buscarSeguro(url.toString(), {
+        ...politicaDoCatalogo(isLocal),
+        headers: { accept: "application/json" },
+        timeoutMs: DOWNLOAD_TIMEOUT_MS,
+        maxBytes: EXTENSION_LIMITS.packageBytes,
+      });
+    } catch (error) {
+      if (error instanceof ErroDeRedeSegura) {
+        if (error.codigo === "net:response_too_large") throw new ExtensionError("extension_payload_too_large");
+        if (error.ehRecusa && error.codigo !== "unsafe_url:dns_failed") unsafe(error);
+        throw new ExtensionError("extension_download_failed", { cause: error });
+      }
+      throw error;
     }
 
-    const url = new URL(`/packages/${entry.sha256}.json`, originUrl);
-    return await requestBytes(url, entry, controller.signal, lookupFunction);
+    if (response.status !== 200) {
+      throw new ExtensionError("extension_download_failed", {
+        cause: { code: "http_status", status: response.status },
+      });
+    }
+    const encoding = response.headers["content-encoding"];
+    if (encoding !== undefined && encoding.trim().toLowerCase() !== "identity") {
+      throw new ExtensionError("extension_download_failed", { cause: { code: "content_encoding" } });
+    }
+    if (response.corpo.byteLength > entry.byte_length) {
+      throw new ExtensionError("extension_invalid_package");
+    }
+    return new Uint8Array(response.corpo);
   } catch (error) {
     if (isExtensionError(error)) throw error;
     throw new ExtensionError("extension_download_failed", { cause: error });
-  } finally {
-    clearTimeout(timeout);
   }
 }

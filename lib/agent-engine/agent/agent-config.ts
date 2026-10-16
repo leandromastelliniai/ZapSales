@@ -15,6 +15,13 @@
  */
 import type pg from 'pg';
 
+import {
+  comporInstrucoes,
+  type IdiomaDoAgente,
+  type PerfilDoAgente,
+  type TomDoAgente,
+} from '@/lib/ai/agents/perfil';
+
 import { lerJanelaDeAtendimento, type JanelaDeAtendimento } from './janela-de-atendimento';
 
 export interface PublishedAgentConfig {
@@ -24,7 +31,19 @@ export interface PublishedAgentConfig {
   agentId: string;
   versionId: string;
   agentName: string;
+  /**
+   * O que o agente RECEBE como instrução: o perfil guiado da versão composto com o
+   * prompt livre (`comporInstrucoes`). Sem perfil, é o prompt exato de sempre.
+   * Composto aqui, uma vez, para todo chamador do turno (WhatsApp, prévia,
+   * rascunho assistido) ler o mesmo texto.
+   */
   systemPrompt: string;
+  /**
+   * Temperatura da versão. `null` = padrão do modelo (ou a da organização, quando
+   * ela configurou uma). É o único lugar do valor: `ai_agents.config.temperature`
+   * era decorativo e saiu.
+   */
+  temperature: number | null;
   provider: string;
   model: string;
   credentialId: string | null;
@@ -116,6 +135,13 @@ interface Row {
   version_id: string;
   agent_name: string;
   system_prompt: string;
+  profile_persona: string | null;
+  profile_tone: string | null;
+  profile_objective: string | null;
+  profile_welcome: string | null;
+  profile_language: string | null;
+  /** `numeric` chega do driver como texto; o SELECT já converte (`::float8`). */
+  temperature: number | null;
   provider: string;
   model: string;
   credential_id: string | null;
@@ -151,6 +177,12 @@ const SELECT_AGENT_CONFIG_COLUMNS = `a.operation_mode,a.paused_at,a.operation_re
             v.id as version_id,
             a.name as agent_name,
             v.system_prompt,
+            v.profile_persona,
+            v.profile_tone,
+            v.profile_objective,
+            v.profile_welcome,
+            v.profile_language,
+            v.temperature::float8 as temperature,
             v.provider,
             v.model,
             v.credential_id,
@@ -202,6 +234,16 @@ function mapAgentConfigRow(r: Row): PublishedAgentConfig {
         // O banco moveu o default; estes tres sitios de codigo ficaram para tras e venciam o banco, porque quem corta pelo limiar e o TypeScript.
         0.4;
 
+  // `?? null` cobre o clone que ainda não aplicou a 0546: coluna ausente vem
+  // undefined, e a direção segura é "sem perfil" — o prompt de sempre.
+  const perfil: PerfilDoAgente = {
+    persona: r.profile_persona ?? null,
+    tom: (r.profile_tone ?? null) as TomDoAgente | null,
+    objetivo: r.profile_objective ?? null,
+    boasVindas: r.profile_welcome ?? null,
+    idioma: (r.profile_language ?? null) as IdiomaDoAgente | null,
+  };
+
   return {
     operationMode: r.operation_mode,
     pausedAt: r.paused_at,
@@ -209,7 +251,8 @@ function mapAgentConfigRow(r: Row): PublishedAgentConfig {
     agentId: r.agent_id,
     versionId: r.version_id,
     agentName: r.agent_name,
-    systemPrompt: r.system_prompt,
+    systemPrompt: comporInstrucoes(r.system_prompt, perfil),
+    temperature: r.temperature ?? null,
     provider: r.provider,
     model: r.model,
     credentialId: r.credential_id,
@@ -246,7 +289,7 @@ function mapAgentConfigRow(r: Row): PublishedAgentConfig {
     // Leitura DEFENSIVA e que falha ABERTA: jsonb livre com shape estranho vira
     // `null` (sem janela ⇒ atende sempre), nunca uma mordaça acidental.
     janelaDeAtendimento: lerJanelaDeAtendimento(r.trigger_config),
-    // `?? false`/`?? null`: o clone que ainda não aplicou a 0546 vem sem a coluna,
+    // `?? false`/`?? null`: o clone que ainda não aplicou a 0547 vem sem a coluna,
     // e a direção segura é o áudio DESLIGADO — o agente segue em texto.
     audioReply: {
       enabled: r.audio_reply_enabled ?? false,

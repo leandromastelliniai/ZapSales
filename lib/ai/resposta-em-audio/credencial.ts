@@ -1,5 +1,5 @@
 /**
- * A chave de VOZ da organização (migration 0546, `voice_provider_credentials`).
+ * A chave de VOZ da organização (migration 0547, `voice_provider_credentials`).
  *
  * Opcional: sem chave, o agente responde em texto exatamente como antes. Mesma
  * cifra das outras integrações (`fn_encrypt_oauth`), e a tabela é server-side

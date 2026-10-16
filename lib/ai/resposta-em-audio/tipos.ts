@@ -15,7 +15,7 @@
 
 /**
  * Os provedores de voz desta entrega. O mesmo vocabulário do CHECK de
- * `voice_provider_credentials.provider` (migration 0546) — cobrado por
+ * `voice_provider_credentials.provider` (migration 0547) — cobrado por
  * `tests/invariants/vocabulario-banco-x-typescript.test.ts`.
  */
 export const PROVEDORES_DE_VOZ = ["openai_compativel", "elevenlabs"] as const;

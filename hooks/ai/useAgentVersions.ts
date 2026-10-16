@@ -37,6 +37,14 @@ export interface AgentVersionRow {
   audio_reply_enabled: boolean;
   audio_reply_voice_id: string | null;
   audio_reply_model_id: string | null;
+  /** Perfil guiado (0546). Todos nulos = agente sem perfil (só o prompt livre). */
+  profile_persona: string | null;
+  profile_tone: "formal" | "normal" | "descontraido" | null;
+  profile_objective: string | null;
+  profile_welcome: string | null;
+  profile_language: "pt-BR" | "es" | "en" | null;
+  /** 0 a 1; `null` = padrão do modelo. */
+  temperature: number | null;
   followup: {
     enabled: boolean;
     flow_pointer_ids: string[];

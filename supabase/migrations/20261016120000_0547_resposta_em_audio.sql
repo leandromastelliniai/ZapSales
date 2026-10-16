@@ -1,5 +1,5 @@
 -- manifest: **Resposta em áudio (issue #91, parte da #86).** Tabela `voice_provider_credentials` (a chave de voz da organização, cifrada, server-side only como a 0504) e três colunas em `ai_agent_versions` — `audio_reply_enabled` (desligada por padrão), `audio_reply_voice_id` e `audio_reply_model_id` — cobertas pela trava de imutabilidade da versão publicada. O interruptor da organização mora em `organizations.settings.resposta_em_audio` (Zod, sem migration). Opcional: sem chave e sem agente ligado, nada muda.
--- 0546 — Resposta em ÁUDIO: a chave de voz da organização e a opção por agente.
+-- 0547 — Resposta em ÁUDIO: a chave de voz da organização e a opção por agente.
 --
 -- O agente já ENTENDE o áudio do cliente (transcrição) e nunca respondia em
 -- áudio. Esta migration dá o chão de dados do recurso, que nasce DESLIGADO:
@@ -80,7 +80,7 @@ comment on column public.ai_agent_versions.audio_reply_model_id is
   'O modelo de voz do agente (ex.: o modelo multilíngue da ElevenLabs). Nulo = o modelo padrão da organização.';
 
 -- ─── A trava de imutabilidade passa a cobrir as colunas novas ───────────────
--- Corpo idêntico ao da 0503, mais as três colunas de áudio. O invariante
+-- Corpo idêntico ao da 0546 (perfil guiado), mais as três colunas de áudio. O invariante
 -- `tests/unit/trigger-imutavel-cobre-todas-as-colunas-de-conteudo.test.ts`
 -- compara a ÚLTIMA definição que vale contra o conjunto de conteúdo.
 
@@ -121,6 +121,12 @@ begin
     or new.audio_reply_enabled    is distinct from old.audio_reply_enabled
     or new.audio_reply_voice_id   is distinct from old.audio_reply_voice_id
     or new.audio_reply_model_id   is distinct from old.audio_reply_model_id
+    or new.profile_persona        is distinct from old.profile_persona
+    or new.profile_tone           is distinct from old.profile_tone
+    or new.profile_objective      is distinct from old.profile_objective
+    or new.profile_welcome        is distinct from old.profile_welcome
+    or new.profile_language       is distinct from old.profile_language
+    or new.temperature            is distinct from old.temperature
     or new.version_number         is distinct from old.version_number
     or new.agent_id               is distinct from old.agent_id
     or new.organization_id        is distinct from old.organization_id

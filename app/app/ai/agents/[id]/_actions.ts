@@ -38,7 +38,7 @@ import { VALID_TOOL_IDS } from "@/lib/mcp/tools";
 const UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const VERSION_COLUMNS =
-  "id, organization_id, agent_id, version_number, system_prompt, provider, model, credential_id, tool_ids, trigger_config, channel_session_id, max_steps, token_budget, cost_budget_cents, history_message_window, history_token_window, handoff_keywords, handoff_tool_enabled, proposal_ai_draft_enabled, cases_enabled, split_messages, split_max_chars, followup, operator_enabled, operator_model, operator_tool_ids, status, published_at, superseded_at, created_at, created_by,pipeline_ids,knowledge_source_ids,provisioning_origin,inbound_debounce_ms,audio_reply_enabled,audio_reply_voice_id,audio_reply_model_id";
+  "id, organization_id, agent_id, version_number, system_prompt, provider, model, credential_id, tool_ids, trigger_config, channel_session_id, max_steps, token_budget, cost_budget_cents, history_message_window, history_token_window, handoff_keywords, handoff_tool_enabled, proposal_ai_draft_enabled, cases_enabled, split_messages, split_max_chars, followup, operator_enabled, operator_model, operator_tool_ids, status, published_at, superseded_at, created_at, created_by,pipeline_ids,knowledge_source_ids,provisioning_origin,inbound_debounce_ms,profile_persona,profile_tone,profile_objective,profile_welcome,profile_language,temperature,audio_reply_enabled,audio_reply_voice_id,audio_reply_model_id";
 
 type ActionResult<T = void> =
   | { ok: true; data?: T }
@@ -324,6 +324,12 @@ export async function saveAgentDraftAction(
         audio_reply_enabled: v.audio_reply_enabled,
         audio_reply_voice_id: v.audio_reply_voice_id ?? null,
         audio_reply_model_id: v.audio_reply_model_id ?? null,
+        profile_persona: v.profile_persona ?? null,
+        profile_tone: v.profile_tone ?? null,
+        profile_objective: v.profile_objective ?? null,
+        profile_welcome: v.profile_welcome ?? null,
+        profile_language: v.profile_language ?? null,
+        temperature: v.temperature ?? null,
         followup: v.followup,
         status: "draft",
         created_by: authUser.id,
@@ -545,6 +551,12 @@ export async function revertToVersionAction(
     audio_reply_enabled: boolean;
     audio_reply_voice_id: string | null;
     audio_reply_model_id: string | null;
+    profile_persona: string | null;
+    profile_tone: string | null;
+    profile_objective: string | null;
+    profile_welcome: string | null;
+    profile_language: string | null;
+    temperature: number | null;
     followup: unknown;
   };
   const src = source as unknown as SourceRow;
@@ -601,6 +613,12 @@ export async function revertToVersionAction(
         audio_reply_enabled: src.audio_reply_enabled ?? false,
         audio_reply_voice_id: src.audio_reply_voice_id ?? null,
         audio_reply_model_id: src.audio_reply_model_id ?? null,
+        profile_persona: src.profile_persona ?? null,
+        profile_tone: src.profile_tone ?? null,
+        profile_objective: src.profile_objective ?? null,
+        profile_welcome: src.profile_welcome ?? null,
+        profile_language: src.profile_language ?? null,
+        temperature: src.temperature ?? null,
         followup: src.followup,
         status: "draft",
         created_by: authUser.id,
@@ -759,6 +777,12 @@ export async function createMcpAgentAction(
     audio_reply_enabled: v.audio_reply_enabled,
     audio_reply_voice_id: v.audio_reply_voice_id ?? null,
     audio_reply_model_id: v.audio_reply_model_id ?? null,
+    profile_persona: v.profile_persona ?? null,
+    profile_tone: v.profile_tone ?? null,
+    profile_objective: v.profile_objective ?? null,
+    profile_welcome: v.profile_welcome ?? null,
+    profile_language: v.profile_language ?? null,
+    temperature: v.temperature ?? null,
     followup: v.followup,
     // O corpo ACEITAVA estes cinco e o INSERT os descartava: criar o assistente
     // pela tela com papel Operador, escopo de funil ou material marcado produzia

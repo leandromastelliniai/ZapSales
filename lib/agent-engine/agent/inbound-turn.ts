@@ -4422,6 +4422,7 @@ async function executarTurnoDoAgente(
                 provider: agentConfig.provider,
                 credentialId: agentConfig.credentialId,
               },
+              temperature: agentConfig.temperature,
             }
           : {}),
       },
@@ -4573,6 +4574,7 @@ async function executarTurnoDoAgente(
                     provider: agentConfig.provider,
                     credentialId: agentConfig.credentialId,
                   },
+                  temperature: agentConfig.temperature,
                 }
               : {}),
             system,

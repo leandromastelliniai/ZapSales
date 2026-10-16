@@ -8,7 +8,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { perfilDaOrganizacao } from "@/lib/legal/perfil-do-pais";
 import { computeDueAt } from "./sla";
-import type { LgpdRequest, LgpdRequestType, LgpdScope } from "./types";
+import type { LgpdRequest, LgpdRequestSource, LgpdRequestType, LgpdScope } from "./types";
 
 // ---------------------------------------------------------------------------
 // createLgpdRequest
@@ -17,7 +17,7 @@ import type { LgpdRequest, LgpdRequestType, LgpdScope } from "./types";
 export interface CreateLgpdRequestInput {
   organizationId: string;
   requestType: LgpdRequestType;
-  source: "admin_panel" | "api";
+  source: LgpdRequestSource;
   contactId?: string | null;
   externalCustomerId?: string | null;
   receivedAt: Date;

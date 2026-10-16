@@ -87,7 +87,7 @@ describe('loadPublishedAgentConfig — resposta em áudio (#91)', () => {
     expect(sql).toMatch(/v\.audio_reply_model_id/);
   });
 
-  it('DESLIGADA por padrão: linha sem a coluna (clone que ainda não aplicou a 0546) ou com null não liga nada', async () => {
+  it('DESLIGADA por padrão: linha sem a coluna (clone que ainda não aplicou a 0547) ou com null não liga nada', async () => {
     for (const extra of [{}, { audio_reply_enabled: null, audio_reply_voice_id: null, audio_reply_model_id: null }]) {
       const cfg = await loadPublishedAgentConfig(poolWith({ ...baseRow, ...extra }), 'org1', 'cs1');
       expect(cfg?.audioReply).toEqual({ enabled: false, voiceId: null, modelId: null });
