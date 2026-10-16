@@ -65,10 +65,21 @@ const AGORA = new Date("2026-07-30T15:00:00Z");
 const CHAVE_DE_VOZ = "chave-de-voz-do-cliente-0001";
 const RESPOSTA_BASE = "Claro, posso ajudar com a sua avaliação. Qual dia fica melhor para você?";
 /**
- * Texto ÚNICO por caso: os casos compartilham o mesmo número, e o gate de repetição
- * (`spinning`, mass_identical) veta corpo IGUAL entre turnos — sem isto, do segundo caso em
- * diante o veto, correto, esconderia o que cada um mede.
+ * Texto REALMENTE DIFERENTE por caso: os casos compartilham o mesmo número, e o gate de
+ * repetição (`spinning`, mass_identical) compara por similaridade de PALAVRAS (Jaccard ≥ 0,8)
+ * e veta a 3ª resposta parecida do número. Um sufixo "(caso N)" não basta — as palavras são as
+ * mesmas e o veto, correto, escondia o que cada caso mede (o 3º e o 6º saíam sem envio nenhum).
  */
+const RESPOSTAS_DISTINTAS = [
+  RESPOSTA_BASE,
+  "Perfeito, anotei o seu pedido e já separo um horário na terça de manhã.",
+  "Sinto muito pelo transtorno! Vou pedir para a equipe financeira rever esse valor hoje mesmo.",
+  "Obrigada por esperar. A clínica abre às oito e atende sem fila até meio-dia.",
+  "Sim, aceitamos cartão de crédito em até seis vezes, além de pix e dinheiro.",
+  "Combinado então: confirmo a consulta de retorno para a próxima semana, na unidade central.",
+  "Posso mandar o endereço completo e o mapa por aqui, se preferir chegar de carro.",
+  "Esse procedimento dura cerca de uma hora e não exige nenhum preparo especial antes.",
+];
 let RESPOSTA = RESPOSTA_BASE;
 let casos = 0;
 const MP3 = Buffer.from([0x49, 0x44, 0x33, 3, 0, 0, 0, 0, 0, 0x21, 0xff, 0xfb, 0x90, 0x00]);
@@ -374,7 +385,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   casos += 1;
-  RESPOSTA = `${RESPOSTA_BASE} (caso ${casos})`;
+  RESPOSTA = RESPOSTAS_DISTINTAS[(casos - 1) % RESPOSTAS_DISTINTAS.length]!;
   enviados = [];
   guardados = [];
   resultadosVistos = [];
