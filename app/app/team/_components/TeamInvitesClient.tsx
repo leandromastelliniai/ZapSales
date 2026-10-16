@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { useT } from "@/hooks/i18n/useT";
+import { rotuloDoPapel } from "@/lib/schemas/rotulo-do-papel";
 import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
 import { useTeamInvites, type TeamInvite } from "@/hooks/team/useTeamInvites";
 import { useResendInvite } from "@/hooks/team/useResendInvite";
@@ -112,7 +113,7 @@ export function TeamInvitesClient({ canManage }: Props) {
                   <TableRow key={inv.id}>
                     <TableCell className="font-medium">{inv.email}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{inv.role}</Badge>
+                      <Badge variant="secondary">{t(rotuloDoPapel(inv.role))}</Badge>
                     </TableCell>
                     <TableCell className="text-sm">
                       {inv.interface_settings?.destinos

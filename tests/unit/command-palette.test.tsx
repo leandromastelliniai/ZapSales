@@ -59,6 +59,13 @@ describe("CommandPalette", () => {
     expect(screen.getByRole("option", { name: /Radar/ })).toBeTruthy();
   });
 
+  it("acha o Disparo em massa por \"campanha\", o nome antigo da tela", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.type(screen.getByRole("combobox"), "campanha");
+    expect(screen.getByRole("option", { name: /Disparo em massa/ })).toBeTruthy();
+  });
+
   it("acha o Jev pelo nome, embora ele não tenha tela própria", async () => {
     const user = userEvent.setup();
     abrir();

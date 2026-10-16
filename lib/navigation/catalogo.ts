@@ -36,6 +36,13 @@ export interface NavMetadata {
   label: string;
   /** Aparece no card do hub e é texto buscável no ⌘K. Nunca vazio. */
   description: string;
+  /**
+   * Outros nomes pelos quais quem procura chama esta tela, buscáveis no ⌘K mas
+   * nunca mostrados. Existe porque o rótulo muda por decisão de produto e o
+   * hábito não acompanha: "Campanhas" virou "Disparo em massa" e quem digitava
+   * "campanha" deixou de achar a tela.
+   */
+  sinonimos?: readonly string[];
   icon: string;
   group: NavGroupId;
   /** Obrigatória em grupo com hub — é o agrupamento por jornada dentro dele. */
@@ -236,6 +243,7 @@ export const NAV_CATALOG = [
     label: "Disparo em massa",
     description:
       "Mande uma mensagem para muita gente de uma vez — suba uma planilha CSV ou escolha contatos que já estão aqui.",
+    sinonimos: ["campanha", "campanhas", "envio em massa", "broadcast"],
     icon: "Megaphone",
     group: "crm",
     section: "O dia a dia da venda",

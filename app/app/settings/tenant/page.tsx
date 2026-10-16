@@ -55,7 +55,7 @@ export default async function TenantSettingsPage() {
       <CabecalhoDePagina
         titulo={traduzir("Organização", idioma)}
         ajuda={<ComoFunciona chave="organizacao" pagina={traduzir("Organização", idioma)} />}
-        descricao={traduzir("Dados da empresa, retenção de mídia, DPO. Admin only.", idioma)}
+        descricao={traduzir("Dados da empresa, retenção de mídia, DPO. Só administradores.", idioma)}
       />
       {row && (
         <TenantForm
