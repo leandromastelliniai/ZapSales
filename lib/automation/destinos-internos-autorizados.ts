@@ -1,10 +1,6 @@
-import { lookup } from "node:dns/promises";
-import { isIPv4, isIPv6 } from "node:net";
-
-import { assertDestinoResolvidoSeguro, ipEhEspecial } from "@/lib/automation/outbound-ip";
-import { assertSafeOutboundUrl } from "@/lib/automation/outbound-url";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { ErroDeRedeSegura, resolverEJulgar, validarUrl, type PoliticaDeDestino } from "@/lib/net/rede-segura";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -277,15 +273,13 @@ export async function gravarDestinosInternos(
 /**
  * Por que este endereço não pode ser destino — ou `null` quando pode.
  *
- * Sem lista, ou com endereço escolhido por uma ORGANIZAÇÃO, é exatamente a
- * régua de antes: o guarda textual julga de graça o que dá para julgar sem
- * rede, e o de DNS paga a resolução para julgar o IP por trás do nome.
+ * É a política da rede segura única (`lib/net/rede-segura`) com UMA válvula: o
+ * IP especial que a lista da instalação cobre. Sem lista, ou com endereço
+ * escolhido por uma ORGANIZAÇÃO, é exatamente a régua de antes. Com a lista e
+ * endereço da INSTALAÇÃO, muda uma coisa só — o IP interno que a lista cobre
+ * deixa de ser recusa. Tudo o mais continua como estava:
  *
- * Com a lista e endereço da INSTALAÇÃO, muda uma coisa só: o IP interno que a
- * lista cobre deixa de ser recusa. Tudo o mais continua como estava:
- *
- *   - o guarda textual roda inteiro, e só a recusa `private_host` é dispensada
- *     — esquema, `https` em produção e literal IPv6 seguem recusando;
+ *   - esquema, `https` em produção e literal IPv6 seguem recusando;
  *   - TODO IP que o nome resolve é julgado. Interno e fora da lista é recusa,
  *     mesmo que outro IP do mesmo nome esteja dentro: meia autorização num
  *     destino é o jeito mais barato de furar uma autorização.
@@ -295,40 +289,17 @@ export async function motivoDaRecusaDeDestino(
   origem: OrigemDoDestino,
 ): Promise<string | null> {
   const faixas = origem === "instalacao" ? faixasDeclaradas(await destinosInternosAutorizados()) : [];
-
+  const politica: PoliticaDeDestino = {
+    permitirHttp: process.env.NODE_ENV !== "production",
+    ...(faixas.length > 0 ? { ipPermitido: (ip: string) => listaCobreIp(ip, faixas) } : {}),
+  };
   try {
-    assertSafeOutboundUrl(endereco);
+    await resolverEJulgar(validarUrl(endereco, politica).hostname, politica);
+    return null;
   } catch (erro) {
-    const codigo = erro instanceof Error ? erro.message : String(erro);
-    if (!(faixas.length > 0 && codigo === "unsafe_url:private_host")) return codigo;
+    if (erro instanceof ErroDeRedeSegura) return erro.codigo;
+    return erro instanceof Error ? erro.message : String(erro);
   }
-
-  const host = new URL(endereco).hostname;
-  if (faixas.length === 0) {
-    try {
-      await assertDestinoResolvidoSeguro(host);
-      return null;
-    } catch (erro) {
-      return erro instanceof Error ? erro.message : String(erro);
-    }
-  }
-
-  let ips: string[];
-  if (isIPv4(host) || isIPv6(host)) {
-    ips = [host];
-  } else {
-    try {
-      ips = (await lookup(host, { all: true })).map((r) => r.address);
-    } catch {
-      return "unsafe_url:dns_failed";
-    }
-    if (ips.length === 0) return "unsafe_url:dns_empty";
-  }
-
-  for (const ip of ips) {
-    if (ipEhEspecial(ip) && !listaCobreIp(ip, faixas)) return "unsafe_url:private_ip";
-  }
-  return null;
 }
 
 /**
@@ -339,9 +310,11 @@ export async function motivoDaRecusaDeDestino(
  * chave, para a rede interna. Julgar a cada chamada, e não só no cadastro, é o
  * que pega o nome que passou a resolver para IP interno depois de validado.
  *
- * ponytail: entre o lookup daqui e o connect do fetch sobra a janela de um
- * segundo lookup (rebinding com TTL zero). Fechá-la pede fixar o IP resolvido
- * no dispatcher do undici, e isso vale para todo o egress, não só para este.
+ * ponytail: aqui o JULGAMENTO é o da rede segura única, mas a CONEXÃO não é: o
+ * `fetch` do SDK resolve o nome de novo, e entre o lookup daqui e o connect
+ * sobra a janela de um segundo lookup (rebinding com TTL zero). Fechá-la pede
+ * trocar o transporte por `buscarSeguro` com corpo em fluxo (a resposta de um
+ * modelo é SSE) — a diferença está registrada em `docs/specs/rede-segura-unica.md`.
  */
 export function fetchParaDestinoDaOrganizacao(interno: typeof fetch = fetch): typeof fetch {
   return async (input, init) => {

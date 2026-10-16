@@ -15,10 +15,14 @@
  * O teto de pools é finito: sem ele, uma instalação com muitas conexões abertas
  * esgota sockets do processo.
  */
+import * as net from "node:net";
+
 import pg from "pg";
 
 import { logger } from "@/lib/logger";
+import { lookupJulgado } from "@/lib/net/rede-segura";
 
+import { politicaDoBanco } from "./guardas";
 import type { ConexaoExterna, ModoTls } from "./types";
 
 const MAX_POOLS = 32;
@@ -51,6 +55,29 @@ function sslPara(modo: ModoTls): pg.PoolConfig["ssl"] {
   }
 }
 
+/**
+ * O socket que o `pg` conecta, com o `lookup` da rede segura única (#88).
+ *
+ * Sem isto o `pg` resolvia o nome sozinho, DEPOIS de a guarda do cadastro/da
+ * abertura do pool já ter julgado — a janela de DNS-rebinding. Aqui a resolução
+ * que vale é a do próprio connect, julgada com `politicaDoBanco`, e o nome segue
+ * sendo o do SNI e o da verificação do certificado (nada é trocado por IP).
+ * O `pg` chama `stream.connect(porta, host)`; a forma por opções é a única que
+ * aceita `lookup`.
+ */
+function soqueteJulgado(): net.Socket {
+  const soquete = new net.Socket();
+  const conectarOriginal = soquete.connect.bind(soquete) as (...args: unknown[]) => net.Socket;
+  soquete.connect = ((...args: unknown[]) => {
+    const [porta, host] = args;
+    if (typeof porta === "number" && typeof host === "string") {
+      return conectarOriginal({ port: porta, host, lookup: lookupJulgado(politicaDoBanco) });
+    }
+    return conectarOriginal(...args);
+  }) as typeof soquete.connect;
+  return soquete;
+}
+
 function configDe(c: ConexaoExterna): pg.PoolConfig {
   return {
     host: c.host,
@@ -59,6 +86,7 @@ function configDe(c: ConexaoExterna): pg.PoolConfig {
     user: c.username,
     password: c.password,
     ssl: sslPara(c.sslMode),
+    stream: soqueteJulgado,
     max: MAX_CONEXOES_POR_POOL,
     connectionTimeoutMillis: CONNECTION_TIMEOUT_MS,
     idleTimeoutMillis: IDLE_TIMEOUT_MS,

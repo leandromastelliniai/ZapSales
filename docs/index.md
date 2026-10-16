@@ -82,6 +82,7 @@ Detalham schema SQL e payloads exatos. **Consulte antes de modelar qualquer cois
 | [`specs/18`](specs/18-spec-voice-calls-wacalls.md) | Chamada de voz WhatsApp (WaCalls) — rascunho, sem sub-PRD dedicado |
 | [`specs/19`](specs/19-spec-console-de-agencia.md) | **Console de Agência** — operar N organizações clientes; unidade de cobrança decidida (retainer por cliente operado). Lei em [`doctrine/operacao-de-agentes.md`](doctrine/operacao-de-agentes.md) |
 | [`specs/20`](specs/20-spec-banco-de-dados-externo.md) | Banco de dados externo — núcleo, API, tela e tools do agente |
+| [`specs/rede-segura-unica.md`](specs/rede-segura-unica.md) | **Rede segura única** — a política de toda saída do servidor para um endereço informado pelo usuário (HTTPS, DNS preso à conexão, redirect, limites); o que migrou e o que ficou de fora |
 | [`specs/extensoes-declarativas-v1.md`](specs/extensoes-declarativas-v1.md) | **Extensões declarativas v1** — pacote JSON estrito, catálogo admitido pelo dono da instalação, ativação por organização, guia no hub CRM |
 | [`specs/modulo-instalado-onda-2.md`](specs/modulo-instalado-onda-2.md) | Módulo instalado — onda 2 da ADR-0002 |
 | [`specs/pre-go-live-whatsapp.md`](specs/pre-go-live-whatsapp.md) | Modo de teste do WhatsApp por canal: lista de telefones, abertura ao público e compatibilidade com autorização por origem |
