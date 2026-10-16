@@ -128,6 +128,14 @@ if (jsdomDoArquivo) {
   }
 }
 
+// `URL.createObjectURL` do ambiente de teste não é confiável a partir do jsdom 30.1: o `File`
+// que passa por `fireEvent.change(input, { target: { files } })` chega ao componente num formato
+// que a função do Node recusa (`Cannot read properties of undefined (reading '_buffer')`), e
+// qualquer tela que mostre prévia de anexo quebra. Teste nenhum precisa de URL de blob real —
+// só do componente receber uma string. No navegador a função é nativa e nada disso se aplica.
+URL.createObjectURL = () => "blob:url-de-teste";
+URL.revokeObjectURL = () => {};
+
 // jsdom não implementa ResizeObserver; Radix (ex.: Switch) usa em layout effects.
 if (typeof globalThis.ResizeObserver === "undefined") {
   globalThis.ResizeObserver = class {
