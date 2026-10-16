@@ -193,6 +193,10 @@ Layout 2 colunas em desktop, stack em mobile.
 └───────────────────────────────────────┴──────────────────────────────────────┘
 ```
 
+### 3.2.0 Perfil guiado e modo avançado (issue #89)
+
+Na coluna das instruções, o formulário **"Como ele se apresenta"** (`PerfilGuiado.tsx`) vem antes do prompt: quem ele é, tom de voz (três cartões: formal, normal, descontraído), o que persegue, boas-vindas e idioma — tudo opcional. Um painel **"Ver como o agente recebe isto"** mostra o texto composto (a mesma `comporInstrucoes` do motor). As instruções livres e a **temperatura** (0 a 1; vazio = padrão do modelo) ficam no bloco **Avançado**, que abre sozinho para o agente sem perfil e fecha para quem tem. Agente novo nasce com tom "normal" e o idioma da tela. O diff de versões e o diálogo de publicar mostram o que mudou no perfil.
+
 ### 3.2.1 Follow-up e retornos do agente
 
 Na edição da versão, a seção **Follow-up** expõe controles independentes:

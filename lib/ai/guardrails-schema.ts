@@ -112,7 +112,11 @@ export const agentVoiceModelSchema = z.enum(AGENT_VOICE_MODEL_OPTIONS);
 export type AgentVoiceModel = z.infer<typeof agentVoiceModelSchema>;
 
 export const agentConfigSchema = z.object({
-  temperature: z.number().min(0).max(2).default(0.4),
+  // A TEMPERATURA saiu daqui (issue #89): este campo era decorativo — nenhum motor
+  // o lia — e agora existe um só lugar para o valor, `ai_agent_versions.temperature`
+  // (editado no formulário do agente, chega à chamada ao modelo). A chave que
+  // sobrou em jsonb de cliente é inerte; o Zod a descarta como desconhecida, o
+  // mesmo destino do limiar de confiança logo abaixo.
   max_tokens: z.number().int().min(64).max(4096).default(1024),
   context_message_window: z.number().int().min(1).max(50).default(20),
   rag_top_k: z.number().int().min(1).max(20).default(5),
@@ -146,7 +150,6 @@ export const agentConfigSchema = z.object({
 export type AgentConfig = z.infer<typeof agentConfigSchema>;
 
 export const AGENT_CONFIG_DEFAULTS: AgentConfig = {
-  temperature: 0.4,
   max_tokens: 1024,
   context_message_window: 20,
   rag_top_k: 5,
@@ -170,7 +173,6 @@ export const AGENT_CONFIG_DEFAULTS: AgentConfig = {
 const cfg = agentConfigSchema.shape;
 export const agentConfigPatchSchema = agentConfigSchema
   .extend({
-    temperature: cfg.temperature.removeDefault(),
     max_tokens: cfg.max_tokens.removeDefault(),
     context_message_window: cfg.context_message_window.removeDefault(),
     rag_top_k: cfg.rag_top_k.removeDefault(),

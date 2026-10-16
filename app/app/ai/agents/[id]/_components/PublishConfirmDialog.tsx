@@ -58,6 +58,19 @@ export function PublishConfirmDialog({
     draft.system_prompt.length - (published?.system_prompt.length ?? 0);
   const modelChanged = !published || draft.model !== published.model;
   const providerChanged = !published || draft.provider !== published.provider;
+  // Perfil guiado (#89): conta os campos que mudaram em relação à publicada. Numa
+  // primeira publicação, conta os preenchidos.
+  const camposDoPerfil = [
+    "profile_persona",
+    "profile_tone",
+    "profile_objective",
+    "profile_welcome",
+    "profile_language",
+  ] as const;
+  const perfilMudou = camposDoPerfil.filter(
+    (k) => (draft[k] ?? null) !== (published?.[k] ?? null),
+  ).length;
+  const temperaturaMudou = (draft.temperature ?? null) !== (published?.temperature ?? null);
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -103,6 +116,18 @@ export function PublishConfirmDialog({
           {toolsDiff.removed.length > 0 ? (
             <p>
               <strong>{t("Tools removidas:")}</strong> {toolsDiff.removed.join(", ")}
+            </p>
+          ) : null}
+          {perfilMudou > 0 ? (
+            <p data-testid="publicar-perfil">
+              <strong>{t("Perfil:")}</strong> {perfilMudou}{" "}
+              {perfilMudou === 1 ? t("campo alterado") : t("campos alterados")}
+            </p>
+          ) : null}
+          {temperaturaMudou ? (
+            <p>
+              <strong>{t("Temperatura:")}</strong>{" "}
+              {`${published?.temperature ?? t("padrão do modelo")} → ${draft.temperature ?? t("padrão do modelo")}`}
             </p>
           ) : null}
           <p>

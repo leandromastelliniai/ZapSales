@@ -29,6 +29,7 @@ const AGENT: PublishedAgentConfig = {
   versionId: "version-1",
   agentName: "Bot ZapSales",
   systemPrompt: "Você é a vendedora da loja X.",
+  temperature: null,
   provider: "anthropic",
   model: "claude-sonnet-4-6",
   credentialId: "cred-1",
