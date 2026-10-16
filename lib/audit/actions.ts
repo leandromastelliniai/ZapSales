@@ -210,6 +210,8 @@ export const AUDIT_ACTIONS = [
   "ai.pacing_knobs_updated",
   "ai.inbox_item_status_changed",
   "ai.flywheel_proposal_applied",
+  /** "Corrigir esta resposta": a correção virou proposta pendente (nada mudou no agente ainda). */
+  "ai.response_correction_proposed",
   "ai.org_memory_published",
   "ai.org_memory_entry_created",
   "ai.org_memory_entry_updated",

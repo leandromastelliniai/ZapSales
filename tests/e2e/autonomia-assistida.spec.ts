@@ -273,7 +273,7 @@ test("testa sem enviar, pausa preserva publicação e duas aprovações entregam
     const tested = page.waitForResponse(
       (r) => r.url().endsWith(`/versions/${f.version}/test`) && r.request().method() === "POST",
     );
-    await page.getByRole("button", { name: "Executar teste", exact: true }).click();
+    await page.getByRole("tabpanel").getByRole("button", { name: "Enviar", exact: true }).click();
     const response = await tested;
     expect(response.status(), await response.text()).toBe(200);
     const preview = (await response.json()).data;
@@ -286,7 +286,62 @@ test("testa sem enviar, pausa preserva publicação e duas aprovações entregam
     ).toBeVisible();
     expect(await count()).toEqual(before);
     expect(channel.bodies).toHaveLength(0);
+
+    // Issue #90: a aba Teste é uma conversa. A segunda troca leva o que já foi dito, e a
+    // correção de uma resposta vira PROPOSTA — nada muda no agente até alguém aplicar.
+    const versoes = async () =>
+      (
+        await pool.query("select count(*)::int n from ai_agent_versions where organization_id=$1", [
+          f.org,
+        ])
+      ).rows[0].n as number;
+    const versoesAntes = await versoes();
+    const segundaTroca = page.waitForResponse(
+      (r) => r.url().endsWith(`/versions/${f.version}/test`) && r.request().method() === "POST",
+    );
+    await page.getByLabel("Mensagem do cliente (sample)").fill("E qual o horário de atendimento?");
+    await page.getByRole("tabpanel").getByRole("button", { name: "Enviar", exact: true }).click();
+    const segunda = await segundaTroca;
+    expect(segunda.status(), await segunda.text()).toBe(200);
+    const corpoDaSegunda = JSON.parse(segunda.request().postData()!);
+    expect(corpoDaSegunda.sample_message).toBe("E qual o horário de atendimento?");
+    expect(corpoDaSegunda.history.map((h: { role: string }) => h.role)).toEqual([
+      "customer",
+      "agent",
+    ]);
+    expect(corpoDaSegunda.history[0].text).toBe("Quais informações vocês oferecem?");
+    await expect(page.getByTestId("teste-troca")).toHaveCount(2);
+    await expect(page.getByTestId("teste-tokens").first()).toBeVisible();
+    expect(await count()).toEqual(before);
+
+    await page.getByTestId("corrigir-resposta").first().click();
+    await page
+      .getByLabel("O que o agente deveria ter dito?")
+      .fill("Oferecemos atendimento das 9h às 18h, de segunda a sexta.");
+    const correcao = page.waitForResponse(
+      (r) => r.url().endsWith(`/agents/${f.agent}/corrections`) && r.request().method() === "POST",
+    );
+    await page.getByRole("button", { name: "Enviar como proposta", exact: true }).click();
+    expect((await correcao).status()).toBe(201);
+    await expect(page.getByTestId("correcao-enviada")).toBeVisible();
+    expect(
+      (
+        await pool.query(
+          "select type, agent_id, applied_at from flywheel_distiller_proposals where organization_id=$1",
+          [f.org],
+        )
+      ).rows,
+    ).toEqual([{ type: "response_correction", agent_id: f.agent, applied_at: null }]);
+    // propor não muda o agente: nenhuma versão nova, e o que foi testado segue sem envio
+    expect(await versoes()).toBe(versoesAntes);
+    expect(channel.bodies).toHaveLength(0);
+    // A evidência é a conversa de duas trocas com a correção enviada — antes de trocar de aba,
+    // que desmonta o painel.
     await capture(page, page.getByRole("tabpanel"), info, "sandbox-desktop");
+    await page.getByRole("tab", { name: "Propostas", exact: true }).click();
+    await expect(page.getByText("Correção de resposta", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("proposta-conversa-de-origem")).toBeVisible();
+    await page.getByRole("tab", { name: "Teste", exact: true }).click();
     await page.getByRole("button", { name: "Pausar automático", exact: true }).click();
     await expect(
       page.getByRole("button", { name: "Retomar automático", exact: true }),

@@ -3,7 +3,12 @@ import { contextoDaCampanhaDaConversa } from "@/lib/campanhas/contexto-do-agente
 import { setExecutionAgentOperation } from '@/lib/atendimento/fronteira-server';
 import { TIPOS_DE_CASO, TIPOS_DE_CASO_PARA_A_IA } from "@/lib/ai/case-copy";
 import { DEFAULT_CHANNEL_PROVIDER } from '@/lib/channels/capabilities';
-import { applyPreviewPolicy, previewGateContext, type TurnPreview } from './preview';
+import {
+  applyPreviewPolicy,
+  previewGateContext,
+  registrarChamadaDaPrevia,
+  type TurnPreview,
+} from './preview';
 import { claimOfJob } from '../queue/claim';
 import { currentExecutionBoundary, guardServiceEffect } from '@/lib/atendimento/fronteira-server';
 /**
@@ -4315,6 +4320,7 @@ async function executarTurnoDoAgente(
       },
       { registry: deps.registry, log: runLog },
     );
+    if (preview) registrarChamadaDaPrevia(preview.result, turn);
 
     // F4-04: correlação dos dois sinais do MESMO turno — jailbreak ALTO + tentativa de
     // promessa fora de tabela (F4-01). Ambos estão determinados aqui (o jailbreak rodou na

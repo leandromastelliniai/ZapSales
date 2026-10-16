@@ -19,10 +19,16 @@ import {
 } from "@/components/ui/sheet";
 import { useT } from "@/hooks/i18n/useT";
 
+import { useRespostaDaExecucao } from "@/hooks/ai/useCorrecaoDeResposta";
+
+import { CorrigirResposta } from "./CorrigirResposta";
 import { RunTrace } from "./RunTrace";
 import type { AgentRunRow } from "@/hooks/ai/useAgentRuns";
 
 interface Props {
+  agentId: string;
+  /** Quem só lê (viewer) não propõe correção. */
+  readOnly?: boolean;
   run: AgentRunRow | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,7 +54,55 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
   timeout: "destructive",
 };
 
-export function RunDetailDrawer({ run, open, onOpenChange }: Props) {
+/**
+ * A resposta real que o agente enviou nesta execução, com "Corrigir esta
+ * resposta" (issue #90). Só turno de atendimento tem resposta enviada: o teste da
+ * aba Teste se corrige lá, e execução sem mensagem (rascunho, bloqueio) diz isso.
+ */
+function RespostaDaExecucao({
+  agentId,
+  run,
+  readOnly,
+}: {
+  agentId: string;
+  run: AgentRunRow;
+  readOnly?: boolean;
+}) {
+  const t = useT();
+  const ehAtendimento = !run.is_dry_run && run.purpose === "agent_turn";
+  const { data, isLoading, isError } = useRespostaDaExecucao(agentId, run.id, ehAtendimento);
+  if (!ehAtendimento) return null;
+
+  const conversa = data?.conversa ?? [];
+  const resposta = conversa.at(-1);
+  return (
+    <div className="space-y-2" data-testid="execucao-resposta">
+      <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {t("Resposta enviada")}
+      </p>
+      {isLoading ? (
+        <p className="text-xs text-muted-foreground">{t("Carregando…")}</p>
+      ) : isError || !resposta ? (
+        <p className="text-xs text-muted-foreground" data-testid="execucao-sem-resposta">
+          {t("Esta execução não terminou numa mensagem enviada pelo agente, então não há resposta para corrigir.")}
+        </p>
+      ) : (
+        <>
+          <p className="rounded-md border border-border/60 bg-background p-2 text-sm whitespace-pre-wrap">
+            {resposta.text}
+          </p>
+          <CorrigirResposta
+            agentId={agentId}
+            origem={{ origem: "execucao", chamadaId: run.id }}
+            readOnly={readOnly}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+export function RunDetailDrawer({ agentId, readOnly, run, open, onOpenChange }: Props) {
   const t = useT();
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -114,6 +168,8 @@ export function RunDetailDrawer({ run, open, onOpenChange }: Props) {
                 </Button>
               ) : null}
             </div>
+
+            <RespostaDaExecucao agentId={agentId} run={run} readOnly={readOnly} />
 
             <div>
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">

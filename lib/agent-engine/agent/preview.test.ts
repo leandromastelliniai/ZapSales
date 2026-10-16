@@ -2,7 +2,14 @@ import { DEFAULT_CHANNEL_PROVIDER } from '@/lib/channels';
 import { describe, it, expect, vi } from 'vitest';
 import { tool } from '../edge/llm/run-model-call';
 import { z } from 'zod';
-import { applyPreviewPolicy, newPreviewResult, scenarioContext, type TurnPreview } from './preview';
+import {
+  applyPreviewPolicy,
+  ePrimeiroEnvioDoCenario,
+  newPreviewResult,
+  registrarChamadaDaPrevia,
+  scenarioContext,
+  type TurnPreview,
+} from './preview';
 import { evaluateBeforeSend, type GateContext } from '../guardrails/before-send';
 import { PACING_DEFAULTS } from '../pacing/defaults';
 import { SPINNING_DEFAULTS } from '../spinning/defaults';
@@ -143,4 +150,41 @@ it('uses only supplied in-memory sample contact in sandbox', () => {
   const context = scenarioContext([], { name: 'Maria Cenário', phone: '+5511999999999' });
   expect(context.context.contact.name).toBe('Maria Cenário');
   expect(context.context.contact.phone).toBe('+5511999999999');
+});
+
+describe('conversa de teste de várias trocas', () => {
+  const at = '2026-09-07T14:00:00Z';
+  it('a primeira resposta é a primeira; depois de uma resposta do agente, deixa de ser', () => {
+    expect(ePrimeiroEnvioDoCenario([{ direction: 'inbound', body: 'oi', sent_at: at }])).toBe(true);
+    expect(
+      ePrimeiroEnvioDoCenario([
+        { direction: 'inbound', body: 'oi', sent_at: at },
+        { direction: 'outbound', body: 'olá', sent_at: at },
+        { direction: 'inbound', body: 'preço?', sent_at: at },
+      ]),
+    ).toBe(false);
+  });
+  it('soma tokens e custo de cada chamada e lista as ferramentas na ordem em que foram chamadas', () => {
+    const r = newPreviewResult();
+    registrarChamadaDaPrevia(r, {
+      usage: { inputTokens: 100, outputTokens: 20 },
+      costCents: 0.5,
+      result: {
+        steps: [
+          { toolCalls: [{ toolName: 'search_knowledge', input: { query: 'horário' } }] },
+          { toolCalls: [{ toolName: 'send_message', input: { body: 'Às nove.' } }] },
+        ],
+      },
+    });
+    registrarChamadaDaPrevia(r, {
+      usage: { inputTokens: 10, outputTokens: 5 },
+      costCents: 0.25,
+      result: { steps: [{}] },
+    });
+    expect(r.usage).toEqual({ tokensIn: 110, tokensOut: 25, costCents: 0.75 });
+    expect(r.toolCalls).toEqual([
+      { tool: 'search_knowledge', arguments: { query: 'horário' } },
+      { tool: 'send_message', arguments: { body: 'Às nove.' } },
+    ]);
+  });
 });
