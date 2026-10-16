@@ -56,7 +56,21 @@ test("suporte mantém identidade, opera B e encerra sem misturar A; readonly/exp
  const pendingMutationDescriptions = () => [...pendingMutations].map(request=>({
   method:request.method(),path:new URL(request.url()).pathname,
  }));
+ // A batida de presença (`POST /api/v1/attendants/presence`) é do app, não do cenário: sai
+ // sozinha ~1,5 s depois de cada tela abrir e a cada 60 s. Este teste abre várias telas e
+ // contextos, então uma batida em voo na hora da limpeza era o que estourava o
+ // `expect.poll` de "Mutações enviadas" (medido nos traces das falhas: as pendentes eram
+ // sempre `POST /api/v1/attendants/presence`, 1 a 4 por execução) — e o teste não prova
+ // nada sobre presença; o emissor tem a spec própria `presenca-do-atendente.spec.ts`.
+ // Abortada ANTES do envio, ela não chega ao servidor, não disputa as linhas que a limpeza
+ // apaga e não conta como mutação em voo (mesmo caminho do bloqueio do `finally`).
+ const ignorarPresenca = (context: BrowserContext) => context.route("**/api/v1/attendants/presence", async route => {
+  const request = route.request();
+  blockedBeforeSend.add(request);pendingMutations.delete(request);
+  await route.abort("aborted");
+ });
  observeRequests(page.context());
+ await ignorarPresenca(page.context());
  const joins: Array<{role:string;topic:string}> = [];
  const observeAuth=(target:Page)=>target.on("websocket",socket=>socket.on("framesent",frame=>{
   try {const p=JSON.parse(frame.payload.toString());const m=Array.isArray(p)?{topic:p[2],event:p[3],payload:p[4]}:p;
@@ -115,7 +129,7 @@ test("suporte mantém identidade, opera B e encerra sem misturar A; readonly/exp
   await login(page,email);await acknowledgeKnownAction(page,"/login");
   const sameTab=await page.context().newPage();await sameTab.goto("/app/inbox");
   await expect(sameTab.getByTestId("tenant-switcher")).toContainText(`Suporte A ${suffix}`);
-  second=await browser.newContext();observeRequests(second);const other=await second.newPage();observeAuth(other);await login(other,email);await acknowledgeKnownAction(other,"/login");
+  second=await browser.newContext();observeRequests(second);await ignorarPresenca(second);const other=await second.newPage();observeAuth(other);await login(other,email);await acknowledgeKnownAction(other,"/login");
   await start(page,orgs[1]!);
   await expect(sameTab.getByTestId("tenant-switcher")).toContainText(`Suporte B ${suffix}`);
   await expect(sameTab.locator("[data-conversation-id]").getByText(`Contato B ${suffix}`,{exact:true})).toBeVisible();
