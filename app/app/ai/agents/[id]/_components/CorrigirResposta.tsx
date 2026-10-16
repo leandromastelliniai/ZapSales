@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useEnviarCorrecao, type OrigemDaCorrecao } from "@/hooks/ai/useCorrecaoDeResposta";
 import { useT } from "@/hooks/i18n/useT";
-import { CORRECAO_MAX } from "@/lib/ai/agents/correcao-de-resposta";
+import { CORRECAO_MAX } from "@/lib/ai/agents/evidencia-de-correcao";
 import { ApiError } from "@/lib/api/types";
 import { randomId } from "@/lib/random-id";
 

@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAgentProposals, useApplyProposal, type ProposalRow } from "@/hooks/ai/useAgentProposals";
 import { useT } from "@/hooks/i18n/useT";
 import { ApiError } from "@/lib/api/types";
-import { lerEvidenciaDeCorrecao } from "@/lib/ai/agents/correcao-de-resposta";
+import { lerEvidenciaDeCorrecao } from "@/lib/ai/agents/evidencia-de-correcao";
 import { Brain } from "@/lib/ui/icons";
 
 const TYPE_LABEL: Record<ProposalRow["type"], string> = {

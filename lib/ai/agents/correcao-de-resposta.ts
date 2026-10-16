@@ -29,13 +29,20 @@ import { z } from "zod";
 
 import { anonymize } from "@/lib/ai/anonymize";
 import {
-  MENSAGEM_DO_TESTE_MAX,
-  historicoDoTesteSchema,
-  turnoDoTesteSchema,
-  type TurnoDoTeste,
-} from "@/lib/ai/agents/teste-em-varias-trocas";
+  CORRECAO_MAX,
+  type EvidenciaDeCorrecao,
+} from "@/lib/ai/agents/evidencia-de-correcao";
+import { historicoDoTesteSchema, type TurnoDoTeste } from "@/lib/ai/agents/teste-em-varias-trocas";
 
-export const CORRECAO_MAX = 1500;
+// A tela importa estes de `evidencia-de-correcao` (sem o anonimizador); reexportados
+// aqui para quem monta a correção no servidor ter um ponto de entrada só.
+export {
+  CORRECAO_MAX,
+  evidenciaDeCorrecaoSchema,
+  lerEvidenciaDeCorrecao,
+  type EvidenciaDeCorrecao,
+} from "@/lib/ai/agents/evidencia-de-correcao";
+
 const CITACAO_MAX = 240;
 /** Quantas falas da conversa de origem a proposta carrega: o suficiente para dar contexto. */
 const FALAS_NA_EVIDENCIA = 12;
@@ -58,27 +65,6 @@ export const correcaoSchema = z.discriminatedUnion("origem", [
     })
     .strict(),
 ]);
-
-/**
- * O que `flywheel_distiller_proposals.evidence` guarda numa correção. É lido
- * SÓ por este schema — a tela não lê caminho de jsonb à mão.
- */
-export const evidenciaDeCorrecaoSchema = z.object({
-  origem: z.enum(["teste", "execucao"]),
-  conversa: z.array(turnoDoTesteSchema),
-  texto_original: z.string().max(MENSAGEM_DO_TESTE_MAX),
-  texto_corrigido: z.string().max(CORRECAO_MAX),
-  /** Mesma chave de `crm_lead_activities.evidence`: aponta para `llm_calls`. */
-  llm_call_ids: z.array(z.string().uuid()).optional(),
-});
-
-export type EvidenciaDeCorrecao = z.infer<typeof evidenciaDeCorrecaoSchema>;
-
-/** Lê a evidência de uma proposta; `null` quando não é de correção (ou está malformada). */
-export function lerEvidenciaDeCorrecao(evidence: unknown): EvidenciaDeCorrecao | null {
-  const r = evidenciaDeCorrecaoSchema.safeParse(evidence);
-  return r.success ? r.data : null;
-}
 
 export type CorrecaoMontada =
   | { ok: true; content: string; evidence: EvidenciaDeCorrecao }
