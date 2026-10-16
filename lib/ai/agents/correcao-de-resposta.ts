@@ -88,7 +88,7 @@ function mascarar(texto: string): string {
   return anonymize(texto).anonymized;
 }
 
-/** Uma linha só, sem aspas de nenhum tipo, com teto — o formato do que vira linha de prompt. */
+/** Uma linha só, sem aspas duplas (retas ou curvas — viram simples), com teto: o formato do que vira linha de prompt. */
 function emUmaLinha(texto: string, max: number): string {
   const limpo = texto
     .replace(/["“”]/g, "'")

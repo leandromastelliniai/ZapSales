@@ -59,7 +59,7 @@ export async function applyProposal(
   // errado. Nulo é proposta da organização (as do flywheel) e vale em qualquer
   // agente, como sempre valeu. A resposta é a de "não existe": para quem chama
   // por este agente, ela não existe.
-  if (proposal.agent_id !== null && proposal.agent_id !== undefined && proposal.agent_id !== agentId) {
+  if (proposal.agent_id != null && proposal.agent_id !== agentId) {
     return { ok: false, code: "proposal_not_found", message: "Proposta não encontrada." };
   }
   if (proposal.applied_at !== null) {
