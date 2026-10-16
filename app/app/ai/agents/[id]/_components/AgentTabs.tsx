@@ -99,7 +99,7 @@ export function AgentTabs(props: Props) {
       </TabsContent>
 
       <TabsContent value="runs" className="m-0">
-        <RunsTable agentId={props.agent.id} active={tab === "runs"} />
+        <RunsTable agentId={props.agent.id} active={tab === "runs"} readOnly={props.readOnly} />
       </TabsContent>
 
       <TabsContent value="proposals" className="m-0">

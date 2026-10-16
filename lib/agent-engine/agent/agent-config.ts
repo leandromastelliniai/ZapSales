@@ -289,7 +289,7 @@ function mapAgentConfigRow(r: Row): PublishedAgentConfig {
     // Leitura DEFENSIVA e que falha ABERTA: jsonb livre com shape estranho vira
     // `null` (sem janela ⇒ atende sempre), nunca uma mordaça acidental.
     janelaDeAtendimento: lerJanelaDeAtendimento(r.trigger_config),
-    // `?? false`/`?? null`: o clone que ainda não aplicou a 0547 vem sem a coluna,
+    // `?? false`/`?? null`: o clone que ainda não aplicou a 0548 vem sem a coluna,
     // e a direção segura é o áudio DESLIGADO — o agente segue em texto.
     audioReply: {
       enabled: r.audio_reply_enabled ?? false,

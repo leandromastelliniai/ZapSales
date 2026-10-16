@@ -210,6 +210,8 @@ export const AUDIT_ACTIONS = [
   "ai.pacing_knobs_updated",
   "ai.inbox_item_status_changed",
   "ai.flywheel_proposal_applied",
+  /** "Corrigir esta resposta": a correção virou proposta pendente (nada mudou no agente ainda). */
+  "ai.response_correction_proposed",
   "ai.org_memory_published",
   "ai.org_memory_entry_created",
   "ai.org_memory_entry_updated",
@@ -1012,7 +1014,7 @@ export const AUDIT_ACTIONS = [
   // trocada, e removida. O metadata diz O QUE mudou — nunca a chave.
   "ai.maps_credential_saved",
   "ai.maps_credential_removed",
-  // A resposta em áudio (#91, 0547, Agente de IA › Provedores): a configuração da
+  // A resposta em áudio (#91, 0548, Agente de IA › Provedores): a configuração da
   // organização mudou (ligada, provedor, limite…), e a chave de voz foi gravada ou
   // removida. O metadata diz O QUE mudou — nunca a chave.
   "ai.audio_reply_config_changed",

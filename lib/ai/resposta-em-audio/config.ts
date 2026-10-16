@@ -17,7 +17,7 @@
  *
  * Aqui: ligado, provedor, endereço/modelo/voz padrão da organização, o limite
  * de tamanho do texto e o preço declarado. A CHAVE não mora aqui — mora cifrada
- * em `voice_provider_credentials` (migration 0547) e nunca volta ao browser.
+ * em `voice_provider_credentials` (migration 0548) e nunca volta ao browser.
  * Por agente (ligar e escolher a voz): `ai_agent_versions.audio_reply_*`.
  */
 import { z } from "zod";

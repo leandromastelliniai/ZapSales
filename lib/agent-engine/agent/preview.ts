@@ -56,6 +56,43 @@ export interface PreviewResult {
   proposals: Array<{ tool: string; arguments: unknown }>;
   impediments: Array<{ code: string; message: string }>;
   restrictions: string[];
+  /** O que a chamada principal ao modelo gastou neste turno (soma, se houve mais de uma). */
+  usage?: PreviewUsage;
+  /** Toda ferramenta que o modelo chamou, na ordem — leituras e propostas de escrita. */
+  toolCalls?: Array<{ tool: string; arguments: unknown }>;
+}
+export interface PreviewUsage {
+  tokensIn: number;
+  tokensOut: number;
+  costCents: number;
+}
+/**
+ * Soma ao resultado da prévia o que uma chamada ao modelo gastou e as
+ * ferramentas que ela chamou. A tela de teste mostra os dois por resposta; sem
+ * isto a rota devolvia zero em tudo e a pessoa não via o custo do que testava.
+ *
+ * Só a chamada principal entra aqui: o classificador de etapa e a compactação
+ * gravam o próprio custo em `llm_calls` (e contam no orçamento), mas não
+ * passam por este ponto.
+ */
+export function registrarChamadaDaPrevia(
+  result: PreviewResult,
+  call: {
+    usage: { inputTokens: number; outputTokens: number };
+    costCents: number | null;
+    result: { steps?: ReadonlyArray<{ toolCalls?: ReadonlyArray<{ toolName: string; input?: unknown }> }> };
+  },
+): void {
+  const antes = result.usage ?? { tokensIn: 0, tokensOut: 0, costCents: 0 };
+  result.usage = {
+    tokensIn: antes.tokensIn + call.usage.inputTokens,
+    tokensOut: antes.tokensOut + call.usage.outputTokens,
+    costCents: antes.costCents + (call.costCents ?? 0),
+  };
+  const chamadas = (call.result.steps ?? []).flatMap((s) =>
+    (s.toolCalls ?? []).map((c) => ({ tool: c.toolName, arguments: c.input })),
+  );
+  result.toolCalls = [...(result.toolCalls ?? []), ...chamadas];
 }
 export function newPreviewResult(): PreviewResult {
   return {
@@ -68,6 +105,17 @@ export function newPreviewResult(): PreviewResult {
       'send_revalidates_live_state',
     ],
   };
+}
+
+/**
+ * Num cenário (sem contato) não há contagem de envios no banco: o que diz se
+ * esta é a primeira resposta é a própria conversa simulada. Numa conversa de
+ * teste de várias trocas, a segunda resposta NÃO é "primeira" — tratá-la assim
+ * reinjetaria o aviso de primeiro contato (LGPD) a cada troca, e quem testa
+ * veria um agente que não existe em produção.
+ */
+export function ePrimeiroEnvioDoCenario(messages: LeadContext['messages']): boolean {
+  return !messages.some((m) => m.direction === 'outbound');
 }
 
 export async function previewGateContext(
@@ -85,7 +133,9 @@ export async function previewGateContext(
   const spinning = channel ? await loadSpinningKnobs(db, org, channel, log) : SPINNING_DEFAULTS;
   const promise = await loadPromiseTable(db, org),
     disclosure = await loadDisclosureTemplate(db, org);
-  const first = p.contactId ? (await countPriorAcceptedSends(db, org, p.contactId)) === 0 : true;
+  const first = p.contactId
+    ? (await countPriorAcceptedSends(db, org, p.contactId)) === 0
+    : ePrimeiroEnvioDoCenario(p.context.context.messages);
   let lastInbound: Date | null = null;
   if (p.contactId && channel) {
     const { rows } = await db.query<{ last_inbound_at: Date | null }>(

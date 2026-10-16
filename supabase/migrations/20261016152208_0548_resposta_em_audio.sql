@@ -1,5 +1,5 @@
 -- manifest: **Resposta em áudio (issue #91, parte da #86).** Tabela `voice_provider_credentials` (a chave de voz da organização, cifrada, server-side only como a 0504) e três colunas em `ai_agent_versions` — `audio_reply_enabled` (desligada por padrão), `audio_reply_voice_id` e `audio_reply_model_id` — cobertas pela trava de imutabilidade da versão publicada. O interruptor da organização mora em `organizations.settings.resposta_em_audio` (Zod, sem migration). Opcional: sem chave e sem agente ligado, nada muda.
--- 0547 — Resposta em ÁUDIO: a chave de voz da organização e a opção por agente.
+-- 0548 — Resposta em ÁUDIO: a chave de voz da organização e a opção por agente.
 --
 -- O agente já ENTENDE o áudio do cliente (transcrição) e nunca respondia em
 -- áudio. Esta migration dá o chão de dados do recurso, que nasce DESLIGADO:

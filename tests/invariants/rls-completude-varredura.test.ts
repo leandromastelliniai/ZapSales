@@ -259,7 +259,7 @@ const PROVA_PROPRIA: readonly Excecao[] = [
       "linha de `map_provider_credentials`: privilégio NENHUM para anon e " +
       "authenticated, `permission denied` sob `set role`, RLS ligada, zero policies, " +
       "`organization_id` NOT NULL com FK em cascata, e o isolamento entre duas " +
-      "organizações medido. Guarda a chave do provedor de voz da organização (0547, " +
+      "organizações medido. Guarda a chave do provedor de voz da organização (0548, " +
       "resposta em áudio), que só o servidor lê.",
   },
   {

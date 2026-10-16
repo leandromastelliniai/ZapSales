@@ -69,7 +69,7 @@ const PARES: Array<{
   {
     tabela: "voice_provider_credentials",
     coluna: "provider",
-    // lib/ai/resposta-em-audio/tipos.ts → PROVEDORES_DE_VOZ (0547, resposta em áudio).
+    // lib/ai/resposta-em-audio/tipos.ts → PROVEDORES_DE_VOZ (0548, resposta em áudio).
     // Nasce com o par no mesmo commit da migration: um provedor que entrasse só no
     // TypeScript faria o `upsert` da chave bater no CHECK (23514) numa tela que o
     // dono vê como "não consegui gravar a chave"; um que entrasse só no banco seria

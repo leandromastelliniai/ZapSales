@@ -328,7 +328,7 @@ preserva as demais propriedades da versão.
 
 ### 4.2 Comportamento
 
-- **Botão "Executar teste"** chama `POST /api/v1/ai/agents/:id/versions/:vid:test` com a versão **draft mais recente** (não a publicada — esse é o ponto: testar ANTES de publicar).
+- **Conversa de várias trocas (issue #90).** O botão agora é **Enviar** e a aba mantém uma conversa simulada: cada troca chama `POST /api/v1/ai/agents/:id/versions/:vid:test` com a mensagem nova e o `history` do que já foi dito, sobre a versão **draft mais recente** (não a publicada — esse é o ponto: testar ANTES de publicar). Cada resposta mostra tokens, custo e as ferramentas chamadas (as que alteram algo são só mostradas), e tem **Corrigir esta resposta**, que cria uma proposta na aba Propostas. **Reiniciar conversa** esvazia a lista; o servidor não guarda a conversa. Troca que falha não entra na conversa e a mensagem continua na caixa.
 - Resposta vem como uma `ai_agent_runs` row com `is_dry_run=true`.
 - Trace renderizada com `<RunTrace />` component — collapse por step, sintaxe highlighting nos JSON args/results.
 - Custo do dry-run **conta no budget mensal do tenant** (warning visível: "Este teste consome créditos reais do provider").

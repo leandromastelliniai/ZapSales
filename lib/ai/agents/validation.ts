@@ -8,6 +8,10 @@
  * Postgres function (defense in depth).
  */
 import { z } from "zod";
+import {
+  MENSAGEM_DO_TESTE_MAX,
+  historicoDoTesteSchema,
+} from "@/lib/ai/agents/teste-em-varias-trocas";
 import { VALID_TOOL_IDS } from "@/lib/mcp/tools/catalog";
 import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
 import { IDS_DE_PROVEDOR } from "@/lib/ai/pontos/provedores";
@@ -328,9 +332,11 @@ export const publishSchema = z.object({ version_id: UUID }).strict();
 
 export const testRunSchema = z
   .object({
-    sample_message: z.string().trim().min(1).max(4000),
+    sample_message: z.string().trim().min(1).max(MENSAGEM_DO_TESTE_MAX),
     /** Simula que o cliente mandou a mensagem como ÁUDIO — para ver a resposta em áudio (#91). */
     sample_audio: z.boolean().optional(),
+    /** Conversa simulada até aqui (issue #90) — vazio é o teste de uma troca, como sempre foi. */
+    history: historicoDoTesteSchema.optional(),
     sample_contact: z
       .object({
         name: z.string().trim().min(1).max(120).optional(),

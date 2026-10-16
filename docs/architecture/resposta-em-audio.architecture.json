@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Resposta em áudio do agente",
-    "subtitle": "O agente responde em nota de voz quando o cliente manda áudio — opcional, desligado, com a chave de voz do próprio cliente (migration 0547; issue #91, parte da #86)",
+    "subtitle": "O agente responde em nota de voz quando o cliente manda áudio — opcional, desligado, com a chave de voz do próprio cliente (migration 0548; issue #91, parte da #86)",
     "output": "resposta-em-audio.html",
     "quality_profile": "standard"
   },

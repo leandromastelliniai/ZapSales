@@ -6282,6 +6282,7 @@ export type Database = {
       }
       flywheel_distiller_proposals: {
         Row: {
+          agent_id: string | null
           applied_at: string | null
           applied_by: string | null
           applied_version_id: string | null
@@ -6296,6 +6297,7 @@ export type Database = {
           type: string
         }
         Insert: {
+          agent_id?: string | null
           applied_at?: string | null
           applied_by?: string | null
           applied_version_id?: string | null
@@ -6310,6 +6312,7 @@ export type Database = {
           type: string
         }
         Update: {
+          agent_id?: string | null
           applied_at?: string | null
           applied_by?: string | null
           applied_version_id?: string | null
@@ -6324,6 +6327,13 @@ export type Database = {
           type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "flywheel_distiller_proposals_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "flywheel_distiller_proposals_applied_version_id_fkey"
             columns: ["applied_version_id"]

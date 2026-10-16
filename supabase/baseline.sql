@@ -7637,10 +7637,9 @@ create table if not exists org_memory_entries (
 create index if not exists idx_org_memory_entries_org_status
   on org_memory_entries (organization_id, status, created_at);
 
--- Flywheel: novo destino de proposta (entry de memória da org).
-alter table flywheel_distiller_proposals drop constraint if exists flywheel_distiller_proposals_type_check;
-alter table flywheel_distiller_proposals add constraint flywheel_distiller_proposals_type_check
-  check (type in ('playbook_bullet', 'golden_case', 'reentry_trigger', 'org_memory_entry'));
+-- Flywheel: novo destino de proposta (entry de memória da org). O valor 'org_memory_entry'
+-- do CHECK de `type` já está no bloco único da migration 0547 (fim do arquivo), que traz o
+-- vocabulário final — a constraint não é reconstruída aqui.
 
 -- RLS (mesmo shape do loop tenant_isolation_* do baseline).
 -- A rotina da migration 0325 no lugar do laço enumerado: ela varre o catálogo
@@ -45588,7 +45587,7 @@ create trigger trg_messages_midia_citada
   when (new.media_storage_path is not null)
   execute function public.fn_midia_citada_sai_da_fila();
 
--- ---- resposta em áudio: a chave de voz e a opção por agente (migration 0547) ----
+-- ---- resposta em áudio: a chave de voz e a opção por agente (migration 0548) ----
 -- Tabela server-side only (RLS sem policies, grants só ao service_role, chave cifrada),
 -- três colunas em ai_agent_versions e a trava de imutabilidade cobrindo-as. Fica ANTES
 -- da VARREDURA anon porque redefine uma função (create or replace); não cria função nova.
@@ -47946,5 +47945,28 @@ create index if not exists idx_passagens_de_atendimento_agente
 
 comment on column public.passagens_de_atendimento.agente_id is
   'O agente de IA que passou a conversa para uma pessoa (migration 0545). Nulo em passagens antigas ou sem agente resolvido; a Inbox então diz só "IA".';
+
+notify pgrst, 'reload schema';
+
+-- ---- correção de resposta vira proposta (migration 0547) ----
+-- Aditiva: a correção escrita na aba Teste ou em Execuções nasce como proposta
+-- pendente, presa ao agente de que fala. Nulo em `agent_id` = proposta da
+-- organização (as do flywheel). O tipo novo entra no CHECK; nenhum dado existente
+-- viola a lista mais larga.
+alter table public.flywheel_distiller_proposals
+  add column if not exists agent_id uuid references public.ai_agents(id) on delete cascade;
+
+create index if not exists idx_flywheel_distiller_proposals_agent
+  on public.flywheel_distiller_proposals (organization_id, agent_id)
+  where agent_id is not null;
+
+alter table public.flywheel_distiller_proposals
+  drop constraint if exists flywheel_distiller_proposals_type_check;
+alter table public.flywheel_distiller_proposals
+  add constraint flywheel_distiller_proposals_type_check
+  check (type in ('playbook_bullet', 'golden_case', 'reentry_trigger', 'org_memory_entry', 'response_correction'));
+
+comment on column public.flywheel_distiller_proposals.agent_id is
+  'O agente de que a proposta fala (migration 0547). Nulo = proposta da organização (as do flywheel). Uma correção de resposta é sempre de um agente: a tela e o aplicar só a alcançam por ele.';
 
 notify pgrst, 'reload schema';

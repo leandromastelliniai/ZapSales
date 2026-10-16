@@ -952,7 +952,7 @@ const HOSTS_DECLARADOS: Record<string, EntradaDeHost> = {
     motivo:
       "endpoint da API da OpenAI (embeddings da busca e transcrição de áudio). É o destino do request: trocar pelo domínio do revendedor faria a chamada não chegar a lugar nenhum.",
   },
-  // ── resposta em áudio (0547, issue #91): destino de chamada ──
+  // ── resposta em áudio (0548, issue #91): destino de chamada ──
   "api.elevenlabs.io": {
     categoria: "FORNECEDOR",
     motivo:

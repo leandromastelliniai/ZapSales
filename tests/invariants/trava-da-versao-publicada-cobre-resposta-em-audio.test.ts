@@ -1,5 +1,5 @@
 /**
- * A TRAVA DA VERSÃO PUBLICADA COBRE A RESPOSTA EM ÁUDIO (migration 0547, issue #91).
+ * A TRAVA DA VERSÃO PUBLICADA COBRE A RESPOSTA EM ÁUDIO (migration 0548, issue #91).
  *
  * `audio_reply_enabled`, `audio_reply_voice_id` e `audio_reply_model_id` são dado
  * da VERSÃO do agente: rascunho, diff, histórico, desfazer. Mudar a voz de uma

@@ -489,9 +489,19 @@ POST  /api/v1/ai/agents/:id/versions/:vid:test   [admin]   (dry-run)
 ```json
 {
   "sample_message": "Oi, quanto custa o produto X?",
-  "sample_contact": { "name": "Cliente Teste", "phone": "+5511..." }   // opcional
+  "sample_contact": { "name": "Cliente Teste", "phone": "+5511..." },   // opcional
+  "history": [                                                          // opcional (issue #90)
+    { "role": "customer", "text": "Oi" },
+    { "role": "agent",    "text": "Olá! Em que posso ajudar?" }
+  ]
 }
 ```
+
+`history` é a conversa simulada até aqui (no máximo 20 trocas, 4000 caracteres por fala); vazio é o teste de
+uma troca. **O servidor não guarda a conversa**: a tela a mantém e a reenvia a cada troca, e "reiniciar" é
+esvaziá-la. Cada troca passa pelo mesmo core do turno real, sem contato, sem conversa e sem envio. O custo
+cai em `llm_calls` (`purpose='agent_preview'`) e conta na régua do orçamento; no modo `bloquear`, com o teto
+atingido, a rota responde **422 `ai_budget_exhausted`** (e não `preview_failed`).
 
 Resposta:
 ```json
@@ -500,12 +510,28 @@ Resposta:
     "run_id": "uuid",
     "status": "completed",
     "final_text": "...",
-    "tool_calls": [...trace...],
+    "tool_calls": [{ "tool": "crm_search_products", "arguments": {} }],   // todas, na ordem
     "tokens_in": 1234, "tokens_out": 567, "cost_cents": 0.4, "latency_ms": 3200,
     "would_send_to": { "session": "...", "chat_id": "..." }   // mostra mas não envia
   }
 }
 ```
+
+#### Corrigir uma resposta (issue #90)
+
+```
+POST /api/v1/ai/agents/:id/corrections                  [manager+]   Idempotency-Key aceito (uuid, 24h)
+GET  /api/v1/ai/agents/:id/runs/:callId/reply           [manager+]   a resposta real de uma execução
+```
+
+`POST .../corrections` recebe `{ origem: "teste", conversa: [...], texto_corrigido }` (a conversa termina
+numa fala do agente) ou `{ origem: "execucao", chamada_id, texto_corrigido }` (a conversa é **relida no
+servidor**, presa a organização e agente). Cria **uma proposta pendente** em `flywheel_distiller_proposals`
+(`type='response_correction'`, `agent_id` do path, `evidence` = conversa mascarada pelo anonimizador das
+transcrições) e responde `201 { proposal_id, status: "pending" }`. A rota **não altera o agente**: só
+`POST .../proposals/:pid/apply` (admin) publica uma versão nova, com a regra no fim do prompt, e recusa
+proposta de outro agente. Erros: `correction_without_reply` (422), `not_found` (404). Auditoria:
+`ai.response_correction_proposed`, sem o texto da conversa.
 
 #### Follow-up configurado por versão
 

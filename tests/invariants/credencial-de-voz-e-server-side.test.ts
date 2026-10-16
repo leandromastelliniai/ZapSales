@@ -1,5 +1,5 @@
 /**
- * A CHAVE DE VOZ É SERVER-SIDE ONLY — E ISSO SE MEDE (migration 0547).
+ * A CHAVE DE VOZ É SERVER-SIDE ONLY — E ISSO SE MEDE (migration 0548).
  *
  * `voice_provider_credentials` guarda a chave do provedor de voz da organização
  * (resposta em áudio do agente, issue #91). A anon key vai para o browser; se o
@@ -48,7 +48,7 @@ describe("o PostgREST não serve a chave de voz", () => {
     const existe = sql(`
       select count(*) from information_schema.tables where table_schema = 'public' and table_name = '${TABELA}';
     `).trim();
-    expect(existe, "a 0547 não chegou ao baseline — o kit self-host não cria a tabela").toBe("1");
+    expect(existe, "a 0548 não chegou ao baseline — o kit self-host não cria a tabela").toBe("1");
   });
 
   it("`anon` e `authenticated` não têm privilégio NENHUM", () => {
