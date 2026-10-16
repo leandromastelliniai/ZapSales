@@ -22,7 +22,7 @@ export default async function TeamInvitePage() {
     <CorpoDaPagina>
       <CabecalhoDePagina
         titulo={t("Convidar membros")}
-        descricao={t("Cole até 20 emails (um por linha) e escolha a role compartilhada.")}
+        descricao={t("Cole até 20 emails (um por linha) e escolha o papel compartilhado.")}
       />
       <InviteForm />
     </CorpoDaPagina>

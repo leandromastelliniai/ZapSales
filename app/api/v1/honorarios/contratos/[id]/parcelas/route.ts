@@ -13,6 +13,7 @@ import { ok, fail } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { requireSupportWrite } from "@/lib/impersonate/support";
+import { tabelaAusente } from "@/lib/instalacao/tabela-ausente";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ const MODULO_NAO_INSTALADO =
   "instalar em Configurações da instalação › Módulos.";
 
 function moduloNaoInstalado(error: { code?: string } | null): boolean {
-  return error?.code === "42P01";
+  return tabelaAusente(error);
 }
 
 const criarSchema = z.object({

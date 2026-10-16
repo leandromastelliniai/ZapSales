@@ -10,6 +10,7 @@
  */
 import { z } from "zod";
 
+import { tabelaAusente } from "@/lib/instalacao/tabela-ausente";
 import type { McpToolDefinition } from "../types";
 
 const MODULO_NAO_INSTALADO_HINT =
@@ -18,7 +19,7 @@ const MODULO_NAO_INSTALADO_HINT =
   "ligada em nenhum agente enquanto isso";
 
 function ehTabelaInexistente(error: { code?: string } | null): boolean {
-  return error?.code === "42P01";
+  return tabelaAusente(error);
 }
 
 // ---------------------------------------------------------------------------

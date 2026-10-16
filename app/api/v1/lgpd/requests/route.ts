@@ -102,7 +102,9 @@ export async function GET(req: NextRequest): Promise<Response> {
   // neste arquivo comparava milissegundos e marcava "Vencido" 26h antes do prazo.
   const enriched = (rows ?? []).map((r) => ({
     ...r,
-    sla_bucket: computeSlaBucket(r.due_at, r.received_at),
+    // Pedido concluído não corre mais contra o prazo: "Vencido" num pedido já
+    // entregue é alarme falso. `failed` segue com balde — não foi atendido.
+    sla_bucket: r.status === "completed" ? null : computeSlaBucket(r.due_at, r.received_at),
   }));
 
   const filtered = parsed.data.sla_bucket

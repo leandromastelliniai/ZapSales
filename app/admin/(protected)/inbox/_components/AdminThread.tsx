@@ -104,7 +104,7 @@ export function AdminThreadClient({ conversationId }: Props) {
           <span className="text-xs text-muted-foreground">
             {t("Modo somente-leitura.")}{" "}
             <span className="font-medium">
-              {t("Use “Impersonate” (em breve, S-11.07) para responder.")}
+              {t("Para responder, use “Acompanhar organização” na página da organização.")}
             </span>
           </span>
         </div>
