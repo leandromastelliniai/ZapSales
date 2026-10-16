@@ -90,7 +90,8 @@ describe("TestPanel — conversa de várias trocas", () => {
     await enviar("Quanto custa?");
 
     const troca = await screen.findByTestId("teste-troca");
-    expect(within(troca).getByTestId("teste-tokens")).toHaveTextContent("1.200");
+    // o separador de milhar depende do idioma do runner (1.200 / 1,200)
+    expect(within(troca).getByTestId("teste-tokens")).toHaveTextContent(/1[.,]200/);
     expect(within(troca).getByTestId("teste-custo")).toHaveTextContent("US$ 0.0042");
     expect(within(troca).getByTestId("teste-ferramentas")).toHaveTextContent("(1)");
     expect(within(troca).getByText("crm_search_products")).toBeInTheDocument();

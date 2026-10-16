@@ -339,7 +339,7 @@ test("testa sem enviar, pausa preserva publicação e duas aprovações entregam
     // que desmonta o painel.
     await capture(page, page.getByRole("tabpanel"), info, "sandbox-desktop");
     await page.getByRole("tab", { name: "Propostas", exact: true }).click();
-    await expect(page.getByText("Correção de resposta", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("proposal-item")).toContainText("Correção de resposta");
     await expect(page.getByTestId("proposta-conversa-de-origem")).toBeVisible();
     await page.getByRole("tab", { name: "Teste", exact: true }).click();
     await page.getByRole("button", { name: "Pausar automático", exact: true }).click();
