@@ -95,4 +95,13 @@ describe("aba de Execuções — llm_calls traduzido para a tela", () => {
     const linha = paraLinhaDeExecucao(chamada());
     expect(linha["agent_id"]).toBe(AGENTE);
   });
+
+  it("teste da aba Teste aparece como teste; turno de atendimento, como produção (issue #90)", () => {
+    // `is_dry_run` saía sempre `false`, e a coluna "Tipo" dizia "produção" para o
+    // que a pessoa acabara de testar. A correção de resposta só se oferece em
+    // turno real, e precisa saber a diferença.
+    expect(paraLinhaDeExecucao(chamada({ purpose: "agent_preview" }))["is_dry_run"]).toBe(true);
+    expect(paraLinhaDeExecucao(chamada())["is_dry_run"]).toBe(false);
+    expect(paraLinhaDeExecucao(chamada())["purpose"]).toBe("agent_turn");
+  });
 });

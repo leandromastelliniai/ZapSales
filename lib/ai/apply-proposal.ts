@@ -17,6 +17,16 @@ export function composeAppliedPrompt(basePrompt: string, bulletContent: string):
   return `${basePrompt.trimEnd()}\n\n## Aprendizado do flywheel\n- ${bullet}\n`;
 }
 
+/**
+ * A correção de resposta (issue #90) entra em seção própria, também no FIM: o
+ * diff mostra "o que a equipe corrigiu" separado do que o flywheel aprendeu, e
+ * nunca reescreve o prompt da pessoa.
+ */
+export function composeAppliedCorrection(basePrompt: string, correctionContent: string): string {
+  const regra = correctionContent.trim();
+  return `${basePrompt.trimEnd()}\n\n## Correções aprovadas pela equipe\n- ${regra}\n`;
+}
+
 export type ApplyProposalResult =
   | { ok: true; versionId: string; versionNumber: number }
   | { ok: true; entryId: string }
@@ -38,11 +48,18 @@ export async function applyProposal(
 
   const { data: proposal } = await admin
     .from("flywheel_distiller_proposals")
-    .select("id, type, content, applied_at")
+    .select("id, type, content, applied_at, agent_id")
     .eq("id", proposalId)
     .eq("organization_id", orgId)
     .maybeSingle();
   if (!proposal) {
+    return { ok: false, code: "proposal_not_found", message: "Proposta não encontrada." };
+  }
+  // A proposta de correção é de UM agente: aplicá-la por outro mudaria o prompt
+  // errado. Nulo é proposta da organização (as do flywheel) e vale em qualquer
+  // agente, como sempre valeu. A resposta é a de "não existe": para quem chama
+  // por este agente, ela não existe.
+  if (proposal.agent_id != null && proposal.agent_id !== agentId) {
     return { ok: false, code: "proposal_not_found", message: "Proposta não encontrada." };
   }
   if (proposal.applied_at !== null) {
@@ -86,11 +103,11 @@ export async function applyProposal(
     return { ok: true, entryId: entry.id };
   }
 
-  if (proposal.type !== "playbook_bullet") {
+  if (proposal.type !== "playbook_bullet" && proposal.type !== "response_correction") {
     return {
       ok: false,
       code: "proposal_type_unsupported",
-      message: `Aplicação automática só existe para playbook_bullet (esta é ${proposal.type}).`,
+      message: `Aplicação automática só existe para playbook_bullet e response_correction (esta é ${proposal.type}).`,
     };
   }
 
@@ -145,8 +162,11 @@ export async function applyProposal(
       // a proposta era aplicada e a nova versão publicada voltava ao default do
       // banco naqueles onze campos.
       ...versionPayloadFrom(base),
-      // Única chave da cópia que muda: o bullet proposto entra no fim do prompt.
-      system_prompt: composeAppliedPrompt(base.system_prompt, proposal.content),
+      // Única chave da cópia que muda: o bullet (ou a correção) proposto entra no fim do prompt.
+      system_prompt:
+        proposal.type === "response_correction"
+          ? composeAppliedCorrection(base.system_prompt, proposal.content)
+          : composeAppliedPrompt(base.system_prompt, proposal.content),
       status: "draft",
       created_by: userId,
     })
