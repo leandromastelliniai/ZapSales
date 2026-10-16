@@ -188,16 +188,16 @@ function montaHandler(doGenerate: unknown) {
 
 async function rodaTurno(
   handler: ReturnType<typeof montaHandler>,
-  alvo: { conv: string; sessao: string; msg: string },
+  alvo: { conv: string; sessao: string; msg: string; contato: string },
 ): Promise<Error | null> {
   // O PG efêmero é compartilhado: neutraliza jobs alheios para o claim FIFO pegar o deste.
   await pool.query("update job_queue set status = 'done' where status = 'pending'");
   const { job } = await m.queue.enqueueJob(pool, ORG, {
     kind: "inbound_turn",
-    leadId: CONTACT,
+    leadId: alvo.contato,
     payload: {
       conversation_id: alvo.conv,
-      contact_id: CONTACT,
+      contact_id: alvo.contato,
       channel_session_id: alvo.sessao,
       inbound_message_id: alvo.msg,
       crm_event_id: randomUUID(),
@@ -221,14 +221,20 @@ async function conversaCom(
   sessao: string,
   formato: "audio" | "texto",
   opcoes: { ultimaMensagemHa?: number } = {},
-): Promise<{ conv: string; sessao: string; msg: string }> {
+): Promise<{ conv: string; sessao: string; msg: string; contato: string }> {
+  // Uma conversa 1:1 por (contato, número): cada cenário ganha o próprio contato.
+  const contato = randomUUID();
+  await pool.query(
+    `insert into contacts (id, organization_id, name, phone_number) values ($1,$2,'Lead de Audio',$3)`,
+    [contato, ORG, `+5511${String(Math.floor(Math.random() * 1e9)).padStart(9, "0")}`],
+  );
   const conv = randomUUID();
   const msg = randomUUID();
   const quando = new Date(AGORA.getTime() - (opcoes.ultimaMensagemHa ?? 0.02) * 3_600_000);
   await pool.query(
     `insert into conversations (id, organization_id, contact_id, channel_session_id, status, is_group, last_inbound_at)
      values ($1,$2,$3,$4,'ai_handling',false,$5)`,
-    [conv, ORG, CONTACT, sessao, quando],
+    [conv, ORG, contato, sessao, quando],
   );
   if (formato === "audio") {
     await pool.query(
@@ -237,17 +243,17 @@ async function conversaCom(
          media_derived_text, media_derived_status, sent_via, sent_at)
        values ($1,$2,$3,$4,$5,'audio','inbound','delivered',null,$6,'audio/ogg',
                'Oi, queria marcar uma avaliação', 'ready', 'external_device', $7)`,
-      [msg, ORG, conv, sessao, CONTACT, `${ORG}/${conv}/entrada.ogg`, quando],
+      [msg, ORG, conv, sessao, contato, `${ORG}/${conv}/entrada.ogg`, quando],
     );
   } else {
     await pool.query(
       `insert into messages (id, organization_id, conversation_id, channel_session_id, contact_id,
          type, direction, status, body, sent_via, sent_at)
        values ($1,$2,$3,$4,$5,'text','inbound','delivered','Oi, queria marcar uma avaliação','external_device',$6)`,
-      [msg, ORG, conv, sessao, CONTACT, quando],
+      [msg, ORG, conv, sessao, contato, quando],
     );
   }
-  return { conv, sessao, msg };
+  return { conv, sessao, msg, contato };
 }
 
 async function usosDaVoz() {
