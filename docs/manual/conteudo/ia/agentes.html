@@ -1,0 +1,254 @@
+<!--meta {"id":"agentes","grupo":"ia","titulo":"Agentes","ordem":2,"resumo":"Quem atende por você: instruções, inteligência usada, ferramentas e publicação. Aqui você cria, ajusta, testa e publica os agentes de IA que respondem no WhatsApp.","palavras":["agente","agentes","ia","bot","atendente virtual","prompt","instruções","modelo","claude","gpt","publicar","rascunho","versão","reverter","ferramentas","capacidades","teste","handoff","passar para humano","modo assistido","pausar"],"onde":"Agente de IA › Agentes (também no menu lateral)","quem":"Abrir a lista e o editor: Gerente (o editor abre só para leitura). Criar, editar, publicar, testar, reverter e arquivar: Administrador.","rotas":["/app/ai/agents","/app/ai/agents/new","/app/ai/agents/[id]"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Um <strong>agente de IA</strong> é um atendente automático que responde clientes pelo WhatsApp. Cada agente tem as suas <strong>instruções</strong> (como ele deve falar e o que nunca deve prometer), a <strong>inteligência artificial</strong> que usa para pensar, o <strong>número</strong> pelo qual atende, as <strong>ferramentas</strong> que pode usar (consultar contato, marcar horário, mover o cartão no funil…) e as regras de quando passar a conversa para uma pessoa.</p>
+<p>Esta página mostra a <a href="#agentes--lista">lista de agentes</a> e o <a href="#agentes--editor">editor</a>, com todas as suas abas. É a tela mais importante da área de IA.</p>
+<aside class="nota info"><strong>Antes de começar, você precisa de três coisas.</strong><ol><li>Uma <strong>chave de IA</strong> cadastrada em <a href="#credenciais">Credenciais</a> (ou a chave que veio na instalação).</li><li>Um <strong>número de WhatsApp conectado</strong>, em <a href="#conexoes">Conexões</a>.</li><li>Papel de <strong>Administrador</strong> para criar e publicar.</li></ol></aside>
+
+<h2 id="lista">A lista de agentes</h2>
+<figure class="print">
+  <img src="img/ia-agentes-lista.png" alt="Lista de agentes com dois cartões, os filtros e o botão Novo agente, numerados de 1 a 10" loading="lazy">
+  <figcaption>A lista de agentes: um publicado (e padrão) e um rascunho.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Busca por nome.</strong> Procura no nome do agente, sem diferenciar maiúsculas (mas diferenciando acentos).</li>
+  <li><strong>Status.</strong> Filtra por <em>Todos, Publicado, Rascunho</em> ou <em>Arquivado</em>.</li>
+  <li><strong>Incluir arquivados.</strong> Os arquivados ficam escondidos por padrão. Para ver os arquivados, marque esta caixa — só escolher o filtro “Arquivado” não basta.</li>
+  <li><strong>Novo agente.</strong> Só para Administrador.</li>
+  <li><strong>O cartão do agente:</strong> nome, a inteligência em uso (<em>provedor · modelo</em>), a descrição, o <em>Tipo</em> (<code>mcp_agent</code> é o agente completo de WhatsApp) e a <em>Prioridade</em>.</li>
+  <li><strong>Selo “default”.</strong> É o <em>agente padrão</em> da organização. Só existe um, e ele não pode ser arquivado.</li>
+  <li><strong>Selo “Publicado”.</strong> O agente tem uma versão no ar e não está pausado.</li>
+  <li><strong>Menu “⋯”.</strong> Só Administrador. Veja abaixo.</li>
+  <li><strong>Selo “Rascunho”.</strong> O agente <em>não atende</em>: nunca foi publicado ou está pausado.</li>
+  <li><strong>Editar / Visualizar.</strong> Abre o editor. O Gerente vê “Visualizar”.</li>
+</ol>
+<aside class="nota atencao"><strong>“Publicado” não garante que ele está respondendo.</strong><p>O selo diz só que existe uma versão publicada e que o agente não está pausado. Se o número de WhatsApp estiver desconectado, ele continua “Publicado” e ninguém recebe resposta. Pausar um agente também mostra “Rascunho”, não “Pausado”.</p></aside>
+
+<h3>O menu “⋯” de cada agente</h3>
+<table class="tabela">
+  <thead><tr><th>Ação</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Editar</strong></td><td>Abre o editor.</td></tr>
+    <tr><td><strong>Duplicar</strong></td><td>Cria uma cópia chamada “<em>nome</em> (cópia)”, com a versão (instruções, ferramentas, chave, número, repasse, follow-up). A cópia nasce <strong>fora do ar</strong>, como rascunho. Não publica e não envia nada.</td></tr>
+    <tr><td><strong>Renomear</strong></td><td>Muda só o nome interno (até 120 caracteres). Versões e histórico não mudam.</td></tr>
+    <tr><td><strong>Pausar / Despausar</strong></td><td><em>Pausar</em> faz o agente parar de atender, sem despublicar a versão. <em>Despausar</em> só funciona se há uma versão publicada; senão avisa “Conclua a configuração e publique uma versão”.</td></tr>
+    <tr><td><strong>Arquivar</strong> (vermelho)</td><td>Tira o agente do ar e das listas. As versões publicadas ficam guardadas para auditoria. <strong>Não dá para desarquivar pela tela.</strong> O agente padrão não pode ser arquivado.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="novo">Criar um agente</h2>
+<p>Clique em <span class="ui">Novo agente</span> (Administrador). A tela é o <strong>mesmo formulário do editor</strong> (aba Configuração), mas sem as abas de Teste, Capacidades, Execuções, Histórico e Propostas.</p>
+<figure class="print">
+  <img src="img/ia-agente-novo.png" alt="Tela Novo agente, o formulário de configuração com o botão Criar agente" loading="lazy">
+  <figcaption>A tela “Novo agente”.</figcaption>
+</figure>
+<ol class="passos">
+  <li>Dê um <strong>nome</strong> e escreva as <strong>instruções</strong> (pelo menos uma frase).</li>
+  <li>Escolha a <strong>empresa de inteligência artificial</strong>, o <strong>modelo</strong> e a <strong>chave de acesso</strong>.</li>
+  <li>Escolha o <strong>número</strong> pelo qual ele atende. <em>Dá para criar sem número</em>; só a publicação exige um.</li>
+  <li>Clique em <span class="ui">Criar agente</span>. O agente nasce como <strong>versão 1 em rascunho</strong> e abre no editor.</li>
+</ol>
+<p>Criar <strong>não publica, não envia mensagem e não gasta IA</strong>. O agente só começa a atender depois de <em>Salvar rascunho → Publicar</em> no editor.</p>
+
+<h2 id="editor">O editor do agente</h2>
+<p>O editor tem uma <strong>faixa de operação</strong> no alto, <strong>seis abas</strong> e, na aba Configuração, <strong>três papéis</strong>. Para o Gerente, tudo abre em <em>somente leitura</em>.</p>
+
+<h3>Configuração › Conversa com o cliente</h3>
+<figure class="print">
+  <img src="img/ia-agente-topo.png" alt="Topo do editor do agente com a faixa de operação, as abas e os botões, numerados de 1 a 13" loading="lazy">
+  <figcaption>O topo do editor do agente “Atendente da Loja”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Modo de operação.</strong> <em>Assistido: revisar antes de enviar</em> (a IA só prepara sugestões; uma pessoa aprova cada envio) ou <em>Automático: responder com as regras do agente</em>. <strong>Grava na hora</strong>, sem salvar nem publicar.</li>
+  <li><strong>Pausar automático</strong> (vira <em>Retomar automático</em>). Para o atendimento automático, preservando a versão publicada. Fica apagado enquanto não há versão publicada. É a mesma pausa do menu “⋯” da lista.</li>
+  <li><strong>As seis abas:</strong> Configuração, Teste, Capacidades, Execuções, Histórico e Propostas. <em>Teste</em> fica desabilitada enquanto o agente não tem nenhuma versão.</li>
+  <li><strong>Selo de versão.</strong> “Publicado v1 + Rascunho v2” diz que a versão 1 está no ar e há uma versão 2 em edição. Outros estados: <em>Novo, Publicado vN, Rascunho vN, Pausado · editando a vN, Sem versão</em>.</li>
+  <li><strong>Descartar alterações.</strong> Volta o formulário ao último estado salvo.</li>
+  <li><strong>Salvar rascunho.</strong> Grava as mudanças <em>sem mudar o que os clientes recebem</em>. Se já existe um rascunho vigente, ele é atualizado no lugar; senão cria a próxima versão.</li>
+  <li><strong>Publicar.</strong> Abre a confirmação de publicação. Quando algo impede, o botão fica apagado e o <em>motivo aparece escrito logo abaixo</em>. Veja <a href="#agentes--publicar">Publicar</a>.</li>
+  <li><strong>Os três papéis do agente:</strong> <em>Conversa com o cliente</em>, <em>Organiza o sistema</em> e <em>Confere antes de enviar</em>.</li>
+  <li><strong>Nome.</strong> Obrigatório, até 120 caracteres.</li>
+  <li><strong>Ordem de preferência (0 a 1000).</strong> Quando mais de um agente pode atender a mesma conversa, o de número maior tenta primeiro. Com um agente só, deixe como está.</li>
+  <li><strong>As instruções dele.</strong> O texto que define como o agente se comporta. Mínimo uma frase; máximo 20.000 caracteres.</li>
+  <li><strong>Contadores.</strong> Caracteres usados e uma estimativa de <em>tokens</em> (pedaços de texto).</li>
+  <li><strong>Estilo de resposta.</strong> Ligado, a resposta sai em <em>várias mensagens curtas</em>, como uma pessoa digita, em vez de um bloco só. Aparece então o campo <em>Tamanho máximo por bolha</em> (80 a 4.000).</li>
+</ol>
+
+<figure class="print">
+  <img src="img/ia-agente-ia-numero.png" alt="Cartões A inteligência que ele usa, Por qual número ele atende e Freios de segurança, numerados de 1 a 6" loading="lazy">
+  <figcaption>A inteligência, o número e os freios de segurança.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Empresa de inteligência artificial.</strong> Anthropic (Claude), OpenAI (GPT), Google (Gemini), OpenRouter, DeepSeek, Requesty ou um <em>provedor personalizado</em> compatível com OpenAI. Trocar a empresa <strong>limpa</strong> o modelo e a chave.</li>
+  <li><strong>Modelo.</strong> A lista de modelos da empresa escolhida (o recomendado vem marcado <em>default</em>). Se o catálogo estiver vazio, vira um campo de texto.</li>
+  <li><strong>Chave de acesso.</strong> As chaves cadastradas em <a href="#credenciais">Credenciais</a>, com o estado de cada uma (<em>validada, validando, não validada, inválida, inativa</em>), e, quando existe, <em>“A chave desta instalação”</em>. Sem nenhuma, a tela aponta para cadastrar. Uma chave que não está validada <strong>bloqueia a publicação</strong>.</li>
+  <li><strong>Número conectado.</strong> Por qual WhatsApp o agente atende, com o estado (<em>Conectado, Escaneie o QR, Conectando…, Parado, Caiu</em>). Só o estado <em>Conectado</em> deixa publicar. Se o agente é acionado por um <a href="#roteadores">roteador</a>, a tela avisa que este campo não se aplica.</li>
+  <li><strong>Freios de segurança.</strong> Limites <em>por atendimento</em> para o agente não gastar sem controle: ações por atendimento (1–25, padrão 10), volume de texto (padrão 50.000), custo máximo em centavos (padrão 50), quantas mensagens anteriores ele lê (padrão 20) e o tamanho desse histórico (padrão 8.000).</li>
+  <li><strong>Esperar antes de responder (segundos).</strong> Mensagens do mesmo contato dentro desse tempo viram uma resposta só. Vazio usa o padrão da instalação (8 s); máximo 60.</li>
+</ol>
+<aside class="nota atencao"><strong>Erro em campo numérico não aparece escrito.</strong><p>Se um dos freios de segurança estiver fora do intervalo, o botão <span class="ui">Salvar rascunho</span> simplesmente fica desabilitado, sem uma mensagem ao lado do campo. Confira os limites acima.</p></aside>
+
+<figure class="print">
+  <img src="img/ia-agente-ferramentas.png" alt="Cartão O que o agente pode fazer, com os pacotes de capacidades e o contador de 27, numerado de 1 a 7" loading="lazy">
+  <figcaption>As ferramentas do agente, agrupadas em pacotes.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O que o agente pode fazer.</strong> O agente só consegue fazer o que estiver ligado aqui — e o que estiver ligado, ele fará sozinho durante o atendimento.</li>
+  <li><strong>Contador de capacidades.</strong> “8 de 27 capacidades ligadas”. O teto é <strong>27</strong>: acima disso o agente erra na hora de escolher o que usar.</li>
+  <li><strong>Um pacote.</strong> Agrupa capacidades por jornada de trabalho: <em>Atender e responder, Vender e mover o funil, Não perder o cliente, Passar para um humano, Organizar a operação, Aprender e evoluir</em>. O interruptor liga o pacote.</li>
+  <li><strong>Selo “parcial”.</strong> Só parte das capacidades do pacote está ligada.</li>
+  <li><strong>“Só ligando uma a uma”.</strong> As capacidades <em>críticas</em> nunca entram por pacote: você precisa marcar cada uma de propósito.</li>
+  <li><strong>Selos de risco.</strong> <em>Só consulta</em> (apenas lê), <em>Altera dados</em> (muda algo, dá para ver e desfazer) e <em>Efeito que não dá para desfazer</em> (algo que sai do sistema ou não volta, como falar com o cliente de verdade).</li>
+  <li><strong>Escolher uma a uma (modo avançado).</strong> Mostra a lista completa de capacidades, cada uma com a explicação do que faz e do que toca.</li>
+</ol>
+<p>Duas capacidades aparecem bloqueadas, com o motivo em azul: <em>Enviar mensagem no WhatsApp</em> e <em>Chamar um atendente humano</em>. O agente já faz as duas por conta própria, pelo caminho seguro do sistema (com opt-out e regra anti-banimento); não há nada a ligar.</p>
+
+<figure class="print">
+  <img src="img/ia-agente-consulta.png" alt="Cartões O que ele consulta antes de responder e Quando ele entra em ação, numerados de 1 a 5" loading="lazy">
+  <figcaption>Os materiais que o agente consulta e quando ele entra em ação.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O que ele consulta antes de responder.</strong> Marque os materiais do <a href="#conhecimento">Conhecimento</a> que este agente pode ler. Ele procura ali antes de responder e <em>cita de onde tirou</em>. Sem nenhum marcado, ele responde só com o que o modelo já sabe.</li>
+  <li><strong>Um material.</strong> Mostra quantos trechos tem, ou <em>“ainda não preparado”</em>. Marcar um material que ainda não foi preparado não adianta: o agente não acha nada nele.</li>
+  <li><strong>Quando ele entra em ação.</strong> O gatilho do agente.</li>
+  <li><strong>Interruptores de filtro.</strong> <em>Não responder em grupos</em> e <em>Não responder às mensagens que saem do seu próprio número</em> (os dois ligados por padrão).</li>
+  <li><strong>Só responder quando a mensagem falar de algo específico.</strong> Opcional. Ex.: <code>pedido|status|orçamento</code> (palavras separadas por <kbd>|</kbd>). Em branco, o agente responde a tudo.</li>
+</ol>
+<p>Ainda nesse cartão: <em>Quantos atendimentos ao mesmo tempo</em> (um por conversa ou um por cliente) e <em>Só atender em horário de funcionamento</em>, com fuso, início, fim e dias da semana.</p>
+
+<figure class="print">
+  <img src="img/ia-agente-resto.png" alt="Cartões Passar para uma pessoa, Pedir ajuda sem sair da conversa, Propostas comerciais, Follow-up e Comandos pelo celular, numerados de 1 a 6" loading="lazy">
+  <figcaption>Repasse a uma pessoa, pedidos de ajuda, propostas, follow-up e comandos pelo celular.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Passar para uma pessoa.</strong> Deixa o agente chamar uma pessoa quando perceber que não é caso dele.</li>
+  <li><strong>Palavras que chamam uma pessoa na hora.</strong> Padrão: <em>falar com humano, atendente, pessoa real</em>. Até 20 palavras; os botões tracejados recolocam as que você removeu.</li>
+  <li><strong>Pedir ajuda sem sair da conversa.</strong> Diferente de passar a conversa: o agente <strong>continua atendendo</strong> e abre um pedido interno (um <a href="#casos">caso</a>) quando esbarra em algo que só uma pessoa resolve. Vem <em>desligado</em>.</li>
+  <li><strong>Propostas comerciais.</strong> Deixa o agente rascunhar uma proposta quando o cliente pede orçamento. Só vale com Propostas ligado na empresa.</li>
+  <li><strong>Follow-up.</strong> Permite que o agente marque retornos sozinho, habilita os fluxos automáticos (escolha os <em>fluxos publicados</em> abaixo) e define horários em que o follow-up pode ser enviado. Veja <a href="#followups">Follow-ups</a>.</li>
+  <li><strong>Comandos pelo celular.</strong> Ligado, qualquer mensagem enviada pelo WhatsApp do celular <strong>pausa a IA nessa conversa até alguém mandar <code>#on</code></strong>; <code>#off</code> pausa sem responder o cliente. Esse cartão <strong>grava na hora</strong>, sem publicar.</li>
+</ol>
+<aside class="nota atencao"><strong>Comandos pelo celular: o texto pode aparecer para o cliente.</strong><p>O comando é digitado no chat do cliente. Vale por conversa, e a pausa só termina com <code>#on</code> ou pelo botão “devolver ao automático”.</p></aside>
+
+<h3>Configuração › Organiza o sistema</h3>
+<figure class="print media">
+  <img src="img/ia-agente-organiza.png" alt="Sub-aba Organiza o sistema, com o interruptor de organizar o sistema e a escolha dos funis" loading="lazy">
+  <figcaption>O segundo papel do agente.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Deixar o agente organizar o sistema depois de cada conversa.</strong> Separa quem <em>conversa</em> de quem <em>mantém o sistema em dia</em>. Ligado, o agente pode usar uma <strong>lista própria de ferramentas</strong> e, se você quiser, <strong>outro modelo</strong> (costuma ser um mais barato).</li>
+  <li><strong>O que ele deixa de fazer com isto desligado.</strong> Ele continua atendendo e registrando o básico (etapa do cliente, retorno prometido, histórico). Deixa de <em>decidir sobre a operação</em>: abrir chamados, distribuir para a pessoa certa, organizar marcadores e etapas.</li>
+  <li><strong>Em que negócios ele pode mexer.</strong> Marque os funis que o agente cuida. Ele conversa com qualquer cliente, mas só move, edita ou encerra negócio dos funis marcados. Sem nenhum marcado, ele não mexe em negócio nenhum. A tela avisa quando um funil marcado ainda não teve as etapas “traduzidas” em <em>Configurações › Etapas do funil</em>.</li>
+</ol>
+
+<h3>Configuração › Confere antes de enviar</h3>
+<figure class="print media">
+  <img src="img/ia-agente-confere.png" alt="Sub-aba Confere antes de enviar, com a lista das verificações que o sistema faz antes de cada mensagem sair" loading="lazy">
+  <figcaption>As verificações antes de cada mensagem sair.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Estilo de resposta.</strong> Um interruptor que troca o travessão longo (—) por vírgula nas mensagens.</li>
+  <li><strong>Antes de cada mensagem sair.</strong> “O assistente escreve, e o sistema confere.” São <strong>11 verificações</strong>, em ordem: a primeira que barra interrompe as seguintes, e o assistente recebe o motivo para reescrever.</li>
+  <li><strong>Uma verificação.</strong> Por exemplo, <em>Respeitar quem pediu para parar</em>: se a pessoa respondeu STOP ou SAIR, nada é enviado a ela.</li>
+  <li><strong>“Isto não se desliga.”</strong> Nove das onze são fixas, por proteção do seu número e por obrigação legal (opt-out, dados apagados, ritmo de envio, janela de 24 horas de WhatsApp…). Duas têm interruptor: <em>Conferir promessas em texto livre</em> e <em>Detectar tentativa de manipular o assistente</em>; cada uma custa <em>uma consulta extra ao modelo</em> por mensagem.</li>
+</ol>
+<aside class="nota info"><strong>Estes interruptores valem para a empresa inteira.</strong><p>Diferente do resto do editor, cada um grava na hora e vale para <em>todos</em> os agentes. Gerente vê; Administrador altera.</p></aside>
+
+<h2 id="publicar">Salvar e publicar</h2>
+<p><strong>Salvar rascunho</strong> só guarda a versão em edição: o atendimento <strong>continua na versão publicada</strong>. <strong>Publicar</strong> faz a versão nova passar a atender <strong>já na próxima mensagem</strong>.</p>
+<figure class="print media">
+  <img src="img/ia-agente-publicar.png" alt="Janela Publicar v2? com o resumo do que mudou" loading="lazy">
+  <figcaption>A confirmação de publicação: mostra só o que mudou em relação à versão no ar.</figcaption>
+</figure>
+<p>A janela explica que a versão atual continua guardada no histórico mas deixa de atender, e resume as diferenças: empresa e modelo, ferramentas adicionadas ou removidas e quantos caracteres o texto ganhou ou perdeu. Confirme em <span class="ui">Publicar v2</span>.</p>
+<p>Para publicar, o sistema exige que:</p>
+<ul>
+  <li>exista um rascunho salvo e sem erros no formulário;</li>
+  <li>a <strong>chave</strong> esteja escolhida e <em>validada</em> (ou seja a chave da instalação, que precisa existir);</li>
+  <li>um <strong>número de WhatsApp</strong> esteja escolhido e com o estado <em>Conectado</em>;</li>
+  <li>o <strong>modelo</strong> exista.</li>
+</ul>
+<p>Quando falta algo, o botão fica apagado e <strong>o primeiro motivo aparece escrito logo abaixo</strong> (por exemplo, <em>“Escolha por qual número de WhatsApp ele atende. O rascunho está salvo; conecte um número em Conexões e volte aqui para publicar.”</em>).</p>
+<aside class="nota atencao"><strong>Publicar muda o atendimento de clientes reais.</strong><p>A partir da próxima mensagem, o agente passa a usar a versão nova. Publicar não envia mensagem sozinho e não gasta IA na hora (gasta quando clientes escreverem). Se o agente estava <em>pausado</em>, publicar não o reativa: use <span class="ui">Retomar automático</span>.</p></aside>
+
+<h2 id="abas">As outras abas</h2>
+<h3>Teste</h3>
+<figure class="print media">
+  <img src="img/ia-agente-teste.png" alt="Aba Teste do agente, com a versão alvo, o aviso de consumo de crédito e os campos de mensagem" loading="lazy">
+  <figcaption>A aba Teste.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Versão alvo.</strong> A que será testada: o rascunho vigente, ou, se não houver, a publicada.</li>
+  <li><strong>Aviso.</strong> <em>“Modo teste consome créditos do provider. Nenhuma mensagem é enviada via WhatsApp.”</em></li>
+  <li><strong>Mensagem do cliente.</strong> Escreva o que um cliente diria. Obrigatória.</li>
+  <li><strong>Nome</strong> do cliente fictício (opcional).</li>
+  <li><strong>Telefone</strong> (opcional).</li>
+  <li><strong>Executar teste.</strong> Roda o agente de verdade, em modo de ensaio. Só Administrador.</li>
+  <li><strong>Resultado.</strong> Estado, latência, tokens, custo, cada ferramenta que o agente chamou e a <em>mensagem que seria enviada</em>. A tela avisa se a resposta usa palavras internas do sistema que o cliente não deveria ver.</li>
+</ol>
+<aside class="nota atencao"><strong>O teste gasta crédito de IA de verdade.</strong><p>Ele não manda nada ao WhatsApp nem mexe em contatos, mas chama o provedor de IA com a sua chave. Algumas verificações do envio real não são feitas no teste.</p></aside>
+
+<h3>Capacidades</h3>
+<figure class="print">
+  <img src="img/ia-agente-capacidades.png" alt="Aba Capacidades, com os usos dos últimos 30 dias de cada ferramenta do agente, numerada de 1 a 7" loading="lazy">
+  <figcaption>O uso das ferramentas nos últimos 30 dias.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Resumo.</strong> Quantos usos e falhas nos últimos 30 dias, e quantas capacidades pedem uma decisão sua.</li>
+  <li><strong>Atualizar.</strong></li>
+  <li><strong>Um cartão por capacidade</strong> (ligada ou já usada).</li>
+  <li><strong>Selo de sinal.</strong> Do mais grave ao mais leve: <em>falhando sempre, falhas, usada sem estar ligada, nunca usada, só em teste, funcionando, ligada agora</em>.</li>
+  <li><strong>Recomendação.</strong> O que fazer, em palavras simples.</li>
+  <li><strong>Números.</strong> Usos, falhas, usos em teste e a última vez.</li>
+  <li><strong>“Nunca usada”.</strong> Ligada há mais de 30 dias e sem uso: ocupa uma das 27 vagas e atrapalha a escolha do agente. Considere desligar.</li>
+</ol>
+
+<h3>Execuções</h3>
+<figure class="print media">
+  <img src="img/ia-agente-execucoes.png" alt="Aba Execuções do agente, com a tabela vazia" loading="lazy">
+  <figcaption>A aba Execuções, ainda sem registros.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Contador.</strong> As execuções recentes (as 25 mais novas); a lista se atualiza em tempo real.</li>
+  <li><strong>Atualizar.</strong></li>
+  <li><strong>Colunas:</strong> Início, Status, Tipo (<em>teste</em> ou <em>produção</em>), Tokens (entrada/saída), Custo, Latência, Steps e Ações.</li>
+  <li><strong>Estado vazio.</strong> “Nenhuma execução ainda.”</li>
+</ol>
+<p>Clicar numa linha abre o painel <em>Execução</em>, com início, fim, tokens, custo, o erro (se houve) e o <strong>trace</strong> passo a passo: cada ferramenta chamada, com argumentos, resultado e erro, e os botões <em>Ver conversa</em> e <em>Ver inbound</em>.</p>
+<aside class="nota atencao"><strong>Esta aba mostra principalmente os seus testes.</strong><p>Hoje ela só recebe as execuções de <em>teste</em> do agente. O registro do atendimento real, com falhas e custos, está em <a href="#execucoes">Execuções</a>, na área de IA.</p></aside>
+
+<h3>Histórico</h3>
+<figure class="print media">
+  <img src="img/ia-agente-historico.png" alt="Aba Histórico com duas versões, a v2 em rascunho e a v1 publicada, numerada de 1 a 7" loading="lazy">
+  <figcaption>O histórico de versões.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo de situação:</strong> <em>Rascunho, Publicado, Substituída</em> ou <em>Arquivado</em>.</li>
+  <li><strong>Número da versão.</strong></li>
+  <li><strong>Provedor e modelo</strong> da versão.</li>
+  <li><strong>Diff.</strong> Compara a versão com a “outra ponta” (publicada × rascunho): configuração, ferramentas, palavras de repasse, follow-up e uma comparação linha a linha das instruções (<span style="color:#0f7b4b">verde</span> = adicionou, <span style="color:#b42318">vermelho</span> = removeu).</li>
+  <li><strong>Selo “Publicado”.</strong> A versão que está atendendo.</li>
+  <li><strong>Data de publicação.</strong></li>
+  <li><strong>Reverter.</strong> Veja abaixo.</li>
+</ol>
+<aside class="nota perigo"><strong>Reverter afeta clientes imediatamente.</strong><p>Reverter cria uma <em>versão nova idêntica</em> à escolhida e a <strong>publica na hora</strong>, com as mesmas exigências do Publicar. A versão que estava no ar vira “Substituída”. O rascunho em andamento fica para trás no histórico.</p></aside>
+
+<h3>Propostas</h3>
+<figure class="print media">
+  <img src="img/ia-agente-propostas.png" alt="Aba Propostas do agente, com uma proposta aplicada e três pendentes, numerada de 1 a 6" loading="lazy">
+  <figcaption>As sugestões de melhoria que o sistema tirou de atendimentos reais.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo “aplicada”.</strong> Já foi usada.</li>
+  <li><strong>Selo “pendente”.</strong> Espera a sua decisão. <strong>Nada se aplica sozinho.</strong></li>
+  <li><strong>Tipo e idade.</strong> <em>Regra de playbook, Caso exemplar, Gatilho de reengajamento</em> ou <em>Memória da organização</em>, e “proposta há…”.</li>
+  <li><strong>O texto da proposta.</strong></li>
+  <li><strong>Aplicar como memória da org.</strong> Cria um <a href="#memoria">aprendizado</a> na Memória, que todos os agentes passam a usar.</li>
+  <li><strong>Aplicar como versão nova.</strong> Cria uma versão nova do agente (a publicada <em>mais</em> o texto da proposta no fim das instruções) e <strong>publica na hora</strong>.</li>
+</ol>
+<aside class="nota atencao"><strong>“Aplicar como versão nova” publica.</strong><p>O agente precisa ter uma versão publicada. Se a mudança não ficar boa, volte pela aba <em>Histórico › Reverter</em>.</p></aside>
+
+<h2 id="cuidados">Cuidados</h2>
+<aside class="nota dica"><strong>Teste antes de publicar.</strong><p>Use a aba <em>Teste</em> com as perguntas mais comuns dos seus clientes, e confira se a mensagem que “seria enviada” está do jeito que você quer. Publique depois.</p></aside>
+<aside class="nota dica"><strong>Comece pequeno.</strong><p>Ligue poucos pacotes de ferramentas, marque só os materiais necessários e deixe o <em>modo assistido</em> nos primeiros dias: a IA prepara a resposta e uma pessoa aprova o envio.</p></aside>
+<aside class="nota info"><strong>Existem três horários diferentes.</strong><p>O horário de funcionamento <em>do agente</em> (cartão “Quando ele entra em ação”), o horário de envio dos <em>follow-ups</em> e as janelas de disparo e resposta <em>por número</em> (em Conexões) são independentes. Eles não se substituem.</p></aside>

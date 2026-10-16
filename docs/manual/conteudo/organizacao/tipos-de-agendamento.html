@@ -1,0 +1,106 @@
+<!--meta {"id":"tipos-de-agendamento","grupo":"organizacao","titulo":"Tipos de agendamento","ordem":10,"resumo":"O que se pode marcar na Agenda (duração, local, quem atende, lembrete) e as regras gerais da agenda: confirmação de presença, dias de folga, agenda dos colegas e ligação com o Google.","palavras":["tipos de agendamento","agenda","duração","lembrete","responsável","jornada","feriado","folga","dias fora da rotina","confirmação de presença","clientes pela agenda","agenda dos colegas","preço padrão","google agenda"],"onde":"Configurações › Sua empresa › Tipos de agendamento","quem":"Todos abrem. Gerente ou acima cria e edita tipos e prazos; só Administrador liga “Clientes pela agenda”.","rotas":["/app/settings/tenant/agenda"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Aqui você define <strong>o que se pode marcar</strong>: quanto dura, onde acontece e quem atende. É exatamente esta lista que a tela de marcar da <a href="#agenda">Agenda</a> e o <a href="#agentes">agente de IA</a> oferecem ao cliente. A tela também reúne as <strong>regras gerais da agenda</strong>: como cobrar a presença, quando um dia fica fechado e quem pode mexer no compromisso de quem.</p>
+<p>Toda organização nova já nasce com três tipos: <strong>Consulta</strong>, <strong>Reunião</strong> e <strong>Atendimento</strong>, de 30 minutos cada. Eles vêm <em>sem responsável</em> — e um tipo sem responsável <strong>não aparece para marcar</strong>.</p>
+<aside class="nota atencao"><strong>Sem responsável, não há horário.</strong><p>Escolha, em cada tipo, <em>Quem atende</em>. Essa pessoa também precisa ter publicado a jornada de atendimento (os dias e as horas em que atende), em <em>Equipe › Atendimento</em>. Sem as duas coisas a Agenda avisa “A jornada de atendimento ainda não foi publicada”.</p></aside>
+
+<figure class="print">
+  <img src="img/tipos-de-agendamento.png" alt="Tela Tipos de agendamento com as seções Suas agendas Google, Confirmação de presença, Clientes pela agenda, Agenda dos colegas, Dias fora da rotina e a lista de tipos, numerada de 1 a 9" loading="lazy">
+  <figcaption>Tipos de agendamento: cinco seções de regras e, no fim, a lista de tipos.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Suas agendas Google.</strong> Só para quem tem conta do Google conectada. Para cada conta, escolha quais agendas contam como “ocupado” e em qual delas os novos compromissos são publicados. Sem conexão, a seção só mostra o link <em>Conecte sua conta pela Agenda</em>. Veja <a href="#tipos-de-agendamento--google">abaixo</a>.</li>
+  <li><strong>Confirmação de presença.</strong> Três prazos, em minutos. Veja <a href="#tipos-de-agendamento--presenca">abaixo</a>.</li>
+  <li><strong>Clientes pela agenda.</strong> Um interruptor, desligado por padrão: “Quem tem horário marcado vira cliente”.</li>
+  <li><strong>Agenda dos colegas.</strong> Um interruptor, ligado por padrão: “Atendentes podem mexer na agenda dos colegas”.</li>
+  <li><strong>Dias fora da rotina.</strong> Feche um dia (feriado, férias) ou abra um dia que a jornada semanal não cobre.</li>
+  <li><strong>Novo tipo de agendamento.</strong> Abre o formulário de criação.</li>
+  <li><strong>A lista de tipos.</strong> Cada linha mostra o nome, o selo da categoria, a duração e o local.</li>
+  <li><strong>Editar.</strong> Abre o formulário de edição dentro da própria linha.</li>
+  <li><strong>Desativar.</strong> Tira o tipo da tela de marcar sem apagá-lo. Um tipo desativado vira <em>Reativar</em>.</li>
+</ol>
+
+<h2 id="tipos">Criar e editar um tipo</h2>
+<figure class="print">
+  <img src="img/tipos-de-agendamento-form.png" alt="Formulário de novo tipo de agendamento e, abaixo, o formulário de edição do tipo Consulta com preço padrão e lembrete2" loading="lazy">
+  <figcaption>Acima, o formulário de criação; abaixo, a edição de um tipo existente.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome.</strong> Obrigatório, de 2 a 80 caracteres. É o nome que o cliente e o agente veem. Não pode repetir o de outro tipo.</li>
+  <li><strong>Categoria.</strong> Consulta, Procedimento, Retorno, Visita, Vistoria, Reunião, Call, Orçamento, Demonstração ou Outro. Só se escolhe ao criar.</li>
+  <li><strong>Duração (minutos).</strong> De 5 a 1.440. O padrão é 30. Define o tamanho do bloco na Agenda.</li>
+  <li><strong>Onde acontece.</strong> Presencial, Telefone, WhatsApp, Link de vídeo ou Google Meet. Só se escolhe ao criar.</li>
+  <li><strong>Quem atende.</strong> A pessoa responsável (ou “Definir depois”). É ela quem dá a jornada de horários e a cor dos blocos.</li>
+  <li><strong>Criar tipo.</strong> Grava. Aparece o aviso “Tipo de agendamento criado.”.</li>
+  <li><strong>Fechar.</strong> Recolhe o formulário de edição sem salvar.</li>
+  <li><strong>Preço padrão.</strong> Opcional. É o valor sugerido na <a href="#comandas">comanda</a> quando alguém é atendido nesse tipo, e pode ser mudado lá. Vazio = sem preço. O limite é R$ 1.000.000,00.</li>
+  <li><strong>Avisar o cliente antes do compromisso, pelo WhatsApp.</strong> Desligado por padrão. Veja o alerta abaixo.</li>
+  <li><strong>Quanto antes.</strong> O número e a unidade (<em>minutos, horas ou dias</em>), de 15 minutos a 7 dias. Dá para <strong>adicionar lembretes</strong> (até 1 principal + 20) e <strong>remover</strong> os extras.</li>
+  <li><strong>Mensagem deste lembrete.</strong> Até 1.000 caracteres. Em branco, vale o texto padrão: “Oi, [nome]! Passando pra lembrar do seu compromisso: [título], [dia] às [hora].”. Variáveis: <code>{{nome}}</code>, <code>{{titulo}}</code>, <code>{{dia}}</code>, <code>{{hora}}</code> e <code>{{endereco}}</code>.</li>
+  <li><strong>Salvar.</strong> Grava as alterações (“Tipo alterado.”).</li>
+</ol>
+<p>Na edição você troca só o <strong>nome</strong>, a <strong>duração</strong>, <strong>quem atende</strong> (a opção “Sem responsável” tira o dono), o <strong>preço padrão</strong> e o <strong>lembrete</strong>. Categoria, local, “pede confirmação”, antecedência mínima, janela de marcação e intervalo entre horários <strong>não têm campo na tela</strong>; só podem ser mudados pela API. Renomear não muda o endereço interno (slug) do tipo.</p>
+<p>Um tipo sem responsável mostra, em amarelo, <em>“sem responsável — definir quem atende”</em> (clique para abrir a edição). Para quem não pode editar, o aviso é “sem responsável — não aparece para marcar”. Quando o lembrete está ligado, a linha mostra “avisa o cliente 120, 60 min antes”.</p>
+<aside class="nota atencao"><strong>Ligar o lembrete faz o sistema escrever aos seus clientes.</strong><p>Com o lembrete ligado, o sistema manda um WhatsApp a cada cliente de cada compromisso do tipo (uma mensagem só, mesmo que vários avisos tenham vencido). Só vai para contatos com telefone e que não pediram para parar, dentro da janela de envio do número, e só funciona com o <em>scheduler</em> rodando. Em número da API Oficial, texto livre fora da janela de 24 horas pode ser recusado pela Meta.</p></aside>
+<aside class="nota info"><strong>Desativar não apaga.</strong><p>O tipo some da tela de marcar, mas continua respondendo pelos compromissos passados. É possível <em>Reativar</em> depois. Nenhuma das ações aqui manda mensagem a clientes, exceto o lembrete já ligado.</p></aside>
+
+<h2 id="presenca">Confirmação de presença</h2>
+<p>Depois do compromisso, o sistema pede à equipe que registre se o cliente veio. Os três prazos, todos em minutos:</p>
+<table class="tabela">
+  <thead><tr><th>Campo</th><th>Padrão</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Pedir confirmação após o fim</strong></td><td>10</td><td>Quanto tempo depois do fim do compromisso a pendência aparece (de 1 a 10.080).</td></tr>
+    <tr><td><strong>Proteger de cobranças por silêncio após o fim</strong></td><td>1.440 (24 h)</td><td>Durante esse prazo o cliente não é cobrado por silêncio (follow-up, Radar). Passado o prazo, a pendência continua visível; outro compromisso vivo ainda protege o contato.</td></tr>
+    <tr><td><strong>Soltar o horário de um pedido não confirmado após</strong></td><td>1.440</td><td>Vale só para tipos que pedem confirmação. O horário fica reservado enquanto o pedido espera; passado o prazo sem decisão, ele volta a ser oferecido. O cliente não é avisado, e o pedido continua na fila.</td></tr>
+  </tbody>
+</table>
+<p>A proteção precisa ser maior que a confirmação (“O prazo de proteção deve ser maior que o prazo de confirmação.”). Clique em <span class="ui">Salvar prazos</span> (Gerente ou acima). Os campos ficam desabilitados para quem não pode editar.</p>
+<aside class="nota info"><strong>O sistema nunca presume falta.</strong><p>Sem confirmação, a presença fica “desconhecida”. Só uma pessoa registra Compareceu ou Faltou.</p></aside>
+
+<h2 id="clientes">Clientes pela agenda</h2>
+<p>Ligado, <strong>quem tem horário marcado vira cliente</strong>: o contato ganha a etiqueta “cliente” e a ficha passa a mostrar “Cliente desde”. Horário cancelado e falta não contam; se não sobrar nenhum que conte, sai a etiqueta que o <em>sistema</em> pôs (a que a equipe pôs à mão fica). Desligado, ninguém ganha a etiqueta e todo contato novo entra pelo funil padrão.</p>
+<ul>
+  <li>Ao ligar, aparece a pergunta <em>“Ligar clientes pela agenda?”</em>: todos os contatos que já tiveram horário marcado ganham a etiqueta agora. Depois mostra o resultado (“N contatos ganharam a etiqueta”).</li>
+  <li>Desligar depois <strong>não</strong> tira a etiqueta de ninguém.</li>
+  <li>As automações “Quando um contato ganhar uma tag” disparam <strong>uma vez por contato</strong>, na primeira vez que o sistema acrescenta a etiqueta.</li>
+  <li><strong>Só Administrador</strong> liga e desliga. Se a organização exige verificação em duas etapas, a ação pede “Confirme a verificação em duas etapas”.</li>
+</ul>
+<aside class="nota atencao"><strong>Ligar mexe em muitos contatos de uma vez.</strong><p>A etiqueta é aplicada em massa a quem já teve horário. Confira o texto da janela de confirmação antes de aceitar.</p></aside>
+
+<h2 id="colegas">Agenda dos colegas</h2>
+<p>Ligado (o padrão), qualquer atendente cancela e remarca o compromisso de qualquer colega. Desligado, cada atendente mexe só nos compromissos <strong>de que é o responsável</strong>; Gerente e Administrador continuam mexendo em tudo. Isso não muda o que cada pessoa <em>vê</em> na Agenda. Quando a regra está desligada e um atendente tenta mexer no compromisso de um colega, a recusa diz: “Esta empresa está com ‘Atendentes podem mexer na agenda dos colegas’ desligado… Peça a um gerente ou administrador.”. Quem muda a regra: Gerente ou Administrador.</p>
+
+<h2 id="dias">Dias fora da rotina</h2>
+<p>Feche um dia (feriado, férias, viagem) ou abra um dia que a sua jornada semanal não cobre. <strong>Em dia fechado o sistema deixa de oferecer horários</strong>, mas o que já estava marcado continua marcado — você decide o que fazer com cada um.</p>
+<ul>
+  <li><strong>O que fazer:</strong> <em>Fechar o dia</em> ou <em>Abrir para atendimento</em>.</li>
+  <li><strong>Dia</strong> (a data). Em “Abrir”, também <strong>Das</strong> e <strong>Até</strong> (a hora final precisa ser maior que a inicial).</li>
+  <li><strong>Motivo (opcional):</strong> até 200 caracteres, como “feriado”.</li>
+  <li><strong>Repetir toda semana até (opcional):</strong> repete no mesmo dia da semana até a data escolhida (no máximo 53 repetições).</li>
+  <li>O botão muda para <span class="ui">Fechar este dia</span> / <span class="ui">Abrir este dia</span>. O resultado mostra “N dia(s) gravado(s)” e quantos já existiam.</li>
+</ul>
+<p>A lista abaixo do formulário mostra os bloqueios daqui para a frente de toda a organização, com o botão <span class="ui">Reabrir</span>, que remove o bloqueio. Cada bloqueio é gravado <strong>para a pessoa que o criou</strong>: você só altera a sua própria agenda (“Você só pode alterar a sua própria agenda.”), e Gerente pode remover os dos outros. O formulário só aparece para Gerente ou acima.</p>
+
+<h2 id="google">Suas agendas Google</h2>
+<p>Depois de conectar o Google pela <a href="#agenda--google">Agenda</a>, esta seção lista as suas contas e as agendas de cada uma:</p>
+<ul>
+  <li><strong>Atualizar lista e sincronização</strong> consulta o Google de novo.</li>
+  <li><strong>Conta como ocupado</strong> — a agenda bloqueia horários aqui quando há evento nela.</li>
+  <li><strong>Destino dos novos compromissos</strong> — onde os compromissos marcados aqui são publicados. É preciso escolher uma para salvar; os já publicados continuam na agenda original.</li>
+  <li>Cada agenda diz se permite criar links do Google Meet e quando foi sincronizada pela última vez.</li>
+  <li><span class="ui">Salvar agendas</span> grava; <span class="ui">Descartar alterações</span> volta ao que estava.</li>
+</ul>
+<p>Sem uma agenda de destino, os compromissos ficam esperando e o detalhe deles avisa: “Escolha uma agenda de destino nas configurações.”</p>
+
+<h2 id="papeis">Quem pode o quê</h2>
+<table class="tabela">
+  <thead><tr><th>Ação</th><th>Papel mínimo</th></tr></thead>
+  <tbody>
+    <tr><td>Ver a tela</td><td>Qualquer membro</td></tr>
+    <tr><td>Criar, editar, desativar e reativar tipos; salvar prazos; formulário de dias fora da rotina</td><td>Gerente</td></tr>
+    <tr><td>Agenda dos colegas</td><td>Gerente</td></tr>
+    <tr><td>Clientes pela agenda</td><td>Administrador</td></tr>
+    <tr><td>Suas agendas Google</td><td>Atendente</td></tr>
+  </tbody>
+</table>

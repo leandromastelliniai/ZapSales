@@ -1,0 +1,27 @@
+<!--meta {"id":"atualizacao","grupo":"organizacao","titulo":"Atualização do sistema","ordem":23,"resumo":"Ver a versão instalada no servidor e, havendo uma nova, mandar o servidor atualizar (com cópia de segurança antes). Só o dono do servidor.","palavras":["atualização","versão","atualizar agora","nova versão","update","backup","kit update","dono do servidor"],"onde":"Rodapé do menu lateral (“versão X.Y.Z” / “Nova versão · X.Y.Z”) — endereço /app/settings/atualizacao; não tem cartão em Configurações","quem":"Só o dono do servidor (administrador da plataforma). Qualquer outra pessoa recebe “página não encontrada”.","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Mostra a <strong>versão instalada no servidor</strong> e, quando há uma nova, o que muda nela — e deixa o dono mandar o servidor atualizar. É uma tela do <em>servidor</em>, não da empresa: “Administrador” da empresa <strong>não</strong> a vê (recebe “página não encontrada”), e ela não tem cartão no hub <a href="#config-hub">Configurações</a>. A porta é o rodapé do menu lateral: mostra “versão X.Y.Z” e, só para o dono, quando há versão nova, vira o link <strong>“Nova versão · X.Y.Z”</strong> com um ponto pulsando (uma seta quando o menu está recolhido).</p>
+<figure class="print media">
+  <img src="img/atualizacao.png" alt="Tela Atualização do sistema no estado Atualização automática indisponível, com o comando bash kit/update.sh e o botão Copiar" loading="lazy">
+  <figcaption>A tela, no estado “Atualização automática indisponível”.</figcaption>
+</figure>
+<p>A captura mostra o estado em que o sistema <em>não consegue falar com o servidor onde está instalado</em>: “Quem tem acesso ao servidor pode entrar na pasta onde o sistema foi instalado e rodar este comando — se for a primeira vez, rode duas vezes: a primeira baixa o programa novo e a segunda liga o botão desta tela.” O comando é <code>bash kit/update.sh</code>, com o botão <span class="ui">Copiar</span>. A linha “Versão instalada” pode aparecer em branco nesse estado.</p>
+
+<h2 id="estados">Os estados da tela</h2>
+<p>A descrição padrão é “A versão instalada no servidor e, quando houver uma nova, o que muda nela.” Cada estado tem título próprio:</p>
+<table class="tabela">
+  <thead><tr><th>Título</th><th>O que significa e o que fazer</th></tr></thead>
+  <tbody>
+    <tr><td>Carregando…</td><td>Lendo a versão.</td></tr>
+    <tr><td><strong>Você está na versão X</strong></td><td>“É a mais recente. Não há nada a fazer.”</td></tr>
+    <tr><td><strong>Versão X disponível</strong></td><td>Mostra a caixa <em>“⚠️ Requer atenção”</em> (“Da versão X:” com avisos de ação manual), o aviso de histórico incompleto, a seção <em>“O que muda”</em> (notas da versão-alvo abertas; as intermediárias recolhidas) e o botão <span class="ui">Atualizar agora</span> (“Iniciando…”) com a nota “O sistema sai do ar por cerca de 2 minutos e volta sozinho. Faço uma cópia de segurança dos seus dados antes.” Em instalação de desenvolvimento aparece um aviso amarelo de que a atualização leva à versão publicada.</td></tr>
+    <tr><td><strong>Pedido enviado — esperando o servidor pegar</strong></td><td>O servidor confere se há algo a fazer “de poucos em poucos minutos”, então a atualização pode levar até cerca de cinco minutos para começar; ficar parada nesse tempo é normal. “Pode fechar esta página: o pedido já está registrado e não se perde.”</td></tr>
+    <tr><td><strong>Atualizando para a versão X</strong></td><td>Quatro passos com ✓/○: “Guardando uma cópia de segurança dos seus dados”, “Baixando a versão nova”, “Atualizando o banco de dados”, “Reiniciando o sistema”. Depois, “Reiniciando…”: “O sistema está voltando. Esta página se atualiza sozinha em alguns instantes.”</td></tr>
+    <tr><td><strong>A atualização para a versão X terminou</strong></td><td>Quando o servidor ainda não confirmou em que versão voltou ao ar, mostra a última confirmada.</td></tr>
+    <tr><td><strong>…não deu certo</strong> / “Não sei dizer como terminou”</td><td>Voltou atrás ou não conseguiu voltar. Mostra comandos para rodar no servidor (<code>bash kit/update.sh --to vX.Y.Z --force</code>) e “Detalhes técnicos (útil se for pedir ajuda)”.</td></tr>
+    <tr><td><strong>Atualização automática indisponível</strong></td><td>Veja acima: rode o comando no servidor.</td></tr>
+    <tr><td>“Não consegui checar se há versão nova”, “Ainda não há nenhuma versão publicada”, “Você está à frente da versão publicada”</td><td>Casos de borda; a tela explica cada um.</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>Atualizar tira o sistema do ar para todos.</strong><p>O pedido é anotado e o agente do servidor (que confere a cada ~5 minutos) faz a cópia de segurança, baixa a versão, atualiza o banco e reinicia: <strong>o sistema fica fora do ar por cerca de 2 minutos para TODAS as empresas e usuários da instalação</strong>. Registra o pedido (<code>system.update_requested</code>) e o fim (<code>system.update_finished</code>) na <a href="#auditoria">Auditoria</a>. <em>Esta tela não foi acionada nas capturas</em>; atualização é um ato de operação do servidor, não do uso diário. Para a regra de versões e o que cada versão traz, veja o histórico de mudanças (changelog) do produto.</p></aside>

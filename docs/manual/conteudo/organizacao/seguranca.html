@@ -1,0 +1,54 @@
+<!--meta {"id":"config-seguranca","grupo":"organizacao","titulo":"Segurança","ordem":3,"resumo":"A verificação em duas etapas (código do celular), os códigos de recuperação, a regra que exige isso da equipe, a chamada de voz pelo WhatsApp e o botão de sair de todos os aparelhos.","palavras":["segurança","mfa","2fa","duas etapas","verificação","autenticador","totp","códigos de recuperação","sessões","sair de todos","chamada de voz","senha","carência"],"onde":"Configurações › Sua conta › Segurança","quem":"Todos abrem e veem as próprias opções. “Exigir da equipe”: só o Administrador. Chamada de voz: ver = Gerente; ligar = Administrador.","rotas":["/app/settings/security"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Proteger a sua conta. A <strong>verificação em duas etapas</strong> (também chamada de MFA ou 2FA) faz o sistema pedir, além da senha, um <em>código de 6 dígitos que só existe no seu celular</em>. É o que impede que uma senha vazada vire um vazamento.</p>
+<aside class="nota info"><strong>Não existe troca de senha aqui.</strong><p>A senha só é redefinida pelo fluxo “esqueci a senha” da tela de entrada.</p></aside>
+<figure class="print">
+  <img src="img/seguranca.png" alt="Tela de Segurança com cinco cartões: verificação em duas etapas, exigir da equipe, códigos de recuperação, chamada de voz e sessões ativas0" loading="lazy">
+  <figcaption>A tela de Segurança vista por um Administrador, com a verificação ainda desativada.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Verificação em duas etapas.</strong> Com o selo <em>Ativada</em> ou <em>Desativada</em>.</li>
+  <li><strong>Ativar.</strong> Abre o assistente de cadastro (abaixo). Se já está ativada, o botão vira <span class="ui">Desligar</span>.</li>
+  <li><strong>Exigir da equipe.</strong> Só o Administrador vê este cartão.</li>
+  <li><strong>Nível mínimo.</strong> “Não exigir de ninguém” (o padrão), “Administrador”, “Gerente”, “Atendente” ou “Somente leitura”. O nível escolhido alcança <em>esse papel e todos os acima</em>.</li>
+  <li><strong>Dias de carência.</strong> De 0 a 30. Durante o prazo ninguém é bloqueado; depois dele a tela trava até a pessoa cadastrar o aplicativo. O prazo começa na mudança da regra ou na entrada da pessoa na empresa, o que for mais tarde.</li>
+  <li><strong>Códigos de recuperação.</strong> “Use se perder acesso ao autenticador. Cada código é de uso único.”</li>
+  <li><strong>Regenerar códigos de recuperação.</strong> Só com a verificação ativada (“Habilite MFA antes de gerar códigos.”).</li>
+  <li><strong>Chamada de voz pelo WhatsApp.</strong> Veja abaixo.</li>
+  <li><strong>Sessões ativas.</strong> Ainda não há lista de sessões (“Listagem de sessões — em breve.”).</li>
+  <li><strong>Sair de todos os dispositivos.</strong> Veja abaixo.</li>
+</ol>
+
+<h2 id="ativar">Ativar a verificação em duas etapas</h2>
+<p>O botão <span class="ui">Ativar</span> abre um assistente de três passos em tela cheia escurecida. <em>O assistente não foi concluído nas capturas</em>, para não ativar o fator na conta de demonstração.</p>
+<ol>
+  <li><strong>“Configure a verificação em duas etapas”.</strong> Explica que, a cada login, além da senha, será pedido um código de 6 dígitos de um aplicativo autenticador (Google Authenticator, 1Password, Authy, Bitwarden). Botão <span class="ui">Iniciar configuração</span>. (Quando o assistente aparece por exigência da empresa, o texto diz que a empresa exige a verificação de quem administra.)</li>
+  <li><strong>“Escaneie o QR code”.</strong> Aponte o aplicativo para o QR code ou clique em “Não consegue escanear? Digite o código manual” para ver a chave. Digite o código de 6 dígitos e clique em <span class="ui">Confirmar</span> (“Código inválido. Tente novamente.” se errar).</li>
+  <li><strong>“Códigos de recuperação”.</strong> Aparecem 10 códigos, de uso único, que <em>não serão mostrados de novo</em>. Use <span class="ui">Copiar todos</span> ou <span class="ui">Baixar .txt</span>, marque “Salvei meus códigos em local seguro.” e clique em <span class="ui">Concluir</span>.</li>
+</ol>
+<ul>
+  <li>O assistente <strong>não tem botão de cancelar</strong>: se você fechar a aba antes de confirmar o código, nada é ativado.</li>
+  <li>Quem <strong>já tem</strong> o fator precisa provar o código a cada entrada, qualquer que seja a regra da empresa.</li>
+  <li><strong>Desligar</strong> exige ter provado o código <em>nesta sessão</em> e é <strong>recusado</strong> quando a empresa (ou o dono do servidor) obriga você: “A verificação em duas etapas é obrigatória para você nesta empresa. Desligue a regra antes.” Pede confirmação (“Sua conta fica sem essa camada de proteção até você ativar de novo.”).</li>
+  <li><strong>Regenerar códigos</strong> invalida os antigos imediatamente (“Gerar novos códigos de recuperação?”) e mostra 10 novos no próprio cartão.</li>
+</ul>
+
+<h2 id="exigir">Exigir da equipe</h2>
+<p>Ligue se a sua equipe mexe com dados de clientes. O padrão é <strong>não exigir</strong> de ninguém: a verificação é opcional até que um administrador decida. Duas políticas se <em>somam</em>: a da empresa (esta tela) e a do dono do servidor para o super-admin.</p>
+<ul>
+  <li>Salvar só habilita quando algo mudou: “A política de verificação foi salva.”. Nada mudou, nada é gravado.</li>
+  <li>Mudar a regra pede ter provado o código nesta sessão, se você tem o fator (“Confirme a verificação em duas etapas nesta sessão.”).</li>
+  <li>Fica na <a href="#auditoria">Auditoria</a> (<code>security.mfa_exigida</code> / <code>security.mfa_dispensada</code>).</li>
+</ul>
+
+<h2 id="voz">Chamada de voz pelo WhatsApp</h2>
+<p>Cartão que liga ou desliga a chamada de voz da empresa. <strong>Leia antes de ligar:</strong> para chamar, o sistema conecta um <em>segundo aparelho</em> ao mesmo número de WhatsApp por um caminho que <strong>não é o oficial</strong>; o WhatsApp pode entender como uso indevido e <strong>bloquear a conta inteira</strong>, não só a chamada. Para ligar é preciso marcar “Eu li o aviso acima e aceito o risco de o WhatsApp bloquear esta conta.” e clicar em <span class="ui">Ligar chamada de voz</span>; para desligar, <span class="ui">Desligar e desconectar o aparelho</span>.</p>
+<ul>
+  <li>Só o Administrador liga e desliga; o Gerente vê o estado. Os demais não veem o painel.</li>
+  <li>Quando o servidor <strong>não tem o serviço de chamadas instalado</strong> (o caso desta captura), aparece “Este servidor não tem a chamada de voz instalada. Quem cuida da instalação precisa ligá-la antes.”.</li>
+  <li>Não foi ligada nas capturas.</li>
+</ul>
+
+<h2 id="sair">Sair de todos os dispositivos</h2>
+<p>O botão <span class="ui">Sair de todos os dispositivos</span> pergunta “Você precisará fazer login de novo em cada um deles.” e, ao confirmar, <strong>encerra todas as suas sessões, inclusive a atual</strong>, e leva você à tela de entrada. Afeta só você. Use quando perder um aparelho.</p>

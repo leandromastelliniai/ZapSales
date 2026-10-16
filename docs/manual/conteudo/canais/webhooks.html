@@ -1,0 +1,156 @@
+<!--meta {"id":"webhooks","grupo":"canais","titulo":"Webhooks","ordem":3,"resumo":"Receba contatos de fora (landing pages, formulários, Zapier, n8n) como leads no funil e crie automações do tipo “quando acontecer isto, faça aquilo” — inclusive avisar outro sistema por webhook.","palavras":["webhooks","captação de leads","landing page","formulário","fonte","endereço","assinatura hmac","segredo","automações","gatilho","ação","avisar outro sistema","atividade","reenviar","zapier","n8n","elementor"],"onde":"Canais › Webhooks (também no menu lateral)","quem":"Gerente ou acima. Quem não é Gerente é levado de volta ao Inbox, sem mensagem.","rotas":["/app/webhooks"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>A tela <strong>Webhooks</strong> faz duas coisas diferentes, em quatro abas:</p>
+<ul>
+  <li><strong>Receber dados</strong> (webhook de <em>entrada</em>): você cria uma “fonte”, copia o endereço dela e cola no seu site, no formulário ou no Zapier. <strong>Cada envio vira um lead no funil.</strong></li>
+  <li><strong>Automações</strong>: regras “<em>quando</em> algo acontece, <em>se</em> uma condição vale, <em>então</em> faça estas ações”. Uma das ações possíveis é <em>“Avisar outro sistema (webhook)”</em> — o webhook de <em>saída</em>.</li>
+</ul>
+<aside class="nota info"><strong>Como esta tela difere do que o nome sugere.</strong><p>Não existe um cadastro de “endpoints de saída” com lista de eventos, nem “histórico de entregas” separado. O webhook de saída é <em>uma ação dentro de uma automação</em>, e o histórico dele é a aba <strong>Atividade</strong>. Também não há desativação automática de regra por excesso de falhas: a regra continua ligada e cada disparo falho gera um registro “Falhou”.</p></aside>
+<p>A tela tem quatro abas: <em>Receber dados</em> (padrão), <em>Leads recebidos</em>, <em>Automações</em> e <em>Atividade</em>.</p>
+
+<h2 id="fontes">Aba Receber dados</h2>
+<figure class="print media">
+  <img src="img/webhooks-vazio.png" alt="Tela Webhooks sem nenhuma fonte, com o convite para criar a primeira, numerada de 1 a 6" loading="lazy">
+  <figcaption>A tela de Webhooks antes de criar a primeira fonte.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong></li>
+  <li><strong>Receber dados.</strong></li>
+  <li><strong>Leads recebidos.</strong></li>
+  <li><strong>Automações.</strong></li>
+  <li><strong>Atividade.</strong></li>
+  <li><strong>Criar primeira fonte.</strong> “Conecte sua landing page em 2 minutos: 1. Crie uma fonte e diga em qual funil o contato entra. 2. Copie o endereço ou o formulário pronto. 3. Cole no seu site — cada envio vira um lead aqui dentro.” Com fontes criadas, o botão vira <span class="ui">Nova fonte</span> e cada fonte é um cartão com o nome, o selo <em>Ativa</em> ou <em>Pausada</em> e “nunca recebeu” ou “último recebimento há 2 minutos”.</li>
+</ol>
+
+<h3>Criar uma fonte</h3>
+<figure class="print media">
+  <img src="img/webhooks-nova-fonte.png" alt="Janela Nova fonte de captação com nome, funil, estágio e URL de obrigado, numerada de 1 a 5" loading="lazy">
+  <figcaption>A janela “Nova fonte de captação”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome.</strong> Obrigatório, de 1 a 120 caracteres (“Landing page de Black Friday”).</li>
+  <li><strong>Funil de entrada.</strong> O funil onde o contato vai entrar.</li>
+  <li><strong>Estágio de entrada.</strong> Só habilita depois de escolher o funil (e é zerado se você trocar o funil). Não aceita etapa arquivada nem de outro funil.</li>
+  <li><strong>URL de obrigado (opcional).</strong> Para onde mandar a pessoa depois de preencher o formulário.</li>
+  <li><strong>Criar fonte.</strong> A fonte nasce <strong>ativa</strong> e o painel dela abre sozinho: “Fonte criada. Agora é só conectar seu site.”.</li>
+</ol>
+<p>O diálogo não pede segredo nem mapeamento de campos. O endereço é gerado pelo servidor, com um código aleatório e impossível de adivinhar.</p>
+
+<h3>O painel da fonte</h3>
+<figure class="print">
+  <img src="img/webhooks-fonte.png" alt="Painel lateral de uma fonte com o endereço, o formulário pronto, as instruções, o teste, a assinatura e os últimos recebimentos, numerado de 1 a 12" loading="lazy">
+  <figcaption>O painel de uma fonte recém-criada.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome e situação.</strong> “Cada envio para o endereço abaixo vira um lead no seu funil, automaticamente.”</li>
+  <li><strong>Endereço da fonte.</strong> <code>https://seu-dominio/api/v1/webhooks/in/[código]</code>, com botão de copiar (“Endereço copiado.”).</li>
+  <li><strong>Formulário pronto para colar no seu site.</strong> Um bloco de HTML com os campos <code>nome</code>, <code>telefone</code> e <code>email</code>.</li>
+  <li><strong>Copiar formulário.</strong></li>
+  <li><strong>Como conectar no seu caso.</strong> Instruções para <em>Elementor Pro</em> (ação “Webhook”), <em>JetFormBuilder</em> (“Call Webhook”), <em>WordPress</em> (campo “Action”), <em>Zapier / n8n</em> (ação Webhooks → POST) e <em>formulário próprio</em>.</li>
+  <li><strong>Para desenvolvedores.</strong> Um exemplo <code>curl</code> com <code>Content-Type: application/json</code> e, com assinatura ligada, o cabeçalho <code>x-zapsales-signature</code>.</li>
+  <li><strong>Enviar lead de teste.</strong> Veja o alerta abaixo.</li>
+  <li><strong>Assinatura (HMAC).</strong> “Sem assinatura, quem descobrir o endereço consegue criar leads.” Veja <a href="#webhooks--assinatura">abaixo</a>.</li>
+  <li><strong>Gerar segredo.</strong></li>
+  <li><strong>Últimos recebimentos.</strong> Até 20, com bolinha verde e o tempo (“há 3 minutos”). Vazio: “Ainda não chegou nada por aqui.”.</li>
+  <li><strong>Fonte ativa.</strong> O interruptor. Pausada, “ela para de aceitar novos envios” e quem envia recebe erro 404.</li>
+  <li><strong>Excluir fonte.</strong> Vermelho. “O endereço para de funcionar imediatamente. Leads já recebidos continuam no seu funil — só a captação futura é interrompida. Essa ação não pode ser desfeita.”</li>
+</ol>
+<aside class="nota atencao"><strong>“Enviar lead de teste” cria um lead de verdade.</strong><p>O botão faz um envio real para a própria fonte com o nome “Lead de Teste” e o telefone <code>11999990000</code>: <strong>cria um lead e um contato</strong> no funil e no estágio da fonte. Com a assinatura ligada o botão fica apagado (“teste a partir do sistema que envia os dados”). Depois do teste aparece o link “Ver no Kanban”. Apague o lead de teste se não quiser mantê-lo. <em>O teste não foi executado</em> nesta captura.</p></aside>
+<h3 id="assinatura">A assinatura (HMAC)</h3>
+<p>Quem envia assina o <strong>corpo cru</strong> da requisição com <code>HMAC-SHA256</code> e manda o resultado em <strong>hexadecimal puro, sem prefixo</strong>, no cabeçalho <code>x-zapsales-signature</code>.</p>
+<ul>
+  <li><strong>Gerar segredo:</strong> o navegador gera 32 bytes aleatórios (64 caracteres), grava <em>cifrado</em> e <strong>mostra o segredo uma única vez</strong>, com o aviso “Guarde agora. Ele não será mostrado de novo.”. Fechar o painel apaga o valor da tela.</li>
+  <li><strong>Trocar segredo:</strong> “Integrações que usam o segredo atual vão parar de funcionar até serem atualizadas.” Mostra o novo uma vez.</li>
+  <li><strong>Remover segredo:</strong> “O endereço volta a aceitar envios sem assinatura — só o endereço secreto passa a protegê-lo.”</li>
+  <li>Sem a chave de cifra da instalação, o segredo não é gravado (“Quem administra o servidor resolve rodando o update.sh”).</li>
+  <li>Fica na auditoria (<code>webhook.source_created</code>, <code>webhook.source_updated</code>, <code>webhook.source_deleted</code>) sem nunca guardar o segredo.</li>
+</ul>
+
+<h2 id="leads">Aba Leads recebidos</h2>
+<figure class="print media">
+  <img src="img/webhooks-leads.png" alt="Aba Leads recebidos com os filtros e a mensagem de que ninguém preencheu os formulários ainda, numerada de 1 a 4" loading="lazy">
+  <figcaption>A aba “Leads recebidos”, ainda sem nenhum envio.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome, telefone ou e-mail.</strong> Busca parcial, sem diferenciar maiúsculas. <kbd>Enter</kbd> aplica.</li>
+  <li><strong>Fonte.</strong> “Todas as fontes” ou uma delas.</li>
+  <li><strong>Resultado.</strong> <em>Todos</em>, <em>Virou lead</em> (verde), <em>Reenvio</em> (o mesmo contato mandou de novo) ou <em>Não entrou</em> (vermelho: foi recusado).</li>
+  <li><strong>De / Até.</strong> Data e hora no seu fuso.</li>
+</ol>
+<p>É o histórico durável de <em>cada formulário que chegou</em>, inclusive os recusados. As colunas são: <em>Quem</em>, <em>Contato</em>, <em>Fonte</em>, <em>Quando</em>, <em>Origem</em> (a página que hospedava o formulário) e <em>Resultado</em>; 30 por página (<span class="ui">Carregar mais</span>). Vazio: “Ninguém preencheu seus formulários ainda.”.</p>
+<p>Clicar numa linha abre o <strong>painel da captação</strong>:</p>
+<ul>
+  <li>Se foi recusada, uma caixa vermelha explica o motivo: <em>“O envio não trazia nome, telefone nem e-mail reconhecíveis — confira os nomes dos campos do formulário.”</em>, <em>“A assinatura não conferiu…”</em>, <em>“O segredo de assinatura desta fonte não pôde ser lido nesta instalação…”</em> ou <em>“Os dados chegaram, mas o lead não pôde ser criado — confira se o funil e a etapa da fonte ainda existem.”</em></li>
+  <li><strong>O que o formulário trouxe:</strong> Nome, Telefone, E-mail e cada campo extra. Um campo extra ainda não cadastrado oferece <span class="ui">Cadastrar como campo do lead</span> (informe o <em>rótulo</em> e o <em>tipo</em>: Texto, Texto longo, Número, Data, E-mail, Telefone, Link, Sim/Não). Atenção: <strong>esta ação exige Administrador</strong>; o Gerente vê o botão, mas ao salvar recebe “Só quem administra o funil pode fazer isso.”. O funil aceita no máximo 50 campos.</li>
+  <li><strong>De onde veio:</strong> a página, o endereço IP, o navegador e cada UTM recebido (<code>utm_source</code>…).</li>
+  <li><span class="ui">Ver o lead no funil</span>, quando a captação gerou lead.</li>
+</ul>
+<aside class="nota atencao"><strong>É dado pessoal.</strong><p>O histórico guarda nome, telefone, e-mail e o formulário inteiro (até 60 campos). A anonimização de um contato por LGPD alcança as linhas ligadas a ele.</p></aside>
+
+<h2 id="automacoes">Aba Automações</h2>
+<p>Uma <strong>automação</strong> é uma regra: <em>quando</em> algo acontece, <em>se</em> uma condição vale, <em>então</em> execute uma ou mais ações, em ordem. Sem nenhuma: “Crie sua primeira automação — Ex.: quando entrar um contato novo, enviar uma mensagem de boas-vindas.”. Cada automação é um cartão com o nome, o selo <em>Ativa</em>/<em>Pausada</em>, o gatilho em português, “N ações”, o interruptor de ligar e pausar, o lápis e a lixeira (“{nome} para de rodar imediatamente. Essa ação não pode ser desfeita.”).</p>
+<figure class="print">
+  <img src="img/webhooks-automacao.png" alt="Editor de automação com o nome, o gatilho Quando um horário for marcado, o bloco Se e a ação Criar tarefa interna, numerado de 1 a 7" loading="lazy">
+  <figcaption>O editor de uma automação (cancelado sem salvar).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome da automação.</strong> Até 120 caracteres.</li>
+  <li><strong>QUANDO.</strong> Escolha o gatilho. Trocar o gatilho apaga as condições já montadas.</li>
+  <li><strong>SE (opcional).</strong> As condições.</li>
+  <li><strong>Adicionar condição.</strong> Até 10. Cada uma tem campo, operador (“é”, “não é”, “contém”; em listas, “tem a tag”) e valor.</li>
+  <li><strong>ENTÃO.</strong> As ações, de 1 a 10, executadas em ordem. As setas movem a ação; a lixeira a remove.</li>
+  <li><strong>“A automação nasce pausada.”</strong> “Revise e ligue quando estiver pronta.”</li>
+  <li><strong>Criar automação</strong> (ou <em>Salvar alterações</em>).</li>
+</ol>
+<h3>Os gatilhos (“eventos disponíveis”)</h3>
+<table class="tabela">
+  <thead><tr><th>Gatilho</th><th>Quando dispara</th></tr></thead>
+  <tbody>
+    <tr><td>Quando entrar um contato novo (webhook)</td><td>Um lead novo é criado.</td></tr>
+    <tr><td>Quando um lead mudar de etapa</td><td>Um negócio muda de etapa.</td></tr>
+    <tr><td>Quando chegar mensagem no WhatsApp</td><td>Uma mensagem de cliente chega.</td></tr>
+    <tr><td>Quando uma mensagem não for entregue</td><td>Falha de entrega.</td></tr>
+    <tr><td>Quando um lead / contato ganhar uma tag</td><td>Uma etiqueta é acrescentada.</td></tr>
+    <tr><td>No aniversário de um contato</td><td>Todo ano, na data (varredura diária).</td></tr>
+    <tr><td>Quando um horário for marcado, confirmado, remarcado ou cancelado; quando alguém comparecer ou faltar</td><td>Os seis eventos da <a href="#agenda">Agenda</a>.</td></tr>
+    <tr><td>Quando faltarem N dias para uma data do funil</td><td>Um campo de data do funil se aproxima (use N negativo para avisar <em>depois</em> da data). Uma vez por negócio.</td></tr>
+    <tr><td>Quando ficar N dias sem mensagem</td><td>Silêncio da equipe, do cliente ou de qualquer um; zera quando chega mensagem; opção de não avisar quando há compromisso marcado.</td></tr>
+    <tr><td>Quando um lead ficar N dias na mesma etapa</td><td>Mudar de etapa zera o relógio.</td></tr>
+  </tbody>
+</table>
+<p>Os gatilhos de data, silêncio e aniversário nascem de <strong>varreduras periódicas do sistema</strong>, não de uma ação de alguém.</p>
+<h3>As ações</h3>
+<table class="tabela">
+  <thead><tr><th>Ação</th><th>O que faz</th><th>Efeito</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Criar/mover lead no funil</strong></td><td>Escolhe funil e etapa. Mover para <em>outro funil</em> pode estar desligado na organização.</td><td>Mexe no funil.</td></tr>
+    <tr><td><strong>Enviar mensagem no WhatsApp</strong></td><td>Número (só conectados), texto de 1 a 2.000 caracteres com <code>{{nome}}</code>, <code>{{telefone}}</code>, <code>{{lead.title}}</code> e campos do funil. Respeita a janela de envio e o limite diário do número.</td><td><strong>Manda mensagem real.</strong></td></tr>
+    <tr><td><strong>Mensagem escrita pela IA</strong></td><td>Escolhe um agente publicado e diz “o que a IA deve fazer com os dados” (1 a 1.000 caracteres).</td><td><strong>Manda mensagem real e gasta IA.</strong></td></tr>
+    <tr><td><strong>Adicionar tag</strong></td><td>De 1 a 10 tags separadas por vírgula.</td><td>Etiqueta o lead.</td></tr>
+    <tr><td><strong>Atribuir a um atendente</strong></td><td>Escolhe a pessoa.</td><td>Muda o responsável.</td></tr>
+    <tr><td><strong>Avisar outro sistema (webhook)</strong></td><td>Endereço (URL), segredo opcional (assinatura) e o interruptor <em>Incluir o responsável no corpo</em> (desligado por padrão).</td><td>Faz uma requisição HTTP para fora, até 3 tentativas.</td></tr>
+    <tr><td><strong>Iniciar fluxo de mensagem</strong></td><td>Inscreve o contato num <a href="#followups">follow-up</a> publicado.</td><td>Pode mandar mensagens.</td></tr>
+    <tr><td><strong>Criar tarefa interna (sem mensagem ao cliente)</strong></td><td>Título, “Vence em (dias)” (0 a 365), prioridade e a quem atribuir.</td><td>Só cria uma <a href="#tarefas">tarefa</a>.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li>A regra só dispara com o interruptor <strong>Ativa</strong>. Ela nasce <strong>pausada</strong>.</li>
+  <li>Segredos de webhook dentro das ações são <em>cifrados</em> antes de gravar e nunca vão para a auditoria. Sem a chave de cifra, você ainda pode criar a ação sem segredo.</li>
+  <li>Cada regra criada, editada ou excluída fica na auditoria (<code>automation.rule_created</code>, <code>.rule_updated</code>, <code>.rule_deleted</code>).</li>
+</ul>
+<aside class="nota atencao"><strong>As frases “Nada é enviado ao cliente” falam só do gatilho.</strong><p>Nos gatilhos de silêncio e de etapa parada, o texto diz “Nada é enviado ao cliente” — isso vale para o <em>aviso do gatilho</em>. A <strong>regra</strong> pode ter qualquer ação, inclusive mandar WhatsApp, se você a adicionar.</p></aside>
+
+<h2 id="atividade">Aba Atividade</h2>
+<p>É o histórico das <strong>últimas 50 execuções</strong> de automações (do mais recente ao mais antigo), com o botão <span class="ui">Atualizar</span>. Vazio: “Nenhuma automação rodou ainda. Assim que uma regra ligada disparar, o histórico aparece aqui.”. Cada cartão mostra o nome da regra (ou “Automação removida”), um selo, o tempo e uma linha por ação executada.</p>
+<table class="tabela">
+  <thead><tr><th>Selo</th><th>Significa</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Sucesso</strong></td><td>Todas as ações funcionaram.</td></tr>
+    <tr><td><strong>Falhou</strong></td><td>Todas falharam ou foram puladas.</td></tr>
+    <tr><td><strong>Parcial</strong></td><td>Algumas falharam.</td></tr>
+    <tr><td><strong>Aguardando envio</strong> (azul)</td><td>A mensagem ficou esperando a janela de envio do número ou a fila do canal. <em>Não é falha.</em></td></tr>
+  </tbody>
+</table>
+<p>Cada ação mostra se teve sucesso, falhou, foi pulada ou adiada, e o <strong>motivo em português</strong> quando há (“O contato pediu para não receber mensagens (opt-out).”, “O contato não tem telefone cadastrado.”, “Está fora da janela de envio configurada para esse número. A mensagem sai sozinha quando ela reabrir.”, “O agente escolhido não tem versão publicada.”…). Quando não há frase pronta, aparece o código cru (<code>http_500</code>, <code>unsafe_url:private_host</code>).</p>
+<p>O botão <span class="ui">Reenviar</span> aparece <strong>só numa ação de webhook que falhou</strong>. Ele <em>reexecuta todas as ações “Avisar outro sistema”</em> daquela regra, contra o evento original, com os dados <em>atuais</em> do lead, mantendo o mesmo identificador de entrega (o receptor pode descartá-lo como duplicata). Faz uma requisição real, com até 3 tentativas, e não tem prazo-limite para reenviar (“Reenviado.”). Fica na auditoria (<code>automation.run_resent</code>); o motor audita uma execução só quando ela <em>não</em> foi um sucesso.</p>

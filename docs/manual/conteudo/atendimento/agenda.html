@@ -1,0 +1,149 @@
+<!--meta {"id":"agenda","grupo":"atendimento","titulo":"Agenda","ordem":3,"resumo":"O calendário da equipe: veja o que está marcado (dia, semana ou mês), marque, remarque, cancele e registre se o cliente compareceu. Pode espelhar tudo com o Google Agenda.","palavras":["agenda","agendamento","compromisso","calendário","marcar","remarcar","cancelar","compareceu","faltou","horário livre","semana","mês","google agenda","confirmação de presença","aguardando confirmação"],"onde":"Atendimento › Agenda","quem":"Todos abrem e veem. Marcar, remarcar, cancelar e registrar presença: Atendente ou acima.","rotas":["/app/agenda"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>A <strong>Agenda</strong> mostra o que está marcado, com quem e quem atende — o seu e o da equipe. Dela saem os horários que o <a href="#agentes">agente de IA</a> oferece ao cliente, e nela você <strong>marca, remarca, cancela</strong> e registra se o cliente <strong>compareceu ou faltou</strong>.</p>
+<aside class="nota info"><strong>Para a agenda oferecer horários, falta configurar duas coisas.</strong><p>Cada tipo de agendamento precisa de uma <strong>pessoa responsável</strong>, e essa pessoa precisa ter publicado a sua <strong>jornada de atendimento</strong> (os dias e horas em que atende, em <em>Equipe › Atendimento</em>). Sem isso a tela avisa “A jornada de atendimento ainda não foi publicada” e ninguém consegue marcar clicando na grade — nem você, nem o agente. Os tipos são criados em <a href="#tipos-de-agendamento">Tipos de agendamento</a>.</p></aside>
+
+<figure class="print">
+  <img src="img/agenda-semana.png" alt="Tela Agenda na visão de semana, com o cartão do Google, a lista de próximos compromissos e a grade de horários, numerada de 1 a 12" loading="lazy">
+  <figcaption>A Agenda na visão de semana, com os próximos compromissos acima da grade.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Abre o painel de ajuda da tela.</li>
+  <li><strong>Hoje.</strong> Volta ao dia de hoje — no fuso da <em>organização</em>, não no do seu navegador.</li>
+  <li><strong>Novo agendamento.</strong> Abre o <a href="#agenda--novo">painel de marcação</a>. Só para Atendente ou acima, e fica apagado se não existe nenhum tipo de agendamento ativo.</li>
+  <li><strong>Cartão do Google.</strong> Mostra se a agenda está ligada ao Google Agenda. Veja <a href="#agenda--google">abaixo</a>.</li>
+  <li><strong>Período.</strong> As setas andam para trás e para frente (7 dias na semana, 1 no dia, 30 no mês) e o título mostra o período que você está vendo.</li>
+  <li><strong>Dia · Semana · Mês.</strong> Troca a visão da grade. O padrão é Semana (em celular, abre em Dia).</li>
+  <li><strong>As quatro abas do histórico:</strong> <em>Próximos</em>, <em>Aguardando confirmação</em>, <em>Passados</em> e <em>Cancelados</em>, cada uma com seu contador.</li>
+  <li><strong>Uma linha do histórico.</strong> Mostra a data, o horário, o cliente (clique para abrir o compromisso), quem atende e a situação.</li>
+  <li><strong>Remarcar.</strong> Abre o painel de marcação para escolher outro horário.</li>
+  <li><strong>Cancelar.</strong> Abre o <a href="#agenda--cancelar">painel de cancelamento</a>.</li>
+  <li><strong>Horários livres de.</strong> Aparece quando há mais de um tipo ativo. Escolha de qual tipo você quer ver os horários livres (cada tipo tem sua duração e seu responsável).</li>
+  <li><strong>Um compromisso na grade.</strong> Um bloco colorido pela pessoa responsável. Clique para abrir o <a href="#agenda--detalhe">detalhe</a>; arraste para remarcar.</li>
+</ol>
+
+<h2 id="grade">A grade</h2>
+<ul>
+  <li>Dia e Semana mostram as horas de <strong>07h às 21h</strong>, com uma linha vermelha marcando “agora”. Compromissos fora desse intervalo ficam fora da área visível.</li>
+  <li>Cada bloco mostra o título; quando cabe (45 minutos ou mais), também a hora e o cliente. <strong>Cancelados não aparecem na grade</strong> — ficam só na aba “Cancelados”.</li>
+  <li>Blocos hachurados escritos “Ocupado” são horários ocupados no <strong>Google Agenda</strong> da pessoa. Eles só informam que o horário está tomado: nunca mostram o título do evento, e não abrem nem arrastam.</li>
+  <li><strong>Clicar num horário livre</strong> abre “Novo agendamento” já naquele horário. Passando o mouse, a dica explica por que um bloco não pode ser clicado: “este horário já passou”, “já há um compromisso neste horário”, “fora dos horários que você publicou”…</li>
+  <li><strong>Arrastar um bloco</strong> para outro horário pede confirmação: <em>“Remarcar [nome] para [dia e hora]? Quem foi atendido recebe o aviso da mudança.”</em> Se o horário não puder ser usado, uma faixa amarela explica o motivo.</li>
+</ul>
+<aside class="nota atencao"><strong>“Quem foi atendido recebe o aviso” depende de uma automação.</strong><p>Remarcar apenas move o compromisso e emite o evento <code>appointment.rescheduled</code>. Quem avisa o cliente é uma automação ou regra da sua organização que escute esse evento; a tela, sozinha, não manda mensagem.</p></aside>
+
+<figure class="print">
+  <img src="img/agenda-mes.png" alt="Agenda na visão de mês com a aba Aguardando confirmação aberta, numerada de 1 a 7" loading="lazy">
+  <figcaption>Visão de mês, com a aba “Aguardando confirmação” aberta.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Mês.</strong> Mostra seis semanas numa grade de 7 colunas, cada dia com os seus compromissos.</li>
+  <li><strong>Aguardando confirmação.</strong> Pedidos de horário que ainda esperam uma decisão da equipe.</li>
+  <li><strong>Selo de situação.</strong> <em>Aguardando confirmação</em> (amarelo), <em>Confirmado</em>, <em>Cancelado</em>, <em>Realizado</em> (verde) ou <em>Não compareceu</em> (vermelho).</li>
+  <li><strong>Confirmar.</strong> Aparece só em “Aguardando confirmação”: aceita o pedido.</li>
+  <li><strong>Remarcar.</strong> Disponível em “Próximos” e “Aguardando confirmação”.</li>
+  <li><strong>Cancelar.</strong> Disponível nas mesmas abas.</li>
+  <li><strong>Um compromisso no dia.</strong> O dia de hoje vem destacado; quando há mais compromissos do que cabem, aparece “+1”.</li>
+</ol>
+<p>Na aba <strong>Passados</strong> aparecem, enquanto a presença não foi registrada, os botões <span class="ui">Realizado</span> e <span class="ui">Faltou</span>. A aba “Aguardando confirmação” só tem itens se algum tipo de agendamento pedir confirmação ou se o agente de IA criar um pedido pendente.</p>
+<aside class="nota info"><strong>Pedidos não decididos soltam o horário sozinhos.</strong><p>Um pedido que ninguém confirma volta a ficar livre depois do prazo configurado (24 horas por padrão, em <em>Configurações › Tipos de agendamento › Confirmação de presença</em>). O cliente não é avisado.</p></aside>
+
+<h2 id="novo">Marcar ou remarcar</h2>
+<p>O painel que abre à direita se chama <strong>Novo agendamento</strong> (ou <strong>Remarcar agendamento</strong>, quando você remarca).</p>
+<figure class="print">
+  <img src="img/agenda-novo.png" alt="Painel Novo agendamento com a escolha do cliente, do tipo, os campos opcionais, o calendário do mês e a lista de horários, numerado de 1 a 11" loading="lazy">
+  <figcaption>O painel “Novo agendamento”, já com o dia 19 e o horário 09:00 escolhidos.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Quem será atendido.</strong> Digite para procurar um contato. Deixe em branco (“Compromisso pessoal, sem cliente”) para marcar algo só seu. Se o nome não existir, a lista oferece <em>Criar “nome”</em>, que abre o formulário de novo contato. Ao remarcar, este campo some.</li>
+  <li><strong>Conversa vinculada (opcional).</strong> Só aparece com um cliente escolhido. Liga o compromisso a uma conversa dele no <a href="#inbox">Inbox</a>.</li>
+  <li><strong>Tipo de agendamento.</strong> Botões com o nome e a duração. Só aparece quando existe mais de um tipo ativo.</li>
+  <li><strong>E-mail do convidado (opcional).</strong> O cliente que tem e-mail na ficha já recebe o convite; preencha só para chamar mais alguém. Um e-mail inválido bloqueia a confirmação.</li>
+  <li><strong>Endereço (opcional).</strong> Onde acontece. Vem preenchido com o local do tipo. Marque <em>“Salvar para os próximos agendamentos”</em> para guardar o endereço para a empresa.</li>
+  <li><strong>Observação (opcional).</strong> O que a equipe precisa lembrar neste horário. Aparece na descrição do compromisso.</li>
+  <li><strong>Dia.</strong> O calendário mostra o mês. Os dias com vaga ficam em lilás; os demais ficam travados, e a dica de cada um diz o motivo (“nenhum horário livre neste dia”, “fora deste mês”, “nenhum horário publicado neste dia”).</li>
+  <li><strong>Horário.</strong> A lista de horas livres do dia escolhido. Escolher uma delas mostra a frase de confirmação.</li>
+  <li><strong>Voltar.</strong> Desfaz a escolha do horário.</li>
+  <li><strong>Confirmar.</strong> Cria o compromisso. Veja “O que acontece” abaixo.</li>
+  <li><strong>Fechar.</strong> Fecha o painel sem marcar nada.</li>
+</ol>
+<ol class="passos">
+  <li>Clique em <span class="ui">Novo agendamento</span> (ou num horário livre da grade).</li>
+  <li>Escolha o cliente (ou deixe em branco para um compromisso pessoal) e, se houver mais de um, o tipo.</li>
+  <li>Escolha o dia e o horário e clique em <span class="ui">Confirmar</span>.</li>
+  <li>O painel mostra “Marcado.” com o resumo, e os botões <span class="ui">Marcar outro</span> e <span class="ui">Ver na agenda</span>.</li>
+</ol>
+<p>O botão <span class="ui">Outro horário</span>, ao fim da lista de horas, é o <strong>encaixe</strong>: permite digitar uma hora fora da jornada publicada. A agenda só recusa se o horário já estiver ocupado. Se o cliente pediu para não receber mensagens, aparece o aviso “O lembrete não será enviado — combine por telefone.”.</p>
+
+<h3>O que acontece ao confirmar</h3>
+<ul>
+  <li>O compromisso é criado como <strong>Confirmado</strong> (ou <strong>Aguardando confirmação</strong>, se o tipo pede confirmação).</li>
+  <li>A agenda recusa horário que não é oferecido pela jornada, que já está ocupado (por outro compromisso ou pelo Google da pessoa) ou de tipo desativado.</li>
+  <li>Fica registrado na linha do tempo do cliente e no registro de auditoria, e o evento <code>appointment.created</code> é emitido: automações e webhooks da organização podem reagir a ele. <strong>O botão em si não manda nenhuma mensagem ao cliente.</strong></li>
+  <li>Se a pessoa tem o Google conectado, o compromisso entra na fila de envio ao Google (a cada 5 minutos).</li>
+  <li>Se o tipo tem <em>lembrete</em> ligado, o sistema manda um WhatsApp ao cliente antes do horário (veja <a href="#tipos-de-agendamento">Tipos de agendamento</a>).</li>
+</ul>
+
+<h2 id="detalhe">O detalhe de um compromisso</h2>
+<p>Clique num bloco da grade, no nome do cliente na lista, ou abra um link vindo do <a href="#radar">Radar</a>. O painel mostra tudo sobre o compromisso e se atualiza sozinho.</p>
+<figure class="print">
+  <img src="img/agenda-detalhe.png" alt="Painel de detalhe de um compromisso, com a sincronização do Google, o envio ao cliente, os dados e os botões de presença, numerado de 1 a 13" loading="lazy">
+  <figcaption>O detalhe de um compromisso que já passou e ainda não teve a presença registrada.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Título.</strong> Tipo e cliente.</li>
+  <li><strong>Sincronização Google.</strong> O estado do espelho com o Google. Aqui, “Há alterações aguardando sincronização. Escolha uma agenda de destino nas configurações.” — o compromisso ainda não foi enviado porque nenhuma agenda de destino foi escolhida. O botão <em>Tentar sincronizar novamente</em> refaz a tentativa.</li>
+  <li><strong>Configurar suas agendas.</strong> Leva a <a href="#tipos-de-agendamento">Configurações › Tipos de agendamento</a>, onde se escolhe a agenda do Google.</li>
+  <li><strong>Mandar ao cliente.</strong> Um bloco para <em>enviar os dados do compromisso</em> ao cliente, na conversa que você escolher no seletor. Em compromissos do tipo Google Meet o bloco vira “Google Meet” e envia o <em>link</em> da reunião. Veja o alerta abaixo.</li>
+  <li><strong>Data e hora</strong>, no fuso do compromisso.</li>
+  <li><strong>Local.</strong> Presencial, Telefone, WhatsApp, Link de vídeo ou Google Meet, com o detalhe.</li>
+  <li><strong>Observação</strong> escrita na marcação.</li>
+  <li><strong>Situação:</strong> <em>Aguardando confirmação</em>, <em>Agendado</em>, <em>Compareceu</em>, <em>Faltou</em> ou <em>Cancelado</em>.</li>
+  <li><strong>Ver contato.</strong> Abre a ficha do cliente em <a href="#contatos">Contatos</a>. Num compromisso pessoal aparece “Compromisso pessoal, sem cliente vinculado.”.</li>
+  <li><strong>Compareceu.</strong> Registra que o cliente veio.</li>
+  <li><strong>Faltou.</strong> Registra a falta. Pode abrir um fluxo de recuperação (acompanhamento).</li>
+  <li><strong>Lembrar em uma hora.</strong> Adia em 1 hora a cobrança da equipe sobre a presença.</li>
+  <li><strong>Cancelar agendamento.</strong> Pede o motivo (campo logo acima) e cancela.</li>
+</ol>
+<ul>
+  <li>Entre os dados e os botões há o aviso <em>“O horário sozinho não confirma falta. A equipe precisa registrar o que aconteceu.”</em> O sistema <strong>nunca presume falta</strong>: quem decide é uma pessoa.</li>
+  <li>O seletor <em>“Mensagem do cliente usada como evidência (opcional)”</em> deixa ligar ao registro a mensagem em que o cliente avisou que vinha ou não. Por padrão é “Confirmação da equipe, sem mensagem”.</li>
+  <li><strong>Compareceu</strong> e <strong>Faltou</strong> ficam desabilitados antes do horário de início. Se o cliente avisou que não vem, cancele em vez de registrar falta.</li>
+  <li>Só uma pessoa registra presença: o agente de IA e as chamadas por token recebem uma recusa (“Peça à equipe para confirmar a presença…”).</li>
+  <li>Se outra pessoa mexeu antes de você, o sistema pede que você recarregue: “O compromisso mudou. Recarregue antes de confirmar.”</li>
+</ul>
+<aside class="nota atencao"><strong>“Mandar ao cliente” envia uma mensagem real.</strong><p>Escolha com cuidado a conversa que receberá os dados. Depois de enviado o botão vira <em>Enviar de novo</em>, que pede uma confirmação (“Mandar de novo os dados deste compromisso para o cliente?”) para evitar envio em dobro. Se o bloco diz “O atendimento mudou. Autorize uma nova entrega na conversa desejada.”, escolha a conversa de novo.</p></aside>
+
+<h2 id="cancelar">Cancelar um compromisso</h2>
+<figure class="print media">
+  <img src="img/agenda-cancelar.png" alt="Painel Cancelar agendamento com o campo do motivo e os botões Voltar e Cancelar agendamento, numerado de 1 a 4" loading="lazy">
+  <figcaption>O painel de cancelamento, aberto pelo botão “Cancelar” da lista.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O que está sendo cancelado.</strong> A frase repete o título, o cliente e a data.</li>
+  <li><strong>Por que está cancelando?</strong> Campo obrigatório, com pelo menos 3 caracteres (exemplo: “O paciente pediu para remarcar por telefone”).</li>
+  <li><strong>Voltar.</strong> Fecha sem cancelar.</li>
+  <li><strong>Cancelar agendamento.</strong> Cancela de verdade.</li>
+</ol>
+<aside class="nota perigo"><strong>Cancelar não tem volta.</strong><p>O compromisso vai para a aba “Cancelados” e some da grade. Não dá para reabri-lo: marque um novo. A linha não é apagada (fica no histórico e na auditoria), e o evento <code>appointment.cancelled</code> é emitido para as automações.</p></aside>
+
+<h2 id="google">Ligar ao Google Agenda (opcional)</h2>
+<p>O cartão logo abaixo do título tem três estados:</p>
+<ul>
+  <li><strong>“Sincronizar com o Google ainda não está disponível”</strong> — a instalação ainda não tem as credenciais do aplicativo do Google. O cartão diz quais variáveis faltam e traz, dentro de “Dados para quem cadastra o aplicativo no Google”, o endereço de retorno a registrar no console do Google. Quem é administrador da instalação tem o link <em>Cadastrar as credenciais do Google</em>. <strong>Não é um defeito:</strong> “até lá a agenda funciona normalmente, só não troca compromissos com o Google”.</li>
+  <li><strong>“Conecte sua agenda do Google…”</strong> — a instalação está configurada, mas você ainda não conectou. O botão <span class="ui">Conectar Google</span> leva ao Google para você autorizar.</li>
+  <li><strong>“Agenda conectada: seu@email”</strong> — com o link <em>Configurar suas agendas</em> e o botão <span class="ui">Desconectar</span>. Desconectar <strong>não apaga</strong> compromissos.</li>
+</ul>
+<p>Conectado, você vê aqui o que já está marcado no Google (como “Ocupado”) e o que for marcado aqui vai para lá. Quem é Gerente pode desconectar a conta de outra pessoa.</p>
+
+<h2 id="papeis">O que cada papel pode fazer</h2>
+<table class="tabela">
+  <thead><tr><th>Papel</th><th>Na Agenda</th></tr></thead>
+  <tbody>
+    <tr><td>Somente leitura</td><td>Vê a grade e a lista. Não vê o botão Novo agendamento nem o filtro de pessoas. Os botões da lista são desenhados, mas a ação volta recusada.</td></tr>
+    <tr><td>Atendente</td><td>Marca, remarca, cancela e registra presença. Se a organização desligar “Atendentes podem mexer na agenda dos colegas”, só mexe nos compromissos de que é responsável.</td></tr>
+    <tr><td>Gerente e Administrador</td><td>Mexem em todos os compromissos; Gerente também configura os tipos e desconecta o Google de outra pessoa.</td></tr>
+  </tbody>
+</table>
+<aside class="nota dica"><strong>Atalho a partir do Inbox.</strong><p>O botão “Marcar compromisso” no painel do cliente, no <a href="#inbox">Inbox</a>, abre a Agenda com o painel de marcação já preenchido com aquele cliente e aquela conversa.</p></aside>

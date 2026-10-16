@@ -1,0 +1,55 @@
+<!--meta {"id":"empresas","grupo":"crm","titulo":"Empresas","ordem":11,"resumo":"Módulo opcional para quem vende para empresas: cadastro com razão social e CNPJ, preenchido sozinho com os dados públicos (BrasilAPI), e as pessoas e telefones de cada empresa.","palavras":["empresas","b2b","cnpj","razão social","nome fantasia","brasilapi","enriquecer","receita federal","decisor","cadastro de empresas"],"onde":"CRM › Ver tudo em CRM › Empresas (só com o módulo “Empresas e pessoas” ligado na instalação)","quem":"Todos veem. Cadastrar e enriquecer: Gerente ou acima.","modulo":"Empresas e pessoas (crm_b2b)","rotas":["/app/companies","/app/companies/[id]"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Em <strong>Empresas</strong> você guarda as empresas que atende: razão social, nome fantasia, CNPJ e cidade. A partir do CNPJ, o sistema <strong>busca na internet os dados públicos</strong> da empresa e preenche o resto sozinho. Cada empresa fica ligada às <a href="#pessoas">pessoas</a> que decidem dentro dela.</p>
+<aside class="nota atencao"><strong>É um módulo opcional, desligado por padrão.</strong><p>Empresas, <a href="#pessoas">Pessoas</a> e <a href="#importacoes">Importações</a> só existem quando o administrador da <em>instalação</em> liga o módulo “Empresas e pessoas (venda para empresas)” em <em>Admin › Sistema</em>. Desligado, as telas, o menu e a busca somem e quem digita o endereço vê “página não encontrada”. Os dados não são apagados. Se você não vê “Empresas” em <span class="ui">Ver tudo em CRM</span>, o módulo está desligado.</p></aside>
+<aside class="nota atencao"><strong>Consultar um CNPJ manda o número para fora do sistema.</strong><p>O enriquecimento consulta a <strong>BrasilAPI</strong> (serviço público e gratuito, <code>brasilapi.com.br</code>). O CNPJ sai do seu servidor para essa consulta. Não gasta crédito do ZapSales nem manda mensagem a cliente.</p></aside>
+
+<figure class="print">
+  <img src="img/empresas-lista.png" alt="Lista de Empresas com nome fantasia, razão social, CNPJ, cidade, situação e data, numerada de 1 a 7" loading="lazy">
+  <figcaption>A lista de empresas (dados fictícios).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Painel de ajuda.</li>
+  <li><strong>Nova empresa.</strong> Abre o <a href="#empresas--nova">formulário</a>. O botão aparece para todos, mas só Gerente ou acima consegue criar.</li>
+  <li><strong>Busca.</strong> “Buscar por nome ou CNPJ”, sem apertar nada (espera 250 ms depois que você para de digitar). Procura no nome fantasia, na razão social e no CNPJ — com ou sem pontos.</li>
+  <li><strong>Nome fantasia.</strong> Clique para abrir a ficha. Mostra o nome fantasia, senão a razão social, senão “—”.</li>
+  <li><strong>CNPJ.</strong> No formato <code>00.000.000/0000-00</code>.</li>
+  <li><strong>Situação.</strong> A situação cadastral que veio da Receita (ATIVA, BAIXADA…). Enquanto ela não chega, aparece o andamento do enriquecimento em inglês: <code>pending</code>, <code>processing</code>, <code>completed</code> ou <code>failed</code>.</li>
+  <li><strong>Uma situação.</strong> “ATIVA” em letras maiúsculas — vem assim da BrasilAPI.</li>
+</ol>
+<ul>
+  <li>As colunas completas são: Nome fantasia, Razão social, CNPJ, Cidade/UF, Situação e Atualizado.</li>
+  <li>A lista mostra só as <strong>50 mais recentes</strong>, sem “carregar mais”; use a busca para achar as demais.</li>
+  <li>Vazio: “Nenhuma empresa ainda.” — a mesma frase aparece se a busca não achar nada ou se a consulta falhar.</li>
+  <li>A tela não se atualiza sozinha: para ver o “pending” virar “ATIVA”, recarregue ou busque de novo.</li>
+</ul>
+
+<h2 id="nova">Cadastrar uma empresa</h2>
+<figure class="print media">
+  <img src="img/empresas-nova.png" alt="Janela Nova empresa com razão social, nome fantasia e CNPJ, numerada de 1 a 4" loading="lazy">
+  <figcaption>A janela “Nova empresa”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Razão social.</strong> Até 500 caracteres.</li>
+  <li><strong>Nome fantasia.</strong> Até 500. Se você deixar vazio e preencher a razão social, o nome fantasia copia a razão social.</li>
+  <li><strong>CNPJ.</strong> Com ou sem pontuação (<code>00.000.000/0000-00</code>). Precisa ter exatamente <strong>14 dígitos</strong> e não ser uma sequência repetida. O sistema <em>não confere os dígitos verificadores</em>.</li>
+  <li><strong>Criar.</strong> Só habilita com pelo menos <em>um</em> dos três campos preenchido.</li>
+</ol>
+<p>Mensagens possíveis: “CNPJ inválido.”, “Já existe empresa com este CNPJ.” (o CNPJ é único por organização; duas empresas <em>sem</em> CNPJ e com o mesmo nome podem coexistir) e, para quem não é Gerente, “Permissão insuficiente. Requer role &gt;= manager.”. Ao criar, a empresa nasce com enriquecimento <em>pending</em> e, se há CNPJ válido, <strong>uma consulta à BrasilAPI começa em segundo plano</strong>.</p>
+
+<h2 id="ficha">A ficha da empresa</h2>
+<figure class="print">
+  <img src="img/empresas-ficha.png" alt="Ficha da empresa Padaria Estrela com os dados cadastrais, as pessoas e os telefones, numerada de 1 a 6" loading="lazy">
+  <figcaption>A ficha de uma empresa enriquecida.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>← Empresas.</strong> Volta à lista.</li>
+  <li><strong>Nome e CNPJ.</strong></li>
+  <li><strong>Enriquecer CNPJ.</strong> Refaz a consulta à BrasilAPI e espera a resposta (“Enriquecendo…”). <strong>Sobrescreve</strong> razão social, nome fantasia, situação, porte, CNAE, endereço, e-mail e telefone com o que a BrasilAPI devolve — o que você editou à mão se perde.</li>
+  <li><strong>Dados cadastrais.</strong> Razão social, Situação, Porte, CNAE (código — descrição), Endereço (rua, número, bairro, cidade, UF e CEP) e Enriquecimento. Quando falha, o campo mostra o motivo: <em>not_found</em> (“CNPJ não encontrado na BrasilAPI.”), <em>timeout</em>, <em>upstream_error</em> ou <em>incomplete</em>.</li>
+  <li><strong>Pessoas / decisores.</strong> Quem está ligado à empresa, com o cargo. O nome leva à ficha da <a href="#pessoas">pessoa</a>. Sem ninguém: “Nenhuma pessoa vinculada.”.</li>
+  <li><strong>Telefones.</strong> Os contatos ligados às pessoas da empresa; o número leva à ficha em <a href="#contatos">Contatos</a>. Sem nenhum: “Nenhum telefone ligado às pessoas desta empresa.”.</li>
+</ol>
+<aside class="nota atencao"><strong>A ficha é só leitura.</strong><p>Não há botão de editar, excluir ou vincular pessoa. Os vínculos nascem nas <a href="#importacoes">Importações</a> ou pela API. Para quem não é Gerente, o botão “Enriquecer CNPJ” aparece, mas a ação é negada <strong>sem mostrar erro</strong>. Se o endereço da ficha não existe ou é de outra organização, a tela fica em “Carregando…” para sempre.</p></aside>
+<p>O enriquecimento guarda a resposta bruta da BrasilAPI <strong>sem o quadro de sócios</strong>, por causa da LGPD. Criar e enriquecer ficam na auditoria (<code>companies.created</code>, <code>companies.enriched</code>).</p>
