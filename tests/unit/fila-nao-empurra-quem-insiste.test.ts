@@ -223,7 +223,9 @@ function fakeSupabase(linhas: Array<Record<string, unknown>>) {
                 resultado = resultado.filter((r) => valores.includes(r[coluna]));
               } else if (prop === "order") {
                 const [coluna, opcoes] = args as [string, OrdemPedida["opcoes"] | undefined];
-                ordensPedidas.push({ coluna, opcoes });
+                // Só a ordem da LISTA: a rota também consulta `crm_leads` (a
+                // linha do funil de cada conversa), com ordem própria.
+                if (tabela === "conversations") ordensPedidas.push({ coluna, opcoes });
               } else if (prop === "limit") {
                 teto = args[0] as number;
               }

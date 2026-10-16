@@ -1,3 +1,6 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import {
   requireAuth,
   isMfaEnrolled,
@@ -60,16 +63,15 @@ export default async function SecurityPage() {
   const idioma = user.idioma;
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{traduzir("Segurança", idioma)}</h1>
-        <p className="text-sm text-muted-foreground">
-          {traduzir(
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={traduzir("Segurança", idioma)}
+        ajuda={<ComoFunciona chave="seguranca" pagina={traduzir("Segurança", idioma)} />}
+        descricao={traduzir(
             "A verificação em duas etapas da sua conta, os códigos de recuperação e as sessões abertas.",
             idioma,
           )}
-        </p>
-      </header>
+      />
 
       <SecurityClient
         mfaEnrolled={enrolled}
@@ -78,6 +80,6 @@ export default async function SecurityPage() {
         papelMinimo={papelMinimo}
         diasDeCarencia={diasDeCarencia}
       />
-    </div>
+    </CorpoDaPagina>
   );
 }

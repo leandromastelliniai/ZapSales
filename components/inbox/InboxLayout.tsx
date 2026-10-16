@@ -31,7 +31,12 @@ import { OpenConversationProvider } from "@/hooks/notifications/OpenConversation
 // ADR-05: ícone de feature sai do mapa canônico, nunca do pacote direto.
 import { CaretLeft, ChatCircle, IdentificationCard, MagnifyingGlass, X } from "@/lib/ui/icons";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { FaixaDaJornada } from "@/components/inbox/visual/FaixaDaJornada";
+import { useResumoDoContato } from "@/hooks/inbox/useResumoDoContato";
+import { useCampanhaDaConversa } from "@/hooks/inbox/useCampanhaDaConversa";
+import { phoneForDisplay } from "@/lib/channels/phone-variants";
+import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
 import { cn } from "@/lib/utils";
 import { comandosDaFila } from "@/lib/inbox/comando-da-conversa";
 import type { AvisoDeRascunho } from "@/lib/inbox/rascunho-sugerido";
@@ -420,10 +425,17 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
   // Em 1280 isso dá 424px de conversa em vez de 372 — 54px de folga sobre o
   // piso do composer (370px), em vez dos 2px que a versão de uma faixa só
   // deixava. Margem de 2px não é margem, é sorte.
+  // A FAIXA DA JORNADA (direção "Linha do Funil"): quem é, de onde veio, onde
+  // está no funil e o que vale. Lê o resumo do contato e a campanha de origem —
+  // as mesmas rotas da ficha e do cabeçalho antigo.
+  const contatoAberto = selectedConversation?.contacts ?? null;
+  const resumo = useResumoDoContato(contatoAberto?.id ?? null);
+  const campanhaDaConversa = useCampanhaDaConversa(selectedConversation?.id ?? null);
+
   return (
     <OpenConversationProvider conversationId={selectedId}>
     <div
-      className="grid h-[calc(100dvh-3.5rem-var(--space-6)-max(var(--space-6),var(--rodape-ocupado,0px)))] w-full grid-cols-1 md:grid-cols-[300px_1fr] xl:grid-cols-[272px_1fr_296px] 2xl:grid-cols-[300px_1fr_320px]"
+      className="grid h-[calc(100dvh-3.5rem-var(--space-6)-max(var(--space-6),var(--rodape-ocupado,0px)))] w-full grid-cols-1 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)] md:gap-3 xl:grid-cols-[360px_minmax(0,1fr)]"
       /*
        * O ESTADO DO TEMPO REAL, LEGÍVEL DE FORA — mesmo par que o dossiê do lead
        * já publica (`LeadDossier`), e pela mesma razão: quando a entrega morre,
@@ -462,7 +474,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
       */}
       <div
         className={cn(
-          "h-full min-h-0 flex-col border-r border-border md:flex",
+          "h-full min-h-0 flex-col overflow-hidden md:flex md:rounded-xl md:border md:border-border md:bg-surface",
           colunas.lista,
         )}
       >
@@ -493,7 +505,7 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
       */}
       <div
         className={cn(
-          "h-full min-h-0 min-w-0 flex-col md:flex",
+          "h-full min-h-0 min-w-0 flex-col md:flex md:gap-3",
           colunas.conversa,
         )}
       >
@@ -516,23 +528,50 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
             </Button>
             <div className="flex-1" />
             {selectedConversation && (
-              <Sheet open={fichaAberta} onOpenChange={setFichaAberta}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-9 gap-1 px-2 xl:hidden">
-                    <IdentificationCard size={16} />
-                    {t("Ficha")}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[min(22rem,90vw)] overflow-y-auto p-0">
-                  <SheetTitle className="sr-only">{t("Ficha do contato")}</SheetTitle>
-                  <CRMSidePanel conversation={selectedConversation} />
-                </SheetContent>
-              </Sheet>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-1 px-2"
+                onClick={() => setFichaAberta(true)}
+              >
+                <IdentificationCard size={16} />
+                {t("Ficha")}
+              </Button>
             )}
           </div>
         )}
         {selectedConversation ? (
           <>
+            <FaixaDaJornada
+              className="max-md:hidden"
+              nome={rotuloDoContato(contatoAberto, t)}
+              telefone={contatoAberto?.phone_number ? phoneForDisplay(contatoAberto.phone_number) : null}
+              fotoUrl={
+                contatoAberto?.avatar_storage_path && !contatoAberto.is_anonymized
+                  ? `/api/v1/contacts/${contatoAberto.id}/avatar`
+                  : null
+              }
+              canal={selectedConversation.channel_sessions ?? null}
+              campanha={campanhaDaConversa?.campanha?.nome ?? null}
+              funil={resumo.data?.funil ?? null}
+              valor={resumo.data?.valor ?? null}
+              proximoPasso={resumo.data?.proximoPasso ?? null}
+              etiquetas={contatoAberto?.tags ?? []}
+              carregando={resumo.isLoading}
+              acaoDaFicha={
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setFichaAberta(true)}
+                  aria-label={t("Ficha completa")}
+                  title={t("Ficha completa")}
+                >
+                  <IdentificationCard size={15} aria-hidden />
+                </Button>
+              }
+            />
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:rounded-xl md:border md:border-border md:bg-surface">
             {/* `key`: trocar de conversa desmonta a confirmação de Fechar/Arquivar
                 aberta — senão o clique de dentro agiria sobre a conversa nova. */}
             <ConversationHeader
@@ -588,6 +627,13 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
                   nome: selectedConversation.assigned_to_user_name ?? null,
                 }}
                 contatoId={selectedConversation.contacts?.id ?? null}
+                cliente={{
+                  nome: rotuloDoContato(contatoAberto, t),
+                  fotoUrl:
+                    contatoAberto?.avatar_storage_path && !contatoAberto.is_anonymized
+                      ? `/api/v1/contacts/${contatoAberto.id}/avatar`
+                      : null,
+                }}
               />
             </div>
             <RetentionNotice conversationId={selectedConversation.id} />
@@ -629,6 +675,16 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
                 rascunhoVivo?.leitura.estado === "sugerido" ? rascunhoVivo.leitura.texto : ""
               }
             />
+            </div>
+            {/* A FICHA COMPLETA, numa gaveta: o que a coluna da direita mostrava
+                (demandas, memória, leads, pedidos, atividade, acervo) continua a
+                um clique — pela faixa ou, no celular, pelo botão "Ficha". */}
+            <Sheet open={fichaAberta} onOpenChange={setFichaAberta}>
+              <SheetContent side="right" className="w-[min(24rem,92vw)] overflow-y-auto p-0">
+                <SheetTitle className="sr-only">{t("Ficha do contato")}</SheetTitle>
+                <CRMSidePanel conversation={selectedConversation} />
+              </SheetContent>
+            </Sheet>
           </>
         ) : selectionNotFound ? (
           <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
@@ -643,9 +699,6 @@ export function InboxLayout({ initialSelectedId = null, rascunho = null }: Inbox
         )}
       </div>
 
-      <div className="hidden h-full min-h-0 min-w-0 xl:block">
-        <CRMSidePanel conversation={selectedConversation} />
-      </div>
 
       <InboxKeyboardShortcuts
         visibleIds={visibleIds}

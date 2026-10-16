@@ -25,6 +25,8 @@
  * O token NÃO é lido aqui, nem decifrado: `existeConexaoDeLeitura` responde
  * apenas se a linha existe. A tela nunca mostra o token de volta.
  */
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -55,17 +57,15 @@ export default async function MetaAdsSettingsPage() {
   const t = (texto: string) => traduzir(texto, idioma);
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-y-auto p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Meta Ads")}</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          {t(
+    <CorpoDaPagina className="overflow-y-auto">
+      <CabecalhoDePagina
+        titulo={t("Meta Ads")}
+        descricao={t(
             "Conecte um token de acesso para o sistema ler o desempenho das suas campanhas e mostrá-lo em Análise › Meta Ads. É uma conexão só de leitura: nada é criado, pausado ou alterado na sua conta de anúncios.",
           )}
-        </p>
-      </header>
+      />
 
-      <div className="rounded-md border border-sky-500/40 bg-sky-500/10 p-4 text-sm">
+      <div className="rounded-md border border-info/40 bg-info-bg p-4 text-sm">
         {/*
           A permissão exata está escrita aqui porque é o erro nº 1 desta
           integração: um token gerado sem `ads_read` conecta, salva, e só falha
@@ -90,6 +90,6 @@ export default async function MetaAdsSettingsPage() {
           )}
         </p>
       )}
-    </div>
+    </CorpoDaPagina>
   );
 }

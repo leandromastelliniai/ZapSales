@@ -170,10 +170,10 @@ export function CanalOficialClient() {
             verdadeiro — a tela nunca diz "registrado" sem ter registrado.
           */}
           {estado.webhookRegistro && !estado.webhookRegistro.registrado ? (
-            <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-warning/40 bg-warning-bg p-3">
               <Badge
                 variant="outline"
-                className="border-amber-500/60 font-normal text-amber-700 dark:text-amber-400"
+                className="border-warning/60 font-normal text-warning-fg"
               >
                 {t("Webhook pendente")}
               </Badge>

@@ -14,7 +14,7 @@ import { VersionFooter } from "@/components/shell/VersionFooter";
 import { LogotipoDoProduto, SimboloDoProduto } from "@/components/branding/MarcaDoProduto";
 import { marcaEhADoProduto } from "@/lib/branding";
 import { useMarcaDaInstalacao } from "@/lib/branding/contexto";
-import { GRUPO_NO_RODAPE, sidebarGroups } from "@/lib/navigation/registry";
+import { GRUPO_NO_RODAPE, ICONE_DO_HUB, sidebarGroups } from "@/lib/navigation/registry";
 
 const CHAVE_GRUPOS_FECHADOS = "sidebar-grupos-fechados";
 
@@ -183,7 +183,7 @@ export function SidebarContent({
           <span className={cn("font-semibold tracking-tight", collapsed && "sr-only")}>{nome}</span>
         )}
         {collapsed && !marcaDoProduto && icone ? (
-          // O ícone da aba que o operador subiu: com o menu recolhido por padrão,
+          // O ícone da aba que o operador subiu: com o menu recolhido,
           // é o que mantém a marca do revendedor visível na barra.
           // eslint-disable-next-line @next/next/no-img-element
           <img src={icone} alt="" aria-hidden className="h-8 w-8 rounded-md object-contain" />
@@ -246,6 +246,7 @@ export function SidebarContent({
       <nav className="flex-1 space-y-2 overflow-y-auto p-2" aria-label={t("Navegação principal")}>
         {grupos.map(({ group, items }) => {
           const tituloId = `nav-grupo-${group.id}`;
+          const IconeDoHub = ICONE_DO_HUB[group.id] ?? ArrowRight;
           // Recolhido o sidebar inteiro (rail de 64px), o grupo sempre mostra
           // seus itens — não há onde desenhar cabeçalho nem seta para fechá-lo.
           const aberto = collapsed || !gruposFechados.has(group.id);
@@ -331,7 +332,7 @@ export function SidebarContent({
                           collapsed && "justify-center px-2",
                         )}
                       >
-                        <ArrowRight size={18} aria-hidden />
+                        <IconeDoHub size={18} aria-hidden />
                         <span className={collapsed ? "sr-only" : "truncate"}>{t(group.hub.label)}</span>
                       </Link>
                     </li>

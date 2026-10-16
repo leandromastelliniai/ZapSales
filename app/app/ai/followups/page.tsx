@@ -1,3 +1,6 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -37,15 +40,12 @@ export default async function FollowupFlowsPage() {
   const canWrite = ROLE_RANK[activeOrg.role] >= ROLE_RANK.manager;
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Follow-ups</h1>
-          <p className="text-sm text-text-muted">
-            {t("Fluxos automáticos de reengajamento — silêncio, etapa, webhook ou resposta do contato, sem intervenção em cada mensagem.")}
-          </p>
-        </div>
-      </header>
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={"Follow-ups"}
+        ajuda={<ComoFunciona chave="follow-ups" pagina={"Follow-ups"} />}
+        descricao={t("Fluxos automáticos de reengajamento — silêncio, etapa, webhook ou resposta do contato, sem intervenção em cada mensagem.")}
+      />
       <Tabs defaultValue="fluxos" className="flex flex-1 flex-col">
         <TabsList>
           <TabsTrigger value="fluxos">{t("Fluxos")}</TabsTrigger>
@@ -58,6 +58,6 @@ export default async function FollowupFlowsPage() {
           <QueueTab canWrite={canWrite} />
         </TabsContent>
       </Tabs>
-    </div>
+    </CorpoDaPagina>
   );
 }

@@ -43,6 +43,8 @@ interface Props {
    */
   dono?: { userId: string | null; nome: string | null } | null;
   contatoId?: string | null;
+  /** O cliente, para a foto e o nome das mensagens recebidas (direção "Linha do Funil"). */
+  cliente?: { nome: string; fotoUrl?: string | null } | null;
 }
 
 /**
@@ -87,6 +89,7 @@ export function ChatThread({
   onResponder,
   dono,
   contatoId,
+  cliente,
   searchTerm = "",
 }: Props) {
   const localeDaData = useLocaleDeData();
@@ -397,6 +400,13 @@ export function ChatThread({
                   // CRM — inclusive nas do colega, porque `sent_via='user'` só
                   // registra que um humano digitou, nunca qual.
                   viewerUserId={currentUser.id}
+                  cliente={cliente ?? null}
+                  // O nome que a bolha consegue afirmar: o do DONO, e só na mensagem
+                  // que ele mesmo mandou. A mensagem de um colega continua dizendo
+                  // "Atendente" — `sent_by_user_id` não traz nome, e inventar seria pior.
+                  nomeDoAtendente={
+                    dono?.userId && item.data.sent_by_user_id === dono.userId ? dono.nome : null
+                  }
                   onEditar={canalAlteraEnviada && item.data.sent_by_user_id === currentUser.id
                     ? (text) => editar.mutateAsync({ id: item.data.id, text }).then(() => undefined)
                     : undefined}

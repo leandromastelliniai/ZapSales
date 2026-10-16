@@ -8,9 +8,9 @@
  *
  * Três tipos de modelo (`kind`):
  *
- * - `STANDARD` — cabeçalho de mídia opcional (imagem, vídeo ou documento),
- *   corpo com variáveis, rodapé e botões de resposta rápida, link, copiar código
- *   e flow.
+ * - `STANDARD` — cabeçalho opcional (texto, ou mídia: imagem, vídeo ou documento),
+ *   corpo com variáveis, rodapé e botões de resposta rápida, link, ligar, copiar
+ *   código e flow.
  * - `CAROUSEL` — a mensagem (corpo) e de 2 a 10 cards, cada um com mídia, corpo
  *   e botões. A Meta exige que todos os cards tenham a mesma mídia e os mesmos
  *   botões, na mesma ordem.
@@ -49,6 +49,26 @@ export const FORMATOS_DE_VARIAVEL = ["POSITIONAL", "NAMED"] as const;
 
 /** As categorias que o editor cria. */
 export const CATEGORIAS_DO_EDITOR = ["MARKETING", "UTILITY"] as const;
+
+/**
+ * Os idiomas que o editor oferece — o código de idioma da Meta de cada um. O
+ * mesmo nome de modelo pode existir em vários idiomas (é assim que a Meta guarda
+ * traduções); a tela mostra o nome de cada um em `t()` literal.
+ */
+export const IDIOMAS_DO_MODELO = [
+  "pt_BR",
+  "pt_PT",
+  "en_US",
+  "en_GB",
+  "es",
+  "es_AR",
+  "es_ES",
+  "es_MX",
+  "fr",
+  "de",
+  "it",
+] as const;
+export type IdiomaDoModelo = (typeof IDIOMAS_DO_MODELO)[number];
 
 /** Os tipos de modelo do editor. */
 export const TIPOS_DE_MODELO = ["STANDARD", "CAROUSEL", "LIMITED_TIME_OFFER"] as const;
@@ -90,6 +110,8 @@ const LIMITE_DO_CORPO_DA_OFERTA = 600;
 const LIMITE_DO_CORPO_DO_CARD = 160;
 const LIMITE_DO_TEXTO_DA_OFERTA = 16;
 const LIMITE_DO_RODAPE = 60;
+const LIMITE_DO_CABECALHO_DE_TEXTO = 60;
+const LIMITE_DO_TELEFONE_DO_BOTAO = 20;
 const LIMITE_DO_TEXTO_DO_BOTAO = 25;
 const LIMITE_DO_CODIGO = 15;
 const LIMITE_DE_BOTOES = 10;
@@ -124,6 +146,16 @@ const botaoSchema = z.discriminatedUnion("type", [
     type: z.literal("COPY_CODE"),
     /** O código de exemplo. O código de verdade vai em cada envio. */
     example: z.string().trim().min(1).max(LIMITE_DO_CODIGO),
+  }),
+  z.object({
+    type: z.literal("PHONE_NUMBER"),
+    text: textoDoBotao,
+    /** O número que o botão liga, com o código do país: `+5511999998888`. */
+    phone_number: z
+      .string()
+      .trim()
+      .max(LIMITE_DO_TELEFONE_DO_BOTAO)
+      .regex(/^\+\d{8,15}$/, "telefone_do_botao_invalido" satisfies MotivoDeRecusa),
   }),
   z.object({
     type: z.literal("FLOW"),
@@ -166,9 +198,30 @@ const cabecalhoSchema = z.object({
   media: midiaSchema.nullable().default(null),
 });
 
+/** O cabeçalho de MÍDIA — o único que o card do carrossel aceita. */
 export type CabecalhoDoModelo = z.output<typeof cabecalhoSchema>;
 
 const exemplosSchema = z.record(z.string(), z.string()).default({});
+
+/**
+ * O cabeçalho de TEXTO: um título curto, com no máximo uma variável (regra da
+ * Meta). O exemplo da variável é pela chave dela, como o do corpo.
+ */
+const cabecalhoDeTextoSchema = z.object({
+  format: z.literal("TEXT"),
+  text: z.string().trim().min(1).max(LIMITE_DO_CABECALHO_DE_TEXTO),
+  examples: exemplosSchema,
+});
+
+export type CabecalhoDeTexto = z.output<typeof cabecalhoDeTextoSchema>;
+
+/** O cabeçalho da mensagem: texto ou mídia, distinguidos por `format`. */
+const cabecalhoDaMensagemSchema = z.discriminatedUnion("format", [
+  cabecalhoSchema,
+  cabecalhoDeTextoSchema,
+]);
+
+export type CabecalhoDaMensagem = z.output<typeof cabecalhoDaMensagemSchema>;
 
 const cardSchema = z.object({
   header: cabecalhoSchema,
@@ -202,7 +255,7 @@ const formaDoModelo = z.object({
     .regex(/^[a-z]{2,3}(_[A-Z]{2})?$/, "idioma_invalido" satisfies MotivoDeRecusa),
   category: z.enum(CATEGORIAS_DO_EDITOR),
   parameter_format: z.enum(FORMATOS_DE_VARIAVEL).default("POSITIONAL"),
-  header: cabecalhoSchema.nullable().default(null),
+  header: cabecalhoDaMensagemSchema.nullable().default(null),
   offer: ofertaSchema.nullable().default(null),
   body: z.string().trim().min(1).max(LIMITE_DO_CORPO),
   /** Exemplo de cada variável do corpo, pela chave (`"1"` ou `"nome"`). */
@@ -258,6 +311,10 @@ export const MOTIVOS_DE_RECUSA = [
   "oferta_precisa_de_link",
   "oferta_com_prazo_pede_codigo",
   "oferta_so_codigo_e_link",
+  // ─── editor completo ───
+  "cabecalho_com_variavel_demais",
+  "ligar_demais",
+  "telefone_do_botao_invalido",
 ] as const;
 
 export type MotivoDeRecusa = (typeof MOTIVOS_DE_RECUSA)[number];
@@ -265,7 +322,10 @@ export type MotivoDeRecusa = (typeof MOTIVOS_DE_RECUSA)[number];
 /** Um motivo de recusa, apontando o campo. `motivo` é código; a tela traduz. */
 export interface ProblemaDoModelo {
   campo: string;
-  motivo: Exclude<MotivoDeRecusa, "nome_invalido" | "idioma_invalido" | "flow_id_invalido">;
+  motivo: Exclude<
+    MotivoDeRecusa,
+    "nome_invalido" | "idioma_invalido" | "flow_id_invalido" | "telefone_do_botao_invalido"
+  >;
 }
 
 /** As variáveis de um texto, uma vez cada, na ordem em que aparecem. */
@@ -347,6 +407,33 @@ function problemasDosBotoes(botoes: BotaoDoModelo[], prefixo: string): ProblemaD
   return out;
 }
 
+/**
+ * As regras do cabeçalho da mensagem. Texto: no máximo UMA variável, no formato
+ * do modelo e com exemplo. Mídia: o arquivo existe e é do formato escolhido.
+ */
+function problemasDoCabecalho(
+  c: CabecalhoDaMensagem,
+  formato: NovoModelo["parameter_format"],
+): ProblemaDoModelo[] {
+  if (c.format !== "TEXT") return problemasDaMidia(c, "header");
+  const out: ProblemaDoModelo[] = [];
+  const variaveis = variaveisDoTexto(c.text);
+  if (variaveis.length > 1) out.push({ campo: "header", motivo: "cabecalho_com_variavel_demais" });
+  if (formato === "POSITIONAL") {
+    if (variaveis.some((v) => v !== "1")) {
+      out.push({ campo: "header", motivo: "variavel_posicional_esperada" });
+    }
+  } else if (variaveis.some((v) => !NOME_DE_VARIAVEL.test(v))) {
+    out.push({ campo: "header", motivo: "variavel_nomeada_invalida" });
+  }
+  for (const v of variaveis) {
+    if (!(c.examples[v] ?? "").trim()) {
+      out.push({ campo: `header.examples.${v}`, motivo: "exemplo_obrigatorio" });
+    }
+  }
+  return out;
+}
+
 /** O arquivo escolhido existe e é do formato do cabeçalho. */
 function problemasDaMidia(c: CabecalhoDoModelo, campo: string): ProblemaDoModelo[] {
   if (!c.media) return [{ campo: `${campo}.media`, motivo: "midia_obrigatoria" }];
@@ -365,7 +452,7 @@ const assinaturaDosBotoes = (c: CardDoModelo) => c.buttons.map((b) => b.type).jo
 
 function problemasDoPadrao(m: NovoModelo): ProblemaDoModelo[] {
   const out: ProblemaDoModelo[] = [];
-  if (m.header) out.push(...problemasDaMidia(m.header, "header"));
+  if (m.header) out.push(...problemasDoCabecalho(m.header, m.parameter_format));
   if (m.offer) out.push(naoSeAplica("offer"));
   if (m.cards.length > 0) out.push(naoSeAplica("cards"));
 
@@ -385,6 +472,9 @@ function problemasDoPadrao(m: NovoModelo): ProblemaDoModelo[] {
   }
   if (tipos.filter((t) => t === "FLOW").length > 1) {
     out.push({ campo: "buttons", motivo: "flow_demais" });
+  }
+  if (tipos.filter((t) => t === "PHONE_NUMBER").length > 1) {
+    out.push({ campo: "buttons", motivo: "ligar_demais" });
   }
   return out;
 }
@@ -434,7 +524,7 @@ function problemasDaOferta(m: NovoModelo): ProblemaDoModelo[] {
   if (m.category !== "MARKETING") out.push({ campo: "category", motivo: "oferta_so_marketing" });
   if (!m.offer) out.push({ campo: "offer", motivo: "oferta_obrigatoria" });
   if (m.header) {
-    if (m.header.format === "DOCUMENT") {
+    if (m.header.format === "DOCUMENT" || m.header.format === "TEXT") {
       out.push({ campo: "header", motivo: "oferta_midia_imagem_ou_video" });
     } else {
       out.push(...problemasDaMidia(m.header, "header"));
@@ -531,14 +621,37 @@ function componenteDoCorpo(
   };
 }
 
-/** O cabeçalho de mídia: a amostra da revisão é o `handle` da API de upload. */
-function componenteDoCabecalho(c: CabecalhoDoModelo): ComponenteDoPedido {
-  return { type: "HEADER", format: c.format, example: { header_handle: [c.media?.handle ?? ""] } };
+/**
+ * O cabeçalho. De mídia: a amostra da revisão é o `handle` da API de upload. De
+ * texto: o título, e — se tiver variável — o exemplo dela no formato do modelo.
+ */
+function componenteDoCabecalho(
+  c: CabecalhoDaMensagem,
+  formato: NovoModelo["parameter_format"] = "POSITIONAL",
+): ComponenteDoPedido {
+  if (c.format !== "TEXT") {
+    return { type: "HEADER", format: c.format, example: { header_handle: [c.media?.handle ?? ""] } };
+  }
+  const variaveis = variaveisDoTexto(c.text);
+  if (variaveis.length === 0) return { type: "HEADER", format: "TEXT", text: c.text };
+  const v = variaveis[0]!;
+  return {
+    type: "HEADER",
+    format: "TEXT",
+    text: c.text,
+    example:
+      formato === "NAMED"
+        ? { header_text_named_params: [{ param_name: v, example: c.examples[v] ?? "" }] }
+        : { header_text: [c.examples[v] ?? ""] },
+  };
 }
 
 function botaoDoPedido(b: BotaoDoModelo): Record<string, unknown> {
   if (b.type === "QUICK_REPLY") return { type: "QUICK_REPLY", text: b.text };
   if (b.type === "COPY_CODE") return { type: "COPY_CODE", example: b.example };
+  if (b.type === "PHONE_NUMBER") {
+    return { type: "PHONE_NUMBER", text: b.text, phone_number: b.phone_number };
+  }
   if (b.type === "FLOW") {
     return {
       type: "FLOW",
@@ -578,7 +691,7 @@ function botoesEmOrdem(m: NovoModelo): BotaoDoModelo[] {
 function componentesDoCard(c: CardDoModelo, formato: NovoModelo["parameter_format"]) {
   return {
     components: [
-      componenteDoCabecalho(c.header),
+      componenteDoCabecalho(c.header, formato),
       componenteDoCorpo(c.body, c.examples, formato),
       { type: "BUTTONS", buttons: c.buttons.map(botaoDoPedido) },
     ],
@@ -596,7 +709,7 @@ export function montarPedidoDeModelo(m: NovoModelo): PedidoDeModelo {
       cards: m.cards.map((c) => componentesDoCard(c, m.parameter_format)),
     });
   } else {
-    if (m.header) components.push(componenteDoCabecalho(m.header));
+    if (m.header) components.push(componenteDoCabecalho(m.header, m.parameter_format));
     if (m.kind === "LIMITED_TIME_OFFER" && m.offer) {
       components.push({
         type: "LIMITED_TIME_OFFER",
@@ -654,8 +767,8 @@ export function lerMidiasGuardadas(bruto: unknown): Record<string, MidiaGuardada
  */
 export function midiasDoModelo(m: NovoModelo): Record<string, MidiaGuardada> {
   const out: Record<string, MidiaGuardada> = {};
-  const guardar = (chave: string, c: CabecalhoDoModelo | null) => {
-    if (!c?.media) return;
+  const guardar = (chave: string, c: CabecalhoDaMensagem | null) => {
+    if (!c || c.format === "TEXT" || !c.media) return;
     out[chave] = { path: c.media.path, mime_type: c.media.mime_type, file_name: c.media.file_name };
   };
   if (m.kind === "CAROUSEL") {
@@ -683,6 +796,8 @@ export interface PreviewDoCabecalho {
 export interface PreviewDoModelo {
   tipo: TipoDeModelo;
   cabecalho: PreviewDoCabecalho | null;
+  /** O título de texto, com o exemplo no lugar da variável. */
+  cabecalhoDeTexto: string | null;
   oferta: { texto: string; temPrazo: boolean; codigo: string | null } | null;
   corpo: string;
   rodape: string | null;
@@ -722,7 +837,10 @@ export function previewDoModelo(m: NovoModelo): PreviewDoModelo {
   const cupom = m.buttons.find((b) => b.type === "COPY_CODE");
   return {
     tipo: m.kind,
-    cabecalho: !carrossel && m.header ? previewDoCabecalho(m.header) : null,
+    cabecalho:
+      !carrossel && m.header && m.header.format !== "TEXT" ? previewDoCabecalho(m.header) : null,
+    cabecalhoDeTexto:
+      !carrossel && m.header?.format === "TEXT" ? comExemplos(m.header.text, m.header.examples) : null,
     oferta: oferta
       ? {
           texto: oferta.text,

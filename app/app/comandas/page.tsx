@@ -1,3 +1,6 @@
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -36,18 +39,17 @@ export default async function Page() {
   const moedaDaOrg = await moedaDaOrganizacao(await createClient(), org.orgId);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold">{t("Comandas")}</h1>
-        <p className="text-sm text-text-muted">
-          {t("O que foi feito, por quem, e quanto o cliente paga.")}
-        </p>
-      </div>
+    <CorpoDaPagina className="min-h-0 flex-1 gap-4">
+      <CabecalhoDePagina
+        titulo={t("Comandas")}
+        descricao={t("O que foi feito, por quem, e quanto o cliente paga.")}
+        ajuda={<ComoFunciona chave="comandas" pagina={t("Comandas")} />}
+      />
       <Comandas
         podeLancar={ROLE_RANK[org.role] >= ROLE_RANK.agent}
         podeEstornar={ROLE_RANK[org.role] >= ROLE_RANK.manager}
         moedaDaOrg={moedaDaOrg}
       />
-    </div>
+    </CorpoDaPagina>
   );
 }

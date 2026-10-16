@@ -336,7 +336,6 @@ preparar_env() {
   # na internet pelo Caddyfile.
   env_definir "$ENV_ARQ" WAHA_WEBHOOK_BASE_URL "http://app:3000"
   env_definir "$ENV_ARQ" WAHA_API_BASE_URL "http://waha:3000"
-  env_definir "$ENV_ARQ" WAHA_WEBHOOK_REQUIRE_SIGNATURE "true"
   env_definir "$ENV_ARQ" UPSTASH_REDIS_REST_URL "http://srh:80"
 
   # Os e-mails de acesso do GoTrue (confirmar conta, redefinir senha) pelos
@@ -407,6 +406,11 @@ preparar_env() {
   else
     msg "  WAHA_IMAGE=$waha_atual é escolha desta instalação — mantida."
   fi
+  # Assinatura do webhook: SEMENTE, não recalculada. O WAHA Core não assina as
+  # entregas; forçar "true" a cada rodada (era o que estava aqui) fazia o app
+  # recusar todo evento e o agente calar sem erro na tela (#58). Só escreve
+  # quando a chave não existe — o ajuste do operador sobrevive à atualização.
+  env_garantir "$ENV_ARQ" WAHA_WEBHOOK_REQUIRE_SIGNATURE     "$(assinatura_padrao_do_webhook "$(env_ler "$ENV_ARQ" WAHA_IMAGE)")"
   chmod 600 "$ENV_ARQ"
   msg "  $ENV_ARQ (modo 600, só o root lê)."
 }

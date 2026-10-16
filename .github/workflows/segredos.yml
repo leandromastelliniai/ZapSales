@@ -1,0 +1,68 @@
+name: segredos
+
+# O repositório é PÚBLICO: um segredo commitado é um segredo publicado, e
+# apagá-lo depois não o tira do histórico (a `main` nunca é reescrita). Este
+# job roda o gitleaks nos commits que o PR ou o push TRAZ — o histórico até
+# 2026-10-07 foi auditado inteiro, e os achados conferidos (todos falsos
+# positivos) estão em `.gitleaksignore`, com o porquê.
+#
+# Falso positivo novo se declara na própria linha com `gitleaks:allow`, à vista
+# de quem revisa. Segredo de verdade que chegou a ser commitado não se conserta
+# com commit novo: troque a credencial na origem.
+#
+# O binário vem da release oficial com versão e sha256 fixos, e não por ação de
+# terceiros: a `gitleaks/gitleaks-action` pede licença para organização e
+# roda código de quem controla aquele repositório. O dependabot não atualiza
+# este par — subir de versão é trocar VERSAO e SHA256 juntos, tirados de
+# `gitleaks_<versao>_checksums.txt` da release.
+#
+# A saída é sempre `--redact`: o log do Actions é público, e um achado
+# verdadeiro impresso por inteiro seria o vazamento que o job quer evitar.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  varredura:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Histórico inteiro: o intervalo base..topo precisa dos dois lados.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Instalar o gitleaks (versão e checksum fixos)
+        env:
+          VERSAO: 8.30.1
+          SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          set -euo pipefail
+          arquivo="gitleaks_${VERSAO}_linux_x64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$arquivo" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSAO}/${arquivo}"
+          echo "${SHA256}  $RUNNER_TEMP/$arquivo" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$arquivo" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" version
+
+      # Os SHAs entram por `env:`, nunca interpolados no script. `before` só é
+      # zeros quando a ref nasce no push — aí não há "antes", e a varredura
+      # cobre tudo até o topo (o `.gitleaksignore` responde pelo passado).
+      - name: Varrer os commits novos
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          TOPO: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$BASE" || "$BASE" =~ ^0+$ ]]; then
+            intervalo="$TOPO"
+          else
+            intervalo="$BASE..$TOPO"
+          fi
+          echo "Intervalo varrido: $intervalo"
+          "$RUNNER_TEMP/gitleaks" git --redact --verbose --no-banner \
+            --log-opts="$intervalo" .

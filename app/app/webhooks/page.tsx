@@ -1,3 +1,6 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -16,17 +19,16 @@ export default async function WebhooksPage() {
   const idioma = user.idioma;
 
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Webhooks</h1>
-        <p className="text-sm text-muted-foreground">
-          {traduzir(
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={"Webhooks"}
+        ajuda={<ComoFunciona chave="webhooks" pagina={"Webhooks"} />}
+        descricao={traduzir(
             "Receba contatos de fora (landing pages, formulários) e crie automações que agem sozinhas.",
             idioma,
           )}
-        </p>
-      </header>
+      />
       <WebhooksClient />
-    </div>
+    </CorpoDaPagina>
   );
 }

@@ -1,0 +1,46 @@
+# Achados do gitleaks JÁ CONFERIDOS um a um — nenhum é segredo de verdade.
+#
+# Auditoria de 2026-10-07 do histórico inteiro: dados falsos de teste
+# ("senha-certa-123", "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ade"), segredos
+# FALSIFICADOS de propósito para provar a redação do log da VPS
+# (tests/shell/kit-implantar-saida.test.sh), nomes que só contêm "key"
+# ("followup-gatilho-caso.v1"), o token do Redis descartável do e2e e um id de
+# conversa do intermediário citado no MANIFEST. A AI_CRED_AES_KEY do teste de
+# rotação foi comparada com a da produção: diferente.
+#
+# Cada linha é `commit:arquivo:regra:linha` e vale SÓ para aquele commit — um
+# segredo novo no mesmo arquivo continua reprovando. Achado novo que for falso
+# positivo se declara na própria linha, com o comentário `gitleaks:allow`;
+# este arquivo é para o que já está no histórico e não pode mais ser editado.
+# Para regerar a lista: gitleaks git --redact --report-format json --report-path r.json
+6ca40aa519e24b098ed57d31151bcb40447a978c:.github/workflows/e2e.yml:curl-auth-header:1824
+6ca40aa519e24b098ed57d31151bcb40447a978c:app/actions/auth/signInWithPassword.test.ts:generic-api-key:66
+6ca40aa519e24b098ed57d31151bcb40447a978c:app/api/v1/tenants/provision/route.test.ts:generic-api-key:161
+6ca40aa519e24b098ed57d31151bcb40447a978c:app/app/ai/credentials/_components/AddCredentialDialog.test.tsx:generic-api-key:52
+6ca40aa519e24b098ed57d31151bcb40447a978c:lib/followup/gatilho-caso.handler.ts:generic-api-key:23
+6ca40aa519e24b098ed57d31151bcb40447a978c:lib/followup/gatilho-etapa.handler.ts:generic-api-key:16
+6ca40aa519e24b098ed57d31151bcb40447a978c:lib/followup/gatilho-lead.handler.ts:generic-api-key:14
+6ca40aa519e24b098ed57d31151bcb40447a978c:lib/followup/gatilho-presenca.handler.ts:generic-api-key:5
+6ca40aa519e24b098ed57d31151bcb40447a978c:lib/followup/gatilho-retorno.handler.ts:generic-api-key:18
+6ca40aa519e24b098ed57d31151bcb40447a978c:lib/notifications/prefs.ts:generic-api-key:17
+6ca40aa519e24b098ed57d31151bcb40447a978c:lib/sentry/privacidade.sdk.test.ts:generic-api-key:24
+6ca40aa519e24b098ed57d31151bcb40447a978c:lib/sentry/replay.test.ts:generic-api-key:11
+6ca40aa519e24b098ed57d31151bcb40447a978c:lib/sentry/scrub.test.ts:generic-api-key:14
+00680139851f1ab18f8bb77a5420ade847ec3dc1:supabase/migrations/MANIFEST.md:generic-api-key:189
+6ca40aa519e24b098ed57d31151bcb40447a978c:supabase/migrations/MANIFEST.md:generic-api-key:189
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/e2e/admin-credencial-google.spec.ts:generic-api-key:55
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/invariants/webhooks-inbound.test.ts:generic-api-key:363
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/invariants/webhooks-secret-encryption.test.ts:generic-api-key:25
+2e5d47102d5fe4e2c730e76bf11b06a529c3a160:tests/shell/kit-implantar-saida.test.sh:jwt:42
+dc2b4970009445d3d56b4521fe69580860ec2b85:tests/shell/kit-implantar-saida.test.sh:private-key:99
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/shell/stack-local.test.sh:generic-api-key:65
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/unit/app-da-meta-tela-nao-devolve-segredo.test.tsx:generic-api-key:216
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/unit/credenciais-aceita-a-chave-do-jev.test.ts:generic-api-key:55
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/unit/credenciais-aceita-a-chave-do-jev.test.ts:generic-api-key:58
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/unit/credenciais-ia-rotacao.test.ts:generic-api-key:15
+00680139851f1ab18f8bb77a5420ade847ec3dc1:tests/unit/credenciais-ia-rotacao.test.ts:generic-api-key:16
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/unit/cron-auth.test.ts:generic-api-key:9
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/unit/cron-auth.test.ts:generic-api-key:59
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/unit/onboarding-chave-da-ia-vale-para-a-empresa.test.ts:generic-api-key:179
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/unit/onboarding-chave-da-ia-vale-para-a-empresa.test.ts:generic-api-key:323
+6ca40aa519e24b098ed57d31151bcb40447a978c:tests/unit/supabase-server-url-opcional.test.ts:generic-api-key:215

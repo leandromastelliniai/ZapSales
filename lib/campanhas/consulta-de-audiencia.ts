@@ -13,7 +13,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { CAMPANHAS_VIVAS, limiteDeSilencio, usaNegocio, type FiltroDeAudiencia } from "./audiencia";
+import { CAMPANHAS_VIVAS, limiteDeSilencio, temRecorte, usaNegocio, type FiltroDeAudiencia } from "./audiencia";
 import { nomeDoContato } from "@/lib/contacts/rotulo-do-contato";
 import { recusouMarketing, type CandidatoDaAudiencia } from "./elegibilidade";
 
@@ -110,21 +110,29 @@ export async function buscarCandidatos(
     consulta = consulta.not("id", "in", `(${filtro.excluir_contatos.join(",")})`);
   }
 
-  const { data, error } = await consulta;
-  if (error) throw new Error(`audiência: contatos — ${error.message}`);
-  const linhas = (data ?? []) as LinhaDeContato[];
+  // Sem recorte (só a lista subida por planilha), a consulta não tem predicado
+  // nenhum e devolveria a organização inteira: ela simplesmente não roda.
+  let linhas: LinhaDeContato[] = [];
+  if (temRecorte(filtro)) {
+    const { data, error } = await consulta;
+    if (error) throw new Error(`audiência: contatos — ${error.message}`);
+    linhas = (data ?? []) as LinhaDeContato[];
+  }
 
   // ─── Os incluídos à mão ───
   // Entram mesmo fora do recorte, e por isso vêm em consulta própria; os vetos
   // por pessoa continuam valendo para eles (incluir à mão não fura opt-out).
   const jaTem = new Set(linhas.map((l) => l.id));
-  const faltam = filtro.incluir_contatos.filter((id) => !jaTem.has(id));
+  const tirados = new Set(filtro.excluir_contatos);
+  const faltam = filtro.incluir_contatos.filter((id) => !jaTem.has(id) && !tirados.has(id));
   if (faltam.length > 0) {
     const { data: extras, error: erroExtras } = await admin
       .from("contacts")
       .select(COLUNAS_DO_CANDIDATO)
       .eq("organization_id", organizationId)
       .eq("kind", "person")
+      // Cadastro mesclado é fantasma, também para quem entra à mão.
+      .is("is_merged_into", null)
       .in("id", faltam);
     if (erroExtras) throw new Error(`audiência: incluídos — ${erroExtras.message}`);
     linhas.push(...((extras ?? []) as LinhaDeContato[]));

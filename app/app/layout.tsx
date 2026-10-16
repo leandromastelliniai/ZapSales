@@ -28,8 +28,46 @@ import { listarConexoesCaidas, type ConexaoCaida } from "@/lib/channels/health";
 import { VoiceCallProvider } from "@/components/voice/VoiceCallContext";
 import { ProvedorDaOcupacaoDoRodape } from "@/lib/ui/rodape-ocupado";
 import { acessoFoiRevogado } from "@/lib/auth/vinculo-revogado";
+import { medirLayout } from "@/lib/observability/tempo-do-layout";
+
+/**
+ * O tema de extensão que a organização escolheu, serializado, ou `null`.
+ *
+ * NUNCA rejeita — e por isso pode ser disparado junto com as outras leituras do
+ * layout sem risco de rejeição solta: o tema NUNCA derruba a casca. Uma leitura
+ * que falhe (tabela ausente numa instalação antiga, RLS, formato inesperado)
+ * desce para `null` em vez de trocar o `redirect` do portão de organização
+ * (suspensa / onboarding / ilegível) por um 500. Quem não escolheu tema fica
+ * exatamente como está; quem escolheu só perde a pintura naquele render.
+ */
+async function lerCssDoTemaDaExtensao(
+  admin: ReturnType<typeof createAdminClient>,
+  orgId: string,
+): Promise<string | null> {
+  try {
+    const temaTrace = await admin
+      .from("organization_extensions")
+      .select(
+        "configuration," +
+          "extension_installations!organization_extensions_installation_id_fkey(" +
+          "extension_artifacts!extension_installations_artifact_id_fkey(manifest))",
+      )
+      .eq("organization_id", orgId)
+      .eq("enabled", true)
+      .limit(50);
+    if (temaTrace.error) return null;
+    const linhas = (temaTrace.data ?? [])
+      .map(linhaBrutaDeTema)
+      .filter((linha): linha is NonNullable<typeof linha> => linha !== null);
+    const temaEscolhido = temaAplicavel(linhas);
+    return temaEscolhido === null ? null : cssDaExtensaoDeTema(temaEscolhido).css;
+  } catch {
+    return null;
+  }
+}
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const fimDaMedicao = medirLayout();
   const user = await loadAuthUser();
   if (!user) redirect("/login");
 
@@ -49,6 +87,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!activeOrg && !user.support && (await acessoFoiRevogado(user.id))) {
     redirect("/acesso-revogado");
   }
+
+  // A leitura do cookie da barra lateral não depende de nada abaixo: dispara já,
+  // corre junto com as consultas e é esperada só onde o valor é usado.
+  const cookiesPromise = cookies();
 
   /**
    * A cor desta organização, serializada, ou `null` quando ela não tem uma.
@@ -85,6 +127,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
      *    consultas a mais — um caminho raro, que termina numa navegação de
      *    qualquer forma. O caminho normal, que é todo render de todo usuário,
      *    deixa de pagar três esperas em fila.
+     *  - A marca da instalação e o tema de extensão entram no mesmo `Promise.all`
+     *    (#65). O tema era lido DEPOIS dos redirects de organização, de propósito,
+     *    para o portão decidir antes de qualquer consulta nova; esse cuidado
+     *    protegia o caminho raro, e o preço era uma espera a mais em TODO render.
+     *    A leitura nunca rejeita, então o portão continua decidindo o destino.
      *  - A consulta das conexões continua morando no seam
      *    (`lib/channels/health`), não aqui: tela que monta o select de
      *    `channel_sessions` à mão foi o que deixou três seletores oferecendo
@@ -95,7 +142,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
      *    este layout — a cerca anterior lia o texto-fonte e reprovava esta
      *    refatoração sem que nada tivesse quebrado.
      */
-    const [orgRes, conexoes, isEnrolled, mfaRequired, modulos] = await Promise.all([
+    const [orgRes, conexoes, isEnrolled, mfaRequired, modulos, marcaBase, cssDoTema] =
+      await Promise.all([
       admin
         .from("organizations")
         .select("onboarded_at, status, settings")
@@ -111,6 +159,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       ),
       // Da INSTALAÇÃO: decide se a porta de um módulo opcional entra no menu.
       modulosLigados(admin),
+      // `marcaDaInstalacao()` é memoizada por TTL no PROCESSO; quando o TTL
+      // vence, ela faz uma consulta — que não precisa esperar as demais.
+      marcaDaInstalacao(),
+      // Depende só da organização ativa, e nunca rejeita (ver o helper).
+      lerCssDoTemaDaExtensao(admin, activeOrg.orgId),
     ]);
 
     const orgRow = orgRes.data;
@@ -145,11 +198,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     // instalacao.ts`), e a derivação da cor é cacheada por régua+semente em
     // `resolve.ts` — a marca custa uma consulta a cada 30s e um lookup de Map
     // por render, não uma derivação de rampa por requisição.
-    const marca = resolverMarcaDaOrganizacao(
-      orgRow?.settings ?? null,
-      await marcaDaInstalacao(),
-      env,
-    );
+    const marca = resolverMarcaDaOrganizacao(orgRow?.settings ?? null, marcaBase, env);
 
     // SÓ quando a cor veio mesmo da organização. Se ela não configurou nada, a
     // resolução devolve a cor da instalação — e reemiti-la aqui, escopada no
@@ -164,35 +213,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       cssDaOrganizacao = cssDaMarca(marca.cor, ESCOPO_DA_ORGANIZACAO).css;
     }
 
-    // O tema de extensão NUNCA derruba a casca — e por isso a leitura fica FORA
-    // do `Promise.all` lá de cima: o portão de organização (suspensa / onboarding
-    // / ilegível) decide o destino ANTES de qualquer consulta nova, e uma leitura
-    // que falhe aqui (tabela ausente numa instalação antiga, RLS, formato
-    // inesperado) desce para `null` em vez de trocar o `redirect` do portão por
-    // um 500. Quem não escolheu tema fica exatamente como está; quem escolheu só
-    // perde a pintura naquele render.
-    try {
-      const temaTrace = await admin
-        .from("organization_extensions")
-        .select(
-          "configuration," +
-            "extension_installations!organization_extensions_installation_id_fkey(" +
-            "extension_artifacts!extension_installations_artifact_id_fkey(manifest))",
-        )
-        .eq("organization_id", activeOrg.orgId)
-        .eq("enabled", true)
-        .limit(50);
-      if (!temaTrace.error) {
-        const linhas = (temaTrace.data ?? [])
-          .map(linhaBrutaDeTema)
-          .filter((linha): linha is NonNullable<typeof linha> => linha !== null);
-        const temaEscolhido = temaAplicavel(linhas);
-        cssDoTemaDaExtensao =
-          temaEscolhido === null ? null : cssDaExtensaoDeTema(temaEscolhido).css;
-      }
-    } catch {
-      cssDoTemaDaExtensao = null;
-    }
+    cssDoTemaDaExtensao = cssDoTema;
 
     // Desce para o menu CAMPO A CAMPO, e só o campo que a organização definiu.
     // Sem a condição por campo, `marca.name` seria o nome da instalação (ou o
@@ -231,12 +252,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     needsMfaGate = mfaRequired;
   }
 
-  // Read sidebar collapsed state SSR to avoid flash.
-  // O padrão é o TRILHO (só ícones, nome no hover): só quem expandiu de propósito
-  // — cookie "0", gravado por `toggleSidebar` — vê o menu largo. Decisão do dono
-  // (07/10/2026, direção "Linha do Funil"): a Inbox ganha a largura de volta.
-  const store = await cookies();
-  const collapsed = store.get("sidebar_collapsed")?.value !== "0";
+  // Lê o estado do menu no servidor, para não piscar.
+  // O padrão é o menu EXPANDIDO (ícone + nome): só quem recolheu de propósito —
+  // cookie "1", gravado por `toggleSidebar` — vê o trilho de ícones. Decisão do dono
+  // (14/10/2026), que reverte a de 07/10: sem o nome, os três "Ver tudo" eram a mesma
+  // seta e ninguém sabia para onde cada ícone levava.
+  const store = await cookiesPromise;
+  const collapsed = store.get("sidebar_collapsed")?.value === "1";
 
   const impersonating = user.support ? {
     tenantId: user.support.organization_id, tenantName: user.support.name,
@@ -260,6 +282,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </VoiceCallProvider>
     </ProvedorDaOcupacaoDoRodape>
   );
+
+  fimDaMedicao();
 
   return (
     // O idioma envolve a árvore inteira e recebe o código PRONTO — ele não

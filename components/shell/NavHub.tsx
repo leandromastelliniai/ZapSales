@@ -4,6 +4,9 @@ import type { InterfaceSettings } from "@/lib/navigation/interface";
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
+import { Painel } from "@/components/ui/painel";
 import type { Role } from "@/lib/auth/types";
 import { permissaoDaCapacidade } from "@/lib/extensions/capacidades";
 import { portasLegiveis } from "@/lib/extensions/portas-legiveis";
@@ -12,7 +15,7 @@ import type { ExtensionGuideView } from "@/lib/extensions/view";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { IDIOMA_PADRAO, type Idioma } from "@/lib/i18n/idiomas";
 import { hubSections, type NavGroupId } from "@/lib/navigation/registry";
-import { BookOpen, Lightbulb, ListChecks, Warning } from "@/lib/ui/icons";
+import { BookOpen, CaretRight, Lightbulb, ListChecks, Warning } from "@/lib/ui/icons";
 
 interface NavHubProps {
   interfaceSettings?: InterfaceSettings;
@@ -88,58 +91,54 @@ export function NavHub({
   const secoes = hubSections(group, isPlatformAdmin, role, interfaceSettings, modulosLigados, capacidadesLigadas);
 
   return (
-    <div className="flex h-full flex-col gap-8 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{traduzir(title, locale)}</h1>
-        {subtitle && <p className="text-sm text-muted-foreground">{traduzir(subtitle, locale)}</p>}
-      </header>
+    <CorpoDaPagina largura="lista" className="gap-8">
+      <CabecalhoDePagina titulo={traduzir(title, locale)} descricao={subtitle ? traduzir(subtitle, locale) : ""} />
 
       {secoes.map(({ section, items }) => (
-        <section
-          key={section}
-          aria-labelledby={`hub-${group}-${slug(section)}`}
-          className="space-y-3"
-        >
-          <h2
-            id={`hub-${group}-${slug(section)}`}
-            className="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-          >
+        <div key={section} className="space-y-3">
+          {/* Título de seção de verdade, não um rótulo miúdo em caixa alta: é o que diz, em palavras, a
+              tarefa do grupo ("Montar o agente", "O dia a dia da venda"). */}
+          <h2 id={`hub-${group}-${slug(section)}`} className="text-base font-semibold tracking-tight">
             {traduzir(section, locale)}
           </h2>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {items.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link key={item.href} href={item.href} className="block">
-                  <Card className="flex h-full gap-3 p-4 transition-colors hover:border-border-strong">
-                    <Icon
-                      size={20}
-                      weight="regular"
-                      aria-hidden
-                      className="mt-0.5 shrink-0 text-muted-foreground"
-                    />
-                    <div>
-                      <h3 className="text-sm font-semibold">{traduzir(item.label, locale)}</h3>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {traduzir(item.description, locale)}
-                      </p>
-                    </div>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
+          <Painel aria-labelledby={`hub-${group}-${slug(section)}`} semRecuo>
+            <ul className="divide-y divide-border">
+              {items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-surface-elevated focus-visible:bg-surface-elevated focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:outline-hidden focus-visible:ring-inset"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-elevated text-text-muted transition-colors group-hover:text-accent">
+                        <Icon size={22} weight="duotone" aria-hidden />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold">{traduzir(item.label, locale)}</span>
+                        <span className="mt-0.5 block text-sm text-muted-foreground">
+                          {traduzir(item.description, locale)}
+                        </span>
+                      </span>
+                      <CaretRight
+                        size={16}
+                        aria-hidden
+                        className="shrink-0 text-text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-accent"
+                      />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </Painel>
+        </div>
       ))}
 
       {group === "crm" && (extensionGuides.length > 0 || extensionsUnavailable) ? (
         <section aria-labelledby="hub-crm-orientacoes-instaladas" className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
-              <h2
-                id="hub-crm-orientacoes-instaladas"
-                className="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-              >
+              <h2 id="hub-crm-orientacoes-instaladas" className="text-base font-semibold tracking-tight">
                 {traduzir("Orientações instaladas", locale)}
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -234,6 +233,6 @@ export function NavHub({
           )}
         </section>
       ) : null}
-    </div>
+    </CorpoDaPagina>
   );
 }

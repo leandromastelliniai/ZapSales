@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { Kanban } from "@/lib/ui/icons";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/server";
-import { traduzir } from "@/lib/i18n/dicionario";
+import type { EtapaDaLinha } from "@/components/inbox/visual/LinhaDoFunil";
 import { FunisClient, type FunilDaLista } from "./_client";
 
 export const dynamic = "force-dynamic";
@@ -61,29 +60,30 @@ export default async function KanbanPickerPage() {
   // Importar planilha é ESCRITA DE OPERAÇÃO, não configuração: quem atende
   // sobe a lista que recebeu. Espelha o `requireRole("agent")` da rota.
   const podeImportar = ROLE_RANK[activeOrg.role] >= ROLE_RANK.agent;
-  const idioma = user.idioma;
-  const t = (texto: string) => traduzir(texto, idioma);
+  // A Linha do Funil de cada funil na lista: as etapas vivas, na ordem. O filtro de organização NÃO é
+  // redundante com a RLS pelo mesmo motivo da consulta de cima (quem participa de duas organizações).
+  const idsDosFunis = funis.map((f) => f.id);
+  const { data: etapas } = idsDosFunis.length
+    ? await supabase
+        .from("crm_stages")
+        .select("id, pipeline_id, name, is_lost, position")
+        .eq("organization_id", activeOrg.orgId)
+        .eq("is_archived", false)
+        .in("pipeline_id", idsDosFunis)
+        .order("position")
+    : { data: [] };
+  const etapasPorFunil: Record<string, EtapaDaLinha[]> = {};
+  for (const e of etapas ?? []) {
+    (etapasPorFunil[e.pipeline_id] ??= []).push({ id: e.id, nome: e.name, perdida: e.is_lost });
+  }
 
   return (
-    <div className="flex h-full flex-col gap-4 p-6">
-      <header className="flex items-center gap-3">
-        <Kanban size={28} className="text-muted-foreground" weight="duotone" />
-        {/* Era "Pipelines" — nome de quem construiu o sistema, não de quem
-            vende. O comentário anterior aqui listava o preço de trocá-lo
-            (`rbac-roles.spec.ts` e `invite-lifecycle.spec.ts`) e dizia que
-            uniformizar era decisão do dono do produto. Ela foi tomada, e o preço
-            era maior do que o comentário contava: são QUATRO assertions em TRÊS
-            specs, e `pipelines-gestao.spec.ts` — a spec da própria feature que
-            gerou o comentário — é uma delas. Todas atualizadas junto. */}
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Funis")}</h1>
-      </header>
-
-      <FunisClient
-        funis={funis}
-        arquivados={arquivados}
-        podeGerenciar={podeGerenciar}
-        podeImportar={podeImportar}
-      />
-    </div>
+    <FunisClient
+      funis={funis}
+      arquivados={arquivados}
+      podeGerenciar={podeGerenciar}
+      podeImportar={podeImportar}
+      etapasPorFunil={etapasPorFunil}
+    />
   );
 }

@@ -3562,3 +3562,33 @@ gravada durante a poda e movida por uma mescla de contatos antes do worker não 
 de mensagem; mensagem de texto não chama a função (`when media_storage_path is not null`).
 
 **Não coberto:** pela tela. O composer cria a mensagem logo após o upload; o caso é o da API.
+
+## J50 — Trocar de tela logado, com latência medida `[P0]` (2026-10-14, issues #63/#64)
+
+**Por que P0:** é o gesto mais repetido do produto (cada clique no menu). Em produção, toda tela e
+toda chamada de API de quem está logado levou de 0,3 a 0,7 s só no servidor, e a primeira depois de
+parada, 2 a 3 s; o `GET /auth/v1/user` do GoTrue, chamado várias vezes por requisição, tinha
+mediana de 332 ms e pico de 2,3 s.
+
+**Meta (da #63):** página logada do dashboard com resposta do servidor abaixo de 300 ms na mediana
+depois do aquecimento; primeira requisição a frio abaixo de 1 s.
+
+| Caso | Como se vê | Prova |
+|---|---|---|
+| Página logada do dashboard = no máximo 1 chamada de validação de usuário | GoTrue falso que conta `GET /auth/v1/user` | `tests/unit/uma-validacao-de-usuario.test.ts` (antes da #64: 3 chamadas; depois: 1) |
+| Rota de API por cookie = no máximo 1 chamada | idem | idem (antes: 2; depois: 1) |
+| Rota de API por token `zps_` não faz chamada de sessão de cookie | idem | idem |
+| Cabeçalho de identidade forjado vindo de fora é ignorado | proxy e rota fora do matcher | idem |
+| Resposta logada traz `Server-Timing: proxy;dur=…, auth;dur=…` | aba Rede do navegador | idem (formato) |
+| Os tetos de CPU do login, REST e armazenamento têm padrão >= 1 núcleo, vêm de variável (`SUPABASE_*_CPUS`) e o GoTrue limita as threads (`GOMAXPROCS`) ao mesmo valor; `.env` antigo sem as variáveis segue válido | leitura do compose | `tests/unit/limites-de-recurso-do-compose.test.ts` (#66) |
+| A VPS está sendo limitada por CPU? | `cpu.max` e delta de `nr_throttled`/`throttled_usec` em `cpu.stat`, antes e depois de uma rajada | `docs/runbooks/deploy.md` §6 (manual, somente leitura) |
+| Inbox → menu → outra tela, lendo o `Server-Timing` de cada resposta, antes e depois, em ambiente fresco estilo VPS | aba Rede do navegador | **pendente** — ver abaixo |
+| Ao abrir uma tela, sons, versão do rodapé e primeiro sinal de presença esperam ~1,5 s e saem da rajada de abertura (a tela de atualização pede a versão na hora; a voz ficou de fora de propósito) | `lib/ui/depois-da-abertura.test.tsx`; aba Rede do navegador logado (#66) | unit + medição em produção |
+
+**Linha de base de produção (#66, 2026-10-14, somente leitura):** períodos limitados no cgroup,
+acumulado desde o início do container — auth 9,8% · rest 2,5% · storage 12,3% · realtime 1,3% ·
+app 4,8% · db 0,2%. Detalhe e o que foi descartado em `docs/runbooks/deploy.md` §6.
+
+**Não coberto ainda:** a medição "antes/depois" de `/user` e do tempo por etapa pela tela, em
+ambiente fresco estilo VPS e em produção (somente leitura) — exige Supabase local e a sessão do dono.
+

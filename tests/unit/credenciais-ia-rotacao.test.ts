@@ -12,7 +12,8 @@ import { NextRequest } from "next/server";
 // Precisa existir ANTES de qualquer import: `lib/env.ts` lê o processo no
 // carregamento do módulo, e é ele que entrega a chave de cifragem ao AES.
 vi.hoisted(() => {
-  process.env.AI_CRED_AES_KEY = "iBc1Z2gYaAH4rEHs1dHQ2dvNQ6t4OfrdE1/Y6OSvtZY=";
+  // base64 de "chave-de-teste-nao-e-de-producao" (32 bytes): falsa à vista.
+  process.env.AI_CRED_AES_KEY = "Y2hhdmUtZGUtdGVzdGUtbmFvLWUtZGUtcHJvZHVjYW8=";
 });
 
 import { PATCH } from "@/app/api/v1/ai/credentials/[id]/route";

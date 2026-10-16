@@ -976,6 +976,7 @@ jobs:
         presenca-do-atendente.spec.ts
         trunk-sip-config.spec.ts
         fotos-no-catalogo.spec.ts
+        modelo-de-mensagem-editor.spec.ts
 
       # ─── PARTE 4 — a spec de VPS fresca, e quem pode entrar ao lado dela ───
       #
@@ -1184,9 +1185,11 @@ jobs:
         agenda-google-meet.spec.ts
         agenda-presenca-recuperacao.spec.ts
         conexao-oficial-assistente.spec.ts
+        disparo-em-massa-csv.spec.ts
         filtro-por-marcador-pela-tela.spec.ts
         fonte-de-captacao-assina-os-envios.spec.ts
         inbox-busca-e-filtros-dizem-a-verdade.spec.ts
+        inbox-funil-e-nome-do-agente.spec.ts
         mapas-em-provedores.spec.ts
         painel-de-configuracao-da-instalacao.spec.ts
         protecao-de-envio-nao-congela-o-padrao.spec.ts
@@ -1711,7 +1714,7 @@ jobs:
       - name: Restaurar os .deb do browser
         if: runner.environment == 'github-hosted'
         id: debs-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/playwright-apt/*.deb
           key: ${{ steps.debs.outputs.prefixo }}${{ steps.debs.outputs.imagem }}
@@ -1725,7 +1728,7 @@ jobs:
       # mais precisa do cache na rodada seguinte — nunca gravaria.
       - name: Guardar os .deb do browser
         if: runner.environment == 'github-hosted' && steps.debs-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/playwright-apt/*.deb
           key: ${{ steps.debs.outputs.prefixo }}${{ steps.debs.outputs.imagem }}

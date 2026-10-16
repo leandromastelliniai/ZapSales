@@ -225,7 +225,8 @@ describe('modo assistido: as detecções determinísticas rodam antes do rascunh
     expect(mocks.passagem).toHaveBeenCalledTimes(1);
     expect(mocks.passagem).toHaveBeenCalledWith(
       p,
-      { tenantId: ids.org, leadId: ids.contact, conversationId: ids.conversation },
+      // `agentId`: o agente do turno vai junto para a passagem (0545).
+      { tenantId: ids.org, leadId: ids.contact, conversationId: ids.conversation, agentId: 'A' },
       expect.objectContaining({ reason: 'suspected_optout' }),
     );
     expect(mocks.draft, 'quem pediu para parar não ganha rascunho').not.toHaveBeenCalled();
@@ -241,7 +242,8 @@ describe('modo assistido: as detecções determinísticas rodam antes do rascunh
 
     expect(mocks.passagem).toHaveBeenCalledWith(
       p,
-      { tenantId: ids.org, leadId: ids.contact, conversationId: ids.conversation },
+      // `agentId`: o agente do turno vai junto para a passagem (0545).
+      { tenantId: ids.org, leadId: ids.contact, conversationId: ids.conversation, agentId: 'A' },
       expect.objectContaining({
         reason: 'requested_human',
         passagem: expect.objectContaining({ origem: 'pedido_explicito' }),
@@ -288,7 +290,8 @@ describe('modo assistido: as detecções determinísticas rodam antes do rascunh
     expect(mocks.aviso, 'sem contexto, o aviso sem lgpd não pode sair').not.toHaveBeenCalled();
     expect(mocks.passagem).toHaveBeenCalledWith(
       p,
-      { tenantId: ids.org, leadId: ids.contact, conversationId: ids.conversation },
+      // `agentId`: o agente do turno vai junto para a passagem (0545).
+      { tenantId: ids.org, leadId: ids.contact, conversationId: ids.conversation, agentId: 'A' },
       expect.objectContaining({ reason: 'suspected_optout' }),
     );
     expect(mocks.draft).not.toHaveBeenCalled();

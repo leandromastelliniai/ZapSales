@@ -382,7 +382,7 @@ test.describe("a moldura do logo no tema escuro", () => {
   // de teste). Ver o comentário longo em `marca-logo.spec.ts`.
   test.setTimeout(120_000);
 
-  // Esta spec mede o menu EXPANDIDO; desde 07/10/2026 o padrão é o trilho recolhido:
+  // Esta spec mede o menu EXPANDIDO; o cookie é gravado de propósito (o padrão passou a ser expandido em 14/10/2026 e já foi o trilho):
   // recolhida, a barra troca o `<img>` do logo pela inicial e o logotipo do
   // produto pelo símbolo — a moldura e o retângulo do cabeçalho que os casos
   // 1, 2, 5, 6 e 7 medem são os da barra LARGA.

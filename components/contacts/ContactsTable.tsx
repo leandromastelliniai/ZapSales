@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ChipDeEtiqueta } from "@/components/tags/ChipDeEtiqueta";
+import { AvatarDoContato } from "@/components/inbox/visual/AvatarDoContato";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -197,9 +198,12 @@ export function ContactsTable({ contacts, orderBy, orderDir, onSort }: Props) {
         {contacts.map((c) => (
           <TableRow key={c.id} className="cursor-pointer">
             <TableCell className="font-medium">
-              <Link href={`/app/contacts/${c.id}`} className="hover:underline">
-                {displayName(c)}
-              </Link>
+              <div className="flex items-center gap-3">
+                <AvatarDoContato nome={displayName(c, t)} tamanho="tabela" />
+                <Link href={`/app/contacts/${c.id}`} className="hover:underline">
+                  {displayName(c)}
+                </Link>
+              </div>
             </TableCell>
             <TableCell className="text-muted-foreground">
               {c.email ?? "—"}

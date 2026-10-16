@@ -1,3 +1,6 @@
+import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
+import { ComoFunciona } from "@/components/shell/ComoFunciona";
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
@@ -24,17 +27,16 @@ export default async function BillingPage() {
   const suporte = await emailDeSuporte();
   const idioma = user.idioma;
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Billing</h1>
-        <p className="text-sm text-muted-foreground">
-          {traduzir("Planos, faturas e cobrança.", idioma)}
-        </p>
-      </header>
+    <CorpoDaPagina>
+      <CabecalhoDePagina
+        titulo={traduzir("Plano e cobrança", idioma)}
+        ajuda={<ComoFunciona chave="plano-e-cobranca" pagina={traduzir("Plano e cobrança", idioma)} />}
+        descricao={traduzir("O plano contratado e as cobranças da sua empresa.", idioma)}
+      />
       <Card className="max-w-xl p-6">
-        <h2 className="text-sm font-semibold">{traduzir("Em breve — Fase 2", idioma)}</h2>
+        <h2 className="text-sm font-semibold">{traduzir("Em breve", idioma)}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          {traduzir("Billing entra na Fase 2 do roadmap.", idioma)}{" "}
+          {traduzir("Planos e cobrança chegam numa próxima versão.", idioma)}{" "}
           {suporte ? (
             <>
               {traduzir("Para questões de pagamento, contate", idioma)}{" "}
@@ -48,6 +50,6 @@ export default async function BillingPage() {
           )}
         </p>
       </Card>
-    </div>
+    </CorpoDaPagina>
   );
 }
