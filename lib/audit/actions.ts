@@ -1014,6 +1014,12 @@ export const AUDIT_ACTIONS = [
   // trocada, e removida. O metadata diz O QUE mudou — nunca a chave.
   "ai.maps_credential_saved",
   "ai.maps_credential_removed",
+  // A resposta em áudio (#91, 0548, Agente de IA › Provedores): a configuração da
+  // organização mudou (ligada, provedor, limite…), e a chave de voz foi gravada ou
+  // removida. O metadata diz O QUE mudou — nunca a chave.
+  "ai.audio_reply_config_changed",
+  "ai.audio_reply_credential_saved",
+  "ai.audio_reply_credential_removed",
 
   // A assinatura do emissor (#2066, PR #2079): quem ligou ou desligou o nome de
   // quem fala nas mensagens ao cliente, e com que nome a IA passou a assinar.

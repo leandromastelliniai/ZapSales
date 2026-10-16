@@ -32,6 +32,8 @@ import type { AgentVersionRow } from "@/hooks/ai/useAgentVersions";
 import { MENSAGEM_DO_TESTE_MAX } from "@/lib/ai/agents/teste-em-varias-trocas";
 import type { TurnoDoTeste } from "@/lib/ai/agents/teste-em-varias-trocas";
 
+import { FRASE_DO_TEXTO } from "@/lib/ai/resposta-em-audio/frases";
+
 import { CorrigirResposta } from "./CorrigirResposta";
 import { RunTrace } from "./RunTrace";
 
@@ -53,7 +55,12 @@ interface TestResult {
   latency_ms?: number;
   would_send_to?: { session?: string | null; chat_id?: string | null };
   stub?: boolean;
-  candidates?: Array<{ body: string; trace: Array<{ gate: string; verdict: string }> }>;
+  candidates?: Array<{
+    body: string;
+    trace: Array<{ gate: string; verdict: string }>;
+    /** Em que formato a resposta SAIRIA (resposta em áudio, #91). Só quando o agente pediu áudio. */
+    delivery?: { format: "audio" } | { format: "text"; reason: string };
+  }>;
   proposals?: Array<{ tool: string; arguments: unknown }>;
   impediments?: Array<{ code: string; message: string }>;
   restrictions?: string[];
@@ -219,6 +226,15 @@ function DetalhesDaResposta({ r }: { r: TestResult }) {
 
       {r.candidates ? (
         <div className="space-y-2 text-xs">
+          {r.candidates.map((candidate, i) =>
+            candidate.delivery ? (
+              <p key={`entrega-${i}`} role="status" data-testid="teste-entrega">
+                {candidate.delivery.format === "audio"
+                  ? t("Esta resposta SAIRIA em áudio (nota de voz); o texto fica gravado na conversa.")
+                  : `${t("Esta resposta sairia em TEXTO:")} ${t(FRASE_DO_TEXTO[candidate.delivery.reason as keyof typeof FRASE_DO_TEXTO] ?? FRASE_DO_TEXTO.desligado_na_organizacao)}`}
+              </p>
+            ) : null,
+          )}
           {r.candidates.map((candidate, i) => (
             <details key={i}>
               <summary className="cursor-pointer text-muted-foreground">
@@ -251,6 +267,7 @@ export function TestPanel({ agent, draft, published, readOnly }: Props) {
   const [contactName, setContactName] = React.useState("");
   const [contactPhone, setContactPhone] = React.useState("");
   const [pending, setPending] = React.useState(false);
+  const [comoAudio, setComoAudio] = React.useState(false);
   const [trocas, setTrocas] = React.useState<Troca[]>([]);
   const proximoId = React.useRef(1);
   const fimDaConversa = React.useRef<HTMLDivElement | null>(null);
@@ -297,6 +314,8 @@ export function TestPanel({ agent, draft, published, readOnly }: Props) {
       const history: TurnoDoTeste[] = trocas.length ? conversaAte(trocas, trocas.length - 1) : [];
       const body: Record<string, unknown> = { sample_message: texto };
       if (history.length) body.history = history;
+      // Vale só para a mensagem NOVA: o histórico da conversa de teste segue como texto.
+      if (comoAudio && target.audio_reply_enabled) body.sample_audio = true;
       if (contactName.trim() || contactPhone.trim()) {
         body.sample_contact = {
           ...(contactName.trim() ? { name: contactName.trim() } : {}),
@@ -468,6 +487,21 @@ export function TestPanel({ agent, draft, published, readOnly }: Props) {
           </Button>
         </div>
       </div>
+
+      {target.audio_reply_enabled ? (
+        <div className="flex items-center gap-2" data-testid="teste-como-audio">
+          <input
+            id="test-como-audio"
+            type="checkbox"
+            checked={comoAudio}
+            onChange={(e) => setComoAudio(e.target.checked)}
+            disabled={pending || readOnly}
+          />
+          <Label htmlFor="test-como-audio" className="font-normal">
+            {t("Simular que o cliente mandou esta mensagem como um áudio")}
+          </Label>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">

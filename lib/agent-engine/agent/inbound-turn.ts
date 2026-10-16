@@ -185,6 +185,16 @@ import {
 import { readSkillReference, skillHasReferences } from './skill-references';
 import { READ_ONLY_TOOLS, wrapToolsWithBreaker, type ToolBreakerThresholds } from './tool-breaker';
 import { loadChannelProvider, nomesDasFerramentas, runBeforeSend } from '../guardrails/before-send';
+import {
+  criarAudioDoTurno,
+  ultimaMensagemDoClienteFoiAudio,
+  type DependenciasDoAudioDoTurno,
+} from '@/lib/ai/resposta-em-audio/turno';
+import {
+  chaveDeVozConfiguradaNoBanco,
+  lerChaveDeVozNoBanco,
+} from '@/lib/ai/resposta-em-audio/credencial';
+import { registrarUsoDaVoz } from '@/lib/ai/resposta-em-audio/uso';
 import { isStatusSendable } from '../../channels/meta/template-binding';
 import { capabilitiesOf } from '@/lib/channels/capabilities';
 import { renderTemplateBody } from '@/lib/channels/meta/render-template';
@@ -1260,6 +1270,17 @@ export interface InboundTurnDeps {
    * organização e o egress com allowlist (`lib/ai/decisao/ponto.ts`).
    */
   jev?: DependenciasDoPonto;
+  /**
+   * A resposta em áudio no turno (issue #91) — injetável só para teste: um
+   * `fetch`/servidor de voz de mentira, o conversor e o Storage. Default = o
+   * provedor real com a chave da organização, o ffmpeg e o Storage do produto.
+   */
+  respostaEmAudio?: Partial<
+    Pick<
+      DependenciasDoAudioDoTurno,
+      'fetch' | 'enderecoDaElevenLabs' | 'converter' | 'guardar' | 'agora' | 'chaveConfigurada' | 'lerChave'
+    >
+  >;
 }
 
 /** Checkpoint mais recente do lead — a memória que atravessa sessões. */
@@ -2319,6 +2340,71 @@ async function executarTurnoDoAgente(
     if (!channel) throw new Error('preview_transport_forbidden');
     return channel;
   };
+  // RESPOSTA EM ÁUDIO (issue #91). `null` para todo agente que não pediu áudio —
+  // o caso de qualquer agente que já existia: nenhuma leitura, nenhum custo, o
+  // mesmo envio de sempre. Quando pediu, o `AudioDoTurno` só é CONSULTADO dentro
+  // do `send` da cadeia (depois de todas as conferências) e na prévia, que apenas
+  // simula a decisão. Ver `lib/ai/resposta-em-audio/turno.ts`.
+  const audioDoTurno =
+    agentConfig?.audioReply?.enabled === true
+      ? criarAudioDoTurno(
+          {
+            organizationId: tenantId,
+            conversationId: input.conversationId,
+            contactId: leadId === '' ? null : leadId,
+            jobId: job?.id ?? null,
+            agentId: agentConfig.agentId,
+            agente: {
+              ativado: true,
+              voz: agentConfig.audioReply.voiceId,
+              modelo: agentConfig.audioReply.modelId,
+            },
+            // Só a RESPOSTA espelha o formato do cliente: um follow-up proativo (horas ou dias
+            // depois) não responde àquele áudio, e a prévia simula o turno de resposta.
+            clienteMandouAudio:
+              (preview !== undefined || eTurnoDeResposta(liveJob())) &&
+              ultimaMensagemDoClienteFoiAudio(openingContext.context.messages),
+          },
+          {
+            lerSettings: async () =>
+              (
+                await pool.query<{ settings: unknown }>(
+                  'select settings from organizations where id = $1',
+                  [tenantId],
+                )
+              ).rows[0]?.settings ?? {},
+            provedorDoCanal: async () =>
+              preview
+                ? preview.channelId
+                  ? loadChannelProvider(pool, tenantId, preview.channelId)
+                  : null
+                : loadChannelProvider(pool, tenantId, input.channelSessionId),
+            chaveConfigurada:
+              deps.respostaEmAudio?.chaveConfigurada ??
+              ((provedor) => chaveDeVozConfiguradaNoBanco(pool, tenantId, provedor)),
+            lerChave:
+              deps.respostaEmAudio?.lerChave ??
+              ((provedor) => lerChaveDeVozNoBanco(pool, tenantId, provedor)),
+            guardar:
+              deps.respostaEmAudio?.guardar ??
+              (async (caminho, nota) => {
+                const { error } = await createAdminClient()
+                  .storage.from('whatsapp-media')
+                  .upload(caminho, nota.buffer, { contentType: nota.mime, upsert: true });
+                if (error) throw new Error(error.message);
+              }),
+            registrarUso: (uso) => registrarUsoDaVoz(pool, uso),
+            ...(deps.respostaEmAudio?.converter ? { converter: deps.respostaEmAudio.converter } : {}),
+            ...(deps.respostaEmAudio?.fetch ? { fetch: deps.respostaEmAudio.fetch } : {}),
+            ...(deps.respostaEmAudio?.enderecoDaElevenLabs
+              ? { enderecoDaElevenLabs: deps.respostaEmAudio.enderecoDaElevenLabs }
+              : {}),
+            ...(deps.respostaEmAudio?.agora ? { agora: deps.respostaEmAudio.agora } : {}),
+            aoCairEmTexto: (motivo) =>
+              runLog.info('resposta em áudio não usada — a resposta saiu em texto', { motivo }),
+          },
+        )
+      : null;
   // STOP lido no turno (fonte: CRM via get_lead_context) — combinado com o cache
   // durável leads.is_opted_out no gate 1 da cadeia (F2-13).
   const optedOutThisTurn = openingContext.context.contact.is_blocked;
@@ -3148,6 +3234,29 @@ async function executarTurnoDoAgente(
             agentConfig?.casesEnabled === true
               ? await hasOpenCaseForContact(pool, tenantId, input.conversationId)
               : false;
+          // RESPOSTA EM ÁUDIO (#91): decidida SÓ aqui — chamada de dentro do `send` da cadeia,
+          // isto é, depois de ela aprovar o texto (`lib/ai/resposta-em-audio/turno.ts`). Com
+          // foto, o texto é a legenda; qualquer falha de voz cai em texto (`null`), e o `body`
+          // da nota de voz é o texto da resposta.
+          const enviarEmAudio = async (
+            finalBody: string,
+            enviar: (corpo: string, media: FotoParaEnvio & { kind: 'audio' }) => Promise<ChannelSendResult>,
+          ): Promise<ChannelSendResult | null> => {
+            if (audioDoTurno === null || fotosDoProduto.length > 0) return null;
+            const entrega = await audioDoTurno.entregar(finalBody, seq + 1);
+            if (entrega.formato !== 'audio') return null;
+            const enviado = await enviar(finalBody, {
+              storagePath: entrega.storagePath,
+              mime: entrega.mime,
+              kind: 'audio',
+            });
+            // O canal RECUSOU a nota de voz (falha definitiva, nada saiu): o cliente recebe o
+            // texto. Qualquer outro desfecho (enviada, na fila, indisponível) é final, para nunca
+            // mandar o mesmo recado em áudio e em texto.
+            if (enviado.kind !== 'failed') return enviado;
+            runLog.warn('o canal recusou a nota de voz — a resposta segue em texto');
+            return null;
+          };
           // Args reusados EXATAMENTE (mesmo objeto) no re-run do fail-safe abaixo — só
           // hasOpenCase/openedCaseThisTurn mudam depois do auto-abre-caso.
           const beforeSendArgs = {
@@ -3259,7 +3368,7 @@ async function executarTurnoDoAgente(
             },
             // `finalBody` = corpo após a cadeia (o disclosureGate F4-05 pode prependar o
             // disclosure via inject); é ELE que vai ao canal, não o `body` capturado da tool.
-            send: (finalBody: string) => {
+            send: async (finalBody: string) => {
               corposEnviados.push(finalBody);
               const sleep =
                 deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
@@ -3272,7 +3381,7 @@ async function executarTurnoDoAgente(
                 Math.floor(Math.random() * (pacingDoTurno?.knobs.jitterMaxMs ?? 800));
               const enviar = (
                 corpo: string,
-                media?: FotoParaEnvio,
+                media?: FotoParaEnvio & { kind?: 'image' | 'audio' },
               ): Promise<ChannelSendResult> => {
                 seq += 1;
                 return liveChannel().send({
@@ -3287,6 +3396,8 @@ async function executarTurnoDoAgente(
                   ...(media ? { media } : {}),
                 });
               };
+              const viaAudio = await enviarEmAudio(finalBody, enviar);
+              if (viaAudio !== null) return viaAudio;
               // Cada foto é uma mensagem física: só vão as que cabem no que resta do teto
               // do turno (a checagem de `max_sends_per_turn` acima roda uma vez, antes).
               // O resto é medido ANTES DE CADA FOTO, depois do texto: o texto acima do
@@ -4043,6 +4154,7 @@ async function executarTurnoDoAgente(
                 toolCalledThisTurn: agendaToolCalledThisTurn,
               },
             }),
+            audioDoTurno,
           )
         : rawTools;
     const tools = wrapToolsWithBreaker(previewTools, {

@@ -92,6 +92,9 @@ function buildFieldChanges(a: AgentVersionRow, b: AgentVersionRow): FieldChange[
     ["split_messages", "split_messages"],
     ["split_max_chars", "split_max_chars"],
     ["inbound_debounce_ms", "inbound_debounce_ms"],
+    ["audio_reply_enabled", "audio_reply_enabled"],
+    ["audio_reply_voice_id", "audio_reply_voice_id"],
+    ["audio_reply_model_id", "audio_reply_model_id"],
     ["temperature", "Temperatura"],
   ];
   return fields

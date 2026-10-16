@@ -49,8 +49,12 @@ export interface ChannelCapabilities {
   banRisk: boolean;
   /** Intervalo mínimo imposto PELA PLATAFORMA entre msgs ao mesmo destinatário (ms). */
   minIntervalMs: number | null;
-  /** 'server-convert' = o canal converte áudio; 'opus-only' = precisamos entregar ogg/opus. */
-  voiceNote: "server-convert" | "opus-only";
+  /**
+   * 'server-convert' = o canal converte áudio; 'opus-only' = precisamos entregar ogg/opus;
+   * 'none' = o canal não entrega nota de voz. Quem responde em áudio (a resposta em áudio
+   * do agente, issue #91) só envia onde a resposta NÃO é 'none' (`suportaNotaDeVoz`).
+   */
+  voiceNote: "server-convert" | "opus-only" | "none";
   groups: "full" | "limited" | "none";
   /** Mensagem entregue gera custo → decisões de envio precisam considerar orçamento. */
   costPerMessage: boolean;

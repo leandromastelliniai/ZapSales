@@ -59,6 +59,7 @@ import {
   type FollowupWindowValue,
 } from "./FollowupWindowEditor";
 import { PainelDoOperador } from "./PainelDoOperador";
+import { RespostaEmAudioDoAgente } from "./RespostaEmAudioDoAgente";
 import { PainelDeSeguranca } from "./PainelDeSeguranca";
 import { BasesDoAgente, type MaterialDoAcervo } from "./BasesDoAgente";
 import { FunisDoAgente, type CoberturaPorFunil } from "./FunisDoAgente";
@@ -210,6 +211,10 @@ interface FormState {
   split_max_chars: number;
   /** Janela de rajada (ms) do agente. `null` = usa a env da instalação. */
   inbound_debounce_ms: number | null;
+  /** Resposta em áudio (issue #91): desligada por padrão. Voz/modelo `null` = os da organização. */
+  audio_reply_enabled: boolean;
+  audio_reply_voice_id: string | null;
+  audio_reply_model_id: string | null;
   followup: FollowupValue;
   // Papel OPERADOR (spec 16 §3.2) — o que mexe no sistema depois da conversa.
   operator_enabled: boolean;
@@ -328,6 +333,9 @@ export function buildState(args: {
     split_messages: version?.split_messages ?? false,
     split_max_chars: version?.split_max_chars ?? 600,
     inbound_debounce_ms: version?.inbound_debounce_ms ?? null,
+    audio_reply_enabled: version?.audio_reply_enabled ?? false,
+    audio_reply_voice_id: version?.audio_reply_voice_id ?? null,
+    audio_reply_model_id: version?.audio_reply_model_id ?? null,
     followup: version?.followup
       ? {
           ...DEFAULT_FOLLOWUP,
@@ -411,6 +419,9 @@ function toVersionPayload(s: FormState) {
     split_messages: s.split_messages,
     split_max_chars: s.split_max_chars,
     inbound_debounce_ms: s.inbound_debounce_ms,
+    audio_reply_enabled: s.audio_reply_enabled,
+    audio_reply_voice_id: s.audio_reply_voice_id,
+    audio_reply_model_id: s.audio_reply_model_id,
     followup: s.followup,
     operator_enabled: s.operator_enabled,
     // "" (não escolheu) → null (herda o do Conversador). São o mesmo conceito em
@@ -1354,6 +1365,24 @@ export function AgentForm(props: Props) {
               </div>
             ) : null}
           </Card>
+
+          {/* Resposta em áudio (issue #91) */}
+          <RespostaEmAudioDoAgente
+            value={{
+              enabled: form.audio_reply_enabled,
+              voiceId: form.audio_reply_voice_id,
+              modelId: form.audio_reply_model_id,
+            }}
+            onChange={(v) =>
+              patch({
+                audio_reply_enabled: v.enabled,
+                audio_reply_voice_id: v.voiceId,
+                audio_reply_model_id: v.modelId,
+              })
+            }
+            disabled={disabled}
+            riscoDeBanimento={channelSession?.riscoDeBanimento === true}
+          />
 
           {/* Capacidades */}
           <Card className="space-y-2 p-4">

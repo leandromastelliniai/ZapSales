@@ -1196,6 +1196,7 @@ jobs:
         prova-painel-provedores.spec.ts
         qa-l12-inbox.spec.ts
         recursos-opcionais.spec.ts
+        resposta-em-audio-pela-tela.spec.ts
         sons-dos-avisos.spec.ts
         suspensao-administrativa.spec.ts
 

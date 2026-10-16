@@ -7,6 +7,9 @@ import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/server";
 import { BudgetCard } from "@/components/ai/BudgetCard";
+import { CartaoDeUsoDaVoz } from "@/components/ai/CartaoDeUsoDaVoz";
+import { lerConfigDeAudio } from "@/lib/ai/resposta-em-audio/config";
+import { resumoDoUsoDaVoz } from "@/lib/ai/resposta-em-audio/uso";
 import { getBudgetStatus } from "@/lib/ai/budget/check";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { UsageDashboardClient } from "./_client";
@@ -54,6 +57,15 @@ export default async function AiUsagePage({ searchParams }: PageProps) {
   };
 
   const budget = await getBudgetStatus(activeOrg.orgId);
+  // A voz da resposta em áudio (#91): config e uso do mês. Leitura que falha vira
+  // "não consegui ler" no cartão — nunca derruba a tela de Uso de IA.
+  const { data: orgRow } = await supabase
+    .from("organizations")
+    .select("settings")
+    .eq("id", activeOrg.orgId)
+    .maybeSingle();
+  const configDaVoz = lerConfigDeAudio((orgRow as { settings?: unknown } | null)?.settings ?? {});
+  const usoDaVoz = await resumoDoUsoDaVoz(supabase, activeOrg.orgId).catch(() => null);
   const isAdmin = ROLE_RANK[activeOrg.role] >= ROLE_RANK.admin;
   const idioma = user.idioma;
 
@@ -68,6 +80,7 @@ export default async function AiUsagePage({ searchParams }: PageProps) {
           )}
       />
       <BudgetCard initialData={budget} isAdmin={isAdmin} />
+      <CartaoDeUsoDaVoz config={configDaVoz} uso={usoDaVoz} idioma={idioma} />
       <UsageDashboardClient agents={agents} initial={initial} />
     </CorpoDaPagina>
   );

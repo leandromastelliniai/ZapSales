@@ -33,6 +33,10 @@ export interface AgentVersionRow {
   split_messages: boolean;
   split_max_chars: number;
   inbound_debounce_ms: number | null;
+  /** Resposta em áudio (issue #91): desligada por padrão; voz/modelo do provedor do cliente. */
+  audio_reply_enabled: boolean;
+  audio_reply_voice_id: string | null;
+  audio_reply_model_id: string | null;
   /** Perfil guiado (0546). Todos nulos = agente sem perfil (só o prompt livre). */
   profile_persona: string | null;
   profile_tone: "formal" | "normal" | "descontraido" | null;

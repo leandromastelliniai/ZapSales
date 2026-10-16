@@ -662,6 +662,63 @@ Todos via `/api/v1/audit` ou já capturados pelas Server Actions emitindo audit 
 
 ---
 
+## 12b. Resposta em áudio (issue #91, parte da #86)
+
+O agente já ENTENDE o áudio do cliente (transcrição); a resposta em áudio é a outra metade. É
+**opcional, desligada por padrão e com a chave de voz do próprio cliente**. Destino (doutrina de
+extensões): *núcleo, atrás de interruptor da organização* — "se nenhuma organização ativar isto, a
+operação comum continua inteira": sim, e é o molde do Jev (provedor externo opcional, interruptor
+por organização, aceite do administrador).
+
+**Duas pontas, as duas precisam estar ligadas**
+
+| Onde | O quê | Quem decide |
+|---|---|---|
+| Organização | `organizations.settings.resposta_em_audio` = `{ ligado, provedor, endereco, modelo, voz, limite_de_caracteres, custo_por_mil_caracteres_cents, aceite }`. Leitura por Zod central (`lib/ai/resposta-em-audio/config.ts`) que **falha desligado**: JSON torto, ou `ligado` sem `aceite`, vale como desligado | admin |
+| Chave | `voice_provider_credentials (organization_id, provider, api_key_encrypted, api_key_last4)` — cifra `fn_encrypt_oauth`, **server-side only** (RLS sem policy, sem grant a `anon`/`authenticated`). Uma por provedor por organização; a tela vê só os 4 últimos | admin |
+| Agente | `ai_agent_versions.audio_reply_enabled` (default `false`), `audio_reply_voice_id`, `audio_reply_model_id` — **dado da versão** (rascunho, diff, histórico, desfazer) e coberto pela trava de imutabilidade da versão publicada | manager+ |
+
+**Provedores** (uma abstração, `ProvedorDeVoz`; vocabulário `PROVEDORES_DE_VOZ` = CHECK do banco):
+`openai_compativel` (`POST {base}/audio/speech`, base escolhida pela organização — endereço da rede
+interna/privada/local é **recusado** pela régua de destino de organização, sem seguir redirecionamento)
+e `elevenlabs` (endereço fixo; voz e modelo **por agente**, a partir de `GET /v1/voices` com a chave do
+cliente). Outros entram pela mesma abstração.
+
+**Rotas** (`/api/v1/ai/audio`): `GET` estado (manager; nunca a chave) · `PUT` configuração e/ou chave
+(admin; ligar exige **aceite + chave do provedor escolhido**, senão 422 com a frase do que falta) ·
+`DELETE ?provedor=` remove a chave (não desliga a organização: o estado passa a `sem_chave`) ·
+`POST /testar` sintetiza uma frase de verdade e converte, sem enviar nada e sem gravar (resposta 200 com
+`ok:false` + motivo + frase do que fazer) · `GET /vozes` (manager). Toda mutação: `requireSupportWrite`,
+Zod `.strict()`, organização da sessão, auditoria `ai.audio_reply_config_changed` /
+`ai.audio_reply_credential_saved` / `ai.audio_reply_credential_removed` (sem segredo).
+
+**Telas**: Provedores › cartão "Resposta em áudio" (provedor, chave, endereço, modelo, voz, limite,
+preço declarado, aceite, ligar, **Testar**; uso do mês e **última falha em conversa real**) · editor do
+agente › seção "Resposta em áudio" (opção, voz e modelo; **explica por que está indisponível** quando a
+organização não ligou ou falta a chave; aviso de **risco de banimento** em número por QR code, lido da
+capacidade `banRisk` do canal) · Uso de IA › "Voz das respostas em áudio" (caracteres, custo, limite).
+
+**Comportamento no turno** (spec 10): o áudio é gerado **dentro do `send` da cadeia `before_send`**, isto é,
+**depois** de opt-out, LGPD, ritmo, janela de 24h, promessa e vocabulário aprovarem o texto — nunca antes e
+nunca em volta. Condições (`decidirRespostaEmAudio`, nesta ordem): organização ligada com aceite · agente
+pediu · a última mensagem do cliente foi áudio · o canal declara nota de voz (`suportaNotaDeVoz`, capacidade
+`voiceNote`) · há chave · texto dentro do limite (nunca é cortado) · voz escolhida (ElevenLabs). Resposta
+com foto de produto sai como foto+legenda. Falha de qualquer peça (provedor, chave, créditos, ffmpeg,
+Storage) **cai em texto**; o motivo vai para o log do turno. O arquivo é `ogg/opus` (conversão do mp3 pelo
+ffmpeg da imagem) em `<org>/<conversa>/`, e o **texto da resposta é o `body` da mensagem de áudio**.
+
+**Custo**: uma linha em `llm_calls` por tentativa (`purpose = 'voice_reply'`; `input_tokens` = caracteres
+convertidos; `cost_cents` em centavos de dólar, `null` = preço desconhecido, nunca 0). Preço público da
+OpenAI só na base da própria OpenAI; para o resto, o administrador declara o preço por mil caracteres. O
+custo soma no gasto do mês que o teto de orçamento vigia; os caracteres **não** entram nos totais de tokens.
+
+**Prévia (aba Testar)**: o candidato de resposta traz `delivery` (`audio` ou `text` + motivo) — simulado, sem
+chamar o provedor nem gravar arquivo.
+
+Mapa vivo: `docs/architecture/resposta-em-audio.architecture.json`. Arquivos: `lib/ai/resposta-em-audio/`.
+
+---
+
 ## 13. Performance
 
 - Lista paginada (default 25/page) com cursor base64+HMAC (Spec 09)

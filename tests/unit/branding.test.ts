@@ -952,6 +952,12 @@ const HOSTS_DECLARADOS: Record<string, EntradaDeHost> = {
     motivo:
       "endpoint da API da OpenAI (embeddings da busca e transcrição de áudio). É o destino do request: trocar pelo domínio do revendedor faria a chamada não chegar a lugar nenhum.",
   },
+  // ── resposta em áudio (0548, issue #91): destino de chamada ──
+  "api.elevenlabs.io": {
+    categoria: "FORNECEDOR",
+    motivo:
+      "endpoint da ElevenLabs (`lib/ai/resposta-em-audio/provedores/elevenlabs.ts`): sintetiza a voz da resposta do agente e lista as vozes da conta, com a chave de voz da PRÓPRIA organização. É o destino do request: trocar pelo domínio do revendedor faria a chamada não chegar a lugar nenhum. Sem chave de voz cadastrada, o código não fala com ele.",
+  },
   "api.typesafe.ai": {
     categoria: "FORNECEDOR",
     motivo:

@@ -3594,3 +3594,35 @@ app 4,8% · db 0,2%. Detalhe e o que foi descartado em `docs/runbooks/deploy.md`
 **Não coberto ainda:** a medição "antes/depois" de `/user` e do tempo por etapa pela tela, em
 ambiente fresco estilo VPS e em produção (somente leitura) — exige Supabase local e a sessão do dono.
 
+
+## J51 — O agente responde em áudio quando o cliente manda áudio `[P1]` (2026-10-16, issue #91)
+
+Contexto: parte da #86. O agente já entendia o áudio do cliente e nunca respondia em áudio. Agora, **opcional e
+desligado por padrão**, a organização liga o recurso em Agente de IA › Provedores › «Resposta em áudio» (provedor
+compatível com a API de fala da OpenAI, ou ElevenLabs, com a chave de voz da própria empresa) e cada agente decide
+se responde em nota de voz. Tabela `voice_provider_credentials` e colunas `ai_agent_versions.audio_reply_*`
+(migration 0548); regra em `lib/ai/resposta-em-audio/`; mapa em `docs/architecture/resposta-em-audio.architecture.json`.
+
+Spec: `tests/e2e/resposta-em-audio-pela-tela.spec.ts` (**escrita, não executada** — veja «Não coberto»).
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J51.1 | Instalação NOVA, sem chave de voz nenhuma | o cartão abre «Indisponível», diz «Desligada. Os agentes respondem sempre em texto», o interruptor e o «Testar» ficam travados | **PASS (componente)** — `CartaoDeRespostaEmAudio.test.tsx`; pela tela: spec escrita |
+| J51.2 | Colar a chave, aceitar, ligar, salvar | o banco guarda a chave CIFRADA e os 4 últimos; a configuração carimba QUEM aceitou; a tela mostra só «···XXXX» e a chave não aparece no HTML | **PASS (unit + invariante)** — `app/api/v1/ai/audio/route.test.ts`; spec escrita |
+| J51.3 | Ligar sem chave / sem o aceite do administrador / com endereço da rede interna | 422 com a frase do que falta; nada é gravado | **PASS (unit)** — `route.test.ts` |
+| J51.4 | «Testar» com chave recusada / conta sem créditos / ffmpeg ausente | a tela explica cada falha com a frase do que fazer, nunca «Funcionou» | **PASS (unit)** — `route.test.ts`, `CartaoDeRespostaEmAudio.test.tsx` |
+| J51.5 | Cliente manda áudio, agente com a opção ligada, organização ligada | o canal recebe a NOTA DE VOZ (tipo áudio, na pasta da conversa) com o TEXTO da resposta como corpo; o provedor recebeu o texto exato e a chave do cliente | **ESCRITO, não executado** — `tests/invariants/resposta-em-audio-no-turno.test.ts` (turno completo + endpoint de voz de verdade); o módulo de decisão e entrega: **PASS (unit)** com endpoint HTTP real — `lib/ai/resposta-em-audio/turno.test.ts` |
+| J51.6 | Cliente escreve / agente com a opção desligada (padrão) / organização desligada | texto, e o provedor de voz nem é consultado | **PASS (unit)**; turno completo: invariante escrita |
+| J51.7 | Provedor sem créditos / chave inválida / fora do ar / lixo | cai em TEXTO, o cliente não fica sem resposta, a falha fica em `llm_calls` e aparece como «última falha» no cartão | **PASS (unit)**; turno completo: invariante escrita |
+| J51.8 | A conferência veta (janela de 24 h fechada) | NADA é enviado e o provedor de voz NEM é chamado: áudio não contorna a cadeia | invariante escrita (`resposta-em-audio-no-turno.test.ts`) |
+| J51.9 | Editor do agente em número por QR code | aviso de risco de banimento (lido da capacidade `banRisk` do canal, nunca do nome do provedor) | **PASS (componente)** — `RespostaEmAudioDoAgente.test.tsx` |
+| J51.10 | A tabela não é servida pelo PostgREST; duas organizações com a chave do mesmo provedor não colidem; apagar a organização leva a chave | privilégio NENHUM a `anon`/`authenticated`, `permission denied`, RLS sem policy, unique `(org, provedor)`, cascade | **PASS (invariante, PGlite)** — `tests/invariants/credencial-de-voz-e-server-side.test.ts` |
+| J51.11 | Mudar a voz de uma versão JÁ publicada | recusado (`imutável`); rascunho novo publica normalmente; versão sem menção a áudio nasce DESLIGADA | **PASS (invariante, PGlite)** — `tests/invariants/trava-da-versao-publicada-cobre-resposta-em-audio.test.ts` |
+| J51.12 | Baseline: instalação do zero e reaplicação (atualização) | a 0548 aplica nas duas passadas | **PASS (PGlite, install + update)** |
+
+**Não coberto ainda:** (a) a prova pela tela em ambiente fresco estilo VPS, sem as chaves opcionais (exige Supabase
+local; esta sessão rodou sem Docker); (b) um áudio real: nenhuma chave de voz nem `ffmpeg` nesta máquina — a
+conversão mp3 → ogg/opus foi provada pelos argumentos passados ao `ffmpeg`, e a imagem do produto já o traz;
+(c) os invariantes de turno completo (`resposta-em-audio-no-turno`, e também `limite-de-envios-por-turno` e
+irmãos) **não rodam sob PGlite** — travam no claim da fila, por natureza do harness, com o controle da `main`
+igualmente vermelho; o gate é o job `invariants` do CI.
