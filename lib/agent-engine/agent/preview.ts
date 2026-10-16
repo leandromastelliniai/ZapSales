@@ -22,6 +22,7 @@ import { DEFAULT_CHANNEL_PROVIDER } from '@/lib/channels/capabilities';
 import { getToolByName } from '@/lib/mcp/tools';
 import type { Logger } from '../obs/logger';
 import type { Citation } from '@/lib/ai/citations/types';
+import type { AudioDoTurno } from '@/lib/ai/resposta-em-audio/turno';
 
 export interface TurnPreview {
   kind: 'sandbox' | 'assisted';
@@ -40,7 +41,18 @@ export interface TurnPreview {
 }
 export interface PreviewResult {
   checkpoint?: unknown;
-  candidates: Array<{ body: string; citations: Citation[]; trace: GateTraceEntry[] }>;
+  candidates: Array<{
+    body: string;
+    citations: Citation[];
+    trace: GateTraceEntry[];
+    /**
+     * Em que formato esta resposta SAIRIA para o cliente (resposta em áudio, issue
+     * #91). Só aparece quando o agente pediu áudio. Simulado: a prévia nunca chama
+     * o provedor de voz nem grava arquivo — decide pela mesma regra do envio real
+     * e diz o motivo quando a resposta cairia em texto.
+     */
+    delivery?: { format: 'audio' } | { format: 'text'; reason: string };
+  }>;
   proposals: Array<{ tool: string; arguments: unknown }>;
   impediments: Array<{ code: string; message: string }>;
   restrictions: string[];
@@ -150,6 +162,7 @@ export function applyPreviewPolicy(
   citations: () => Citation[],
   semanticClassifier?: (body: string) => Promise<NonNullable<GateContext['semanticPromise']>>,
   liveContext?: () => Partial<GateContext>,
+  audio?: AudioDoTurno | null,
 ): ToolSet {
   return Object.fromEntries(
     Object.entries(tools).map(([name, definition]) => {
@@ -188,10 +201,19 @@ export function applyPreviewPolicy(
                   error: { code: result.veto.code, message: result.veto.message },
                 };
               }
+              const simulada = audio ? await audio.simular(result.body) : null;
               p.result.candidates.push({
                 body: result.body,
                 citations: citations(),
                 trace: result.trace,
+                ...(simulada
+                  ? {
+                      delivery:
+                        simulada.formato === 'audio'
+                          ? ({ format: 'audio' } as const)
+                          : ({ format: 'text', reason: simulada.motivo } as const),
+                    }
+                  : {}),
               });
               return {
                 ok: true,

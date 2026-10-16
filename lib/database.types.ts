@@ -1818,6 +1818,9 @@ export type Database = {
           history_token_window: number
           id: string
           inbound_debounce_ms: number | null
+          audio_reply_enabled: boolean
+          audio_reply_model_id: string | null
+          audio_reply_voice_id: string | null
           knowledge_source_ids: string[]
           max_steps: number
           model: string
@@ -1857,6 +1860,9 @@ export type Database = {
           history_token_window?: number
           id?: string
           inbound_debounce_ms?: number | null
+          audio_reply_enabled?: boolean
+          audio_reply_model_id?: string | null
+          audio_reply_voice_id?: string | null
           knowledge_source_ids?: string[]
           max_steps?: number
           model: string
@@ -1896,6 +1902,9 @@ export type Database = {
           history_token_window?: number
           id?: string
           inbound_debounce_ms?: number | null
+          audio_reply_enabled?: boolean
+          audio_reply_model_id?: string | null
+          audio_reply_voice_id?: string | null
           knowledge_source_ids?: string[]
           max_steps?: number
           model?: string

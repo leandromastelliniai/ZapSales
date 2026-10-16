@@ -90,6 +90,19 @@ export interface PublishedAgentConfig {
    * conserta (o campo existia na tela e nenhum leitor vivo o consultava).
    */
   janelaDeAtendimento: JanelaDeAtendimento | null;
+  /**
+   * Resposta em áudio (issue #91): "responder em nota de voz quando o cliente
+   * mandar áudio". DESLIGADA por padrão — e só vale com o interruptor da
+   * organização ligado e uma chave de voz gravada (`lib/ai/resposta-em-audio/`).
+   * Opcional no tipo para os dublês de teste que montam a config à mão; o
+   * leitor do banco sempre a preenche.
+   */
+  audioReply?: {
+    enabled: boolean;
+    /** A voz escolhida na lista do provedor. `null` = a padrão da organização. */
+    voiceId: string | null;
+    modelId: string | null;
+  };
   /** criadores (p/ mint do token efêmero de audit — padrão do runtime nativo). */
   versionCreatedBy: string | null;
   agentCreatedBy: string | null;
@@ -127,6 +140,9 @@ interface Row {
   pipeline_ids: string[] | null;
   knowledge_source_ids: string[] | null;
   trigger_config: unknown;
+  audio_reply_enabled: boolean | null;
+  audio_reply_voice_id: string | null;
+  audio_reply_model_id: string | null;
   version_created_by: string | null;
   agent_created_by: string | null;
 }
@@ -159,6 +175,9 @@ const SELECT_AGENT_CONFIG_COLUMNS = `a.operation_mode,a.paused_at,a.operation_re
             v.pipeline_ids,
             v.knowledge_source_ids,
             v.trigger_config,
+            v.audio_reply_enabled,
+            v.audio_reply_voice_id,
+            v.audio_reply_model_id,
             v.created_by as version_created_by,
             a.created_by as agent_created_by`;
 
@@ -227,6 +246,13 @@ function mapAgentConfigRow(r: Row): PublishedAgentConfig {
     // Leitura DEFENSIVA e que falha ABERTA: jsonb livre com shape estranho vira
     // `null` (sem janela ⇒ atende sempre), nunca uma mordaça acidental.
     janelaDeAtendimento: lerJanelaDeAtendimento(r.trigger_config),
+    // `?? false`/`?? null`: o clone que ainda não aplicou a 0546 vem sem a coluna,
+    // e a direção segura é o áudio DESLIGADO — o agente segue em texto.
+    audioReply: {
+      enabled: r.audio_reply_enabled ?? false,
+      voiceId: r.audio_reply_voice_id ?? null,
+      modelId: r.audio_reply_model_id ?? null,
+    },
     versionCreatedBy: r.version_created_by,
     agentCreatedBy: r.agent_created_by,
   };

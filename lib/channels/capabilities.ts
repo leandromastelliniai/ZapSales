@@ -138,6 +138,39 @@ export function canalConhecidoSemMensagem(provider: string | null | undefined): 
   return (PROVIDERS_SEM_MENSAGEM as readonly string[]).includes(provider ?? "");
 }
 
+/**
+ * Este canal entrega NOTA DE VOZ? É a pergunta da resposta em áudio do agente
+ * (issue #91), e é de CAPACIDADE, nunca de provedor (invariante 1).
+ *
+ * Falha fechada pelo motivo de `transportaMensagem`: provedor que este código
+ * não conhece, ou que não conversa, não recebe áudio — o erro barato é mandar
+ * texto, o caro é mandar uma nota de voz por um canal que não a entrega.
+ */
+export function suportaNotaDeVoz(provider: string | null | undefined): boolean {
+  if (!transportaMensagem(provider)) return false;
+  try {
+    return capabilitiesOf(provider as ProviderDeMensagem).voiceNote !== "none";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Este canal tem risco de banimento (auto-restrição)? Perguntado pela tela do
+ * agente para avisar, em quem escolhe responder em áudio, que áudio aumenta o
+ * risco de banimento num número conectado por QR code. Falha para `false` só
+ * quando o provedor é desconhecido: aviso a mais seria ruído, e a decisão de
+ * ENVIAR não passa por esta função.
+ */
+export function temRiscoDeBanimento(provider: string | null | undefined): boolean {
+  if (!transportaMensagem(provider)) return false;
+  try {
+    return capabilitiesOf(provider as ProviderDeMensagem).banRisk;
+  } catch {
+    return false;
+  }
+}
+
 export function capabilitiesOf(provider: ChannelProvider): ChannelCapabilities {
   const caps = CHANNEL_CAPABILITIES[provider as ProviderDeMensagem];
   // Fail-closed: provider fora da matriz não herda o default do WAHA. O tipo

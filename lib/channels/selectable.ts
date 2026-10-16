@@ -22,7 +22,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { nomeDoCanal } from "@/lib/channels/estado";
 
 import { ARCHIVED_AT, queryTolerantToMissingArchived } from "./archived";
-import { PROVIDERS_DE_MENSAGEM, capabilitiesOf, transportaMensagem } from "./capabilities";
+import { PROVIDERS_DE_MENSAGEM, capabilitiesOf, temRiscoDeBanimento, transportaMensagem } from "./capabilities";
 import type { ProviderDeMensagem } from "./types";
 
 /** Um canal oferecível como destino, já com o rótulo resolvido para a tela. */
@@ -46,6 +46,16 @@ export interface SelectableChannel {
    * quem já consumia `SelectableChannel` não muda uma linha.
    */
   aceitaMensagemLivre: boolean;
+  /**
+   * O número pode ser BANIDO por volume/padrão de envio (auto-restrição, `banRisk`)?
+   *
+   * É a pergunta do editor de agente na "Resposta em áudio" (issue #91): nota de
+   * voz é um padrão de envio a mais, e quem conecta o número por QR code precisa
+   * ler o aviso antes de ligá-la. Capacidade, não provedor (invariante 1) — a tela
+   * nunca sabe QUAL canal é. Aditivo e opcional: fixtures antigas seguem válidas,
+   * e ausente vale `false` (sem aviso).
+   */
+  riscoDeBanimento?: boolean;
 }
 
 // `provider` entra no `select` por causa de `aceitaMensagemLivre`. Ele é lido
@@ -123,5 +133,6 @@ export async function listSelectableChannels(
     status: c.status,
     phone_number: c.phone_number ?? null,
     aceitaMensagemLivre: aceitaMensagemLivre(c.provider),
+    riscoDeBanimento: temRiscoDeBanimento(c.provider),
   }));
 }

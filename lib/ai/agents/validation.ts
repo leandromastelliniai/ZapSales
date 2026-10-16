@@ -178,6 +178,16 @@ const versionShapeSchema = z
      * ninguém travar o atendimento sem querer (#1856).
      */
     inbound_debounce_ms: z.number().int().min(0).max(60000).nullable().optional(),
+    /**
+     * Resposta em áudio (issue #91): responder em nota de voz quando o cliente
+     * mandar áudio. DESLIGADA por padrão, e só vale com o interruptor da
+     * organização ligado e uma chave de voz gravada (`lib/ai/resposta-em-audio/`).
+     * Voz e modelo são os que o provedor oferece para a chave do cliente; `null` =
+     * a voz/modelo padrão da organização. Dado da VERSÃO: rascunho, diff, histórico.
+     */
+    audio_reply_enabled: z.boolean().default(false),
+    audio_reply_voice_id: z.string().trim().min(1).max(120).nullable().default(null),
+    audio_reply_model_id: z.string().trim().min(1).max(120).nullable().default(null),
     followup: followupConfigSchema,
     // ── Papel OPERADOR (spec 16 §3.2) ───────────────────────────────────────
     // Todos com `.default(...)`, e é o que mantém retrocompatível: agent e
@@ -248,6 +258,9 @@ export const versionPatchSchema = versionShapeSchema
     cases_enabled: versionShapeSchema.shape.cases_enabled.removeDefault(),
     split_messages: versionShapeSchema.shape.split_messages.removeDefault(),
     split_max_chars: versionShapeSchema.shape.split_max_chars.removeDefault(),
+    audio_reply_enabled: versionShapeSchema.shape.audio_reply_enabled.removeDefault(),
+    audio_reply_voice_id: versionShapeSchema.shape.audio_reply_voice_id.removeDefault(),
+    audio_reply_model_id: versionShapeSchema.shape.audio_reply_model_id.removeDefault(),
     followup: followupPatchSchema,
     operator_enabled: versionShapeSchema.shape.operator_enabled.removeDefault(),
     operator_model: versionShapeSchema.shape.operator_model.removeDefault(),
