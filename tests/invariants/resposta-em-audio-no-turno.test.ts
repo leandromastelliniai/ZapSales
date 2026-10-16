@@ -328,8 +328,8 @@ beforeAll(async () => {
   for (const [agente, versao, sessao, audio] of agentes) {
     await pool.query(
       `insert into ai_agents (id, organization_id, name, system_prompt)
-       values ($1,$2,'Agente de áudio','você atende quem escreve') on conflict (id) do nothing`,
-      [agente, ORG],
+       values ($1,$2,$3,'você atende quem escreve') on conflict (id) do nothing`,
+      [agente, ORG, `Agente de áudio ${agente.slice(-3)}`],
     );
     await pool.query(
       `insert into ai_agent_versions (id, organization_id, agent_id, version_number, system_prompt,
