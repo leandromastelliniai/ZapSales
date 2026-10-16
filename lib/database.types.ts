@@ -1818,6 +1818,12 @@ export type Database = {
           history_token_window: number
           id: string
           inbound_debounce_ms: number | null
+          profile_persona: string | null
+          profile_tone: string | null
+          profile_objective: string | null
+          profile_welcome: string | null
+          profile_language: string | null
+          temperature: number | null
           knowledge_source_ids: string[]
           max_steps: number
           model: string
@@ -1857,6 +1863,12 @@ export type Database = {
           history_token_window?: number
           id?: string
           inbound_debounce_ms?: number | null
+          profile_persona?: string | null
+          profile_tone?: string | null
+          profile_objective?: string | null
+          profile_welcome?: string | null
+          profile_language?: string | null
+          temperature?: number | null
           knowledge_source_ids?: string[]
           max_steps?: number
           model: string
@@ -1896,6 +1908,12 @@ export type Database = {
           history_token_window?: number
           id?: string
           inbound_debounce_ms?: number | null
+          profile_persona?: string | null
+          profile_tone?: string | null
+          profile_objective?: string | null
+          profile_welcome?: string | null
+          profile_language?: string | null
+          temperature?: number | null
           knowledge_source_ids?: string[]
           max_steps?: number
           model?: string

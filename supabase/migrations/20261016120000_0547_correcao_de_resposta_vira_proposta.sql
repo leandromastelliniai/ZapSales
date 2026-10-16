@@ -1,6 +1,6 @@
 -- manifest: **"Corrigir esta resposta" vira proposta do agente.** `flywheel_distiller_proposals` ganha `agent_id` (FK para `ai_agents`, `on delete cascade`, nulo = proposta da organização, como todas as anteriores) e o tipo `response_correction` no CHECK. A correção que a pessoa escreve na aba Teste ou em Execuções nasce como proposta pendente, presa ao agente de que fala, e só muda o comportamento quando alguém a aplica. Aditiva e idempotente; dado existente não é tocado.
 
--- 0546: a correção de uma resposta do agente vira proposta (issue #90, parte da #86).
+-- 0547: a correção de uma resposta do agente vira proposta (issue #90, parte da #86).
 --
 -- ─── Por quê ────────────────────────────────────────────────────────────────
 --
@@ -42,6 +42,6 @@ alter table public.flywheel_distiller_proposals
   check (type in ('playbook_bullet', 'golden_case', 'reentry_trigger', 'org_memory_entry', 'response_correction'));
 
 comment on column public.flywheel_distiller_proposals.agent_id is
-  'O agente de que a proposta fala (migration 0546). Nulo = proposta da organização (as do flywheel). Uma correção de resposta é sempre de um agente: a tela e o aplicar só a alcançam por ele.';
+  'O agente de que a proposta fala (migration 0547). Nulo = proposta da organização (as do flywheel). Uma correção de resposta é sempre de um agente: a tela e o aplicar só a alcançam por ele.';
 
 notify pgrst, 'reload schema';

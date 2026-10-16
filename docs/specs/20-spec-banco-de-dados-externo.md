@@ -113,8 +113,10 @@ resposta ensina o modelo a repetir com um trecho menor do termo.
 ## Segurança
 
 1. **SSRF/TCP:** o `pg` não passa pelo egress HTTP; a guarda de `guardas.ts` é a
-   barreira, reavaliada a cada abertura de pool. A janela de DNS-rebinding entre a
-   checagem e o connect permanece declarada (a mesma dívida de `outbound-ip.ts`).
+   barreira, reavaliada a cada abertura de pool, e o socket do pool resolve e julga o
+   destino NA HORA de conectar (`lookupJulgado`, `lib/net/rede-segura`): a janela de
+   DNS-rebinding que este item declarava foi fechada na issue #88. Única diferença para
+   o webhook: aqui a LAN RFC 1918 é permitida (`politicaDoBanco`).
 2. **Somente leitura de verdade:** imposta pelo Postgres (`BEGIN READ ONLY`), não
    por análise de string.
 3. **LGPD:** o dado externo pode ter PII. PII não vai para log de auditoria; a

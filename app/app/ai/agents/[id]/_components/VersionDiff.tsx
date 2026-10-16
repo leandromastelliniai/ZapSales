@@ -92,12 +92,18 @@ function buildFieldChanges(a: AgentVersionRow, b: AgentVersionRow): FieldChange[
     ["split_messages", "split_messages"],
     ["split_max_chars", "split_max_chars"],
     ["inbound_debounce_ms", "inbound_debounce_ms"],
+    ["temperature", "Temperatura"],
   ];
   return fields
     .filter(([k]) => a[k] !== b[k])
     .map(([k, label]) => ({ key: k as string, label, a: a[k], b: b[k] }));
 }
 
+/**
+ * O perfil guiado (#89) é dado da versão e tem diff próprio: texto livre não cabe
+ * na tabela de configuração, e o dono precisa ver "o tom mudou de formal para
+ * descontraído" antes de publicar. Só entram os campos que mudaram.
+ */
 export function VersionDiff({ versionA, versionB }: Props) {
   const t = useT();
   const tools = diffArr(versionA.tool_ids ?? [], versionB.tool_ids ?? []);
@@ -112,6 +118,14 @@ export function VersionDiff({ versionA, versionB }: Props) {
   const callbackEnabledB = callbacksHabilitados(versionB.followup);
   const callbackEnabledChanged = callbackEnabledA !== callbackEnabledB;
   const fields = buildFieldChanges(versionA, versionB);
+  const camposDoPerfil: Array<[keyof AgentVersionRow, string]> = [
+    ["profile_persona", t("Quem ele é")],
+    ["profile_tone", t("Tom de voz")],
+    ["profile_objective", t("O que ele persegue na conversa")],
+    ["profile_welcome", t("Mensagem de boas-vindas")],
+    ["profile_language", t("Idioma das respostas")],
+  ];
+  const perfil = camposDoPerfil.filter(([k]) => (versionA[k] ?? null) !== (versionB[k] ?? null));
   const lines = diffLines(versionA.system_prompt ?? "", versionB.system_prompt ?? "");
 
   return (
@@ -148,6 +162,26 @@ export function VersionDiff({ versionA, versionB }: Props) {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </Section>
+
+      <Section title={t("Perfil do agente")}>
+        {perfil.length === 0 ? (
+          <p className="text-xs text-muted-foreground">{t("Sem mudanças.")}</p>
+        ) : (
+          <div className="space-y-2" data-testid="diff-do-perfil">
+            {perfil.map(([k, rotulo]) => (
+              <div key={k} className="space-y-0.5 text-xs">
+                <p className="font-medium">{rotulo}</p>
+                <p className="whitespace-pre-wrap break-words font-mono text-destructive">
+                  - {versionA[k] === null || versionA[k] === undefined ? "—" : String(versionA[k])}
+                </p>
+                <p className="whitespace-pre-wrap break-words font-mono text-success-fg">
+                  + {versionB[k] === null || versionB[k] === undefined ? "—" : String(versionB[k])}
+                </p>
+              </div>
+            ))}
           </div>
         )}
       </Section>

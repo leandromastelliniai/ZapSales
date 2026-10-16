@@ -33,6 +33,14 @@ export interface AgentVersionRow {
   split_messages: boolean;
   split_max_chars: number;
   inbound_debounce_ms: number | null;
+  /** Perfil guiado (0546). Todos nulos = agente sem perfil (só o prompt livre). */
+  profile_persona: string | null;
+  profile_tone: "formal" | "normal" | "descontraido" | null;
+  profile_objective: string | null;
+  profile_welcome: string | null;
+  profile_language: "pt-BR" | "es" | "en" | null;
+  /** 0 a 1; `null` = padrão do modelo. */
+  temperature: number | null;
   followup: {
     enabled: boolean;
     flow_pointer_ids: string[];

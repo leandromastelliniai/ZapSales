@@ -49,6 +49,18 @@ const PARES: Array<{
   simbolo: string;
 }> = [
   {
+    tabela: "lgpd_requests",
+    coluna: "source",
+    arquivo: "lib/lgpd/types.ts",
+    simbolo: "LgpdRequestSource",
+  },
+  {
+    tabela: "lgpd_requests",
+    coluna: "request_type",
+    arquivo: "lib/lgpd/types.ts",
+    simbolo: "LgpdRequestType",
+  },
+  {
     tabela: "ad_platform_connections",
     coluna: "google_api",
     arquivo: "lib/plataformas-de-anuncio/types.ts",
@@ -137,6 +149,24 @@ const PARES: Array<{
     // banco de dev conta o que aconteceu com ele, não o que o sistema promete.
     arquivo: "lib/agent-engine/db/repository.ts",
     simbolo: "InboxKind",
+  },
+  {
+    tabela: "ai_agent_versions",
+    coluna: "profile_tone",
+    // lib/ai/agents/perfil.ts → TONS_DO_AGENTE (tupla `as const`). Nasce no MESMO
+    // commit da migration 0546 (perfil guiado, #89), que é a lição desta lista.
+    // Tom fora do CHECK viraria `23514` ao salvar o rascunho; fora do TypeScript,
+    // um tom que a tela não sabe rotular e o compositor não sabe descrever.
+    arquivo: "lib/ai/agents/perfil.ts",
+    simbolo: "TONS_DO_AGENTE",
+  },
+  {
+    tabela: "ai_agent_versions",
+    coluna: "profile_language",
+    // lib/ai/agents/perfil.ts → IDIOMAS_DO_AGENTE: os idiomas do produto
+    // (`perfil.test.ts` cobra a igualdade com o registro de idiomas).
+    arquivo: "lib/ai/agents/perfil.ts",
+    simbolo: "IDIOMAS_DO_AGENTE",
   },
   {
     tabela: "agent_case_events",

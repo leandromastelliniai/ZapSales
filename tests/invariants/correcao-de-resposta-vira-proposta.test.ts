@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GOV_MANAGER, GOV_ORG, seedGov } from "./gov-helpers";
 
 /**
- * "Corrigir esta resposta" vira proposta (issue #90, migration 0546).
+ * "Corrigir esta resposta" vira proposta (issue #90, migration 0547).
  *
  * O que o BANCO garante, e que a rota e a tela supõem:
  *   1. o tipo `response_correction` cabe no CHECK de `type` (sem ele, todo

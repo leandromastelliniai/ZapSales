@@ -193,6 +193,24 @@ create trigger trg_ai_agent_versions_audit
 - Não pode editar versão `published` (cria nova versão)
 - `archived` apenas via DBA manual (preserva histórico mesmo após delete do agente — soft delete)
 
+### 3.2.1 Perfil guiado e temperatura da versão (migration 0546, issue #89)
+
+Seis colunas **nullable** em `ai_agent_versions`, aditivas e sem backfill — `NULL` é "sem perfil / padrão do modelo":
+
+| Coluna | Vocabulário | Papel |
+|---|---|---|
+| `profile_persona` | texto, até 600 | quem o agente é |
+| `profile_tone` | `formal` \| `normal` \| `descontraido` (CHECK, não enum) | tom de voz |
+| `profile_objective` | texto, até 600 | o que ele persegue na conversa |
+| `profile_welcome` | texto, até 500 | abertura para contato novo |
+| `profile_language` | `pt-BR` \| `es` \| `en` (CHECK; os idiomas do produto) | idioma das respostas |
+| `temperature` | `numeric(3,2)`, 0 a 1 | temperatura enviada ao modelo |
+
+- São **conteúdo da versão**: entram em `VERSION_COLUMNS`, em `versionShapeSchema`, no PATCH de rascunho, no duplicar/reverter/aplicar proposta e na trava de imutabilidade da versão publicada.
+- **O que o agente recebe** é `comporInstrucoes(system_prompt, perfil)` (`lib/ai/agents/perfil.ts`), aplicada **uma vez**, na carga da config publicada (`mapAgentConfigRow`): seção `## Perfil do agente` (só os campos preenchidos) + `## Instruções` com o prompt livre. **Perfil vazio devolve o prompt intacto, byte a byte** — agente existente não muda até ser editado.
+- **Temperatura**: `RunModelCallInput.temperature` vence `organizations.settings.llm.params.temperature`; `NULL` herda a da organização e, sem ela, o padrão do modelo. Chega às chamadas que falam em nome do agente (turno, fechamento do turno, rascunho assistido, abordagem de formulário). `ai_agents.config.temperature` — que nenhum motor lia — saiu: o valor tem um lugar só. Faixa 0–1 (a que todos os provedores aceitam).
+- Prova: `tests/invariants/perfil-guiado-do-agente-no-turno.test.ts` (versão publicada → turno, modelo falso) e `lib/ai/agents/perfil.test.ts`.
+
 ### 3.3 Nova tabela `ai_provider_credentials`
 
 ```sql
