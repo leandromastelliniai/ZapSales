@@ -175,6 +175,11 @@ export function PerfilGuiado({ value, onChange, instrucoesLivres, disabled, erro
           placeholder={t("Ex.: Oi! Eu sou a Marina, da Clínica Sorriso. Como posso ajudar?")}
           aria-invalid={!!erros?.boasVindas}
         />
+        <p className="text-xs text-muted-foreground">
+          {t(
+            "O agente abre a conversa com algo nessa linha — pode ajustar o nome do contato, mas não é um texto fixo.",
+          )}
+        </p>
         <ContadorETexto
           atual={value.boasVindas.trim().length}
           limite={LIMITES_DO_PERFIL.boasVindas}

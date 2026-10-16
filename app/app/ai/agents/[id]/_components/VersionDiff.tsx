@@ -104,11 +104,6 @@ function buildFieldChanges(a: AgentVersionRow, b: AgentVersionRow): FieldChange[
  * na tabela de configuração, e o dono precisa ver "o tom mudou de formal para
  * descontraído" antes de publicar. Só entram os campos que mudaram.
  */
-/**
- * O perfil guiado (#89) é dado da versão e tem diff próprio: texto livre não cabe
- * na tabela de configuração, e o dono precisa ver "o tom mudou de formal para
- * descontraído" antes de publicar. Só entram os campos que mudaram.
- */
 export function VersionDiff({ versionA, versionB }: Props) {
   const t = useT();
   const tools = diffArr(versionA.tool_ids ?? [], versionB.tool_ids ?? []);

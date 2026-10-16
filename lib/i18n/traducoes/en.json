@@ -9527,5 +9527,7 @@
   "campo alterado": "field changed",
   "campos alterados": "fields changed",
   "padrão do modelo": "model default",
-  "É isto que o agente lê antes de cada conversa: o perfil acima, depois as instruções livres.": "This is what the agent reads before each conversation: the profile above, then the free-form instructions."
+  "É isto que o agente lê antes de cada conversa: o perfil acima, depois as instruções livres.": "This is what the agent reads before each conversation: the profile above, then the free-form instructions.",
+  "O agente abre a conversa com algo nessa linha — pode ajustar o nome do contato, mas não é um texto fixo.": "The agent opens the conversation with something along these lines — it may adjust the contact's name, but it is not fixed text.",
+  "Temperatura": "Temperature"
 }

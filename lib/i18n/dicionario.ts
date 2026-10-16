@@ -1701,6 +1701,8 @@ export const DICIONARIO: Traducoes = {
   "Confere antes de enviar": { es: "Revisa antes de enviar" },
   "Quem é este agente": { es: "Quién es este agente" },
   // ─── PERFIL GUIADO DO AGENTE (#89) ───
+  "O agente abre a conversa com algo nessa linha — pode ajustar o nome do contato, mas não é um texto fixo.": { es: "El agente abre la conversación con algo en esa línea: puede ajustar el nombre del contacto, pero no es un texto fijo." },
+  "Temperatura": { es: "Temperatura" },
   "A temperatura vai de 0 a 1.": { es: "La temperatura va de 0 a 1." },
   "As instruções livres continuam valendo por inteiro: o perfil acima entra antes delas, e nada do que você escrever aqui é trocado.": { es: "Las instrucciones libres siguen valiendo por completo: el perfil de arriba entra antes que ellas, y nada de lo que escribas aquí se reemplaza." },
   "Avançado: instruções livres e temperatura": { es: "Avanzado: instrucciones libres y temperatura" },
