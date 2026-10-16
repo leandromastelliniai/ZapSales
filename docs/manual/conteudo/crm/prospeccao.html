@@ -1,0 +1,114 @@
+<!--meta {"id":"prospeccao","grupo":"crm","titulo":"Prospecção","ordem":4,"resumo":"Busca empresas por segmento e cidade e deixa uma IA mandar, aos poucos, a primeira mensagem de WhatsApp a cada uma. Quem responde cai no funil e no Inbox.","palavras":["prospecção","prospectar","apify","google maps","abordagem","empresas","lead frio","legítimo interesse","campanha de busca","agente de prospecção","fila","ritmo"],"onde":"CRM › Prospecção (só pelo hub “Ver tudo em CRM” e pela busca ⌘K)","quem":"Somente Administrador. Quem não é administrador é levado ao Inbox.","rotas":["/app/prospecting"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>A <strong>Prospecção</strong> procura empresas de um segmento numa cidade (por exemplo, <em>clínicas de estética em São Paulo</em>) e deixa um agente de IA <strong>abordar, aos poucos</strong>, cada uma delas pelo WhatsApp. Quem responde vira contato e negócio no <a href="#funis">funil</a> e a conversa segue no <a href="#inbox">Inbox</a>.</p>
+<p>É a tela de quem <strong>escreve primeiro</strong> a pessoas que nunca falaram com você. Por isso ela é a mais protegida do sistema: só o Administrador abre, tem ritmo diário limitado e as mensagens saem devagar.</p>
+<aside class="nota atencao"><strong>Tela de alto impacto: gasta dinheiro e manda mensagens a quem não pediu.</strong><p>A <em>busca</em> consome o saldo da sua conta Apify (serviço de terceiros). As <em>abordagens</em> mandam WhatsApp a empresas que nunca falaram com você e usam créditos de IA. Nada disso começa sozinho: só depois de você clicar em <span class="ui">Buscar empresas</span> e, mais adiante, em <span class="ui">Iniciar abordagens com IA</span>.</p></aside>
+<aside class="nota info"><strong>Onde fica a porta.</strong><p>Prospecção não tem item no menu lateral por falta de espaço. Abra por <span class="ui">Ver tudo em CRM</span> ou pela busca <kbd>⌘K</kbd> / <kbd>Ctrl K</kbd>.</p></aside>
+
+<h2 id="antes">O que você precisa ter antes</h2>
+<ul>
+  <li>Uma <strong>chave da Apify</strong> (serviço externo e pago que busca empresas no Google Maps).</li>
+  <li>Um <strong>agente de IA publicado</strong> em modo automático, com a ferramenta de mover o funil.</li>
+  <li>Uma <strong>conexão de WhatsApp ativa</strong> do tipo QR code (WAHA), que aceita texto livre. A API Oficial da Meta não participa, porque exige modelo aprovado.</li>
+  <li>Um <strong>funil com pelo menos duas etapas abertas</strong>.</li>
+  <li>Uma chave de IA cadastrada em <a href="#credenciais">Credenciais</a> (para o assistente de configuração).</li>
+</ul>
+
+<h2 id="tela">A tela, de cima para baixo</h2>
+<figure class="print">
+  <img src="img/prospeccao-topo.png" alt="Tela Prospecção com o formulário de busca, a lista de campanhas, o cartão da campanha e o assistente de configuração, numerada de 1 a 14" loading="lazy">
+  <figcaption>Prospecção, com duas campanhas de demonstração em rascunho.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Configurar busca.</strong> Mostra ou esconde o cartão da chave da Apify. O cartão aparece sozinho enquanto não há chave.</li>
+  <li><strong>Público ou segmento.</strong> Obrigatório, de 2 a 120 caracteres (“clínicas de estética”).</li>
+  <li><strong>Até quantas empresas.</strong> De 1 a 100 (padrão 20). A busca pode achar menos.</li>
+  <li><strong>Teto da busca (US$).</strong> De 0,5 a 10 (padrão 1). É o <strong>limite de gasto</strong> daquela busca na Apify.</li>
+  <li><strong>Buscar empresas.</strong> Dispara a busca. Fica apagado sem chave. <em>Nenhuma abordagem começa nesta etapa.</em></li>
+  <li><strong>Suas campanhas.</strong> Cada busca é uma “campanha” de prospecção. A lista mostra as 50 mais novas, com o estado e o número de empresas.</li>
+  <li><strong>Uma campanha.</strong> Clique para abrir. Os rótulos de estado: <em>Preparar campanha</em> (rascunho), <em>Em andamento</em>, <em>Pausada</em> e <em>Abordagens concluídas</em>.</li>
+  <li><strong>Encontrados.</strong> Quantas empresas a busca trouxe.</li>
+  <li><strong>Na fila.</strong> Quantas já estão na fila de abordagem. Os outros números são <em>Responderam</em> e <em>Qualificados</em>.</li>
+  <li><strong>Configurar por conversa.</strong> O assistente: você conta em palavras o que quer alcançar e ele monta o agente.</li>
+  <li><strong>Usar agente existente / configurar manualmente.</strong> O modo manual, mostrado <a href="#prospeccao--manual">abaixo</a>.</li>
+  <li><strong>Sugestões de resposta.</strong> “Qualificar interessados” e “Agendar uma conversa” preenchem o primeiro pedido.</li>
+  <li><strong>Mensagem para configurar o agente.</strong> Escreva livremente o que o agente deve fazer (até 3.000 caracteres).</li>
+  <li><strong>O resumo do agente.</strong> “Seu agente está tomando forma”: mostra quantas das seis definições já foram preenchidas (como vai abordar, quando qualificar, conexão de saída, funil, etapa inicial, etapa de qualificados).</li>
+</ol>
+
+<h3>A chave da Apify</h3>
+<p>O cartão pede a <strong>Chave da Apify</strong> (campo de senha, no mínimo 10 caracteres). A chave é <strong>validada com a Apify</strong> e guardada <strong>cifrada</strong> no servidor. Cada busca tem o seu limite de gasto. O aviso “Chave de busca salva.” confirma.</p>
+
+<h2 id="busca">1. Encontrar empresas</h2>
+<ol class="passos">
+  <li>Cole a chave da Apify (uma vez).</li>
+  <li>Preencha o segmento e a cidade ou região (“São Paulo, SP”), o limite de empresas e o teto de gasto.</li>
+  <li>Deixe marcado <em>“Enriquecer com e-mails comerciais e redes encontradas no site”</em> se quiser, além do telefone, e-mails e redes das empresas.</li>
+  <li>Clique em <span class="ui">Buscar empresas</span>. A tela avisa “Solicitação registrada. Acompanhe o estado da busca nesta tela.”.</li>
+</ol>
+<p>Os resultados chegam sozinhos e viram a lista de empresas da campanha. O telefone é normalizado <strong>só para números brasileiros</strong> (10 ou 11 dígitos); empresa sem telefone brasileiro válido nunca é abordada. Empresas já encontradas antes não voltam como novas; elas contam em “N resultados repetidos ou indisponíveis foram desconsiderados”. O estado da busca pode ser <em>Iniciando busca, Em andamento, Busca concluída, Revisar falha</em> ou <em>Busca sem confirmação</em> (a busca ficou mais de 2 minutos sem resposta: confira no painel da Apify antes de repetir, para não pagar duas vezes).</p>
+
+<h2 id="abordagem">2. Preparar a abordagem</h2>
+<p>Este cartão só aparece numa campanha em rascunho, com busca concluída e ao menos uma empresa. Há dois modos.</p>
+<h3 id="conversa">Modo conversa</h3>
+<p>O assistente pergunta “O que você oferece e o que quer descobrir na conversa com essas empresas?”. Você responde e ele monta o agente. As abas são <em>Configurar conversando</em> e <em>Testar como cliente</em>. Quando as seis definições estão preenchidas aparece <span class="ui">Publicar e usar agente</span>.</p>
+<ul>
+  <li><strong>Testar como cliente:</strong> escreva como um cliente. O teste usa um rascunho pausado e <strong>consome créditos de IA</strong>, mas <strong>não envia mensagem aos seus contatos</strong>. Cada teste avalia uma mensagem; ações sobre contatos e envios não são executadas.</li>
+  <li><strong>Manter a continuidade do agente neste canal</strong> (opcional): o mesmo agente continua as conversas desse canal, salvo mudança de assunto ou transferência.</li>
+  <li><strong>Publicar e usar agente</strong> cria e publica um agente comercial. Ao publicar, o agente passa a poder atender mensagens recebidas naquele canal — mas <strong>a prospecção só começa quando você iniciar a campanha</strong>.</li>
+</ul>
+<h3 id="manual">Modo manual</h3>
+<figure class="print">
+  <img src="img/prospeccao-manual.png" alt="Formulário do modo manual com agente, conexão, funil, etapas, texto de oferta, qualificação, ritmo, entrada no funil, base legal e o botão Iniciar abordagens com IA, numerado de 1 a 12" loading="lazy">
+  <figcaption>O modo manual. Cada campo precisa estar preenchido para o botão final destravar.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Agente de IA.</strong> Escolha um agente já publicado.</li>
+  <li><strong>Conexão de saída.</strong> Só aparecem conexões ativas (<em>Funcionando</em>). O link <em>Ver conexões e proteções de envio</em> leva a <a href="#conexoes">Conexões</a>.</li>
+  <li><strong>Funil.</strong> Para onde vão as empresas.</li>
+  <li><strong>Etapa inicial.</strong> Onde a empresa entra.</li>
+  <li><strong>Etapa de qualificados.</strong> Onde o negócio precisa estar para contar como “Qualificado”. Precisa ser diferente da inicial.</li>
+  <li><strong>O que a IA deve oferecer e como iniciar.</strong> De 10 a 2.000 caracteres. O texto <em>se soma</em> ao prompt do agente nas conversas desta campanha; se você mudar o prompt do agente, confira se os dois ainda dizem a mesma coisa.</li>
+  <li><strong>Quando considerar o cliente qualificado.</strong> De 10 a 2.000 caracteres (“confirmou a necessidade, participa da decisão e deseja conversar sobre a solução”).</li>
+  <li><strong>Máximo em 24 horas.</strong> De 1 a 50 abordagens (padrão 10).</li>
+  <li><strong>Intervalo mínimo (minutos).</strong> De 5 a 1.440 (padrão 15) entre uma abordagem e outra.</li>
+  <li><strong>Quando a empresa entra no funil.</strong> <em>Só quando for abordada</em> (recomendado: o funil mostra só quem já recebeu a primeira mensagem) ou <em>Todas ao iniciar</em> (cria contato, negócio e conversa de toda a fila na hora de iniciar).</li>
+  <li><strong>Referência da avaliação de legítimo interesse.</strong> Obrigatório (de 3 a 500 caracteres). Informe a referência <em>real</em> da avaliação que fundamenta esta prospecção. <strong>Isso não registra consentimento dos contatos.</strong></li>
+  <li><strong>Iniciar abordagens com IA.</strong> Começa de verdade. Fica apagado sem agente ou sem conexão ativa.</li>
+</ol>
+
+<h2 id="resultados">3. Acompanhar resultados</h2>
+<figure class="print">
+  <img src="img/prospeccao-resultados.png" alt="Tabela de resultados da campanha com os botões de marcar e a coluna de progresso, numerada de 1 a 11" loading="lazy">
+  <figcaption>A tabela de resultados.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Marcar todas.</strong> Só em rascunho ou em campanha pausada.</li>
+  <li><strong>Desmarcar todas.</strong></li>
+  <li><strong>Mostrar desmarcadas.</strong> Mostra (ou esconde) as que você tirou da fila.</li>
+  <li><strong>Excluir desmarcadas.</strong> Tira essas empresas da lista. Pede “Confirmar exclusão”: elas podem reaparecer como novas em outra busca.</li>
+  <li><strong>Abordar.</strong> A caixa de seleção. Só as <em>marcadas</em> entram na fila.</li>
+  <li><strong>Empresa.</strong> Nome, categoria e telefone (ou “Sem telefone”).</li>
+  <li><strong>Informações.</strong> Endereço, site, nota e avaliações e e-mails.</li>
+  <li><strong>Progresso.</strong> O estado de cada empresa.</li>
+  <li><strong>Conversa.</strong> O link <em>Abrir no Inbox</em>, quando já existe conversa.</li>
+  <li><strong>Revisar falha.</strong> Houve erro nessa empresa; a mensagem aparece embaixo.</li>
+  <li><strong>Encontrado.</strong> Ainda não está na fila.</li>
+</ol>
+<p>Os estados de cada empresa são: <em>Encontrado, Na fila, Preparando abordagem, Abordado, Não abordado, Respondeu, Qualificado</em> e <em>Revisar falha</em>. Um “Não abordado” mostra o motivo — por exemplo, “Contato já existe no CRM; atendimento preservado.” (quem já é seu contato nunca é abordado de novo). A tabela mostra até 5.000 empresas e atualiza a cada 10 segundos.</p>
+<aside class="nota info"><strong>Encontrado não é qualificado.</strong><p>“Respondeu” significa que a conversa recebeu uma mensagem; “Qualificado” significa que o negócio está na etapa de qualificados escolhida — e isso depende do que for confirmado na conversa.</p></aside>
+
+<h2 id="envio">O que acontece quando você inicia</h2>
+<ul>
+  <li>Só pode haver <strong>uma campanha “em andamento” por organização</strong>. Para iniciar outra, pause a atual.</li>
+  <li>A <strong>primeira abordagem é preparada cerca de um minuto depois</strong> do clique, e as seguintes saem no ritmo escolhido. A cada minuto, o sistema envia no máximo <strong>uma</strong> abordagem.</li>
+  <li>Cada mensagem é <strong>escrita pela IA</strong>, curta e transparente, com dados públicos da empresa, e termina com o rodapé fixo “Se não quiser mais receber mensagens, responda PARAR.”.</li>
+  <li>Respeita a <strong>janela de envio</strong> do número (padrão 7h–22h), o <strong>aquecimento</strong> do número (um número novo manda poucas por dia: 5, 12, 25 ou 50 conforme a idade) e o <strong>teto global de 50 abordagens em 24 horas</strong> por organização.</li>
+  <li>Antes de cada envio o sistema confere de novo: campanha rodando, contato não bloqueado, sem pedido de parar, sem atendente humano e sem mensagem anterior.</li>
+  <li>Empresas desmarcadas, sem telefone ou que já são seus contatos ficam como <em>Não abordado</em>.</li>
+</ul>
+<aside class="nota perigo"><strong>Iniciar abordagens manda mensagens reais a empresas que nunca falaram com você. Não dá para desfazer um envio.</strong><p>Revise o texto de oferta, o ritmo, a base legal e a lista de empresas marcadas antes de clicar. Use <span class="ui">Pausar abordagens</span> para parar a fila (uma mensagem já em transmissão pode concluir). Para retomar, use <span class="ui">Retomar fila</span>. Com a campanha pausada, <span class="ui">Editar ritmo</span> ajusta o máximo em 24 horas e o intervalo mínimo.</p></aside>
+
+<h2 id="papeis">Quem pode o quê</h2>
+<p>Só o <strong>Administrador</strong> abre a tela. Chamadas por token de API só podem configurar, buscar e pausar: <strong>iniciar e retomar exigem a tela</strong>, para o envio ficar sob controle de uma pessoa. Tudo fica registrado na auditoria (<code>prospecting.changed</code>, <code>prospecting.approach_sent</code>) e sessões de suporte temporário não gravam nada.</p>

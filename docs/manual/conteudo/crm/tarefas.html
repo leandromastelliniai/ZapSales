@@ -1,0 +1,74 @@
+<!--meta {"id":"tarefas","grupo":"crm","titulo":"Tarefas","ordem":5,"resumo":"O que ficou combinado, com prazo — e o que já venceu sem ninguém fazer. Lista agrupada por atraso, ou calendário do mês.","palavras":["tarefas","tarefa","prazo","atrasadas","pendente","concluída","prioridade","urgente","calendário","lembrete","to-do"],"onde":"CRM › Tarefas","quem":"Todos veem. Criar, editar, concluir e apagar: Atendente ou acima.","rotas":["/app/tasks"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>As <strong>Tarefas</strong> guardam o que ficou combinado e tem prazo — “ligar de volta na terça”, “cobrar o comprovante” —, para o combinado não depender da memória de ninguém. A tela destaca o que <strong>já venceu</strong> sem ninguém fazer.</p>
+<p>Tarefas <strong>não mandam mensagem a cliente, não usam IA e não chamam serviço externo</strong>: só registram. Quem cria tarefas sozinhos, além de você, são os agentes de IA, as automações e a API.</p>
+
+<figure class="print">
+  <img src="img/tarefas-lista.png" alt="Tela Tarefas na visão de lista, com os grupos Atrasadas, Hoje, Esta semana, Mais tarde e Sem prazo, numerada de 1 a 11" loading="lazy">
+  <figcaption>A lista de tarefas, agrupada pela urgência do prazo.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Painel de ajuda.</li>
+  <li><strong>Nova tarefa.</strong> Só para Atendente ou acima.</li>
+  <li><strong>Situação.</strong> Filtra por <em>Em aberto</em> (padrão: pendentes e em andamento), <em>Pendente</em>, <em>Em andamento</em>, <em>Concluída</em> ou <em>Cancelada</em>.</li>
+  <li><strong>Lista · Calendário.</strong> Troca a visão.</li>
+  <li><strong>Atualizar.</strong> Recarrega as tarefas.</li>
+  <li><strong>Os grupos.</strong> Na ordem: <em>Atrasadas</em> (título vermelho), <em>Hoje</em>, <em>Esta semana</em>, <em>Mais tarde</em>, <em>Sem prazo</em> e <em>Encerradas</em>. Só aparecem os grupos que têm tarefa.</li>
+  <li><strong>A caixinha redonda.</strong> Marca a tarefa como concluída (e reabre, se já está concluída).</li>
+  <li><strong>Prioridade.</strong> <em>Baixa</em> (cinza), <em>Média</em> (azul), <em>Alta</em> (amarelo) ou <em>Urgente</em> (vermelho).</li>
+  <li><strong>O prazo.</strong> No formato <code>dd/mm hh:mm</code>, ou “Sem prazo”. Fica vermelho e em negrito quando atrasado.</li>
+  <li><strong>Editar</strong> (lápis). Aparece ao passar o mouse sobre a linha.</li>
+  <li><strong>Apagar</strong> (lixeira). Pede confirmação em dois cliques — o ícone vira um botão vermelho <span class="ui">Confirmar</span>. <strong>Apagar é definitivo</strong>, sem lixeira.</li>
+</ol>
+<p>A linha mostra o título, a descrição em uma linha, a prioridade e o prazo. <strong>Não mostra</strong> a situação, o negócio ligado nem o responsável. Sem nenhuma tarefa, a tela diz “Nenhuma tarefa por aqui”.</p>
+<table class="tabela">
+  <thead><tr><th>Grupo</th><th>O que entra</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Atrasadas</strong></td><td>Prazo antes da meia-noite de hoje.</td></tr>
+    <tr><td><strong>Hoje</strong></td><td>Prazo hoje — mesmo que a hora já tenha passado (nesse caso o prazo fica vermelho, mas a tarefa continua em “Hoje”).</td></tr>
+    <tr><td><strong>Esta semana</strong></td><td>De hoje até 7 dias à frente (uma janela móvel, não a semana do calendário).</td></tr>
+    <tr><td><strong>Mais tarde</strong></td><td>Depois disso.</td></tr>
+    <tr><td><strong>Sem prazo</strong></td><td>Tarefas sem data.</td></tr>
+    <tr><td><strong>Encerradas</strong></td><td>Concluídas ou canceladas. No filtro “Em aberto” este grupo não aparece.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="calendario">A visão Calendário</h2>
+<figure class="print">
+  <img src="img/tarefas-calendario.png" alt="Tarefas na visão de calendário do mês de outubro, com as tarefas nos dias de prazo, numerada de 1 a 6" loading="lazy">
+  <figcaption>Tarefas no calendário do mês.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Lista.</strong> Volta à visão de lista.</li>
+  <li><strong>Mês anterior.</strong></li>
+  <li><strong>Próximo mês.</strong></li>
+  <li style="counter-set:leg 5"><strong>Uma tarefa de hoje.</strong> O dia de hoje vem destacado. Clique na tarefa para abrir a edição.</li>
+  <li style="counter-set:leg 6"><strong>Uma tarefa atrasada.</strong> Em vermelho. As encerradas ficam cinza e riscadas; as normais, em azul.</li>
+</ol>
+<ul>
+  <li>O título do mês aparece no centro, e os dias da semana começam no <strong>domingo</strong>.</li>
+  <li>Cada dia mostra até 3 tarefas e “+N mais” quando passa disso.</li>
+  <li><strong>Clicar num dia vazio</strong> abre “Nova tarefa” já com aquele dia (Atendente ou acima).</li>
+  <li><strong>Tarefas sem prazo não aparecem</strong> no calendário. O calendário respeita o filtro de situação.</li>
+</ul>
+
+<h2 id="nova">Criar ou editar uma tarefa</h2>
+<figure class="print media">
+  <img src="img/tarefas-nova.png" alt="Janela Nova tarefa com título, detalhes, prazo, horário, prioridade e situação, numerada de 1 a 7" loading="lazy">
+  <figcaption>A janela “Nova tarefa”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O que precisa ser feito.</strong> Obrigatório (“Escreva um título para a tarefa.”). Até 255 caracteres.</li>
+  <li><strong>Detalhes.</strong> Opcional, até 5.000 caracteres: “O que você vai querer lembrar quando chegar a hora”.</li>
+  <li><strong>Prazo.</strong> A data. Opcional. Se você clicou num dia do calendário, já vem preenchida.</li>
+  <li><strong>Horário.</strong> Padrão 09:00. Fica apagado enquanto não houver prazo. Vale no fuso do <em>seu navegador</em>.</li>
+  <li><strong>Prioridade.</strong> Baixa, Média (padrão), Alta ou Urgente.</li>
+  <li><strong>Situação.</strong> Pendente (padrão), Em andamento, Concluída ou Cancelada.</li>
+  <li><strong>Salvar.</strong> Grava e fecha. Se falhar, uma faixa vermelha mostra o motivo.</li>
+</ol>
+<aside class="nota atencao"><strong>O formulário não liga a tarefa a um negócio nem a uma pessoa.</strong><p>A ajuda diz que “tarefa presa a um negócio aparece na linha do tempo dele”, mas pela tela só isso é possível se a tarefa <em>já veio vinculada</em> (criada por um agente de IA, automação ou API). Também não existe campo de responsável. Se a tarefa tem negócio, criar e concluir geram registros na linha do tempo do negócio.</p></aside>
+<aside class="nota info"><strong>Detalhe da caixinha.</strong><p>Marcar a caixinha de uma tarefa concluída a devolve para “Pendente”. Numa tarefa <em>Cancelada</em> a caixinha aparece marcada, mas clicar nela a grava como <em>Concluída</em>.</p></aside>
+<p>As tarefas ficam registradas na auditoria (<code>crm_task.created</code>, <code>crm_task.updated</code>, <code>crm_task.deleted</code>). A lista mostra até 500 tarefas, em ordem de prazo, e se atualiza quando você volta para a aba.</p>
+<h2 id="papeis">Quem pode o quê</h2>
+<p><strong>Somente leitura</strong> vê as tarefas, mas sem o botão Nova tarefa, a caixinha (desabilitada) e os ícones de editar e apagar. <strong>Atendente</strong> ou acima cria, edita, conclui e apaga.</p>

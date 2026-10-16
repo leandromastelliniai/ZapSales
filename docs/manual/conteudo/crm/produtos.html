@@ -1,0 +1,74 @@
+<!--meta {"id":"produtos","grupo":"crm","titulo":"Produtos","ordem":8,"resumo":"O catálogo da loja: o que você vende, o preço, o estoque e as fotos. É daqui que o agente de IA tira o preço quando um cliente pergunta.","palavras":["produtos","catálogo","preço","estoque","sku","código","marca","categoria","fotos","importar planilha","csv","custo","desativar"],"onde":"CRM › Ver tudo em CRM › Produtos (também pela busca ⌘K)","quem":"Todos veem o catálogo. Criar, importar, mexer em fotos e desativar: Gerente ou acima.","rotas":["/app/products"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O <strong>catálogo de Produtos</strong> é onde você cadastra o que a loja vende e por quanto. O <a href="#agentes">agente de IA</a> consulta esse catálogo quando um cliente pergunta preço, disponibilidade ou pede fotos. <strong>Se o catálogo está vazio, o agente responde que não encontrou o produto</strong> — mesmo que a loja tenha.</p>
+<aside class="nota info"><strong>Onde fica a porta.</strong><p>Produtos não está no menu lateral diário. Abra por <span class="ui">Ver tudo em CRM</span> (seção “Preparar a venda”) ou pela busca <kbd>⌘K</kbd> / <kbd>Ctrl K</kbd>.</p></aside>
+
+<figure class="print">
+  <img src="img/produtos-lista.png" alt="Tela Produtos com a busca, os botões de novo produto e importar e a lista de produtos com preço, estoque e botões, numerada de 1 a 11" loading="lazy">
+  <figcaption>O catálogo da loja de demonstração (nove produtos, um deles desativado).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Painel de ajuda.</li>
+  <li><strong>Novo produto.</strong> Abre o formulário de cadastro, logo abaixo do cabeçalho (o botão vira <em>Cancelar</em> enquanto ele está aberto).</li>
+  <li><strong>Importar planilha.</strong> Escolha um arquivo <code>.csv</code> para cadastrar vários de uma vez. Veja <a href="#produtos--importar">abaixo</a>.</li>
+  <li><strong>Busca.</strong> “Buscar por nome, código ou marca”. Também procura na categoria. A busca filtra só entre os 500 primeiros produtos.</li>
+  <li><strong>Baixar planilha modelo.</strong> Baixa <code>modelo-catalogo.csv</code>, com as colunas <code>codigo, nome, marca, categoria, preco, custo, estoque</code> e dois exemplos.</li>
+  <li><strong>Uma linha de produto.</strong> A ordem é: ativos primeiro, depois por nome.</li>
+  <li><strong>Código · marca · estoque.</strong> A linha cinza mostra o código, a marca e “N em estoque” (ou “sem controle de estoque”).</li>
+  <li><strong>Preço.</strong> Na moeda da organização.</li>
+  <li><strong>Fotos (N).</strong> Abre o painel de fotos do produto.</li>
+  <li><strong>Desativar.</strong> Tira o produto da oferta do agente sem apagá-lo.</li>
+  <li><strong>Reativar.</strong> No produto desativado (nome riscado e cinza), devolve-o ao catálogo.</li>
+</ol>
+<p>Custo, categoria e descrição <strong>não aparecem</strong> na lista. Para quem não é Gerente, a tela mostra o catálogo sem nenhum botão.</p>
+
+<h2 id="novo">Cadastrar um produto</h2>
+<figure class="print">
+  <img src="img/produtos-novo.png" alt="Formulário Novo produto com código, nome, marca, categoria, preço, custo, estoque e o botão Salvar produto, numerado de 1 a 7" loading="lazy">
+  <figcaption>O formulário “Novo produto”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Código.</strong> Obrigatório (até 60 caracteres). É a <em>identidade</em> do produto: não pode repetir na organização.</li>
+  <li><strong>Nome.</strong> Obrigatório, de 2 a 200 caracteres.</li>
+  <li><strong>Marca e Categoria.</strong> Opcionais, até 80 caracteres cada.</li>
+  <li><strong>Preço de venda.</strong> Obrigatório. Aceita <code>R$ 5.499,00</code>, <code>5499,00</code>, <code>5.499</code>, <code>5499</code> e <code>1299,9</code> (um dígito depois da vírgula = centavos). Qualquer letra ou símbolo além de “R$” é recusado: “Preço inválido. Escreva assim: 5.499,00”.</li>
+  <li><strong>Custo (opcional).</strong> “Serve para o atendente saber até onde pode negociar. Não aparece para o cliente.”.</li>
+  <li><strong>Controlar estoque deste produto.</strong> Marcado por padrão; aparece o campo <em>Quantidade</em>. Desmarcado, o produto <strong>sempre aparece como disponível</strong> — o certo para item sob encomenda ou fracionado.</li>
+  <li><strong>Salvar produto.</strong> Grava (“Produto cadastrado”).</li>
+</ol>
+<ul>
+  <li>A <strong>moeda não se escolhe</strong>: vem da moeda da organização (padrão BRL).</li>
+  <li>Se o código já existe: “Já existe um produto com esse código.”. Se algo faltar ou estiver fora do limite, o aviso é só “Dados inválidos.”, sem dizer qual campo.</li>
+  <li>Nada é enviado a clientes ao cadastrar.</li>
+</ul>
+<aside class="nota atencao"><strong>Não dá para editar um produto já criado pela tela.</strong><p>Depois de salvo, só é possível <em>desativar/reativar</em> e mexer nas <em>fotos</em>. Para mudar preço, nome ou estoque, <strong>reimporte a planilha com o mesmo código</strong> (isso atualiza em vez de duplicar). Também não existe excluir pela tela.</p></aside>
+
+<h2 id="fotos">As fotos do produto</h2>
+<p>O botão <span class="ui">Fotos (N)</span> abre um painel: <em>“A primeira foto é a capa. O atendente de IA manda as fotos nesta ordem quando apresenta o produto.”</em></p>
+<ul>
+  <li><strong>Adicionar foto:</strong> JPG ou PNG, até 5 MB, <strong>no máximo 5 fotos</strong> por produto. O formato é conferido pelo conteúdo do arquivo, não pela extensão.</li>
+  <li><strong>← e →</strong> mudam a ordem; <strong>✕</strong> remove a foto. <strong>Remover apaga o arquivo de verdade</strong> do armazenamento.</li>
+  <li>As fotos ficam num armazenamento privado do sistema; a tela mostra links temporários de 1 hora (por isso, às vezes, “Sem prévia”).</li>
+  <li>As fotos só podem ser adicionadas <em>depois</em> de salvar o produto (a ajuda da tela fala em “até cinco fotos” no cadastro, mas é pelo botão da linha).</li>
+</ul>
+
+<h2 id="importar">Importar uma planilha</h2>
+<ol class="passos">
+  <li>Clique em <span class="ui">Baixar planilha modelo</span> e preencha (ou use sua planilha).</li>
+  <li>Salve como <strong>CSV UTF-8</strong> (no Excel: <em>Salvar como › CSV UTF-8</em>).</li>
+  <li>Clique em <span class="ui">Importar planilha</span> e escolha o arquivo. O botão mostra “Importando…”.</li>
+  <li>Leia o resumo: “N novos · M atualizados · T linhas na planilha”, as <em>colunas que não foram usadas</em> e, se houver, as <em>linhas que não entraram</em> (até 20, com o motivo). Clique em <span class="ui">Fechar</span>.</li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Regra</th><th>Detalhe</th></tr></thead>
+  <tbody>
+    <tr><td>Limites</td><td>Só <code>.csv</code>, até 5 MB e 500 linhas (“divida a planilha”).</td></tr>
+    <tr><td>Colunas obrigatórias</td><td>Nome e preço. Sem elas: “A planilha precisa de uma coluna de nome e de preço. Encontrei: …”. Os títulos são reconhecidos em português, inglês e espanhol, sem diferenciar acento ou maiúscula (por exemplo <code>sku</code>, <code>produto</code>, <code>valor</code>, <code>qtd</code>).</td></tr>
+    <tr><td>Código</td><td>É a chave. Reimportar com o mesmo código <strong>atualiza</strong>. Sem coluna de código, o nome vira o código. “IP15” e “ip15” são tratados como códigos diferentes, e a segunda linha é recusada.</td></tr>
+    <tr><td>Linha recusada</td><td>“sem nome do produto”, “preço não reconhecido”, “custo não reconhecido” ou “código repetido na planilha”.</td></tr>
+    <tr><td>Quantidade</td><td>Lida tirando tudo o que não é número: “3,5” vira 35 e “-3” vira 3.</td></tr>
+  </tbody>
+</table>
+<aside class="nota perigo"><strong>Importar sobrescreve o que já existe.</strong><p>Para os produtos que já existem, a planilha <strong>substitui</strong> preço, custo, marca, categoria e estoque. <em>Planilha sem coluna de estoque</em> transforma todos em “sem controle de estoque” com quantidade 0; <em>sem marca, categoria ou custo</em> apaga esses campos. Descrição, fotos e a situação ativo/desativado <strong>não</strong> são tocados.</p></aside>
+<p>Cadastros, importações, alterações de fotos e ativação ficam registrados na auditoria. Nada aqui custa dinheiro nem chama serviço externo.</p>

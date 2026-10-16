@@ -1,0 +1,50 @@
+<!--meta {"id":"modelos-de-proposta","grupo":"organizacao","titulo":"Modelos de proposta","ordem":13,"resumo":"Os textos-base das propostas: use os da plataforma, personalize, crie os da sua empresa ou importe de um PDF que você já usa.","palavras":["modelos de proposta","template","seções","personalizar","importar pdf","campos","variáveis","não usar","modelo em branco"],"onde":"Configurações › Sua empresa › Propostas › Modelos de proposta","quem":"Todos abrem e leem. Criar, personalizar, desligar, remover, importar e editar: Gerente ou acima.","modulo":"Propostas","rotas":["/app/settings/tenant/proposals/modelos","/app/settings/tenant/proposals/modelos/[slug]"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Um <strong>modelo de proposta</strong> é o esqueleto do documento: uma lista de <em>seções</em> (Resumo, Escopo, Prazo, Investimento…) com textos e <em>campos</em> que mudam de cliente para cliente. A IA e a equipe escolhem um modelo ao montar uma <a href="#propostas">proposta</a>. A plataforma traz <strong>8 modelos prontos</strong>; você pode usá-los, personalizá-los, criar os seus ou importar a partir de um PDF.</p>
+<aside class="nota info"><strong>Editar um modelo não altera propostas já enviadas.</strong><p>Cada proposta enviada guarda um “retrato” do modelo usado. Nada nesta tela manda mensagem a clientes.</p></aside>
+
+<figure class="print">
+  <img src="img/propostas-modelos.png" alt="Lista de modelos de proposta com a importação por arquivo, o novo modelo em branco e os oito modelos da plataforma mais um da empresa, numerada de 1 a 7" loading="lazy">
+  <figcaption>A lista de modelos: os 8 da plataforma e um criado pela empresa.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Criar a partir da proposta que a empresa já usa.</strong> “Envie um PDF, .md ou .txt de até 5 MB. A IA divide em seções, troca por campos o que muda de um cliente e de um projeto para outro, e você revisa antes de salvar.”</li>
+  <li><strong>Arquivo da proposta.</strong> Aceita <code>.pdf</code>, <code>.md</code> e <code>.txt</code>. Andamento: “Lendo o arquivo…” e, depois de 3 segundos, “A IA está montando as seções (pode levar até um minuto)…”. <strong>Usa IA</strong> (gasta o orçamento de IA da empresa).</li>
+  <li><strong>Novo modelo em branco.</strong> Escreva um nome (mínimo 2 caracteres, “Ex.: Locação por temporada”) e clique em <span class="ui">Criar</span>. Nasce com uma seção “Resumo da proposta” e abre o editor.</li>
+  <li><strong>Personalizar.</strong> Nos modelos da plataforma: cria uma cópia da empresa e abre o editor.</li>
+  <li><strong>Não usar.</strong> Desliga o modelo (vira <em>Usar</em>). Propostas que já usam continuam abrindo.</li>
+  <li><strong>Desligado.</strong> “Desligado — não aparece para a IA nem no seletor.”</li>
+  <li><strong>Editar.</strong> Só nos modelos da empresa e personalizados. Ao lado, <em>Voltar ao modelo da plataforma</em> (personalizado) ou <em>Remover</em> (da empresa), com confirmação do navegador.</li>
+</ol>
+<ul>
+  <li>Cada linha mostra o nome e “origem · N seções”: <em>Da plataforma</em>, <em>Personalizado</em> ou <em>Da empresa</em>. A plataforma vem primeiro; os da empresa, por nome.</li>
+  <li>Os 8 modelos da plataforma: Site institucional, Landing page, E-commerce, Catálogo imobiliário, Site profissional, Sistema web, Automação e Projeto personalizado.</li>
+  <li>Depois de salvar um modelo, uma faixa verde confirma: “Modelo «nome» salvo.”.</li>
+  <li>Erros comuns de importação: “O arquivo passa de 5 MB.”, “Não leio Word diretamente — no Word use ‘Salvar como’ → PDF…”, “Não encontrei texto neste arquivo” (PDF escaneado: exporte com texto) e “A IA não está disponível agora.”.</li>
+  <li>Auditoria: <code>proposal_template.saved</code>, <code>.hidden</code>, <code>.shown</code>, <code>.deactivated</code> e <code>.imported</code>.</li>
+</ul>
+<aside class="nota atencao"><strong>“Personalizar” e “Remover” não apagam a base.</strong><p>Remover desativa a cópia da empresa; voltar ao modelo da plataforma faz as mudanças deixarem de valer nas próximas propostas. Cada edição cria uma nova <em>versão</em> do modelo da empresa.</p></aside>
+
+<h2 id="editor">O editor de modelo</h2>
+<figure class="print">
+  <img src="img/modelo-editor.png" alt="Editor de modelo com nome, descrição, seções, campos usados e botões de salvar, numerado" loading="lazy">
+  <figcaption>O editor do modelo “Locação por temporada”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome do modelo.</strong> De 2 a 80 caracteres.</li>
+  <li><strong>Para que serve (opcional).</strong> Até 300 caracteres.</li>
+  <li style="counter-set:leg 4"><strong>↑ ↓ (subir e descer seção).</strong> A única forma de mudar a ordem das seções. Cada seção tem também <em>Título da seção</em> (1 a 120 caracteres) e <em>Texto da seção</em> (1 a 20.000).</li>
+  <li><strong>Remover.</strong> Tira a seção.</li>
+  <li style="counter-set:leg 7"><strong>Obrigatória</strong> / <strong>Só aparece se tiver dado.</strong> As duas marcas são exclusivas: uma exclui a outra.</li>
+  <li><strong>+ Seção.</strong> Acrescenta uma seção (identificador interno <code>secao_N</code>). O modelo precisa de pelo menos 1 e no máximo 40.</li>
+  <li><strong>Salvar modelo.</strong> Grava e volta à lista.</li>
+  <li><strong>Campos usados.</strong> “Escreva {{campo}} no texto; a proposta troca pelo valor de cada cliente.” Lista os campos que o texto usa, com o nome amigável (<code>{{project.name}}</code> — Nome do projeto; <code>{{client.company_or_name}}</code> — Empresa ou nome do cliente; <code>{{investment.total_formatted}}</code> — Investimento total; <code>{{schedule.estimated_days}}</code> — Prazo em dias úteis…).</li>
+  <li><strong>Este modelo vai pedir ao cliente.</strong> A lista do que a IA vai perguntar. Campos calculados pelo sistema (investimento, condições, aprovação, nome do cliente) não entram. Se o modelo pede muito pouco, uma faixa amarela avisa que a IA “não saberá o que perguntar” e sugere trocar por <code>{{campo}}</code> o que muda de projeto para projeto.</li>
+</ol>
+<ul>
+  <li><strong>Modelo da plataforma é somente leitura</strong>: “Personalize-o na lista para editar.”.</li>
+  <li>Um modelo importado abre em <code>/modelos/novo</code>, guardado só no navegador; <strong>nada é gravado até você clicar em Salvar modelo</strong>. Se o navegador perdeu o rascunho: “O modelo importado não está mais disponível. Envie o arquivo de novo.”.</li>
+  <li>Validações: “Há uma variável sem fechar, ou com caractere inválido, entre {{ e }}.”, “Nome de variável não permitido.”, “O modelo precisa de pelo menos uma seção.”, “Identificador de seção repetido”.</li>
+  <li>Nome repetido de modelo ativo é recusado (“Já existe um modelo ativo com este nome.”).</li>
+</ul>

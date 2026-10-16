@@ -1,0 +1,68 @@
+<!--meta {"id":"navegacao","grupo":"comecando","titulo":"Navegando pelo sistema","ordem":3,"resumo":"O menu lateral, a barra do topo, a busca ⌘K, a Central de avisos, o tema e o idioma: tudo o que fica em volta das telas e que aparece em todas elas.","palavras":["menu","barra lateral","sidebar","busca","paleta","atalho","ctrl k","sino","avisos","tema","escuro","idioma","sair","logout","recolher","configurações","como funciona","ajuda"],"onde":"Em todas as telas","quem":"Todos os papéis","rotas":[]} -->
+
+<h2 id="visao-geral">A tela do sistema</h2>
+<p>Toda tela do ZapSales tem a mesma moldura: o <strong>menu lateral</strong> à esquerda, a <strong>barra do topo</strong> em cima e, no meio, o conteúdo da tela em que você está.</p>
+<figure class="print">
+  <img src="img/navegacao-visao.png" alt="Tela de Funis com o menu lateral e a barra do topo numerados de 1 a 11" loading="lazy">
+  <figcaption>O menu lateral (1 a 6) e a barra do topo (7 a 11), vistos na tela de Funis.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome do grupo do menu.</strong> O menu é dividido em grupos (Atendimento, CRM, Agente de IA, Canais, Análise). Clique no nome do grupo para recolher ou abrir a lista dele.</li>
+  <li><strong>Item do menu.</strong> Cada item leva a uma tela. O item da tela em que você está fica destacado em roxo. O número vermelho ao lado do <span class="ui">Inbox</span> é a quantidade de conversas esperando alguém atender.</li>
+  <li><strong>“Ver tudo em…”.</strong> O menu mostra só o que se usa todo dia. Esse item abre uma página com <em>todas</em> as telas do grupo, organizadas por tarefa.</li>
+  <li><strong>Bolinha vermelha.</strong> Aviso de saúde. Em <span class="ui">Conexões</span> ela acende quando há um problema com o número de WhatsApp — por exemplo, quando ainda não há nenhum conectado.</li>
+  <li><strong>Configurações.</strong> Sempre fixo no rodapé do menu. Reúne a sua conta, a equipe e as regras da empresa.</li>
+  <li><strong>Recolher.</strong> Encolhe o menu para mostrar só os ícones e dar mais espaço ao conteúdo. Clique de novo para abrir.</li>
+  <li><strong>Busca ⌘K.</strong> Abre a busca de telas (veja abaixo).</li>
+  <li><strong>Sino: Central de avisos.</strong> Leva à tela <span class="ui">Alertas</span>: o que a IA encontrou e precisa de uma decisão sua. Um número aparece no sino quando há avisos em aberto.</li>
+  <li><strong>Idioma.</strong> Troca o idioma do sistema para você: português, espanhol ou inglês (o chinês ainda está em construção e não aparece na lista). Veja <a href="#navegacao--topo">os detalhes do topo</a>.</li>
+  <li><strong>Tema.</strong> Alterna entre claro, escuro e o que o seu computador estiver usando. Atalho: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd> (no Mac, <kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd>).</li>
+  <li><strong>Menu do usuário.</strong> Seu nome e e-mail, e a opção <span class="ui">Sair</span>. Quem é dono do servidor vê também <span class="ui">Modo administrador</span>, que leva ao painel de configuração da instalação.</li>
+</ol>
+
+<h2 id="o-menu-muda">Por que o meu menu é diferente do dos outros</h2>
+<p>O menu <strong>não é igual para todo mundo</strong>. Ele muda conforme três coisas:</p>
+<ul>
+  <li><strong>O seu papel.</strong> Quem é “Somente leitura” não vê itens de configuração; quem é Administrador vê todos. Veja <a href="#conceitos--papeis">Papéis</a>.</li>
+  <li><strong>Os recursos opcionais ligados.</strong> Algumas telas (Empresas, Pessoas, Propostas, Honorários, entre outras) só aparecem quando o recurso correspondente está ligado na instalação ou pela organização, em <span class="ui">Configurações › Recursos opcionais</span>.</li>
+  <li><strong>A organização em que você está.</strong> Se você participa de mais de uma, um seletor com o nome da empresa aparece no topo para trocar de uma para outra. Com uma só organização, ele fica escondido.</li>
+</ul>
+<aside class="nota dica"><strong>Não achou uma tela?</strong><p>Use a busca ⌘K, ou abra o <span class="ui">Ver tudo em…</span> do grupo. As telas de uso menos frequente não ficam no menu lateral, mas estão sempre lá.</p></aside>
+
+<h2 id="busca">A busca de telas (⌘K)</h2>
+<p>É o caminho mais rápido para ir a qualquer tela. Clique em <span class="ui">Buscar…</span> no topo, ou tecle <kbd>Ctrl</kbd> + <kbd>K</kbd> (no Mac, <kbd>⌘</kbd> + <kbd>K</kbd>).</p>
+<figure class="print media">
+  <img src="img/navegacao-busca.png" alt="Janela de busca com a palavra disparo digitada e o resultado Disparo em massa" loading="lazy">
+  <figcaption>Buscando “disparo”: o resultado destacado abre a tela de Disparo em massa.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Campo de busca.</strong> Digite parte do nome da tela ou do que ela faz. A busca ignora acentos e maiúsculas.</li>
+  <li><strong>Limpar.</strong> Apaga o que foi digitado.</li>
+  <li><strong>Grupos.</strong> Filtram os resultados por grupo do menu. O número entre parênteses é quantas telas há em cada um.</li>
+  <li><strong>Resultado.</strong> Mostra o nome da tela, o grupo e uma frase explicando para que ela serve. O primeiro já vem selecionado.</li>
+  <li><strong>Dica de teclado.</strong> <kbd>↑</kbd> <kbd>↓</kbd> escolhem, <kbd>Enter</kbd> abre, <kbd>Esc</kbd> fecha.</li>
+</ol>
+<aside class="nota atencao"><strong>A busca ⌘K procura telas, não pessoas.</strong><p>Ela não acha contatos, conversas nem cartões. Para achar uma pessoa, use a busca da tela <a href="#contatos">Contatos</a> ou a do <a href="#inbox">Inbox</a>. E ela procura no nome e na descrição da tela: digite <em>disparo</em> ou <em>mensagem em massa</em> para chegar ao disparo em massa.</p></aside>
+
+<h2 id="como-funciona">O botão “Como funciona”</h2>
+<p>Muitas telas têm, no canto de cima, um botão <span class="ui">Como funciona</span>. Ele abre um painel lateral curto com três coisas: uma explicação do que a tela é, um <strong>passo a passo</strong> das tarefas mais comuns e as <strong>“palavras desta tela”</strong>, com o significado dos termos que aparecem nela.</p>
+<figure class="print estreita">
+  <img src="img/funis-comofunciona.png" alt="Painel Como funciona da tela de Funis, aberto à direita" loading="lazy">
+  <figcaption>O painel “Como funciona” da tela de Funis.</figcaption>
+</figure>
+<p>É a ajuda embutida no sistema. Este manual vai além dela: explica cada botão e cada campo, com prints.</p>
+
+<h2 id="topo">Detalhes do topo da tela</h2>
+<figure class="print estreita">
+  <img src="img/topo-menu-usuario.png" alt="Menu do usuário aberto mostrando o nome, o e-mail e a opção Sair" loading="lazy">
+  <figcaption>O menu do usuário: nome, e-mail e <span class="ui">Sair</span>.</figcaption>
+</figure>
+<ul>
+  <li><strong>Seletor de organização.</strong> Um botão com o nome da empresa aparece ao lado da busca <em>somente</em> para quem tem acesso a duas ou mais organizações (e para o dono do servidor, com o item <span class="ui">Gerenciar organizações</span>). Escolher outra recarrega o sistema no Inbox daquela empresa. Só funciona para organizações onde o seu convite foi aceito e não foi revogado, e pede a verificação em duas etapas se você a tem. Fica registrado na <a href="#auditoria">Auditoria</a>.</li>
+  <li><strong>Idioma (PT / ES / EN).</strong> Grava a <em>sua</em> preferência pessoal — a mesma do campo “Idioma” do <a href="#config-perfil">Perfil</a> — e recarrega a página inteira. Não muda o idioma da empresa nem o que os colegas veem.</li>
+  <li><strong>Tema.</strong> Claro → escuro → igual ao computador. A escolha fica salva só neste navegador.</li>
+  <li><strong>Menu do usuário.</strong> Não tem “Perfil” nem “Configurações”: o Perfil está em Configurações › Sua conta, e Configurações fica no rodapé do menu lateral. <span class="ui">Sair</span> encerra só este navegador (para sair de todos, use a <a href="#config-seguranca">Segurança</a>).</li>
+</ul>
+
+<h2 id="no-celular">No celular</h2>
+<p>No celular, o menu lateral vira um botão de menu (as três barrinhas) no canto superior esquerdo. Toque nele para abrir a lista de telas.</p>

@@ -1,0 +1,42 @@
+<!--meta {"id":"admin-google","grupo":"admin","titulo":"Google Agenda e API Oficial (Meta)","ordem":7,"resumo":"As credenciais de aplicativo que valem para a instalação inteira: o app do Google que deixa cada atendente conectar a própria agenda, e o app da Meta que confere as mensagens dos números oficiais e liga o “Conectar com Facebook”.","palavras":["google agenda","oauth","client id","chave secreta","api oficial","meta","token de verificação","webhook","embedded signup","tech provider","conectar com facebook"],"onde":"Modo administrador › Google Agenda e API Oficial (Meta) (/admin/google, /admin/meta)","quem":"Administrador da plataforma; salvar exige escopo full e a verificação em dia","rotas":[]} -->
+
+<h2 id="google">Google Agenda desta instalação</h2>
+<p>Com estas duas informações, quem atende consegue conectar a agenda pessoal do Google e ver os compromissos do CRM lá. Valem para a <strong>instalação inteira</strong>; cada pessoa conecta a própria conta depois, na <a href="#agenda">Agenda</a>.</p>
+<figure class="print">
+  <img src="img/admin-google.png" alt="Tela Google Agenda da instalação com o endereço de retorno, o ID do cliente e a chave secreta, numerada de 1 a 4" loading="lazy">
+  <figcaption>A tela Google Agenda, ainda não configurada.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Endereço de retorno.</strong> Somente leitura, montado a partir do endereço público da instalação. “Cole exatamente isto em ‘URIs de redirecionamento autorizados’, na tela de credenciais do Google Cloud.”</li>
+  <li><strong>ID do cliente.</strong> De 10 a 300 caracteres (<code>000000000000-xxxxxxxx.apps.googleusercontent.com</code>).</li>
+  <li><strong>Chave secreta do cliente.</strong> Campo de senha (<code>GOCSPX-…</code>). Obrigatória na primeira vez; em branco mantém a atual. “Ela é guardada cifrada e nunca volta a aparecer nesta tela.”</li>
+  <li><strong>Salvar.</strong> “Credenciais do Google salvas.” Só habilita com ID e segredo preenchidos (ou já salvos).</li>
+</ol>
+<ul>
+  <li>Se as credenciais já estão no arquivo do servidor, a tela avisa que o que você salvar passa a valer no lugar delas.</li>
+  <li><strong>Trocar uma credencial em uso derruba as conexões:</strong> quem já conectou a agenda precisará conectar de novo, porque o Google invalida as autorizações antigas. Ninguém perde compromisso.</li>
+  <li>O rodapé mostra “Última alteração em …” ou “Nunca configurado por aqui.”. Fica na auditoria como <code>platform_google_oauth.updated</code>.</li>
+  <li>Outra coisa: o botão “Entrar com Google” da tela de login depende da configuração de login do servidor, não desta tela.</li>
+</ul>
+
+<h2 id="meta">API Oficial da Meta desta instalação</h2>
+<p>É com estas informações que o sistema confere que cada mensagem recebida pelo número oficial veio mesmo da Meta. Valem para a instalação inteira; cada empresa conecta o próprio número depois, em <a href="#conexoes">Conexões</a>.</p>
+<figure class="print">
+  <img src="img/admin-meta.png" alt="Tela API Oficial da Meta com a chave secreta, o token de verificação e o cartão Conectar com Facebook, numerada de 1 a 6" loading="lazy">
+  <figcaption>A tela API Oficial (Meta), ainda não configurada.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Chave secreta do aplicativo.</strong> Fica no painel da Meta, em Configurações do app › Básico (32 caracteres). Guardada cifrada. “Nunca configurado por aqui.” enquanto vazia.</li>
+  <li><strong>Token de verificação.</strong> Ainda não existe: “Ele é criado pelo sistema na primeira vez que você salva a chave secreta — ninguém precisa inventar nada.”</li>
+  <li><strong>Gerar token / Gerar novo token.</strong> O botão só aparece depois que a chave secreta foi salva.</li>
+  <li><strong>Conectar com Facebook (Embedded Signup).</strong> “Desligado. Ligue só depois que o seu app for aprovado como Tech Provider pela Meta — antes disso o login da Meta não conclui.”</li>
+  <li><strong>ID do app.</strong> Só números (Configurações do app › Básico).</li>
+  <li><strong>ID da configuração de login.</strong> Em Facebook Login for Business › Configurações, na configuração do WhatsApp Embedded Signup.</li>
+</ol>
+<ul>
+  <li>O token aparece <strong>uma única vez</strong> depois de gerado, com <span class="ui">Copiar</span> e o aviso “Copie agora… Se perder, é só gerar outro aqui.”. No painel da Meta ele vai em WhatsApp › Configuração › Webhook › “Verificar token”; a “URL de callback” é de cada número e aparece em Conexões › API Oficial (Meta) (link “Abrir Conexões em outra aba”).</li>
+  <li><strong>Gerar novo token</strong> invalida o atual na hora (“Gerar um novo token de verificação?”). As mensagens continuam chegando (são conferidas pela chave secreta); o que muda é que a Meta só confirma o endereço do webhook de novo depois que você colar o token novo.</li>
+  <li><strong>Ligar o Embedded Signup</strong> exige a chave secreta já cadastrada (“Cadastre a chave secreta do aplicativo acima antes de ligar.”). Ligado, as empresas veem o botão “Conectar com Facebook” em Conexões › API Oficial.</li>
+  <li><strong>Trocar a chave secreta</strong> afeta a conferência de assinatura das mensagens de <em>todos</em> os números. Erros: “A chave parece incompleta. Copie de novo do painel da Meta — ela tem 32 caracteres.”</li>
+  <li>Auditoria: <code>platform_meta_app.updated</code>, <code>…verify_token_rotated</code> e <code>…embedded_signup_updated</code>. Os preços das mensagens estão em <a href="#admin-destinos--precos">Preços da Meta</a>.</li>
+</ul>

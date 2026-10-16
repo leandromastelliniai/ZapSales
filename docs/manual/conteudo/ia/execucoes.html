@@ -1,0 +1,42 @@
+<!--meta {"id":"execucoes","grupo":"ia","titulo":"Execuções","ordem":17,"resumo":"Tudo o que a inteligência artificial fez por aqui e, quando algo falhou, o que aconteceu e o que fazer. Responde: “o agente parou de responder, por quê?”","palavras":["execução","execuções","runs","falha","erro","chamada","modelo","provedor","tokens","custo","latência","credencial recusada","jev"],"onde":"Agente de IA › Execuções (Ver tudo em IA › Acompanhar o agente)","quem":"Gerente ou acima.","rotas":["/app/ai/runs"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Cada vez que o sistema pede algo a um modelo de IA — responder um cliente, medir o clima da conversa, escolher qual agente atende — isso é uma <strong>execução</strong>. Esta tela as lista, da mais recente para a mais antiga, e, quando uma falha, explica em linguagem simples <strong>o que o cliente percebeu</strong> e <strong>o que você deve fazer</strong>. É a primeira tela a abrir quando “o agente parou de responder”.</p>
+<p>O título da tela é <em>“Execuções de IA”</em>. É só leitura: não há botão que altere nada, não chama a IA e não envia mensagem.</p>
+<figure class="print">
+  <img src="img/ia-execucoes.png" alt="Lista de execuções de IA com o resumo de falhas no topo, numerada de 1 a 9" loading="lazy">
+  <figcaption>As execuções de IA, com três falhas no resumo.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Resumo de falhas.</strong> Sem falhas, diz <em>“Nenhuma falha nas últimas N execuções”</em>. Com falhas, diz quantas das execuções carregadas falharam e lista cada tipo de erro com a sua orientação.</li>
+  <li><strong>Ver só as falhas.</strong> Filtra a lista. Aparece também o botão <em>Só o Jev</em> quando há execuções do Jev (o classificador que mede as mensagens).</li>
+  <li><strong>Nome do ponto.</strong> Para que serviu a chamada, por exemplo <em>“Responder o cliente”</em> ou <em>“Medir o clima da conversa”</em>.</li>
+  <li><strong>Provedor e modelo</strong> usados (por exemplo, Anthropic · claude-sonnet-4-6).</li>
+  <li><strong>Selo “falhou”.</strong> A execução deu erro.</li>
+  <li><strong>O que aconteceu.</strong> O efeito da falha para o cliente.</li>
+  <li><strong>O que fazer.</strong> O passo recomendado para resolver.</li>
+  <li><strong>Mensagem técnica do provedor.</strong> O erro cru, para quem precisa investigar (com o código HTTP).</li>
+  <li><strong>Em uma execução bem-sucedida:</strong> quantidade de <em>tokens</em> (pedaços de texto) usados, tempo de resposta em milissegundos e custo em dólar. No rodapé, a data, a hora e <em>por que este modelo foi escolhido</em> (por exemplo, “Definido na versão publicada do agente”).</li>
+</ol>
+
+<h2 id="erros">Os erros mais comuns</h2>
+<table class="tabela">
+  <thead><tr><th>Erro</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td>Chave recusada</td><td>O provedor não aceitou a chave. Confira se ela ainda é válida em <span class="ui">IA › Credenciais</span>; chaves são revogadas ou expiram.</td></tr>
+    <tr><td>Modelo inexistente</td><td>O modelo escolhido não existe mais nesse provedor. Escolha outro em <span class="ui">IA › Provedores</span>.</td></tr>
+    <tr><td>Limite ou saldo</td><td>O provedor recusou por limite de uso ou saldo. Verifique o faturamento na conta do provedor.</td></tr>
+    <tr><td>Provedor indisponível</td><td>O provedor está fora do ar ou demorou demais. Costuma se resolver sozinho; se persistir, troque de provedor nesse ponto.</td></tr>
+    <tr><td>Modelo sem ferramentas</td><td>O modelo não sabe usar as ferramentas do CRM. Troque por um que saiba.</td></tr>
+    <tr><td>Orçamento esgotado</td><td>A IA parou porque o gasto do mês atingiu o limite. Ajuste em <a href="#uso-ia">Uso de IA › Orçamento</a>.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="entender">Como ler a tela</h2>
+<ul>
+  <li><strong>Uma “execução” é uma chamada a um modelo</strong>, não uma conversa. Um único atendimento gera várias execuções (a resposta, o classificador, o resumo…).</li>
+  <li>A tela carrega as <strong>100 mais recentes</strong> e o resumo conta só essas.</li>
+  <li>O <strong>custo é sempre em dólar</strong>. Se o modelo não tem preço conhecido, o custo fica em branco.</li>
+  <li><strong>Preparar materiais de conhecimento não aparece aqui:</strong> esses gastos (embeddings) não são registrados nesta lista.</li>
+  <li>Esta tela <strong>não tem</strong> o botão “Como funciona”.</li>
+</ul>

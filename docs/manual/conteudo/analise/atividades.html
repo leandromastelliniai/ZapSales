@@ -1,0 +1,51 @@
+<!--meta {"id":"atividades","grupo":"analise","titulo":"Atividades","ordem":4,"resumo":"O que aconteceu nos seus negócios nos últimos dias — mudanças de etapa, anotações, atendimentos da IA, agendamentos, propostas — separando o que foi feito pela equipe, pelos agentes e pelo automático.","palavras":["atividades","relatório","linha do tempo","equipe","agentes","automático","acontecimentos","quem fez","o que foi feito","auditoria de operação"],"onde":"Análise › Ver tudo em Análise › Atividades (também pela busca ⌘K)","quem":"Todos abrem. O Atendente vê só as atividades dos negócios que ele pode ver.","rotas":["/app/activities"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>As <strong>Atividades</strong> mostram tudo o que aconteceu nos negócios da empresa em 7, 30 ou 90 dias, e <strong>quanto disso foi feito pela equipe</strong>, pelos <a href="#agentes">agentes de IA</a> ou pelo automático. É a tela para responder: “o que a operação realmente fez esta semana, e quem fez?”. É só leitura.</p>
+<p>Ela é irmã de <a href="#desempenho">Desempenho</a>: lá se mede o <em>desfecho</em> (funil, ganhos e perdidos); aqui, o <em>trabalho feito</em>. A fonte é a linha do tempo de cada negócio.</p>
+<aside class="nota info"><strong>Onde fica a porta.</strong><p>Atividades saiu do menu lateral (cedeu lugar a “Disparo em massa”). Abra por <span class="ui">Ver tudo em Análise</span> ou pela busca <kbd>⌘K</kbd>.</p></aside>
+
+<figure class="print">
+  <img src="img/atividades.png" alt="Tela Atividades com o seletor de período, os três cartões de origem, o gráfico por dia, os rankings e a linha do tempo, numerada de 1 a 10" loading="lazy">
+  <figcaption>As atividades dos últimos 7 dias (dados fictícios).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong></li>
+  <li><strong>Período.</strong> <em>Últimos 7 dias</em> (padrão), <em>30</em> ou <em>90</em>. O máximo é 90 dias.</li>
+  <li><strong>Total.</strong> “178 acontecimentos”.</li>
+  <li><strong>A equipe.</strong> Atividades feitas por pessoas, com a porcentagem do total.</li>
+  <li><strong>Os agentes.</strong> Atividades feitas pelos agentes de IA.</li>
+  <li><strong>Automático.</strong> Todo o resto: sistema, regras, o próprio cliente e registros antigos sem autor.</li>
+  <li><strong>Quando.</strong> Um gráfico de barras, uma por dia (“dd/mm”). A janela são as últimas N×24 horas até agora; por isso a primeira e a última barras são parciais e o gráfico mostra N+1 barras.</li>
+  <li><strong>Quem fez.</strong> O ranking por pessoa ou agente, com a quantidade e uma barra de porcentagem.</li>
+  <li><strong>O que foi feito.</strong> O ranking por tipo de acontecimento (“Atendimento da IA”, “Mudou de estágio”, “Negócio esfriou”…).</li>
+  <li><strong>Linha do tempo da operação.</strong> As atividades mais recentes (até 200).</li>
+</ol>
+<p>Cada linha da linha do tempo mostra: data e hora, o tipo (em negrito), quem fez, o <strong>título do negócio</strong> (um link para ele), “· nome do contato” e, embaixo, o motivo, quando houver (“Cliente pediu orçamento por WhatsApp”). Se há mais de 200, a tela avisa: “A lista mostra só os mais recentes. No período houve N acontecimentos.” — os totais e rankings continuam contando tudo.</p>
+
+<h2 id="regras">Regras que ajudam a ler</h2>
+<ul>
+  <li><strong>O cliente conta como “Automático”</strong> nos cartões, de propósito: a pergunta é “o que a <em>equipe</em> fez”. Nas listas, ele aparece com o marcador da equipe.</li>
+  <li>Os marcadores de forma ajudam a distinguir sem depender de cor: <strong>cheio</strong> = equipe (e cliente), <strong>anel</strong> = agente, <strong>tracejado</strong> = automático ou sem autor.</li>
+  <li>A janela é móvel (“agora menos N dias”), não os dias do calendário. O dia é contado no fuso do <em>seu navegador</em>.</li>
+  <li>Quando o nome de um autor não é achado, aparecem rótulos genéricos: “Você/time”, “Agente”, “Cliente”, “Automação”, “Sistema”, “Autor não registrado”.</li>
+  <li>A palavra “Negócio” vem do vocabulário do funil padrão (uma clínica pode ver “Paciente”).</li>
+  <li>Um tipo de atividade desconhecido (de versões antigas) aparece como “Atividade registrada”.</li>
+  <li><strong>O que cada papel enxerga:</strong> Somente leitura, Gerente e Administrador veem a organização inteira. O <strong>Atendente</strong> vê só as atividades dos negócios que ele pode ver — por padrão, os dele e os sem responsável (ou todos, se a organização escolheu “todos veem tudo”).</li>
+</ul>
+<h3>Os tipos de acontecimento mais comuns</h3>
+<table class="tabela">
+  <thead><tr><th>Rótulo na tela</th><th>Quando acontece</th></tr></thead>
+  <tbody>
+    <tr><td>Entrou no funil · Mudou de estágio · Dados do negócio alterados · Anotação</td><td>O ciclo do negócio no <a href="#funis">funil</a>.</td></tr>
+    <tr><td>Atendimento da IA · Passou para humano · Voltou para o atendimento automático · Envio bloqueado</td><td>O trabalho dos agentes e dos vetos.</td></tr>
+    <tr><td>Assumiu a conversa · Transferiu a conversa · Liberou a conversa · Pausou o automático</td><td>Ações da equipe no <a href="#inbox">Inbox</a>.</td></tr>
+    <tr><td>Retorno agendado · Follow-up pausado, retomado, adiado · Passo do follow-up pulado</td><td>Os <a href="#followups">follow-ups</a>.</td></tr>
+    <tr><td>Agendamento marcado, remarcado, cancelado, realizado · Não compareceu</td><td>A <a href="#agenda">Agenda</a>.</td></tr>
+    <tr><td>Tarefa combinada · Tarefa concluída</td><td>As <a href="#tarefas">Tarefas</a> ligadas a um negócio.</td></tr>
+    <tr><td>Rascunho de proposta criado · Proposta enviada, aceita, recusada, venceu sem decisão</td><td>As <a href="#propostas">Propostas</a>.</td></tr>
+    <tr><td>Negócio esfriou · Negócio voltou a andar · Retomada de contato aprovada ou descartada</td><td>O <a href="#radar">Radar</a> e as sugestões de retomada.</td></tr>
+    <tr><td>Chamada de voz, perdida ou sem resposta</td><td>As <a href="#chamadas">Chamadas</a>.</td></tr>
+  </tbody>
+</table>
+<p>No total são 51 tipos com rótulo próprio. Sem nenhum acontecimento no período, a tela mostra “Nada aconteceu neste período” com o botão <span class="ui">Ver conversas</span>. A tela não altera nada e não gera auditoria.</p>

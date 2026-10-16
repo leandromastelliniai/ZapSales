@@ -1,0 +1,217 @@
+<!--meta {"id":"funis","grupo":"crm","titulo":"Funis","ordem":1,"resumo":"Os funis pelos quais seus clientes passam, da primeira conversa até fechar negócio. Aqui você cria os funis e trabalha cada venda no quadro de cartões.","palavras":["kanban","pipeline","quadro","lead","negócio","cartão","etapa","venda","vendas","oportunidade","arrastar","ganho","perdido","importar planilha","csv","arquivar","funil padrão","pedido"],"onde":"CRM › Funis","quem":"Ver e trabalhar nos cartões: Atendente ou acima (Somente leitura só vê). Criar, renomear e arquivar funis: Gerente ou acima.","rotas":["/app/kanban","/app/pipelines/[id]"]} -->
+
+<h2 id="visao-geral">O que são as duas telas de Funis</h2>
+<p>O item <span class="ui">Funis</span> do menu abre duas telas, uma dentro da outra:</p>
+<ol>
+  <li><strong>A lista de funis</strong> (<a href="#funis--lista">veja abaixo</a>): onde você cria, renomeia, ordena e arquiva os funis.</li>
+  <li><strong>O quadro de um funil</strong> (<a href="#funis--quadro">veja abaixo</a>): onde você trabalha as vendas. Cada coluna é uma etapa e cada cartão é um cliente (um <em>lead</em>).</li>
+</ol>
+<p>Você chega ao quadro clicando no nome de um funil na lista. Se ainda não conhece as palavras <em>funil</em>, <em>etapa</em> e <em>lead</em>, leia antes <a href="#conceitos--funil">Conceitos básicos</a>.</p>
+
+<h2 id="lista">A lista de funis</h2>
+<p>Para cada funil, a lista mostra o nome, o caminho de etapas e os botões de gestão. No caso de uma instalação nova, já existe um funil chamado <strong>Pedidos</strong>, marcado como <strong>Padrão</strong>, com as etapas <em>Carrinho abandonado, Aguardando pagamento, Pago, Em separação, Enviado, Entregue</em> e <em>Pós-venda</em>.</p>
+<figure class="print">
+  <img src="img/funis-lista.png" alt="Lista de funis com o funil Pedidos e os botões numerados de 1 a 10" loading="lazy">
+  <figcaption>A lista de funis. O funil “Pedidos” é o que já vem na instalação.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Abre o painel de ajuda da tela, com o passo a passo e o significado das palavras. Veja <a href="#navegacao--como-funciona">O botão “Como funciona”</a>.</li>
+  <li><strong>Importar planilha.</strong> Traz clientes de uma planilha para dentro de um funil. Veja <a href="#funis--importar">Importar uma planilha</a>.</li>
+  <li><strong>Novo funil.</strong> Cria um funil. Só aparece para Gerente ou acima. Veja <a href="#funis--criar">Criar um funil</a>.</li>
+  <li><strong>Setas para cima e para baixo.</strong> Mudam a posição do funil na lista. A seta fica cinza quando o funil já está no topo ou no fim.</li>
+  <li><strong>Nome do funil.</strong> Clique no nome para abrir o quadro dele.</li>
+  <li><strong>Selo “Padrão”.</strong> Marca o <strong>funil padrão</strong>: o que recebe todo contato novo, enquanto nenhuma outra regra mandar para outro funil. Só um funil é o padrão.</li>
+  <li><strong>Apelido do funil</strong> (aqui, <code>/pedidos</code>). É um nome curto criado a partir do nome do funil. Você não precisa mexer nele.</li>
+  <li><strong>Renomear.</strong> Troca o nome do funil, ali mesmo na linha.</li>
+  <li><strong>Arquivar.</strong> Tira o funil da lista de trabalho, sem apagar nada.</li>
+  <li><strong>O caminho de etapas.</strong> O desenho horizontal mostra, em ordem, as etapas do funil. É só uma pré-visualização: as etapas se renomeiam no quadro (veja abaixo) e se organizam em <span class="ui">Configurações › Etapas do funil</span>.</li>
+</ol>
+<p>Alguns botões só aparecem em situações específicas:</p>
+<table class="tabela">
+  <thead><tr><th>Botão</th><th>Quando aparece</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><span class="ui">Tornar padrão</span></td><td>Em todo funil que <strong>não</strong> é o padrão.</td><td>Faz deste funil o padrão. O selo “Padrão” passa para ele.</td></tr>
+    <tr><td><span class="ui">Funil de clientes</span></td><td>Só depois de ligar <em>Clientes pela agenda</em> em <span class="ui">Configurações › Tipos de agendamento</span>.</td><td>Marca o funil que guarda quem <strong>já é cliente</strong>, separado de quem ainda está sendo atendido para comprar. O botão vira <span class="ui">Deixar de ser funil de clientes</span> para desfazer.</td></tr>
+    <tr><td><span class="ui">Funis arquivados (n)</span></td><td>Só quando existe pelo menos um funil arquivado, para Gerente ou acima.</td><td>Abre a “gaveta” dos arquivados, de onde você pode trazer um funil de volta ou excluí-lo de vez.</td></tr>
+  </tbody>
+</table>
+
+<h3 id="criar">Criar um funil</h3>
+<ol class="passos">
+  <li>Clique em <span class="ui">Novo funil</span>. Uma caixa de texto aparece no alto da lista.</li>
+  <li>Digite o nome. O campo sugere exemplos, como <em>Consultas, Obras, Matrículas</em>.</li>
+  <li>Tecle <kbd>Enter</kbd> ou clique em <span class="ui">Criar funil</span>. Para desistir, clique em <span class="ui">Cancelar</span> ou tecle <kbd>Esc</kbd>.</li>
+</ol>
+<aside class="nota dica"><strong>Quando criar outro funil?</strong><p>Quando a jornada do cliente é diferente. Uma loja pode ter um funil para <em>vendas</em> e outro para <em>pós-venda</em>. Se a jornada é a mesma, use um funil só e separe as pessoas por <em>tags</em>.</p></aside>
+
+<h3>Renomear, ordenar e tornar padrão</h3>
+<ul>
+  <li><strong>Renomear:</strong> clique em <span class="ui">Renomear</span>, escreva o novo nome e confirme com <span class="ui">Salvar</span>. Para desistir, <span class="ui">Cancelar</span>.</li>
+  <li><strong>Ordenar:</strong> use as setas à esquerda do nome. A ordem da lista é só para você achar o funil mais rápido.</li>
+  <li><strong>Tornar padrão:</strong> clique em <span class="ui">Tornar padrão</span> na linha do funil escolhido. Todo contato novo passa a entrar por ele.</li>
+</ul>
+
+<h3>Arquivar e excluir um funil</h3>
+<p>Ao clicar em <span class="ui">Arquivar</span>, aparece uma confirmação na própria linha, com três opções:</p>
+<ul>
+  <li><span class="ui">Arquivar</span>: o funil sai da lista e <strong>para de receber negócio novo</strong>. O histórico continua guardado e nada é apagado. É o que você quer na maioria das vezes.</li>
+  <li><span class="ui">Excluir de vez</span>: apaga o funil de verdade. <strong>Só funciona se ele nunca recebeu nenhum negócio.</strong> Se já recebeu, o sistema recusa e explica o motivo na própria tela.</li>
+  <li><span class="ui">Cancelar</span>: não faz nada.</li>
+</ul>
+<p>Para trazer um funil arquivado de volta, abra <span class="ui">Funis arquivados</span> no fim da lista e clique em <span class="ui">Tirar do arquivo</span>.</p>
+<aside class="nota atencao"><strong>Se o sistema recusar, leia a mensagem.</strong><p>Quando um funil ainda está em uso — por exemplo, por um formulário ou uma automação —, o sistema recusa arquivar ou excluir e escreve na própria linha o que está no caminho e o que fazer antes de tentar de novo. E como toda organização precisa de um funil padrão, escolha outro com <span class="ui">Tornar padrão</span> antes de arquivar o atual.</p></aside>
+
+<h2 id="importar">Importar uma planilha</h2>
+<p>Se você já tem uma lista de clientes numa planilha, não precisa digitar um por um. O botão <span class="ui">Importar planilha</span> traz a lista inteira para um funil. Quem pode importar: Atendente ou acima.</p>
+<figure class="print media">
+  <img src="img/funis-importar.png" alt="Janela Importar leads de uma planilha, com o campo Funil de destino e o botão Escolher o arquivo CSV" loading="lazy">
+  <figcaption>A janela de importação.</figcaption>
+</figure>
+<ol class="passos">
+  <li>Clique em <span class="ui">Importar planilha</span>.</li>
+  <li>Em <strong>Funil de destino</strong>, escolha para qual funil os clientes vão. Eles entram na <strong>primeira etapa aberta</strong> desse funil.</li>
+  <li>Se for a primeira vez, clique em <span class="ui">Baixar planilha modelo</span>. Ela mostra as colunas que o sistema espera. Preencha uma linha por cliente e salve como <strong>CSV</strong>.</li>
+  <li>Clique em <span class="ui">Escolher o arquivo CSV</span> e selecione o arquivo.</li>
+</ol>
+<aside class="nota dica"><strong>CSV é só um tipo de arquivo de planilha.</strong><p>No Excel ou no Google Planilhas, use <em>Arquivo › Salvar como</em> (ou <em>Fazer download</em>) e escolha “CSV”.</p></aside>
+
+<h2 id="quadro">O quadro do funil</h2>
+<p>Ao clicar no nome de um funil, você chega ao quadro. É onde a venda acontece: <strong>cada coluna é uma etapa e cada cartão é um cliente</strong>. Quando o cliente avança, você <strong>arrasta o cartão</strong> para a coluna seguinte.</p>
+<figure class="print">
+  <img src="img/funis-quadro.png" alt="Quadro do funil Pedidos com as colunas Carrinho abandonado, Aguardando pagamento, Pago e Em separação, e os controles numerados" loading="lazy">
+  <figcaption>O quadro do funil “Pedidos”. Em telas estreitas, as últimas colunas ficam à direita: role o quadro para o lado.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Novo Lead.</strong> Cria um cartão neste funil. Veja <a href="#funis--novo-lead">Criar um cartão</a>.</li>
+  <li><strong>Buscar por título.</strong> Mostra só os cartões cujo título tem o que você digitou.</li>
+  <li><strong>Responsável.</strong> Filtra pela pessoa (ou agente de IA) que cuida do cartão.</li>
+  <li><strong>Status.</strong> Filtra entre <em>Todos, Abertos, Ganhos</em> e <em>Perdidos</em>.</li>
+  <li><strong>Tag.</strong> Filtra pelas etiquetas dos cartões.</li>
+  <li><strong>Apenas atrasados.</strong> Mostra só os negócios abertos cuja data de <em>fechamento previsto</em> já passou.</li>
+  <li><strong>Nome da etapa.</strong> É o título da coluna. Para trocar o nome, clique nele, digite o novo e tecle <kbd>Enter</kbd> (ou clique fora). <kbd>Esc</kbd> desfaz. O número ao lado é quantos cartões há na etapa.</li>
+  <li><strong>Total da coluna.</strong> A soma dos valores dos cartões da etapa. Etapa sem nenhum valor não mostra total.</li>
+  <li><strong>Cartão.</strong> Um cliente no funil. Veja <a href="#funis--cartao">O cartão</a>.</li>
+  <li><strong>“ponderado”.</strong> Aparece em etapas que têm uma <strong>chance de fechar</strong> calibrada. É o total multiplicado por essa chance: uma estimativa de quanto aquela etapa deve realmente render. Nas etapas de <em>ganho</em> vale 100% e nas de <em>perda</em>, zero.</li>
+</ol>
+
+<h3 id="mover">Mover um cartão de etapa</h3>
+<ol class="passos">
+  <li>Aponte o mouse para o cartão, segure o botão e <strong>arraste</strong> até a coluna de destino.</li>
+  <li>Solte. O cartão fica na nova etapa e a mudança é registrada na linha do tempo dele (“Mudou de estágio”).</li>
+</ol>
+<p>Também dá para mover vários de uma vez (veja <a href="#funis--varios">Trabalhar com vários cartões</a>) ou levar um cartão para <em>outro funil</em> pelo menu dele.</p>
+
+<h3 id="filtros">Como os filtros funcionam</h3>
+<ul>
+  <li>Você pode <strong>combinar</strong> filtros: busca + responsável + status + tag + atrasados, tudo ao mesmo tempo.</li>
+  <li><strong>Responsável</strong> tem as opções <em>Todos</em>, <em>Sem responsável</em>, <em>Eu</em> e uma lista com cada pessoa e agente de IA.</li>
+  <li><strong>Tag</strong> aceita escolher várias tags. Em <em>Todas (E)</em>, o cartão precisa ter <strong>todas</strong> as tags marcadas; em <em>Qualquer uma (OU)</em>, basta ter uma.</li>
+  <li>Ao escolher o status <em>Perdidos</em>, e havendo negócios perdidos com motivo registrado, aparece o filtro <strong>Motivo</strong> (e, quando os motivos têm categoria, também <strong>Categoria</strong>) para ver só um tipo de perda.</li>
+  <li><span class="ui">Limpar filtros</span> aparece assim que há algum filtro ligado e desliga todos.</li>
+  <li>Os filtros ficam <strong>no endereço da página</strong>. Copie o endereço e mande para um colega: ele abre o quadro com os mesmos filtros.</li>
+</ul>
+
+<h2 id="cartao">O cartão</h2>
+<p>O cartão resume o cliente em quatro faixas. Ele tem sempre a mesma altura, para o quadro não “dançar” quando algo muda.</p>
+<figure class="print media">
+  <img src="img/funis-cartao.png" alt="Um cartão do funil com oito marcações numeradas" loading="lazy">
+  <figcaption>Um cartão em detalhe (cliente “Ana Paula Ferreira”).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Caixa de seleção.</strong> Só aparece quando você passa o mouse sobre o cartão. Serve para <a href="#funis--varios">trabalhar com vários cartões</a>.</li>
+  <li><strong>Título.</strong> Clique nele para abrir o <a href="#funis--dossie">dossiê</a> do cartão. Passe o mouse sobre o cartão para ver as tags dele.</li>
+  <li><strong>Menu “…”.</strong> As ações do cartão (veja <a href="#funis--menu">o menu do cartão</a>).</li>
+  <li><strong>Valor.</strong> Quanto vale o negócio. Mostra “—” quando não há valor.</li>
+  <li><strong>Última mensagem.</strong> O trecho da conversa mais recente com esse cliente, com um <strong>número roxo</strong> quando há mensagens que ninguém leu. Clique nela para abrir a conversa no <a href="#inbox">Inbox</a>.</li>
+  <li><strong>Telefone e e-mail</strong> do contato. Somem se o contato não tem nenhum dos dois.</li>
+  <li><strong>Responsável.</strong> A pessoa ou o agente de IA que cuida do cartão. Mostra “Sem responsável” quando ninguém foi escolhido.</li>
+  <li><strong>Tempo na etapa.</strong> Há quanto tempo o cartão está parado naquela etapa (“agora em…”, ou o tempo decorrido).</li>
+</ol>
+
+<h3>As cores e os avisos do cartão</h3>
+<p>O cartão só ganha cor quando algo pede a sua atenção, e mostra <strong>um aviso de cada vez</strong>, o mais importante:</p>
+<table class="tabela">
+  <thead><tr><th>O que você vê</th><th>O que significa</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td>Borda na <strong>cor de destaque</strong> e a frase <em>“Propõe: …”</em> com <span class="ui">Aprovar</span> e <span class="ui">Ignorar</span></td><td>Um agente de IA sugere uma ação para esse negócio e espera a sua decisão.</td><td>Clique em <span class="ui">Aprovar</span> para deixar a ação acontecer, ou <span class="ui">Ignorar</span> para descartá-la.</td></tr>
+    <tr><td>Borda <strong>laranja</strong> e <em>“Retomar contato?”</em> com <span class="ui">Retomar</span> e <span class="ui">Encerrar</span></td><td>O cliente parou de responder e o sistema tem uma sugestão pronta para reativar a conversa.</td><td><span class="ui">Retomar</span> segue a sugestão; <span class="ui">Encerrar</span> desiste do negócio. A sugestão tem prazo e “vence” depois de um tempo.</td></tr>
+    <tr><td>Borda <strong>laranja</strong> e <em>“Sem resposta há 3 dias”</em></td><td>O negócio está esfriando: faz tempo que o cliente não responde.</td><td>Escreva para o cliente, ou mova o cartão se o assunto mudou.</td></tr>
+    <tr><td>Uma <strong>barrinha de chance</strong> de fechar</td><td>Uma estimativa de quanto esse negócio tem de chance de dar certo, com o motivo.</td><td>Nada: é uma ajuda para você decidir em quem investir o tempo.</td></tr>
+  </tbody>
+</table>
+
+<h3 id="menu">O menu do cartão (“…”)</h3>
+<p>O botão <span class="ui">…</span> no canto do cartão abre um menu com seis ações.</p>
+<figure class="print estreita">
+  <img src="img/funis-menu-cartao.png" alt="Menu do cartão com as opções Editar, Responsável, Marcar como ganho, Marcar como perdido, Levar para outro funil e Excluir" loading="lazy">
+  <figcaption>O menu do cartão.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Editar.</strong> Abre um formulário para mudar título, valor, descrição e demais dados do negócio.</li>
+  <li><strong>Responsável.</strong> Abre uma lista com as pessoas da equipe para você escolher quem cuida do cartão.</li>
+  <li><strong>Marcar como ganho.</strong> Registra a venda como fechada.</li>
+  <li><strong>Marcar como perdido.</strong> Pede o <strong>motivo</strong> da perda (e um detalhe opcional) antes de confirmar. Essa informação ajuda a melhorar o funil. Se o motivo que você quer não está na lista, ele se cadastra em <span class="ui">Configurações › Funis</span>.</li>
+  <li><strong>Levar para outro funil.</strong> Passa o cartão para outro funil. Se existe um funil só, o sistema avisa que é preciso criar outro antes.</li>
+  <li><strong>Excluir</strong> (em vermelho). Apaga o cartão, depois de uma confirmação.</li>
+</ol>
+<aside class="nota perigo"><strong>Excluir não tem volta.</strong><p>Se o cliente só desistiu, use <span class="ui">Marcar como perdido</span>: o cartão sai do andamento, mas o histórico e o motivo ficam registrados para você aprender com eles.</p></aside>
+
+<h2 id="novo-lead">Criar um cartão (Novo Lead)</h2>
+<p>Clique em <span class="ui">Novo Lead</span>, no canto do quadro. Quem pode: Atendente ou acima.</p>
+<figure class="print media">
+  <img src="img/funis-novo-lead.png" alt="Janela Novo Lead com os campos Contato, Título, Descrição, Etapa, Valor, Fechamento previsto e Tags" loading="lazy">
+  <figcaption>A janela “Novo Lead”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Contato.</strong> Procure a pessoa pelo nome ou telefone e clique nela na lista. É a pessoa a quem esse negócio pertence.</li>
+  <li><strong>Criar contato.</strong> Se a pessoa ainda não está cadastrada, cadastre-a aqui mesmo, sem sair da janela.</li>
+  <li><strong>Título.</strong> Um nome para o negócio, para você reconhecê-lo no quadro. Por exemplo: <em>Pedido Maria — combo presente</em>.</li>
+  <li><strong>Descrição.</strong> Contexto, observações, links. É livre.</li>
+  <li><strong>Etapa.</strong> Em que coluna o cartão começa. Já vem na primeira etapa.</li>
+  <li><strong>Valor (R$).</strong> Quanto vale o negócio. Alimenta os totais das colunas.</li>
+  <li><strong>Fechamento previsto.</strong> A data em que você espera fechar. Se passar sem fechar, o cartão entra no filtro <em>Apenas atrasados</em>.</li>
+  <li><strong>Tags.</strong> Etiquetas separadas por vírgula.</li>
+  <li><strong>Criar lead.</strong> Cria o cartão. <span class="ui">Cancelar</span> fecha sem criar.</li>
+</ol>
+<aside class="nota atencao"><strong>Cartão sem contato não recebe WhatsApp.</strong><p>O sistema avisa na própria janela: sem contato, o lead não recebe mensagem de WhatsApp nem entra nas automações. Vincule sempre uma pessoa.</p></aside>
+
+<h2 id="dossie">O dossiê do cartão</h2>
+<p>Clicar no título de um cartão abre o <strong>dossiê</strong>: um painel que desliza pela direita com tudo sobre aquele negócio, sem você sair do quadro.</p>
+<figure class="print">
+  <img src="img/funis-dossie.png" alt="Painel do dossiê aberto à direita do quadro, com contato, linha do tempo e dados do negócio" loading="lazy">
+  <figcaption>O dossiê do cartão “Kit skincare completo”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Título</strong> do negócio, com o valor, a etapa em que ele está e o responsável logo abaixo. Se o negócio nasceu de um disparo em massa, o nome da campanha também aparece aí.</li>
+  <li><strong>Editar campos.</strong> Rola o painel até o formulário <em>Dados do negócio</em>, mais abaixo.</li>
+  <li><strong>Abrir conversa no Inbox.</strong> Mostra a última mensagem e leva à conversa completa, com o número de mensagens não lidas.</li>
+  <li><strong>Abas Dados e Links</strong> do contato. <em>Dados</em> mostra nome, telefone e e-mail; <em>Links</em> é um formulário para guardar os endereços do contato na internet (Instagram, site, Google Meu Negócio…). Só vale endereço que começa com <code>http</code>. Os links salvos aparecem também no cartão.</li>
+  <li><strong>Abrir no WhatsApp.</strong> Abre o WhatsApp com esse número, fora do ZapSales.</li>
+  <li><strong>Ver ficha completa do contato.</strong> Vai para a ficha do contato em <a href="#contatos">Contatos</a>.</li>
+  <li><strong>Linha do tempo.</strong> O histórico do negócio, com quem fez cada coisa e quando: <em>entrou no funil, mudou de estágio, dados do negócio alterados</em>, anotações, atendimento da IA, quem <em>assumiu, transferiu ou liberou</em> a conversa, agendamentos e retornos. Fica vazia (“Nada aconteceu com este negócio ainda”) até que algo aconteça.</li>
+  <li><strong>Dados do negócio.</strong> O formulário para editar título, descrição, valor, fechamento previsto e tags. Termina com o botão <span class="ui">Salvar</span>. Se o funil tem campos extras, eles aparecem aqui também.</li>
+  <li><strong>Fechar.</strong> O X no canto de cima. Também fecha com <kbd>Esc</kbd>.</li>
+</ol>
+<aside class="nota info"><strong>Propostas.</strong><p>Quando o recurso de propostas está ligado, o dossiê ganha também uma seção <em>Propostas</em>, depois de “Dados do negócio”, com as propostas enviadas para esse cliente.</p></aside>
+
+<h2 id="varios">Trabalhar com vários cartões de uma vez</h2>
+<p>Para fazer a mesma coisa em muitos cartões — mover, trocar o responsável, colocar uma tag, excluir — selecione-os e use a barra que aparece.</p>
+<ul>
+  <li><strong>Marcar um cartão:</strong> clique na caixa que aparece ao passar o mouse, ou segure <kbd>Ctrl</kbd> (no Mac, <kbd>⌘</kbd>) e clique no cartão.</li>
+  <li><strong>Marcar um intervalo:</strong> clique num cartão, segure <kbd>Shift</kbd> e clique em outro: todos entre os dois ficam marcados.</li>
+  <li><strong>Marcar uma etapa inteira:</strong> use a caixa de seleção no cabeçalho da coluna (aparece ao passar o mouse).</li>
+</ul>
+<p>Com cartões marcados, uma barra de ações mostra quantos estão selecionados e oferece:</p>
+<table class="tabela">
+  <thead><tr><th>Ação</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><span class="ui">Mover para…</span></td><td>Leva todos os marcados para a etapa escolhida.</td></tr>
+    <tr><td><span class="ui">Responsável…</span> / <span class="ui">Remover responsável</span></td><td>Define, ou tira, quem cuida de todos os marcados.</td></tr>
+    <tr><td>Campo de tag + <span class="ui">Adicionar</span></td><td>Cola a mesma tag em todos os marcados.</td></tr>
+    <tr><td><span class="ui">Excluir</span></td><td>Apaga os marcados, depois de uma confirmação. <strong>Não pode ser desfeito.</strong></td></tr>
+    <tr><td><span class="ui">Cancelar</span></td><td>Desmarca tudo, sem alterar nada.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="tempo-real">O quadro se atualiza sozinho</h2>
+<p>Você não precisa recarregar a página. Quando um colega (ou um agente de IA) move ou altera um cartão, o quadro muda na sua tela e o cartão dá uma <strong>piscada</strong> rápida para você notar.</p>

@@ -1,0 +1,190 @@
+<!--meta {"id":"inbox","grupo":"atendimento","titulo":"Inbox","ordem":1,"resumo":"A caixa de entrada do WhatsApp: todas as conversas da equipe num lugar só. Aqui você assume, responde, transfere e encerra o atendimento.","palavras":["conversa","conversas","mensagem","mensagens","whatsapp","atender","atendimento","responder","fila","assumir","liberar","transferir","fechar","arquivar","nota interna","anexo","áudio","emoji","atalho","automático","ia","lembrar","chat","caixa de entrada"],"onde":"Atendimento › Inbox","quem":"Ver conversas: todos os papéis. Assumir, responder, transferir, fechar e arquivar: Atendente ou acima.","rotas":["/app/inbox","/app/inbox/[id]"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O <span class="ui">Inbox</span> é onde a equipe conversa com os clientes pelo WhatsApp. Todas as conversas de todos os números conectados chegam aqui. O número vermelho ao lado do item do menu mostra quantas conversas estão <strong>esperando alguém atender</strong>.</p>
+<p>A tela tem <strong>duas metades</strong>: à esquerda, a <a href="#inbox--lista">lista de conversas</a>; à direita, a <a href="#inbox--conversa">conversa aberta</a>, com o cabeçalho, as mensagens e a caixa para responder.</p>
+<figure class="print">
+  <img src="img/inbox-conversa.png" alt="Inbox com a lista de conversas à esquerda e a conversa aberta à direita, com 17 marcações numeradas" loading="lazy">
+  <figcaption>O Inbox com uma conversa aberta. Os números 1 a 5 são a lista; 6 a 17, o cabeçalho da conversa.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Abas.</strong> Separam as conversas por situação. Veja <a href="#inbox--abas">As abas da lista</a>.</li>
+  <li><strong>Busca.</strong> Procura por nome, telefone ou pelo texto da última mensagem.</li>
+  <li><strong>Filtros rápidos.</strong> <em>Não lidos</em> mostra só as conversas com mensagens não lidas. <em>Grupos</em> mostra as conversas de grupos do WhatsApp que você ligou ao sistema.</li>
+  <li><strong>Filtro de tags.</strong> Mostra só as conversas com as tags escolhidas. Quando há mais de um número de WhatsApp conectado, aparece também um filtro <em>Todos os números</em>.</li>
+  <li><strong>Uma conversa na lista.</strong> A que está aberta fica destacada, com uma barra na esquerda. Veja <a href="#inbox--item">O que cada conversa mostra</a>.</li>
+  <li><strong>Nome e telefone</strong> do cliente. O ícone verde de WhatsApp indica o canal.</li>
+  <li><strong>Linha do Funil.</strong> As etapas do funil do negócio desse cliente, com a etapa atual em destaque. Mostra de relance em que ponto da venda ele está.</li>
+  <li><strong>Valor, próximo passo e tags.</strong> O valor do negócio, o que está previsto para acontecer a seguir (aqui, <em>Responder à nova mensagem do cliente</em>) e as tags do contato. O botão com ícone de cartão abre a <a href="#inbox--ficha">ficha completa</a>.</li>
+  <li><strong>Quem está atendendo.</strong> Uma faixa diz se a conversa está em atendimento por uma pessoa, com o automático, ou esperando. Veja <a href="#inbox--faixa">Quem atende cada conversa</a>.</li>
+  <li><strong>Lupa.</strong> Busca dentro desta conversa.</li>
+  <li><strong>Liberar.</strong> Devolve a conversa para a fila (ela deixa de ser sua).</li>
+  <li><strong>Pausar o automático.</strong> Faz o atendimento automático parar nesta conversa, sem mudar o dono.</li>
+  <li><strong>Transferir.</strong> Passa a conversa para outro atendente, ou para outro número.</li>
+  <li><strong>Lembrar.</strong> Pede um lembrete para esta conversa.</li>
+  <li><strong>Fechar.</strong> Encerra o atendimento.</li>
+  <li><strong>Arquivar.</strong> Tira a conversa da frente sem apagá-la.</li>
+  <li><strong>Ver contato.</strong> Abre a ficha da pessoa em <a href="#contatos">Contatos</a>.</li>
+</ol>
+
+<h2 id="lista">A lista de conversas</h2>
+
+<h3 id="abas">As abas da lista</h3>
+<table class="tabela">
+  <thead><tr><th>Aba</th><th>O que mostra</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Fila</strong></td><td>As conversas que <strong>esperam um atendente</strong>, ordenadas por quem espera há mais tempo. É a aba de quem está de plantão: pegue a primeira da lista.</td></tr>
+    <tr><td><strong>Minhas</strong></td><td>As conversas que estão com <strong>você</strong>.</td></tr>
+    <tr><td><strong>Todas</strong></td><td>Todas as conversas abertas da organização. Dependendo da regra de visibilidade da organização, o Atendente não vê esta aba: aí ele só trabalha com a Fila e as Minhas.</td></tr>
+    <tr><td><strong>Fechadas</strong></td><td>Atendimentos encerrados. Dá para reabrir se o cliente escrever de novo.</td></tr>
+    <tr><td><strong>Arquivadas</strong></td><td>O que saiu da fila de trabalho sem ser apagado.</td></tr>
+    <tr><td><strong>Automático</strong></td><td>As conversas que o atendimento automático (a IA) está cuidando.</td></tr>
+  </tbody>
+</table>
+<p>O número laranja ao lado do nome de cada aba é quantas conversas há nela. Se as abas não couberem na largura, use as setinhas nas pontas para rolar.</p>
+
+<h3 id="item">O que cada conversa mostra</h3>
+<ul>
+  <li><strong>Iniciais ou foto</strong> do cliente, e um número no canto quando há mensagens não lidas. O nome fica em <strong>negrito</strong> enquanto há algo não lido.</li>
+  <li><strong>Nome</strong> e, à direita, <strong>a hora</strong> da última mensagem (ou há quanto tempo foi, como <em>1 dia</em>).</li>
+  <li><strong>O começo da última mensagem</strong>, para você reconhecer a conversa sem abri-la.</li>
+  <li><strong>Uma mini linha do funil</strong>: as bolinhas são as etapas do negócio desse cliente e a cheia é a etapa atual.</li>
+  <li><strong>Na Fila:</strong> a <strong>posição</strong> na fila (<em>1º, 2º…</em>) e quem atende (<em>Sem atendente</em>). Passando o mouse, o sistema mostra “desde quando o cliente espera resposta”.</li>
+  <li><strong>As tags</strong> do contato.</li>
+  <li><strong>Selos</strong>: <em>Grupo</em>, <em>Bloqueado</em> e <em>Anonimizado</em>, quando for o caso.</li>
+</ul>
+
+<h2 id="conversa">A conversa aberta</h2>
+<p>Clique numa conversa da lista para abri-la à direita. Em telas pequenas, a conversa ocupa a tela inteira, com um botão <span class="ui">Conversas</span> para voltar à lista e um botão <span class="ui">Ficha</span> para ver os dados do cliente.</p>
+
+<h3 id="faixa">Quem atende cada conversa</h3>
+<p>Logo abaixo do cabeçalho, uma faixa diz quem está com a conversa neste momento:</p>
+<table class="tabela">
+  <thead><tr><th>Faixa</th><th>Significa</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Em atendimento</strong> (com o nome da pessoa e desde que horas)</td><td>Uma pessoa da equipe é a dona da conversa. O atendimento automático <strong>não</strong> responde enquanto isso.</td></tr>
+    <tr><td><strong>Automático atendendo</strong></td><td>O agente de IA está respondendo ao cliente.</td></tr>
+    <tr><td><strong>Aguardando atendente</strong></td><td>Ninguém assumiu ainda e o automático não está com a conversa: ela está na fila, esperando uma pessoa.</td></tr>
+    <tr><td><strong>Sem atendente</strong></td><td>Não há dono para a conversa <em>e</em> a organização ainda não tem nenhum atendimento automático configurado — então ninguém vai responder sozinho. É o estado normal de uma instalação nova, antes de montar o primeiro agente.</td></tr>
+    <tr><td><strong>Encerrada</strong></td><td>O atendimento foi fechado.</td></tr>
+  </tbody>
+</table>
+<aside class="nota info"><strong>Respondeu pelo celular? O automático para.</strong><p>Se alguém da equipe responde o cliente pelo próprio celular, fora do ZapSales, o atendimento automático é pausado naquela conversa. Ele só volta quando você clica em <span class="ui">Devolver ao automático</span> (ou envia o comando <code>#on</code> pelo celular).</p></aside>
+
+<h3 id="botoes">Os botões de ação</h3>
+<p>Os botões mudam conforme a situação da conversa. Os que você vê dependem de quem está com ela:</p>
+<table class="tabela">
+  <thead><tr><th>Botão</th><th>Quando aparece</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><span class="ui">Assumir</span></td><td>Quando a conversa está aberta e <strong>não é sua</strong>.</td><td>Você passa a ser o dono e <strong>o atendimento automático para</strong> nesta conversa.</td></tr>
+    <tr><td><span class="ui">Liberar</span></td><td>Quando a conversa <strong>é sua</strong>.</td><td>Devolve a conversa à fila.</td></tr>
+    <tr><td><span class="ui">Pausar o automático</span></td><td>Quando o automático ainda atende uma conversa que tem dono.</td><td>O automático para nesta conversa. O dono não muda.</td></tr>
+    <tr><td><span class="ui">Devolver ao automático</span></td><td>Quando o automático está parado e pode voltar.</td><td>Devolve a conversa ao atendimento automático. Em alguns casos (quando foi o <em>contato</em> que ficou travado em atendimento humano), o botão religa o automático para <strong>todas as conversas dessa pessoa</strong>: o texto do botão avisa.</td></tr>
+    <tr><td><span class="ui">Transferir</span></td><td>Em conversa não encerrada.</td><td>Abre uma janela com duas abas: <em>Atendente</em> (escolha para quem passar e, se quiser, escreva o motivo) e <em>Número</em> (continuar a conversa por <strong>outro número de WhatsApp</strong> da empresa). Só dá para continuar por outro número se o contato tem telefone salvo.</td></tr>
+    <tr><td><span class="ui">Lembrar</span></td><td>Em conversa não encerrada.</td><td>Menu com <em>Em 1 hora</em>, <em>Em 3 horas</em> e <em>Em 24 horas</em>. Quando o prazo vence, a conversa reabre e a equipe recebe um aviso interno. <strong>Nada é enviado ao cliente.</strong> O botão vira <em>Lembrete ativo</em>, com a opção de cancelar.</td></tr>
+    <tr><td><span class="ui">Fechar</span> / <span class="ui">Reabrir</span></td><td><em>Fechar</em> em conversa aberta; <em>Reabrir</em> em conversa já encerrada.</td><td><em>Fechar</em> pede confirmação e encerra o atendimento. <em>Reabrir</em> volta a abrir.</td></tr>
+    <tr><td><span class="ui">Arquivar</span></td><td>Em toda conversa que ainda não está arquivada.</td><td>Pede confirmação e tira a conversa da frente, mandando-a para a aba <em>Arquivadas</em>. Nada é apagado.</td></tr>
+    <tr><td><span class="ui">Ver contato</span></td><td>Sempre.</td><td>Abre a ficha da pessoa em <a href="#contatos">Contatos</a>.</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>Assumir muda duas coisas de uma vez.</strong><p>Ao assumir uma conversa você passa a ser quem responde <em>e</em> o atendimento automático deixa de responder nela. Se você só quer que a IA pare de falar mas sem tomar a conversa para si, use <span class="ui">Pausar o automático</span>.</p></aside>
+
+<h3 id="mensagens">As mensagens</h3>
+<p>As mensagens do cliente ficam à esquerda; as suas, à direita, com a palavra <em>Você</em>. Elas são separadas por dia (<em>Hoje</em>, <em>Ontem</em>…). Cada mensagem enviada mostra o seu estado com tracinhos ao lado da hora:</p>
+<table class="tabela">
+  <thead><tr><th>Sinal</th><th>Significa</th></tr></thead>
+  <tbody>
+    <tr><td>✓ (um tracinho)</td><td>Enviada.</td></tr>
+    <tr><td>✓✓ (dois tracinhos cinza)</td><td>Entregue ao celular do cliente.</td></tr>
+    <tr><td>✓✓ (dois tracinhos azuis)</td><td>Lida pelo cliente.</td></tr>
+    <tr><td><strong>Falhou</strong></td><td>A mensagem não saiu. O motivo aparece logo abaixo dela.</td></tr>
+  </tbody>
+</table>
+<p>Ao passar o mouse sobre uma mensagem, o botão <span class="ui">Opções da mensagem</span> oferece:</p>
+<ul>
+  <li><strong>Responder a esta mensagem:</strong> sua resposta aparece citando a mensagem escolhida.</li>
+  <li><strong>Editar mensagem:</strong> corrige o texto. A mensagem passa a mostrar “editada”.</li>
+  <li><strong>Apagar para todos:</strong> pede ao WhatsApp para remover a mensagem também para o cliente. O sistema avisa que o WhatsApp <em>tentará</em> removê-la: não há garantia.</li>
+  <li><strong>Ocultar no CRM:</strong> esconde a mensagem só aqui dentro. Ela continua na conversa do cliente e no registro da empresa, e um gestor pode restaurá-la.</li>
+</ul>
+<p>Além das mensagens, a conversa pode mostrar:</p>
+<ul>
+  <li><strong>Notas internas</strong>, escritas pela equipe e invisíveis para o cliente (veja abaixo).</li>
+  <li><strong>O cartão de passagem</strong>, quando o agente de IA passou a conversa para uma pessoa. Ele resume, para quem recebeu: <em>O cliente quer</em>, <em>A IA já tentou</em>, <em>Últimas palavras do cliente</em> e um <em>Resumo da IA</em> (que vale conferir). Diz também se o cliente já foi avisado de que uma pessoa vai assumir, ou se ele <strong>ainda está esperando sem saber</strong>.</li>
+</ul>
+
+<h3 id="responder">Responder ao cliente</h3>
+<figure class="print">
+  <img src="img/inbox-compositor.png" alt="Mensagens e a caixa de resposta do Inbox, com nove marcações numeradas" loading="lazy">
+  <figcaption>As mensagens e a caixa de resposta (compositor).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Mensagem do cliente.</strong> Com o nome, o texto e a hora.</li>
+  <li><strong>Sua mensagem.</strong> Com <em>Você</em> e os tracinhos de entrega e leitura.</li>
+  <li><strong>Responder / Nota interna.</strong> Duas abas para a mesma caixa. <em>Responder</em> envia ao cliente. <em>Nota interna</em> guarda um recado <strong>só para a equipe</strong>; o cliente nunca vê.</li>
+  <li><strong>Sugerir resposta.</strong> Pede ao agente de IA um rascunho de resposta, que você <strong>revisa antes de enviar</strong>. Veja abaixo.</li>
+  <li><strong>Caixa de texto.</strong> Escreva a mensagem. <kbd>Enter</kbd> envia; <kbd>Shift</kbd> + <kbd>Enter</kbd> quebra a linha sem enviar.</li>
+  <li><strong>Botão +.</strong> Anexa <em>Fotos e vídeos</em>, um <em>Documento</em> ou um <em>Contato</em>.</li>
+  <li><strong>Emoji.</strong> Abre o seletor de emojis.</li>
+  <li><strong>Microfone.</strong> Grava e envia uma mensagem de áudio. O navegador pede permissão para usar o microfone na primeira vez.</li>
+  <li><strong>Enviar.</strong> Envia a mensagem. Fica apagado enquanto não há nada escrito.</li>
+</ol>
+<aside class="nota dica"><strong>Respostas rápidas com “/”.</strong><p>Digite <kbd>/</kbd> no começo da caixa de texto e um menu com as suas <em>respostas rápidas</em> aparece. Escolha uma e o texto é preenchido para você. Elas são criadas na tela <a href="#respostas-rapidas">Respostas rápidas</a>; se ainda não há nenhuma, o menu avisa para criar nas configurações.</p></aside>
+
+<h3 id="sugestao">A resposta sugerida pela IA</h3>
+<p>Com <span class="ui">Sugerir resposta</span> o agente escreve um rascunho. Ele <strong>nunca é enviado sozinho</strong>: aparece num painel de revisão com o aviso <em>“Revise antes de enviar”</em> e duas saídas:</p>
+<ul>
+  <li><span class="ui">Aprovar e enviar</span>: manda o texto (ou o texto que você ajustou) para o cliente.</li>
+  <li><span class="ui">Rejeitar</span>: descarta o rascunho. Você pode escrever um <em>feedback</em>, que o agente usa na próxima sugestão.</li>
+</ul>
+
+<h3 id="janela">Quando o WhatsApp não deixa responder</h3>
+<aside class="nota atencao"><strong>Passadas 24 horas do último contato do cliente, o WhatsApp só permite mensagens por “modelo”.</strong><p>Quando isso acontece numa conversa pela API Oficial da Meta, o Inbox deixa de aceitar texto livre e mostra um aviso. No lugar da caixa de texto aparece um seletor com os <strong>modelos já aprovados</strong> pela Meta: escolha um, preencha os campos pedidos e clique em <span class="ui">Enviar modelo</span>. Quando o cliente responde, a janela de conversa reabre. Se ainda não há modelo aprovado, o aviso manda criar um em <span class="ui">Conexões › Templates</span>.</p></aside>
+<aside class="nota atencao"><strong>O número desta conversa não está conectado.</strong><p>Se o número de WhatsApp pelo qual o cliente falou está desconectado, o Inbox avisa e oferece <span class="ui">Responder por outro número</span>.</p></aside>
+
+<h2 id="ficha">A ficha completa (gaveta lateral)</h2>
+<p>O botão com ícone de cartão no cabeçalho (ou <span class="ui">Ficha</span>, no celular) abre uma gaveta pela direita com tudo sobre o cliente, sem sair da conversa.</p>
+<figure class="print estreita">
+  <img src="img/inbox-ficha.png" alt="Gaveta Contato aberta no Inbox, com as seções numeradas de 1 a 9" loading="lazy">
+  <figcaption>A gaveta “Contato”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Marcar compromisso.</strong> Abre a <em>Agenda</em> já com este contato e esta conversa escolhidos.</li>
+  <li><strong>Tags do contato.</strong> Edita as etiquetas da <em>pessoa</em>.</li>
+  <li><strong>Novo Lead.</strong> Cria um cartão no funil para este cliente, sem sair do Inbox. Veja <a href="#funis--novo-lead">Criar um cartão</a>.</li>
+  <li><strong>Ver contato.</strong> Abre a ficha da pessoa em <a href="#contatos">Contatos</a>.</li>
+  <li><strong>Sobre a empresa.</strong> Dados de enriquecimento (da empresa do cliente), quando existem. Sem eles, a seção avisa.</li>
+  <li><strong>Tags da conversa.</strong> Etiquetas só desta <em>conversa</em> (diferentes das do contato). Escreva em <em>Nova tag…</em> e clique em <span class="ui">+</span>.</li>
+  <li><strong>Demandas abertas.</strong> Uma <em>demanda</em> é um assunto em aberto com este cliente. Mostra há quanto tempo ela está aberta e o <strong>próximo passo</strong>. <span class="ui">Encerrar demanda</span> pede o desfecho: <em>Resolvida, Convertida, Não procede, Encerrada pelo cliente, Perdida</em> ou <em>Expirada sem resposta</em>. <span class="ui">Marcar próximo passo</span> registra o que deve acontecer a seguir.</li>
+  <li><strong>Memória do contato.</strong> Fatos duráveis sobre a pessoa, registrados nas notas. Fica vazia até alguém registrar algo.</li>
+  <li><strong>Leads recentes e Etapa do funil.</strong> Os negócios dele no funil. O seletor <em>Etapa do funil</em> permite <strong>mudar a etapa</strong> do negócio direto daqui, e abaixo dele aparecem os campos extras do funil, se existirem.</li>
+</ol>
+<p>Descendo a gaveta, há ainda <strong>Pedidos recentes</strong>, a <strong>Atividade</strong> do cliente e o <strong>Acervo</strong>: uma busca na base de conhecimento, feita <em>como a IA faz</em>, que mostra a origem de cada trecho encontrado. Serve para conferir o que o agente sabe.</p>
+
+<h2 id="atalhos">Atalhos de teclado</h2>
+<p>O Inbox foi feito para quem atende o dia todo. Estas teclas funcionam quando você <strong>não</strong> está digitando:</p>
+<table class="tabela">
+  <thead><tr><th>Tecla</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><kbd>J</kbd></td><td>Abre a próxima conversa da lista.</td></tr>
+    <tr><td><kbd>K</kbd></td><td>Abre a conversa anterior.</td></tr>
+    <tr><td><kbd>R</kbd></td><td>Leva o cursor para a caixa de resposta.</td></tr>
+    <tr><td><kbd>A</kbd></td><td>Assume a conversa.</td></tr>
+    <tr><td><kbd>E</kbd></td><td>Fecha a conversa.</td></tr>
+    <tr><td><kbd>?</kbd></td><td>Mostra a lista de atalhos.</td></tr>
+    <tr><td><kbd>Enter</kbd></td><td>Dentro da caixa de resposta: envia a mensagem.</td></tr>
+    <tr><td><kbd>Shift</kbd> + <kbd>Enter</kbd></td><td>Dentro da caixa de resposta: quebra a linha sem enviar.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="passo-a-passo">Passo a passo: atender a primeira conversa da fila</h2>
+<ol class="passos">
+  <li>Abra o <span class="ui">Inbox</span> e clique na aba <strong>Fila</strong>. A conversa que espera há mais tempo está no topo.</li>
+  <li>Clique nela. A conversa abre à direita. Leia as mensagens e, se houver, o cartão de passagem da IA.</li>
+  <li>Clique em <span class="ui">Assumir</span>. A faixa muda para <em>Em atendimento</em>, com o seu nome, e o automático para.</li>
+  <li>Clique na caixa de texto, escreva a resposta e tecle <kbd>Enter</kbd>. Acompanhe os tracinhos para saber se foi entregue e lida.</li>
+  <li>Se a venda andou, abra a <strong>ficha</strong> (botão de cartão) e mude a <em>Etapa do funil</em>, ou crie um <span class="ui">Novo Lead</span> se ainda não houver negócio.</li>
+  <li>Se vai precisar voltar ao assunto, use <span class="ui">Lembrar</span> e escolha em quanto tempo. Se outra pessoa deve cuidar, use <span class="ui">Transferir</span>.</li>
+  <li>Quando o atendimento terminou, clique em <span class="ui">Fechar</span> e confirme. Se o cliente escrever de novo, a conversa pode ser reaberta.</li>
+</ol>
+<aside class="nota dica"><strong>Não achou a conversa que procura?</strong><p>Confira em que aba você está: uma conversa fechada some da <em>Fila</em> e das <em>Minhas</em>. Use a busca no alto da lista, que procura pelo nome, telefone e texto da última mensagem, e olhe também as abas <em>Fechadas</em> e <em>Arquivadas</em>.</p></aside>

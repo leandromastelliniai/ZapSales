@@ -1,0 +1,48 @@
+<!--meta {"id":"skills","grupo":"ia","titulo":"Skills","ordem":12,"resumo":"Habilidades especializadas que os agentes só carregam quando a conversa pede, como contornar objeção de preço ou marcar horário. Instale as prontas do catálogo ou envie a sua.","palavras":["skill","habilidade","playbook","catálogo","zip","palavras-chave","objeção de preço","agendamento","instalar","versão"],"onde":"Agente de IA › Skills (Ver tudo em IA › Ensinar o agente)","quem":"Gerente ou acima.","rotas":["/app/ai/skills"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Uma <strong>skill</strong> é uma “receita” especializada que o agente <strong>só consulta quando o assunto pede</strong>. Em vez de encher as instruções de todo agente com tudo, a skill entra em ação quando o cliente escreve uma das <em>palavras-chave</em> dela. Exemplos: um passo a passo para contornar a objeção “está caro” ou para marcar e remarcar horário.</p>
+<figure class="print">
+  <img src="img/ia-skills.png" alt="Tela Skills da IA com duas skills instaladas e uma disponível no catálogo, numeradas de 1 a 8" loading="lazy">
+  <figcaption>Skills instaladas (uma do catálogo e uma manual) e o catálogo com uma skill ainda não instalada.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Enviar skill (.zip).</strong> Instala uma skill sua, empacotada num arquivo <code>.zip</code>.</li>
+  <li><strong>Selo “do catálogo”.</strong> A skill veio de uma cópia do catálogo da plataforma.</li>
+  <li><strong>Selo “manual”.</strong> A skill foi enviada por você (ou criada à mão).</li>
+  <li><strong>Editar.</strong> Ajusta o texto de uma skill instalada. Veja <a href="#skills--editar">Editar uma skill</a>.</li>
+  <li><strong>Desinstalar.</strong> A skill deixa de valer para os agentes. Não pede confirmação.</li>
+  <li><strong>Aviso informativo.</strong> Lembra que cada salvamento cria uma versão nova e a anterior fica no histórico, e que reenviar um <code>.zip</code> com o mesmo nome substitui a skill.</li>
+  <li><strong>Catálogo.</strong> As skills prontas, mantidas pela plataforma, que você ainda não instalou. Quando já instalou tudo, a tela diz que não há skill nova.</li>
+  <li><strong>Instalar.</strong> Cria uma <em>cópia da sua organização</em> da skill, que passa a valer na hora para os agentes.</li>
+</ol>
+
+<h2 id="catalogo">O catálogo da plataforma</h2>
+<p>Hoje o catálogo traz duas skills:</p>
+<ul>
+  <li><strong>objecao-preco:</strong> um playbook para contornar objeção de preço no WhatsApp. Diagnostica o motivo real por trás do “caro” antes de reagir, sem ceder desconto não autorizado.</li>
+  <li><strong>agendamento:</strong> um playbook para marcar e remarcar horário (consulta, visita, sessão). Consulta a agenda real pelas ferramentas quando elas existem, nunca inventa disponibilidade e confirma por escrito antes de fechar.</li>
+</ul>
+<p>Quando a plataforma publica uma <strong>versão nova</strong> de uma skill que você já instalou, aparece uma faixa avisando, com o que mudaria (descrição, palavras-chave, procedimento) e o botão <span class="ui">Adotar versão nova</span>. Se você tinha editado a sua cópia, as edições ficam só no <em>Histórico de versões</em>: ao adotar, a versão nova do catálogo passa a ser a ativa. Confira antes.</p>
+
+<h2 id="editar">Editar uma skill</h2>
+<p>Clique em <span class="ui">Editar</span>. A janela pede:</p>
+<ul>
+  <li><strong>Descrição</strong> (obrigatória, até 500 caracteres, uma linha): aparece no índice de skills que o agente enxerga.</li>
+  <li><strong>Palavras-chave de ativação</strong> (separadas por vírgula; pelo menos uma): a skill é carregada quando o cliente escreve uma dessas palavras. Exemplo: <em>consulta, horário, preço</em>.</li>
+  <li><strong>Corpo</strong>: o procedimento que o agente segue, em texto. O limite é de <strong>200 linhas</strong>; o contador fica vermelho acima disso.</li>
+  <li><strong>Histórico de versões</strong>: cada salvamento cria uma versão nova. A atual aparece como <em>“em uso”</em>; nas outras há o botão <span class="ui">Restaurar</span>.</li>
+</ul>
+<p>Salvar cria uma versão nova (a antiga continua no histórico) e vale de imediato para os agentes. Uma skill que veio de um pacote com arquivos (pastas de referência) não pode ser editada aqui: edite o pacote e envie o <code>.zip</code> de novo.</p>
+
+<h2 id="zip">Enviar uma skill sua (.zip)</h2>
+<ol class="passos">
+  <li>Monte uma pasta com um arquivo <code>SKILL.md</code> na raiz. Ele começa com um cabeçalho entre linhas <code>---</code> contendo <code>name</code>, <code>description</code> e <code>matcher</code> (com a lista <code>any_keywords</code>), e abaixo vem o procedimento, em até 200 linhas.</li>
+  <li>Se quiser, inclua as pastas <code>references/</code> e <code>assets/</code> (imagens, PDF, áudio ou vídeo permitidos).</li>
+  <li>Compacte em <code>.zip</code> e clique em <span class="ui">Enviar skill (.zip)</span>. Limites: até 64 arquivos, 5 MB descompactado, 1 MB por arquivo, 6 MB de envio.</li>
+</ol>
+<p>O nome da skill só aceita letras sem acento, números, ponto, hífen, sublinhado e espaço. Enviar um <code>.zip</code> com o <strong>mesmo nome</strong> de uma skill instalada a <strong>substitui</strong> (nova versão), inclusive a que veio do catálogo.</p>
+
+<h2 id="cuidados">Cuidados</h2>
+<aside class="nota atencao"><strong>Skill gasta IA a cada uso.</strong><p>Quando uma skill é ativada, o corpo dela vai junto na resposta do agente, o que aumenta o gasto daquele atendimento. Skills enxutas custam menos.</p></aside>
+<aside class="nota info"><strong>“Do catálogo” continua valendo depois de editar.</strong><p>O selo só diz de onde a skill veio. Uma skill do catálogo que você editou continua com o selo.</p></aside>

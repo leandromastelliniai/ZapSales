@@ -1,0 +1,55 @@
+<!--meta {"id":"modelos-da-meta","grupo":"canais","titulo":"Modelos de mensagem da Meta","ordem":2,"resumo":"Os modelos (templates) que a Meta precisa aprovar para você falar com um cliente fora da janela de 24 horas na API Oficial: ver, sincronizar com a Meta, criar e acompanhar a aprovação.","palavras":["templates","modelos de mensagem","modelo aprovado","meta","sincronizar","aprovação","categoria","marketing","utilidade","carrossel","oferta","botões","variáveis","cabeçalho","idioma"],"onde":"Canais › Conexões › API Oficial (Meta) › Templates da Meta","quem":"Somente Administrador.","rotas":["/app/connections/modelos/novo"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Pela API Oficial, só dá para <strong>iniciar conversa</strong> com um cliente (ou falar com ele depois de 24 horas sem resposta) usando um <strong>modelo de mensagem aprovado pela Meta</strong>. Esta sub-aba mostra os modelos que existem na sua conta do WhatsApp Business, deixa <strong>criar</strong> novos (com pré-visualização do jeito que o cliente verá) e <strong>sincronizar</strong> com a Meta. É esses modelos que o <a href="#disparo-em-massa">Disparo em massa</a> usa em número oficial.</p>
+<aside class="nota info"><strong>Não confunda com “Respostas rápidas”.</strong><p>O item “Templates” do menu antigo era outra coisa: textos salvos do atendente (veja <a href="#respostas-rapidas">Respostas rápidas</a>). Aqui o nome é <em>“Templates da Meta”</em> de propósito.</p></aside>
+<aside class="nota atencao"><strong>Sem número oficial conectado não há o que mostrar.</strong><p>A sub-aba diz “Canal oficial não conectado — Os templates vivem na sua conta do WhatsApp Business (Meta) — esta tela é um espelho deles. Conecte o canal oficial em Conexões WhatsApp para começar a sincronizar.” (o texto fala “Conexões WhatsApp”, mas o item do menu se chama <a href="#conexoes">Conexões</a>). Foi o estado fotografado na conta de demonstração, que não tem conta da Meta.</p></aside>
+
+<h2 id="lista">A lista de modelos</h2>
+<p>Com o canal oficial conectado, a lista mostra “Espelho da conta [WABA] · N template(s)” e dois botões: <span class="ui">Sincronizar com a Meta</span> e <span class="ui">Novo modelo</span>. Sem nenhum: “Nenhum template ainda” (“Só templates aprovados podem ser enviados fora da janela de 24 horas.”).</p>
+<p>Cada cartão é um modelo (nome + idioma), do mais “aprovado” para o menos, e mostra:</p>
+<ul>
+  <li>O <strong>nome técnico</strong> (<code>snake_case</code>) e o <strong>idioma</strong> (<code>pt_BR</code>).</li>
+  <li>O <strong>selo de situação</strong>, <em>em inglês, como a Meta informa</em>: <code>APPROVED</code> (verde), <code>PENDING</code>, <code>REJECTED</code> e <code>DISABLED</code> (vermelho), ou outro (<code>PAUSED</code>, <code>IN_APPEAL</code>…). <strong>Só <code>APPROVED</code> pode ser enviado ou disparado.</strong></li>
+  <li>A <strong>categoria</strong> (<code>MARKETING</code>, <code>UTILITY</code>, <code>AUTHENTICATION</code>) e, se a Meta informou, a <strong>qualidade</strong> (“Qualidade alta”, “média” ou “baixa” — a baixa é “o degrau antes da pausa”).</li>
+  <li>“sem parâmetros” ou “N parâmetro(s)” (as variáveis, inclusive mídia de cabeçalho).</li>
+  <li>Se recusado, a linha vermelha “Recusado: [motivo da Meta]”.</li>
+  <li>A <strong>pré-visualização</strong> do texto (só de partes com variável, com cada <code>{{variável}}</code> destacada).</li>
+  <li>Para modelos com <strong>cabeçalho de mídia</strong>, o campo “link da mídia” (<code>https://</code>) com <span class="ui">Salvar link</span> / <span class="ui">Remover link</span>. Guarda o link para a conversa já vir preenchido. Não manda nada à Meta; hoje o disparo ainda pede o link colado.</li>
+</ul>
+<p><strong>Sincronizar com a Meta</strong> traz os modelos da conta, atualiza o espelho local e marca como <code>DISABLED</code> o que sumiu da Meta (nunca apaga). Se a Meta devolver uma lista vazia, <em>nada</em> é desativado (proteção contra token de outra conta). Se a categoria de um modelo mudou, as campanhas que o usam <strong>pausam sozinhas</strong> (motivo “modelo recategorizado”). Aviso: “Sincronizado: N novo(s), N atualizado(s), N desativado(s).”. A situação também muda sozinha por aviso da Meta, sem precisar sincronizar. <strong>Não existe</strong> editar, excluir nem duplicar um modelo existente pela tela: para corrigir um recusado, crie outro nome ou idioma.</p>
+
+<h2 id="editor">Criar um modelo</h2>
+<p>O botão <span class="ui">Novo modelo</span> abre a página <strong>Criar modelo</strong>. Ela tem três colunas: o que vale para o modelo inteiro (esquerda), a mensagem do idioma aberto (meio) e a pré-visualização <em>“Como o cliente vê”</em> (direita, fixa ao rolar), num balão de WhatsApp com os exemplos no lugar das variáveis.</p>
+<figure class="print">
+  <img src="img/modelo-meta-editor.png" alt="Página Criar modelo com o nome, a categoria, o tipo, as variáveis, os idiomas, o cabeçalho, a mensagem e a pré-visualização, numerada de 1 a 9" loading="lazy">
+  <figcaption>A página “Criar modelo”, ainda vazia.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Modelos de mensagem.</strong> Volta à lista.</li>
+  <li><strong>Cancelar.</strong> Volta sem enviar nada.</li>
+  <li><strong>Enviar para aprovação.</strong> Manda o modelo à Meta (“Enviando…”).</li>
+  <li><strong>Nome do modelo.</strong> Só letras minúsculas, números e <code>_</code> (<code>oferta_de_outubro</code>); o campo já converte espaço e hífen. Até 512 caracteres.</li>
+  <li><strong>Categoria do modelo.</strong> <em>Marketing</em> (padrão) ou <em>Utilidade</em> (mensagem ligada a algo que o cliente fez ou pediu: confirmação, lembrete, atualização de pedido). <strong>A Meta cobra cada envio pela categoria e pode mudá-la na revisão</strong> — se mudar, você é avisado na Central. Texto promocional marcado como Utilidade costuma ser passado a Marketing. Autenticação não pode ser criada aqui.</li>
+  <li><strong>Tipo de modelo.</strong> <em>Padrão</em> (texto, mídia opcional e botões), <em>Carrossel</em> (de 2 a 10 cards com mídia e botões) ou <em>Oferta por tempo limitado</em> (cupom e contagem regressiva; só marketing). Trocar o tipo limpa o que não existe no novo.</li>
+  <li><strong>Idiomas.</strong> Começa em Português (Brasil). <em>+ Novo idioma</em> cria uma cópia da versão aberta para traduzir (Português de Portugal, Inglês EUA/Reino Unido, Espanhol e variantes, Francês, Alemão, Italiano). Na Meta, cada idioma é um modelo de <em>mesmo nome</em>. Um selo vermelho “corrigir” marca o idioma com erro depois da primeira tentativa de envio.</li>
+  <li><strong>Cabeçalho (opcional).</strong> <em>Texto</em> (até 60 caracteres, no máximo 1 variável), <em>Imagem</em> (JPG ou PNG até 5 MB), <em>Vídeo</em> (MP4 até 16 MB) ou <em>Arquivo</em> (PDF).</li>
+  <li><strong>Mensagem.</strong> Até 1.024 caracteres (600 na Oferta), com variáveis. Há atalhos <code>{{nome}}</code>, <code>{{primeiro_nome}}</code>, <code>{{empresa}}</code>, <code>{{produto}}</code>, <code>{{valor}}</code> e <code>{{data}}</code>. Use <code>*texto*</code> para negrito e <code>_texto_</code> para itálico. A <strong>pré-visualização</strong> aparece na coluna da direita.</li>
+</ol>
+<ul>
+  <li><strong>Variáveis:</strong> “Com nome” (<code>{{nome}}</code>, padrão) ou “Numeradas” (<code>{{1}}</code>). Elas são preenchidas em cada envio; na campanha você liga cada uma a um dado do contato. <strong>Cada variável exige um exemplo</strong> para a revisão da Meta (“nome → João”).</li>
+  <li><strong>Rodapé</strong> (só no Padrão): até 60 caracteres, sem variável.</li>
+  <li><strong>Botões</strong> (opcionais): <em>Resposta rápida</em>, <em>Link</em> (precisa de <code>https://</code>; a variável só no fim e só <code>{{1}}</code>), <em>Ligar</em> (número com código do país), <em>Copiar código</em> e <em>Flow</em>. Texto de até 25 caracteres. No máximo 2 de link, 1 de copiar código, 1 Flow e 1 Ligar; as respostas rápidas ficam juntas; até 10 botões no total.</li>
+  <li><strong>Carrossel:</strong> 2 a 10 cards, todos com a <em>mesma mídia</em> e os <em>mesmos botões</em>; o texto do card tem até 160 caracteres e cada card aceita 1 ou 2 botões.</li>
+  <li><strong>Oferta:</strong> “Texto da oferta” de até 16 caracteres e a contagem regressiva (com ela, o botão de copiar código é obrigatório). Exatamente 1 botão de link.</li>
+</ul>
+
+<h3>O que acontece ao enviar para aprovação</h3>
+<ol class="passos">
+  <li>O sistema valida <strong>todos os idiomas</strong> com as mesmas regras do servidor. Se algum tem erro, abre esse idioma e marca os campos; nada é enviado.</li>
+  <li>Para cada idioma, em sequência, o modelo é <strong>enviado à Meta</strong>. Se a Meta recusar, a frase dela aparece. Se já existe um modelo com o mesmo nome e idioma (que não esteja desativado): “Já existe um modelo com este nome e idioma.”.</li>
+  <li>O espelho local guarda a situação e a categoria <em>que a Meta devolveu</em> (pode já voltar recategorizada; padrão <code>PENDING</code>).</li>
+  <li>Sucesso: “Modelo enviado para aprovação da Meta. Situação: …” e você volta à lista. Se enviou só alguns idiomas: “Enviados: …. Faltam: ….”. A Meta revisa “em geral em minutos”, e a situação se atualiza sozinha.</li>
+</ol>
+<aside class="nota atencao"><strong>Escolher um arquivo envia o arquivo à Meta na hora.</strong><p>O upload do cabeçalho de mídia acontece <em>ao escolher o arquivo</em>, antes de enviar o modelo: o arquivo vai para a Meta (como amostra da revisão) e uma cópia fica guardada. O tipo é decidido pelo <strong>conteúdo</strong> do arquivo, não pelo nome. Uma cópia que nenhum modelo cita é apagada em 7 dias.</p></aside>
+<aside class="nota atencao"><strong>Enviar o modelo é irreversível pela tela.</strong><p>Não há editar nem excluir. Criar o modelo não custa; o custo é <em>por envio</em> (a Meta cobra cada mensagem de modelo). Esta captura <strong>não enviou nenhum modelo</strong> à Meta.</p></aside>

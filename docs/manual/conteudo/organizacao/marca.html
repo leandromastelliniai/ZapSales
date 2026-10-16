@@ -1,0 +1,30 @@
+<!--meta {"id":"marca","grupo":"organizacao","titulo":"Marca","ordem":17,"resumo":"O nome, a cor e o logo que a sua empresa mostra para quem trabalha dentro do sistema (white-label por empresa).","palavras":["marca","white label","nome","cor","logo","tema","aparência","identidade visual"],"onde":"Configurações › Sua empresa › Marca (só pelo hub Configurações; não está no menu lateral)","quem":"Administrador","rotas":["/app/settings/marca"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Troca o <strong>nome</strong>, a <strong>cor</strong> e o <strong>logo</strong> que a sua empresa mostra a <em>quem trabalha dentro do sistema</em>. Vale <strong>só para esta empresa</strong>; a marca da instalação (que pinta a tela de entrada e os e-mails) é outra, do dono do servidor.</p>
+<figure class="print">
+  <img src="img/marca.png" alt="Tela Marca com o nome, a cor, o logo, de onde vem cada coisa e o que isto ainda não muda, numerada de 1 a 7" loading="lazy">
+  <figcaption>A tela Marca, sem nada definido pela empresa.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como sua empresa aparece.</strong> O cartão de campos.</li>
+  <li><strong>Nome da sua empresa.</strong> Até 120 caracteres. Aparece no menu lateral. Em branco usa o nome padrão (“ZapSales”).</li>
+  <li><strong>Cor da sua marca.</strong> Um seletor de cor mais o código (<code>#7a5cd6</code>). Em branco volta à cor do sistema. Abaixo o sistema monta uma <em>escala de tons</em> e mostra o tom que irá nos botões no modo claro e no escuro; “No modo escuro o sistema usa naturalmente um tom mais claro da escala.”</li>
+  <li><strong>Logo.</strong> PNG ou JPG de até <strong>512 KB</strong>, de preferência com fundo transparente. <strong>SVG não é aceito</strong> (poderia executar código). O envio é <em>imediato</em>: não passa pelo botão Salvar. Há também “Logo para o tema escuro (opcional)”, com prévias em “Aparência clara” e “Aparência escura”, e botões <span class="ui">Remover</span> e <span class="ui">Remover logo escuro</span>. A tela tenta reduzir imagens grandes sozinha antes de recusar.</li>
+  <li><strong>De onde vem cada coisa.</strong> Para Nome, Cor e Logo diz a origem: “você definiu aqui”, “é o padrão do sistema” ou “veio de quem instalou o sistema”.</li>
+  <li><strong>O que isto ainda não muda.</strong> Veja abaixo.</li>
+  <li><strong>Salvar.</strong> “Marca salva.”</li>
+</ol>
+
+<h2 id="precedencia">Quem manda em cada campo</h2>
+<p>Campo a campo: <strong>sua empresa › instalação › arquivo de configuração do servidor › padrão do produto</strong>. Quem define só a cor mantém o nome da instalação. Ao salvar, vale para <strong>todas as pessoas da empresa</strong> (menu lateral, topo, cor de botões e destaques) e fica na <a href="#auditoria">Auditoria</a> (<code>org.branding_updated</code>). É reversível: deixe em branco e salve. Se a cor for inaplicável, a tela avisa que “o sistema continuaria com a cor que já usa”.</p>
+
+<h2 id="nao-muda">O que a marca da empresa ainda não muda</h2>
+<ul>
+  <li>O título da aba do navegador continua com o nome do sistema.</li>
+  <li>A tela de entrada é sempre a do sistema (ainda não dá para saber de qual empresa a pessoa é).</li>
+  <li>Os e-mails (convite da equipe, pedidos de LGPD) <em>já saem</em> com o nome da empresa.</li>
+  <li>O relatório de LGPD entregue ao cliente traz a <strong>razão social</strong>, não o nome da marca: é a empresa que responde legalmente pelos dados. Confira o campo “Razão social” em <a href="#dados-da-empresa">Organização</a>.</li>
+  <li>O aplicativo de verificação em duas etapas registra o nome do sistema.</li>
+</ul>
+<p>Erros possíveis: “Use um código de cor como #7a5cd6.”, “Só quem administra esta empresa pode mudar a marca.”, “Você não tem permissão para trocar este logo.”, “Muitas trocas seguidas. Tente de novo em alguns minutos.”. Quem tem o fator de duas etapas precisa tê-lo provado na sessão para salvar e para enviar o logo.</p>

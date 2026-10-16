@@ -36,6 +36,8 @@ Se achou divergência, corrija a fonte de menor precedência e registre.
 | [`CLAUDE.md`](../CLAUDE.md) | **Doutrina não-negociável.** Convenções, anti-patterns, Definition of Done |
 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | Como contribuir |
 | [`CHANGELOG.md`](../CHANGELOG.md) | Mudanças por versão (SemVer). **Quem roda VPS lê antes de atualizar** — mudança que exige ação manual aparece sob "⚠️ Requer atenção" |
+| [`docs/manual/`](manual/README.md) | **Manual do usuário em HTML** (cada menu e tela, com prints anotados, índice e busca). Abra `docs/manual/index.html`; como escrever e regerar está no README da pasta |
+| [`docs/manual/`](manual/README.md) | **Manual do usuário em HTML** (cada menu e tela, com prints anotados, índice e busca). Abra `docs/manual/index.html`; como escrever e regerar está no README da pasta |
 
 ## 2. Produto e intenção
 

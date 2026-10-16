@@ -1,0 +1,64 @@
+<!--meta {"id":"fluxos-de-atendimento","grupo":"ia","titulo":"Fluxos de atendimento","ordem":4,"resumo":"Módulo opcional: roteiros de perguntas que a IA faz durante a conversa, uma de cada vez, guardando cada resposta na ficha do cliente.","palavras":["fluxos de atendimento","roteiro","perguntas","coleta de dados","palavra-gatilho","pergunta","skill","campos do cliente","cpf","intenção"],"onde":"Agente de IA › Ver tudo em IA › Fluxos de atendimento (só com o módulo ligado na instalação)","quem":"Todos abrem a lista; criar e editar: Gerente ou acima.","modulo":"Fluxos de atendimento","rotas":["/app/ai/atendimento","/app/ai/atendimento/[id]"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Um <strong>fluxo de atendimento</strong> é um <em>roteiro de perguntas</em> que a IA segue durante a conversa: ela pergunta uma coisa por vez, entende a resposta e <strong>guarda o dado na ficha do cliente</strong> (cidade, CPF, interesse…). Serve para cadastro, triagem, agendamento — qualquer conversa em que você precisa coletar dados em ordem. O que o cliente já respondeu <strong>não é perguntado de novo</strong>, em nenhum roteiro.</p>
+<aside class="nota atencao"><strong>É um módulo opcional, desligado por padrão.</strong><p>O administrador da <em>instalação</em> precisa ligar “Fluxos de atendimento” em <em>Admin › Sistema</em>. Desligado, a tela some (“página não encontrada”) e o cartão desaparece do hub de IA. Quem publica um roteiro com o módulo desligado é recusado.</p></aside>
+<aside class="nota atencao"><strong>Publicado, o roteiro conduz conversas reais e gasta IA.</strong><p>A IA faz as perguntas no WhatsApp e lê e valida cada resposta. Ele é diferente de um <a href="#followups">follow-up</a>: aqui o roteiro <em>acontece durante a conversa</em>, e não é uma retomada depois do silêncio.</p></aside>
+
+<h2 id="lista">A lista</h2>
+<figure class="print media">
+  <img src="img/fluxos-atendimento-lista.png" alt="Tela Fluxos de atendimento ainda sem nenhum fluxo, com o guia rápido recolhido e o botão Novo fluxo de atendimento, numerada de 1 a 3" loading="lazy">
+  <figcaption>A lista de fluxos de atendimento, ainda vazia.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Painel de ajuda.</li>
+  <li><strong>Como usar os fluxos de atendimento (guia rápido).</strong> Um cartão que abre e fecha com o passo a passo e o jeito como a IA se comporta (veja abaixo).</li>
+  <li><strong>Novo fluxo de atendimento.</strong> Pede um nome e cria um <em>rascunho</em>: “Você cadastra as perguntas e a finalização no editor em seguida.”.</li>
+</ol>
+<p>Cada fluxo aparece num cartão com o nome, a situação (<em>Rascunho, Ativo, Desativado</em>), a versão e o handoff, com os botões <span class="ui">Renomear</span>, <span class="ui">Duplicar</span> e <span class="ui">Excluir</span>, iguais aos de <a href="#followups">Follow-ups</a>. A lista não tem “Começar de um modelo” nem aba de fila. Clique no cartão para abrir o editor. Vazio: “Nenhum fluxo de atendimento ainda”.</p>
+
+<h2 id="editor">O editor</h2>
+<p>É o mesmo construtor visual do <a href="#followups--editor">editor de follow-ups</a>, mas com <strong>só quatro tipos de caixa</strong> e <strong>uma única linha</strong>: ligue as caixas em fila, do <em>Início</em> ao <em>Fim</em>. O roteiro <strong>termina quando uma pessoa assume a conversa</strong>.</p>
+<figure class="print">
+  <img src="img/fluxos-atendimento-editor.png" alt="Editor de fluxo de atendimento com a barra de comandos, a paleta de quatro caixas, uma caixa Pergunta selecionada e o painel de configuração dela, numerado de 1 a 14" loading="lazy">
+  <figcaption>O editor, com uma caixa “Pergunta” selecionada e o painel de configuração à direita.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome do fluxo.</strong> O lápis renomeia. Ao lado, a situação e, quando há mudança, “Alterações não salvas”.</li>
+  <li><strong>Salvar.</strong> Grava o rascunho; nada muda para os clientes.</li>
+  <li><strong>Publicar.</strong> Valida e ativa o roteiro.</li>
+  <li><strong>Desativar.</strong> Para de usar o roteiro.</li>
+  <li><strong>Rollback.</strong> Volta à versão publicada anterior (só se houver mais de uma).</li>
+  <li><strong>Organizar.</strong> Arruma as caixas.</li>
+  <li><strong>A paleta.</strong> <em>Gatilho</em> (Início), <em>Pergunta</em>, <em>Skill</em> e <em>Fim</em>. Clique ou arraste para a área de desenho.</li>
+  <li><strong>Uma caixa.</strong> Clique para configurá-la no painel da direita. Mostra o título e se é obrigatória.</li>
+  <li><strong>Pergunta (o que a IA deve perguntar).</strong> Até 80 caracteres.</li>
+  <li><strong>Chave do campo.</strong> Onde a resposta é guardada no cliente: minúsculas, números e <code>_</code>, começando por letra, até 60 (<code>cidade</code>, <code>cnh</code>, <code>moto_interesse</code>). Uma chave não pode se repetir em outra caixa.</li>
+  <li><strong>Tipo da resposta.</strong> <em>Texto livre, Número, Data, Sim ou não, Escolha numa lista</em> (com as opções separadas por vírgula, até 20) ou <em>CPF</em> (confere o dígito verificador).</li>
+  <li><strong>Obrigatória.</strong> Ligado por padrão.</li>
+  <li><strong>Permitir correção.</strong> “Se o cliente mudar de ideia, a nova informação substitui a anterior.” Ligado por padrão.</li>
+  <li><strong>Texto sugerido (opcional).</strong> Até 400 caracteres. “A IA pode adaptar a pergunta ao tom da conversa.”</li>
+</ol>
+<h3>As caixas deste editor</h3>
+<table class="tabela">
+  <thead><tr><th>Caixa</th><th>O que configura</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Gatilho (Início)</strong></td><td>“O roteiro começa quando a mensagem do cliente tem uma palavra-gatilho, ou quando um roteador de intenção o aponta.” <em>Palavras-gatilho</em> (separadas por vírgula, até 30); <em>Máximo de tentativas por pergunta</em> (1 a 10, padrão 3 — depois disso a pergunta é encerrada como não respondida); <em>Encerrar o roteiro depois de quantas horas sem resposta</em> (1 a 720, padrão 72); e o interruptor <em>Pode recomeçar para quem já concluiu</em> (desligado por padrão — ligue para roteiros que se repetem, como agendamento).</td></tr>
+    <tr><td><strong>Pergunta</strong></td><td>Os campos descritos acima.</td></tr>
+    <tr><td><strong>Skill</strong></td><td>Escolha uma <a href="#skills">skill</a> instalada (um procedimento da loja) para a IA usar naquele passo.</td></tr>
+    <tr><td><strong>Fim</strong></td><td>Uma nota (opcional) e <em>Ao concluir, o que fazer</em>: <em>Nada (só encerra)</em>, <em>Devolver à IA</em> (com orientação), <em>Chamar uma skill</em> ou <em>Iniciar outro fluxo de atendimento</em> (só fluxos ativos, exceto o próprio).</td></tr>
+  </tbody>
+</table>
+<p>Ao publicar, o sistema recusa: caixas que não estão em linha reta, <em>campo repetido</em> em duas caixas e <em>ciclo</em> entre roteiros (“o ao concluir volta a este roteiro”).</p>
+
+<h2 id="como-a-ia-age">Como a IA se comporta</h2>
+<ul>
+  <li>Pergunta <strong>uma coisa por vez</strong>, entende a resposta e guarda o dado no cadastro do cliente.</li>
+  <li>Só grava <strong>resposta escrita na mensagem</strong>; se o cliente já disse, registra sem perguntar.</li>
+  <li>Atualiza quando o cliente corrige (se “Permitir correção” está ligado).</li>
+  <li>Repete a pergunta sem resposta até o máximo de tentativas e depois encerra, sem travar a conversa.</li>
+  <li><strong>Para</strong> quando uma pessoa assume, quando o cliente pede para parar e depois de 72 horas sem resposta (padrão).</li>
+  <li>As respostas ficam nos campos do cliente e aparecem na ficha dele e na conversa.</li>
+</ul>
+<h3>Como o roteiro começa</h3>
+<p>Por uma <strong>palavra-gatilho</strong> na mensagem do cliente, ou por um <a href="#roteadores">roteador</a>: na intenção do roteador, o campo “Fluxo de atendimento (opcional)” aponta para este roteiro. Com o módulo ligado, a <a href="#followups--fila">fila de follow-ups</a> ganha também o estado “Coletando respostas do roteiro”.</p>

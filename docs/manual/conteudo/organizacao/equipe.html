@@ -1,0 +1,107 @@
+<!--meta {"id":"equipe","grupo":"organizacao","titulo":"Equipe","ordem":5,"resumo":"Quem trabalha na empresa: convidar pessoas, definir o papel e a interface de cada uma, retirar acesso, e organizar horários, capacidade e distribuição do atendimento.","palavras":["equipe","membros","convidar","convite","papel","role","administrador","gerente","atendente","somente leitura","revogar","interface","horário de atendimento","capacidade","disponível","roteamento","rodízio"],"onde":"Configurações › Sua empresa › Equipe","quem":"Todos abrem a página. Lista de membros e convites: Gerente ou acima. Convidar, mudar papel, revogar e mudar interface: só o Administrador. Aba Atendimento: Gerente ou acima.","rotas":["/app/team","/app/team/invite"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>É onde você vê <strong>quem tem acesso</strong> à empresa, convida gente nova, decide o <strong>papel</strong> de cada um (o que a pessoa pode fazer), e organiza o atendimento: horários, capacidade e se cada atendente está disponível.</p>
+<aside class="nota info"><strong>Os quatro papéis — e por que aparecem em inglês.</strong><p>Do menor para o maior: <code>viewer</code> (Somente leitura), <code>agent</code> (Atendente), <code>manager</code> (Gerente) e <code>admin</code> (Administrador). <strong>Nesta tela, no convite e no e-mail do convite os papéis aparecem em inglês, “crus”</strong> (<code>viewer</code>, <code>agent</code>, <code>manager</code>, <code>admin</code>); só a tela de <a href="#config-seguranca">Segurança</a> usa os nomes em português. Existe ainda um papel interno, <code>ai_operator</code>, que é do agente de IA e nunca de uma pessoa.</p></aside>
+<p>A página tem duas abas, <strong>Membros</strong> e <strong>Atendimento</strong>, e o botão <span class="ui">Convidar membros</span> (só o Administrador o vê). As abas têm endereço próprio: <code>/app/team?aba=membros</code> e <code>/app/team?aba=atendimento</code>.</p>
+
+<h2 id="membros">Aba Membros</h2>
+<figure class="print">
+  <img src="img/equipe-membros.png" alt="Tela de Equipe com a tabela de membros e a seção de convites, numerada de 1 a 9" loading="lazy">
+  <figcaption>A aba Membros, com a equipe e os convites de exemplo.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Convidar membros.</strong> Leva à página de convite. Só o Administrador.</li>
+  <li><strong>Membros.</strong> A aba aberta.</li>
+  <li><strong>Atendimento.</strong> A outra aba.</li>
+  <li><strong>Papel.</strong> O Administrador muda o papel de <em>outra</em> pessoa numa lista (grava na hora: “Papel atualizado.”). Para si mesmo e para os demais, é só um selo.</li>
+  <li><strong>Interface.</strong> “Completa”, “Simplificada” ou “Personalizada”. O Administrador clica e abre a janela da interface.</li>
+  <li><strong>Status.</strong> <em>Aceito</em> (já entrou), <em>Pendente</em> (vínculo sem aceite) ou <em>Revogado</em> (teve o acesso retirado).</li>
+  <li><strong>Última atividade.</strong> Data e hora do último login, ou “—”.</li>
+  <li><strong>Convites.</strong> A seção de convites enviados (Gerente ou acima).</li>
+  <li><strong>E-mail enviado.</strong> “Sim” ou “Não saiu”. Veja abaixo.</li>
+</ol>
+<p>Na linha de cada pessoa o Administrador tem o menu “⋯” com <strong>Revogar acesso</strong> (ou <strong>Devolver acesso</strong>, se ela já foi revogada). Na própria linha aparece “você”. A lista vazia diz “Nenhum membro ativo.”; se carregar mal, “Erro ao carregar membros.” (quem não é Gerente pode ver este erro, porque a lista exige Gerente).</p>
+
+<h3 id="interface">A interface de cada pessoa</h3>
+<figure class="print media">
+  <img src="img/equipe-interface.png" alt="Janela Interface de Rafael Lima com o perfil de interface e o botão Salvar interface, numerada de 1 a 4" loading="lazy">
+  <figcaption>A janela “Interface de …”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Título.</strong> “A alteração vale apenas nesta organização e aparece para o membro sem sair da conta.”</li>
+  <li><strong>Perfil de interface.</strong> <em>Completa</em> ou <em>Simplificada</em>. Trocar o perfil restaura a seleção padrão dele.</li>
+  <li><strong>Personalizar áreas visíveis.</strong> Abre caixas de seleção por grupo do menu (Atendimento, CRM, Agente de IA, Canais, Análise, Organização) — só as telas que o papel da pessoa pode ver e que não são essenciais. Deve sobrar ao menos uma área.</li>
+  <li><strong>Salvar interface.</strong> “Interface atualizada.”</li>
+</ol>
+<ul>
+  <li>A <strong>Simplificada</strong> mostra Inbox, Agenda, Funis (Kanban), Contatos, Tarefas e Conexões, além das áreas essenciais.</li>
+  <li>A interface <strong>só muda o que aparece no menu</strong>. As permissões continuam sendo as do papel; links de conversas e avisos ainda podem abrir áreas autorizadas que estejam ocultas. Perfil, Segurança e (para o administrador) Equipe e Organização nunca somem.</li>
+</ul>
+
+<h3 id="revogar">Revogar e devolver acesso</h3>
+<figure class="print media">
+  <img src="img/equipe-revogar.png" alt="Confirmação Revogar acesso com os botões Cancelar e Revogar" loading="lazy">
+  <figcaption>A confirmação de revogar acesso (cancelada nesta captura).</figcaption>
+</figure>
+<ul>
+  <li>A pessoa <strong>perde o acesso</strong> à empresa e as <strong>conversas abertas com ela voltam para a fila</strong> (isso gera atividade e auditoria). Reversível por <strong>Devolver acesso</strong>, que mantém o papel que ela tinha (“Acesso devolvido.”).</li>
+  <li>Não dá para revogar <strong>a si mesmo</strong> nem <strong>o último Administrador</strong>; também não dá para rebaixar o último Administrador. O texto da janela fala em “reconvidar”, mas o caminho reverso é o “Devolver acesso”.</li>
+</ul>
+
+<h3 id="convites">Convites enviados</h3>
+<p>A seção abaixo da tabela mostra cada convite: <em>E-mail</em>, <em>Role</em> (o título em inglês), <em>Interface</em>, <em>Status</em> (<strong>Pendente</strong>, <strong>Expirado</strong>, <strong>Aceito</strong> ou <strong>Revogado</strong>), <em>E-mail enviado</em>, <em>Enviado em</em> (com “reenviado N×”), <em>Expira em</em> e <em>Convidado por</em>.</p>
+<ul>
+  <li><strong>“Não saiu”</strong> (em vermelho) com o botão <span class="ui">Copiar link</span>: a instalação não tem e-mail configurado ou o envio falhou. Copie o link e mande por outro meio.</li>
+  <li>Em convites pendentes ou expirados, o Administrador tem o menu <strong>Reenviar</strong> (renova a validade e reenvia o e-mail), <strong>Copiar link</strong> e <strong>Revogar</strong> (o link deixa de funcionar: “Convite revogado.”).</li>
+  <li>O convite <strong>vale 24 horas</strong>. Reconvidar um e-mail com convite pendente renova o convite.</li>
+</ul>
+
+<h2 id="convidar">Convidar membros</h2>
+<figure class="print media">
+  <img src="img/equipe-convidar.png" alt="Página Convidar membros com a caixa de e-mails, o papel, a interface e o botão Enviar convites, numerada de 1 a 5" loading="lazy">
+  <figcaption>A página de convite (com dois e-mails digitados e nada enviado).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Emails.</strong> Cole até <strong>20</strong> e-mails, um por linha (também vale vírgula ou ponto e vírgula; repetidos são removidos).</li>
+  <li><strong>Role.</strong> O papel de <em>todos</em> os convidados deste envio: <code>agent</code> (padrão), <code>viewer</code>, <code>manager</code> ou <code>admin</code>.</li>
+  <li><strong>Interface.</strong> O mesmo editor de interface; o convidado já nasce com o perfil escolhido.</li>
+  <li><strong>Enviar convites.</strong> “N convite(s) enviado(s), M falha(s).”</li>
+  <li><strong>Resultados.</strong> Depois do envio aparecem <em>Enviados</em> (“Email enviado.” ou “Resend não configurado — link copiável abaixo (DEV)”, com o link) e <em>Falhas</em>, como “Já é membro desta organização.”</li>
+</ol>
+<ul>
+  <li>O e-mail traz “Você foi convidado para a &lt;empresa&gt;” e um botão <em>Aceitar convite</em>. Só sai se a instalação tem e-mail configurado.</li>
+  <li><strong>O convite é do e-mail:</strong> se a pessoa entrar com outro e-mail, o aceite é recusado.</li>
+  <li>Quem clica no link: sem conta, escolhe <em>Fazer login</em> ou <em>Ainda não tenho conta</em>; com a conta certa, vê <em>Aceitar convite</em>. Link vencido ou revogado mostra “Convite inválido ou expirado”. Aceitar leva ao <code>/app</code>.</li>
+</ul>
+
+<h2 id="atendimento">Aba Atendimento</h2>
+<figure class="print">
+  <img src="img/equipe-atendimento.png" alt="Aba Atendimento com o modo de roteamento e a tabela de atendentes, numerada de 1 a 9" loading="lazy">
+  <figcaption>A aba Atendimento (Gerente ou acima).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Modo de roteamento.</strong> Como as conversas novas são distribuídas.</li>
+  <li><strong>Modo.</strong> “Manual (atendente puxa da fila)”, “Rodízio (distribui automático)” ou “Menor carga (quem tem menos conversas na mão)”.</li>
+  <li><strong>Tentativas máx. e Backoff (s).</strong> Quantas vezes (0–20) e de quanto em quanto tempo (1–3600 s) o sistema tenta de novo quando ninguém está disponível.</li>
+  <li><strong>Atendentes e horários de atendimento.</strong> Status, carga, capacidade e jornada de cada atendente.</li>
+  <li><strong>Status.</strong> Dois selos: <em>De plantão</em> / <em>Fora do horário</em> / <em>Desligado</em> e a presença <em>Com a tela aberta</em> / <em>Sem sinal de tela</em>, com a hora do último sinal.</li>
+  <li><strong>Carga.</strong> Quantas conversas abertas a pessoa tem (vermelho se atingiu a capacidade).</li>
+  <li><strong>Capacidade.</strong> Número editável de 1 a 1000 (padrão 5); grava ao sair do campo.</li>
+  <li><strong>Horário.</strong> Resumo (“Seg 08:00–18:00…”) ou “Não publicado”, e o relógio que abre a janela de horário.</li>
+  <li><strong>Disponível.</strong> O interruptor.</li>
+</ol>
+<p>Só entram na lista membros ativos com papel <strong>Atendente ou superior</strong> (Gerente e Administrador entram; Somente leitura, não). Quem é menos que Gerente vê só um texto: “Só gerentes e administradores editam os horários de atendimento da equipe.”. A configuração de modo, tentativas e espera é a <strong>mesma</strong> da tela <a href="#distribuicao">Distribuição de atendimento</a>.</p>
+<aside class="nota atencao"><strong>“Sem horário” quer dizer coisas opostas.</strong><p>Para o <em>roteamento</em>, uma pessoa sem janelas aceita conversa a <strong>qualquer hora</strong>. Para a <a href="#agenda">Agenda</a>, sem janelas há <strong>zero horários</strong> para marcar com ela. Por isso o texto “Não publicado”. “De plantão” só vale quando a pessoa está <em>Disponível</em> <strong>e</strong> dentro da jornada; “Com a tela aberta” é outra coisa (o navegador dela mandou sinal nos últimos 3 minutos).</p></aside>
+<figure class="print media">
+  <img src="img/equipe-horario.png" alt="Janela Horário de Marina Souza com o fuso e as janelas por dia da semana, numerada de 1 a 5" loading="lazy">
+  <figcaption>A janela de horário de uma pessoa.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Título.</strong> “Sem janelas, o roteamento aceita conversa a qualquer hora — mas a Agenda não oferece NENHUM horário para marcar.”</li>
+  <li><strong>Fuso horário.</strong> Cidade e código (“São Paulo (Brasil) — America/Sao_Paulo”).</li>
+  <li><strong>Adicionar janela.</strong> Cria Seg 08:00–18:00.</li>
+  <li><strong>Remover janela.</strong> A lixeira.</li>
+  <li><strong>Salvar.</strong> O fim precisa ser depois do início; até 50 janelas.</li>
+</ol>
+<p>A API também deixaria o próprio Atendente editar o próprio horário, mas <strong>não há tela para isso</strong>: precisa de um Gerente. Salvar altera os horários que a Agenda oferece e a distribuição automática (<code>attendant.availability_changed</code> na auditoria).</p>

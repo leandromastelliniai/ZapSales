@@ -1,0 +1,59 @@
+<!--meta {"id":"conversoes","grupo":"organizacao","titulo":"Conversões","ordem":15,"resumo":"Devolve ao anúncio as vendas que ele trouxe (Meta e Google Ads) e marca a origem de quem chega pelo site, com histórico de envios, diagnóstico e links rastreáveis.","palavras":["conversões","api de conversões","meta","google ads","dataset","pixel","token","venda","purchase","histórico de envios","diagnóstico","links rastreáveis","utm","script do site","código de teste","ctwa_clid"],"onde":"Configurações › Sua empresa › Conversões","quem":"Somente Administrador.","rotas":["/app/settings/conversoes"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Quando um negócio que <strong>veio de um anúncio</strong> é marcado como <strong>ganho</strong>, esta função avisa a plataforma que trouxe o cliente (Meta ou Google Ads) <strong>qual foi o valor da venda</strong>. É esse retorno que ensina o anúncio a procurar mais gente parecida com quem comprou. Também é onde você marca a <strong>origem de quem chega pelo site</strong>.</p>
+<aside class="nota perigo"><strong>Isto escreve na sua conta de anúncios e pode distorcer a otimização.</strong><p>O evento de compra real ensina o otimizador da Meta (e do Google). Enviar valor errado ou eventos falsos prejudica quem paga a mídia. <strong>Não há como apagar do lado da Meta um evento já enviado</strong> — trate como irreversível. Não gasta verba diretamente e não manda mensagem a clientes. Use o <em>código de teste</em> enquanto conferir.</p></aside>
+<aside class="nota atencao"><strong>Esta página foi fotografada sem nenhuma conexão salva.</strong><p>Para não enviar nada de verdade a uma plataforma de anúncios, a conta de demonstração <strong>não tem token nem conexão</strong>. As telas abaixo estão no estado inicial; o restante foi descrito a partir do código.</p></aside>
+<p>A página tem <strong>quatro abas</strong>: <em>Configuração</em> (padrão), <em>Histórico de envios</em>, <em>Diagnóstico</em> e <em>Links rastreáveis</em>.</p>
+
+<h2 id="configuracao">Aba Configuração</h2>
+<figure class="print">
+  <img src="img/conversoes-config.png" alt="Aba Configuração de Conversões com as quatro abas e o formulário de conexão com a Meta, numerada de 1 a 9" loading="lazy">
+  <figcaption>A aba Configuração, antes de conectar a Meta.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Configuração.</strong> A aba padrão.</li>
+  <li><strong>Histórico de envios.</strong></li>
+  <li><strong>Diagnóstico.</strong></li>
+  <li><strong>Links rastreáveis.</strong></li>
+  <li><strong>Identificador do destino de conversões.</strong> Só números, de 5 a 64 dígitos. É a “fonte de dados” (dataset/pixel) do gerenciador de anúncios que recebe as conversões.</li>
+  <li><strong>Token de acesso.</strong> De 20 a 1.000 caracteres. Fica guardado criptografado e <strong>nunca volta para a tela</strong>.</li>
+  <li><strong>Código de teste (opcional).</strong> Enquanto preenchido, as vendas vão marcadas como teste e <strong>não contam para a otimização</strong>. Apague quando terminar de conferir.</li>
+  <li><strong>Reportar vendas automaticamente.</strong> “Desligar pausa o envio e mantém a credencial gravada.”</li>
+  <li><strong>Salvar conexão.</strong> Só habilita com identificador e token. Sucesso: “Conexão salva.”.</li>
+</ol>
+<aside class="nota atencao"><strong>Numa primeira conexão, o interruptor nasce desligado.</strong><p>Ligue “Reportar vendas automaticamente” <em>antes</em> de salvar, senão a conexão fica gravada e pausada (“O envio está pausado. As vendas continuam sendo registradas aqui, mas não vão para a plataforma…”). Não existe botão de remover a conexão da Meta: só pausar. Com código de teste, aparece o aviso “Modo de teste ligado…”.</p></aside>
+<h3>O que mais aparece nesta aba</h3>
+<ul>
+  <li><strong>Página e conta do WhatsApp Business</strong> (só com a conexão Meta feita): para vendas de anúncio “clique-para-WhatsApp”, a Meta exige o ID da <em>Página</em> ou o da <em>conta do WhatsApp Business</em> (um ou outro, 5 a 64 dígitos). Sem nenhum, ela recusa a venda.</li>
+  <li><strong>O que cada etapa do funil informa à Meta</strong> (só com a conexão): além da venda, a Meta pode saber de quem recebeu orçamento ou agendou. Cada etapa <em>aberta</em> ligada envia o seu evento <strong>uma vez por negócio</strong>, ao entrar ali: <em>Lead enviado</em>, <em>Lead qualificado</em>, <em>Início de compra (orçamento)</em>, <em>Adicionou ao carrinho</em> ou <em>Viu o conteúdo</em>. <span class="ui">Usar o recomendado</span> liga e sugere eventos pelo nome da etapa (nada é salvo até <span class="ui">Salvar regras</span>). Os eventos saem <em>sem valor</em>, só quando o negócio muda de etapa, só para quem veio de anúncio da Meta, e movimentos anteriores a ligar a regra não são enviados.</li>
+  <li><strong>Google Ads:</strong> sem as credenciais do Google na instalação, a tela diz “Enviar conversões para o Google Ads ainda não está disponível nesta instalação — não é nada que você tenha feito.” Com elas, o botão <span class="ui">Conectar com Google</span> autoriza o acesso; depois você informa a conta (Customer ID), a ação de conversão (ou <span class="ui">Criar no Google</span>, que cria a ação na conta do Google do cliente), a categoria e o modo do valor; há ainda o interruptor <em>Enviar o telefone do contato criptografado</em> (desligado por padrão — é dado pessoal).</li>
+  <li><strong>Conversões que não foram reportadas:</strong> a lista das 20 pendências mais recentes, com o motivo e o botão <span class="ui">Verificar ou tentar novamente</span>. Vazio: “Nenhuma pendência. Ainda pode não haver vendas ou qualificações com origem em anúncio.” (lista vazia <em>não prova</em> que funciona). Mostra também “N conversões aceitas pela plataforma”.</li>
+  <li><strong>Script para instalar no site</strong> e <strong>Quem chegou pelo site:</strong> o script <code>&lt;script defer src=".../rastreio/v1.js" data-org="…"&gt;</code> marca a origem de quem chega pelo site, e o “endereço de captura” (sem script) leva ao WhatsApp com um código <code>[ref:…]</code> no texto da mensagem. A origem aparece na ficha do contato e no filtro “Site (landing page)” da lista de contatos. Só campos de campanha viajam — nunca nome, telefone, e-mail ou documento. O endereço público atende 30 acessos por minuto por IP.</li>
+</ul>
+
+<h3 id="conversoes--motor">O que acontece com a venda</h3>
+<ol class="passos">
+  <li>O negócio vira <strong>ganho</strong> (pela equipe, pela IA ou por automação).</li>
+  <li>Se o contato <strong>veio de anúncio</strong> (clique registrado, ou origem pelo site com origem Meta), a venda é elegível. <strong>Venda orgânica sai calada.</strong></li>
+  <li>Sem <strong>valor</strong> no negócio, <em>nada é enviado</em> (“sem_valor”; nunca se manda zero). Na Meta, o sistema ainda tenta ler o valor dito na conversa.</li>
+  <li>Exige conexão existente, ligada, com identificador e token.</li>
+  <li>Envia o evento <code>Purchase</code> à Meta, com o valor e a moeda, o clique do anúncio e a Página ou conta do WhatsApp Business; telefone vai criptografado (SHA-256). Eventos com <strong>mais de 7 dias</strong> são recusados.</li>
+  <li>Falha temporária: o sistema tenta de novo sozinho em 5 minutos. Recusa definitiva: fica “Falhou” com a frase da plataforma. Uma venda já entregue <strong>nunca sai duas vezes</strong>.</li>
+</ol>
+<p>O envio é feito por um processo do servidor que roda <em>a cada minuto</em>.</p>
+
+<h2 id="historico">Aba Histórico de envios</h2>
+<ul>
+  <li><strong>Filtros:</strong> <em>Período</em> (Hoje, Últimas 24h, 7 dias, 30 dias — padrão —, Todo o período), <em>Status</em> (Todos, Entregues, Falhas, Aguardando, Não enviados), <em>Evento</em> (Todos, Compra e uma opção por regra de etapa), <em>Plataforma</em> (Todas, Google Ads, Meta Ads) e <em>Buscar por negócio</em>. O estado fica no endereço da página. “Hoje” começa à meia-noite pelo horário do <em>servidor</em>.</li>
+  <li>Mostra “N envios”, 50 por página (Anterior / Próxima). Cada linha tem o evento e a plataforma, o título do negócio, a data e um selo: <strong>Entregue</strong> (verde), <strong>Falhou</strong> (vermelho), <strong>Aguardando</strong> (azul) ou <strong>Não enviado</strong> (âmbar). Abrir a linha mostra o motivo legível, o detalhe da plataforma, o “ID do evento”, o valor e o link <em>Abrir negócio</em>; fora do “Entregue”, também o botão <span class="ui">Verificar ou tentar novamente</span>.</li>
+  <li>Há <strong>uma linha por (negócio, evento)</strong>: reenvios sobrescrevem a mesma linha, sem linha por tentativa. Vazio: “Nenhum envio com estes filtros.”.</li>
+</ul>
+
+<h2 id="diagnostico">Aba Diagnóstico</h2>
+<p>É <strong>só do Google Ads</strong> (não existe equivalente para a Meta). Mostra a “Saúde da integração com o Google Ads” em cartões com selo <em>OK</em>, <em>Atenção</em> ou <em>Problema</em>: <strong>conexão</strong> (“Conexão ativa”, “Envio pausado”, “Conta Google não conectada”, “Instalação sem credenciais do Google Ads”), <strong>conversões chegando ao Google</strong> (Atenção se a última foi há mais de 14 dias), <strong>falhas em 7 dias</strong>, <strong>envios aguardando</strong> e <strong>cobertura do funil</strong> (“x de y momentos do funil com conversão configurada”). Na conta de demonstração: “Instalação sem credenciais do Google Ads — Problema… Até lá, nada é enviado ao Google.”.</p>
+
+<h2 id="links">Aba Links rastreáveis</h2>
+<p>“Crie um link por campanha ou botão. O código liga o clique à mensagem enviada pelo visitante.” A tabela mostra <em>Nome, Cliques, Contatos, Negócios, Estado</em> (Ativo/Desativado) e <em>Ação</em> (Editar). As contagens usam os registros ainda retidos no CRM; <strong>cliques incluem acessos repetidos</strong> e não representam pessoas únicas.</p>
+<p>O formulário <strong>Novo link</strong> pede: <em>Nome</em> (até 100), <em>WhatsApp com código do país</em> (<code>+5511999999999</code>), <em>Mensagem inicial</em> (até 900; o sistema acrescenta ` [ref:código]`, e a prévia mostra como fica), <em>Onde será usado</em> (Site, Anúncio, Orgânico), <em>Origem, Meio e Nome da campanha</em> (UTM, até 200 cada) e a caixa <em>Link ativo</em>. Depois de salvo: o <strong>link rastreável</strong> (com <em>Copiar link</em>), o <strong>script do site</strong>, o campo <em>URL do site</em> com <em>Verificar instalação</em> (exige HTTPS) e o <em>sufixo de URL final do Google Ads</em>. Um link desativado não abre o WhatsApp.</p>
+<p>Tudo fica na auditoria (<code>conversions.meta_identity_updated</code>, <code>meta_ads_conversion_rules.updated</code>, <code>captura_de_utm.updated</code>, <code>ad_tracking_link.saved</code>, <code>ad_conversion.retry_requested</code>…).</p>

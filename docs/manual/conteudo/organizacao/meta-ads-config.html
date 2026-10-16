@@ -1,0 +1,22 @@
+<!--meta {"id":"meta-ads-config","grupo":"organizacao","titulo":"Meta Ads (conexão)","ordem":14,"resumo":"Cole o token de acesso da Meta que autoriza o sistema a ler o desempenho das suas campanhas (a tela Meta Ads da Análise).","palavras":["meta ads","token","ads_read","conectar conta de anúncios","conta padrão","desconectar","facebook","instagram"],"onde":"Configurações › Sua empresa › Meta Ads","quem":"Somente Administrador.","rotas":["/app/settings/meta-ads"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Aqui o Administrador cola o <strong>token de acesso</strong> da Meta que permite ao sistema <strong>ler</strong> o desempenho das campanhas e mostrá-lo em <a href="#meta-ads">Análise › Meta Ads</a>. É uma conexão <em>só de leitura</em>: nada é criado, pausado ou alterado na sua conta de anúncios. Quem não é Administrador é levado à página “sem permissão” (o Administrador é exigido mesmo sendo só leitura, porque o token expõe orçamento e performance da conta inteira).</p>
+<figure class="print media">
+  <img src="img/meta-ads-config.png" alt="Configuração de Meta Ads com o aviso sobre a permissão ads_read, o campo do token, a conta padrão e o botão Salvar, numerada de 1 a 4" loading="lazy">
+  <figcaption>Configurações › Meta Ads, antes de conectar.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O aviso.</strong> “O token precisa da permissão ads_read. Gere-o no Meta for Developers, na sua conta de aplicativo, e cole abaixo — ele fica guardado criptografado e nunca é mostrado de volta.”</li>
+  <li><strong>Token de acesso.</strong> Campo de senha (de 20 a 1.000 caracteres). Ajuda: “Precisa da permissão ads_read.”. Já conectada: “Guardado — preencha só para trocar”.</li>
+  <li><strong>Conta padrão (opcional).</strong> No formato <code>act_123456789012345</code>. É a conta que a tela Meta Ads abre; em branco, abre a primeira conta ativa que o token alcançar. Para trocar só a conta padrão, deixe o token em branco: o guardado é mantido.</li>
+  <li><strong>Salvar.</strong> Numa primeira conexão fica apagado até o token ter 20 caracteres (“Cole o token para poder salvar.”). Sucesso: “Conexão salva.”.</li>
+</ol>
+<ul>
+  <li>Quando conectada aparece também <span class="ui">Desconectar</span>: “apaga o token guardado. A tela de Meta Ads volta a pedir uma conexão, e nenhum dado histórico é perdido — nada é armazenado aqui.” Aviso: “Conta desconectada.”.</li>
+  <li><strong>Salvar não chama a Meta.</strong> O token é guardado <em>criptografado</em> e só é testado quando alguém abre a tela Meta Ads: um token errado “salva e só falha depois”. Desconectar não revoga o token na Meta (quem o gerou precisa revogar lá).</li>
+  <li>Sem a chave de criptografia da instalação nada é gravado: “Esta instalação está sem a chave mestra de criptografia, e o token não foi gravado.” — quem instalou o sistema precisa configurá-la.</li>
+  <li>Se a organização exige verificação em duas etapas e você tem o fator, a ação pede “Confirme o segundo fator para salvar esta mudança.”.</li>
+  <li>Fica registrado na auditoria (<code>ad_insights_connection.updated</code> e <code>.deleted</code>) sem nunca guardar o token.</li>
+</ul>
+<aside class="nota atencao"><strong>Este é o token de leitura, não o de conversões.</strong><p>O token que <em>envia vendas à Meta</em> fica em <a href="#conversoes">Conversões</a>. Colar um no campo do outro é o erro típico.</p></aside>
