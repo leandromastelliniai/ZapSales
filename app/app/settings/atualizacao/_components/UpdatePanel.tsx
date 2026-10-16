@@ -89,6 +89,9 @@ export function UpdatePanel() {
   }
 
   const versao = semV(data.current_version);
+  // Servidor que nunca bateu (agente fora do ar desde a instalação) não informa
+  // versão: a frase "Versão instalada: ." não pode chegar à tela.
+  const versaoNaFrase = versao || t("ainda não informada pelo servidor");
   const nova = semV(data.latest_version);
 
   if (rodando) {
@@ -319,7 +322,7 @@ export function UpdatePanel() {
         </p>
         <Comando comando={COMANDO_MANUAL} />
         <p className="mt-3 text-sm text-muted-foreground">
-          {t("Versão instalada:")} {versao}.
+          {t("Versão instalada:")} {versaoNaFrase}.
         </p>
       </Layout>
     );
@@ -333,7 +336,7 @@ export function UpdatePanel() {
       <Layout titulo={t("Não consegui checar se há versão nova")}>
         <p className="text-sm">
           {t("O servidor não conseguiu comparar a sua versão (")}
-          <strong>{versao}</strong>
+          <strong>{versaoNaFrase}</strong>
           {t(
             ") com a última publicada — normalmente é internet instável ou falta de espaço em disco na hora da checagem.",
           )}{" "}

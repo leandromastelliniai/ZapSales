@@ -1419,7 +1419,7 @@ export const DICIONARIO: Traducoes = {
   "Informações pessoais. Email só pode ser trocado em breve.": {
     es: "Información personal. Pronto podrás cambiar el email.",
   },
-  "Dados da empresa, retenção de mídia, DPO. Admin only.": {
+  "Dados da empresa, retenção de mídia, DPO. Só administradores.": {
     es: "Datos de la empresa, retención de archivos multimedia, DPO. Solo administradores.",
   },
 
@@ -6602,8 +6602,8 @@ export const DICIONARIO: Traducoes = {
   "Selecione uma conversa para visualizar": {
     es: "Selecciona una conversación para verla",
   },
-  "Modo somente-leitura. Use “Impersonate” para responder como atendente do tenant.": {
-    es: "Modo de solo lectura. Usa “Impersonate” para responder como asesor del tenant.",
+  "Modo somente-leitura. Para responder como atendente, abra a organização e use “Acompanhar organização”.": {
+    es: "Modo de solo lectura. Para responder como asesor, abre la organización y usa “Dar seguimiento a la organización”.",
   },
   "Sem nome": { es: "Sin nombre" },
   "Buscar mensagem...": { es: "Buscar mensaje..." },
@@ -6612,8 +6612,8 @@ export const DICIONARIO: Traducoes = {
   "Falha ao carregar conversa.": { es: "No se pudo cargar la conversación." },
   "Sem mensagens nesta conversa.": { es: "No hay mensajes en esta conversación." },
   "Modo somente-leitura.": { es: "Modo de solo lectura." },
-  "Use “Impersonate” (em breve, S-11.07) para responder.": {
-    es: "Usa “Impersonate” (próximamente, S-11.07) para responder.",
+  "Para responder, use “Acompanhar organização” na página da organização.": {
+    es: "Para responder, usa “Dar seguimiento a la organización” en la página de la organización.",
   },
   "Contato anonimizado": { es: "Contacto anonimizado" },
   "Sem contato vinculado.": { es: "Sin contacto vinculado." },
@@ -8187,9 +8187,11 @@ export const DICIONARIO: Traducoes = {
   "A gestão de atendimento está disponível para gerentes e administradores.": {
     es: "La gestión de atención está disponible para gerentes y administradores.",
   },
-  "Cole até 20 emails (um por linha) e escolha a role compartilhada.": {
+  "Cole até 20 emails (um por linha) e escolha o papel compartilhado.": {
     es: "Pega hasta 20 correos (uno por línea) y elige el rol compartido.",
   },
+  Visualizador: { es: "Observador" },
+  "ainda não informada pelo servidor": { es: "aún no informada por el servidor" },
   "Adicione ao menos um email.": { es: "Agrega al menos un correo." },
   "Máximo 20 emails por convite.": { es: "Máximo 20 correos por invitación." },
   "convite(s) enviado(s)": { es: "invitación(es) enviada(s)" },

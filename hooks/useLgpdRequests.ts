@@ -31,7 +31,8 @@ export interface LgpdRequest {
   emergency: boolean;
   scope: "contact" | "tenant";
   error_message: string | null;
-  sla_bucket: SlaBucket;
+  /** `null` em pedido concluído: quem já foi atendido não está correndo contra prazo. */
+  sla_bucket: SlaBucket | null;
 }
 
 export interface LgpdRequestsFilters {
