@@ -63,7 +63,14 @@ const VERSAO_SEM_AUDIO = "eeeeeeee-0000-4000-8000-000000000025";
 
 const AGORA = new Date("2026-07-30T15:00:00Z");
 const CHAVE_DE_VOZ = "chave-de-voz-do-cliente-0001";
-const RESPOSTA = "Claro, posso ajudar com a sua avaliação. Qual dia fica melhor para você?";
+const RESPOSTA_BASE = "Claro, posso ajudar com a sua avaliação. Qual dia fica melhor para você?";
+/**
+ * Texto ÚNICO por caso: os casos compartilham o mesmo número, e o gate de repetição
+ * (`spinning`, mass_identical) veta corpo IGUAL entre turnos — sem isto, do segundo caso em
+ * diante o veto, correto, esconderia o que cada um mede.
+ */
+let RESPOSTA = RESPOSTA_BASE;
+let casos = 0;
 const MP3 = Buffer.from([0x49, 0x44, 0x33, 3, 0, 0, 0, 0, 0, 0x21, 0xff, 0xfb, 0x90, 0x00]);
 const OGG = Buffer.from("OggS-de-mentira");
 
@@ -366,6 +373,8 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+  casos += 1;
+  RESPOSTA = `${RESPOSTA_BASE} (caso ${casos})`;
   enviados = [];
   guardados = [];
   resultadosVistos = [];
