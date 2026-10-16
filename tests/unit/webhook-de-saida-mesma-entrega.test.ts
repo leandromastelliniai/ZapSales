@@ -25,6 +25,7 @@ import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { NextRequest } from "next/server";
+import type * as RedeSegura from "@/lib/net/rede-segura";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const deps = vi.hoisted(() => ({
@@ -40,16 +41,17 @@ vi.mock("@/lib/impersonate/support", () => ({ requireSupportWrite: deps.support 
 vi.mock("@/lib/audit", () => ({ audit: deps.audit }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: deps.criarClientDeSessao }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: deps.criarClientAdmin }));
-// O receptor escuta em 127.0.0.1, que os guardas anti-SSRF recusam — e devem.
-// Aqui eles não são o assunto; os testes deles moram em outro lugar.
-vi.mock("@/lib/automation/outbound-url", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  assertSafeOutboundUrl: () => undefined,
-}));
-vi.mock("@/lib/automation/outbound-ip", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  assertDestinoResolvidoSeguro: async () => undefined,
-}));
+// O receptor escuta em 127.0.0.1, que a rede segura recusa — e deve. Aqui ela
+// não é o assunto (os testes dela moram em lib/net/rede-segura): a porta que
+// libera o loopback é a mesma que a instalação usa para os destinos internos.
+vi.mock("@/lib/net/rede-segura", async (importOriginal) => {
+  const real = await importOriginal<typeof RedeSegura>();
+  return {
+    ...real,
+    buscarSeguro: (endereco: string, opcoes: Parameters<typeof real.buscarSeguro>[1]) =>
+      real.buscarSeguro(endereco, { ...opcoes, permitirHttp: true, ipPermitido: () => true }),
+  };
+});
 
 import "@/lib/automation/actions/call-webhook";
 import { idDaEntrega } from "@/lib/automation/actions/call-webhook";

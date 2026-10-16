@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "titulo": "Rede segura única",
+  "descricao": "Toda saída do servidor para um endereço que um usuário informou passa por UMA política: HTTPS, DNS resolvido uma vez e preso ao socket (sem janela de rebinding), endereço especial IPv4/IPv6 recusado, redirect revalidado salto a salto, prazo total e teto de bytes. Issue #88; contrato em docs/specs/rede-segura-unica.md.",
+  "lanes": [
+    {
+      "id": "consumidores",
+      "label": "Quem sai para um endereço do usuário"
+    },
+    {
+      "id": "nucleo",
+      "label": "Núcleo lib/net/rede-segura"
+    },
+    {
+      "id": "fachadas",
+      "label": "Fachadas que só julgam"
+    },
+    {
+      "id": "fora",
+      "label": "Fora da conexão presa (diferença registrada)"
+    },
+    {
+      "id": "prova",
+      "label": "Cercas"
+    }
+  ],
+  "mainPath": [
+    "webhook",
+    "buscar",
+    "resolver",
+    "ip"
+  ],
+  "nodes": [
+    {
+      "id": "webhook",
+      "lane": "consumidores",
+      "label": "Webhook de saída (call_webhook)",
+      "sublabel": "lib/automation/actions/call-webhook.ts · HMAC e retentativas intactos · recusa não é retentada · corpo da resposta derrubado sem ler",
+      "type": "lib",
+      "dot": "amber"
+    },
+    {
+      "id": "extensoes",
+      "lane": "consumidores",
+      "label": "Download de extensões",
+      "sublabel": "lib/extensions/download.ts · perfil do catálogo · exceção HTTP só em loopback de ensaio",
+      "type": "lib",
+      "dot": "amber"
+    },
+    {
+      "id": "bancoExterno",
+      "lane": "consumidores",
+      "label": "Socket do banco externo (pg)",
+      "sublabel": "lib/external-db/conexao.ts · stream com lookupJulgado · cada socket novo julga na hora de conectar",
+      "type": "lib",
+      "dot": "amber"
+    },
+    {
+      "id": "guardasBanco",
+      "lane": "consumidores",
+      "label": "politicaDoBanco / validarHostDeBanco",
+      "sublabel": "lib/external-db/guardas.ts · a mesma régua MAIS a LAN RFC 1918 · checagem antecipada da tela",
+      "type": "lib",
+      "dot": "amber"
+    },
+    {
+      "id": "destinos",
+      "lane": "consumidores",
+      "label": "Destinos internos da instalação",
+      "sublabel": "lib/automation/destinos-internos-autorizados.ts · decisão 22-d · entrega o ipPermitido; nunca vale para organização",
+      "type": "lib",
+      "dot": "amber"
+    },
+    {
+      "id": "buscar",
+      "lane": "nucleo",
+      "label": "buscarSeguro",
+      "sublabel": "o ponto único de acesso: salto a salto, prazo total, maxBytes, credencial não atravessa origem",
+      "type": "lib",
+      "dot": "green"
+    },
+    {
+      "id": "lookup",
+      "lane": "nucleo",
+      "label": "lookupJulgado",
+      "sublabel": "lookup de socket que resolve E julga no instante da conexão — para quem abre o próprio socket",
+      "type": "lib",
+      "dot": "green"
+    },
+    {
+      "id": "resolver",
+      "lane": "nucleo",
+      "label": "resolverEJulgar",
+      "sublabel": "DNS uma vez · recusa o conjunto inteiro se QUALQUER endereço é especial · única válvula: ipPermitido",
+      "type": "lib",
+      "dot": "green"
+    },
+    {
+      "id": "url",
+      "lane": "nucleo",
+      "label": "validarUrl",
+      "sublabel": "texto da URL, sem rede: esquema, https, localhost, IPv4 de rede local, literal IPv6",
+      "type": "lib",
+      "dot": "green"
+    },
+    {
+      "id": "ip",
+      "lane": "nucleo",
+      "label": "ipEhEspecial",
+      "sublabel": "ip.ts · normaliza (IPv4-mapped) e só unicast passa · fecha ::a.b.c.d e 100::/64 · lixo é especial",
+      "type": "lib",
+      "dot": "green"
+    },
+    {
+      "id": "fachadaUrl",
+      "lane": "fachadas",
+      "label": "outbound-url.ts / outbound-ip.ts",
+      "sublabel": "assertSafeOutboundUrl · assertDestinoResolvidoSeguro · só julgam, delegam ao núcleo",
+      "type": "lib",
+      "dot": "violet"
+    },
+    {
+      "id": "midia",
+      "lane": "fachadas",
+      "label": "assertUrlDeMidiaSegura",
+      "sublabel": "media_url: o gateway é quem baixa, fora deste processo — só dá para julgar antes",
+      "type": "lib",
+      "dot": "violet"
+    },
+    {
+      "id": "sdk",
+      "lane": "fora",
+      "label": "fetch do SDK de modelos (provedor personalizado)",
+      "sublabel": "fetchParaDestinoDaOrganizacao · julgamento é o da política; a conexão ainda resolve de novo",
+      "type": "lib",
+      "dot": "red"
+    },
+    {
+      "id": "pdf",
+      "lane": "fora",
+      "label": "Imagem de produto e logo no PDF",
+      "sublabel": "quem busca é o @react-pdf; só o guarda textual na frente",
+      "type": "lib",
+      "dot": "red"
+    },
+    {
+      "id": "futuros",
+      "lane": "fora",
+      "label": "Funções novas da #86",
+      "sublabel": "treino por site · webhook como ferramenta do agente · MCP externo — devem sair por buscarSeguro",
+      "type": "lib",
+      "dot": "red"
+    },
+    {
+      "id": "testeNucleo",
+      "lane": "prova",
+      "label": "cliente.test.ts + ip.test.ts",
+      "sublabel": "servidores HTTP reais em 127.0.0.1: IP privado, IPv6 especial, rebinding, redirect interno, resposta gigante e lenta",
+      "type": "tool",
+      "dot": "sky"
+    },
+    {
+      "id": "testeBanco",
+      "lane": "prova",
+      "label": "conexao-rede.test.ts",
+      "sublabel": "nome que passa a resolver para metadata/loopback/CGNAT/IPv4-mapped é recusado sem abrir conexão",
+      "type": "tool",
+      "dot": "sky"
+    },
+    {
+      "id": "testeDownload",
+      "lane": "prova",
+      "label": "download-rebinding.test.ts",
+      "sublabel": "o teste de rebinding das extensões segue verde sobre a política única",
+      "type": "tool",
+      "dot": "sky"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "webhook",
+      "to": "buscar",
+      "label": "POST, sem seguir 3xx"
+    },
+    {
+      "id": "e2",
+      "from": "extensoes",
+      "to": "buscar",
+      "label": "GET do pacote"
+    },
+    {
+      "id": "e3",
+      "from": "bancoExterno",
+      "to": "lookup",
+      "label": "julga ao conectar"
+    },
+    {
+      "id": "e4",
+      "from": "guardasBanco",
+      "to": "resolver",
+      "label": "checagem antecipada"
+    },
+    {
+      "id": "e5",
+      "from": "bancoExterno",
+      "to": "guardasBanco",
+      "label": "politicaDoBanco"
+    },
+    {
+      "id": "e6",
+      "from": "buscar",
+      "to": "url",
+      "label": "cada salto"
+    },
+    {
+      "id": "e7",
+      "from": "buscar",
+      "to": "resolver",
+      "label": "cada salto"
+    },
+    {
+      "id": "e8",
+      "from": "lookup",
+      "to": "resolver",
+      "label": "resolve e julga"
+    },
+    {
+      "id": "e9",
+      "from": "resolver",
+      "to": "ip",
+      "label": "cada endereço"
+    },
+    {
+      "id": "e10",
+      "from": "url",
+      "to": "ip",
+      "label": "IPv4 literal"
+    },
+    {
+      "id": "e11",
+      "from": "destinos",
+      "to": "resolver",
+      "label": "ipPermitido (lista)"
+    },
+    {
+      "id": "e12",
+      "from": "fachadaUrl",
+      "to": "url",
+      "label": "delega"
+    },
+    {
+      "id": "e13",
+      "from": "fachadaUrl",
+      "to": "resolver",
+      "label": "delega"
+    },
+    {
+      "id": "e14",
+      "from": "midia",
+      "to": "fachadaUrl",
+      "label": "julga antes de entregar"
+    },
+    {
+      "id": "e15",
+      "from": "sdk",
+      "to": "destinos",
+      "label": "motivoDaRecusaDeDestino a cada chamada"
+    },
+    {
+      "id": "e16",
+      "from": "pdf",
+      "to": "fachadaUrl",
+      "label": "só o guarda textual"
+    },
+    {
+      "id": "e17",
+      "from": "futuros",
+      "to": "buscar",
+      "label": "dependem desta política"
+    },
+    {
+      "id": "e18",
+      "from": "testeNucleo",
+      "to": "buscar",
+      "label": "prova"
+    },
+    {
+      "id": "e19",
+      "from": "testeNucleo",
+      "to": "lookup",
+      "label": "prova"
+    },
+    {
+      "id": "e20",
+      "from": "testeBanco",
+      "to": "bancoExterno",
+      "label": "prova"
+    },
+    {
+      "id": "e21",
+      "from": "testeDownload",
+      "to": "extensoes",
+      "label": "prova"
+    }
+  ],
+  "cards": [
+    {
+      "id": "card-janela",
+      "tone": "red",
+      "title": "A janela de rebinding deixou de existir",
+      "body": "Antes: julgar o IP e deixar o fetch resolver o nome de novo. Agora o socket recebe só os endereços já julgados (lookup fixado), e o Host/SNI continuam sendo o nome — o que quebrava TLS era trocar a URL pelo IP. No banco, o lookup julga NO MOMENTO de conectar."
+    },
+    {
+      "id": "card-conjunto",
+      "tone": "blue",
+      "title": "Recusa o conjunto inteiro",
+      "body": "Se QUALQUER endereço do nome é especial, o nome é recusado: um público e um privado na mesma resposta é a assinatura do rebinding, e não há como saber qual o socket pegaria."
+    },
+    {
+      "id": "card-valvula",
+      "tone": "amber",
+      "title": "Uma válvula só: ipPermitido",
+      "body": "Por endereço, nunca por nome. É o gancho da lista de destinos internos que o dono da INSTALAÇÃO autoriza e da LAN do banco externo. Uma organização nunca a recebe."
+    },
+    {
+      "id": "card-fora",
+      "tone": "red",
+      "title": "Não-ligações declaradas",
+      "body": "O SDK de modelos (SSE precisa de corpo em fluxo), a imagem do PDF (busca o @react-pdf) e a media_url (baixa o gateway) julgam pela política mas não têm a conexão presa. Detalhe e plano em docs/specs/rede-segura-unica.md."
+    }
+  ]
+}

@@ -221,6 +221,32 @@ describe("executeCallWebhook", () => {
     expect(result.error).toMatch(/^unsafe_url/);
   });
 
+  it("recusa da política é definitiva: não gasta as retentativas (1 s + 5 s) para ouvir o mesmo não", async () => {
+    const inicio = Date.now();
+    const result = await executeCallWebhook(baseCtx(), { url: "https://10.0.0.5/hook" });
+    expect(result.status).toBe("failed");
+    expect(result.error).toBe("unsafe_url:private_host");
+    expect(result.detail).toBeUndefined();
+    expect(Date.now() - inicio).toBeLessThan(1_000);
+  });
+
+  it("receptor que responde 2xx com corpo enorme continua sendo entrega bem-sucedida", async () => {
+    server = createServer((req, res) => {
+      req.resume();
+      req.on("end", () => {
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.end(Buffer.alloc(5 * 1024 * 1024, 65));
+      });
+    });
+    const { port, close } = await listen(server);
+
+    const result = await executeCallWebhook(baseCtx(), { url: `http://127.0.0.1:${port}/hook` }, { skipUrlCheck: true });
+
+    expect(result.status).toBe("success");
+    expect(result.detail?.response_status).toBe(200);
+    await close();
+  });
+
   it("envelope projeta lead/contact públicos — não vaza colunas internas do DB", async () => {
     let received: { body: string } | undefined;
     server = createServer((req, res) => {
