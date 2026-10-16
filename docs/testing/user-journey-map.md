@@ -135,6 +135,8 @@ fonte só (`lib/onboarding/passos.ts`) — eram três listas que discordavam. Ga
 | J3.13 | A escolha sobrevive ao salvar e recarregar | o servidor aceita a lista (o mesmo teto da tela, `TETO_TOOLS_POR_AGENTE`, fonte única) e o estado volta igual · **PASS** |
 | J3.14 | Ver se o que está ligado está funcionando (aba Capacidades) | usos, falhas, quantos vieram de teste, última vez — e o que fazer com cada número · **PASS** (números escritos pelo emissor real de audit) |
 | J3.15 | O teto recusa a passagem, explicando em português | **PASS** — exercitável desde que o catálogo cresceu (57 capacidades). `capacidades-do-agente.spec.ts` liga "Atender" sobre as 8 do seed e prova a recusa por 1 vaga. A afirmação "não exercitável hoje, com 16 capacidades no catálogo" VENCEU |
+| J3.16 | Criar o agente pelo formulário guiado (persona, tom, objetivo, boas-vindas, idioma), sem escrever prompt (#89) | o formulário vem antes das instruções; agente novo nasce com tom "normal" e o idioma da tela; "Ver como o agente recebe isto" mostra o texto composto · **PASS no componente real** (`tests/unit/perfil-guiado-no-editor.test.tsx` + capturas em `docs/testing/evidencias/89-perfil-guiado/`, página de teste sem login). **Falta**: o caminho criar → salvar → publicar → conversar numa instalação fresca estilo VPS |
+| J3.17 | Agente que existia antes não muda até ser editado; temperatura em branco usa o padrão do modelo (#89) | sem perfil o agente recebe o prompt byte a byte; a temperatura da versão chega ao modelo e vence a da organização · **PASS** (`tests/invariants/perfil-guiado-do-agente-no-turno.test.ts`, versão publicada → turno com modelo falso) |
 
 ## Chaves de acesso à IA `[P0]`
 

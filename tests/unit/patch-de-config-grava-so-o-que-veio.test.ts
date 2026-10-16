@@ -100,17 +100,17 @@ beforeEach(() => {
 });
 
 describe("PATCH /api/v1/ai/agents/:id — config parcial não regrava o que não veio", () => {
-  it("ligar os comandos do celular mantém temperatura e RAG ajustados", async () => {
+  it("ligar os comandos do celular mantém o limite de tokens e o RAG ajustados", async () => {
     const status = await patch(
       { config: { aceita_comandos_celular: true } },
-      agente({ rag_top_k: 8, rag_similarity_threshold: 0.3, temperature: 0.9 }),
+      agente({ rag_top_k: 8, rag_similarity_threshold: 0.3, max_tokens: 900 }),
     );
     expect(status).toBe(200);
     expect(gravado?.config).toMatchObject({
       aceita_comandos_celular: true,
       rag_top_k: 8,
       rag_similarity_threshold: 0.3,
-      temperature: 0.9,
+      max_tokens: 900,
     });
   });
 
