@@ -43,7 +43,7 @@ export const MODELO_PADRAO_OPENAI = "tts-1";
 export const VOZ_PADRAO_OPENAI = "alloy";
 export const MODELO_PADRAO_ELEVENLABS = "eleven_multilingual_v2";
 
-const enderecoSchema = z
+export const enderecoSchema = z
   .string()
   .trim()
   .max(300)

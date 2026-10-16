@@ -298,6 +298,15 @@ describe("PUT — gravar", () => {
     expect(admin.estado.updates).toHaveLength(0);
   });
 
+  it("configuração inválida NÃO deixa a chave gravada pela metade", async () => {
+    const admin = bancoFalso();
+    deps.admin.mockReturnValue(admin);
+    const res = await PUT(put({ api_key: CHAVE, ligado: true, aceitar: true, endereco: "ftp://exemplo.com" }) as never);
+    expect(res.status).toBe(422);
+    expect(admin.estado.upserts).toHaveLength(0);
+    expect(deps.audit).not.toHaveBeenCalled();
+  });
+
   it("sem cifra no servidor, não grava texto claro", async () => {
     const admin = bancoFalso({ cifra: false });
     deps.admin.mockReturnValue(admin);
@@ -428,6 +437,20 @@ describe("POST /testar — o botão Testar", () => {
     const corpo = (await (await TESTAR(testar({ api_key: CHAVE, endereco: "http://127.0.0.1:9000/v1" }) as never)).json()).data;
     expect(corpo).toMatchObject({ ok: false, motivo: "endereco_recusado" });
     expect(f).not.toHaveBeenCalled();
+  });
+
+  it("⭐ a chave GRAVADA só viaja para o endereço GRAVADO — um endereço do corpo não a recebe", async () => {
+    deps.admin.mockReturnValue(bancoFalso({ chaves: { openai_compativel: "6789" } }));
+    const f = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(MP3, { status: 200, headers: { "content-type": "audio/mpeg" } }),
+    );
+    await TESTAR(testar({ endereco: "https://servidor-do-admin.exemplo.com/v1" }) as never);
+    expect((f.mock.calls[0] as [string])[0]).toBe("https://api.openai.com/v1/audio/speech");
+  });
+
+  it("endereço com esquema que não é http(s) é recusado", async () => {
+    deps.admin.mockReturnValue(bancoFalso());
+    expect((await TESTAR(testar({ api_key: CHAVE, endereco: "ftp://exemplo.com/v1" }) as never)).status).toBe(422);
   });
 
   it("sem chave nenhuma, pede uma", async () => {

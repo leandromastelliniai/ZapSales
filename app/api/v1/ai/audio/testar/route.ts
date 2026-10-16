@@ -18,7 +18,7 @@ import { z } from "zod";
 
 import { fail, ok } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
-import { LIMITE_MAXIMO_DE_CARACTERES, lerConfigDeAudio } from "@/lib/ai/resposta-em-audio/config";
+import { LIMITE_MAXIMO_DE_CARACTERES, enderecoSchema, lerConfigDeAudio } from "@/lib/ai/resposta-em-audio/config";
 import { chaveDeVozSchema, lerChaveDeVoz } from "@/lib/ai/resposta-em-audio/credencial";
 import { fraseDoMotivo } from "@/lib/ai/resposta-em-audio/frases";
 import { paraNotaDeVoz } from "@/lib/ai/resposta-em-audio/nota-de-voz";
@@ -35,7 +35,7 @@ const postSchema = z
   .object({
     provedor: z.enum(PROVEDORES_DE_VOZ).optional(),
     api_key: chaveDeVozSchema.optional(),
-    endereco: z.string().trim().max(300).url().nullable().optional(),
+    endereco: enderecoSchema.nullable().optional(),
     modelo: z.string().trim().min(1).max(120).nullable().optional(),
     voz: z.string().trim().min(1).max(120).nullable().optional(),
   })
@@ -71,8 +71,12 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   // O teste usa o que está NA TELA (ainda sem gravar) por cima do que está gravado.
   const provedor = parsed.data.provedor ?? salva.provedor;
+  // A chave GRAVADA só viaja para o endereço GRAVADO: aceitar um endereço do corpo com a
+  // chave guardada deixaria qualquer admin mandar a chave da empresa a um servidor dele.
+  // Endereço novo no teste exige a chave colada junto (ela já é do próprio admin).
+  const usaAChaveGravada = parsed.data.api_key === undefined;
   const config = {
-    endereco: parsed.data.endereco !== undefined ? parsed.data.endereco : salva.endereco,
+    endereco: !usaAChaveGravada && parsed.data.endereco !== undefined ? parsed.data.endereco : salva.endereco,
     modelo: parsed.data.modelo !== undefined ? parsed.data.modelo : salva.modelo,
     voz: parsed.data.voz !== undefined ? parsed.data.voz : salva.voz,
   };

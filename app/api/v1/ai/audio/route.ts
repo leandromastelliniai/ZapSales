@@ -26,8 +26,11 @@ import { motivoDaRecusaDeDestino } from "@/lib/automation/destinos-internos-auto
 import {
   LIMITE_MAXIMO_DE_CARACTERES,
   LIMITE_MINIMO_DE_CARACTERES,
+  configDeAudioSchema,
+  enderecoSchema,
   gravarConfigDeAudio,
   lerConfigDeAudio,
+  mesclarConfigDeAudio,
 } from "@/lib/ai/resposta-em-audio/config";
 import {
   chaveDeVozSchema,
@@ -41,8 +44,6 @@ import { traduzir } from "@/lib/i18n/dicionario";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
-
-const enderecoSchema = z.string().trim().max(300).url();
 
 const putSchema = z
   .object({
@@ -142,6 +143,21 @@ export async function PUT(req: NextRequest): Promise<Response> {
     }
   }
 
+  // A configuração que SAIRIA precisa ser válida ANTES de a chave ser gravada: senão uma
+  // recusa da configuração deixaria a chave guardada (e auditada) numa chamada que falhou.
+  const mudanca = { ...resto, ...(aceitar === true ? { aceitar: true as const } : {}) };
+  const mudouAlgoDaConfig = Object.keys(mudanca).length > 0;
+  if (
+    mudouAlgoDaConfig &&
+    !configDeAudioSchema.safeParse(
+      mesclarConfigDeAudio(atual, mudanca, { em: new Date().toISOString(), por: authz.user.id }),
+    ).success
+  ) {
+    return fail("validation_failed", t("Confira os campos da resposta em áudio: algum valor está fora do permitido."), 422, {
+      requestId,
+    });
+  }
+
   let ultimos4: string | null = null;
   if (chaveNova !== undefined) {
     const r = await guardarChaveDeVoz(admin, { organizationId: orgId, provedor: provedorAlvo, chave: chaveNova, atorId: authz.user.id });
@@ -168,8 +184,6 @@ export async function PUT(req: NextRequest): Promise<Response> {
     });
   }
 
-  const mudanca = { ...resto, ...(aceitar === true ? { aceitar: true as const } : {}) };
-  const mudouAlgoDaConfig = Object.keys(mudanca).length > 0;
   if (mudouAlgoDaConfig) {
     const r = await gravarConfigDeAudio({ admin, orgId, actorUserId: authz.user.id, mudanca });
     if (!r.ok) {
@@ -199,8 +213,13 @@ export async function PUT(req: NextRequest): Promise<Response> {
     });
   }
 
-  const estado = await estadoDaRespostaEmAudio(admin, orgId);
-  return ok(corpoDoEstado(estado, t), { requestId });
+  try {
+    const estado = await estadoDaRespostaEmAudio(admin, orgId);
+    return ok(corpoDoEstado(estado, t), { requestId });
+  } catch {
+    // O que o administrador pediu JÁ foi gravado; só a releitura do estado falhou.
+    return fail("internal_error", t("Não consegui ler a configuração da resposta em áudio."), 500, { requestId });
+  }
 }
 
 export async function DELETE(req: NextRequest): Promise<Response> {

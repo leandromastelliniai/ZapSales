@@ -2354,7 +2354,11 @@ async function executarTurnoDoAgente(
               voz: agentConfig.audioReply.voiceId,
               modelo: agentConfig.audioReply.modelId,
             },
-            clienteMandouAudio: ultimaMensagemDoClienteFoiAudio(openingContext.context.messages),
+            // Só a RESPOSTA espelha o formato do cliente: um follow-up proativo (horas ou dias
+            // depois) não responde àquele áudio, e a prévia simula o turno de resposta.
+            clienteMandouAudio:
+              (preview !== undefined || eTurnoDeResposta(liveJob())) &&
+              ultimaMensagemDoClienteFoiAudio(openingContext.context.messages),
           },
           {
             lerSettings: async () =>
@@ -3236,7 +3240,17 @@ async function executarTurnoDoAgente(
             if (audioDoTurno === null || fotosDoProduto.length > 0) return null;
             const entrega = await audioDoTurno.entregar(finalBody, seq + 1);
             if (entrega.formato !== 'audio') return null;
-            return enviar(finalBody, { storagePath: entrega.storagePath, mime: entrega.mime, kind: 'audio' });
+            const enviado = await enviar(finalBody, {
+              storagePath: entrega.storagePath,
+              mime: entrega.mime,
+              kind: 'audio',
+            });
+            // O canal RECUSOU a nota de voz (falha definitiva, nada saiu): o cliente recebe o
+            // texto. Qualquer outro desfecho (enviada, na fila, indisponível) é final, para nunca
+            // mandar o mesmo recado em áudio e em texto.
+            if (enviado.kind !== 'failed') return enviado;
+            runLog.warn('o canal recusou a nota de voz — a resposta segue em texto');
+            return null;
           };
           // Args reusados EXATAMENTE (mesmo objeto) no re-run do fail-safe abaixo — só
           // hasOpenCase/openedCaseThisTurn mudam depois do auto-abre-caso.
