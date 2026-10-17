@@ -17,9 +17,14 @@
  *    na própria linha da fonte, e não com uma violação de constraint que o dono
  *    do negócio leria como bug do produto.
  *
- * A coluna fica FORA de `tests/invariants/vocabulario-banco-x-typescript.test.ts`
- * de propósito: aquele invariante cobre apenas colunas que JÁ têm CHECK, e
- * acrescentar esta ali recriaria pelo teste a constraint que a migration tirou.
+ * ## A 0549 (issue #93) devolveu o CHECK
+ *
+ * Com o tipo `site` o vocabulário voltou a ser FECHADO no banco
+ * (`ai_knowledge_sources_source_type_check`: faq | documento | conversas | catalogo | site),
+ * e a coluna entrou em `tests/invariants/vocabulario-banco-x-typescript.test.ts`
+ * contra `IDS_DE_TIPO_DE_FONTE`. Tipo novo = uma linha aqui, na literal, e uma migration
+ * que alarga o CHECK — o invariante reprova um sem o outro. Os nomes legados continuam
+ * traduzidos na borda (`canonizarTipoDeFonte`) e nunca chegam ao banco.
  */
 
 /** Como o material entra no sistema. É o que decide o caminho de ingestão. */
@@ -36,7 +41,13 @@ export type ComoSePreenche =
    */
   | "arquivo_ou_texto"
   /** Uma rotina do sistema alimenta sozinha; não há o que colar. */
-  | "automatico";
+  | "automatico"
+  /**
+   * A pessoa informa uma LISTA DE ENDEREÇOS (https) e o sistema vai ler as páginas.
+   * Não há texto para colar nem arquivo para enviar: o conteúdo mora no site, e a
+   * leitura é uma ação (manual) que o sistema faz — issue #93.
+   */
+  | "lista_de_enderecos";
 
 export interface TipoDeFonte {
   id: string;
@@ -85,6 +96,13 @@ export const TIPOS_DE_FONTE = [
     comoChega:
       "Entra sozinho: os produtos vêm da sincronização com a sua loja, não de conteúdo digitado aqui.",
   },
+  {
+    id: "site",
+    rotulo: "Site",
+    oQueE:
+      "Páginas do seu site (até 20). O agente lê o texto principal de cada uma e aprende com ele. Você refaz a leitura quando o site mudar.",
+    comoSePreenche: "lista_de_enderecos",
+  },
 ] as const satisfies readonly TipoDeFonte[];
 // `as const satisfies` e não anotação de tipo: a anotação apagaria os literais e
 // `TipoDeFonteId` viraria `string`, deixando o compilador aceitar qualquer texto
@@ -92,11 +110,21 @@ export const TIPOS_DE_FONTE = [
 
 export type TipoDeFonteId = (typeof TIPOS_DE_FONTE)[number]["id"];
 
-/** Só os ids, na forma que o `z.enum` exige (tupla não-vazia de literais). */
-export const IDS_DE_TIPO_DE_FONTE = TIPOS_DE_FONTE.map((t) => t.id) as unknown as readonly [
-  TipoDeFonteId,
-  ...TipoDeFonteId[],
-];
+/**
+ * Só os ids, na forma que o `z.enum` exige (tupla não-vazia de literais).
+ *
+ * É uma LITERAL de propósito, e não um `.map` sobre `TIPOS_DE_FONTE`: o invariante
+ * `tests/invariants/vocabulario-banco-x-typescript.test.ts` lê os valores do fonte
+ * para compará-los com o CHECK de `ai_knowledge_sources.source_type` (0549). O teste
+ * `tipos-de-fonte.test.ts` e o `satisfies` abaixo garantem que as duas listas, aqui
+ * dentro, são a mesma.
+ */
+export const IDS_DE_TIPO_DE_FONTE = ["faq", "documento", "conversas", "catalogo", "site"] as const;
+
+// Compilador: um id em TIPOS_DE_FONTE que falte na literal (ou vice-versa) deixa de compilar.
+type _TodosOsIdsEstaoNaLiteral = Exclude<TipoDeFonteId, (typeof IDS_DE_TIPO_DE_FONTE)[number]> extends never ? true : never;
+type _NaoSobraIdNaLiteral = Exclude<(typeof IDS_DE_TIPO_DE_FONTE)[number], TipoDeFonteId> extends never ? true : never;
+export const _vocabularioFechado: [_TodosOsIdsEstaoNaLiteral, _NaoSobraIdNaLiteral] = [true, true];
 
 export const TIPO_DE_FONTE_POR_ID: ReadonlyMap<string, TipoDeFonte> = new Map(
   TIPOS_DE_FONTE.map((t) => [t.id, t]),
@@ -125,6 +153,8 @@ export function canonizarTipoDeFonte(bruto: string): TipoDeFonteId | null {
     case "catalogo":
     case "catalog":
       return "catalogo";
+    case "site":
+      return "site";
     default:
       return null;
   }
@@ -154,4 +184,9 @@ export function aceitaArquivo(id: string): boolean {
 /** A pessoa alimenta este material, ou uma rotina alimenta sozinha? */
 export function ePreenchidoPorRotina(id: string): boolean {
   return TIPO_DE_FONTE_POR_ID.get(id)?.comoSePreenche === "automatico";
+}
+
+/** O material é uma lista de endereços (https) que o sistema lê — e não texto, arquivo ou rotina? */
+export function aceitaEnderecos(id: string): boolean {
+  return TIPO_DE_FONTE_POR_ID.get(id)?.comoSePreenche === "lista_de_enderecos";
 }

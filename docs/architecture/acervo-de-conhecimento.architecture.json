@@ -185,6 +185,46 @@
       "type": "table",
       "label": "last_index_status",
       "sublabel": "indexando | sem_credencial | success | failed — a tela deixa de mentir"
+    },
+    {
+      "id": "paginasTela",
+      "lane": "humano",
+      "col": 3,
+      "type": "frontend",
+      "label": "PaginasDoSiteDialog",
+      "sublabel": "estado de cada página do site (lida / não foi lida e POR QUÊ), lista editável, 'Ler o site de novo' — a leitura é sempre manual"
+    },
+    {
+      "id": "paginasApi",
+      "lane": "borda",
+      "col": 3,
+      "type": "api",
+      "label": "GET /sources/:id/paginas",
+      "sublabel": "tipo site (#93): lista as páginas da fonte; POST/PATCH aceitam `urls` (https, até 20); PATCH só relê quando a LISTA muda"
+    },
+    {
+      "id": "lerSite",
+      "lane": "motor",
+      "col": 4,
+      "type": "lib",
+      "label": "lerPagina → extrairTextoPrincipal",
+      "sublabel": "HTML → texto visível (sem script, menu, rodapé nem o que a página esconde); instrução na página é DADO, nunca instrução"
+    },
+    {
+      "id": "redeSeguraSite",
+      "lane": "motor",
+      "col": 4,
+      "type": "lib",
+      "label": "buscarSeguro (rede segura, #88)",
+      "sublabel": "https, DNS preso ao socket, IP interno recusado a cada salto, 15 s e 2 MB por página — nada de rede por fora"
+    },
+    {
+      "id": "paginas",
+      "lane": "dados",
+      "col": 5,
+      "type": "table",
+      "label": "ai_knowledge_source_pages",
+      "sublabel": "uma linha por página: status pendente/lida/falhou, motivo, título, content_hash (página inalterada não reembeda), RLS por organização"
     }
   ],
   "edges": [
@@ -216,7 +256,16 @@
     { "id": "e26", "from": "fonte", "to": "escolha", "label": "o acervo alimenta o seletor" },
     { "id": "e27", "from": "chave", "to": "provedor", "label": "troca OpenAI ↔ Google, avisando ANTES que refaz a base" },
     { "id": "e28", "from": "provedor", "to": "chaveResolver", "label": "grava a família em settings.base_de_conhecimento; vale para indexar e consultar" },
-    { "id": "e29", "from": "provedor", "to": "evento", "label": "refaz a base: knowledge_source.updated por fonte" }
+    { "id": "e29", "from": "provedor", "to": "evento", "label": "refaz a base: knowledge_source.updated por fonte" },
+    { "id": "e30", "from": "acervo", "to": "paginasTela", "label": "tipo site: 'Ver as páginas' abre o estado de cada uma" },
+    { "id": "e31", "from": "paginasTela", "to": "paginasApi", "label": "lê o estado e salva a lista de endereços" },
+    { "id": "e32", "from": "paginasApi", "to": "paginas", "label": "cria/remove/reordena as linhas; só a sessão decide a organização" },
+    { "id": "e33", "from": "paginasApi", "to": "evento", "label": "lista mudou ou re-treino manual → knowledge_source.updated (renomear não lê rede)" },
+    { "id": "e34", "from": "indexador", "to": "lerSite", "label": "fonte do tipo site: lê cada página, grava o estado dela" },
+    { "id": "e35", "from": "lerSite", "to": "redeSeguraSite", "label": "toda leitura de página sai pela política única" },
+    { "id": "e36", "from": "lerSite", "to": "paginas", "label": "status, motivo, título e hash por página" },
+    { "id": "e37", "from": "lerSite", "to": "chunks", "label": "trechos com metadata {pagina, endereco}; trecho inalterado reaproveita o vetor da versão ativa" },
+    { "id": "e38", "from": "paginas", "to": "estado", "label": "alguma página falhou → a fonte fica 'partial', com o aviso do que não foi lido" }
   ],
   "cards": [
     {

@@ -14,7 +14,10 @@ import { ok, fail } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { aceitaTextoColado, canonizarTipoDeFonte } from "@/lib/ai/rag/tipos-de-fonte";
+import { audit } from "@/lib/audit";
+import { aceitaEnderecos, aceitaTextoColado, canonizarTipoDeFonte, rotuloDoTipo } from "@/lib/ai/rag/tipos-de-fonte";
+import { enderecosDoSiteSchema, limitesDoSite } from "@/lib/ai/rag/ingest/site";
+import { definirPaginasDoSite } from "@/lib/ai/rag/ingest/site-paginas";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +36,8 @@ const patchSourceSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   items: z.array(faqItemSchema).optional(),
   source_metadata: z.record(z.string(), z.unknown()).optional(),
+  /** Só para o tipo `site`: a lista COMPLETA de páginas (substitui a anterior). */
+  urls: z.array(z.string()).optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -150,6 +155,28 @@ export async function PATCH(
   const ksRow = existing as { id: string; source_type: string; agent_id: string | null };
   const tipo = canonizarTipoDeFonte(ksRow.source_type);
 
+  // A lista de páginas só existe no tipo site — e a forma dela é conferida ANTES de qualquer
+  // escrita, para a lista antiga não ser trocada pela metade.
+  let enderecos: string[] | undefined;
+  if (input.urls !== undefined) {
+    if (tipo === null || !aceitaEnderecos(tipo)) {
+      return fail(
+        "unprocessable_entity",
+        `Material de ${rotuloDoTipo(tipo ?? ksRow.source_type).toLowerCase()} não recebe lista de endereços — isso é só para o tipo site.`,
+        422,
+        { requestId },
+      );
+    }
+    const lista = enderecosDoSiteSchema(limitesDoSite().maxPaginas).safeParse(input.urls);
+    if (!lista.success) {
+      return fail("validation_failed", lista.error.issues[0]?.message ?? "Campos inválidos.", 422, {
+        requestId,
+        details: lista.error.flatten(),
+      });
+    }
+    enderecos = lista.data;
+  }
+
   // Build update payload (only provided fields).
   const updatePayload: Record<string, unknown> = {};
   if (input.name !== undefined) updatePayload.name = input.name;
@@ -219,21 +246,56 @@ export async function PATCH(
     }
   }
 
-  // Emit knowledge_source.updated (fire-and-forget).
-  const { error: emitErr } = await admin.rpc("emit_event" as never, {
-    p_event_type: "knowledge_source.updated",
-    p_entity_kind: "ai_knowledge_source",
-    p_entity_id: sourceId,
-    p_payload: {
-      knowledge_source_id: sourceId,
-      agent_id: ksRow.agent_id,
-      source_type: ksRow.source_type,
-    },
-    p_organization_id: activeOrg.orgId,
-  } as never);
+  let paginasMudaram: { adicionadas: number; removidas: number } | null = null;
+  if (enderecos !== undefined) {
+    try {
+      paginasMudaram = await definirPaginasDoSite(admin, activeOrg.orgId, sourceId, enderecos);
+    } catch (err) {
+      console.error("[ai-knowledge-sources] PATCH páginas do site falhou:", err instanceof Error ? err.message : String(err));
+      return fail("internal_error", "Erro ao atualizar as páginas do site.", 500, { requestId });
+    }
+  }
 
-  if (emitErr) {
-    console.warn("[ai-knowledge-sources] emit_event failed (non-blocking):", emitErr.message);
+  // Material de SITE só é relido quando a LISTA mudou (ou pelo re-treino manual): renomear não
+  // pode virar uma rodada de leituras de rede. Os demais tipos seguem como sempre.
+  const ehSite = tipo !== null && aceitaEnderecos(tipo);
+  const deveReindexar = !ehSite || paginasMudaram !== null;
+
+  // Emit knowledge_source.updated (fire-and-forget).
+  if (deveReindexar) {
+    const { error: emitErr } = await admin.rpc("emit_event" as never, {
+      p_event_type: "knowledge_source.updated",
+      p_entity_kind: "ai_knowledge_source",
+      p_entity_id: sourceId,
+      p_payload: {
+        knowledge_source_id: sourceId,
+        agent_id: ksRow.agent_id,
+        source_type: ksRow.source_type,
+      },
+      p_organization_id: activeOrg.orgId,
+    } as never);
+
+    if (emitErr) {
+      console.warn("[ai-knowledge-sources] emit_event failed (non-blocking):", emitErr.message);
+    }
+  }
+
+  if (paginasMudaram !== null && enderecos !== undefined) {
+    void audit({
+      action: "ai.knowledge_site_pages_changed",
+      actorUserId: ctx.authUser.id,
+      organizationId: activeOrg.orgId,
+      resourceType: "ai_knowledge_source",
+      resourceId: sourceId,
+      requestId,
+      // Host e contagem, nunca a URL inteira: ela pode levar `?token=` na query.
+      metadata: {
+        pages: enderecos.length,
+        added: paginasMudaram.adicionadas,
+        removed: paginasMudaram.removidas,
+        hosts: [...new Set(enderecos.map((u) => new URL(u).host))],
+      },
+    });
   }
 
   return ok(

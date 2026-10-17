@@ -45,6 +45,7 @@ import { acquireDebounce } from "@/lib/ai/rag/debounce";
 import { chunkText, computeContentHash } from "@/lib/ai/rag/chunker";
 import { canonizarTipoDeFonte } from "@/lib/ai/rag/tipos-de-fonte";
 import { extrairTextoDoArquivo, ErroDeExtracao } from "@/lib/ai/rag/ingest/documento";
+import { montarPedacosDoSite } from "@/lib/ai/rag/ingest/site-paginas";
 import { estimateTokens } from "@/lib/ai/runtime/history";
 import {
   createKnowledgeVersion,
@@ -86,15 +87,19 @@ interface FonteRow {
 const COLUNAS_DA_FONTE =
   "id, organization_id, agent_id, source_type, name, status, is_active, source_metadata, content_hash, last_index_status, active_kb_version_id";
 
-/** Um pedaço pronto para virar vetor. */
+/**
+ * Um pedaço pronto para virar vetor. `embedding` já preenchido = vetor REAPROVEITADO da
+ * versão ativa (trecho de site que não mudou): não há o que pagar ao provedor.
+ */
 interface Pedaco {
   content: string;
   metadata: Record<string, unknown>;
+  embedding?: string;
 }
 
 type Resultado =
-  | { tipo: "ok"; versionId: string; chunks: number; contentHash: string }
-  | { tipo: "pulado"; motivo: string }
+  | { tipo: "ok"; versionId: string; chunks: number; contentHash: string; parcial?: string }
+  | { tipo: "pulado"; motivo: string; parcial?: string }
   | { tipo: "erro"; detalhe: string }
   | { tipo: "sem_chave" };
 
@@ -268,6 +273,8 @@ export async function indexarFonte(
   }
 
   let pedacos: Pedaco[];
+  /** Site em que algumas páginas não foram lidas: o material entra, mas "pela metade", com o aviso. */
+  let parcial: string | null = null;
   try {
     switch (tipo) {
       case "faq":
@@ -276,6 +283,22 @@ export async function indexarFonte(
       case "documento":
         pedacos = await pedacosDeDocumento(fonte);
         break;
+      case "site": {
+        const leitura = await montarPedacosDoSite({
+          admin: createAdminClient(),
+          fonte,
+          // O site reaproveita o vetor de uma versão calculada com o MESMO modelo, então precisa
+          // dele antes dos pedaços; o modelo é função da chave, que já está resolvida.
+          modeloDeEmbedding: modeloDeEmbedding(chave.provedor),
+        });
+        pedacos = leitura.pedacos;
+        if (leitura.resumo.falhas > 0) {
+          parcial =
+            `${leitura.resumo.falhas} de ${leitura.resumo.lidas + leitura.resumo.falhas} páginas do site não foram lidas — ` +
+            "veja o motivo de cada uma em “Ver as páginas”.";
+        }
+        break;
+      }
       case "catalogo":
         // Nenhuma origem de conteúdo alimenta o catálogo por aqui hoje: a única
         // que existia era a sincronização de uma loja externa, removida na 0533.
@@ -319,7 +342,8 @@ export async function indexarFonte(
   const hashDoConteudo = computeContentHash(pedacos.map((p) => p.content).join("\n---\n"));
   if (
     fonte.content_hash === hashDoConteudo &&
-    fonte.last_index_status === "success" &&
+    // Site com páginas que falharam fica `partial`; sem mudança, continua valendo o que já está pronto.
+    (fonte.last_index_status === "success" || (tipo === "site" && fonte.last_index_status === "partial")) &&
     fonte.active_kb_version_id !== null
   ) {
     const { data: versaoAtiva } = await createAdminClient()
@@ -329,7 +353,7 @@ export async function indexarFonte(
       .eq("organization_id", fonte.organization_id)
       .maybeSingle();
     if ((versaoAtiva as { embedding_model?: string } | null)?.embedding_model === modelo) {
-      return { tipo: "pulado", motivo: "sem_mudanca" };
+      return { tipo: "pulado", motivo: "sem_mudanca", ...(parcial ? { parcial } : {}) };
     }
   }
 
@@ -353,15 +377,19 @@ export async function indexarFonte(
 
   for (let i = 0; i < pedacos.length; i++) {
     const p = pedacos[i]!;
-    let embedding: number[];
+    let embedding: number[] | string;
     try {
-      // `chave` já resolvida: sem isto, um documento de 200 trechos decifraria a
-      // credencial 200 vezes.
-      const r = await embedText(p.content, {
-        organizationId: fonte.organization_id,
-        chave,
-      });
-      embedding = r.embedding;
+      if (p.embedding !== undefined) {
+        embedding = p.embedding;
+      } else {
+        // `chave` já resolvida: sem isto, um documento de 200 trechos decifraria a
+        // credencial 200 vezes.
+        const r = await embedText(p.content, {
+          organizationId: fonte.organization_id,
+          chave,
+        });
+        embedding = r.embedding;
+      }
     } catch (err) {
       const detalhe = err instanceof Error ? err.message : String(err);
       await markVersionFailed(versionId, fonte.organization_id, `embed@${i}: ${detalhe}`);
@@ -417,7 +445,7 @@ export async function indexarFonte(
     versionId,
   });
 
-  return { tipo: "ok", versionId, chunks: gravados, contentHash: hashDoConteudo };
+  return { tipo: "ok", versionId, chunks: gravados, contentHash: hashDoConteudo, ...(parcial ? { parcial } : {}) };
 }
 
 // ---------------------------------------------------------------------------
@@ -505,8 +533,10 @@ export async function processRagIndexer(row: EventRow): Promise<HandlerResult> {
 
     if (resultado.tipo === "ok") {
       await marcarFonte(row.organization_id, fonte.id, {
-        last_index_status: "success",
-        last_index_error: null,
+        // `partial`: um site em que algumas páginas não foram lidas. O material entrou e o agente
+        // já sabe o resto — mas a tela não pode dizer "o agente já sabe" como se estivesse inteiro.
+        last_index_status: resultado.parcial ? "partial" : "success",
+        last_index_error: resultado.parcial ?? null,
         last_indexed_at: new Date().toISOString(),
         chunks_count: resultado.chunks,
         content_hash: resultado.contentHash,
@@ -523,7 +553,13 @@ export async function processRagIndexer(row: EventRow): Promise<HandlerResult> {
       // pronto e continua pronto — limpar para null o faria parecer "nunca
       // indexado"); os demais pulos limpam o `indexando` para a tela não girar.
       await marcarFonte(row.organization_id, fonte.id, {
-        last_index_status: resultado.motivo === "sem_mudanca" ? "success" : null,
+        last_index_status:
+          resultado.motivo === "sem_mudanca" ? (resultado.parcial ? "partial" : "success") : null,
+        // O aviso de "pela metade" só mexe quando existe ou existia — a linha de um material comum
+        // fica como estava.
+        ...(resultado.motivo === "sem_mudanca" && (resultado.parcial || fonte.last_index_status === "partial")
+          ? { last_index_error: resultado.parcial ?? null }
+          : {}),
       });
       return { consumer_key: consumerKey, status: "skipped", detail: resultado.motivo };
     }

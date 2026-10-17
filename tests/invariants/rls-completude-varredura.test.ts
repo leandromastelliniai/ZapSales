@@ -75,6 +75,7 @@ interface Excecao {
  * linhas da OUTRA organização, não uma leitura como superusuário.
  */
 const PROVA_PROPRIA: readonly Excecao[] = [
+  { tabela: "ai_knowledge_source_pages", razao: "tests/invariants/treino-por-site-banco.test.ts — dois tenants reais por JWT: A lê as 2 páginas dela e ZERO do vizinho, B lê a 1 dela; authenticated sem insert/update/delete/truncate (só o servidor grava) e anon sem select; migration 0549." },
   { tabela: "meta_message_costs", razao: "tests/invariants/custo-da-campanha-oficial.test.ts — dois tenants reais por JWT (authenticated, row_security ligada): o vizinho lê ZERO, a própria organização lê as suas (controle positivo), e insert/update diretos de authenticated recebem permission denied (só o servidor grava custo; migration 0540)." },
   { tabela: "golden_candidates", razao: "tests/invariants/golden-candidates.test.ts — dois tenants reais por JWT (agent): leitura positiva local e ZERO do vizinho nos dois sentidos, a tabela inteira sem filtro igual à própria, anon recusado, e insert/update/delete de authenticated sem efeito (só o servidor grava)." },
   { tabela: "jev_observacoes", razao: "tests/invariants/jev-observacoes.test.ts — dois tenants reais por JWT (agent): leitura positiva local e ZERO do vizinho nos dois sentidos, a tabela inteira sem filtro igual à própria, anon recusado, e insert/update/delete de authenticated sem efeito (só o servidor grava)." },

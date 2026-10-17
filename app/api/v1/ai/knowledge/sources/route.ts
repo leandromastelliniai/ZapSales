@@ -20,9 +20,13 @@ import { loadAuthUser } from "@/lib/auth/server";
 import { orgAtivaDaApi, requireRole } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { audit } from "@/lib/audit";
 import { parseFaqMarkdown } from "@/lib/ai/rag/ingest/faq";
+import { enderecosDoSiteSchema, limitesDoSite } from "@/lib/ai/rag/ingest/site";
+import { definirPaginasDoSite } from "@/lib/ai/rag/ingest/site-paginas";
 import { temChaveDeEmbedding } from "@/lib/ai/embeddings/chave";
 import {
+  aceitaEnderecos,
   aceitaTextoColado,
   canonizarTipoDeFonte,
   ePerguntaEResposta,
@@ -59,8 +63,15 @@ const createSourceSchema = z.object({
   name: z.string().trim().min(2).max(120),
   items: z.array(faqItemSchema).optional(),
   markdown_blob: z.string().optional(),
+  /** Só para o tipo `site`: as páginas que o agente vai ler (https). */
+  urls: z.array(z.string()).optional(),
   source_metadata: z.record(z.string(), z.unknown()).optional().default({}),
 });
+
+/** Os hosts distintos de uma lista de URLs, em ordem — o que a auditoria guarda no lugar da URL. */
+function hostsDe(urls: string[]): string[] {
+  return [...new Set(urls.map((u) => new URL(u).host))];
+}
 
 const SELECT_COLUNAS =
   "id, agent_id, organization_id, source_type, name, status, last_index_status, " +
@@ -137,7 +148,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (tipo === null) {
     return fail(
       "validation_failed",
-      `Tipo de material desconhecido: "${input.source_type}". Use faq, documento, conversas ou catalogo.`,
+      `Tipo de material desconhecido: "${input.source_type}". Use faq, documento, conversas, catalogo ou site.`,
       422,
       { requestId },
     );
@@ -153,6 +164,27 @@ export async function POST(req: NextRequest): Promise<Response> {
       "unprocessable_entity",
       `Material de ${rotuloDoTipo(tipo).toLowerCase()} não recebe conteúdo colado — ` +
         "ele é preenchido automaticamente.",
+      422,
+      { requestId },
+    );
+  }
+
+  // Site: a FORMA da lista é conferida aqui, com frase de gente; o que um NOME resolve (rede
+  // interna, rebinding) só se sabe na leitura, e a recusa é da rede segura (`lib/net/rede-segura`).
+  let enderecos: string[] = [];
+  if (aceitaEnderecos(tipo)) {
+    const lista = enderecosDoSiteSchema(limitesDoSite().maxPaginas).safeParse(input.urls ?? []);
+    if (!lista.success) {
+      return fail("validation_failed", lista.error.issues[0]?.message ?? t("Campos inválidos."), 422, {
+        requestId,
+        details: lista.error.flatten(),
+      });
+    }
+    enderecos = lista.data;
+  } else if (input.urls !== undefined) {
+    return fail(
+      "unprocessable_entity",
+      `Material de ${rotuloDoTipo(tipo).toLowerCase()} não recebe lista de endereços — isso é só para o tipo site.`,
       422,
       { requestId },
     );
@@ -273,6 +305,17 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const ksId: string = (ks as { id: string }).id;
 
+  if (aceitaEnderecos(tipo)) {
+    try {
+      await definirPaginasDoSite(admin, activeOrg.orgId, ksId, enderecos);
+    } catch (err) {
+      // Fonte de site sem página nenhuma é fonte que promete e nunca lê.
+      await admin.from("ai_knowledge_sources").delete().eq("id", ksId).eq("organization_id", activeOrg.orgId);
+      console.error("[ai-knowledge-sources] gravar as páginas do site falhou:", err instanceof Error ? err.message : String(err));
+      return fail("internal_error", t("Erro ao gravar as páginas do site."), 500, { requestId });
+    }
+  }
+
   let itemsCount = 0;
   if (faqItems.length > 0) {
     const rows = faqItems.map((item, idx) => ({
@@ -311,6 +354,19 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   if (emitErr) {
     console.warn("[ai-knowledge-sources] emit_event falhou (não bloqueia):", emitErr.message);
+  }
+
+  if (aceitaEnderecos(tipo)) {
+    // Sem a URL inteira: ela pode levar `?token=` na query. O host e a contagem bastam para rastrear.
+    void audit({
+      action: "ai.knowledge_site_created",
+      actorUserId: authz.user.id,
+      organizationId: activeOrg.orgId,
+      resourceType: "ai_knowledge_source",
+      resourceId: ksId,
+      requestId,
+      metadata: { pages: enderecos.length, hosts: hostsDe(enderecos) },
+    });
   }
 
   // A resposta DIZ se a indexação vai acontecer. Sem isto a tela prometia
