@@ -92,10 +92,26 @@ function agenteDeTeste(): string {
   return id;
 }
 
+/**
+ * O botão de um dos três papéis, SÓ o visível.
+ *
+ * Logo depois de um `goto` ou `reload`, o HTML em streaming do Next traz o conteúdo
+ * da página DUAS vezes por instantes: a cópia do servidor, dentro de um
+ * `<div hidden id="S:0">`, e a que o React já montou no cliente. Quando o script de
+ * troca (`$RC`) roda, a oculta some. `getByTestId` casa elemento oculto também, e
+ * nessa janela o clique falhava com "strict mode violation: resolved to 2 elements"
+ * (CI: três falhas em ~40 rodadas, sempre neste arquivo). O usuário só enxerga a
+ * cópia visível, então é ela que o teste deve usar — nunca um `.first()`, que
+ * poderia pegar a oculta.
+ */
+function papel(id: "conversa" | "operacao" | "seguranca") {
+  return pagina.locator(`[data-testid="papel-${id}"]:visible`);
+}
+
 /** Abre o agente semeado e vai para a aba do papel que organiza o sistema. */
 async function abrirAbaDoOperador(): Promise<void> {
   await pagina.goto(`/app/ai/agents/${agenteDeTeste()}`);
-  await pagina.getByTestId("papel-operacao").click();
+  await papel("operacao").click();
 }
 
 test.describe("A aba do papel que organiza o sistema", () => {
@@ -105,16 +121,16 @@ test.describe("A aba do papel que organiza o sistema", () => {
     // Os rótulos são o contrato com quem configura. "Conversador"/"Operador" é
     // vocabulário nosso; quem tem uma clínica pensa em quem fala com o cliente
     // e em quem mantém a casa em ordem.
-    await expect(pagina.getByTestId("papel-conversa")).toHaveText(/conversa com o cliente/i);
-    await expect(pagina.getByTestId("papel-operacao")).toHaveText(/organiza o sistema/i);
+    await expect(papel("conversa")).toHaveText(/conversa com o cliente/i);
+    await expect(papel("operacao")).toHaveText(/organiza o sistema/i);
     // O TERCEIRO. O épico se chama "os três papéis" e foi entregue com dois na
     // tela — a cadeia de conferências rodava e ninguém que configura sabia.
-    await expect(pagina.getByTestId("papel-seguranca")).toHaveText(/confere antes de enviar/i);
+    await expect(papel("seguranca")).toHaveText(/confere antes de enviar/i);
   });
 
   test("o papel que confere mostra a lista inteira, aberta, e sem interruptor decorativo", async () => {
     await pagina.goto(`/app/ai/agents/${agenteDeTeste()}`);
-    await pagina.getByTestId("papel-seguranca").click();
+    await papel("seguranca").click();
 
     const painel = pagina.getByTestId("painel-de-seguranca");
     await expect(painel).toBeVisible();
@@ -228,7 +244,7 @@ test.describe("A aba do papel que organiza o sistema", () => {
     // o Zod, o VERSION_COLUMNS e o SELECT que relê. É onde um campo que ninguém
     // propagou some em silêncio.
     await pagina.reload();
-    await pagina.getByTestId("papel-operacao").click();
+    await papel("operacao").click();
 
     await expect(
       pagina.getByTestId("operador-capacidades"),
@@ -250,7 +266,7 @@ test.describe("A aba do papel que organiza o sistema", () => {
     await expect(pagina.getByText(/rascunho v\d+ salvo/i)).toBeVisible({ timeout: 20_000 });
 
     await pagina.reload();
-    await pagina.getByTestId("papel-operacao").click();
+    await papel("operacao").click();
     // `operator_model` NULL = herda o do Conversador. Se o refresh trouxesse
     // uma string vazia virando "modelo escolhido", o botão apareceria — e o
     // usuário veria uma escolha que ele não fez.
