@@ -19,6 +19,7 @@ import { IDS_DE_PROVEDOR } from "@/lib/ai/pontos/provedores";
 import {
   IDIOMAS_DO_AGENTE,
   LIMITES_DO_PERFIL,
+  LIMITES_DOS_TEMAS,
   TONS_DO_AGENTE,
 } from "@/lib/ai/agents/perfil";
 
@@ -295,6 +296,18 @@ const versionShapeSchema = z
      * sem temperatura, ou com a da organização). É o único lugar do valor.
      */
     temperature: z.number().min(0).max(1).nullable().default(null),
+    // ── Restringir temas (#92) ───────────────────────────────────────────────
+    // Chave por agente + lista de assuntos + a resposta para o que está fora.
+    // DESLIGADA por padrão: corpo que não conhece o recurso lê "sem restrição".
+    // Chave ligada com lista vazia é aceita e NÃO restringe nada
+    // (`restricaoDeTemasAtiva`) — a tela avisa; calar o agente inteiro por um
+    // formulário incompleto seria pior do que não restringir.
+    restrict_topics: z.boolean().default(false),
+    allowed_topics: z
+      .array(z.string().trim().min(1).max(LIMITES_DOS_TEMAS.assunto))
+      .max(LIMITES_DOS_TEMAS.assuntos)
+      .default([]),
+    off_topic_reply: perfilTexto(LIMITES_DOS_TEMAS.respostaFora),
   })
   .strict();
 
@@ -333,6 +346,9 @@ export const versionPatchSchema = versionShapeSchema
     profile_welcome: versionShapeSchema.shape.profile_welcome.removeDefault(),
     profile_language: versionShapeSchema.shape.profile_language.removeDefault(),
     temperature: versionShapeSchema.shape.temperature.removeDefault(),
+    restrict_topics: versionShapeSchema.shape.restrict_topics.removeDefault(),
+    allowed_topics: versionShapeSchema.shape.allowed_topics.removeDefault(),
+    off_topic_reply: versionShapeSchema.shape.off_topic_reply.removeDefault(),
   })
   .partial();
 

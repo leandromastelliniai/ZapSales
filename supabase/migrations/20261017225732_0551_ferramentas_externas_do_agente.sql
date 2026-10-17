@@ -1,5 +1,5 @@
 -- manifest: **Ferramentas externas do agente — webhook de consulta (issue #94, parte da #86).** Tabela `agent_external_tools` (o webhook que o agente chama no meio da conversa: nome, "quando usar", endereço, campos a preencher, "só consulta"/"altera dados" e a chave de assinatura cifrada, server-side only como a 0548), coluna `ai_agent_versions.external_tool_ids` (quais ferramentas cada versão do agente pode chamar, coberta pela trava de imutabilidade) e o aviso `external_tool_failed` na Central. "Altera dados" só existe inativo: a trava de aprovação é de outra etapa.
--- 0549 — Ferramentas externas do agente (webhook de CONSULTA).
+-- 0551 — Ferramentas externas do agente (webhook de CONSULTA).
 --
 -- O agente passa a poder chamar um webhook durante a conversa para consultar
 -- algo em outro sistema (estoque, planilha, ERP, Make, n8n). Esta migration dá o
@@ -93,7 +93,7 @@ comment on column public.ai_agent_versions.external_tool_ids is
   'Ferramentas externas (agent_external_tools) que esta versão do agente pode chamar. Vazio = nenhuma. Soma com tool_ids no teto de 27 capacidades por agente. Quem confere que a ferramenta existe e é desta organização é o servidor (sem FK: array).';
 
 -- ─── A trava de imutabilidade passa a cobrir a coluna nova ──────────────────
--- Corpo idêntico ao da 0548 (resposta em áudio), mais `external_tool_ids`. O
+-- Corpo idêntico ao da 0549 (restringir temas), mais `external_tool_ids`. O
 -- invariante `tests/unit/trigger-imutavel-cobre-todas-as-colunas-de-conteudo.test.ts`
 -- compara a ÚLTIMA definição que vale contra o conjunto de conteúdo.
 
@@ -141,6 +141,9 @@ begin
     or new.profile_welcome        is distinct from old.profile_welcome
     or new.profile_language       is distinct from old.profile_language
     or new.temperature            is distinct from old.temperature
+    or new.restrict_topics        is distinct from old.restrict_topics
+    or new.allowed_topics         is distinct from old.allowed_topics
+    or new.off_topic_reply        is distinct from old.off_topic_reply
     or new.version_number         is distinct from old.version_number
     or new.agent_id               is distinct from old.agent_id
     or new.organization_id        is distinct from old.organization_id

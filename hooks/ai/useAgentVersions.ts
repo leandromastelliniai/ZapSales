@@ -46,6 +46,10 @@ export interface AgentVersionRow {
   profile_language: "pt-BR" | "es" | "en" | null;
   /** 0 a 1; `null` = padrão do modelo. */
   temperature: number | null;
+  /** Restringir temas (0549). Chave desligada = sem restrição. */
+  restrict_topics: boolean;
+  allowed_topics: string[];
+  off_topic_reply: string | null;
   followup: {
     enabled: boolean;
     flow_pointer_ids: string[];

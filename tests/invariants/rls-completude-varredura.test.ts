@@ -271,7 +271,7 @@ const PROVA_PROPRIA: readonly Excecao[] = [
       "cascata, e o isolamento entre duas organizações medido (o filtro da organização " +
       "é a cerca do service role; o motor só carrega o que é da organização do turno). " +
       "Guarda a chave de assinatura (cifrada) e o endereço do webhook de consulta do " +
-      "agente (0549, #94), que só o servidor lê.",
+      "agente (0551, #94), que só o servidor lê.",
   },
   {
     tabela: "ad_conversion_dispatches",

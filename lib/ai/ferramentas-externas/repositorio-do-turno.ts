@@ -1,7 +1,7 @@
 /**
  * As ferramentas externas, vistas pelo MOTOR do agente (pool `pg`, sem PostgREST).
  *
- * O worker fala com o banco pelo pool `pg`; a tabela é server-side only (0549), e o
+ * O worker fala com o banco pelo pool `pg`; a tabela é server-side only (0551), e o
  * papel do worker pode chamar `fn_decrypt_oauth`. A chave em claro só existe na
  * memória do turno, no instante da chamada.
  *

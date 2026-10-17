@@ -1,6 +1,6 @@
 /**
  * O cadastro das ferramentas externas, visto pela API (cliente `service_role` do
- * PostgREST). A tabela é server-side only (migration 0549): RLS ligada, zero
+ * PostgREST). A tabela é server-side only (migration 0551): RLS ligada, zero
  * policies, grants revogados de anon/authenticated. A cerca entre organizações é
  * o filtro `organization_id` que TODA consulta daqui carrega — o id da organização
  * vem sempre da sessão (quem chama), nunca do corpo do pedido.

@@ -137,6 +137,8 @@ fonte só (`lib/onboarding/passos.ts`) — eram três listas que discordavam. Ga
 | J3.15 | O teto recusa a passagem, explicando em português | **PASS** — exercitável desde que o catálogo cresceu (57 capacidades). `capacidades-do-agente.spec.ts` liga "Atender" sobre as 8 do seed e prova a recusa por 1 vaga. A afirmação "não exercitável hoje, com 16 capacidades no catálogo" VENCEU |
 | J3.16 | Criar o agente pelo formulário guiado (persona, tom, objetivo, boas-vindas, idioma), sem escrever prompt (#89) | o formulário vem antes das instruções; agente novo nasce com tom "normal" e o idioma da tela; "Ver como o agente recebe isto" mostra o texto composto · **PASS no componente real** (`tests/unit/perfil-guiado-no-editor.test.tsx` + capturas em `docs/testing/evidencias/89-perfil-guiado/`, página de teste sem login). **Falta**: o caminho criar → salvar → publicar → conversar numa instalação fresca estilo VPS |
 | J3.17 | Agente que existia antes não muda até ser editado; temperatura em branco usa o padrão do modelo (#89) | sem perfil o agente recebe o prompt byte a byte; a temperatura da versão chega ao modelo e vence a da organização · **PASS** (`tests/invariants/perfil-guiado-do-agente-no-turno.test.ts`, versão publicada → turno com modelo falso) |
+| J3.18 | Criar um agente útil a partir de um modelo por ramo (vendas, suporte, agendamento), sem escrever prompt (#92) | a galeria aparece só na criação; escolher preenche perfil e instruções no idioma da tela; tudo editável · **PASS no componente real** (`tests/unit/modelos-e-temas-no-editor.test.tsx`). **Falta**: o caminho criar → publicar → conversar numa instalação fresca estilo VPS, com evidência visual |
+| J3.19 | Restringir assuntos: pergunta fora do tema recebe a resposta padrão; dentro é respondida; atendente humano e opt-out nunca são "fora do tema" (#92) | a restrição é instrução na composição, não conferência nova; as 11 conferências intactas · **PASS** (`tests/invariants/restringir-temas-no-turno.test.ts`, versão publicada → turno com modelo falso **que obedece à instrução**: prova que a instrução chega ao modelo e que a resposta padrão atravessa as conferências, inclusive a recusa de cada modelo pronto em 3 idiomas — **não** prova que um modelo real obedece). Handoff e opt-out: detectados em código antes do modelo (`lib/ai/agents/restringir-temas-precedencia.test.ts`); o turno vivo com restrição ligada não tem teste próprio |
 
 ## Chaves de acesso à IA `[P0]`
 
@@ -3633,7 +3635,7 @@ igualmente vermelho; o gate é o job `invariants` do CI.
 Contexto: parte da #86. O agente só usava o catálogo interno de capacidades do CRM. Agora a organização cadastra
 um **webhook de consulta** (estoque, planilha, ERP, Make, n8n) em Agente de IA › Ferramentas externas, escolhe no
 editor de cada agente quais ferramentas ele pode usar e testa de verdade num botão da própria tela. Tabela
-`agent_external_tools` e coluna `ai_agent_versions.external_tool_ids` (migration 0549); regra em
+`agent_external_tools` e coluna `ai_agent_versions.external_tool_ids` (migration 0551); regra em
 `lib/ai/ferramentas-externas/`; mapa em `docs/architecture/ferramentas-externas-do-agente.architecture.json`;
 guia de quem recebe em `docs/integracao/ferramentas-externas-do-agente.md`.
 
@@ -3653,7 +3655,7 @@ Spec: `tests/e2e/ferramentas-externas-pela-tela.spec.ts` (**escrita, não execut
 | J52.10 | Agente cuja versão não lista a ferramenta / ferramenta desativada | nem é oferecida ao modelo; receptor intocado | **PASS (unit)**; turno completo: invariante escrita |
 | J52.11 | Teto de 27 | `tool_ids` + `external_tool_ids` > 27 recusado na tela e no servidor; ferramenta desativada só pode ser desmarcada | **PASS (unit)** — `validation`/`escopo` e o seletor |
 | J52.12 | A tabela não é servida pelo PostgREST; duas organizações com o mesmo identificador não colidem; o motor só carrega o que é da organização do turno, ativo e consulta; versão publicada não troca de ferramentas | privilégio NENHUM a `anon`/`authenticated`, RLS sem policy, unique `(org, slug)`, cascade, trava de imutabilidade | **PASS (invariante, PGlite)** — `ferramentas-externas-do-agente.test.ts` (18 casos) |
-| J52.13 | Baseline: instalação do zero e reaplicação (atualização) | a 0549 aplica nas duas passadas | **PASS (PGlite, install)**; update: CI |
+| J52.13 | Baseline: instalação do zero e reaplicação (atualização) | a 0551 aplica nas duas passadas | **PASS (PGlite, install)**; update: CI |
 
 **Não coberto ainda:** (a) a prova pela tela em ambiente fresco estilo VPS, sem as chaves opcionais (exige Supabase
 local; esta máquina não tem Docker) — a spec está escrita e a prova em produção segue a receita de organização

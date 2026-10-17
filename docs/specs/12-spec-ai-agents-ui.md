@@ -197,6 +197,10 @@ Layout 2 colunas em desktop, stack em mobile.
 
 Na coluna das instruções, o formulário **"Como ele se apresenta"** (`PerfilGuiado.tsx`) vem antes do prompt: quem ele é, tom de voz (três cartões: formal, normal, descontraído), o que persegue, boas-vindas e idioma — tudo opcional. Um painel **"Ver como o agente recebe isto"** mostra o texto composto (a mesma `comporInstrucoes` do motor). As instruções livres e a **temperatura** (0 a 1; vazio = padrão do modelo) ficam no bloco **Avançado**, que abre sozinho para o agente sem perfil e fecha para quem tem. Agente novo nasce com tom "normal" e o idioma da tela. O diff de versões e o diálogo de publicar mostram o que mudou no perfil.
 
+### 3.2.0.1 Modelos por ramo e restringir assuntos (issue #92)
+
+Na **criação** (nunca na edição: trocar de modelo apagaria o que o dono configurou), uma galeria **"Comece por um modelo"** (`ModelosDoAgente.tsx`) oferece vendas, suporte e agendamento. Escolher um preenche nome (se ainda vazio), perfil, instruções livres e a lista sugerida de assuntos, **no idioma da tela** (`lib/ai/agents/modelos.ts`); tudo segue editável, e trocar de modelo substitui o que foi preenchido (a tela avisa). No `PerfilGuiado`, o bloco **"Restringir assuntos"** tem a chave, a lista (um assunto por linha, até 20) e a resposta para o que está fora; chave ligada com lista vazia mostra aviso e não restringe. O painel "Ver como o agente recebe isto" mostra a seção `## Assuntos permitidos` (a mesma `comporInstrucoes` do motor), e o diff de versões e a confirmação de publicar mostram a mudança da restrição.
+
 ### 3.2.1 Follow-up e retornos do agente
 
 Na edição da versão, a seção **Follow-up** expõe controles independentes:
@@ -736,7 +740,7 @@ executa o que não é consulta — três travas independentes.
 
 | Onde | O quê |
 |---|---|
-| `agent_external_tools` (0549) | `organization_id` (FK cascade), `name`, `slug` (único por organização; o modelo vê `ext_<slug>`; **não muda** quando o nome muda), `when_to_use`, `url`, `parameters` (jsonb `[{nome, tipo, descricao, obrigatorio}]`, até 10), `effect`, `active`, `signing_secret_encrypted` (`fn_encrypt_oauth`) + `signing_secret_last4`. **Server-side only**: RLS sem policy, sem grant a `anon`/`authenticated`. A tela vê só os 4 últimos |
+| `agent_external_tools` (0551) | `organization_id` (FK cascade), `name`, `slug` (único por organização; o modelo vê `ext_<slug>`; **não muda** quando o nome muda), `when_to_use`, `url`, `parameters` (jsonb `[{nome, tipo, descricao, obrigatorio}]`, até 10), `effect`, `active`, `signing_secret_encrypted` (`fn_encrypt_oauth`) + `signing_secret_last4`. **Server-side only**: RLS sem policy, sem grant a `anon`/`authenticated`. A tela vê só os 4 últimos |
 | `ai_agent_versions.external_tool_ids uuid[]` | quais ferramentas **esta versão** pode chamar. Dado da versão (rascunho, diff, histórico, desfazer) e coberto pela trava de imutabilidade. A existência, a organização e o efeito são conferidos no servidor (`validarEscopoDaVersao`); o teto de **27 capacidades** vale para `tool_ids` + `external_tool_ids` (`passaDoTetoDeCapacidades`) |
 | `agent_inbox_items.kind = 'external_tool_failed'` | a falha de uma chamada. Um aberto por ferramenta (o título leva o nome); destino geral: a tela das ferramentas |
 

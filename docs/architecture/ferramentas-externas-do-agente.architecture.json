@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Ferramentas externas do agente",
-    "subtitle": "O agente consulta outro sistema (estoque, planilha, ERP, Make, n8n) no meio da conversa — webhook de CONSULTA, assinado, pela rede segura única, com o resultado como dado e a falha na Central (migration 0549; issue #94, parte da #86)",
+    "subtitle": "O agente consulta outro sistema (estoque, planilha, ERP, Make, n8n) no meio da conversa — webhook de CONSULTA, assinado, pela rede segura única, com o resultado como dado e a falha na Central (migration 0551; issue #94, parte da #86)",
     "output": "ferramentas-externas-do-agente.html",
     "quality_profile": "standard"
   },

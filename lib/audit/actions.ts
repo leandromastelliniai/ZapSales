@@ -1020,7 +1020,7 @@ export const AUDIT_ACTIONS = [
   "ai.audio_reply_config_changed",
   "ai.audio_reply_credential_saved",
   "ai.audio_reply_credential_removed",
-  // Ferramentas externas do agente (#94, 0549, Agente de IA › Ferramentas externas):
+  // Ferramentas externas do agente (#94, 0551, Agente de IA › Ferramentas externas):
   // cadastro, edição (inclui ativar/desativar), nova chave de assinatura, remoção, o
   // teste real pelo botão da tela e cada chamada feita por um agente. O metadata diz
   // O QUE aconteceu (ferramenta, campos alterados, motivo, status, duração) — nunca a

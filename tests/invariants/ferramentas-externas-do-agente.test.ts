@@ -1,5 +1,5 @@
 /**
- * FERRAMENTAS EXTERNAS DO AGENTE — O CHÃO DE DADOS (migration 0549, issue #94).
+ * FERRAMENTAS EXTERNAS DO AGENTE — O CHÃO DE DADOS (migration 0551, issue #94).
  *
  * `agent_external_tools` guarda o webhook de consulta que o agente chama no meio da
  * conversa e a CHAVE DE ASSINATURA dele (cifrada). A anon key vai para o browser; se
@@ -72,7 +72,7 @@ describe("o PostgREST não serve as ferramentas externas", () => {
   it("a tabela EXISTE no baseline — controle positivo da sonda", () => {
     expect(
       sql(`select count(*) from information_schema.tables where table_schema = 'public' and table_name = '${TABELA}';`).trim(),
-      "a 0549 não chegou ao baseline — o kit self-host não cria a tabela",
+      "a 0551 não chegou ao baseline — o kit self-host não cria a tabela",
     ).toBe("1");
   });
 

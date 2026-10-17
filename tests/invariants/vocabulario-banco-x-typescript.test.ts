@@ -80,7 +80,7 @@ const PARES: Array<{
   {
     tabela: "agent_external_tools",
     coluna: "effect",
-    // lib/ai/ferramentas-externas/tipos.ts → EFEITOS_DA_FERRAMENTA (0549, ferramentas
+    // lib/ai/ferramentas-externas/tipos.ts → EFEITOS_DA_FERRAMENTA (0551, ferramentas
     // externas do agente, #94). Nasce com o par no mesmo commit da migration: um efeito
     // que entrasse só no banco seria uma linha que o Zod da leitura não reconhece (a
     // ferramenta cairia em "altera" por falha fechada e sumiria do seletor).
