@@ -196,7 +196,7 @@ export type ResultadoParaOAgente =
  * (isso é para o dono, na Central): carrega a ordem que evita o dano real, que é o
  * agente dizer ao cliente algo que a consulta não confirmou.
  */
-export function resultadoParaOAgente(_slug: string, r: ResultadoDaChamada): ResultadoParaOAgente {
+export function resultadoParaOAgente(r: ResultadoDaChamada): ResultadoParaOAgente {
   if (r.ok) {
     const teto = LIMITES_DA_CHAMADA.maxCaracteresParaOAgente;
     const passou = r.conteudo.length > teto;

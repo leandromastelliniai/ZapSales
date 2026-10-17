@@ -23,6 +23,7 @@ import { z } from "zod";
 import { chaveDaRequisicao, comIdempotencia } from "@/lib/api/idempotency";
 import { fail, ok } from "@/lib/api/wrappers";
 import { criarFerramentaSchema } from "@/lib/ai/ferramentas-externas/esquema";
+import { fraseDaRecusaDeEndereco } from "@/lib/ai/ferramentas-externas/tipos";
 import { criarFerramenta, listarFerramentas, type FerramentaExterna } from "@/lib/ai/ferramentas-externas/repositorio";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (recusa) {
     return fail(
       "validation_failed",
-      t("Este endereço não pode ser usado: endereços da rede interna, privada ou local são recusados por segurança."),
+      t(fraseDaRecusaDeEndereco(recusa)),
       422,
       { requestId, details: { url: recusa } },
     );

@@ -153,7 +153,7 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       tool_ids: v.tool_ids,
     });
     if (!escopo.ok) {
-      return fail("validation_failed", mensagemDoEscopo(escopo), 422, { requestId });
+      return fail("validation_failed", t(mensagemDoEscopo(escopo)), 422, { requestId });
     }
 
     const nextNumber = (maxRow?.version_number ?? 0) + 1;

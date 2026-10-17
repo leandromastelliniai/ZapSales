@@ -152,7 +152,7 @@ export async function montarFerramentasExternas(
               "Abra Ferramentas externas, confira o endereço e use «Testar» para ver o que o outro sistema responde.",
           });
         }
-        return resultadoParaOAgente(f.slug, resultado);
+        return resultadoParaOAgente(resultado);
       },
     });
   }

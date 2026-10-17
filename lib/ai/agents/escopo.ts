@@ -100,7 +100,7 @@ export function mensagemDoEscopo(r: Extract<ResultadoDoEscopo, { ok: false }>): 
     case "pipeline_ids":
       return `Um dos funis marcados não existe mais nesta organização (${r.ausentes.length}). Recarregue a página e marque de novo.`;
     case "external_tool_ids":
-      return `Uma das ferramentas externas marcadas não existe mais (${r.ausentes.length}). Recarregue a página e marque de novo.`;
+      return "Uma das ferramentas externas marcadas não existe mais. Recarregue a página e marque de novo.";
     case "external_tool_altera":
       return MOTIVO_DO_BLOQUEIO_DE_ALTERACAO;
     case "teto_de_capacidades":

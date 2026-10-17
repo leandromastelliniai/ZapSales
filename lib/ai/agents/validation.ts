@@ -15,6 +15,13 @@ import {
 import { VALID_TOOL_IDS } from "@/lib/mcp/tools/catalog";
 import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
 
+import { IDS_DE_PROVEDOR } from "@/lib/ai/pontos/provedores";
+import {
+  IDIOMAS_DO_AGENTE,
+  LIMITES_DO_PERFIL,
+  TONS_DO_AGENTE,
+} from "@/lib/ai/agents/perfil";
+
 /**
  * O teto de capacidades por agente vale para a SOMA: as do catálogo (`tool_ids`) e as
  * ferramentas externas. Uma regra, em UM lugar — a tela mostra o mesmo número que o
@@ -26,12 +33,6 @@ export function passaDoTetoDeCapacidades(
 ): boolean {
   return toolIds.length + (externalToolIds?.length ?? 0) > TETO_TOOLS_POR_AGENTE;
 }
-import { IDS_DE_PROVEDOR } from "@/lib/ai/pontos/provedores";
-import {
-  IDIOMAS_DO_AGENTE,
-  LIMITES_DO_PERFIL,
-  TONS_DO_AGENTE,
-} from "@/lib/ai/agents/perfil";
 
 /**
  * Derivado de `lib/ai/pontos/provedores.ts` (a lista única desde a 0127). Como

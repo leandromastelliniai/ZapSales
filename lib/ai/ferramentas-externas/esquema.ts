@@ -72,6 +72,9 @@ export const parametroSchema = z
   })
   .strict();
 
+/** A leitura DEFENSIVA do jsonb `parameters`: quem lê do banco usa esta (cadastro e motor). */
+export const parametrosLidos = z.array(parametroSchema);
+
 const parametrosSchema = z
   .array(parametroSchema)
   .max(LIMITES_DA_FERRAMENTA.parametros.max)

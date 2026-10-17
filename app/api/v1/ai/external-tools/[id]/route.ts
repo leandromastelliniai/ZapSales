@@ -15,6 +15,7 @@ import { type NextRequest } from "next/server";
 
 import { fail, ok } from "@/lib/api/wrappers";
 import { editarFerramentaSchema } from "@/lib/ai/ferramentas-externas/esquema";
+import { fraseDaRecusaDeEndereco } from "@/lib/ai/ferramentas-externas/tipos";
 import {
   apagarFerramenta,
   buscarFerramenta,
@@ -83,7 +84,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
     if (recusa) {
       return fail(
         "validation_failed",
-        t("Este endereço não pode ser usado: endereços da rede interna, privada ou local são recusados por segurança."),
+        t(fraseDaRecusaDeEndereco(recusa)),
         422,
         { requestId, details: { url: recusa } },
       );

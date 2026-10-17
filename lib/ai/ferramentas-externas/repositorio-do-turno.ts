@@ -8,16 +8,12 @@
  * ⚠️ Toda consulta filtra `organization_id`, e o id vem da LINHA do job (fonte
  * confiável), nunca de payload do modelo.
  */
-import { z } from "zod";
-
 import type { Queryable } from "@/lib/agent-engine/queue/queue";
 import { logger } from "@/lib/logger";
 
 import type { ResultadoDaChamada } from "./chamar";
-import { parametroSchema } from "./esquema";
+import { parametrosLidos } from "./esquema";
 import type { DependenciasDoTurnoExterno, FerramentaDoTurno } from "./turno";
-
-const parametrosLidos = z.array(parametroSchema);
 
 interface LinhaDoTurno {
   id: string;

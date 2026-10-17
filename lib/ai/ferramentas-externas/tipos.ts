@@ -105,3 +105,14 @@ export const FRASE_DA_FALHA: Record<MotivoDeFalha, string> = {
 
 /** O prefixo do nome que o agente enxerga. Separa a ferramenta externa das do catálogo. */
 export const PREFIXO_DO_NOME_NO_AGENTE = "ext_";
+
+/** A frase de uma recusa do endereço pela rede segura: a causa certa, não sempre "rede interna". */
+export function fraseDaRecusaDeEndereco(codigo: string): string {
+  if (codigo === "unsafe_url:dns_failed" || codigo === "unsafe_url:dns_empty") {
+    return "Não consegui encontrar este endereço: o nome não existe ou não responde. Confira se está escrito certo.";
+  }
+  if (codigo === "unsafe_url:https_required" || codigo === "unsafe_url:scheme" || codigo === "unsafe_url:invalid") {
+    return "Este endereço não é válido: informe o endereço completo, começando com https://.";
+  }
+  return "Este endereço não pode ser usado: endereços da rede interna, privada ou local são recusados por segurança.";
+}

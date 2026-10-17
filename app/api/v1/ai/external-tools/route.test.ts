@@ -150,6 +150,15 @@ describe("POST — cadastrar", () => {
     expect(deps.repo.criarFerramenta).not.toHaveBeenCalled();
   });
 
+  it("nome que não resolve diz isso — não acusa a rede interna", async () => {
+    deps.destino.mockResolvedValue("unsafe_url:dns_failed");
+    const res = await POST(req("POST", "/api/v1/ai/external-tools", { ...CORPO_VALIDO, url: "https://nao-existe.exemplo.com.br/x" }));
+    expect(res.status).toBe(422);
+    const mensagem = (await res.json()).error.message as string;
+    expect(mensagem).toMatch(/não consegui encontrar este endereço/i);
+    expect(mensagem).not.toMatch(/rede interna/);
+  });
+
   it("cifra do servidor indisponível: recusa com instrução, não grava chave em claro", async () => {
     deps.repo.criarFerramenta.mockResolvedValue({ ok: false, erro: "cifra_indisponivel" });
     const res = await POST(req("POST", "/api/v1/ai/external-tools", CORPO_VALIDO));

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type pg from "pg";
+import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
 import { agentMcpCreateSchema, type VersionInput } from "./validation";
 
 /** One record recipe for the REST/Supabase adapter and transactional setup. */
@@ -64,6 +65,7 @@ export async function createMcpAgentDraft(
   );
   if (new Set(sources.rows.map((r) => r.id)).size !== new Set(v.knowledge_source_ids).size)
     throw new Error("knowledge_scope_invalid");
+  if (v.tool_ids.length + v.external_tool_ids.length > TETO_TOOLS_POR_AGENTE) throw new Error("capability_ceiling_exceeded");
   // Ferramentas externas (#94): existem, são desta organização e são CONSULTAS. A mesma regra
   // da rota REST (`validarEscopoDaVersao`), aqui no caminho transacional em SQL puro.
   if (v.external_tool_ids.length > 0) {

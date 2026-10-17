@@ -125,7 +125,8 @@ export function VersionDiff({ versionA, versionB }: Props) {
     enabled: mudouExternas,
     staleTime: 30_000,
   });
-  const nomeDaExterna = (id: string) => nomesDasExternas.data?.get(id) ?? t("Ferramenta externa removida");
+  const nomeDaExterna = (id: string) =>
+    nomesDasExternas.data ? (nomesDasExternas.data.get(id) ?? t("Ferramenta externa removida")) : "…";
   const handoffKw = diffArr(versionA.handoff_keywords ?? [], versionB.handoff_keywords ?? []);
   const followupFlows = diffArr(
     versionA.followup?.flow_pointer_ids ?? [],

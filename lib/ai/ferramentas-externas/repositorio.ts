@@ -12,13 +12,12 @@
 import { randomBytes } from "node:crypto";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { z } from "zod";
 
 import { logger } from "@/lib/logger";
 import { decryptWebhookSecret, encryptWebhookSecret } from "@/lib/webhooks/secrets";
 
 import {
-  parametroSchema,
+  parametrosLidos,
   nomeNoAgente,
   slugDaFerramenta,
   type CriarFerramentaInput,
@@ -61,8 +60,6 @@ interface LinhaPublica {
   created_at: string;
   updated_at: string;
 }
-
-const parametrosLidos = z.array(parametroSchema);
 
 export function paraFerramenta(l: LinhaPublica): FerramentaExterna {
   // Leitura DEFENSIVA do jsonb: linha escrita por fora da tela com formato estranho
