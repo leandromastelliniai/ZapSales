@@ -1,5 +1,5 @@
 -- manifest: **Treino do agente por site (issue #93, parte da #86).** Tabela `ai_knowledge_source_pages` (uma linha por página de uma fonte do tipo `site`: endereço, estado `pendente`/`lida`/`falhou`, motivo, título, `content_hash`, trechos) com RLS por organização, e o CHECK de `ai_knowledge_sources.source_type` volta com o vocabulário fechado `faq|documento|conversas|catalogo|site` (nomes legados traduzidos antes; validação auto-curativa). Fontes existentes não mudam.
--- 0549 — O agente aprende com um SITE: o estado de cada página e o vocabulário de `source_type`.
+-- 0550 — O agente aprende com um SITE: o estado de cada página e o vocabulário de `source_type`.
 --
 -- Uma fonte do tipo `site` guarda uma LISTA de endereços (https, até 20 por padrão).
 -- Cada endereço é uma linha em `ai_knowledge_source_pages`, com o que a tela precisa
@@ -105,4 +105,4 @@ exception when others then
 end $$;
 
 comment on column public.ai_knowledge_sources.source_type is
-  'Vocabulário FECHADO (CHECK da 0549): faq | documento | conversas | catalogo | site. A lista que a tela oferece vive em lib/ai/rag/tipos-de-fonte.ts, vigiada por tests/invariants/vocabulario-banco-x-typescript.test.ts.';
+  'Vocabulário FECHADO (CHECK da 0550): faq | documento | conversas | catalogo | site. A lista que a tela oferece vive em lib/ai/rag/tipos-de-fonte.ts, vigiada por tests/invariants/vocabulario-banco-x-typescript.test.ts.';

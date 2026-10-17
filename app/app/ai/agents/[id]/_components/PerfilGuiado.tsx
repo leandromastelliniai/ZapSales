@@ -12,6 +12,7 @@
  */
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -24,6 +25,7 @@ import { useT } from "@/hooks/i18n/useT";
 import {
   IDIOMAS_DO_AGENTE,
   LIMITES_DO_PERFIL,
+  LIMITES_DOS_TEMAS,
   TONS_DO_AGENTE,
   comporInstrucoes,
   perfilPreenchido,
@@ -40,6 +42,11 @@ export interface PerfilDoFormulario {
   objetivo: string;
   boasVindas: string;
   idioma: IdiomaDoAgente | "";
+  /** Restringir temas (#92). */
+  restringirTemas: boolean;
+  /** Um assunto por linha: é o que o dono digita; o contrato é uma lista. */
+  temasPermitidos: string;
+  respostaForaDoTema: string;
 }
 
 /** Do formulário para o contrato (`""` → `null`). Um ponto só. */
@@ -51,7 +58,18 @@ export function perfilDoContrato(f: PerfilDoFormulario): PerfilDoAgente {
     objetivo: texto(f.objetivo),
     boasVindas: texto(f.boasVindas),
     idioma: f.idioma === "" ? null : f.idioma,
+    restringirTemas: f.restringirTemas,
+    temasPermitidos: assuntosDoTexto(f.temasPermitidos),
+    respostaForaDoTema: texto(f.respostaForaDoTema),
   };
+}
+
+/** Do campo de texto (um assunto por linha) para a lista do contrato. */
+export function assuntosDoTexto(bruto: string): string[] {
+  return bruto
+    .split(/\r?\n/)
+    .map((linha) => linha.trim())
+    .filter((linha) => linha !== "");
 }
 
 const NOME_DO_IDIOMA = Object.fromEntries(
@@ -206,6 +224,65 @@ export function PerfilGuiado({ value, onChange, instrucoesLivres, disabled, erro
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2 rounded-md border p-3" data-testid="restringir-temas">
+        <div className="flex items-center gap-2">
+          <Switch
+            id="perfil_restringir_temas"
+            checked={value.restringirTemas}
+            onCheckedChange={(v) => onChange({ restringirTemas: v })}
+            disabled={disabled}
+          />
+          <Label htmlFor="perfil_restringir_temas">{t("Restringir assuntos")}</Label>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {t(
+            "Ligado, o agente só conversa sobre os assuntos da lista e responde a mensagem abaixo para o resto. Pedir um atendente e pedir para parar de receber mensagens nunca contam como fora do assunto.",
+          )}
+        </p>
+        <div className="space-y-1">
+          <Label htmlFor="perfil_temas">{t("Assuntos permitidos (um por linha)")}</Label>
+          <Textarea
+            id="perfil_temas"
+            value={value.temasPermitidos}
+            onChange={(e) => onChange({ temasPermitidos: e.target.value })}
+            disabled={disabled}
+            rows={4}
+            placeholder={t("Ex.: Horários e endereço\nValores de consulta\nComo agendar")}
+            aria-invalid={!!erros?.temasPermitidos}
+          />
+          {value.restringirTemas && assuntosDoTexto(value.temasPermitidos).length === 0 ? (
+            <p className="text-xs text-warning-fg" data-testid="restringir-temas-vazio">
+              {t("Escreva ao menos um assunto: com a lista vazia, nada é restringido.")}
+            </p>
+          ) : null}
+          <ContadorETexto
+            atual={assuntosDoTexto(value.temasPermitidos).length}
+            limite={LIMITES_DOS_TEMAS.assuntos}
+            erro={erros?.temasPermitidos}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="perfil_resposta_fora">{t("Resposta para o que está fora")}</Label>
+          <Textarea
+            id="perfil_resposta_fora"
+            value={value.respostaForaDoTema}
+            onChange={(e) => onChange({ respostaForaDoTema: e.target.value })}
+            disabled={disabled}
+            rows={2}
+            placeholder={t("Ex.: Posso ajudar só com horários e valores. Quer falar com uma pessoa?")}
+            aria-invalid={!!erros?.respostaForaDoTema}
+          />
+          <p className="text-xs text-muted-foreground">
+            {t("Em branco, o agente recusa com educação, no tom dele.")}
+          </p>
+          <ContadorETexto
+            atual={value.respostaForaDoTema.trim().length}
+            limite={LIMITES_DOS_TEMAS.respostaFora}
+            erro={erros?.respostaForaDoTema}
+          />
+        </div>
       </div>
 
       <details className="rounded-md border border-dashed p-3" data-testid="perfil-como-recebe">

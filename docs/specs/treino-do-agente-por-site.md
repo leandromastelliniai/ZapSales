@@ -92,7 +92,7 @@ Códigos de falha: `endereco_invalido`, `endereco_recusado`, `tempo_esgotado`, `
 
 Valor ausente, zero, negativo ou ilegível volta ao padrão (`limitesDoSite`) e nunca derruba o app.
 
-## Banco (migration 0549)
+## Banco (migration 0550)
 
 - `ai_knowledge_source_pages`: `organization_id`, RLS (leitura só para membros), sem privilégio de escrita
   para `anon`/`authenticated` — a escrita é do servidor.

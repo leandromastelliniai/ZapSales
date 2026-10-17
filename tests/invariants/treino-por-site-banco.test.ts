@@ -6,7 +6,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { countAs, sql } from "./gov-helpers";
 
 /**
- * TREINO DO AGENTE POR SITE — o que o banco garante (migration 0549, issue #93).
+ * TREINO DO AGENTE POR SITE — o que o banco garante (migration 0550, issue #93).
  *
  * Contra um Postgres real com o `baseline.sql` aplicado, que é o arquivo que o
  * self-hoster recebe. Cada garantia vem em PAR (o que passa E o que é barrado): um
@@ -32,7 +32,7 @@ const FONTE_B = "e0e0e0e0-2222-4000-8000-00000000000b";
 const FONTE_DESCARTAVEL = "e0e0e0e0-2222-4000-8000-00000000000c";
 
 const MIGRATION = readFileSync(
-  join(process.cwd(), "supabase/migrations/20261017150000_0549_treino_do_agente_por_site.sql"),
+  join(process.cwd(), "supabase/migrations/20261017150000_0550_treino_do_agente_por_site.sql"),
   "utf8",
 );
 
@@ -102,7 +102,7 @@ describe("ai_knowledge_sources.source_type — o vocabulário fechado", () => {
   });
 });
 
-describe("a migration 0549 re-aplicada sobre dado velho", () => {
+describe("a migration 0550 re-aplicada sobre dado velho", () => {
   it("traduz o nome legado e recoloca a constraint (clone que parou no meio do update)", () => {
     sql(`
       alter table public.ai_knowledge_sources drop constraint if exists ai_knowledge_sources_source_type_check;

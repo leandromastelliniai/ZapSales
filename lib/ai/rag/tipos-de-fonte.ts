@@ -17,7 +17,7 @@
  *    na própria linha da fonte, e não com uma violação de constraint que o dono
  *    do negócio leria como bug do produto.
  *
- * ## A 0549 (issue #93) devolveu o CHECK
+ * ## A 0550 (issue #93) devolveu o CHECK
  *
  * Com o tipo `site` o vocabulário voltou a ser FECHADO no banco
  * (`ai_knowledge_sources_source_type_check`: faq | documento | conversas | catalogo | site),
@@ -115,7 +115,7 @@ export type TipoDeFonteId = (typeof TIPOS_DE_FONTE)[number]["id"];
  *
  * É uma LITERAL de propósito, e não um `.map` sobre `TIPOS_DE_FONTE`: o invariante
  * `tests/invariants/vocabulario-banco-x-typescript.test.ts` lê os valores do fonte
- * para compará-los com o CHECK de `ai_knowledge_sources.source_type` (0549). O teste
+ * para compará-los com o CHECK de `ai_knowledge_sources.source_type` (0550). O teste
  * `tipos-de-fonte.test.ts` e o `satisfies` abaixo garantem que as duas listas, aqui
  * dentro, são a mesma.
  */

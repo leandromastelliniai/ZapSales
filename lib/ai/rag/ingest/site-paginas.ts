@@ -28,7 +28,7 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 type Admin = ReturnType<typeof createAdminClient>;
 
 /**
- * O vocabulário de `ai_knowledge_source_pages.status` (CHECK da 0549, par vigiado em
+ * O vocabulário de `ai_knowledge_source_pages.status` (CHECK da 0550, par vigiado em
  * `tests/invariants/vocabulario-banco-x-typescript.test.ts`).
  */
 export const ESTADOS_DA_PAGINA = ["pendente", "lida", "falhou"] as const;

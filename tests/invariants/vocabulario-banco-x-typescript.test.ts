@@ -365,7 +365,7 @@ const PARES: Array<{
     coluna: "source_type",
     // lib/ai/rag/tipos-de-fonte.ts → IDS_DE_TIPO_DE_FONTE (tupla literal `as const`).
     // A 0181 tinha tirado o CHECK ("vocabulário aberto") e este par ficava de fora de
-    // propósito; a 0549 (#93, treino por site) o devolveu — o vocabulário é fechado de novo,
+    // propósito; a 0550 (#93, treino por site) o devolveu — o vocabulário é fechado de novo,
     // e nasce com o par no MESMO commit: tipo só no banco seria material que nenhuma tela
     // oferece nem o indexador sabe ler; só no TypeScript, um 23514 no cadastro.
     arquivo: "lib/ai/rag/tipos-de-fonte.ts",
@@ -374,7 +374,7 @@ const PARES: Array<{
   {
     tabela: "ai_knowledge_source_pages",
     coluna: "status",
-    // lib/ai/rag/ingest/site-paginas.ts → ESTADOS_DA_PAGINA. Nasce com a 0549.
+    // lib/ai/rag/ingest/site-paginas.ts → ESTADOS_DA_PAGINA. Nasce com a 0550.
     arquivo: "lib/ai/rag/ingest/site-paginas.ts",
     simbolo: "ESTADOS_DA_PAGINA",
   },
