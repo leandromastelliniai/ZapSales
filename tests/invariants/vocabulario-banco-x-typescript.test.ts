@@ -361,6 +361,24 @@ const PARES: Array<{
     simbolo: "AiAgentChannel",
   },
   {
+    tabela: "ai_knowledge_sources",
+    coluna: "source_type",
+    // lib/ai/rag/tipos-de-fonte.ts → IDS_DE_TIPO_DE_FONTE (tupla literal `as const`).
+    // A 0181 tinha tirado o CHECK ("vocabulário aberto") e este par ficava de fora de
+    // propósito; a 0550 (#93, treino por site) o devolveu — o vocabulário é fechado de novo,
+    // e nasce com o par no MESMO commit: tipo só no banco seria material que nenhuma tela
+    // oferece nem o indexador sabe ler; só no TypeScript, um 23514 no cadastro.
+    arquivo: "lib/ai/rag/tipos-de-fonte.ts",
+    simbolo: "IDS_DE_TIPO_DE_FONTE",
+  },
+  {
+    tabela: "ai_knowledge_source_pages",
+    coluna: "status",
+    // lib/ai/rag/ingest/site-paginas.ts → ESTADOS_DA_PAGINA. Nasce com a 0550.
+    arquivo: "lib/ai/rag/ingest/site-paginas.ts",
+    simbolo: "ESTADOS_DA_PAGINA",
+  },
+  {
     tabela: "agent_case_chat_messages",
     coluna: "author_kind",
     // lib/ai/conversa-do-caso/vocabulario.ts → CASE_CHAT_AUTHOR_KINDS (tupla

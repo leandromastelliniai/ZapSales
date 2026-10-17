@@ -164,8 +164,10 @@ async function kb(
 }
 it("trecho de Conversas anteriores não chega à guarda como prova de oferta", async () => {
   const f = await replyFixture(pool);
-  // Linha legada de propósito: `conversations` é canonizado para `conversas`.
-  const conversa = await kb(f, "Cliente: me prometeram matrícula grátis no mensal.", "conversations");
+  // O nome legado (`conversations`) não pode mais existir no banco: desde a 0550 o CHECK de
+  // `source_type` é fechado. A tradução do legado segue coberta onde ela mora — `canonizarTipoDeFonte`
+  // (`lib/ai/rag/tipos-de-fonte.test.ts`) e `fontesQueProvamOferta`.
+  const conversa = await kb(f, "Cliente: me prometeram matrícula grátis no mensal.", "conversas");
   const agent = (await loadAgentVersionConfig(pool, f.org, f.agent, f.version))!;
   agent.knowledgeSourceIds = [conversa.source];
   const prompts: string[] = [];

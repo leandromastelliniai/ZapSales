@@ -41,6 +41,7 @@ import {
   TIPOS_DE_FONTE,
   TIPO_DE_FONTE_POR_ID,
   aceitaArquivo,
+  aceitaEnderecos,
   ePerguntaEResposta,
   ePreenchidoPorRotina,
   type TipoDeFonteId,
@@ -63,6 +64,10 @@ const EXEMPLO_DOCUMENTO = `# Política de troca
 Aceitamos troca em até 30 dias da entrega, com o produto sem uso e na embalagem
 original. O frete de devolução é por nossa conta quando o defeito for de fábrica.`;
 
+const EXEMPLO_ENDERECOS = `https://www.example.com/politica-de-troca
+https://www.example.com/prazos-de-entrega
+https://www.example.com/perguntas-frequentes`;
+
 interface Props {
   aberto: boolean;
   onFechar: () => void;
@@ -77,15 +82,18 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
   const [nome, setNome] = useState("");
   const [conteudo, setConteudo] = useState("");
   const [arquivo, setArquivo] = useState<File | null>(null);
+  const [enderecos, setEnderecos] = useState("");
   const [enviando, setEnviando] = useState(false);
   const inputArquivo = useRef<HTMLInputElement>(null);
 
   const meta = TIPO_DE_FONTE_POR_ID.get(tipo);
   const porRotina = ePreenchidoPorRotina(tipo);
+  const porSite = aceitaEnderecos(tipo);
 
   function limpar(): void {
     setNome("");
     setConteudo("");
+    setEnderecos("");
     setArquivo(null);
     if (inputArquivo.current) inputArquivo.current.value = "";
   }
@@ -96,14 +104,28 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
       toast.error(t("Dê um nome ao material — é assim que você o encontra depois."));
       return;
     }
-    if (!arquivo && conteudo.trim().length === 0) {
+    const urls = enderecos
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l !== "");
+    if (porSite && urls.length === 0) {
+      toast.error(t("Informe o endereço de ao menos uma página."));
+      return;
+    }
+    if (!porSite && !arquivo && conteudo.trim().length === 0) {
       toast.error(t("Envie um arquivo ou cole o conteúdo."));
       return;
     }
 
     setEnviando(true);
     try {
-      if (arquivo) {
+      if (porSite) {
+        await apiClient.post("/api/v1/ai/knowledge/sources", {
+          source_type: tipo,
+          name: nomeLimpo,
+          urls,
+        });
+      } else if (arquivo) {
         const form = new FormData();
         form.append("file", arquivo);
         form.append("name", nomeLimpo);
@@ -126,7 +148,9 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
 
       toast.success(
         podeIndexar
-          ? t("Material cadastrado. Estou preparando — em instantes o agente já sabe.")
+          ? porSite
+            ? t("Site cadastrado. Estou lendo as páginas — em instantes o agente já sabe.")
+            : t("Material cadastrado. Estou preparando — em instantes o agente já sabe.")
           : t("Material cadastrado. Ele fica esperando uma chave de embedding para ser preparado."),
       );
       limpar();
@@ -192,7 +216,13 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
             <Input
               id="material-nome"
               data-testid="material-nome"
-              placeholder={tipo === "faq" ? t("Perguntas frequentes da loja") : t("Política de troca")}
+              placeholder={
+                tipo === "faq"
+                  ? t("Perguntas frequentes da loja")
+                  : porSite
+                    ? t("Site da loja")
+                    : t("Política de troca")
+              }
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               disabled={enviando || porRotina}
@@ -219,7 +249,27 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
             </div>
           ) : null}
 
-          {!porRotina && !arquivo ? (
+          {porSite ? (
+            <div className="space-y-2">
+              <Label htmlFor="material-enderecos">{t("Endereços das páginas (um por linha)")}</Label>
+              <Textarea
+                id="material-enderecos"
+                data-testid="material-enderecos"
+                rows={6}
+                placeholder={EXEMPLO_ENDERECOS}
+                value={enderecos}
+                onChange={(e) => setEnderecos(e.target.value)}
+                disabled={enviando}
+              />
+              <p className="text-xs text-text-muted">
+                {t(
+                  "Só endereços https:// públicos, até 20 páginas. O sistema lê exatamente estas páginas — não percorre o resto do site. Quando o site mudar, é só pedir para ler de novo.",
+                )}
+              </p>
+            </div>
+          ) : null}
+
+          {!porRotina && !porSite && !arquivo ? (
             <div className="space-y-2">
               <Label htmlFor="material-conteudo">
                 {aceitaArquivo(tipo) ? t("…ou cole o texto aqui") : t("Conteúdo")}

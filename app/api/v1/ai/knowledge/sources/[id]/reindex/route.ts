@@ -20,6 +20,8 @@ import { requireRole } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { audit } from "@/lib/audit";
+import { aceitaEnderecos, canonizarTipoDeFonte } from "@/lib/ai/rag/tipos-de-fonte";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +115,19 @@ export async function POST(
 
   if (emitErr) {
     console.warn("[ai-knowledge-reindex] emit_event failed (non-blocking):", emitErr.message);
+  }
+
+  // O re-treino de um SITE é a única coisa que dispara leitura de rede: fica na auditoria.
+  const tipo = canonizarTipoDeFonte(ksRow.source_type);
+  if (tipo !== null && aceitaEnderecos(tipo)) {
+    void audit({
+      action: "ai.knowledge_site_retrained",
+      actorUserId: authz.user.id,
+      organizationId: activeOrg.orgId,
+      resourceType: "ai_knowledge_source",
+      resourceId: id,
+      requestId,
+    });
   }
 
   return ok({ id, queued: true as const, agent_id: ksRow.agent_id }, { requestId });

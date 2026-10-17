@@ -35,6 +35,21 @@ export interface SourceRow {
   updated_at: string;
 }
 
+/** O estado de uma página de uma fonte do tipo site (`GET …/sources/:id/paginas`). */
+export interface PaginaDoSiteRow {
+  id: string;
+  url: string;
+  position: number;
+  status: "pendente" | "lida" | "falhou";
+  error_code: string | null;
+  error_message: string | null;
+  title: string | null;
+  content_hash: string | null;
+  chunks_count: number;
+  last_read_at: string | null;
+  last_changed_at: string | null;
+}
+
 interface ListResponse {
   data: SourceRow[];
 }
@@ -158,6 +173,51 @@ export function useArquivarSource() {
     },
     onError: (err) => showApiError(err),
     onSettled: () => {
+      qc.invalidateQueries({ queryKey: sourcesQueryKey() });
+    },
+  });
+}
+
+export const paginasDoSiteQueryKey = (sourceId: string) =>
+  ["ai", "knowledge", "sources", sourceId, "paginas"] as const;
+
+/** As páginas de um material do tipo site, com o estado de cada uma. */
+export function usePaginasDoSite(sourceId: string, enabled = true) {
+  return useQuery({
+    queryKey: paginasDoSiteQueryKey(sourceId),
+    queryFn: async () => {
+      const res = await apiClient.get<{ data: PaginaDoSiteRow[] }>(
+        `/api/v1/ai/knowledge/sources/${sourceId}/paginas`,
+      );
+      return res.data ?? [];
+    },
+    enabled,
+  });
+}
+
+/** Troca a lista de endereços do site (e dispara a leitura das páginas novas). */
+export function useSalvarPaginasDoSite(sourceId: string) {
+  const t = useT();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationKey: ["ai", "knowledge", "sources", sourceId, "paginas", "salvar"],
+    mutationFn: async (urls: string[]) => {
+      const res = await apiClient.patch<{ data: { pagina_lista_mudou?: boolean } }>(
+        `/api/v1/ai/knowledge/sources/${sourceId}`,
+        { urls },
+      );
+      return res.data;
+    },
+    onSuccess: (resultado) => {
+      toast.success(
+        resultado?.pagina_lista_mudou === false
+          ? t("A lista é a mesma — nada foi lido de novo. Para reler o site, toque em “Ler o site de novo”.")
+          : t("Endereços salvos. Estou lendo as páginas — em instantes o agente já sabe."),
+      );
+    },
+    onError: (err) => showApiError(err),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: paginasDoSiteQueryKey(sourceId) });
       qc.invalidateQueries({ queryKey: sourcesQueryKey() });
     },
   });
