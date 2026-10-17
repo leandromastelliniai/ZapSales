@@ -38,8 +38,11 @@ import type { Idioma } from "@/lib/i18n/idiomas";
 import {
   IDIOMAS_DO_AGENTE,
   LIMITES_DO_PERFIL,
+  LIMITES_DOS_TEMAS,
   perfilPreenchido,
+  type IdiomaDoAgente,
 } from "@/lib/ai/agents/perfil";
+import { aplicarModelo, type IdDoModelo } from "@/lib/ai/agents/modelos";
 import Link from "next/link";
 
 import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
@@ -67,9 +70,11 @@ import { PublishConfirmDialog } from "./PublishConfirmDialog";
 import { ComandosDoCelular } from "./ComandosDoCelular";
 import {
   PerfilGuiado,
+  assuntosDoTexto,
   perfilDoContrato,
   type PerfilDoFormulario,
 } from "./PerfilGuiado";
+import { ModelosDoAgente } from "./ModelosDoAgente";
 import {
   saveAgentDraftAction,
   publishAgentAction,
@@ -194,6 +199,14 @@ interface FormState {
   profile_objective: string;
   profile_welcome: string;
   profile_language: PerfilDoFormulario["idioma"];
+  /**
+   * Restringir temas (#92). `allowed_topics` é o TEXTO do campo (um assunto por
+   * linha) e vira lista só em `toVersionPayload`; a chave plana com o nome da
+   * coluna é o que a cerca de payload exige.
+   */
+  restrict_topics: boolean;
+  allowed_topics: string;
+  off_topic_reply: string;
   /** Temperatura (0 a 1). `null` = padrão do modelo. Campo avançado. */
   temperature: number | null;
   tool_ids: string[];
@@ -314,6 +327,9 @@ export function buildState(args: {
     profile_objective: version?.profile_objective ?? "",
     profile_welcome: version?.profile_welcome ?? "",
     profile_language: version ? (version.profile_language ?? "") : agent ? "" : idiomaInicial,
+    restrict_topics: version?.restrict_topics ?? false,
+    allowed_topics: (version?.allowed_topics ?? []).join("\n"),
+    off_topic_reply: version?.off_topic_reply ?? "",
     temperature: version?.temperature ?? null,
     tool_ids: version?.tool_ids ?? [],
     trigger_config: (version?.trigger_config as unknown as TriggerValue) ?? DEFAULT_TRIGGER,
@@ -383,6 +399,9 @@ function perfilDoFormulario(s: FormState): PerfilDoFormulario {
     objetivo: s.profile_objective,
     boasVindas: s.profile_welcome,
     idioma: s.profile_language,
+    restringirTemas: s.restrict_topics,
+    temasPermitidos: s.allowed_topics,
+    respostaForaDoTema: s.off_topic_reply,
   };
 }
 
@@ -396,6 +415,9 @@ function toVersionPayload(s: FormState) {
     profile_objective: perfil.objetivo,
     profile_welcome: perfil.boasVindas,
     profile_language: perfil.idioma,
+    restrict_topics: perfil.restringirTemas,
+    allowed_topics: perfil.temasPermitidos,
+    off_topic_reply: perfil.respostaForaDoTema,
     temperature: s.temperature,
     provider: s.provider,
     model: s.model,
@@ -468,6 +490,12 @@ export function AgentForm(props: Props) {
    * que salvou um e não o outro.
    */
   const [papel, setPapel] = React.useState<"conversa" | "operacao" | "seguranca">("conversa");
+  /** O ramo escolhido na galeria (#92), só para marcar o card. */
+  const [modeloEscolhido, setModeloEscolhido] = React.useState<IdDoModelo | null>(null);
+  /** O modelo vem no idioma da tela de quem cria; idioma sem modelo cai em português. */
+  const idiomaDoModelo: IdiomaDoAgente = (IDIOMAS_DO_AGENTE as readonly string[]).includes(idiomaDaTela)
+    ? (idiomaDaTela as IdiomaDoAgente)
+    : "pt-BR";
   /**
    * O modo avançado (instruções livres + temperatura). Abre sozinho para quem NÃO
    * tem perfil — o agente que já existia vive nas instruções livres, e escondê-las
@@ -542,6 +570,14 @@ export function AgentForm(props: Props) {
       if (perfilDoFormulario(form)[campo].trim().length > limite)
         errors[chave] = `${t("Pode ter até")} ${limite} ${t("caracteres.")}`;
     }
+    // Restringir temas: as mesmas réguas do servidor (`LIMITES_DOS_TEMAS`).
+    const assuntos = assuntosDoTexto(form.allowed_topics);
+    if (assuntos.length > LIMITES_DOS_TEMAS.assuntos)
+      errors.allowed_topics = `${t("No máximo")} ${LIMITES_DOS_TEMAS.assuntos} ${t("assuntos.")}`;
+    else if (assuntos.some((a) => a.length > LIMITES_DOS_TEMAS.assunto))
+      errors.allowed_topics = `${t("Cada assunto pode ter até")} ${LIMITES_DOS_TEMAS.assunto} ${t("caracteres.")}`;
+    if (form.off_topic_reply.trim().length > LIMITES_DOS_TEMAS.respostaFora)
+      errors.off_topic_reply = `${t("Pode ter até")} ${LIMITES_DOS_TEMAS.respostaFora} ${t("caracteres.")}`;
     if (form.temperature !== null && (form.temperature < 0 || form.temperature > 1))
       errors.temperature = t("A temperatura vai de 0 a 1.");
     if (!form.model) errors.model = t("Escolha o modelo de inteligência artificial.");
@@ -900,6 +936,33 @@ export function AgentForm(props: Props) {
         />
       ) : null}
 
+      {/* Galeria de modelos por ramo (#92): só na criação — num agente que já existe,
+          trocar de modelo apagaria o que o dono configurou. */}
+      {!isEdit && papel === "conversa" ? (
+        <ModelosDoAgente
+          idioma={idiomaDoModelo}
+          escolhido={modeloEscolhido}
+          onEscolher={(id) => {
+            const campos = aplicarModelo(id, idiomaDoModelo);
+            setModeloEscolhido(id);
+            patch({
+              // O nome só é sugerido se o dono ainda não digitou o dele.
+              ...(form.name.trim() === "" ? { name: campos.name } : {}),
+              system_prompt: campos.system_prompt,
+              profile_persona: campos.profile_persona,
+              profile_tone: campos.profile_tone,
+              profile_objective: campos.profile_objective,
+              profile_welcome: campos.profile_welcome,
+              profile_language: campos.profile_language,
+              restrict_topics: campos.restrict_topics,
+              allowed_topics: campos.allowed_topics.join("\n"),
+              off_topic_reply: campos.off_topic_reply,
+            });
+          }}
+          disabled={disabled}
+        />
+      ) : null}
+
       {/* Two-column grid */}
       <div className={papel === "conversa" ? "grid grid-cols-1 gap-4 lg:grid-cols-2" : "hidden"}>
         {/* COLUMN 1 */}
@@ -1217,6 +1280,11 @@ export function AgentForm(props: Props) {
                 ...(parte.objetivo !== undefined ? { profile_objective: parte.objetivo } : {}),
                 ...(parte.boasVindas !== undefined ? { profile_welcome: parte.boasVindas } : {}),
                 ...(parte.idioma !== undefined ? { profile_language: parte.idioma } : {}),
+                ...(parte.restringirTemas !== undefined ? { restrict_topics: parte.restringirTemas } : {}),
+                ...(parte.temasPermitidos !== undefined ? { allowed_topics: parte.temasPermitidos } : {}),
+                ...(parte.respostaForaDoTema !== undefined
+                  ? { off_topic_reply: parte.respostaForaDoTema }
+                  : {}),
               })
             }
             instrucoesLivres={form.system_prompt}
@@ -1225,6 +1293,8 @@ export function AgentForm(props: Props) {
               persona: validation.profile_persona,
               objetivo: validation.profile_objective,
               boasVindas: validation.profile_welcome,
+              temasPermitidos: validation.allowed_topics,
+              respostaForaDoTema: validation.off_topic_reply,
             }}
           />
 

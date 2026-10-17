@@ -24,7 +24,7 @@ export const DUPLICATE_AGENT_COLUMNS =
  * basta, se o INSERT não a escreve a cópia nasce com o default do banco.
  */
 export const DUPLICATE_VERSION_COLUMNS =
-  "id, organization_id, agent_id, version_number, system_prompt, provider, model, credential_id, tool_ids, trigger_config, channel_session_id, max_steps, token_budget, cost_budget_cents, history_message_window, history_token_window, handoff_keywords, handoff_tool_enabled, proposal_ai_draft_enabled, cases_enabled, split_messages, split_max_chars, followup, operator_enabled, operator_model, operator_tool_ids, status, published_at, superseded_at, created_at, created_by,pipeline_ids,knowledge_source_ids,provisioning_origin,inbound_debounce_ms,profile_persona,profile_tone,profile_objective,profile_welcome,profile_language,temperature,audio_reply_enabled,audio_reply_voice_id,audio_reply_model_id";
+  "id, organization_id, agent_id, version_number, system_prompt, provider, model, credential_id, tool_ids, trigger_config, channel_session_id, max_steps, token_budget, cost_budget_cents, history_message_window, history_token_window, handoff_keywords, handoff_tool_enabled, proposal_ai_draft_enabled, cases_enabled, split_messages, split_max_chars, followup, operator_enabled, operator_model, operator_tool_ids, status, published_at, superseded_at, created_at, created_by,pipeline_ids,knowledge_source_ids,provisioning_origin,inbound_debounce_ms,profile_persona,profile_tone,profile_objective,profile_welcome,profile_language,temperature,audio_reply_enabled,audio_reply_voice_id,audio_reply_model_id,restrict_topics,allowed_topics,off_topic_reply";
 
 export type DuplicateAgentError =
   | "not_found"
@@ -97,6 +97,10 @@ export function versionPayloadFrom(src: Record<string, unknown>) {
     profile_welcome: src.profile_welcome ?? null,
     profile_language: src.profile_language ?? null,
     temperature: src.temperature ?? null,
+    // Restringir temas (0549): a cópia leva a restrição inteira.
+    restrict_topics: src.restrict_topics ?? false,
+    allowed_topics: src.allowed_topics ?? [],
+    off_topic_reply: src.off_topic_reply ?? null,
     followup: src.followup,
     // ESCOPO. As duas faltavam — `pipeline_ids` desde a 0125, e o cabeçalho
     // deste arquivo já mandava ("coluna nova entra aqui E em

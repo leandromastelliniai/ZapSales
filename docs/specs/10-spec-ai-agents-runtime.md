@@ -211,6 +211,22 @@ Seis colunas **nullable** em `ai_agent_versions`, aditivas e sem backfill — `N
 - **Temperatura**: `RunModelCallInput.temperature` vence `organizations.settings.llm.params.temperature`; `NULL` herda a da organização e, sem ela, o padrão do modelo. Chega às chamadas que falam em nome do agente (turno, fechamento do turno, rascunho assistido, abordagem de formulário). `ai_agents.config.temperature` — que nenhum motor lia — saiu: o valor tem um lugar só. Faixa 0–1 (a que todos os provedores aceitam).
 - Prova: `tests/invariants/perfil-guiado-do-agente-no-turno.test.ts` (versão publicada → turno, modelo falso) e `lib/ai/agents/perfil.test.ts`.
 
+### 3.2.2 Restringir temas (migration 0549, issue #92)
+
+Três colunas em `ai_agent_versions`, aditivas e **sem backfill** — a chave nasce `false`, a lista vazia e a resposta `NULL`, que o motor lê como "sem restrição":
+
+| Coluna | Tipo | Papel |
+|---|---|---|
+| `restrict_topics` | `boolean not null default false` | a chave por agente |
+| `allowed_topics` | `text[] not null default '{}'`, CHECK `cardinality <= 20` (cada assunto até 120, no Zod) | assuntos permitidos |
+| `off_topic_reply` | texto, CHECK até 500 | resposta para o que está fora; `NULL` = recusa educada no tom do agente |
+
+- São **conteúdo da versão**: entram em `VERSION_COLUMNS`, em `versionShapeSchema`, no PATCH de rascunho, no duplicar/reverter e na trava de imutabilidade.
+- **Aplicada na composição das instruções**, no mesmo lugar do perfil: `comporInstrucoes` acrescenta a seção `## Assuntos permitidos` entre `## Perfil do agente` e `## Instruções`. **Não é uma 12ª conferência antes do envio** e não altera nenhuma das 11 (lista e ordem iguais, provado em `tests/invariants/restringir-temas-no-turno.test.ts`).
+- **Só vale com chave ligada E ao menos um assunto** (`restricaoDeTemasAtiva`): chave ligada com lista vazia não restringe nada — calar o agente inteiro por um formulário incompleto seria pior. A tela avisa.
+- **Precedência**: pedido de atendente humano (`detectHumanHandoffRequest` e as palavras de passagem da versão) e opt-out (`lib/opt-out`) são detectados **em código, antes do modelo**, e portanto valem com a restrição ligada; a seção os declara exceção também em texto ("nunca é fora do tema"), junto de cumprimentos e conversa social de abertura.
+- **Modelos por ramo** (vendas, suporte, agendamento) são conteúdo versionado em `lib/ai/agents/modelos.ts`, nos três idiomas do produto — não tabela. Preenchem perfil, instruções e a *sugestão* de assuntos, mas **não ligam a restrição** (decisão do dono). `modelos.test.ts` reprova modelo sem um idioma ou com texto que o contrato da API recusaria.
+
 ### 3.3 Nova tabela `ai_provider_credentials`
 
 ```sql
