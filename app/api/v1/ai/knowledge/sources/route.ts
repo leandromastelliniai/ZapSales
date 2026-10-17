@@ -22,7 +22,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { audit } from "@/lib/audit";
 import { parseFaqMarkdown } from "@/lib/ai/rag/ingest/faq";
-import { enderecosDoSiteSchema, limitesDoSite } from "@/lib/ai/rag/ingest/site";
+import { enderecosDoSiteSchema, FRASE_URLS_SO_PARA_SITE, hostsDasUrls, limitesDoSite } from "@/lib/ai/rag/ingest/site";
 import { definirPaginasDoSite } from "@/lib/ai/rag/ingest/site-paginas";
 import { temChaveDeEmbedding } from "@/lib/ai/embeddings/chave";
 import {
@@ -67,11 +67,6 @@ const createSourceSchema = z.object({
   urls: z.array(z.string()).optional(),
   source_metadata: z.record(z.string(), z.unknown()).optional().default({}),
 });
-
-/** Os hosts distintos de uma lista de URLs, em ordem — o que a auditoria guarda no lugar da URL. */
-function hostsDe(urls: string[]): string[] {
-  return [...new Set(urls.map((u) => new URL(u).host))];
-}
 
 const SELECT_COLUNAS =
   "id, agent_id, organization_id, source_type, name, status, last_index_status, " +
@@ -184,7 +179,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   } else if (input.urls !== undefined) {
     return fail(
       "unprocessable_entity",
-      `Material de ${rotuloDoTipo(tipo).toLowerCase()} não recebe lista de endereços — isso é só para o tipo site.`,
+      `Material de ${rotuloDoTipo(tipo).toLowerCase()} ${FRASE_URLS_SO_PARA_SITE}`,
       422,
       { requestId },
     );
@@ -365,7 +360,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       resourceType: "ai_knowledge_source",
       resourceId: ksId,
       requestId,
-      metadata: { pages: enderecos.length, hosts: hostsDe(enderecos) },
+      metadata: { pages: enderecos.length, hosts: hostsDasUrls(enderecos) },
     });
   }
 

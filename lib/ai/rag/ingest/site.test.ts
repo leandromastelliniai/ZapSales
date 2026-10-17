@@ -286,6 +286,14 @@ describe("lerPagina — o que não é uma página legível", () => {
     expect(r.codigo).toBe("sem_texto");
   });
 
+  it("binário SEM Content-Type não é decodificado como texto", async () => {
+    const s = await servidor((_req, res) => {
+      res.writeHead(200);
+      res.end(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52]));
+    });
+    expect(falhou(await ler(s.url)).codigo).toBe("tipo_nao_suportado");
+  });
+
   it("servidor que recusa a conexão", async () => {
     const s = await servidor(html("<p>x</p>"));
     const url = s.url;

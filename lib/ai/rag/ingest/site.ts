@@ -120,6 +120,14 @@ export function enderecosDoSiteSchema(maximo: number) {
     });
 }
 
+/** Os hosts distintos de uma lista de URLs, em ordem — o que a auditoria guarda no lugar da URL (ela pode levar `?token=`). */
+export function hostsDasUrls(urls: string[]): string[] {
+  return [...new Set(urls.map((u) => new URL(u).host))];
+}
+
+/** A recusa de `urls` num material que não é site — a mesma frase na criação e na edição. */
+export const FRASE_URLS_SO_PARA_SITE = "não recebe lista de endereços — isso é só para o tipo site.";
+
 // ---------------------------------------------------------------------------
 // A leitura
 // ---------------------------------------------------------------------------
@@ -215,6 +223,11 @@ export async function lerPagina(endereco: string, opcoes: OpcoesDeLeitura = {}):
 
   const contentType = String(resposta.headers["content-type"] ?? "");
   if (contentType !== "" && !TIPOS_DE_TEXTO.test(contentType)) {
+    return falha("tipo_nao_suportado", "A página não é um texto que o agente consiga ler (PDF, imagem ou outro formato).");
+  }
+
+  // Sem Content-Type não há o que conferir pelo cabeçalho: um NUL nos primeiros bytes é binário.
+  if (contentType === "" && resposta.corpo.subarray(0, 1024).includes(0)) {
     return falha("tipo_nao_suportado", "A página não é um texto que o agente consiga ler (PDF, imagem ou outro formato).");
   }
 

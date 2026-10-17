@@ -16,7 +16,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { audit } from "@/lib/audit";
 import { aceitaEnderecos, aceitaTextoColado, canonizarTipoDeFonte, rotuloDoTipo } from "@/lib/ai/rag/tipos-de-fonte";
-import { enderecosDoSiteSchema, limitesDoSite } from "@/lib/ai/rag/ingest/site";
+import { enderecosDoSiteSchema, FRASE_URLS_SO_PARA_SITE, hostsDasUrls, limitesDoSite } from "@/lib/ai/rag/ingest/site";
 import { definirPaginasDoSite } from "@/lib/ai/rag/ingest/site-paginas";
 
 export const dynamic = "force-dynamic";
@@ -162,7 +162,7 @@ export async function PATCH(
     if (tipo === null || !aceitaEnderecos(tipo)) {
       return fail(
         "unprocessable_entity",
-        `Material de ${rotuloDoTipo(tipo ?? ksRow.source_type).toLowerCase()} não recebe lista de endereços — isso é só para o tipo site.`,
+        `Material de ${rotuloDoTipo(tipo ?? ksRow.source_type).toLowerCase()} ${FRASE_URLS_SO_PARA_SITE}`,
         422,
         { requestId },
       );
@@ -246,7 +246,7 @@ export async function PATCH(
     }
   }
 
-  let paginasMudaram: { adicionadas: number; removidas: number } | null = null;
+  let paginasMudaram: { adicionadas: number; removidas: number; reordenadas: number } | null = null;
   if (enderecos !== undefined) {
     try {
       paginasMudaram = await definirPaginasDoSite(admin, activeOrg.orgId, sourceId, enderecos);
@@ -256,10 +256,12 @@ export async function PATCH(
     }
   }
 
-  // Material de SITE só é relido quando a LISTA mudou (ou pelo re-treino manual): renomear não
-  // pode virar uma rodada de leituras de rede. Os demais tipos seguem como sempre.
+  // Material de SITE só é relido quando entrou ou saiu página (ou pelo re-treino manual): renomear,
+  // salvar a mesma lista ou só reordená-la não pode virar uma rodada de leituras de rede.
+  // Os demais tipos seguem como sempre.
   const ehSite = tipo !== null && aceitaEnderecos(tipo);
-  const deveReindexar = !ehSite || paginasMudaram !== null;
+  const listaMudou = paginasMudaram !== null && paginasMudaram.adicionadas + paginasMudaram.removidas > 0;
+  const deveReindexar = !ehSite || listaMudou;
 
   // Emit knowledge_source.updated (fire-and-forget).
   if (deveReindexar) {
@@ -280,7 +282,7 @@ export async function PATCH(
     }
   }
 
-  if (paginasMudaram !== null && enderecos !== undefined) {
+  if (paginasMudaram !== null && enderecos !== undefined && listaMudou) {
     void audit({
       action: "ai.knowledge_site_pages_changed",
       actorUserId: ctx.authUser.id,
@@ -293,13 +295,18 @@ export async function PATCH(
         pages: enderecos.length,
         added: paginasMudaram.adicionadas,
         removed: paginasMudaram.removidas,
-        hosts: [...new Set(enderecos.map((u) => new URL(u).host))],
+        hosts: hostsDasUrls(enderecos),
       },
     });
   }
 
   return ok(
-    { id: sourceId, ...(itemsCount !== undefined ? { items_count: itemsCount } : {}) },
+    {
+      id: sourceId,
+      ...(itemsCount !== undefined ? { items_count: itemsCount } : {}),
+      // A tela só promete "estou lendo" quando a leitura vai de fato acontecer.
+      ...(enderecos !== undefined ? { pagina_lista_mudou: listaMudou } : {}),
+    },
     { requestId },
   );
 }

@@ -1,7 +1,7 @@
 /**
  * O TEXTO PRINCIPAL DE UMA PÁGINA — o que uma pessoa leria (issue #93).
  *
- * Fica de fora: script, estilo, menu, cabeçalho, rodapé, formulário, e tudo o
+ * Fica de fora: script, estilo, menu, cabeçalho e rodapé da PÁGINA, controles de formulário, e tudo o
  * que a PRÓPRIA página esconde (`hidden`, `aria-hidden`, `display:none`,
  * `visibility:hidden`, comentário, `<template>`, `<noscript>`). O escondido não é
  * só ruído: é o lugar clássico de uma instrução plantada para o agente. O texto
@@ -26,10 +26,18 @@ const ELEMENTOS_VAZIOS = new Set([
 const ELEMENTOS_DE_TEXTO_BRUTO = new Set(["script", "style", "textarea"]);
 
 /** Descartados sempre, com tudo o que contêm. */
-const SEMPRE_FORA = new Set(["script", "style", "noscript", "template", "svg", "iframe", "object", "canvas", "select"]);
+const SEMPRE_FORA = new Set(["script", "style", "noscript", "template", "svg", "iframe", "object", "canvas", "select", "button"]);
 
 /** Estrutura de página que não é conteúdo — descartada, com uma rede de segurança (ver `extrair`). */
-const ESTRUTURA_FORA = new Set(["nav", "header", "footer", "aside", "form"]);
+const ESTRUTURA_FORA = new Set(["nav", "header", "footer", "aside"]);
+
+/**
+ * O fechamento de cada elemento de texto bruto, achado a partir da posição atual (`lastIndex`). Um
+ * `html.toLowerCase()` por tag custava O(n) cada — 2 MB de `<style></style>` virava tempo quadrático.
+ */
+const FECHAMENTO_DE_TEXTO_BRUTO: Record<string, RegExp> = Object.fromEntries(
+  [...ELEMENTOS_DE_TEXTO_BRUTO].map((nome) => [nome, new RegExp(`</${nome}`, "gi")]),
+);
 
 const BLOCOS = new Set([
   "p", "div", "li", "ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "tr", "table", "section", "article", "main",
@@ -64,18 +72,29 @@ function decodificarEntidades(texto: string): string {
   });
 }
 
-function atributo(atributos: string, nome: string): string | null {
-  const m = new RegExp(`(?:^|[\\s"'/])${nome}(?:\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s"'>]+)))?(?=[\\s/>]|$)`, "i").exec(atributos);
-  if (!m) return null;
-  return m[1] ?? m[2] ?? m[3] ?? "";
+/**
+ * Os atributos de uma tag, UM A UM: o nome vem antes do `=`, e o valor entre aspas é consumido
+ * inteiro. Procurar o nome por regex no texto todo errava: `class="hidden md:block"` (Tailwind) e
+ * `title="x hidden y"` pareciam o atributo `hidden` e a página perdia o texto visível.
+ */
+const ATRIBUTO = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
+
+function parsearAtributos(atributos: string): Map<string, string> {
+  const mapa = new Map<string, string>();
+  if (atributos === "") return mapa;
+  for (const m of atributos.matchAll(ATRIBUTO)) {
+    const nome = m[1]!.toLowerCase();
+    if (!mapa.has(nome)) mapa.set(nome, m[2] ?? m[3] ?? m[4] ?? "");
+  }
+  return mapa;
 }
 
-function escondidoPelaPagina(atributos: string): boolean {
-  if (atributos === "") return false;
-  if (atributo(atributos, "hidden") !== null) return true;
-  if ((atributo(atributos, "aria-hidden") ?? "").trim().toLowerCase() === "true") return true;
-  const estilo = atributo(atributos, "style");
-  return estilo !== null && /display\s*:\s*none|visibility\s*:\s*hidden/i.test(estilo);
+function escondidoPelaPagina(atributos: Map<string, string>): boolean {
+  if (atributos.size === 0) return false;
+  if (atributos.has("hidden")) return true;
+  if ((atributos.get("aria-hidden") ?? "").trim().toLowerCase() === "true") return true;
+  const estilo = atributos.get("style");
+  return estilo !== undefined && /display\s*:\s*none|visibility\s*:\s*hidden/i.test(estilo);
 }
 
 interface Acumulador {
@@ -190,7 +209,10 @@ function extrair(
 
     if (ELEMENTOS_DE_TEXTO_BRUTO.has(nome)) {
       // Pula até o fechamento correspondente (ou o fim, se nunca fechar).
-      const fim = html.toLowerCase().indexOf(`</${nome}`, pos);
+      const fechamentoBruto = FECHAMENTO_DE_TEXTO_BRUTO[nome]!;
+      fechamentoBruto.lastIndex = pos;
+      const achado = fechamentoBruto.exec(html);
+      const fim = achado ? achado.index : -1;
       if (fim === -1) {
         pos = html.length;
       } else {
@@ -206,8 +228,12 @@ function extrair(
     }
     if (ELEMENTOS_VAZIOS.has(nome) || m[0].endsWith("/>")) continue;
 
-    const fora = SEMPRE_FORA.has(nome) || (descartarEstrutura && ESTRUTURA_FORA.has(nome)) || escondidoPelaPagina(atributos);
-    const ehPrincipal = nome === "main" || nome === "article" || (atributo(atributos, "role") ?? "").toLowerCase() === "main";
+    const attrs = parsearAtributos(atributos);
+    // `<header>`/`<footer>`/`<aside>` dentro de <main>/<article> são do ARTIGO (o título dele mora ali):
+    // só a estrutura da PÁGINA, fora do miolo, é descartada.
+    const estruturaDaPagina = descartarEstrutura && ESTRUTURA_FORA.has(nome) && principalDesde === 0;
+    const fora = SEMPRE_FORA.has(nome) || estruturaDaPagina || escondidoPelaPagina(attrs);
+    const ehPrincipal = nome === "main" || nome === "article" || (attrs.get("role") ?? "").toLowerCase() === "main";
     const ehH1 = nome === "h1" && foraDesde === 0 && bufferDoH1 === null && primeiroH1 === null;
 
     if (BLOCOS.has(nome)) quebrar();
@@ -232,9 +258,11 @@ const MIOLO_MINIMO = 200;
 
 export function extrairTextoPrincipal(html: string): PaginaExtraida {
   let r = extrair(html, true);
-  // Rede de segurança: rodapé/menu que NUNCA FECHA engole o resto da página. Só nesse caso
-  // refaz sem descartar a estrutura — texto a mais é melhor que página vazia. (Página que é
-  // só menu, com tudo fechado, continua vazia: o que ela tem não é conteúdo.)
+  // Rede de segurança: rodapé/menu que NUNCA FECHA engole o resto da página. Só nesse caso refaz
+  // sem descartar a estrutura — texto a mais é melhor que página vazia. (Página que é só menu, com
+  // tudo fechado, continua vazia: o que ela tem não é conteúdo.) `<form>` não é estrutura: páginas
+  // ASP.NET envolvem o corpo inteiro em um, e o que se descarta dele são só os CONTROLES (select,
+  // button, textarea).
   if (r.estruturaSemFechar) {
     const sem = extrair(html, false);
     if (sem.todo.length > r.todo.length) r = sem;

@@ -43,10 +43,14 @@ Códigos de falha: `endereco_invalido`, `endereco_recusado`, `tempo_esgotado`, `
 2. `montarPedacosDoSite` lê as páginas (4 por vez) com `lerPagina`, que sai **só** por `buscarSeguro`
    (rede segura única, #88): https, DNS preso ao socket, IP interno/privado/local recusado a cada salto de
    redirecionamento (até 3), 15 s no total e 2 MB contados no que chega.
-3. `extrairTextoPrincipal` devolve o que uma pessoa leria: sem `script`, `style`, `nav`, `header`,
-   `footer`, `aside`, `form`, `svg`, `iframe`, comentário, `template`, `noscript` — e sem o que a própria
-   página esconde (`hidden`, `aria-hidden`, `display:none`, `visibility:hidden`). Prefere `<main>`/`<article>`
-   quando há texto suficiente. É um tokenizador linear: HTML hostil custa O(n).
+3. `extrairTextoPrincipal` devolve o que uma pessoa leria: sem `script`, `style`, `svg`, `iframe`,
+   comentário, `template`, `noscript`, `select`, `button`, sem `nav`/`header`/`footer`/`aside` **da página**
+   (dentro de `<main>`/`<article>` o `<header>` é do artigo e o título dele fica) — e sem o que a própria
+   página esconde (atributo `hidden`, `aria-hidden="true"`, `display:none`, `visibility:hidden`). Os atributos
+   são lidos um a um: `class="hidden md:block"` não é o atributo `hidden`. `<form>` não é descartado
+   (páginas ASP.NET envolvem o corpo todo em um). Prefere `<main>`/`<article>` quando há texto suficiente. É
+   um tokenizador linear: HTML hostil custa O(n); menu ou rodapé que nunca fecha cai numa segunda passada
+   sem descarte de estrutura.
 4. Cada trecho recebe `metadata = { source_type: "site", pagina, endereco }`. `pagina` é o título (ou
    `host/caminho`) e é o **nome citado**, no mesmo lugar em que o documento leva `arquivo`.
 5. **Página inalterada não é reprocessada**: o vetor de um trecho com o mesmo `content_hash` é reaproveitado
@@ -56,6 +60,18 @@ Códigos de falha: `endereco_invalido`, `endereco_recusado`, `tempo_esgotado`, `
    uma hora não apaga o que o agente sabia). Se **nenhuma** página pôde ser lida e nada pode ser mantido, a
    fonte fica `failed` com o motivo, sem versão vazia.
 7. Se alguma página falhou, a fonte fica `partial` ("Entrou pela metade"), com o aviso do que não foi lido.
+
+## O que "lida" quer dizer, e o que é manual
+
+- `lida` = o **texto** da página foi lido na última leitura. Se o índice falhar depois (embedding,
+  ativação), a fonte mostra "Não entrou" com o motivo; a página continua `lida` — o que falhou não foi a
+  leitura.
+- Página inalterada não gasta **embedding**. Ela ainda é baixada (é assim que se sabe que não mudou),
+  re-fatiada e regravada na versão nova de índice, como qualquer fonte: o versionamento é por fonte.
+- "Manual" = nenhuma leitura sem uma pessoa pedir. Pedem: **Ler o site de novo**, **Salvar endereços**
+  (lista com página nova ou removida; salvar a mesma lista ou só reordená-la não lê nada) e os botões
+  gerais **Preparar tudo de novo** / troca do provedor de embedding, que reprocessam todas as fontes — as de
+  site inclusive.
 
 ## Segurança
 

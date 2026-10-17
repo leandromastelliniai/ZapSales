@@ -210,3 +210,33 @@ describe("ai_knowledge_source_pages — integridade", () => {
     expect(sql(`select count(*) from public.ai_knowledge_source_pages where organization_id = '${ORG_A}';`)).toBe("2");
   });
 });
+
+describe("a busca devolve o NOME DA PÁGINA junto do trecho (a citação)", () => {
+  const VERSAO = "e0e0e0e0-6666-4000-8000-000000000001";
+  const VETOR = "(select array_fill(0.1::real, array[1536])::vector)";
+
+  it("trecho de site volta com o nome do material e a metadata {pagina, endereco} — como o documento leva `arquivo`", () => {
+    sql(`
+      insert into public.ai_knowledge_versions (id, organization_id, knowledge_source_id, version_number, status, is_active, embedding_model)
+        values ('${VERSAO}', '${ORG_A}', '${FONTE_A}', 1, 'ready', true, 'openai/text-embedding-3-small')
+        on conflict (id) do nothing;
+      insert into public.ai_chunks (organization_id, knowledge_source_id, kb_version_id, position, content, content_hash, token_count, embedding, metadata)
+        select '${ORG_A}', '${FONTE_A}', '${VERSAO}', 0, 'Plano Básico: R$ 49 por mês.', 'hs1', 8, ${VETOR},
+               '{"source_type":"site","pagina":"Planos e preços","endereco":"https://a.example/planos"}'::jsonb
+        where not exists (select 1 from public.ai_chunks where kb_version_id = '${VERSAO}');
+      update public.ai_knowledge_sources set active_kb_version_id = '${VERSAO}' where id = '${FONTE_A}';
+    `);
+    const linha = sql(`
+      select source_name || '|' || (metadata->>'pagina') || '|' || (metadata->>'endereco') || '|' || content
+        from public.fn_buscar_trechos_das_fontes('${ORG_A}', array['${FONTE_A}']::uuid[], ${VETOR}, 5, -1);
+    `);
+    expect(linha).toBe("Site da A|Planos e preços|https://a.example/planos|Plano Básico: R$ 49 por mês.");
+  });
+
+  it("a busca da OUTRA organização não alcança o trecho do site, nem pedindo a fonte pelo id", () => {
+    const n = sql(`
+      select count(*) from public.fn_buscar_trechos_das_fontes('${ORG_B}', array['${FONTE_A}']::uuid[], ${VETOR}, 5, -1);
+    `);
+    expect(n).toBe("0");
+  });
+});

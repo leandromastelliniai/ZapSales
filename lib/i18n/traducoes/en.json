@@ -9682,5 +9682,6 @@
   "A página não tem texto para o agente ler (só menu, imagem ou script).": "The page has no text for the agent to read (only menu, images or scripts).",
   "A fonte do site não tem nenhuma página. Informe ao menos um endereço.": "The site source has no pages. Enter at least one address.",
   "Nenhuma página do site pôde ser lida.": "No page of the site could be read.",
-  "Erro ao gravar as páginas do site.": "Error saving the site pages."
+  "Erro ao gravar as páginas do site.": "Error saving the site pages.",
+  "A lista é a mesma — nada foi lido de novo. Para reler o site, toque em “Ler o site de novo”.": "The list is the same — nothing was read again. To read the site again, tap “Read the site again”."
 }

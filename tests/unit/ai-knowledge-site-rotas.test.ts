@@ -207,6 +207,23 @@ describe("PATCH /sources/:id — editar o site", () => {
     expect(eventos()).toHaveLength(0);
   });
 
+  it("salvar a MESMA lista (ou só reordená-la) não lê rede nem audita, e a resposta diz isso", async () => {
+    const igual = await editar(FONTE, { urls: ["https://loja.com.br/planos", "https://loja.com.br/troca"] });
+    expect(igual.status).toBe(200);
+    expect(((await igual.json()) as { data: { pagina_lista_mudou: boolean } }).data.pagina_lista_mudou).toBe(false);
+
+    const reordenada = await editar(FONTE, { urls: ["https://loja.com.br/troca", "https://loja.com.br/planos"] });
+    expect(((await reordenada.json()) as { data: { pagina_lista_mudou: boolean } }).data.pagina_lista_mudou).toBe(false);
+    const ordem = banco.tabelas.ai_knowledge_source_pages!
+      .filter((p) => p.knowledge_source_id === FONTE)
+      .sort((a, b) => Number(a.position) - Number(b.position))
+      .map((p) => p.url);
+    expect(ordem).toEqual(["https://loja.com.br/troca", "https://loja.com.br/planos"]);
+
+    expect(eventos()).toHaveLength(0);
+    expect(auditorias()).toEqual([]);
+  });
+
   it("só renomear NÃO dispara leitura de rede", async () => {
     const res = await editar(FONTE, { name: "Novo nome" });
     expect(res.status).toBe(200);

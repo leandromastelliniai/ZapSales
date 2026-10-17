@@ -130,3 +130,49 @@ describe("extrairTextoPrincipal — HTML torto e hostil", () => {
     expect(r.texto).toContain("fim");
   });
 });
+
+describe("extrairTextoPrincipal — achados da revisão (#93)", () => {
+  it("'hidden' dentro de um VALOR de atributo (classe do Tailwind) não esconde nada", () => {
+    const r = extrairTextoPrincipal(
+      '<body><div class="hidden md:block">Menu de preços visível no desktop</div><p title="x hidden y">Texto do parágrafo</p></body>',
+    );
+    expect(r.texto).toContain("Menu de preços visível no desktop");
+    expect(r.texto).toContain("Texto do parágrafo");
+  });
+
+  it("o atributo hidden de verdade continua escondendo, em qualquer forma", () => {
+    for (const marca of ["hidden", "hidden=''", 'hidden="until-found"', 'class="a" HIDDEN', "data-x='1' hidden"]) {
+      const r = extrairTextoPrincipal(`<body><p>fica</p><div ${marca}>SOME</div></body>`);
+      expect(r.texto, marca).not.toContain("SOME");
+      expect(r.texto, marca).toContain("fica");
+    }
+  });
+
+  it("<style></style> repetido milhares de vezes não custa tempo quadrático", () => {
+    const hostil = "<style></style>".repeat(140_000) + "<p>fim</p>";
+    const t0 = Date.now();
+    const r = extrairTextoPrincipal(hostil);
+    expect(Date.now() - t0).toBeLessThan(2_000);
+    expect(r.texto).toBe("fim");
+  });
+
+  it("página inteira dentro de um <form> (ASP.NET) não vira página vazia", () => {
+    const r = extrairTextoPrincipal(
+      '<html><body><form id="aspnetForm"><h1>Política de troca</h1><p>Aceitamos troca em até 30 dias, com o produto sem uso e na embalagem original, mediante nota fiscal.</p></form></body></html>',
+    );
+    expect(r.texto).toContain("Aceitamos troca em até 30 dias");
+  });
+
+  it("<header> dentro de <article> é o cabeçalho do ARTIGO: o título dele fica", () => {
+    const miolo = "Conteúdo que importa de verdade. ".repeat(10);
+    const r = extrairTextoPrincipal(`<body><nav>menu</nav><article><header><h1>Prazos de entrega</h1></header><p>${miolo}</p></article></body>`);
+    expect(r.texto).toContain("Prazos de entrega");
+    expect(r.texto).not.toContain("menu");
+  });
+
+  it("menu enorme não faz a rede de segurança despejar a página toda: o miolo curto continua só o miolo", () => {
+    const menu = "<nav>" + "<a>Item de menu</a>".repeat(3) + "</nav>";
+    const r = extrairTextoPrincipal(`<body>${menu}<p>Conteúdo útil de tamanho razoável para a página existir.</p></body>`);
+    expect(r.texto).toBe("Conteúdo útil de tamanho razoável para a página existir.");
+  });
+});

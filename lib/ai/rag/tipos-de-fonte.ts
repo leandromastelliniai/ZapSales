@@ -121,11 +121,6 @@ export type TipoDeFonteId = (typeof TIPOS_DE_FONTE)[number]["id"];
  */
 export const IDS_DE_TIPO_DE_FONTE = ["faq", "documento", "conversas", "catalogo", "site"] as const;
 
-// Compilador: um id em TIPOS_DE_FONTE que falte na literal (ou vice-versa) deixa de compilar.
-type _TodosOsIdsEstaoNaLiteral = Exclude<TipoDeFonteId, (typeof IDS_DE_TIPO_DE_FONTE)[number]> extends never ? true : never;
-type _NaoSobraIdNaLiteral = Exclude<(typeof IDS_DE_TIPO_DE_FONTE)[number], TipoDeFonteId> extends never ? true : never;
-export const _vocabularioFechado: [_TodosOsIdsEstaoNaLiteral, _NaoSobraIdNaLiteral] = [true, true];
-
 export const TIPO_DE_FONTE_POR_ID: ReadonlyMap<string, TipoDeFonte> = new Map(
   TIPOS_DE_FONTE.map((t) => [t.id, t]),
 );

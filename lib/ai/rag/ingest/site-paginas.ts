@@ -89,7 +89,7 @@ export async function definirPaginasDoSite(
   organizationId: string,
   sourceId: string,
   urls: string[],
-): Promise<{ adicionadas: number; removidas: number }> {
+): Promise<{ adicionadas: number; removidas: number; reordenadas: number }> {
   const atuais = await listarPaginasDoSite(admin, organizationId, sourceId);
   const queFicam = new Set(urls);
   const sairam = atuais.filter((p) => !queFicam.has(p.url));
@@ -120,17 +120,20 @@ export async function definirPaginasDoSite(
     if (error) throw new Error(`criar_paginas: ${error.message}`);
   }
 
+  let reordenadas = 0;
   for (const [position, url] of urls.entries()) {
     const existente = jaExistem.get(url);
     if (existente && existente.position !== position) {
-      await admin
+      const { error } = await admin
         .from("ai_knowledge_source_pages")
         .update({ position })
         .eq("organization_id", organizationId)
         .eq("id", existente.id);
+      if (error) throw new Error(`reordenar_paginas: ${error.message}`);
+      reordenadas += 1;
     }
   }
-  return { adicionadas: novas.length, removidas: sairam.length };
+  return { adicionadas: novas.length, removidas: sairam.length, reordenadas };
 }
 
 /** O nome com que o agente cita a página quando ela não tem título: `host/caminho`. */

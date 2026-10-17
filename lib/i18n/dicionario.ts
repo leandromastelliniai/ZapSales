@@ -9996,6 +9996,7 @@ export const DICIONARIO: Traducoes = {
   "Material cadastrado. Estou preparando — em instantes o agente já sabe.": { es: "Material registrado. Lo estoy preparando; en unos instantes el agente ya lo sabrá." },
   "Material cadastrado. Ele fica esperando uma chave de embedding para ser preparado.": { es: "Material registrado. Queda a la espera de una clave de embeddings para prepararse." },
   "Ensinar algo novo ao agente": { es: "Enseñarle algo nuevo al agente" },
+  "A lista é a mesma — nada foi lido de novo. Para reler o site, toque em “Ler o site de novo”.": { es: "La lista es la misma; no se volvió a leer nada. Para releer el sitio, toca «Volver a leer el sitio»." },
   "Lendo…": { es: "Leyendo…" },
   "Ler o site de novo": { es: "Volver a leer el sitio" },
   "Ver as páginas": { es: "Ver las páginas" },

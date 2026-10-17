@@ -202,10 +202,18 @@ export function useSalvarPaginasDoSite(sourceId: string) {
   return useMutation({
     mutationKey: ["ai", "knowledge", "sources", sourceId, "paginas", "salvar"],
     mutationFn: async (urls: string[]) => {
-      await apiClient.patch(`/api/v1/ai/knowledge/sources/${sourceId}`, { urls });
+      const res = await apiClient.patch<{ data: { pagina_lista_mudou?: boolean } }>(
+        `/api/v1/ai/knowledge/sources/${sourceId}`,
+        { urls },
+      );
+      return res.data;
     },
-    onSuccess: () => {
-      toast.success(t("Endereços salvos. Estou lendo as páginas — em instantes o agente já sabe."));
+    onSuccess: (resultado) => {
+      toast.success(
+        resultado?.pagina_lista_mudou === false
+          ? t("A lista é a mesma — nada foi lido de novo. Para reler o site, toque em “Ler o site de novo”.")
+          : t("Endereços salvos. Estou lendo as páginas — em instantes o agente já sabe."),
+      );
     },
     onError: (err) => showApiError(err),
     onSettled: () => {
