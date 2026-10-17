@@ -1831,6 +1831,7 @@ export type Database = {
           allowed_topics: string[]
           off_topic_reply: string | null
           knowledge_source_ids: string[]
+          external_tool_ids: string[]
           max_steps: number
           model: string
           multimodal_input: boolean
@@ -1882,6 +1883,7 @@ export type Database = {
           allowed_topics?: string[]
           off_topic_reply?: string | null
           knowledge_source_ids?: string[]
+          external_tool_ids?: string[]
           max_steps?: number
           model: string
           multimodal_input?: boolean
@@ -1933,6 +1935,7 @@ export type Database = {
           allowed_topics?: string[]
           off_topic_reply?: string | null
           knowledge_source_ids?: string[]
+          external_tool_ids?: string[]
           max_steps?: number
           model?: string
           multimodal_input?: boolean

@@ -3628,3 +3628,37 @@ conversão mp3 → ogg/opus foi provada pelos argumentos passados ao `ffmpeg`, e
 (c) os invariantes de turno completo (`resposta-em-audio-no-turno`, e também `limite-de-envios-por-turno` e
 irmãos) **não rodam sob PGlite** — travam no claim da fila, por natureza do harness, com o controle da `main`
 igualmente vermelho; o gate é o job `invariants` do CI.
+
+
+## J52 — O agente consulta outro sistema durante a conversa `[P1]` (2026-10-17, issue #94)
+
+Contexto: parte da #86. O agente só usava o catálogo interno de capacidades do CRM. Agora a organização cadastra
+um **webhook de consulta** (estoque, planilha, ERP, Make, n8n) em Agente de IA › Ferramentas externas, escolhe no
+editor de cada agente quais ferramentas ele pode usar e testa de verdade num botão da própria tela. Tabela
+`agent_external_tools` e coluna `ai_agent_versions.external_tool_ids` (migration 0551); regra em
+`lib/ai/ferramentas-externas/`; mapa em `docs/architecture/ferramentas-externas-do-agente.architecture.json`;
+guia de quem recebe em `docs/integracao/ferramentas-externas-do-agente.md`.
+
+Spec: `tests/e2e/ferramentas-externas-pela-tela.spec.ts` (**escrita, não executada** — veja «Não coberto»).
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J52.1 | Instalação NOVA, sem nenhuma ferramenta | a tela diz «O agente ainda não consulta nenhum sistema»; o grupo do editor diz «Você ainda não cadastrou nenhuma ferramenta externa» com o caminho para cadastrar; nenhum agente existente muda | spec escrita |
+| J52.2 | Cadastrar nome, «quando usar», endereço https e campos | a chave de assinatura aparece UMA vez; a lista mostra só os 4 últimos; a chave não aparece no HTML nem na lista | **PASS (unit)** — `lib/ai/ferramentas-externas/*.test.ts`; pela tela: spec escrita |
+| J52.3 | Endereço da rede interna / privada / local, sem https, ou com usuário e senha | recusado antes de gravar, com a frase do porquê | **PASS (unit)** — `esquema.test.ts`, `chamar.test.ts` (política única, sem abrir conexão) |
+| J52.4 | Escolher «Altera dados» | bloqueado, com o motivo escrito na tela e 422 `external_tool_mutating_blocked` na rota; no banco só existe inativa | **PASS (unit + invariante, PGlite)** — `esquema.test.ts`, `ferramentas-externas-do-agente.test.ts` |
+| J52.5 | «Testar de verdade» com dados de exemplo | chamada real assinada; mostra o status, o tempo, o que o outro sistema devolveu e o que foi enviado; falha mostra a frase do que fazer | **PASS (unit, receptor HTTP real)** — `chamar.test.ts`; pela tela: spec escrita |
+| J52.6 | O agente chama a ferramenta numa conversa | o receptor recebe a chamada ASSINADA com só os dados que o agente preencheu; o agente recebe o resultado como dado não confiável; a resposta sai ao cliente; a auditoria registra sem chave, argumentos nem resposta | **PASS (unit, receptor real)** — `turno.test.ts`; turno completo: **ESCRITO, não executado** — `tests/invariants/ferramenta-externa-no-turno.test.ts` |
+| J52.7 | A resposta do outro sistema traz instruções («ignore as regras…») | chega como VALOR do campo `dado`, com o aviso à frente; o conjunto de ferramentas não muda; um identificador interno repetido pelo agente é VETADO antes do envio | **PASS (unit)**; turno completo: invariante escrita |
+| J52.8 | O outro sistema cai (5xx / prazo / rede) | uma nova tentativa e para; o agente recebe «não afirme o que dependia da consulta» (sem endereço nem corpo do erro); a Central ganha UM aviso por ferramenta; a auditoria registra o motivo | **PASS (unit)**; turno completo e Central: invariante escrita + `ferramentas-externas-do-agente.test.ts` (PGlite: um aviso, o segundo não duplica) |
+| J52.9 | Aba Teste do agente | a chamada aparece como «seria feita» com os dados; o receptor NÃO é tocado; o modelo é avisado de que não tem o resultado | **PASS (invariante, PGlite)** — `ferramenta-externa-no-turno.test.ts` (caso da prévia) |
+| J52.10 | Agente cuja versão não lista a ferramenta / ferramenta desativada | nem é oferecida ao modelo; receptor intocado | **PASS (unit)**; turno completo: invariante escrita |
+| J52.11 | Teto de 27 | `tool_ids` + `external_tool_ids` > 27 recusado na tela e no servidor; ferramenta desativada só pode ser desmarcada | **PASS (unit)** — `validation`/`escopo` e o seletor |
+| J52.12 | A tabela não é servida pelo PostgREST; duas organizações com o mesmo identificador não colidem; o motor só carrega o que é da organização do turno, ativo e consulta; versão publicada não troca de ferramentas | privilégio NENHUM a `anon`/`authenticated`, RLS sem policy, unique `(org, slug)`, cascade, trava de imutabilidade | **PASS (invariante, PGlite)** — `ferramentas-externas-do-agente.test.ts` (18 casos) |
+| J52.13 | Baseline: instalação do zero e reaplicação (atualização) | a 0551 aplica nas duas passadas | **PASS (PGlite, install)**; update: CI |
+
+**Não coberto ainda:** (a) a prova pela tela em ambiente fresco estilo VPS, sem as chaves opcionais (exige Supabase
+local; esta máquina não tem Docker) — a spec está escrita e a prova em produção segue a receita de organização
+temporária; (b) os invariantes de turno completo (`ferramenta-externa-no-turno`, como `resposta-em-audio-no-turno`)
+**não rodam sob PGlite** — travam no claim da fila, por natureza do harness; só o caso da prévia roda aqui, e o gate
+é o job `invariants` do CI; (c) um ERP real: o receptor dos testes é um servidor HTTP efêmero.

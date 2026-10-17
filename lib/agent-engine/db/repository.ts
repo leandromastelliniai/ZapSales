@@ -78,6 +78,11 @@ export type InboxKind =
   // lê a Central os dois pedem a mesma coisa: alguém precisa ligar de volta.
   | 'voice_call_missed'
   | 'proposal_expired_notice'
+  // (migration 0551, issue #94) A chamada de uma ferramenta externa do agente falhou.
+  // O agente já foi instruído a não afirmar o que dependia da consulta; este é o
+  // aviso que o DONO vê, para consertar a integração. Sem referência: o título leva
+  // o nome da ferramenta.
+  | 'external_tool_failed'
   | 'proposal_acceptance_rate_drop'
   | 'proposal_promised_not_created'
   // (migration 0312) O fluxo de follow-up PUBLICADO que nunca vai disparar:

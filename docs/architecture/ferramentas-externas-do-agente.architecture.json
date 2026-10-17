@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ferramentas externas do agente",
+    "subtitle": "O agente consulta outro sistema (estoque, planilha, ERP, Make, n8n) no meio da conversa — webhook de CONSULTA, assinado, pela rede segura única, com o resultado como dado e a falha na Central (migration 0551; issue #94, parte da #86)",
+    "output": "ferramentas-externas-do-agente.html",
+    "quality_profile": "standard"
+  },
+  "lanes": [
+    { "id": "ui", "label": "Telas" },
+    { "id": "api", "label": "Rotas" },
+    { "id": "data", "label": "Banco" },
+    { "id": "agent", "label": "Turno do agente" },
+    { "id": "ext", "label": "Fora do produto" }
+  ],
+  "mainPath": ["tela", "rota", "tabela", "versao", "montagem", "modelo", "chamada", "rede", "erp", "resultado"],
+  "nodes": [
+    {
+      "id": "tela",
+      "lane": "ui",
+      "col": 1,
+      "type": "frontend",
+      "label": "Ferramentas externas (cadastro, campos, chave mostrada uma vez, Testar de verdade)"
+    },
+    {
+      "id": "seletor",
+      "lane": "ui",
+      "col": 2,
+      "type": "frontend",
+      "label": "Editor do agente › grupo \"Ferramentas externas\" (conta no teto de 27)"
+    },
+    {
+      "id": "abaTeste",
+      "lane": "ui",
+      "col": 6,
+      "type": "frontend",
+      "label": "Aba Teste › \"seria feita\" (a chamada é mostrada e não executada)"
+    },
+    {
+      "id": "central",
+      "lane": "ui",
+      "col": 8,
+      "type": "frontend",
+      "label": "Central de avisos › \"O agente não conseguiu consultar um sistema externo\""
+    },
+    {
+      "id": "rota",
+      "lane": "api",
+      "col": 2,
+      "type": "api",
+      "label": "/api/v1/ai/external-tools (CRUD, /test, /rotate-secret) — manager, guarda de suporte, Idempotency-Key"
+    },
+    {
+      "id": "rotaVersao",
+      "lane": "api",
+      "col": 3,
+      "type": "api",
+      "label": "/api/v1/ai/agents/:id/versions (confere: existe, é da org, é consulta, teto 27 somado)"
+    },
+    {
+      "id": "tabela",
+      "lane": "data",
+      "col": 2,
+      "type": "database",
+      "label": "agent_external_tools (RLS sem policy, só o servidor; chave de assinatura cifrada; \"altera\" só inativa)"
+    },
+    {
+      "id": "versao",
+      "lane": "data",
+      "col": 3,
+      "type": "database",
+      "label": "ai_agent_versions.external_tool_ids (travada na versão publicada: rascunho, diff, histórico)"
+    },
+    {
+      "id": "auditoria",
+      "lane": "data",
+      "col": 5,
+      "type": "database",
+      "label": "api_audit_log (ai.external_tool_created / updated / secret_rotated / deleted / tested / called — sem chave, sem corpo, sem resposta)"
+    },
+    {
+      "id": "aviso",
+      "lane": "data",
+      "col": 7,
+      "type": "database",
+      "label": "agent_inbox_items kind external_tool_failed (um aberto por ferramenta)"
+    },
+    {
+      "id": "montagem",
+      "lane": "agent",
+      "col": 3,
+      "type": "service",
+      "label": "montarFerramentasExternas (só ATIVA e CONSULTA; nome ext_<identificador>)"
+    },
+    {
+      "id": "modelo",
+      "lane": "agent",
+      "col": 4,
+      "type": "service",
+      "label": "modelo escolhe a ferramenta e preenche os campos"
+    },
+    {
+      "id": "validacao",
+      "lane": "agent",
+      "col": 4,
+      "type": "service",
+      "label": "validarArgumentos (tipo, obrigatório, campo desconhecido, tamanho) — dado inválido não sai"
+    },
+    {
+      "id": "chamada",
+      "lane": "agent",
+      "col": 5,
+      "type": "service",
+      "label": "chamarFerramentaExterna (HMAC, prazo 8 s, teto 64 KiB, 1 nova tentativa só em consulta)"
+    },
+    {
+      "id": "rede",
+      "lane": "agent",
+      "col": 6,
+      "type": "service",
+      "label": "rede segura única (https, DNS preso à conexão, IP interno recusado, redirect não seguido)"
+    },
+    {
+      "id": "erp",
+      "lane": "ext",
+      "col": 6,
+      "type": "external",
+      "label": "Sistema do cliente (ERP, planilha, Make, n8n) — confere a assinatura"
+    },
+    {
+      "id": "resultado",
+      "lane": "agent",
+      "col": 7,
+      "type": "service",
+      "label": "resultado como DADO NÃO CONFIÁVEL (limite de tamanho; nunca instrução)"
+    },
+    {
+      "id": "cadeia",
+      "lane": "agent",
+      "col": 8,
+      "type": "service",
+      "label": "cadeia before_send (inclui a conferência de vocabulário interno) antes de qualquer envio ao cliente"
+    }
+  ],
+  "edges": [
+    { "id": "0", "from": "tela", "to": "rota", "label": "cadastra, edita, ativa, testa, nova chave" },
+    { "id": "1", "from": "rota", "to": "tabela", "label": "grava (endereço julgado pela rede segura antes)" },
+    { "id": "2", "from": "rota", "to": "auditoria", "label": "registra o fato — sem a chave" },
+    { "id": "3", "from": "seletor", "to": "rotaVersao", "label": "salva external_tool_ids no rascunho" },
+    { "id": "4", "from": "rotaVersao", "to": "versao", "label": "grava; publicar trava" },
+    { "id": "5", "from": "tabela", "to": "rotaVersao", "label": "a ferramenta existe, é desta org e é consulta?" },
+    { "id": "6", "from": "tabela", "to": "seletor", "label": "lista para marcar (ativas)" },
+    { "id": "7", "from": "versao", "to": "montagem", "label": "quais ferramentas esta versão pode chamar" },
+    { "id": "8", "from": "tabela", "to": "montagem", "label": "carrega só ativa + consulta, da organização do turno" },
+    { "id": "9", "from": "montagem", "to": "modelo", "label": "oferece como ferramenta do agente" },
+    { "id": "10", "from": "modelo", "to": "validacao", "label": "dados que preencheu" },
+    { "id": "11", "from": "validacao", "to": "chamada", "label": "só com dados válidos (senão, ensino ao modelo)" },
+    { "id": "12", "from": "chamada", "to": "rede", "label": "POST assinado, prazo e teto" },
+    { "id": "13", "from": "rede", "to": "erp", "label": "chamada de verdade" },
+    { "id": "14", "from": "erp", "to": "resultado", "label": "resposta (status + corpo curto)" },
+    { "id": "15", "from": "resultado", "to": "modelo", "label": "volta como dado não confiável" },
+    { "id": "16", "from": "modelo", "to": "cadeia", "label": "resposta ao cliente" },
+    { "id": "17", "from": "chamada", "to": "auditoria", "label": "cada chamada: ok, status, motivo, tentativas, duração" },
+    { "id": "18", "from": "chamada", "to": "aviso", "label": "falha: abre o aviso (um por ferramenta)" },
+    { "id": "19", "from": "aviso", "to": "central", "label": "o dono vê e vai à tela da ferramenta" },
+    { "id": "20", "from": "chamada", "to": "modelo", "label": "falha vira ensino: não afirme o que dependia da consulta" },
+    { "id": "21", "from": "montagem", "to": "abaTeste", "label": "na prévia nada sai: registra \"seria feita\"" },
+    { "id": "22", "from": "central", "to": "tela", "label": "orienta: confira o endereço e use Testar" }
+  ]
+}

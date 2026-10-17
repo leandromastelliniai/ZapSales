@@ -225,12 +225,16 @@ export function vagasExigidasPeloPacote(
   return depois.size;
 }
 
-export function vagasRestantes(selecionadas: ReadonlyArray<string>): number {
-  return TETO_TOOLS_POR_AGENTE - selecionadas.length;
+/**
+ * `externas` é quantas ferramentas externas (webhook de consulta, #94) o agente já
+ * tem: elas contam no MESMO teto, porque ocupam o mesmo prompt do modelo.
+ */
+export function vagasRestantes(selecionadas: ReadonlyArray<string>, externas = 0): number {
+  return TETO_TOOLS_POR_AGENTE - selecionadas.length - externas;
 }
 
-export function excedeuTeto(selecionadas: ReadonlyArray<string>): boolean {
-  return selecionadas.length > TETO_TOOLS_POR_AGENTE;
+export function excedeuTeto(selecionadas: ReadonlyArray<string>, externas = 0): boolean {
+  return selecionadas.length + externas > TETO_TOOLS_POR_AGENTE;
 }
 
 /**

@@ -26,6 +26,7 @@ import { z } from "zod";
 import { registerAction } from "@/lib/automation/actions";
 import type { ActionCtx, ActionResultDetail } from "@/lib/automation/types";
 import { buscarSeguro, ErroDeRedeSegura, type PoliticaDeDestino } from "@/lib/net/rede-segura";
+import { assinaturaComCarimbo } from "@/lib/webhooks/assinatura-de-saida";
 import { decryptWebhookSecret } from "@/lib/webhooks/secrets";
 
 const TIMEOUT_MS = 10_000;
@@ -118,11 +119,12 @@ export function idDaEntrega(
   return uuidV5(`${eventId}:${ruleId}:${indiceDaAcao}:${impressaoDasAcoes(acoesDaRegra)}`, NAMESPACE_DA_ENTREGA);
 }
 
-/** `t=<ts>,v1=<hex HMAC-SHA256(segredo, "<ts>.<entrega>.<corpo>")>`. */
-export function assinaturaComCarimbo(segredo: string, carimbo: number, entrega: string, corpo: string): string {
-  const v1 = createHmac("sha256", segredo).update(`${carimbo}.${entrega}.${corpo}`).digest("hex");
-  return `t=${carimbo},v1=${v1}`;
-}
+/**
+ * `t=<ts>,v1=<hex HMAC-SHA256(segredo, "<ts>.<entrega>.<corpo>")>`. Mora em
+ * `lib/webhooks/assinatura-de-saida.ts` (a ferramenta externa do agente assina
+ * do mesmo jeito) e continua exportada daqui, onde os testes e o guia a leem.
+ */
+export { assinaturaComCarimbo };
 
 /**
  * A forma que este arquivo grava em `actions_result[]` — o schema central da

@@ -594,6 +594,19 @@ export const NAV_CATALOG = [
     minRole: "manager",
   },
   {
+    href: "/app/ai/external-tools",
+    label: "Ferramentas externas",
+    description: "Consultas a outro sistema (estoque, planilha, ERP) que o agente faz durante a conversa, com teste de verdade.",
+    sinonimos: ["webhook", "integração", "make", "n8n", "erp", "consulta externa"],
+    icon: "Signpost",
+    group: "ia",
+    section: "Montar o agente",
+    minRole: "manager",
+    // SEM `sidebar: true`: o menu lateral só cabe com 15 itens em 900 px (medido por
+    // `navegacao.spec.ts`). Cadastrar uma ferramenta é tarefa de poucas vezes; o caminho é o
+    // hub "Ver tudo em IA" e a paleta ⌘K, como Credenciais, Conhecimento e Skills.
+  },
+  {
     href: "/app/ai/memory",
     label: "Memória",
     description: "O que o agente já aprendeu sobre a sua operação e reaproveita.",

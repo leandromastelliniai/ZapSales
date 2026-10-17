@@ -17,14 +17,26 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { conferirFerramentasDaVersao } from "@/lib/ai/ferramentas-externas/repositorio";
+import { MOTIVO_DO_BLOQUEIO_DE_ALTERACAO } from "@/lib/ai/ferramentas-externas/tipos";
+import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
+
 export interface EscopoDaVersao {
   pipeline_ids?: string[];
   knowledge_source_ids?: string[];
+  /** Ferramentas externas (#94): existem, são desta organização e são CONSULTAS. */
+  external_tool_ids?: string[];
+  /** Junto de `external_tool_ids`, para o teto de capacidades (a soma dos dois). */
+  tool_ids?: string[];
 }
 
 export type ResultadoDoEscopo =
   | { ok: true }
-  | { ok: false; campo: "pipeline_ids" | "knowledge_source_ids"; ausentes: string[] };
+  | {
+      ok: false;
+      campo: "pipeline_ids" | "knowledge_source_ids" | "external_tool_ids" | "external_tool_altera" | "teto_de_capacidades";
+      ausentes: string[];
+    };
 
 /**
  * Confere que todo id do escopo existe NESTA organização.
@@ -66,12 +78,34 @@ export async function validarEscopoDaVersao(
     if (ausentes.length > 0) return { ok: false, campo: "knowledge_source_ids", ausentes };
   }
 
+  const externas = escopo.external_tool_ids ?? [];
+  if (externas.length > 0) {
+    const conferida = await conferirFerramentasDaVersao(supabase, organizationId, externas);
+    if (!conferida.ok) {
+      return conferida.motivo === "inexistente"
+        ? { ok: false, campo: "external_tool_ids", ausentes: conferida.ausentes }
+        : { ok: false, campo: "external_tool_altera", ausentes: conferida.ids };
+    }
+  }
+  if ((escopo.tool_ids?.length ?? 0) + externas.length > TETO_TOOLS_POR_AGENTE) {
+    return { ok: false, campo: "teto_de_capacidades", ausentes: [] };
+  }
+
   return { ok: true };
 }
 
 /** Frase para quem lê na tela — nunca o id cru sem contexto. */
 export function mensagemDoEscopo(r: Extract<ResultadoDoEscopo, { ok: false }>): string {
-  return r.campo === "pipeline_ids"
-    ? `Um dos funis marcados não existe mais nesta organização (${r.ausentes.length}). Recarregue a página e marque de novo.`
-    : `Um dos materiais marcados não existe mais, ou foi arquivado (${r.ausentes.length}). Recarregue a página e marque de novo.`;
+  switch (r.campo) {
+    case "pipeline_ids":
+      return `Um dos funis marcados não existe mais nesta organização (${r.ausentes.length}). Recarregue a página e marque de novo.`;
+    case "external_tool_ids":
+      return "Uma das ferramentas externas marcadas não existe mais. Recarregue a página e marque de novo.";
+    case "external_tool_altera":
+      return MOTIVO_DO_BLOQUEIO_DE_ALTERACAO;
+    case "teto_de_capacidades":
+      return `Cada agente tem no máximo ${TETO_TOOLS_POR_AGENTE} capacidades, somando as do sistema e as ferramentas externas. Desligue alguma antes de ligar outra.`;
+    case "knowledge_source_ids":
+      return `Um dos materiais marcados não existe mais, ou foi arquivado (${r.ausentes.length}). Recarregue a página e marque de novo.`;
+  }
 }

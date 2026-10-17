@@ -71,6 +71,12 @@ export interface PublishedAgentConfig {
    */
   knowledgeSourceIds: string[];
   /**
+   * Ferramentas externas (webhook de consulta) que ESTA versão pode chamar
+   * (`ai_agent_versions.external_tool_ids`, migration 0551). Vazio = nenhuma: o
+   * turno não monta nada e não paga nem uma consulta ao banco.
+   */
+  externalToolIds: string[];
+  /**
    * LEGADO: a KB ativa do agente (`ai_agents.active_kb_version_id`).
    *
    * Só é usada quando `knowledgeSourceIds` vem vazio — o clone que ainda não
@@ -165,6 +171,7 @@ interface Row {
   operator_tool_ids: string[] | null;
   pipeline_ids: string[] | null;
   knowledge_source_ids: string[] | null;
+  external_tool_ids: string[] | null;
   trigger_config: unknown;
   audio_reply_enabled: boolean | null;
   audio_reply_voice_id: string | null;
@@ -210,6 +217,7 @@ const SELECT_AGENT_CONFIG_COLUMNS = `a.operation_mode,a.paused_at,a.operation_re
             v.operator_tool_ids,
             v.pipeline_ids,
             v.knowledge_source_ids,
+            v.external_tool_ids,
             v.trigger_config,
             v.audio_reply_enabled,
             v.audio_reply_voice_id,
@@ -282,6 +290,9 @@ function mapAgentConfigRow(r: Row): PublishedAgentConfig {
     // `?? []` cobre o clone sem a 0181: sem a coluna, o agente cai no ponteiro
     // legado abaixo em vez de ficar sem material nenhum.
     knowledgeSourceIds: r.knowledge_source_ids ?? [],
+    // `?? []` cobre o clone que ainda não aplicou a 0551: sem a coluna, o agente
+    // segue sem ferramenta externa — a direção segura é agir de menos.
+    externalToolIds: r.external_tool_ids ?? [],
     activeKbVersionId: r.active_kb_version_id,
     ragTopK,
     ragSimilarityThreshold,
