@@ -1,0 +1,72 @@
+# Ferramentas externas do agente — guia de quem recebe
+
+> **Para quem é:** quem mantém o sistema que RECEBE a chamada que o agente de IA
+> faz durante uma conversa (estoque, planilha, ERP, Make, n8n).
+> **O que responde:** o que chega em cada chamada, como conferir que veio do
+> ZapSales, o que devolver e o que o agente faz com a resposta.
+> **Fonte da verdade no código:** `lib/ai/ferramentas-externas/chamar.ts`. A
+> assinatura é a **mesma** dos webhooks de saída das automações
+> ([`webhooks-de-saida.md`](webhooks-de-saida.md), seção 3): o código que confere
+> uma confere a outra.
+
+---
+
+## 1. O que chega
+
+Um `POST` com `Content-Type: application/json` para o endereço que você cadastrou:
+
+```json
+{
+  "event": "agent.tool_call",
+  "occurred_at": "2026-10-17T15:00:00.000Z",
+  "delivery_id": "0b0f7d8e-5d0e-4f62-9c37-2a5e8b0a6a11",
+  "tool": "consultar_estoque",
+  "arguments": { "produto": "camiseta azul" }
+}
+```
+
+| Campo | O que é |
+|---|---|
+| `event` | Sempre `agent.tool_call`. |
+| `delivery_id` | O id desta chamada — o mesmo valor do cabeçalho `X-Webhook-Delivery`. Se a primeira tentativa falhar, a nova tentativa leva o **mesmo** id: use-o para não processar duas vezes. |
+| `tool` | O identificador da ferramenta (derivado do nome que você deu; não muda se você renomear). |
+| `arguments` | Os dados que o agente preencheu, exatamente nos campos e tipos que você declarou. Nada mais: **não vão** organização, contato, telefone nem conversa. Se precisar de algo assim, peça como campo. |
+
+Cabeçalhos: `X-Webhook-Delivery`, `X-Webhook-Attempt` (`1` ou `2`), `X-Webhook-Timestamp` e `X-Webhook-Signature` (`t=<timestamp>,v1=<hex>`).
+
+## 2. Conferir a assinatura
+
+Igual aos webhooks de saída: `v1 = HMAC-SHA256(chave, "<t>.<delivery>.<corpo cru>")`, em hex. A **chave** é a que apareceu uma única vez quando você cadastrou a ferramenta (ou gerou uma nova). Recuse a chamada se o `v1` não conferir ou se o `t` for velho demais para a sua janela.
+
+```js
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+function confere(chave, cabecalhos, corpoCru) {
+  const [t, v1] = String(cabecalhos["x-webhook-signature"]).split(",").map((p) => p.split("=")[1]);
+  const esperado = createHmac("sha256", chave)
+    .update(`${t}.${cabecalhos["x-webhook-delivery"]}.${corpoCru}`)
+    .digest("hex");
+  return v1?.length === esperado.length && timingSafeEqual(Buffer.from(v1), Buffer.from(esperado));
+}
+```
+
+## 3. O que devolver
+
+Responda **2xx em até 8 segundos**, com o corpo que o agente deve usar — JSON ou texto. O que passar de **64 KiB** faz a chamada falhar, e o agente só recebe os primeiros **4.000 caracteres** da resposta. Seja objetivo: devolva só o necessário para responder ao cliente.
+
+| Sua resposta | O que acontece |
+|---|---|
+| 2xx | O corpo chega ao agente como informação. |
+| 5xx, 408, 429, ou sem resposta | O ZapSales tenta **mais uma vez** (só consultas são repetidas) e, persistindo, avisa o agente e o dono. |
+| 4xx (outros) | Não repete: o mesmo pedido daria a mesma resposta. O dono vê o aviso. |
+| 3xx (redirecionamento) | **Não é seguido.** Cadastre o endereço final. |
+
+## 4. O que o agente faz com a resposta
+
+A resposta chega ao agente como **dado, nunca como instrução**: ele a lê como informação para responder ao cliente, e qualquer ordem que apareça nela é ignorada. Mesmo assim, **não coloque nela** nomes internos, instruções ou segredos — o texto que o agente escreve ao cliente ainda passa pelas conferências antes do envio, mas o melhor é a resposta nem conter o que não deve ser dito.
+
+Se a consulta falhar, o agente é instruído a **não afirmar** nada que dependia dela, e o dono recebe um aviso na Central.
+
+## 5. Endereço
+
+Precisa ser `https`, sem usuário e senha. Endereços da **rede interna, privada ou local** (`localhost`, `10.x`, `192.168.x`, `169.254.x`, IPv6 especial) são **recusados por segurança**, no cadastro e a cada chamada — o nome é resolvido uma vez e a conexão usa só o endereço julgado, então um nome que passou a apontar para dentro também é barrado.

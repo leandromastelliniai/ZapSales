@@ -14838,7 +14838,7 @@ export const DICIONARIO: Traducoes = {
   "Chave copiada.": { es: "Clave copiada." },
   "Não consegui copiar. Selecione a chave e copie à mão.": { es: "No pude copiar. Selecciona la clave y cópiala a mano." },
   "Guarde a chave de assinatura": { es: "Guarda la clave de firma" },
-  "Por segurança, ela aparece só agora. Quem recebe a chamada usa esta chave para conferir que o pedido veio do ZapSales.": { es: "Por seguridad, aparece solo ahora. Quien recibe la llamada usa esta clave para verificar que el pedido vino de ZapSales." },
+  "Por segurança, ela aparece só agora. Quem recebe a chamada usa esta chave para conferir que o pedido veio deste sistema.": { es: "Por seguridad, aparece solo ahora. Quien recibe la llamada usa esta clave para verificar que el pedido vino de este sistema." },
   "Chave de assinatura": { es: "Clave de firma" },
   "Cada chamada traz o cabeçalho X-Webhook-Signature (t=carimbo,v1=assinatura), um HMAC-SHA256 de «carimbo.entrega.corpo» feito com esta chave. Se perder a chave, gere outra: a antiga deixa de valer na hora.": { es: "Cada llamada trae el encabezado X-Webhook-Signature (t=sello,v1=firma), un HMAC-SHA256 de «sello.entrega.cuerpo» hecho con esta clave. Si pierdes la clave, genera otra: la anterior deja de valer al instante." },
   "Já guardei": { es: "Ya la guardé" },
@@ -14855,6 +14855,10 @@ export const DICIONARIO: Traducoes = {
   "Número inteiro": { es: "Número entero" },
   "Sim ou não": { es: "Sí o no" },
   "Ferramentas que alteram dados no outro sistema ainda não podem ser ligadas: elas precisam da etapa de aprovação, para o agente nunca executar sozinho uma ação errada. Por enquanto, cadastre só consultas.": { es: "Las herramientas que modifican datos en el otro sistema aún no se pueden activar: necesitan la etapa de aprobación, para que el agente nunca ejecute solo una acción equivocada. Por ahora, registra solo consultas." },
+  "Abra a ferramenta, confira o endereço e use o botão de teste para ver o que o outro sistema responde.": { es: "Abre la herramienta, revisa la dirección y usa el botón de prueba para ver qué responde el otro sistema." },
+  "Abrir ferramentas externas": { es: "Abrir herramientas externas" },
+  "O agente não conseguiu consultar um sistema externo": { es: "El agente no pudo consultar un sistema externo" },
+  "Consultas a outro sistema (estoque, planilha, ERP) que o agente faz durante a conversa, com teste de verdade.": { es: "Consultas a otro sistema (inventario, hoja de cálculo, ERP) que el agente hace durante la conversación, con prueba real." },
 };
 
 /**

@@ -9706,7 +9706,7 @@
   "Chave copiada.": "Key copied.",
   "Não consegui copiar. Selecione a chave e copie à mão.": "I couldn't copy it. Select the key and copy it by hand.",
   "Guarde a chave de assinatura": "Save the signing key",
-  "Por segurança, ela aparece só agora. Quem recebe a chamada usa esta chave para conferir que o pedido veio do ZapSales.": "For security, it only appears now. Whoever receives the call uses this key to check the request came from ZapSales.",
+  "Por segurança, ela aparece só agora. Quem recebe a chamada usa esta chave para conferir que o pedido veio deste sistema.": "For security, it only appears now. Whoever receives the call uses this key to check the request came from this system.",
   "Chave de assinatura": "Signing key",
   "Cada chamada traz o cabeçalho X-Webhook-Signature (t=carimbo,v1=assinatura), um HMAC-SHA256 de «carimbo.entrega.corpo» feito com esta chave. Se perder a chave, gere outra: a antiga deixa de valer na hora.": "Each call carries the X-Webhook-Signature header (t=timestamp,v1=signature), an HMAC-SHA256 of «timestamp.delivery.body» made with this key. If you lose the key, generate another: the old one stops working immediately.",
   "Já guardei": "I've saved it",
@@ -9722,5 +9722,9 @@
   "Chamar agora": "Call now",
   "Número inteiro": "Whole number",
   "Sim ou não": "Yes or no",
-  "Ferramentas que alteram dados no outro sistema ainda não podem ser ligadas: elas precisam da etapa de aprovação, para o agente nunca executar sozinho uma ação errada. Por enquanto, cadastre só consultas.": "Tools that change data in the other system can't be turned on yet: they need the approval step, so the agent never carries out a wrong action on its own. For now, register lookups only."
+  "Ferramentas que alteram dados no outro sistema ainda não podem ser ligadas: elas precisam da etapa de aprovação, para o agente nunca executar sozinho uma ação errada. Por enquanto, cadastre só consultas.": "Tools that change data in the other system can't be turned on yet: they need the approval step, so the agent never carries out a wrong action on its own. For now, register lookups only.",
+  "Abra a ferramenta, confira o endereço e use o botão de teste para ver o que o outro sistema responde.": "Open the tool, check the address and use the test button to see what the other system answers.",
+  "Abrir ferramentas externas": "Open external tools",
+  "O agente não conseguiu consultar um sistema externo": "The agent couldn't look something up in an external system",
+  "Consultas a outro sistema (estoque, planilha, ERP) que o agente faz durante a conversa, com teste de verdade.": "Lookups in another system (stock, spreadsheet, ERP) that the agent makes during the conversation, with a real test."
 }

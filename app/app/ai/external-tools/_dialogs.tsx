@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/hooks/i18n/useT";
 import { apiClient } from "@/lib/api/client";
+import { copyToClipboard } from "@/lib/clipboard";
 import { urlDaFerramentaSchema } from "@/lib/ai/ferramentas-externas/esquema";
 import type { FerramentaExterna } from "@/lib/ai/ferramentas-externas/repositorio";
 import {
@@ -141,6 +142,9 @@ function Formulario({ editando, onFechar, onSalvo }: FormularioProps) {
   return (
     <form
       className="space-y-4"
+      // As mensagens são nossas, em português e com o motivo: a validação nativa do navegador
+      // (que fala no idioma dele e só aponta o campo) barraria o envio antes delas.
+      noValidate
       onSubmit={(e) => {
         e.preventDefault();
         void salvar();
@@ -182,7 +186,7 @@ function Formulario({ editando, onFechar, onSalvo }: FormularioProps) {
           value={url}
           maxLength={LIMITES_DA_FERRAMENTA.url.max}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://hook.us1.make.com/..."
+          placeholder="https://sistema.example.com/webhook"
         />
         <p className="text-xs text-muted-foreground">
           {t(
@@ -330,12 +334,9 @@ export function ChaveDaFerramentaDialog({
   const t = useT();
   async function copiar() {
     if (!dados) return;
-    try {
-      await navigator.clipboard.writeText(dados.chave);
-      toast.success(t("Chave copiada."));
-    } catch {
-      toast.error(t("Não consegui copiar. Selecione a chave e copie à mão."));
-    }
+    // `copyToClipboard` cobre o navegador fora de contexto seguro (instalação em http://IP).
+    if (await copyToClipboard(dados.chave)) toast.success(t("Chave copiada."));
+    else toast.error(t("Não consegui copiar. Selecione a chave e copie à mão."));
   }
   return (
     <Dialog open={dados !== null} onOpenChange={(aberto) => (aberto ? null : onFechar())}>
@@ -343,7 +344,7 @@ export function ChaveDaFerramentaDialog({
         <DialogHeader>
           <DialogTitle>{t("Guarde a chave de assinatura")}</DialogTitle>
           <DialogDescription>
-            {t("Por segurança, ela aparece só agora. Quem recebe a chamada usa esta chave para conferir que o pedido veio do ZapSales.")}
+            {t("Por segurança, ela aparece só agora. Quem recebe a chamada usa esta chave para conferir que o pedido veio deste sistema.")}
           </DialogDescription>
         </DialogHeader>
         {dados ? (

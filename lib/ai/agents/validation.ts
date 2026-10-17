@@ -325,6 +325,7 @@ export const versionPatchSchema = versionShapeSchema
     operator_tool_ids: versionShapeSchema.shape.operator_tool_ids.removeDefault(),
     pipeline_ids: versionShapeSchema.shape.pipeline_ids.removeDefault(),
     knowledge_source_ids: versionShapeSchema.shape.knowledge_source_ids.removeDefault(),
+    external_tool_ids: versionShapeSchema.shape.external_tool_ids.removeDefault(),
     profile_persona: versionShapeSchema.shape.profile_persona.removeDefault(),
     profile_tone: versionShapeSchema.shape.profile_tone.removeDefault(),
     profile_objective: versionShapeSchema.shape.profile_objective.removeDefault(),

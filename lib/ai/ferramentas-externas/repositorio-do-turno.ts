@@ -8,13 +8,13 @@
  * ⚠️ Toda consulta filtra `organization_id`, e o id vem da LINHA do job (fonte
  * confiável), nunca de payload do modelo.
  */
-import { audit } from "@/lib/audit";
+import { z } from "zod";
+
 import type { Queryable } from "@/lib/agent-engine/queue/queue";
 import { logger } from "@/lib/logger";
 
 import type { ResultadoDaChamada } from "./chamar";
 import { parametroSchema } from "./esquema";
-import { z } from "zod";
 import type { DependenciasDoTurnoExterno, FerramentaDoTurno } from "./turno";
 
 const parametrosLidos = z.array(parametroSchema);
@@ -144,15 +144,26 @@ export function dependenciasDoMotor(args: {
     lerChave: (id) => lerChaveNoBanco(db, organizationId, id),
     abrirAviso: (aviso) => abrirAvisoDeFalha(db, organizationId, aviso),
     auditar: async ({ ferramenta, resultado }) => {
-      // `audit` é fire-and-forget por contrato: falha de escrita não derruba o turno.
-      await audit({
-        action: "ai.external_tool_called",
-        organizationId,
-        resourceType: "agent_external_tool",
-        resourceId: ferramenta.id,
-        requestId: args.jobId,
-        metadata: metadadosDaChamada(ferramenta, resultado, { agentId: args.agentId, jobId: args.jobId }),
-      });
+      // O motor fala com o banco pelo `pg`, e a auditoria vai pelo mesmo caminho (uma linha
+      // em `api_audit_log`). Fire-and-forget por contrato: falha de escrita avisa no log e
+      // NUNCA derruba o turno nem muda o que o cliente recebe.
+      try {
+        await db.query(
+          `insert into api_audit_log (organization_id, action, resource_type, resource_id, request_id, metadata)
+           values ($1, 'ai.external_tool_called', 'agent_external_tool', $2, $3, $4::jsonb)`,
+          [
+            organizationId,
+            ferramenta.id,
+            args.jobId,
+            JSON.stringify(metadadosDaChamada(ferramenta, resultado, { agentId: args.agentId, jobId: args.jobId })),
+          ],
+        );
+      } catch (err) {
+        logger.warn("[ferramentas-externas] auditoria da chamada não foi gravada", {
+          organization_id: organizationId,
+          error: (err instanceof Error ? err.message : String(err)).slice(0, 120),
+        });
+      }
     },
     log: args.log,
   };

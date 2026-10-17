@@ -64,6 +64,16 @@ export async function createMcpAgentDraft(
   );
   if (new Set(sources.rows.map((r) => r.id)).size !== new Set(v.knowledge_source_ids).size)
     throw new Error("knowledge_scope_invalid");
+  // Ferramentas externas (#94): existem, são desta organização e são CONSULTAS. A mesma regra
+  // da rota REST (`validarEscopoDaVersao`), aqui no caminho transacional em SQL puro.
+  if (v.external_tool_ids.length > 0) {
+    const ferramentas = await db.query(
+      "select id from agent_external_tools where organization_id=$1 and id=any($2::uuid[]) and effect='consulta'",
+      [context.orgId, v.external_tool_ids],
+    );
+    if (new Set(ferramentas.rows.map((r) => r.id)).size !== new Set(v.external_tool_ids).size)
+      throw new Error("external_tool_scope_invalid");
+  }
   const agentId = records.agent.id;
   const versionId = records.version.id;
   const { rows: agents } = await db.query(

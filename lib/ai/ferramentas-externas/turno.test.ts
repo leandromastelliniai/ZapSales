@@ -59,8 +59,23 @@ function deps(carregadas: FerramentaDoTurno[], sobre: Partial<DependenciasDoTurn
   return { base, avisos, auditorias };
 }
 
-async function executar(t: Tool, entrada: unknown): Promise<any> {
-  return (t.execute as (i: unknown, o: unknown) => Promise<unknown>)(entrada, { toolCallId: "x", messages: [] });
+/** O que o modelo lê de volta: os campos de sucesso e de falha que os casos conferem. */
+interface Saida {
+  ok?: boolean;
+  status?: string;
+  message?: string;
+  origem?: string;
+  dado_nao_confiavel?: boolean;
+  aviso?: string;
+  dado?: string;
+  error?: { code?: string; message?: string };
+}
+
+async function executar(t: Tool, entrada: unknown): Promise<Saida> {
+  return (await (t.execute as (i: unknown, o: unknown) => Promise<unknown>)(entrada, {
+    toolCallId: "x",
+    messages: [],
+  })) as Saida;
 }
 
 describe("montarFerramentasExternas", () => {
@@ -107,7 +122,7 @@ describe("montarFerramentasExternas", () => {
     const r = await montarFerramentasExternas({ ids: ["x"] }, base);
     const out = await executar(r.tools.ext_consultar_estoque!, { produto: "camiseta azul" });
     expect(out).toMatchObject({ ok: true, origem: "ferramenta_externa", dado_nao_confiavel: true });
-    expect(JSON.parse(out.dado)).toEqual({ disponivel: true, quantidade: 3 });
+    expect(JSON.parse(out.dado ?? "{}")).toEqual({ disponivel: true, quantidade: 3 });
     expect(JSON.parse(chegadas[0]!)).toMatchObject({ tool: "consultar_estoque", arguments: { produto: "camiseta azul" } });
     expect(auditorias).toEqual([{ ok: true }]);
     expect(avisos).toEqual([]);
@@ -170,7 +185,7 @@ describe("montarFerramentasExternas", () => {
     const r = await montarFerramentasExternas({ ids: ["x"] }, base);
     const out = await executar(r.tools.ext_consultar_estoque!, { produto: "camiseta" });
     expect(out).toMatchObject({ ok: false, error: { code: "external_tool_failed" } });
-    expect(out.error.message).toMatch(/não afirme/i);
+    expect(out.error?.message).toMatch(/não afirme/i);
     // O que o modelo lê não carrega o corpo do erro nem o endereço.
     expect(JSON.stringify(out)).not.toContain("stack trace");
     expect(JSON.stringify(out)).not.toContain("127.0.0.1");

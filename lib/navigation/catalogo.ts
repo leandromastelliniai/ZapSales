@@ -598,7 +598,7 @@ export const NAV_CATALOG = [
     label: "Ferramentas externas",
     description: "Consultas a outro sistema (estoque, planilha, ERP) que o agente faz durante a conversa, com teste de verdade.",
     sinonimos: ["webhook", "integração", "make", "n8n", "erp", "consulta externa"],
-    icon: "WebhooksLogo",
+    icon: "Signpost",
     group: "ia",
     section: "Montar o agente",
     minRole: "manager",

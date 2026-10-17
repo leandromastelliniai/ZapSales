@@ -53,8 +53,9 @@ export function FerramentasExternasDoSeletor({ value, onChange, semVagas, disabl
 
   const ferramentas = query.data ?? [];
   const conhecidas = new Set(ferramentas.map((f) => f.id));
-  // Marcadas que o servidor não lista mais: não somem da tela (isso seria mentir).
-  const orfas = value.filter((id) => !conhecidas.has(id));
+  // Marcadas que o servidor não lista mais: não somem da tela (isso seria mentir). Só vale
+  // DEPOIS de a lista chegar — durante o carregamento toda marcada pareceria órfã.
+  const orfas = query.isSuccess ? value.filter((id) => !conhecidas.has(id)) : [];
 
   function alternar(id: string) {
     onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
