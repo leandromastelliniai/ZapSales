@@ -51,6 +51,10 @@ export const KIND_LABEL = {
   // Diz o que o CLIENTE vive, não a configuração: do lado de lá as mensagens
   // chegam e ninguém responde. "Modo de teste sem número autorizado" descreve
   // o campo; "a IA não responde ninguém" é o que faz o operador agir.
+  // Diz o que o AGENTE não conseguiu fazer por causa do outro sistema, e não que uma
+  // chamada HTTP deu erro: quem lê é o dono do negócio, e o que ele precisa saber é
+  // que o agente respondeu sem poder consultar. O motivo vai no corpo.
+  external_tool_failed: "O agente não conseguiu consultar um sistema externo",
   canal_mudo_sem_numero: "Um canal está em modo de teste — a IA não responde ninguém nele",
   // Diz o que o CLIENTE está esperando, não o que o sistema deixou de gravar.
   // "Promessa não cumprida" é a única frase que faz o dono do negócio agir: do

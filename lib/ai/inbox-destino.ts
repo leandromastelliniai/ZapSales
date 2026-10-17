@@ -120,6 +120,14 @@ export const POLITICAS_DE_AVISO = {
   atendimento_gratis_do_numero: { refs: ["channel_session"], orientacao: "Depois das 1.000 grátis do mês, cada mensagem de atendimento deste número é cobrada pela Meta. Acompanhe o contador em Campanhas › Configuração.", geral: CONEXOES },
   // Mesmo par de `message_send_stuck`, para a proposta — o cron devolve a
   // rascunho sozinho, sem reenviar; quem lê decide se envia de novo.
+  // Nasce SEM referência (o título leva o nome da ferramenta): a tabela das
+  // ferramentas é só do servidor, então o resolvedor não tem como confirmar a
+  // existência por RLS — o destino é a tela, que lista e testa a ferramenta.
+  external_tool_failed: {
+    refs: [],
+    orientacao: "Abra a ferramenta, confira o endereço e use o botão de teste para ver o que o outro sistema responde.",
+    geral: { papel: "manager", href: "/app/ai/external-tools", rotulo: "Abrir ferramentas externas" },
+  },
   proposta_travada: { refs: ["proposal"], orientacao: "Confira a proposta antes de decidir se precisa enviar novamente." },
   proposta_pronta_para_revisao: {
     refs: ["proposal"],

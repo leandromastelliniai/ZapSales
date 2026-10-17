@@ -80,6 +80,7 @@ import {
   versionCreateSchema,
   agentMcpCreateSchema,
   agentMcpPatchSchema,
+  passaDoTetoDeCapacidades,
 } from "@/lib/ai/agents/validation";
 import type { SelectableChannel as ChannelSessionLite } from "@/lib/channels/selectable";
 import type { AgentRow } from "@/hooks/ai/useAgent";
@@ -223,6 +224,8 @@ interface FormState {
   operator_tool_ids: string[];
   pipeline_ids: string[];
   knowledge_source_ids: string[];
+  /** Ferramentas externas (webhook de consulta, #94) que o agente pode chamar. */
+  external_tool_ids: string[];
 }
 
 interface FollowupValue {
@@ -352,6 +355,7 @@ export function buildState(args: {
     pipeline_ids: version?.pipeline_ids ?? [],
     // `?? []` = nenhum material. Mesma direção segura: agir de menos.
     knowledge_source_ids: version?.knowledge_source_ids ?? [],
+    external_tool_ids: version?.external_tool_ids ?? [],
   };
 }
 
@@ -430,6 +434,7 @@ function toVersionPayload(s: FormState) {
     operator_tool_ids: s.operator_tool_ids,
     pipeline_ids: s.pipeline_ids,
     knowledge_source_ids: s.knowledge_source_ids,
+    external_tool_ids: s.external_tool_ids,
   };
 }
 
@@ -566,7 +571,7 @@ export function AgentForm(props: Props) {
     //
     // Quem cobra o número é `bloqueioDePublicacao` (logo abaixo): sem ele o
     // agente não vai ao ar, e o botão "Publicar" explica o que falta.
-    if (form.tool_ids.length > TETO_TOOLS_POR_AGENTE)
+    if (passaDoTetoDeCapacidades(form.tool_ids, form.external_tool_ids))
       errors.tool_ids = `${t("Máximo de")} ${TETO_TOOLS_POR_AGENTE} ${t("capacidades por agente.")}`;
 
     // Tenta o schema completo:
@@ -1395,6 +1400,10 @@ export function AgentForm(props: Props) {
             <ToolPicker
               value={form.tool_ids}
               onChange={(ids) => patch({ tool_ids: ids })}
+              externas={{
+                value: form.external_tool_ids,
+                onChange: (ids) => patch({ external_tool_ids: ids }),
+              }}
               disabled={disabled}
             />
             {validation.tool_ids ? (

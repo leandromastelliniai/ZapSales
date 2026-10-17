@@ -23,6 +23,8 @@ import { getToolByName } from '@/lib/mcp/tools';
 import type { Logger } from '../obs/logger';
 import type { Citation } from '@/lib/ai/citations/types';
 import type { AudioDoTurno } from '@/lib/ai/resposta-em-audio/turno';
+import type { ChamadaSimulada } from '@/lib/ai/ferramentas-externas/turno';
+import { PREFIXO_DO_NOME_NO_AGENTE } from '@/lib/ai/ferramentas-externas/tipos';
 
 export interface TurnPreview {
   kind: 'sandbox' | 'assisted';
@@ -60,6 +62,12 @@ export interface PreviewResult {
   usage?: PreviewUsage;
   /** Toda ferramenta que o modelo chamou, na ordem — leituras e propostas de escrita. */
   toolCalls?: Array<{ tool: string; arguments: unknown }>;
+  /**
+   * As chamadas a ferramentas EXTERNAS (webhook de consulta, #94) que o agente faria.
+   * Na prévia nenhuma é executada: cada uma aparece aqui como "seria feita", com os
+   * dados que o modelo preencheu. `executed` é sempre `false`.
+   */
+  externalCalls?: ChamadaSimulada[];
 }
 export interface PreviewUsage {
   tokensIn: number;
@@ -215,6 +223,9 @@ export function applyPreviewPolicy(
         'read_skill_reference',
       ].includes(name);
       const catalog = getToolByName(name);
+      // A ferramenta externa já trata a prévia por conta própria (registra a chamada como
+      // "seria feita" e não sai da máquina) — o `execute` dela é a política.
+      if (name.startsWith(PREFIXO_DO_NOME_NO_AGENTE)) return [name, definition];
       if (
         nativeRead ||
         (catalog?.category === 'read' && (p.contactId !== null || SCENARIO_READS.has(name)))

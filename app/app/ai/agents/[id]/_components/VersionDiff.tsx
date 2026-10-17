@@ -9,8 +9,10 @@
  *     pequeno) com marcadores `+`/`-`/` `.
  */
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { Badge } from "@/components/ui/badge";
+import { apiClient } from "@/lib/api/client";
 import { useT } from "@/hooks/i18n/useT";
 import type { AgentVersionRow } from "@/hooks/ai/useAgentVersions";
 import { callbacksHabilitados } from "@/lib/followup/callback-policy";
@@ -110,6 +112,20 @@ function buildFieldChanges(a: AgentVersionRow, b: AgentVersionRow): FieldChange[
 export function VersionDiff({ versionA, versionB }: Props) {
   const t = useT();
   const tools = diffArr(versionA.tool_ids ?? [], versionB.tool_ids ?? []);
+  const externas = diffArr(versionA.external_tool_ids ?? [], versionB.external_tool_ids ?? []);
+  const mudouExternas = externas.added.length > 0 || externas.removed.length > 0;
+  // Os ids são uuid; a pessoa lê o NOME. A consulta só roda quando algo mudou, e usa a
+  // mesma chave do seletor (cache compartilhado).
+  const nomesDasExternas = useQuery({
+    queryKey: ["ai", "external-tools"],
+    queryFn: async () => {
+      const res = await apiClient.get<{ data: Array<{ id: string; name: string }> }>("/api/v1/ai/external-tools");
+      return new Map(res.data.map((f) => [f.id, f.name]));
+    },
+    enabled: mudouExternas,
+    staleTime: 30_000,
+  });
+  const nomeDaExterna = (id: string) => nomesDasExternas.data?.get(id) ?? t("Ferramenta externa removida");
   const handoffKw = diffArr(versionA.handoff_keywords ?? [], versionB.handoff_keywords ?? []);
   const followupFlows = diffArr(
     versionA.followup?.flow_pointer_ids ?? [],
@@ -195,6 +211,12 @@ export function VersionDiff({ versionA, versionB }: Props) {
         {tools.added.length === 0 && tools.removed.length === 0 ? (
           <p className="text-xs text-muted-foreground">{t("Sem mudanças.")}</p>
         ) : null}
+      </Section>
+
+      <Section title={t("Ferramentas externas")}>
+        <Pills label={t("Adicionadas")} tone="add" items={externas.added.map(nomeDaExterna)} />
+        <Pills label={t("Removidas")} tone="del" items={externas.removed.map(nomeDaExterna)} />
+        {!mudouExternas ? <p className="text-xs text-muted-foreground">{t("Sem mudanças.")}</p> : null}
       </Section>
 
       <Section title={t("Handoff keywords")}>

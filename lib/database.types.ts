@@ -1828,6 +1828,7 @@ export type Database = {
           profile_language: string | null
           temperature: number | null
           knowledge_source_ids: string[]
+          external_tool_ids: string[]
           max_steps: number
           model: string
           multimodal_input: boolean
@@ -1876,6 +1877,7 @@ export type Database = {
           profile_language?: string | null
           temperature?: number | null
           knowledge_source_ids?: string[]
+          external_tool_ids?: string[]
           max_steps?: number
           model: string
           multimodal_input?: boolean
@@ -1924,6 +1926,7 @@ export type Database = {
           profile_language?: string | null
           temperature?: number | null
           knowledge_source_ids?: string[]
+          external_tool_ids?: string[]
           max_steps?: number
           model?: string
           multimodal_input?: boolean

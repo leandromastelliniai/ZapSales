@@ -62,6 +62,11 @@ interface TestResult {
     delivery?: { format: "audio" } | { format: "text"; reason: string };
   }>;
   proposals?: Array<{ tool: string; arguments: unknown }>;
+  /**
+   * Consultas a ferramentas EXTERNAS que o agente faria (#94). No teste nenhuma é feita:
+   * aparecem aqui como "seria feita", com os dados que o agente preencheu.
+   */
+  externalCalls?: Array<{ tool: string; name: string; arguments: unknown; executed: false }>;
   impediments?: Array<{ code: string; message: string }>;
   restrictions?: string[];
   /** Ver lib/ai/agents/avaliar-resposta-de-teste.ts. */
@@ -223,6 +228,25 @@ function DetalhesDaResposta({ r }: { r: TestResult }) {
           ) : null}
         </div>
       </details>
+
+      {r.externalCalls && r.externalCalls.length > 0 ? (
+        <div className="space-y-1 rounded-md border border-border/60 p-2 text-xs" data-testid="teste-consultas-externas">
+          <p className="font-medium">
+            {t("Consultas a sistemas externos que o agente FARIA (no teste elas não são feitas):")}
+          </p>
+          <ul className="space-y-1">
+            {r.externalCalls.map((c, i) => (
+              <li key={`${c.tool}-${i}`} data-testid="teste-consulta-externa">
+                <span className="font-medium">{c.name}</span>{" "}
+                <span className="rounded-md bg-muted px-1 py-0.5 text-[11px]">{t("seria feita")}</span>
+                <pre className="mt-1 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-muted-foreground">
+                  {JSON.stringify(c.arguments, null, 2)}
+                </pre>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {r.candidates ? (
         <div className="space-y-2 text-xs">

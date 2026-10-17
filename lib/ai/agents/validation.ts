@@ -14,6 +14,18 @@ import {
 } from "@/lib/ai/agents/teste-em-varias-trocas";
 import { VALID_TOOL_IDS } from "@/lib/mcp/tools/catalog";
 import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
+
+/**
+ * O teto de capacidades por agente vale para a SOMA: as do catálogo (`tool_ids`) e as
+ * ferramentas externas. Uma regra, em UM lugar — a tela mostra o mesmo número que o
+ * servidor recusa.
+ */
+export function passaDoTetoDeCapacidades(
+  toolIds: readonly string[],
+  externalToolIds: readonly string[] | undefined,
+): boolean {
+  return toolIds.length + (externalToolIds?.length ?? 0) > TETO_TOOLS_POR_AGENTE;
+}
 import { IDS_DE_PROVEDOR } from "@/lib/ai/pontos/provedores";
 import {
   IDIOMAS_DO_AGENTE,
@@ -256,6 +268,17 @@ const versionShapeSchema = z
      * organização é o servidor.
      */
     knowledge_source_ids: z.array(z.string().uuid()).default([]),
+    /**
+     * Ferramentas externas (webhook de consulta, #94) que este agente pode chamar.
+     * Vazio = NENHUMA. Soma com `tool_ids` no teto de capacidades por agente — a soma
+     * é conferida por `passaDoTetoDeCapacidades` (a tela e o servidor), porque um
+     * `.refine()` aqui impediria o `.extend()` do schema de edição.
+     *
+     * Sem `.refine()` de existência pelo mesmo motivo de `knowledge_source_ids`: a
+     * ferramenta é linha de tabela, e quem confere que existe, é desta organização e é
+     * uma CONSULTA é o servidor (`validarEscopoDaVersao`).
+     */
+    external_tool_ids: z.array(z.string().uuid()).max(TETO_TOOLS_POR_AGENTE).default([]),
     // ── Perfil guiado (#89) ──────────────────────────────────────────────────
     // `null` = campo não preenchido; perfil todo nulo = agente sem perfil, que
     // recebe só o prompt livre, exatamente como antes. Texto vazio vira `null`

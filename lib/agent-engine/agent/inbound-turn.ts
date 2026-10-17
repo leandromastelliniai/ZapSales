@@ -185,6 +185,8 @@ import {
 import { readSkillReference, skillHasReferences } from './skill-references';
 import { READ_ONLY_TOOLS, wrapToolsWithBreaker, type ToolBreakerThresholds } from './tool-breaker';
 import { loadChannelProvider, nomesDasFerramentas, runBeforeSend } from '../guardrails/before-send';
+import { montarFerramentasExternas, type DependenciasDoTurnoExterno } from '@/lib/ai/ferramentas-externas/turno';
+import { dependenciasDoMotor as dependenciasDasFerramentasExternas } from '@/lib/ai/ferramentas-externas/repositorio-do-turno';
 import {
   criarAudioDoTurno,
   ultimaMensagemDoClienteFoiAudio,
@@ -1281,6 +1283,12 @@ export interface InboundTurnDeps {
       'fetch' | 'enderecoDaElevenLabs' | 'converter' | 'guardar' | 'agora' | 'chaveConfigurada' | 'lerChave'
     >
   >;
+  /**
+   * As ferramentas externas no turno (issue #94) — injetável só para teste: a política de
+   * rede (o receptor do teste está em 127.0.0.1), a espera entre tentativas e a leitura da
+   * chave de assinatura. Default = a rede segura da organização e a chave gravada.
+   */
+  ferramentasExternas?: Partial<Pick<DependenciasDoTurnoExterno, 'politica' | 'dormir' | 'lerChave'>>;
 }
 
 /** Checkpoint mais recente do lead — a memória que atravessa sessões. */
@@ -2895,6 +2903,8 @@ async function executarTurnoDoAgente(
    * a correção depende.
    */
   const mcpToolIdsDoTurno: string[] = [];
+  /** Nomes (`ext_<identificador>`) das ferramentas externas montadas neste turno. */
+  const nomesDasFerramentasExternas: string[] = [];
 
   const rawTools: ToolSet = {
     get_lead_context: tool({
@@ -4103,6 +4113,50 @@ async function executarTurnoDoAgente(
       }
     }
 
+    // Ferramentas EXTERNAS (webhook de consulta, issue #94): as que a versão publicada do
+    // agente lista, ativas e de consulta. Sem nenhuma na versão (todo agente que já
+    // existia) não há consulta ao banco. Na prévia nada sai — a chamada é registrada
+    // como "seria feita" (`preview.result.externalCalls`). Falha em montar NÃO derruba o
+    // turno: ferramenta extra é privilégio, não invariante.
+    if (agentConfig !== null && agentConfig.externalToolIds.length > 0) {
+      try {
+        const externas = await montarFerramentasExternas(
+          {
+            ids: agentConfig.externalToolIds,
+            previa: preview
+              ? {
+                  registrar: (chamada) => {
+                    (preview.result.externalCalls ??= []).push(chamada);
+                  },
+                }
+              : null,
+          },
+          {
+            ...dependenciasDasFerramentasExternas({
+              db: pool,
+              organizationId: tenantId,
+              agentId: agentConfig.agentId,
+              jobId: preview ? null : liveJob().id,
+              log: runLog,
+            }),
+            ...deps.ferramentasExternas,
+          },
+        );
+        for (const [name, externa] of Object.entries(externas.tools)) {
+          if (name in rawTools) continue;
+          rawTools[name] = externa;
+          nomesDasFerramentasExternas.push(name);
+        }
+        if (externas.nomes.length > 0) {
+          runLog.info('ferramentas externas montadas no turno', { externas: externas.nomes });
+        }
+      } catch (err) {
+        runLog.warn('ferramentas externas não montadas — turno segue sem elas', {
+          error: (err instanceof Error ? err.message : String(err)).slice(0, 120),
+        });
+      }
+    }
+
     // ── A CURA (spec 16, passo 6) ───────────────────────────────────────────────
     //
     // As ferramentas de escrita saem do Conversador quando o Operador as assumiu.
@@ -4159,7 +4213,9 @@ async function executarTurnoDoAgente(
         : rawTools;
     const tools = wrapToolsWithBreaker(previewTools, {
       thresholds: deps.knobs.breaker,
-      readOnlyTools: READ_ONLY_TOOLS,
+      // As externas são CONSULTAS (nesta etapa só elas existem): o modo `no_progress`
+      // do breaker as trata como leitura, e o mesmo erro repetido bloqueia a chamada.
+      readOnlyTools: [...READ_ONLY_TOOLS, ...nomesDasFerramentasExternas],
       log: runLog, // os warns dos gates do breaker saem carimbados com o run
     });
 
