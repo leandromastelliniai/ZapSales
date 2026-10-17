@@ -70,6 +70,13 @@ export function PublishConfirmDialog({
   const perfilMudou = camposDoPerfil.filter(
     (k) => (draft[k] ?? null) !== (published?.[k] ?? null),
   ).length;
+  // Restringir temas (#92): o que muda o que o agente PODE responder merece linha
+  // própria na confirmação — publicar uma restrição sem perceber cala o agente.
+  const restricaoDe = (v: typeof draft | null | undefined) =>
+    v?.restrict_topics && (v.allowed_topics ?? []).length > 0
+      ? (v.allowed_topics ?? []).join("|")
+      : null;
+  const restricaoMudou = restricaoDe(draft) !== restricaoDe(published);
   const temperaturaMudou = (draft.temperature ?? null) !== (published?.temperature ?? null);
 
   return (
@@ -122,6 +129,14 @@ export function PublishConfirmDialog({
             <p data-testid="publicar-perfil">
               <strong>{t("Perfil:")}</strong> {perfilMudou}{" "}
               {perfilMudou === 1 ? t("campo alterado") : t("campos alterados")}
+            </p>
+          ) : null}
+          {restricaoMudou ? (
+            <p data-testid="publicar-restricao">
+              <strong>{t("Assuntos:")}</strong>{" "}
+              {restricaoDe(draft) === null
+                ? t("sem restrição")
+                : `${draft.allowed_topics.length} ${t("assuntos permitidos")}`}
             </p>
           ) : null}
           {temperaturaMudou ? (

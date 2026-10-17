@@ -19,7 +19,7 @@ import { traduzir } from "@/lib/i18n/dicionario";
 export const dynamic = "force-dynamic";
 
 const VERSION_COLUMNS =
-  "id, organization_id, agent_id, version_number, system_prompt, provider, model, credential_id, tool_ids, trigger_config, channel_session_id, max_steps, token_budget, cost_budget_cents, history_message_window, history_token_window, handoff_keywords, handoff_tool_enabled, proposal_ai_draft_enabled, cases_enabled, split_messages, split_max_chars, followup, operator_enabled, operator_model, operator_tool_ids, status, published_at, superseded_at, created_at, created_by,pipeline_ids,knowledge_source_ids,provisioning_origin,inbound_debounce_ms,profile_persona,profile_tone,profile_objective,profile_welcome,profile_language,temperature,audio_reply_enabled,audio_reply_voice_id,audio_reply_model_id";
+  "id, organization_id, agent_id, version_number, system_prompt, provider, model, credential_id, tool_ids, trigger_config, channel_session_id, max_steps, token_budget, cost_budget_cents, history_message_window, history_token_window, handoff_keywords, handoff_tool_enabled, proposal_ai_draft_enabled, cases_enabled, split_messages, split_max_chars, followup, operator_enabled, operator_model, operator_tool_ids, status, published_at, superseded_at, created_at, created_by,pipeline_ids,knowledge_source_ids,provisioning_origin,inbound_debounce_ms,profile_persona,profile_tone,profile_objective,profile_welcome,profile_language,temperature,audio_reply_enabled,audio_reply_voice_id,audio_reply_model_id,restrict_topics,allowed_topics,off_topic_reply";
 
 const UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -134,6 +134,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
   if (patch.profile_welcome !== undefined) update.profile_welcome = patch.profile_welcome;
   if (patch.profile_language !== undefined) update.profile_language = patch.profile_language;
   if (patch.temperature !== undefined) update.temperature = patch.temperature;
+  if (patch.restrict_topics !== undefined) update.restrict_topics = patch.restrict_topics;
+  if (patch.allowed_topics !== undefined) update.allowed_topics = patch.allowed_topics;
+  if (patch.off_topic_reply !== undefined) update.off_topic_reply = patch.off_topic_reply;
   if (patch.followup !== undefined) {
     const existingFollowup =
       existing.followup !== null &&

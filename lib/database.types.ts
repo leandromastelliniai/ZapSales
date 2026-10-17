@@ -1827,6 +1827,9 @@ export type Database = {
           profile_welcome: string | null
           profile_language: string | null
           temperature: number | null
+          restrict_topics: boolean
+          allowed_topics: string[]
+          off_topic_reply: string | null
           knowledge_source_ids: string[]
           max_steps: number
           model: string
@@ -1875,6 +1878,9 @@ export type Database = {
           profile_welcome?: string | null
           profile_language?: string | null
           temperature?: number | null
+          restrict_topics?: boolean
+          allowed_topics?: string[]
+          off_topic_reply?: string | null
           knowledge_source_ids?: string[]
           max_steps?: number
           model: string
@@ -1923,6 +1929,9 @@ export type Database = {
           profile_welcome?: string | null
           profile_language?: string | null
           temperature?: number | null
+          restrict_topics?: boolean
+          allowed_topics?: string[]
+          off_topic_reply?: string | null
           knowledge_source_ids?: string[]
           max_steps?: number
           model?: string

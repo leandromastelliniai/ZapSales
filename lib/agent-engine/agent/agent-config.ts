@@ -169,6 +169,10 @@ interface Row {
   audio_reply_enabled: boolean | null;
   audio_reply_voice_id: string | null;
   audio_reply_model_id: string | null;
+  /** Restringir temas (0549). Ausente/nulo = sem restrição (clone que ainda não aplicou a 0549). */
+  restrict_topics: boolean | null;
+  allowed_topics: string[] | null;
+  off_topic_reply: string | null;
   version_created_by: string | null;
   agent_created_by: string | null;
 }
@@ -210,6 +214,9 @@ const SELECT_AGENT_CONFIG_COLUMNS = `a.operation_mode,a.paused_at,a.operation_re
             v.audio_reply_enabled,
             v.audio_reply_voice_id,
             v.audio_reply_model_id,
+            v.restrict_topics,
+            v.allowed_topics,
+            v.off_topic_reply,
             v.created_by as version_created_by,
             a.created_by as agent_created_by`;
 
@@ -242,6 +249,9 @@ function mapAgentConfigRow(r: Row): PublishedAgentConfig {
     objetivo: r.profile_objective ?? null,
     boasVindas: r.profile_welcome ?? null,
     idioma: (r.profile_language ?? null) as IdiomaDoAgente | null,
+    restringirTemas: r.restrict_topics ?? false,
+    temasPermitidos: r.allowed_topics ?? [],
+    respostaForaDoTema: r.off_topic_reply ?? null,
   };
 
   return {

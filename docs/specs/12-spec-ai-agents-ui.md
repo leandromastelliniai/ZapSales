@@ -197,6 +197,10 @@ Layout 2 colunas em desktop, stack em mobile.
 
 Na coluna das instruções, o formulário **"Como ele se apresenta"** (`PerfilGuiado.tsx`) vem antes do prompt: quem ele é, tom de voz (três cartões: formal, normal, descontraído), o que persegue, boas-vindas e idioma — tudo opcional. Um painel **"Ver como o agente recebe isto"** mostra o texto composto (a mesma `comporInstrucoes` do motor). As instruções livres e a **temperatura** (0 a 1; vazio = padrão do modelo) ficam no bloco **Avançado**, que abre sozinho para o agente sem perfil e fecha para quem tem. Agente novo nasce com tom "normal" e o idioma da tela. O diff de versões e o diálogo de publicar mostram o que mudou no perfil.
 
+### 3.2.0.1 Modelos por ramo e restringir assuntos (issue #92)
+
+Na **criação** (nunca na edição: trocar de modelo apagaria o que o dono configurou), uma galeria **"Comece por um modelo"** (`ModelosDoAgente.tsx`) oferece vendas, suporte e agendamento. Escolher um preenche nome (se ainda vazio), perfil, instruções livres e a lista sugerida de assuntos, **no idioma da tela** (`lib/ai/agents/modelos.ts`); tudo segue editável, e trocar de modelo substitui o que foi preenchido (a tela avisa). No `PerfilGuiado`, o bloco **"Restringir assuntos"** tem a chave, a lista (um assunto por linha, até 20) e a resposta para o que está fora; chave ligada com lista vazia mostra aviso e não restringe. O painel "Ver como o agente recebe isto" mostra a seção `## Assuntos permitidos` (a mesma `comporInstrucoes` do motor), e o diff de versões e a confirmação de publicar mostram a mudança da restrição.
+
 ### 3.2.1 Follow-up e retornos do agente
 
 Na edição da versão, a seção **Follow-up** expõe controles independentes:

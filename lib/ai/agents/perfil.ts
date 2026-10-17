@@ -33,12 +33,30 @@ export const LIMITES_DO_PERFIL = {
   boasVindas: 500,
 } as const;
 
+/**
+ * Tetos da restrição de temas (issue #92). Os mesmos valores vivem nos CHECKs da
+ * migration 0549 (`allowed_topics`, `off_topic_reply`).
+ */
+export const LIMITES_DOS_TEMAS = {
+  /** Quantos assuntos permitidos. */
+  assuntos: 20,
+  /** Tamanho de cada assunto. */
+  assunto: 120,
+  /** Tamanho da resposta padrão para o que está fora. */
+  respostaFora: 500,
+} as const;
+
 export interface PerfilDoAgente {
   persona: string | null;
   tom: TomDoAgente | null;
   objetivo: string | null;
   boasVindas: string | null;
   idioma: IdiomaDoAgente | null;
+  /** Chave "restringir temas" (#92). Desligada = a lista abaixo não vale nada. */
+  restringirTemas: boolean;
+  temasPermitidos: string[];
+  /** A resposta para o que está fora da lista. `null` = recusa educada no estilo do agente. */
+  respostaForaDoTema: string | null;
 }
 
 export const PERFIL_VAZIO: PerfilDoAgente = {
@@ -47,6 +65,9 @@ export const PERFIL_VAZIO: PerfilDoAgente = {
   objetivo: null,
   boasVindas: null,
   idioma: null,
+  restringirTemas: false,
+  temasPermitidos: [],
+  respostaForaDoTema: null,
 };
 
 const DESCRICAO_DO_TOM: Record<TomDoAgente, string> = {
@@ -78,14 +99,58 @@ export function perfilPreenchido(perfil: PerfilDoAgente): boolean {
   );
 }
 
+/** Os assuntos permitidos que de fato valem: aparados, sem vazios. */
+export function assuntosValidos(perfil: PerfilDoAgente): string[] {
+  return perfil.temasPermitidos.map((a) => a.trim()).filter((a) => a !== "");
+}
+
+/**
+ * A restrição só existe com a chave ligada E ao menos um assunto: chave ligada
+ * com lista vazia calaria o agente inteiro, e isso o dono nunca quis.
+ */
+export function restricaoDeTemasAtiva(perfil: PerfilDoAgente): boolean {
+  return perfil.restringirTemas && assuntosValidos(perfil).length > 0;
+}
+
+/**
+ * A seção "Assuntos permitidos". Mora na COMPOSIÇÃO de instruções — não é uma
+ * conferência antes do envio (as 11 seguem intactas) e não bloqueia nada por
+ * código: é a instrução que o modelo lê. O pedido de atendente humano e o
+ * opt-out são declarados como EXCEÇÃO aqui, e continuam tendo os seus próprios
+ * caminhos (palavras de passagem da versão, `lib/opt-out`) que nem passam pelo
+ * modelo.
+ */
+function secaoDeTemas(perfil: PerfilDoAgente): string[] {
+  const resposta = texto(perfil.respostaForaDoTema);
+  return [
+    "## Assuntos permitidos",
+    "Converse SOMENTE sobre estes assuntos:",
+    ...assuntosValidos(perfil).map((a) => `- ${a}`),
+    resposta !== null
+      ? `Se o contato perguntar sobre qualquer outra coisa, não responda a pergunta e responda exatamente com esta mensagem: ${resposta}`
+      : "Se o contato perguntar sobre qualquer outra coisa, não responda a pergunta: diga de forma educada, no seu tom, que não pode ajudar com esse assunto e lembre sobre o que você pode ajudar.",
+    "Isto NUNCA é fora do tema, e vale sempre, mesmo fora da lista acima: (1) pedido para falar com um atendente humano ou com uma pessoa — encaminhe como suas instruções mandam; (2) pedido para parar de receber mensagens, sair da lista ou não ser mais contatado — respeite e confirme; (3) cumprimentos e a conversa social de abertura.",
+  ];
+}
+
 /**
  * Perfil + prompt livre = o que o agente recebe. Sem perfil, o prompt exato.
  * Com perfil, a seção do perfil vem ANTES das instruções livres, e só os campos
  * preenchidos aparecem.
  */
 export function comporInstrucoes(systemPrompt: string, perfil: PerfilDoAgente): string {
-  if (!perfilPreenchido(perfil)) return systemPrompt;
+  const comPerfil = perfilPreenchido(perfil);
+  const comTemas = restricaoDeTemasAtiva(perfil);
+  if (!comPerfil && !comTemas) return systemPrompt;
 
+  const secoes: string[][] = [];
+  if (comPerfil) secoes.push(secaoDoPerfil(perfil));
+  if (comTemas) secoes.push(secaoDeTemas(perfil));
+  const blocos = secoes.map((linhas) => linhas.join("\n"));
+  return [...blocos.flatMap((b) => [b, ""]), "## Instruções", systemPrompt].join("\n");
+}
+
+function secaoDoPerfil(perfil: PerfilDoAgente): string[] {
   const linhas: string[] = ["## Perfil do agente"];
   const persona = texto(perfil.persona);
   if (persona !== null) linhas.push(`- Persona: ${persona}`);
@@ -101,5 +166,5 @@ export function comporInstrucoes(systemPrompt: string, perfil: PerfilDoAgente): 
   if (perfil.idioma !== null) {
     linhas.push(`- Idioma: responda sempre em ${NOME_DO_IDIOMA[perfil.idioma]}.`);
   }
-  return [...linhas, "", "## Instruções", systemPrompt].join("\n");
+  return linhas;
 }

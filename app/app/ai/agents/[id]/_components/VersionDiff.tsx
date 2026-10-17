@@ -70,6 +70,20 @@ function diffArr(prev: string[], next: string[]) {
   return { added, removed };
 }
 
+/**
+ * O valor de um campo do perfil como TEXTO comparável e mostrável: lista vira uma
+ * linha por assunto, chave vira sim/não, ausente vira `null`. Uma lista vazia e
+ * uma chave desligada são "sem restrição" — igual a uma versão antiga que nem
+ * tinha a coluna.
+ */
+function valorDoPerfil(v: AgentVersionRow, k: keyof AgentVersionRow): string | null {
+  const bruto = v[k];
+  if (bruto === null || bruto === undefined) return null;
+  if (Array.isArray(bruto)) return bruto.length === 0 ? null : bruto.join("\n");
+  if (typeof bruto === "boolean") return k === "restrict_topics" && !bruto ? null : bruto ? "sim" : "não";
+  return String(bruto);
+}
+
 interface FieldChange {
   key: string;
   label: string;
@@ -127,8 +141,15 @@ export function VersionDiff({ versionA, versionB }: Props) {
     ["profile_objective", t("O que ele persegue na conversa")],
     ["profile_welcome", t("Mensagem de boas-vindas")],
     ["profile_language", t("Idioma das respostas")],
+    // Restringir temas (#92) é dado da versão e mora no mesmo bloco: é parte de
+    // "como o agente se comporta", e o dono precisa ver a lista mudar.
+    ["restrict_topics", t("Restringir assuntos")],
+    ["allowed_topics", t("Assuntos permitidos")],
+    ["off_topic_reply", t("Resposta para o que está fora")],
   ];
-  const perfil = camposDoPerfil.filter(([k]) => (versionA[k] ?? null) !== (versionB[k] ?? null));
+  const perfil = camposDoPerfil.filter(
+    ([k]) => valorDoPerfil(versionA, k) !== valorDoPerfil(versionB, k),
+  );
   const lines = diffLines(versionA.system_prompt ?? "", versionB.system_prompt ?? "");
 
   return (
@@ -178,10 +199,10 @@ export function VersionDiff({ versionA, versionB }: Props) {
               <div key={k} className="space-y-0.5 text-xs">
                 <p className="font-medium">{rotulo}</p>
                 <p className="whitespace-pre-wrap break-words font-mono text-destructive">
-                  - {versionA[k] === null || versionA[k] === undefined ? "—" : String(versionA[k])}
+                  - {valorDoPerfil(versionA, k) ?? "—"}
                 </p>
                 <p className="whitespace-pre-wrap break-words font-mono text-success-fg">
-                  + {versionB[k] === null || versionB[k] === undefined ? "—" : String(versionB[k])}
+                  + {valorDoPerfil(versionB, k) ?? "—"}
                 </p>
               </div>
             ))}
