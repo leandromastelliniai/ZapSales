@@ -72,15 +72,20 @@ function diffArr(prev: string[], next: string[]) {
 
 /**
  * O valor de um campo do perfil como TEXTO comparável e mostrável: lista vira uma
- * linha por assunto, chave vira sim/não, ausente vira `null`. Uma lista vazia e
+ * linha por assunto, chave ligada vira o texto `ligado` (já traduzido por quem chama), ausente vira `null`. Uma lista vazia e
  * uma chave desligada são "sem restrição" — igual a uma versão antiga que nem
  * tinha a coluna.
  */
-function valorDoPerfil(v: AgentVersionRow, k: keyof AgentVersionRow): string | null {
+function valorDoPerfil(
+  v: AgentVersionRow,
+  k: keyof AgentVersionRow,
+  ligado: string,
+): string | null {
   const bruto = v[k];
   if (bruto === null || bruto === undefined) return null;
   if (Array.isArray(bruto)) return bruto.length === 0 ? null : bruto.join("\n");
-  if (typeof bruto === "boolean") return k === "restrict_topics" && !bruto ? null : bruto ? "sim" : "não";
+  // A única chave booleana do perfil é a restrição de temas: desligada = "sem restrição" = nada.
+  if (typeof bruto === "boolean") return bruto ? ligado : null;
   return String(bruto);
 }
 
@@ -148,7 +153,7 @@ export function VersionDiff({ versionA, versionB }: Props) {
     ["off_topic_reply", t("Resposta para o que está fora")],
   ];
   const perfil = camposDoPerfil.filter(
-    ([k]) => valorDoPerfil(versionA, k) !== valorDoPerfil(versionB, k),
+    ([k]) => valorDoPerfil(versionA, k, t("Ligado")) !== valorDoPerfil(versionB, k, t("Ligado")),
   );
   const lines = diffLines(versionA.system_prompt ?? "", versionB.system_prompt ?? "");
 
@@ -199,10 +204,10 @@ export function VersionDiff({ versionA, versionB }: Props) {
               <div key={k} className="space-y-0.5 text-xs">
                 <p className="font-medium">{rotulo}</p>
                 <p className="whitespace-pre-wrap break-words font-mono text-destructive">
-                  - {valorDoPerfil(versionA, k) ?? "—"}
+                  - {valorDoPerfil(versionA, k, t("Ligado")) ?? "—"}
                 </p>
                 <p className="whitespace-pre-wrap break-words font-mono text-success-fg">
-                  + {valorDoPerfil(versionB, k) ?? "—"}
+                  + {valorDoPerfil(versionB, k, t("Ligado")) ?? "—"}
                 </p>
               </div>
             ))}

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useT } from "@/hooks/i18n/useT";
 
+import { restricaoAtiva } from "@/lib/ai/agents/perfil";
 import { PROVEDORES } from "@/lib/ai/pontos/provedores";
 import type { AgentVersionRow } from "@/hooks/ai/useAgentVersions";
 
@@ -73,7 +74,7 @@ export function PublishConfirmDialog({
   // Restringir temas (#92): o que muda o que o agente PODE responder merece linha
   // própria na confirmação — publicar uma restrição sem perceber cala o agente.
   const restricaoDe = (v: typeof draft | null | undefined) =>
-    v?.restrict_topics && (v.allowed_topics ?? []).length > 0
+    v && restricaoAtiva(v.restrict_topics ?? false, v.allowed_topics ?? [])
       ? (v.allowed_topics ?? []).join("|")
       : null;
   const restricaoMudou = restricaoDe(draft) !== restricaoDe(published);

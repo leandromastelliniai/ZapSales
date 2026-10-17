@@ -109,7 +109,15 @@ export function assuntosValidos(perfil: PerfilDoAgente): string[] {
  * com lista vazia calaria o agente inteiro, e isso o dono nunca quis.
  */
 export function restricaoDeTemasAtiva(perfil: PerfilDoAgente): boolean {
-  return perfil.restringirTemas && assuntosValidos(perfil).length > 0;
+  return restricaoAtiva(perfil.restringirTemas, perfil.temasPermitidos);
+}
+
+/**
+ * A mesma regra para quem só tem a chave e a lista (a confirmação de publicar lê
+ * a linha da versão, e não um `PerfilDoAgente`): um lugar só decide o que vale.
+ */
+export function restricaoAtiva(ligada: boolean, assuntos: readonly string[]): boolean {
+  return ligada && assuntos.some((a) => a.trim() !== "");
 }
 
 /**

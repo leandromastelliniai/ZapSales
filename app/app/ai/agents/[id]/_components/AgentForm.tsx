@@ -40,9 +40,9 @@ import {
   LIMITES_DO_PERFIL,
   LIMITES_DOS_TEMAS,
   perfilPreenchido,
+  type IdiomaDoAgente,
 } from "@/lib/ai/agents/perfil";
 import { aplicarModelo, type IdDoModelo } from "@/lib/ai/agents/modelos";
-import type { IdiomaDoAgente } from "@/lib/ai/agents/perfil";
 import Link from "next/link";
 
 import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
@@ -490,18 +490,18 @@ export function AgentForm(props: Props) {
    * que salvou um e não o outro.
    */
   const [papel, setPapel] = React.useState<"conversa" | "operacao" | "seguranca">("conversa");
-  /**
-   * O modo avançado (instruções livres + temperatura). Abre sozinho para quem NÃO
-   * tem perfil — o agente que já existia vive nas instruções livres, e escondê-las
-   * seria sumir com o que ele faz —, e fecha para quem tem, porque aí o formulário
-   * guiado é a porta. Erro dentro dele força abrir (ver `avancadoVisivel`).
-   */
   /** O ramo escolhido na galeria (#92), só para marcar o card. */
   const [modeloEscolhido, setModeloEscolhido] = React.useState<IdDoModelo | null>(null);
   /** O modelo vem no idioma da tela de quem cria; idioma sem modelo cai em português. */
   const idiomaDoModelo: IdiomaDoAgente = (IDIOMAS_DO_AGENTE as readonly string[]).includes(idiomaDaTela)
     ? (idiomaDaTela as IdiomaDoAgente)
     : "pt-BR";
+  /**
+   * O modo avançado (instruções livres + temperatura). Abre sozinho para quem NÃO
+   * tem perfil — o agente que já existia vive nas instruções livres, e escondê-las
+   * seria sumir com o que ele faz —, e fecha para quem tem, porque aí o formulário
+   * guiado é a porta. Erro dentro dele força abrir (ver `avancadoVisivel`).
+   */
   const [avancadoAberto, setAvancadoAberto] = React.useState(
     () => !perfilPreenchido(perfilDoContrato(perfilDoFormulario(baseline))),
   );
