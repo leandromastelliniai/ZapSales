@@ -32,8 +32,10 @@ import { tool, type Tool } from "ai";
 import type { PoliticaDeDestino } from "@/lib/net/rede-segura";
 
 import { decidirSePedeAprovacao, fraseDoEstadoParaOAgente, type ModoDoTurnoExterno } from "./aprovacao";
-import { chamarFerramentaExterna, fraseDoMotivo, resultadoParaOAgente, type ResultadoDaChamada } from "./chamar";
+import { fraseDoMotivo, resultadoParaOAgente, type ResultadoDaChamada } from "./chamar";
 import { esquemaDeEntrada, nomeNoAgente, validarArgumentos } from "./esquema";
+import { executarFerramentaExterna } from "./executar";
+import type { DestinoMcp } from "./mcp/tipos";
 import type { AberturaDoPedido, PedidoDoTurno } from "./pedidos-tipos";
 import type { EfeitoDaFerramenta, OrigemDoPedido, ParametroDaFerramenta } from "./tipos";
 
@@ -42,9 +44,12 @@ export interface FerramentaDoTurno {
   slug: string;
   name: string;
   whenToUse: string;
+  /** Webhook: o endereço da ferramenta. MCP: o endereço do servidor (visão em memória). */
   url: string;
   parameters: ParametroDaFerramenta[];
   effect: EfeitoDaFerramenta;
+  /** Presente = a ferramenta vem de um servidor MCP (issue #96); ausente = webhook. */
+  mcp?: DestinoMcp;
   /** `null` = a pessoa nunca mexeu na chave: vale o padrão do efeito. */
   requireApproval: boolean | null;
   /** Horas que um pedido desta ferramenta espera por um humano. */
@@ -195,9 +200,16 @@ export async function montarFerramentasExternas(
     pedido: PedidoDoTurno | null,
   ): Promise<unknown> {
     const chave = await deps.lerChave(f.id);
-    const resultado = await chamarFerramentaExterna(
+    const resultado = await executarFerramentaExterna(
       {
-        ferramenta: { slug: f.slug, url: f.url, efeito: f.effect },
+        ferramenta: {
+          slug: f.slug,
+          url: f.url,
+          efeito: f.effect,
+          ...(f.mcp
+            ? { mcp: { cabecalho: f.mcp.cabecalho, temCredencial: f.mcp.temCredencial, nomeNoServidor: f.mcp.nomeNoServidor } }
+            : {}),
+        },
         segredo: chave,
         argumentos,
         // O id do pedido é o id de entrega: quem recebe deduplica por ele.
@@ -224,7 +236,9 @@ export async function montarFerramentasExternas(
               "O agente foi orientado a não afirmar ao cliente que foi realizada."
             : `O agente tentou consultar «${f.name}» durante um atendimento e não conseguiu: ${fraseDoMotivo(resultado.motivo)} ` +
               "O agente foi orientado a não afirmar ao cliente nada que dependia dessa consulta. " +
-              "Abra Ferramentas externas, confira o endereço e use «Testar» para ver o que o outro sistema responde.",
+              (f.mcp
+                ? "Abra Ferramentas externas › Servidores MCP, confira o servidor e use «Testar conexão» para ver o que ele responde."
+                : "Abra Ferramentas externas, confira o endereço e use «Testar» para ver o que o outro sistema responde."),
       });
     }
     return resultadoParaOAgente(resultado, f.effect);

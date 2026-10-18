@@ -3713,3 +3713,53 @@ opcionais; receptor real = `httpbin.org`, que ecoa o que recebeu).** Evidências
 **Não provado em produção:** o turno do agente chamando a ferramenta (exige canal e credencial de IA reais; a regra do
 turno foi medida no CI com receptor HTTP real: `ferramenta-externa-no-turno`, verde no PR #120) e a aba Teste / modo
 Assistido contra um agente real (idem, no CI).
+
+## J54 — O agente usa ferramentas de um servidor MCP de terceiro `[P1]` (2026-10-18, issue #96)
+
+Contexto: parte da #86. Além do webhook (J52/J53), a organização pode conectar um **servidor MCP** e escolher quais
+ferramentas dele o agente usa — com o recurso **desligado por padrão**, só para administrador, credencial cifrada
+que nunca volta, risco padrão «altera dados» e a mesma aprovação do webhook. Tabela `mcp_servers` e o tipo `mcp` em
+`agent_external_tools` (migration 0553); interruptor em `organizations.settings.mcp_externo`; regra em
+`lib/ai/ferramentas-externas/mcp/` e `executar.ts`; rotas `/api/v1/ai/mcp` e `/api/v1/ai/mcp-servers`; mapa em
+`docs/architecture/servidores-mcp-externos.architecture.json`; guia em `docs/integracao/ferramentas-externas-do-agente.md` §7.
+
+Spec pela tela: `tests/e2e/servidores-mcp-pela-tela.spec.ts` (**escrita; roda no CI do PR** — a organização nunca alcança
+127.0.0.1, então ela usa um IPv4 público que não responde e grava a ferramenta escolhida direto; o servidor de verdade
+é provado nos testes abaixo, com o servidor do SDK oficial).
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J54.1 | Instalação NOVA, sem ligar nada | a aba «Servidores MCP» diz o que é, que o sistema funciona sem isto e que ligar exige o aceite; nenhum servidor é cadastrado nem chamado; agentes e webhooks existentes não mudam | **PASS (unit)** — `servidores-mcp-tela.test.tsx`, `mcp/route.test.ts`; pela tela: spec escrita |
+| J54.2 | Ligar | só administrador; sem aceite a rota recusa (422); religar não pede o aceite de novo; desligar NÃO apaga nada; ligado SEM aceite no banco vale desligado | **PASS (unit)** — `mcp/config.test.ts`, `mcp/route.test.ts`; **PASS (invariante, PGlite)** — `servidores-mcp-do-agente.test.ts` |
+| J54.3 | Cadastrar servidor (https + credencial) | grava cifrada; a resposta e a tela só mostram os 4 últimos; auditoria sem credencial; **o teste de conexão acompanha o cadastro** e a causa vem em português | **PASS (unit + servidor MCP real)** — `mcp-servers/route.test.ts`, `mcp/cliente.test.ts` |
+| J54.4 | Endereço interno/privado/local | recusado ANTES de gravar, com a causa certa («não achei o nome» ≠ «rede interna») | **PASS (unit)**; cliente: **PASS (servidor real)** — a política recusa 127.0.0.1 e 10.x sem abrir conexão |
+| J54.5 | Servidor que não responde / credencial errada / não é MCP | o servidor é salvo MESMO ASSIM; «Não conectou» + a frase do que olhar; «Testar conexão» repete | **PASS (unit + servidor real)** — 401, 404, 503, redirecionamento, prazo |
+| J54.6 | Descobrir as ferramentas | lista AO VIVO; para cada uma: suportada ou não (e por quê), dica do servidor, risco, «quando usar», e se o servidor a mudou | **PASS (unit)** — `mcp/selecao.test.ts`, `mcp-servers/route.test.ts`, `servidores-mcp-tela.test.tsx` |
+| J54.7 | Escolher ferramentas | o corpo traz só o NOME e o que o administrador decide; a definição vem do servidor agora; risco padrão «altera dados» com aprovação ligada, mesmo com a dica «só lê»; «Só consulta» é escolha dele | **PASS (unit)** |
+| J54.8 | Ferramenta com campo obrigatório que é lista/objeto, ou mais de 10 campos | aparece DESABILITADA com o porquê; opcional não suportado é ignorado e listado | **PASS (unit)** — `mcp/esquema.test.ts` |
+| J54.9 | O agente chama a consulta MCP numa conversa | o servidor recebe a abertura de sessão e UMA chamada com a credencial no cabeçalho e só os campos preenchidos; o agente recebe o resultado como dado não confiável; a resposta sai; auditoria `kind: mcp` sem segredo | **PASS (unit, servidor MCP real)** — `turno-mcp.test.ts`; turno completo: **ESCRITO, não executado** — `tests/invariants/mcp-externo-no-turno.test.ts` |
+| J54.10 | Resultado com instruções («ignore as regras…», identificador interno) | chega embrulhado como dado; um identificador interno repetido pelo agente é VETADO antes do envio | **PASS (unit)**; turno completo: invariante escrita |
+| J54.11 | Ação MCP que altera | NADA sai; o pedido fica pendente na Central; «depende da equipe» não é vetado; o servidor (que jura «só lê») não é tocado | **PASS (unit, servidor real)**; turno completo: invariante escrita |
+| J54.12 | Aprovar na Central | executa pelo cliente MCP com a credencial do SERVIDOR, o nome da ferramenta NO servidor e o id do pedido em `_meta`; recurso desligado → 409 e o pedido segue pendente; recusar sempre pode | **PASS (unit)** — `decide/route.test.ts` |
+| J54.13 | Falha incerta numa ação (5xx / prazo / `isError`) | UMA tentativa, pedido «falha incerta», o texto do erro NÃO vai ao agente (só ao administrador, ao testar), a Central diz que não foi repetida | **PASS (unit, servidor real)** |
+| J54.14 | Desligar o recurso, desativar o servidor ou tirar da versão | a ferramenta nem é oferecida ao modelo e o servidor não é tocado; nada é apagado; o seletor do agente explica o porquê | **PASS (invariante PGlite — o motor carrega só com os três ligados)**; turno completo: invariante escrita |
+| J54.15 | Isolamento entre organizações | a ferramenta nunca aponta para o servidor de OUTRA organização (FK composta, mesmo por escrita direta); cada organização lê só os seus servidores e a credencial só do seu | **PASS (invariante, PGlite)** — `servidores-mcp-do-agente.test.ts` |
+| J54.16 | Baseline: instalação do zero e atualização | a 0553 aplica nas duas passadas; linhas `webhook` de antes seguem válidas | **PASS (PGlite install + update)**; CI: pendente do PR |
+
+**Medido neste PR (2026-10-18, máquina de desenvolvimento, sem Docker):** `pnpm typecheck` e `pnpm lint` sem erro; os
+testes dos diretórios tocados (cliente MCP contra o servidor do SDK em 4 combinações JSON/SSE × com/sem sessão, esquema,
+seleção, interruptor, rotas, turno, tela, i18n, marca, mapas, navegação) — **55 arquivos, 900 casos, todos verdes**; as
+invariantes de dado em PGlite (servidores MCP, pedidos, ferramentas, vocabulário banco×TypeScript, hardening das funções
+`security definer`) — **5 arquivos, 120 casos, verdes**, mais os 2 casos de prévia/Assistido do turno MCP. `pnpm test:unit`
+completo: as falhas restantes são as MESMAS da `main` nesta máquina (antivírus, git, PDF e prazos de teste sob carga —
+conferidas contra a `main` limpa arquivo por arquivo), nenhuma do PR.
+
+**O que NÃO foi provado ainda (e por quê):**
+- **Prova pela tela em ambiente fresco estilo VPS** (critério comum da #86): esta máquina não tem Docker, então a
+  instalação fresca com Supabase local não sobe aqui. O caminho é o da #95: CI do PR (e2e `servidores-mcp-pela-tela`)
+  e, depois do merge, a prova em produção com organização e usuário temporários e um servidor MCP público — **a
+  fazer**, com as capturas em `docs/testing/evidencias/96-servidores-mcp-externos/`.
+- **Turno completo** (`mcp-externo-no-turno.test.ts`): os casos de prévia/Assistido passam em PGlite; os de turno ao vivo
+  travam no claim da fila sob PGlite (igual ao `ferramenta-externa-no-turno`, com o controle da `main` também vermelho):
+  o gate é o job `invariants` do CI.
+- O caminho HTTPS real contra um servidor MCP de terceiro (SNI/certificado) não é exercitado por nenhum gate.

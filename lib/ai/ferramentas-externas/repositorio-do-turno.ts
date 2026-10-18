@@ -17,6 +17,7 @@ import { resumoDosDados, resumoEmTexto, tituloDoAviso } from "./aprovacao";
 import type { ResultadoDaChamada } from "./chamar";
 import { parametrosLidos } from "./esquema";
 import { hashDosArgumentos } from "./impressao-digital";
+import { lerConfigDeMcp } from "./mcp/config";
 import type { AberturaDoPedido, PedidoDoTurno } from "./pedidos-tipos";
 import type { PedidoParaOBloco } from "./pedidos-bloco";
 import { JANELA_DA_REPETICAO_HORAS, type EstadoDoPedido, type OrigemDoPedido } from "./tipos";
@@ -27,52 +28,100 @@ interface LinhaDoTurno {
   slug: string;
   name: string;
   when_to_use: string;
-  url: string;
+  url: string | null;
   parameters: unknown;
   effect: string;
   require_approval: boolean | null;
   approval_ttl_hours: number;
+  kind: string;
+  mcp_server_id: string | null;
+  mcp_tool_name: string | null;
+  server_url: string | null;
+  server_auth_header: string | null;
+  server_has_credential: boolean | null;
 }
 
-/** Ativas, entre as que a versão do agente cita, desta organização (consulta e ação que altera). */
+/**
+ * Ativas, entre as que a versão do agente cita, desta organização (consulta e ação que altera).
+ *
+ * A ferramenta de servidor MCP (issue #96) só entra com TRÊS coisas ligadas: ela, o servidor dela
+ * e o interruptor da organização (`settings.mcp_externo`, desligado por padrão e falha desligado).
+ * Desligar qualquer um tira a ferramenta do turno — sem apagar nada.
+ */
 export async function carregarFerramentasDoTurno(
   db: Queryable,
   organizationId: string,
   ids: readonly string[],
 ): Promise<FerramentaDoTurno[]> {
   const { rows } = await db.query<LinhaDoTurno>(
-    `select id, slug, name, when_to_use, url, parameters, effect, require_approval, approval_ttl_hours
-       from agent_external_tools
-      where organization_id = $1
-        and id = any($2::uuid[])
-        and active
-      order by name`,
+    `select t.id, t.slug, t.name, t.when_to_use, t.url, t.parameters, t.effect, t.require_approval,
+            t.approval_ttl_hours, t.kind, t.mcp_server_id, t.mcp_tool_name,
+            s.url as server_url, s.auth_header as server_auth_header,
+            (s.credential_encrypted is not null) as server_has_credential
+       from agent_external_tools t
+       left join mcp_servers s on s.organization_id = t.organization_id and s.id = t.mcp_server_id and s.active
+      where t.organization_id = $1
+        and t.id = any($2::uuid[])
+        and t.active
+        and (t.kind = 'webhook' or s.id is not null)
+      order by t.name`,
     [organizationId, [...ids]],
   );
-  return rows.map((r) => {
+
+  let mcpLigado = false;
+  if (rows.some((r) => r.kind === "mcp")) {
+    const { rows: org } = await db.query<{ settings: unknown }>("select settings from organizations where id = $1", [
+      organizationId,
+    ]);
+    mcpLigado = lerConfigDeMcp(org[0]?.settings ?? {}).ligado;
+  }
+
+  const ferramentas: FerramentaDoTurno[] = [];
+  for (const r of rows) {
     const parametros = parametrosLidos.safeParse(r.parameters);
-    return {
+    const base = {
       id: r.id,
       slug: r.slug,
       name: r.name,
       whenToUse: r.when_to_use,
-      url: r.url,
       parameters: parametros.success ? parametros.data : [],
       // Vocabulário desconhecido cai em «altera»: falha FECHADA (pede aprovação e não repete).
       effect: r.effect === "consulta" ? ("consulta" as const) : ("altera" as const),
       requireApproval: r.require_approval,
       approvalTtlHours: r.approval_ttl_hours,
     };
-  });
+    if (r.kind === "mcp") {
+      if (!mcpLigado || !r.server_url || !r.mcp_server_id || !r.mcp_tool_name) continue;
+      ferramentas.push({
+        ...base,
+        url: r.server_url,
+        mcp: {
+          servidorId: r.mcp_server_id,
+          cabecalho: r.server_auth_header ?? "authorization",
+          temCredencial: r.server_has_credential === true,
+          nomeNoServidor: r.mcp_tool_name,
+        },
+      });
+      continue;
+    }
+    if (!r.url) continue;
+    ferramentas.push({ ...base, url: r.url });
+  }
+  return ferramentas;
 }
 
-/** A chave em claro, ou `null` (sem linha, cifra indisponível, leitura falhou). Nunca lança. */
+/**
+ * O segredo em claro, ou `null` (sem linha, cifra indisponível, leitura falhou). Nunca lança.
+ * Webhook: a chave de assinatura da ferramenta. MCP: a credencial do SERVIDOR dela (`null`
+ * também quando o servidor não tem credencial — `temCredencial` é quem diferencia).
+ */
 export async function lerChaveNoBanco(db: Queryable, organizationId: string, id: string): Promise<string | null> {
   try {
     const { rows } = await db.query<{ chave: string | null }>(
-      `select public.fn_decrypt_oauth(signing_secret_encrypted) as chave
-         from agent_external_tools
-        where organization_id = $1 and id = $2`,
+      `select public.fn_decrypt_oauth(coalesce(t.signing_secret_encrypted, s.credential_encrypted)) as chave
+         from agent_external_tools t
+         left join mcp_servers s on s.organization_id = t.organization_id and s.id = t.mcp_server_id
+        where t.organization_id = $1 and t.id = $2`,
       [organizationId, id],
     );
     const chave = rows[0]?.chave ?? null;
@@ -119,7 +168,7 @@ export async function abrirAvisoDeFalha(
  * motivo, tentativas e duração. Nunca a chave, o corpo enviado nem a resposta.
  */
 export function metadadosDaChamada(
-  ferramenta: Pick<FerramentaDoTurno, "id" | "slug" | "effect">,
+  ferramenta: Pick<FerramentaDoTurno, "id" | "slug" | "effect" | "mcp">,
   resultado: ResultadoDaChamada,
   contexto: { agentId: string | null; jobId: string | null },
 ): Record<string, unknown> {
@@ -127,6 +176,8 @@ export function metadadosDaChamada(
     tool_id: ferramenta.id,
     tool_slug: ferramenta.slug,
     effect: ferramenta.effect,
+    kind: ferramenta.mcp ? "mcp" : "webhook",
+    ...(ferramenta.mcp ? { mcp_server_id: ferramenta.mcp.servidorId, mcp_tool: ferramenta.mcp.nomeNoServidor } : {}),
     agent_id: contexto.agentId,
     job_id: contexto.jobId,
     ok: resultado.ok,

@@ -482,7 +482,9 @@ export function TesteDaFerramentaDialog({
         <DialogHeader>
           <DialogTitle>{t("Testar de verdade")}</DialogTitle>
           <DialogDescription>
-            {t("Isto faz uma chamada real ao endereço cadastrado, com os dados de exemplo que você escrever. Nada é enviado a nenhum cliente.")}
+            {ferramenta?.mcp
+              ? t("Isto faz uma chamada real ao servidor MCP, com os dados de exemplo que você escrever. Nada é enviado a nenhum cliente.")
+              : t("Isto faz uma chamada real ao endereço cadastrado, com os dados de exemplo que você escrever. Nada é enviado a nenhum cliente.")}
           </DialogDescription>
         </DialogHeader>
         {ferramenta ? <CorpoDoTeste key={ferramenta.id} ferramenta={ferramenta} onFechar={onFechar} /> : null}

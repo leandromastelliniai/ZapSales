@@ -58,6 +58,7 @@ destinos internos que o dono da **instalação** autoriza
 |---|---|---|
 | Webhook de saída (`call_webhook`) | `buscarSeguro` | `permitirHttp` só fora de produção; **sem lista de destinos internos** (o endereço é de uma organização; antes desta issue o webhook também nunca a consultou); 3xx não seguido; corpo da resposta derrubado sem ler. Mantém assinatura HMAC, cabeçalhos e retentativas. |
 | Download de extensões | `buscarSeguro` | Origem de catálogo: `julgarLiteralIpv6`; exceção HTTP só no loopback de ensaio. |
+| Ferramentas externas do agente — webhook (#94) e servidor MCP (#96) | `buscarSeguro` | Endereço de **organização**: sem a lista de destinos internos, `permitirHttp` só fora de produção, 3xx não seguido (a credencial/assinatura não vai atrás de um endereço que ninguém cadastrou), prazo total por tentativa e teto de bytes. O cliente MCP é próprio (`lib/ai/ferramentas-externas/mcp/cliente.ts`) **de propósito**: o cliente do SDK usa o `fetch` global, que resolve o nome de novo, segue redirecionamento e lê sem teto. |
 | Banco externo | `lookupJulgado` no socket do `pg` + `validarHostDeBanco` | `politicaDoBanco`: a mesma régua **mais a LAN RFC 1918** (Postgres na rede do dono é caso real). |
 | `media_url` (o gateway é quem baixa) | `assertUrlDeMidiaSegura` → `validarUrl` + `resolverEJulgar` | Só **julga**; ver "O que continua de fora". |
 | Provedor de IA personalizado | `motivoDaRecusaDeDestino` (+ lista da instalação) | Só **julga**; ver abaixo. |
@@ -95,7 +96,7 @@ sair por `buscarSeguro` — é a razão deste ticket vir antes.
 ## Como verificar
 
 ```bash
-pnpm vitest run lib/net lib/external-db lib/extensions/download-rebinding.test.ts lib/automation
+pnpm vitest run lib/net lib/external-db lib/extensions/download-rebinding.test.ts lib/automation lib/ai/ferramentas-externas
 ```
 
 Os casos hostis (IP privado, IPv6 especial, rebinding entre resolução e conexão, redirecionamento

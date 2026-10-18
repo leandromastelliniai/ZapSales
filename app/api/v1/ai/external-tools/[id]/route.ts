@@ -10,6 +10,10 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
  *
  * A organização vem da sessão. Id de outra organização é 404 (nunca 403: não confirma que
  * existe). O identificador que o modelo vê (`ext_<slug>`) NÃO muda quando o nome muda.
+ *
+ * Ferramenta de servidor MCP (#96) passa pelas mesmas rotas, com duas diferenças: só ADMINISTRADOR
+ * edita ou apaga (o servidor é uma integração de terceiro com credencial), e o que vem do servidor
+ * (endereço, campos) não se edita aqui — escolhe-se de novo na tela do servidor.
  */
 import { randomUUID } from "node:crypto";
 import { type NextRequest } from "next/server";
@@ -78,6 +82,26 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
   }
   const patch = parsed.data;
 
+  const admin = createAdminClient();
+  try {
+    const atual = await buscarFerramenta(admin, org.orgId, id);
+    if (!atual) return fail("not_found", t("Ferramenta não encontrada."), 404, { requestId });
+    if (atual.mcp) {
+      const adm = await requireRole("admin", { requestId, resource: "ai_external_tools" });
+      if (!adm.ok) return adm.response;
+      if (patch.url !== undefined || patch.parametros !== undefined) {
+        return fail(
+          "validation_failed",
+          t("O endereço e os campos de uma ferramenta de servidor MCP vêm do servidor: escolha a ferramenta de novo na tela do servidor."),
+          422,
+          { requestId },
+        );
+      }
+    }
+  } catch {
+    return fail("internal_error", t("Não foi possível salvar a ferramenta."), 500, { requestId });
+  }
+
   if (patch.url !== undefined) {
     const recusa = await motivoDaRecusaDeDestino(patch.url, "organizacao");
     if (recusa) {
@@ -90,7 +114,6 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
     }
   }
 
-  const admin = createAdminClient();
   try {
     const ferramenta = await editarFerramenta(admin, { organizationId: org.orgId, id, atorId: user.id, patch });
     if (!ferramenta) return fail("not_found", t("Ferramenta não encontrada."), 404, { requestId });
@@ -104,6 +127,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
       // Os NOMES dos campos que mudaram — nunca os valores (o endereço pode levar um token).
       metadata: {
         slug: ferramenta.slug,
+        kind: ferramenta.kind,
         fields: camposAlterados(patch),
         ...(patch.ativa !== undefined ? { active: patch.ativa } : {}),
         // O valor da chave «pedir aprovação» NÃO é segredo: quem desligou a proteção fica no rastro.
@@ -132,6 +156,10 @@ export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
   try {
     const antes = await buscarFerramenta(admin, org.orgId, id);
     if (!antes) return fail("not_found", t("Ferramenta não encontrada."), 404, { requestId });
+    if (antes.mcp) {
+      const adm = await requireRole("admin", { requestId, resource: "ai_external_tools" });
+      if (!adm.ok) return adm.response;
+    }
     const resultado = await apagarFerramenta(admin, org.orgId, id);
     if (resultado === "em_uso") {
       return fail(
@@ -149,7 +177,7 @@ export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
       resourceType: "agent_external_tool",
       resourceId: id,
       requestId,
-      metadata: { slug: antes.slug },
+      metadata: { slug: antes.slug, kind: antes.kind },
     });
     return ok({ id, deleted: true }, { requestId });
   } catch {

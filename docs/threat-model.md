@@ -191,6 +191,22 @@ teto de bytes contado no corpo lido e prazo total de 15 s. A exceção HTTP em l
 **Ressalva do mesmo tipo:** o caminho HTTPS real (SNI, certificado, lookup amarrado) não é
 exercitado por nenhum gate — os testes usam HTTP local e um dublê do lookup.
 
+**Terceiro egress do servidor (servidores MCP, issue #96):** `lib/ai/ferramentas-externas/mcp/cliente.ts` fala
+com o servidor MCP que um **administrador** cadastrou, e o faz **só** por `buscarSeguro` (o cliente do SDK foi
+descartado de propósito: o `fetch` global resolve o nome de novo ao conectar, segue redirecionamento e lê sem teto).
+Mesma política: HTTPS, endereço da organização nunca da rede interna, DNS preso ao socket, **3xx não é seguido** (a
+credencial não vai atrás de um endereço que ninguém cadastrou), prazo total de 15 s e teto de bytes por resposta. Três
+superfícies novas, e a defesa de cada uma: (1) **a credencial** — cifrada em `mcp_servers`, nunca devolvida por rota,
+fora de log e auditoria, e credencial gravada e ilegível **não** vira «chamar sem autenticação»; (2) **texto de
+terceiro** — o resultado de uma ferramenta chega ao agente como dado não confiável (teto de 4.000 caracteres, aviso
+à frente, conferência de vocabulário interno antes de qualquer mensagem sair), e nome/descrição/esquema são
+sanitizados e fixados na definição que o administrador viu (o «rug pull» do servidor aparece como «Mudou no
+servidor»); (3) **a ferramenta que altera** — risco padrão «altera dados», a anotação `readOnlyHint` do servidor é
+só uma dica, a aprovação e a execução única são as do webhook e uma falha incerta nunca é repetida. O recurso é
+**desligado por padrão** e falha desligado. Prova: `lib/ai/ferramentas-externas/mcp/cliente.test.ts`,
+`turno-mcp.test.ts` e `tests/invariants/mcp-externo-no-turno.test.ts`, contra um servidor MCP de verdade.
+**Ressalva do mesmo tipo da anterior:** o caminho HTTPS real (SNI, certificado) não é exercitado por nenhum gate.
+
 ### T7 — Sem varredura de secret no histórico git 🟡 CONFIRMADO
 
 Sem gitleaks/trufflehog no CI, sem pre-commit hook (`.husky` e `.pre-commit-config.yaml`

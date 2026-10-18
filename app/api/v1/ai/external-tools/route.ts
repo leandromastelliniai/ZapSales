@@ -133,7 +133,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         // A decisão de quem cadastra: `null` = o padrão do efeito (altera pede aprovação).
         require_approval: criada.ferramenta.require_approval,
         approval_ttl_hours: criada.ferramenta.approval_ttl_hours,
-        host: new URL(criada.ferramenta.url).host,
+        host: new URL(criada.ferramenta.url ?? "http://invalido").host,
         parameters: criada.ferramenta.parameters.length,
       },
     });

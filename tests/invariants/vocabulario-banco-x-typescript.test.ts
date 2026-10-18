@@ -88,6 +88,16 @@ const PARES: Array<{
     simbolo: "EFEITOS_DA_FERRAMENTA",
   },
   {
+    tabela: "agent_external_tools",
+    coluna: "kind",
+    // lib/ai/ferramentas-externas/tipos.ts → TIPOS_DA_FERRAMENTA (0553, servidores MCP
+    // externos, #96). Um tipo que entrasse só no banco seria uma linha que o Zod da leitura não
+    // reconhece (a ferramenta cairia em «webhook» e sumiria do seletor com o endereço nulo); um
+    // só no TypeScript, um INSERT que bate no CHECK (23514) na hora de escolher a ferramenta.
+    arquivo: "lib/ai/ferramentas-externas/tipos.ts",
+    simbolo: "TIPOS_DA_FERRAMENTA",
+  },
+  {
     tabela: "agent_external_tool_requests",
     coluna: "status",
     // lib/ai/ferramentas-externas/tipos.ts → ESTADOS_DO_PEDIDO (0552, aprovação das ações

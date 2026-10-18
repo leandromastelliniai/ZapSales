@@ -597,7 +597,7 @@ export const NAV_CATALOG = [
     href: "/app/ai/external-tools",
     label: "Ferramentas externas",
     description: "Consultas e ações em outro sistema (estoque, planilha, ERP) que o agente faz durante a conversa; as que alteram algo esperam a sua aprovação.",
-    sinonimos: ["webhook", "integração", "make", "n8n", "erp", "consulta externa"],
+    sinonimos: ["webhook", "integração", "make", "n8n", "erp", "consulta externa", "mcp", "servidor mcp"],
     icon: "Signpost",
     group: "ia",
     section: "Montar o agente",

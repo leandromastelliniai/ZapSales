@@ -1,0 +1,354 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Servidores MCP externos para o agente",
+    "subtitle": "O agente usa ferramentas de servidores MCP de terceiros, escolhidas por um administrador: recurso desligado por padrão (aceite na organização), credencial cifrada e nunca devolvida, rede segura única, risco «altera dados» por padrão com a mesma aprovação do webhook, resultado sempre como dado e ação que altera nunca repetida em falha incerta (migration 0553; issue #96, parte da #86)",
+    "output": "servidores-mcp-externos.html",
+    "quality_profile": "standard"
+  },
+  "lanes": [
+    {
+      "id": "ui",
+      "label": "Telas"
+    },
+    {
+      "id": "api",
+      "label": "Rotas"
+    },
+    {
+      "id": "data",
+      "label": "Banco"
+    },
+    {
+      "id": "agent",
+      "label": "Turno do agente"
+    },
+    {
+      "id": "ext",
+      "label": "Fora do produto"
+    }
+  ],
+  "mainPath": [
+    "aba",
+    "rotaFerramentas",
+    "ferramentas",
+    "carregar",
+    "turno",
+    "executar",
+    "cliente",
+    "rede",
+    "servidorMcp"
+  ],
+  "nodes": [
+    {
+      "id": "aba",
+      "lane": "ui",
+      "col": 1,
+      "type": "frontend",
+      "label": "Ferramentas externas › aba «Servidores MCP» — desligado por padrão, aceite, servidor, teste de conexão, escolha das ferramentas (só admin)"
+    },
+    {
+      "id": "seletor",
+      "lane": "ui",
+      "col": 7,
+      "type": "frontend",
+      "label": "Seletor do agente — grupo «Ferramentas externas»: a MCP leva o selo «Servidor MCP» e fica desabilitada se o recurso/servidor está desligado"
+    },
+    {
+      "id": "central",
+      "lane": "ui",
+      "col": 8,
+      "type": "frontend",
+      "label": "Central de avisos — o MESMO cartão de aprovação do webhook (pedido da ferramenta MCP)"
+    },
+    {
+      "id": "rotaInterruptor",
+      "lane": "api",
+      "col": 1,
+      "type": "api",
+      "label": "/api/v1/ai/mcp — GET manager · PUT admin (aceite conferido na rota)"
+    },
+    {
+      "id": "rotaServidor",
+      "lane": "api",
+      "col": 2,
+      "type": "api",
+      "label": "/api/v1/ai/mcp-servers (+ /:id, /:id/test) — admin; endereço pela rede segura; Idempotency-Key"
+    },
+    {
+      "id": "rotaFerramentas",
+      "lane": "api",
+      "col": 3,
+      "type": "api",
+      "label": "/api/v1/ai/mcp-servers/:id/tools — GET descobre ao vivo · PUT escolhe (o corpo traz só o nome e o risco)"
+    },
+    {
+      "id": "rotaDecide",
+      "lane": "api",
+      "col": 8,
+      "type": "api",
+      "label": "/api/v1/ai/external-tool-requests/:id/decide — confere interruptor e servidor ANTES de reivindicar"
+    },
+    {
+      "id": "config",
+      "lane": "data",
+      "col": 1,
+      "type": "database",
+      "label": "organizations.settings.mcp_externo (ligado + aceite; falha DESLIGADO) — sem migration"
+    },
+    {
+      "id": "servidores",
+      "lane": "data",
+      "col": 2,
+      "type": "database",
+      "label": "mcp_servers (0553) — endereço, cabeçalho, credencial CIFRADA (nunca devolvida); só o servidor lê"
+    },
+    {
+      "id": "ferramentas",
+      "lane": "data",
+      "col": 4,
+      "type": "database",
+      "label": "agent_external_tools kind='mcp' (FK composta org+servidor; sem endereço nem chave de assinatura; risco nasce «altera»)"
+    },
+    {
+      "id": "pedido",
+      "lane": "data",
+      "col": 8,
+      "type": "database",
+      "label": "agent_external_tool_requests — o MESMO pedido (pendente → executando → executada/falha/recusada/expirada)"
+    },
+    {
+      "id": "auditoria",
+      "lane": "data",
+      "col": 9,
+      "type": "database",
+      "label": "api_audit_log (ai.mcp_* e ai.external_tool_* com kind=mcp — sem credencial, dados nem resposta)"
+    },
+    {
+      "id": "esquema",
+      "lane": "agent",
+      "col": 3,
+      "type": "service",
+      "label": "parametrosDoEsquemaMcp — esquema JSON do servidor → campos simples; sanitização do texto de terceiro; impressão da definição"
+    },
+    {
+      "id": "carregar",
+      "lane": "agent",
+      "col": 5,
+      "type": "service",
+      "label": "carregarFerramentasDoTurno — só com ferramenta + servidor + interruptor ligados; lê a credencial do SERVIDOR"
+    },
+    {
+      "id": "turno",
+      "lane": "agent",
+      "col": 6,
+      "type": "service",
+      "label": "montarFerramentasExternas — a mesma decisão de aprovação, o mesmo teto de 27, a prévia nunca executa"
+    },
+    {
+      "id": "executar",
+      "lane": "agent",
+      "col": 7,
+      "type": "service",
+      "label": "executarFerramentaExterna — despachante único (webhook | MCP) do turno, da decisão e do teste"
+    },
+    {
+      "id": "cliente",
+      "lane": "agent",
+      "col": 8,
+      "type": "service",
+      "label": "cliente MCP sobre buscarSeguro — sem redirecionamento, prazo e bytes limitados, falha antes da chamada = certa"
+    },
+    {
+      "id": "rede",
+      "lane": "agent",
+      "col": 9,
+      "type": "service",
+      "label": "rede segura única (lib/net/rede-segura) — interno, privado e local recusados"
+    },
+    {
+      "id": "servidorMcp",
+      "lane": "ext",
+      "col": 9,
+      "type": "external",
+      "label": "Servidor MCP de terceiro (Streamable HTTP) — recebe só o nome da ferramenta, os campos e o id do pedido"
+    }
+  ],
+  "edges": [
+    {
+      "id": "0",
+      "from": "aba",
+      "to": "rotaInterruptor",
+      "label": "liga/desliga com o aceite"
+    },
+    {
+      "id": "1",
+      "from": "rotaInterruptor",
+      "to": "config",
+      "label": "grava sem apagar o resto de settings"
+    },
+    {
+      "id": "2",
+      "from": "aba",
+      "to": "rotaServidor",
+      "label": "cadastra servidor (credencial viaja uma vez)"
+    },
+    {
+      "id": "3",
+      "from": "rotaServidor",
+      "to": "servidores",
+      "label": "grava; credencial cifrada por fn_encrypt_oauth"
+    },
+    {
+      "id": "4",
+      "from": "rotaServidor",
+      "to": "cliente",
+      "label": "teste de conexão logo depois de gravar"
+    },
+    {
+      "id": "5",
+      "from": "aba",
+      "to": "rotaFerramentas",
+      "label": "descobre e escolhe as ferramentas"
+    },
+    {
+      "id": "6",
+      "from": "rotaFerramentas",
+      "to": "cliente",
+      "label": "tools/list AO VIVO (a definição vem do servidor, nunca do corpo)"
+    },
+    {
+      "id": "7",
+      "from": "cliente",
+      "to": "esquema",
+      "label": "ferramentas oferecidas → campos que o agente preenche"
+    },
+    {
+      "id": "8",
+      "from": "esquema",
+      "to": "ferramentas",
+      "label": "grava a definição que o administrador viu (risco padrão: altera)"
+    },
+    {
+      "id": "9",
+      "from": "servidores",
+      "to": "ferramentas",
+      "label": "FK composta (organization_id, mcp_server_id): nunca o servidor de outra organização"
+    },
+    {
+      "id": "10",
+      "from": "config",
+      "to": "carregar",
+      "label": "interruptor da organização (falha desligado)"
+    },
+    {
+      "id": "11",
+      "from": "servidores",
+      "to": "carregar",
+      "label": "servidor ativo + credencial do servidor"
+    },
+    {
+      "id": "12",
+      "from": "ferramentas",
+      "to": "carregar",
+      "label": "ferramentas ativas citadas pela versão publicada"
+    },
+    {
+      "id": "13",
+      "from": "carregar",
+      "to": "turno",
+      "label": "ferramenta do turno (url do servidor em memória, destino MCP)"
+    },
+    {
+      "id": "14",
+      "from": "turno",
+      "to": "seletor",
+      "label": "mesma lista de external_tool_ids e o mesmo teto de 27"
+    },
+    {
+      "id": "15",
+      "from": "turno",
+      "to": "pedido",
+      "label": "ação que altera / Assistido: abre o pedido, nada sai"
+    },
+    {
+      "id": "16",
+      "from": "turno",
+      "to": "executar",
+      "label": "consulta sem aprovação, ou ação com a chave desligada"
+    },
+    {
+      "id": "17",
+      "from": "pedido",
+      "to": "central",
+      "label": "aviso external_tool_approval"
+    },
+    {
+      "id": "18",
+      "from": "central",
+      "to": "rotaDecide",
+      "label": "Aprovar e executar / Recusar"
+    },
+    {
+      "id": "19",
+      "from": "rotaDecide",
+      "to": "config",
+      "label": "aprovar com o recurso desligado: 409 mcp_disabled (recusar sempre pode)"
+    },
+    {
+      "id": "20",
+      "from": "rotaDecide",
+      "to": "executar",
+      "label": "execução única, id do pedido como _meta.agent/delivery_id"
+    },
+    {
+      "id": "21",
+      "from": "executar",
+      "to": "cliente",
+      "label": "tools/call — consulta repete 1 vez; ação que altera, UMA tentativa"
+    },
+    {
+      "id": "22",
+      "from": "cliente",
+      "to": "rede",
+      "label": "DNS julgado e preso ao socket; 3xx não é seguido"
+    },
+    {
+      "id": "23",
+      "from": "rede",
+      "to": "servidorMcp",
+      "label": "POST com a credencial no cabeçalho escolhido"
+    },
+    {
+      "id": "24",
+      "from": "servidorMcp",
+      "to": "turno",
+      "label": "resultado = DADO NÃO CONFIÁVEL, 4.000 caracteres, só texto"
+    },
+    {
+      "id": "25",
+      "from": "executar",
+      "to": "auditoria",
+      "label": "ai.external_tool_called / _request_executed com kind=mcp"
+    },
+    {
+      "id": "26",
+      "from": "rotaServidor",
+      "to": "auditoria",
+      "label": "ai.mcp_server_created/updated/deleted/tested"
+    },
+    {
+      "id": "27",
+      "from": "rotaFerramentas",
+      "to": "auditoria",
+      "label": "ai.mcp_tools_selected (nomes e risco, nunca a definição)"
+    },
+    {
+      "id": "28",
+      "from": "rotaInterruptor",
+      "to": "auditoria",
+      "label": "ai.mcp_switch_changed"
+    }
+  ]
+}

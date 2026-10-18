@@ -23,6 +23,10 @@ const deps = vi.hoisted(() => ({
   },
   lerChave: vi.fn(),
   chamar: vi.fn(),
+  // Servidor MCP (#96)
+  mcpChamar: vi.fn(),
+  mcpConfig: vi.fn(),
+  mcpServidor: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/require-role", () => ({ requireRole: deps.role }));
@@ -38,6 +42,13 @@ vi.mock("@/lib/ai/ferramentas-externas/chamar", async (importar) => ({
   ...(await importar<typeof import("@/lib/ai/ferramentas-externas/chamar")>()),
   chamarFerramentaExterna: deps.chamar,
 }));
+
+vi.mock("@/lib/ai/ferramentas-externas/mcp/cliente", () => ({ chamarFerramentaDoServidor: deps.mcpChamar }));
+vi.mock("@/lib/ai/ferramentas-externas/mcp/config", async (importar) => ({
+  ...(await importar<typeof import("@/lib/ai/ferramentas-externas/mcp/config")>()),
+  lerConfigDeMcpDaOrganizacao: deps.mcpConfig,
+}));
+vi.mock("@/lib/ai/ferramentas-externas/mcp/repositorio", () => ({ carregarServidorParaChamar: deps.mcpServidor }));
 
 import { POST } from "@/app/api/v1/ai/external-tool-requests/[id]/decide/route";
 
@@ -91,6 +102,15 @@ beforeEach(() => {
   deps.repo.recusar.mockResolvedValue(true);
   deps.repo.marcarExpirado.mockResolvedValue(true);
   deps.lerChave.mockResolvedValue("whsec_chave");
+  deps.mcpConfig.mockResolvedValue({ ligado: true, aceite: { em: "2026-10-18T12:00:00.000Z", por: EU } });
+  deps.mcpServidor.mockResolvedValue({
+    nome: "ERP",
+    ativo: true,
+    servidor: { url: "https://mcp.exemplo.com/mcp", credencial: "tok-do-servidor", cabecalho: "authorization" },
+    temCredencial: true,
+    credencialLegivel: true,
+  });
+  deps.mcpChamar.mockResolvedValue({ ok: true, httpStatus: 200, conteudo: '{"pedido":"P-1"}', truncado: false, tentativas: 1, duracaoMs: 20 });
   deps.chamar.mockResolvedValue({ ok: true, httpStatus: 201, conteudo: "{}", truncado: false, tentativas: 1, duracaoMs: 12 });
 });
 
@@ -298,5 +318,103 @@ describe("recusar cancela", () => {
     const res = await POST(req({ decision: "reject" }), ctx());
     expect(res.status).toBe(409);
     expect(acoesAuditadas()).toEqual([]);
+  });
+});
+
+describe("ferramenta de servidor MCP (#96)", () => {
+  const SERVIDOR = "66666666-6666-4666-8666-666666666666";
+  const PEDIDO_MCP = {
+    ...PEDIDO,
+    tool_slug: "criar_pedido_erp",
+    tool_url: null,
+    tool_mcp: { servidor_id: SERVIDOR, nome_no_servidor: "criar_pedido" },
+  };
+
+  it("aprovar executa pelo cliente MCP, com a credencial do SERVIDOR, o nome da ferramenta NO servidor e o id do pedido", async () => {
+    deps.repo.buscarPedido.mockResolvedValue(PEDIDO_MCP);
+    const res = await POST(req({ decision: "approve" }), ctx());
+    expect(res.status).toBe(200);
+    expect((await res.json()).data).toMatchObject({ id: ID, status: "executed", ok: true, content: '{"pedido":"P-1"}' });
+    expect(deps.chamar).not.toHaveBeenCalled();
+    expect(deps.mcpChamar).toHaveBeenCalledTimes(1);
+    const [entrada] = deps.mcpChamar.mock.calls[0]!;
+    expect(entrada).toMatchObject({
+      servidor: { url: "https://mcp.exemplo.com/mcp", credencial: "tok-do-servidor", cabecalho: "authorization" },
+      ferramenta: "criar_pedido",
+      efeito: "altera",
+      idDeEntrega: ID,
+    });
+    expect(deps.mcpServidor).toHaveBeenCalledWith({}, ORG, SERVIDOR);
+    expect(deps.repo.finalizar).toHaveBeenCalledWith({}, ORG, ID, expect.objectContaining({ ok: true }));
+  });
+
+  it("a auditoria diz que é MCP, de qual servidor e qual ferramenta — e nunca a credencial", async () => {
+    deps.repo.buscarPedido.mockResolvedValue(PEDIDO_MCP);
+    await POST(req({ decision: "approve" }), ctx());
+    const texto = JSON.stringify(deps.audit.mock.calls);
+    expect(texto).toContain('"kind":"mcp"');
+    expect(texto).toContain(SERVIDOR);
+    expect(texto).toContain("criar_pedido");
+    expect(texto).not.toContain("tok-do-servidor");
+    expect(texto).not.toContain("xyz-segredo");
+  });
+
+  it("com o recurso DESLIGADO a aprovação não executa, o pedido continua pendente e nada é chamado", async () => {
+    deps.repo.buscarPedido.mockResolvedValue(PEDIDO_MCP);
+    deps.mcpConfig.mockResolvedValue({ ligado: false, aceite: null });
+    const res = await POST(req({ decision: "approve" }), ctx());
+    expect(res.status).toBe(409);
+    expect((await res.json()).error.code).toBe("mcp_disabled");
+    expect(deps.repo.reivindicar).not.toHaveBeenCalled();
+    expect(deps.mcpChamar).not.toHaveBeenCalled();
+  });
+
+  it("falha na leitura do interruptor vale desligado (falha fechada)", async () => {
+    deps.repo.buscarPedido.mockResolvedValue(PEDIDO_MCP);
+    deps.mcpConfig.mockResolvedValue(null);
+    expect((await POST(req({ decision: "approve" }), ctx())).status).toBe(409);
+    expect(deps.mcpChamar).not.toHaveBeenCalled();
+  });
+
+  it("servidor desativado (ou apagado) não executa; o pedido continua pendente", async () => {
+    deps.repo.buscarPedido.mockResolvedValue(PEDIDO_MCP);
+    deps.mcpServidor.mockResolvedValue({ nome: "ERP", ativo: false, servidor: { url: "https://x.com/mcp", credencial: null, cabecalho: "authorization" }, temCredencial: false, credencialLegivel: true });
+    const res = await POST(req({ decision: "approve" }), ctx());
+    expect(res.status).toBe(409);
+    expect((await res.json()).error.code).toBe("mcp_server_inactive");
+    expect(deps.repo.reivindicar).not.toHaveBeenCalled();
+    deps.mcpServidor.mockResolvedValue(null);
+    expect((await POST(req({ decision: "approve" }), ctx())).status).toBe(409);
+    expect(deps.mcpChamar).not.toHaveBeenCalled();
+  });
+
+  it("credencial gravada e ilegível: a chamada NÃO sai (nada de «tentar sem autenticação») e o pedido fecha como falha certa", async () => {
+    deps.repo.buscarPedido.mockResolvedValue(PEDIDO_MCP);
+    deps.mcpServidor.mockResolvedValue({
+      nome: "ERP",
+      ativo: true,
+      servidor: { url: "https://mcp.exemplo.com/mcp", credencial: null, cabecalho: "authorization" },
+      temCredencial: true,
+      credencialLegivel: false,
+    });
+    const corpo = (await (await POST(req({ decision: "approve" }), ctx())).json()).data;
+    expect(corpo).toMatchObject({ status: "failed", ok: false, uncertain: false, reason: "segredo_indisponivel" });
+    expect(deps.mcpChamar).not.toHaveBeenCalled();
+  });
+
+  it("falha incerta no servidor: UMA chamada, fecha como incerta e não é repetida", async () => {
+    deps.repo.buscarPedido.mockResolvedValue(PEDIDO_MCP);
+    deps.mcpChamar.mockResolvedValue({ ok: false, motivo: "timeout", httpStatus: null, tentativas: 1, duracaoMs: 15000, desfechoIncerto: true });
+    const corpo = (await (await POST(req({ decision: "approve" }), ctx())).json()).data;
+    expect(corpo).toMatchObject({ status: "failed", ok: false, uncertain: true, reason: "timeout" });
+    expect(deps.mcpChamar).toHaveBeenCalledTimes(1);
+  });
+
+  it("recusar um pedido de MCP funciona mesmo com o recurso desligado (dá para limpar a fila)", async () => {
+    deps.repo.buscarPedido.mockResolvedValue(PEDIDO_MCP);
+    deps.mcpConfig.mockResolvedValue({ ligado: false, aceite: null });
+    const res = await POST(req({ decision: "reject" }), ctx());
+    expect(res.status).toBe(200);
+    expect(deps.mcpChamar).not.toHaveBeenCalled();
   });
 });

@@ -10,7 +10,7 @@ import { randomUUID } from "node:crypto";
 import { type NextRequest } from "next/server";
 
 import { fail, ok } from "@/lib/api/wrappers";
-import { rotacionarChave } from "@/lib/ai/ferramentas-externas/repositorio";
+import { buscarFerramenta, rotacionarChave } from "@/lib/ai/ferramentas-externas/repositorio";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { traduzir } from "@/lib/i18n/dicionario";
@@ -35,7 +35,18 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { user, org } = authz;
 
   try {
-    const r = await rotacionarChave(createAdminClient(), { organizationId: org.orgId, id, atorId: user.id });
+    const admin = createAdminClient();
+    // Ferramenta de servidor MCP não tem chave de assinatura: a credencial é do SERVIDOR (tela do servidor).
+    const atual = await buscarFerramenta(admin, org.orgId, id);
+    if (atual?.mcp) {
+      return fail(
+        "not_applicable",
+        t("Esta ferramenta vem de um servidor MCP e não tem chave de assinatura. A credencial se troca na tela do servidor."),
+        422,
+        { requestId },
+      );
+    }
+    const r = await rotacionarChave(admin, { organizationId: org.orgId, id, atorId: user.id });
     if (!r.ok) {
       return r.erro === "nao_encontrada"
         ? fail("not_found", t("Ferramenta não encontrada."), 404, { requestId })

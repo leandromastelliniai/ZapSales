@@ -864,6 +864,97 @@ execução lançar. Para o agente, «executando» é «sendo executada agora —
 
 ---
 
+## 12e. Servidores MCP externos para o agente (issue #96, parte da #86)
+
+O agente pode usar as ferramentas de **servidores MCP de terceiros** que um administrador cadastra. Destino:
+**núcleo atrás de interruptor da organização, desligado por padrão** — não é «extensão» (o contrato de
+extensões v1 é declarativo e não tem ferramentas de IA) e segue o molde do Jev e da resposta em áudio. Pergunta
+da doutrina: *se nenhuma organização ligar isto, a operação comum continua inteira?* **Sim**: nada é cadastrado,
+nada é chamado e nenhuma tela de agente muda.
+
+**Interruptor** (`organizations.settings.mcp_externo`, sem migration; `lib/ai/ferramentas-externas/mcp/config.ts`):
+`{ ligado, aceite: { em, por } }`. Leitura **nunca lança e falha desligada**: JSON torto, `ligado` sem `aceite`
+(LGPD: o agente passa a enviar dados a terceiros) ou ilegível valem **desligado**. Só **administrador** liga
+(`PUT /api/v1/ai/mcp`, com guarda de suporte e auditoria `ai.mcp_switch_changed`); a rota exige o `aceite` — o
+gravado antes ou o que chega na chamada —, não só a tela. Desligar **não apaga nada**: servidores, credencial e
+ferramentas ficam; as ferramentas saem do turno, as rotas que sairiam para fora respondem 409 `mcp_disabled` e uma
+aprovação pendente não executa (`mcp_disabled`) — mas pode ser **recusada**.
+
+**Servidor** (`mcp_servers`, 0553 — server-side only como `agent_external_tools`: RLS ligada, zero policies,
+grants revogados de `anon`/`authenticated`): `name` (único por organização, sem diferenciar caixa), `url`,
+`auth_header`, `credential_encrypted`/`credential_last4` (cifrada por `fn_encrypt_oauth`, **nunca devolvida**; o
+par é tudo-ou-nada por CHECK), `active`, e o último teste de conexão (`last_check_*`, `server_name/version`).
+`(organization_id, id)` é único para a FK composta de `agent_external_tools`.
+
+**A ferramenta escolhida** entra no **mesmo registro** `agent_external_tools` (`kind = 'mcp'`, CHECK de forma
+`agent_external_tools_kind_shape`): sem `url` nem chave de assinatura (o endereço é o do servidor — uma fonte só),
+com `mcp_server_id` (FK composta `(organization_id, mcp_server_id)`: nunca o servidor de outra organização, nem
+por escrita direta com a service key) e `mcp_tool_name` (o nome NO servidor). `mcp_definition_hash` guarda a
+impressão de descrição + esquema que o administrador viu; `mcp_hint_read_only` guarda o `readOnlyHint` do
+servidor — **só uma dica para a tela**. Herda tudo da #94/#95: o seletor do agente (grupo «Ferramentas externas»),
+`external_tool_ids` da versão publicada (imutável), o **teto de 27**, a chave `require_approval` (nula = padrão do
+efeito), o modo Assistido, o pedido, a execução única, a expiração e a Central.
+
+**Risco.** `effect` nasce **`altera`** e só o administrador troca para `consulta`. A dica do servidor não decide
+nada (o servidor de teste do invariante declara `readOnlyHint: true` numa ferramenta que cria pedido, e o pedido
+continua pendente).
+
+**Esquema → campos** (`mcp/esquema.ts`): o esquema JSON do servidor vira os mesmos 4 tipos simples
+(texto/número/inteiro/sim-não, até 10, `enum` de textos → texto com as opções) para que a conferência do que o
+modelo preenche, o resumo do pedido e a tela sejam **uma só**. Opcional não suportado (lista/objeto) é ignorado e
+listado; **obrigatório** não suportado → ferramenta `campo_obrigatorio_complexo` (desabilitada na tela, com o
+porquê); mais de 10 campos, nome de campo inválido e esquema que não é objeto também. Nomes em `camelCase` valem
+(`parametrosLidos` aceita `[A-Za-z_][A-Za-z0-9_-]*`; a criação por webhook continua exigindo minúsculas).
+
+**Texto de terceiro é dado.** Nome, descrição e esquema passam por `sanitizarTextoDoServidor` (sem controle, sem
+marcação que imita papel de conversa, uma linha, com teto); a descrição vira o «quando usar» **que o administrador
+lê e edita** antes de escolher — é a única porta para texto de terceiro dentro do que o modelo lê como instrução da
+ferramenta. A definição escolhida fica **fixada**: se o servidor mudar descrição ou esquema, a descoberta marca
+«Mudou no servidor» e o agente segue com a definição de antes até alguém salvar de novo.
+
+**Cliente** (`mcp/cliente.ts`, **não** o do SDK): Streamable HTTP sobre `buscarSeguro` — a rede segura única, com
+o DNS julgado e preso ao socket, **sem seguir redirecionamento**, prazo total de 15 s por tentativa e teto de bytes
+contado sobre o que chega (64 KB por resposta, 512 KB por página de `tools/list`). Duas fases, um critério: falha
+**antes** de `tools/call` sair é **certa**; depois, só a recusa explícita (credencial recusada, `-32601/-32602`,
+4xx) é certa — prazo, rede, 5xx, resposta ilegível e `isError: true` deixam o desfecho **incerto**. Ação que altera
+tem **uma tentativa**; consulta repete uma vez em falha repetível. `executar.ts` é o despachante único (webhook ou
+MCP) usado pelo turno, pela rota `decide` e pelo botão «Testar de verdade».
+
+**Turno.** `carregarFerramentasDoTurno` só carrega a ferramenta MCP com **três** coisas ligadas — ela, o servidor
+e o interruptor — e lê a credencial **do servidor** (`lerChaveNoBanco`); `temCredencial` distingue «servidor sem
+credencial» (chama sem) de «credencial gravada e ilegível» (**não chama**: falha certa `segredo_indisponivel`,
+nunca «tentar sem autenticação»). O resultado volta como `dado_nao_confiavel`, com o aviso à frente e teto de
+4.000 caracteres; o texto de um `isError` **não** vai ao agente (só ao administrador, ao testar).
+
+**Rotas** (`/api/v1/ai/…`, todas com `requireRole`, guarda de suporte antes do efeito e `.strict()` no Zod):
+`mcp` (GET manager · PUT admin) · `mcp-servers` (GET lista · POST cadastra **e testa a conexão**, com
+`Idempotency-Key`) · `mcp-servers/:id` (GET · PATCH · DELETE) · `mcp-servers/:id/test` · `mcp-servers/:id/tools`
+(GET **descobre ao vivo** · PUT escolhe: o corpo traz só o nome no servidor e o que o administrador decide; a
+definição vem do servidor, agora). Tudo **admin**; `external-tools/:id` (PATCH/DELETE/test) aceita a linha MCP
+também, mas só **admin** a mexe, e `url`/`parametros` dela vêm do servidor (422); `rotate-secret` não se aplica
+(422 `not_applicable`). Apagar servidor cujas ferramentas uma versão cita → 409 `mcp_server_in_use` (desative).
+
+**Auditoria** (sem credencial, sem dados enviados, sem o que o servidor respondeu): `ai.mcp_switch_changed` ·
+`ai.mcp_server_created/updated/deleted/tested` · `ai.mcp_tools_selected`, e a execução reaproveita
+`ai.external_tool_called` e `ai.external_tool_request_*`, agora com `kind: "mcp"`, `mcp_server_id` e `mcp_tool`.
+
+**Tela.** Ferramentas externas ganha a aba **«Servidores MCP»** (mesma porta, `?aba=mcp`): desligado → o que é,
+que o sistema funciona sem isto e o aceite; ligado → lista de servidores (credencial só como `…xxxx`, selo
+«Conectou/Não conectou/Ainda não testado»), «Adicionar servidor» (o teste de conexão acompanha e a causa vem em
+português), «Escolher ferramentas» (risco padrão «Altera dados», «Pedir aprovação» ligado, dica do servidor
+como dica, «quando usar» editável, não suportadas desabilitadas). A lista de webhooks não mostra ferramentas MCP;
+o seletor do agente mostra as duas, com o selo «Servidor MCP», e desabilita a que está indisponível (recurso
+desligado, servidor desativado).
+
+Mapa vivo: `docs/architecture/servidores-mcp-externos.architecture.json`. Guia de quem opera o servidor:
+`docs/integracao/ferramentas-externas-do-agente.md` §7.
+
+**Limites conhecidos (v1):** só o transporte Streamable HTTP; só campos simples (listas/objetos obrigatórios não
+são suportados); sem OAuth do servidor (a credencial é um token/valor colado); só texto chega ao agente; o fluxo de
+notificações do servidor não é aberto; as ferramentas de um servidor só mudam quando o administrador salva de novo.
+
+---
+
 ## 13. Performance
 
 - Lista paginada (default 25/page) com cursor base64+HMAC (Spec 09)

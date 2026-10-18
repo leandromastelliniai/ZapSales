@@ -222,6 +222,11 @@ describe("POST — cadastrar", () => {
 });
 
 describe("/:id — ler, editar, apagar", () => {
+  // Editar e apagar leem a ferramenta antes (ferramenta de servidor MCP exige administrador): a de teste é um webhook.
+  beforeEach(() => {
+    deps.repo.buscarFerramenta.mockResolvedValue(FERRAMENTA);
+  });
+
   it("id de OUTRA organização é 404, nunca 403 (não confirma que existe)", async () => {
     deps.repo.buscarFerramenta.mockResolvedValue(null);
     expect((await GET_UMA(req("GET", `/x/${ID}`), ctx())).status).toBe(404);
@@ -335,6 +340,7 @@ describe("POST /:id/test — Testar de verdade", () => {
         segredo: CHAVE,
         argumentos: { produto: "camiseta" },
       }),
+      expect.anything(),
     );
     // A chave nunca está na resposta nem na auditoria.
     expect(JSON.stringify(corpo)).not.toContain(CHAVE);

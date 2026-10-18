@@ -23,6 +23,9 @@ vi.mock("@/components/feedback/ApiErrorToast", () => ({ showApiError: toasts.api
 
 const FERRAMENTA: FerramentaExterna = {
   id: "aaaaaaaa-0000-4000-8000-000000000001",
+  kind: "webhook",
+  mcp: null,
+  unavailable_reason: null,
   name: "Consultar estoque",
   slug: "consultar_estoque",
   agent_name: "ext_consultar_estoque",

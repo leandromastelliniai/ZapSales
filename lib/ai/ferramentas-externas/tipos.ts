@@ -20,6 +20,15 @@
 export const EFEITOS_DA_FERRAMENTA = ["consulta", "altera"] as const;
 export type EfeitoDaFerramenta = (typeof EFEITOS_DA_FERRAMENTA)[number];
 
+/**
+ * De onde a ferramenta vem (issue #96). `webhook` = o endereço que a pessoa cadastrou e o sistema
+ * assina (#94). `mcp` = uma ferramenta que um servidor MCP de terceiros oferece e o administrador
+ * escolheu. Igual ao CHECK de `agent_external_tools.kind` (vigiado por
+ * `tests/invariants/vocabulario-banco-x-typescript.test.ts`).
+ */
+export const TIPOS_DA_FERRAMENTA = ["webhook", "mcp"] as const;
+export type TipoDaFerramenta = (typeof TIPOS_DA_FERRAMENTA)[number];
+
 /** Os tipos de dado que o agente pode ser mandado a preencher. */
 export const TIPOS_DE_PARAMETRO = ["texto", "numero", "inteiro", "booleano"] as const;
 export type TipoDeParametro = (typeof TIPOS_DE_PARAMETRO)[number];
@@ -81,6 +90,11 @@ export const MOTIVOS_DE_FALHA = [
   "erro_do_outro_sistema",
   "recusada_pelo_outro_sistema",
   "rede",
+  // Servidor MCP (issue #96): a credencial não foi aceita; o servidor respondeu algo que não é MCP;
+  // a ferramenta respondeu «deu erro» (o que ela já tinha feito antes de falhar, ninguém sabe).
+  "credencial_recusada",
+  "protocolo_invalido",
+  "ferramenta_com_erro",
 ] as const;
 export type MotivoDeFalha = (typeof MOTIVOS_DE_FALHA)[number];
 
@@ -94,6 +108,7 @@ export const MOTIVOS_DE_FALHA_CERTA: ReadonlySet<MotivoDeFalha> = new Set<Motivo
   "recusada_pela_politica",
   "segredo_indisponivel",
   "recusada_pelo_outro_sistema",
+  "credencial_recusada",
 ]);
 
 /** A frase, sem jargão, do que aconteceu. Quem lê é o dono do negócio. */
@@ -108,6 +123,10 @@ export const FRASE_DA_FALHA: Record<MotivoDeFalha, string> = {
   erro_do_outro_sistema: "O outro sistema respondeu com erro.",
   recusada_pelo_outro_sistema: "O outro sistema recusou o pedido (erro de endereço, acesso ou dados).",
   rede: "Não foi possível alcançar o outro sistema.",
+  credencial_recusada:
+    "O servidor recusou a credencial (não autorizado). Confira ou troque a credencial na tela do servidor MCP.",
+  protocolo_invalido: "O endereço respondeu, mas não é um servidor MCP que o sistema consiga usar.",
+  ferramenta_com_erro: "A ferramenta do servidor MCP respondeu com erro.",
 };
 
 /** O prefixo do nome que o agente enxerga. Separa a ferramenta externa das do catálogo. */

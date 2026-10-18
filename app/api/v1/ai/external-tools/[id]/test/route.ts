@@ -24,8 +24,11 @@ import { type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { fail, ok } from "@/lib/api/wrappers";
-import { chamarFerramentaExterna, fraseDoMotivo } from "@/lib/ai/ferramentas-externas/chamar";
+import { fraseDoMotivo } from "@/lib/ai/ferramentas-externas/chamar";
 import { validarArgumentos } from "@/lib/ai/ferramentas-externas/esquema";
+import { executarFerramentaExterna, type FerramentaExecutavel } from "@/lib/ai/ferramentas-externas/executar";
+import { lerConfigDeMcpDaOrganizacao } from "@/lib/ai/ferramentas-externas/mcp/config";
+import { carregarServidorParaChamar } from "@/lib/ai/ferramentas-externas/mcp/repositorio";
 import { buscarFerramenta, lerChaveDaFerramenta } from "@/lib/ai/ferramentas-externas/repositorio";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
@@ -75,12 +78,39 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     const validado = validarArgumentos(ferramenta.parameters, parsed.data.arguments);
     if (!validado.ok) return fail("validation_failed", validado.mensagem, 422, { requestId });
 
-    const chave = await lerChaveDaFerramenta(admin, org.orgId, id);
-    const resultado = await chamarFerramentaExterna({
-      ferramenta: { slug: ferramenta.slug, url: ferramenta.url, efeito: ferramenta.effect },
-      segredo: chave,
-      argumentos: validado.valor,
-    });
+    // Ferramenta de servidor MCP (#96): quem testa é o administrador (o servidor é uma integração de
+    // terceiro com credencial), o recurso tem de estar ligado e o servidor ativo.
+    let alvo: FerramentaExecutavel;
+    let segredo: string | null;
+    if (ferramenta.mcp) {
+      const admOk = await requireRole("admin", { requestId, resource: "ai_external_tools" });
+      if (!admOk.ok) return admOk.response;
+      const config = await lerConfigDeMcpDaOrganizacao(admin, org.orgId);
+      if (!config?.ligado) {
+        return fail("mcp_disabled", t("Os servidores MCP estão desligados nesta organização. Ligue-os para testar."), 409, {
+          requestId,
+        });
+      }
+      const servidor = await carregarServidorParaChamar(admin, org.orgId, ferramenta.mcp.server_id);
+      if (!servidor || !servidor.ativo) {
+        return fail("mcp_server_inactive", t("O servidor MCP desta ferramenta está desativado."), 409, { requestId });
+      }
+      alvo = {
+        slug: ferramenta.slug,
+        url: servidor.servidor.url,
+        efeito: ferramenta.effect,
+        mcp: {
+          cabecalho: servidor.servidor.cabecalho,
+          temCredencial: servidor.temCredencial,
+          nomeNoServidor: ferramenta.mcp.tool_name,
+        },
+      };
+      segredo = servidor.servidor.credencial;
+    } else {
+      alvo = { slug: ferramenta.slug, url: ferramenta.url ?? "", efeito: ferramenta.effect };
+      segredo = await lerChaveDaFerramenta(admin, org.orgId, id);
+    }
+    const resultado = await executarFerramentaExterna({ ferramenta: alvo, segredo, argumentos: validado.valor });
 
     // O fato, sem a chave, sem o corpo enviado e sem o que o outro sistema respondeu.
     void audit({
@@ -93,6 +123,8 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       metadata: {
         slug: ferramenta.slug,
         effect: ferramenta.effect,
+        kind: ferramenta.kind,
+        ...(ferramenta.mcp ? { mcp_server_id: ferramenta.mcp.server_id, mcp_tool: ferramenta.mcp.tool_name } : {}),
         ok: resultado.ok,
         http_status: resultado.httpStatus,
         attempts: resultado.tentativas,
@@ -101,7 +133,9 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       },
     });
 
-    const enviado = { event: "agent.tool_call", tool: ferramenta.slug, arguments: validado.valor };
+    const enviado = ferramenta.mcp
+      ? { method: "tools/call", tool: ferramenta.mcp.tool_name, arguments: validado.valor }
+      : { event: "agent.tool_call", tool: ferramenta.slug, arguments: validado.valor };
     if (resultado.ok) {
       return ok(
         {
@@ -121,6 +155,8 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
         ok: false as const,
         reason: resultado.motivo,
         message: t(fraseDoMotivo(resultado.motivo)),
+        // O que o servidor MCP disse do erro (texto de terceiro, já limpo): só o administrador que testa o lê.
+        ...(resultado.detalhe && resultado.motivo === "ferramenta_com_erro" ? { detail: resultado.detalhe } : {}),
         http_status: resultado.httpStatus,
         attempts: resultado.tentativas,
         duration_ms: resultado.duracaoMs,
