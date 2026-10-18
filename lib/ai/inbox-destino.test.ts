@@ -45,6 +45,17 @@ describe("destinos da Central", () => {
     expect(invalidPair?.destination).not.toHaveProperty("href");
     expect(l.queries).toHaveLength(0);
   });
+  it("aviso de aprovação de ação externa leva à tela das ferramentas (manager+) e nunca diz «contexto indisponível»", async () => {
+    // A tabela do pedido é só do servidor: o resolvedor NÃO a consulta (nenhuma query), e o pedido
+    // vem anexado ao aviso pela rota. O destino é a tela das ferramentas.
+    for (const [role, estado] of [["manager", "disponivel"], ["admin", "disponivel"], ["agent", "sem_permissao"]] as const) {
+      const l = leitor();
+      const [item] = await resolverDestinosDosAvisos(l.client, ORG, role, [aviso("external_tool_approval", "external_tool_request", ID)]);
+      expect(item?.destination.estado, role).toBe(estado);
+      if (estado === "disponivel") expect(item?.destination).toMatchObject({ href: "/app/ai/external-tools", rotulo: "Abrir ferramentas externas" });
+      expect(l.queries, role).toEqual([]);
+    }
+  });
   it("toda categoria possui política", () => expect(Object.keys(POLITICAS_DE_AVISO).sort()).toEqual(Object.keys(KIND_LABEL).sort()));
   it.each([
     ["handoff", "conversation", `/app/inbox/${ID}`], ["job_dead", "conversation", `/app/inbox/${ID}`],

@@ -14843,6 +14843,8 @@ export const DICIONARIO: Traducoes = {
   "Esta resposta SAIRIA em áudio (nota de voz); o texto fica gravado na conversa.": { es: "Esta respuesta SALDRÍA en audio (nota de voz); el texto queda guardado en la conversación." },
   "Esta resposta sairia em TEXTO:": { es: "Esta respuesta saldría en TEXTO:" },
   // ─── APROVAÇÃO DAS AÇÕES EXTERNAS DO AGENTE (issue #95) ───
+  "O agente não conseguiu usar um sistema externo": { es: "El agente no pudo usar un sistema externo" },
+  "Consultas e ações em outro sistema (estoque, planilha, ERP, Make, n8n) que o agente faz durante a conversa. Você cadastra, testa de verdade e escolhe, na tela do agente, quem pode usar.": { es: "Consultas y acciones en otro sistema (inventario, hoja de cálculo, ERP, Make, n8n) que el agente hace durante la conversación. Las registras, las pruebas de verdad y eliges, en la pantalla del agente, quién puede usarlas." },
   "Consultas e ações em outro sistema (estoque, planilha, ERP) que o agente faz durante a conversa. Só aparecem aqui as que você cadastrou em Ferramentas externas.": { es: "Consultas y acciones en otro sistema (inventario, hoja de cálculo, ERP) que el agente hace durante la conversación. Aquí solo aparecen las que registraste en Herramientas externas." },
   "Pede aprovação": { es: "Pide aprobación" },
   "Executa direto": { es: "Ejecuta directo" },
