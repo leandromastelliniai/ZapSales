@@ -51,7 +51,7 @@ export const KIND_LABEL = {
   // Diz o que o AGENTE não conseguiu fazer por causa do outro sistema, e não que uma
   // chamada HTTP deu erro: quem lê é o dono do negócio, e o que ele precisa saber é
   // que o agente respondeu sem poder consultar. O motivo vai no corpo.
-  external_tool_failed: "O agente não conseguiu consultar um sistema externo",
+  external_tool_failed: "O agente não conseguiu usar um sistema externo",
   // Diz o que a PESSOA tem de fazer, não o estado da fila: do lado de lá existe um cliente
   // esperando que uma ação seja aprovada. O que o agente quer fazer e os dados vão no corpo.
   external_tool_approval: "O agente quer executar uma ação num sistema externo e espera a sua aprovação",

@@ -3676,28 +3676,40 @@ e coluna `agent_external_tools.require_approval` (migration 0552); regra em `lib
 `docs/architecture/aprovacao-de-acoes-externas.architecture.json`; guia de quem recebe em
 `docs/integracao/ferramentas-externas-do-agente.md` §6.
 
-Spec: `tests/e2e/acoes-externas-com-aprovacao.spec.ts` (**escrita, não executada** — veja «Não coberto»).
+Spec: `tests/e2e/acoes-externas-com-aprovacao.spec.ts` (**verde no CI do PR #120**; a prova em produção está abaixo).
 
 | # | Caso | Expectativa | Resultado |
 |---|------|-------------|-----------|
-| J53.1 | Cadastrar «Altera dados» | a escolha é livre; «Pedir aprovação» liga sozinho (chave fica NULA no banco = padrão do efeito); desligar avisa que o agente executa sozinho e que a ação não é repetida; a lista mostra «Pede aprovação» | **PASS (unit)** — `ferramentas-externas-tela.test.tsx`; pela tela: spec escrita |
-| J53.2 | O agente chama a ação que altera (chave padrão) | NADA sai para o outro sistema; o pedido fica pendente com os dados; o aviso nasce na Central; o agente lê «aguardando aprovação» e «depende da equipe» NÃO é vetado pela conferência de promessa | **PASS (unit)** — `turno.test.ts`; turno completo (receptor real): **ESCRITO, não executado** — `ferramenta-externa-no-turno.test.ts` |
-| J53.3 | Aprovar na Central | pede confirmação; executa UMA vez com `delivery_id` = id do pedido; o cartão mostra o desfecho; o aviso é resolvido; auditoria `approved` + `executed` | **PASS (unit)** — `decide/route.test.ts`, `aprovacao-do-pedido-na-central.test.tsx`; pela tela: spec escrita |
-| J53.4 | Clique duplo / duas decisões simultâneas | uma 200 e uma 409; o outro sistema é chamado uma vez | **PASS (unit + invariante, PGlite: reivindicação condicional)**; simultâneo real: CI/spec |
+| J53.1 | Cadastrar «Altera dados» | a escolha é livre; «Pedir aprovação» liga sozinho (chave fica NULA no banco = padrão do efeito); desligar avisa que o agente executa sozinho e que a ação não é repetida; a lista mostra «Pede aprovação» | **PASS (unit)** — `ferramentas-externas-tela.test.tsx`; pela tela: **PASS (CI e produção)** |
+| J53.2 | O agente chama a ação que altera (chave padrão) | NADA sai para o outro sistema; o pedido fica pendente com os dados; o aviso nasce na Central; o agente lê «aguardando aprovação» e «depende da equipe» NÃO é vetado pela conferência de promessa | **PASS (unit)** — `turno.test.ts`; turno completo (receptor real): **PASS (CI, PR #120)** — `ferramenta-externa-no-turno.test.ts` |
+| J53.3 | Aprovar na Central | pede confirmação; executa UMA vez com `delivery_id` = id do pedido; o cartão mostra o desfecho; o aviso é resolvido; auditoria `approved` + `executed` | **PASS (unit)** — `decide/route.test.ts`, `aprovacao-do-pedido-na-central.test.tsx`; pela tela: **PASS (CI e produção)** |
+| J53.4 | Clique duplo / duas decisões simultâneas | uma 200 e uma 409; o outro sistema é chamado uma vez | **PASS (unit + invariante, PGlite: reivindicação condicional)**; simultâneo real: **PASS (produção, [200,409,409])** |
 | J53.5 | Recusar | nada é enviado; fica «Recusada»; o agente lê que NÃO foi feita | **PASS (unit)** |
 | J53.6 | Pedido sem decisão por 24 h | expira (cron e também na própria decisão tardia → 409); o agente lê «expirou»; aviso sai da Central | **PASS (unit + invariante, PGlite)** |
-| J53.7 | Falha incerta (5xx / prazo) numa ação que altera | UMA tentativa; pedido «falha incerta»; o agente não afirma nem nega; a Central diz que NÃO foi repetida; a repetição do modelo não chama de novo | **PASS (unit, receptor HTTP real)** — `chamar.test.ts`; turno completo: invariante escrita |
-| J53.8 | Chave desligada numa ação que altera | executa direto, uma vez; a repetição do modelo reencontra o pedido executado | **PASS (unit)**; turno completo: invariante escrita |
+| J53.7 | Falha incerta (5xx / prazo) numa ação que altera | UMA tentativa; pedido «falha incerta»; o agente não afirma nem nega; a Central diz que NÃO foi repetida; a repetição do modelo não chama de novo | **PASS (unit, receptor HTTP real)** — `chamar.test.ts`; turno completo: **PASS (CI)** |
+| J53.8 | Chave desligada numa ação que altera | executa direto, uma vez; a repetição do modelo reencontra o pedido executado | **PASS (unit)**; turno completo: **PASS (CI)** |
 | J53.9 | Agente em modo Assistido | TODA ferramenta externa (inclusive consulta com a chave desligada) abre um pedido; nada sai | **PASS (invariante, PGlite)** — `ferramenta-externa-no-turno.test.ts` (caso Assistido, motor real) |
 | J53.10 | Aba Teste | a ação que altera não executa nem abre pedido: «seria feita» + «altera dados» + «pediria aprovação» | **PASS (invariante, PGlite)** |
-| J53.11 | O agente no turno seguinte | lê o bloco com o estado dos pedidos da conversa (feito / recusado / expirou) | **PASS (unit)** — `pedidos-bloco.test.ts`; turno completo: invariante escrita |
+| J53.11 | O agente no turno seguinte | lê o bloco com o estado dos pedidos da conversa (feito / recusado / expirou) | **PASS (unit)** — `pedidos-bloco.test.ts`; turno completo: **PASS (CI)** |
 | J53.12 | A tabela não é servida pelo PostgREST; duas organizações não veem nem reivindicam os pedidos uma da outra | privilégio NENHUM a `anon`/`authenticated`, RLS sem policy, cascade, índice único da chamada viva | **PASS (invariante, PGlite)** — `pedidos-de-acao-externa.test.ts` (19 casos) |
-| J53.13 | Baseline: instalação do zero | a 0552 aplica; o estado de uma ação que altera ATIVA já é aceito | **PASS (PGlite, install)**; update: CI |
+| J53.13 | Baseline: instalação do zero | a 0552 aplica; o estado de uma ação que altera ATIVA já é aceito | **PASS (PGlite install + update; CI; produção: migration aplicada)** |
 
-**Não coberto ainda:** (a) a prova pela tela em ambiente fresco estilo VPS, sem as chaves opcionais (esta máquina não
-tem Docker nem Supabase local) — a spec está escrita e roda no job `e2e`; a prova em produção segue a receita de
-organização temporária da VPS; (b) os invariantes de turno completo (`ferramenta-externa-no-turno`, casos «ação que
-ALTERA algo») **não rodam sob PGlite** — travam no claim da fila, por natureza do harness, e o caso da #94 («consulta
-feliz») trava igual na própria `main`; o gate é o job `invariants` do CI; só os casos da prévia e do modo Assistido
-rodaram aqui; (c) um ERP real: o receptor dos testes é um servidor HTTP efêmero (a organização nunca alcança
-127.0.0.1, então a spec de tela aprova contra um endereço público que não responde e mede a falha incerta).
+**Prova em PRODUÇÃO (2026-10-18, versão `9221605`, organização e usuário temporários, apagados no fim; sem as chaves
+opcionais; receptor real = `httpbin.org`, que ecoa o que recebeu).** Evidências em
+`docs/testing/evidencias/95-acoes-externas-com-aprovacao/` (a captura da chave de assinatura não foi guardada).
+
+| Prova | Medido |
+|---|---|
+| Cadastro pela tela | «Altera dados» liga «Pedir aprovação» sozinho (validade 24); desligar mostra o aviso do risco; a chave fica NULA no banco (padrão do efeito); a lista mostra «Altera dados» + «Pede aprovação»; o seletor do agente deixa marcar a ferramenta (95-01…06) |
+| Central | 4 pedidos com a ferramenta, o efeito e os dados; `senha` aparece como «•••» e **não está** no HTML nem na resposta da API; o pedido vencido aparece «Expirada» e sem botões (95-07) |
+| Aprovar (receptor real) | confirmação → executou → o cartão mostra o que o outro sistema devolveu; o receptor recebeu `delivery_id` **igual ao id do pedido**, a **assinatura HMAC conferiu** com a chave, o corpo tinha só `event, tool, arguments, delivery_id, occurred_at`, nada de organização/contato (95-08, 95-09) |
+| Execução única | 3 decisões simultâneas do mesmo pedido → `[200, 409, 409]`; 1 execução no banco |
+| Recusar | nada enviado, «Recusada» (95-10); vencido → 409 `request_expired`; id inexistente → 404; corpo com `organization_id` → 422 |
+| Auditoria e avisos | `created / approved / rejected / expired / executed` com o resumo sem segredo; todos os avisos de aprovação resolvidos |
+| Cron implantado | a entrada `*/15` existe no scheduler de produção; ao rodar: 1 pendente vencido → expirado, 1 «executando» parado há 40 min → falha **incerta** + aviso «ficou sem desfecho», 1 pedido executado há 100 dias → dados apagados (`data_pruned_at`); auditoria `by=cron` / `pruned` |
+| Teste real de ferramenta que altera | o diálogo avisa «ALTERA dados… de verdade» e o botão diz «Executar de verdade» (95-11) |
+| Celular (390 px) | Central sem rolagem horizontal (95-12); aba Resolvidos explica o desfecho de cada pedido (95-13) |
+
+**Não provado em produção:** o turno do agente chamando a ferramenta (exige canal e credencial de IA reais; a regra do
+turno foi medida no CI com receptor HTTP real: `ferramenta-externa-no-turno`, verde no PR #120) e a aba Teste / modo
+Assistido contra um agente real (idem, no CI).

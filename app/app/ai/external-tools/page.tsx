@@ -39,7 +39,7 @@ export default async function FerramentasExternasPage() {
       <CabecalhoDePagina
         titulo={t("Ferramentas externas")}
         descricao={t(
-          "Consultas a outro sistema (estoque, planilha, ERP, Make, n8n) que o agente faz durante a conversa. Você cadastra, testa de verdade e escolhe, na tela do agente, quem pode usar.",
+          "Consultas e ações em outro sistema (estoque, planilha, ERP, Make, n8n) que o agente faz durante a conversa. Você cadastra, testa de verdade e escolhe, na tela do agente, quem pode usar.",
         )}
       />
       <FerramentasExternasClient inicial={inicial} />

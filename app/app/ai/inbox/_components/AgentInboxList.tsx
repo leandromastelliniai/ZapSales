@@ -165,7 +165,8 @@ function InboxRow({
         <p className="text-xs text-muted-foreground">
           {kindLabel(item.kind, t)} · {when}
         </p>
-        {item.body ? <p className="mt-1 text-xs text-muted-foreground">{item.body}</p> : null}
+        {/* O cartão do pedido já mostra o que o agente quer executar e os dados: o corpo repetiria tudo. */}
+        {item.body && !item.approval ? <p className="mt-1 text-xs text-muted-foreground">{item.body}</p> : null}
         {/* O aviso de APROVAÇÃO carrega o pedido com os botões (issue #95). */}
         {item.approval ? <AprovacaoDoPedido pedido={item.approval} podeDecidir={canDecide && item.status !== "resolved"} onDecidido={onDecidido} /> : null}
         {item.destination.orientacao ? <p className="mt-2 text-xs text-muted-foreground">{t(item.destination.orientacao)}</p> : null}
