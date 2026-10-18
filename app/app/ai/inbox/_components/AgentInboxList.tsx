@@ -14,11 +14,13 @@ import {
   useResolveAllInboxItems,
   useUpdateInboxItem,
   type AgentInboxItem,
+  type DesfechoDaDecisao,
 } from "@/hooks/ai/useAgentInbox";
 import { kindLabel, SEVERITY_LABEL, type AgentInboxSeverity } from "@/lib/ai/agent-inbox-copy";
 import { Bell, Check } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
 import { ApiError } from "@/lib/api/types";
+import { AprovacaoDoPedido } from "./AprovacaoDoPedido";
 
 const SEVERITY_VARIANT: Record<AgentInboxSeverity, "info" | "warning" | "error"> = {
   info: "info",
@@ -26,7 +28,7 @@ const SEVERITY_VARIANT: Record<AgentInboxSeverity, "info" | "warning" | "error">
   critical: "error",
 };
 
-export function AgentInboxList({ canResolve }: { canResolve: boolean }) {
+export function AgentInboxList({ canResolve, canDecide = false }: { canResolve: boolean; canDecide?: boolean }) {
   const t = useT();
   const [tab, setTab] = useState<"open" | "resolved">("open");
   const { data: cachedData, error, isLoading, isError, refetch, isFetching } = useAgentInbox(tab);
@@ -34,6 +36,14 @@ export function AgentInboxList({ canResolve }: { canResolve: boolean }) {
   const data = acessoNegado ? undefined : cachedData;
   const update = useUpdateInboxItem();
   const resolveAll = useResolveAllInboxItems();
+  // Decidir um pedido resolve o aviso; a lista recarregada o tiraria da tela antes de a pessoa ler o
+  // desfecho (a falha incerta, principalmente). O cartão decidido NESTA sessão fica até sair da página.
+  const [decididos, setDecididos] = useState<Record<string, AgentInboxItem>>({});
+  const itens: AgentInboxItem[] = !data
+    ? []
+    : tab === "open"
+      ? [...data.items, ...Object.values(decididos).filter((d) => !data.items.some((i) => i.id === d.id))]
+      : data.items;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
@@ -76,7 +86,7 @@ export function AgentInboxList({ canResolve }: { canResolve: boolean }) {
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-16 w-full" />
         </div>
-      ) : isError && !data ? null : !data || data.items.length === 0 ? (
+      ) : isError && !data ? null : !data || itens.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16 text-center">
           <Bell size={28} className="text-muted-foreground" aria-hidden />
           <p className="text-sm font-medium">
@@ -96,11 +106,13 @@ export function AgentInboxList({ canResolve }: { canResolve: boolean }) {
           </p>
         ) : null}
         <ul className="divide-y divide-border rounded-lg border border-border">
-          {data.items.map((item) => (
+          {itens.map((item) => (
             <InboxRow
               key={item.id}
               item={item}
               canResolve={canResolve}
+              canDecide={canDecide}
+              onDecidido={() => setDecididos((atuais) => ({ ...atuais, [item.id]: item }))}
               pending={update.isPending}
               onToggle={(status) => update.mutate({ id: item.id, status })}
             />
@@ -115,11 +127,15 @@ export function AgentInboxList({ canResolve }: { canResolve: boolean }) {
 function InboxRow({
   item,
   canResolve,
+  canDecide,
+  onDecidido,
   pending,
   onToggle,
 }: {
   item: AgentInboxItem;
   canResolve: boolean;
+  canDecide: boolean;
+  onDecidido: (desfecho: DesfechoDaDecisao) => void;
   pending: boolean;
   onToggle: (status: "open" | "resolved") => void;
 }) {
@@ -150,6 +166,8 @@ function InboxRow({
           {kindLabel(item.kind, t)} · {when}
         </p>
         {item.body ? <p className="mt-1 text-xs text-muted-foreground">{item.body}</p> : null}
+        {/* O aviso de APROVAÇÃO carrega o pedido com os botões (issue #95). */}
+        {item.approval ? <AprovacaoDoPedido pedido={item.approval} podeDecidir={canDecide && item.status !== "resolved"} onDecidido={onDecidido} /> : null}
         {item.destination.orientacao ? <p className="mt-2 text-xs text-muted-foreground">{t(item.destination.orientacao)}</p> : null}
         {item.destination.estado === "disponivel" ? (
           <Button asChild size="sm" variant="link" className="mt-1 h-auto whitespace-normal px-0 text-left">

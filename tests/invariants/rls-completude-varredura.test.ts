@@ -275,6 +275,16 @@ const PROVA_PROPRIA: readonly Excecao[] = [
       "agente (0551, #94), que só o servidor lê.",
   },
   {
+    tabela: "agent_external_tool_requests",
+    razao:
+      "tests/invariants/pedidos-de-acao-externa.test.ts — mesmo desenho da linha de " +
+      "`agent_external_tools`: privilégio NENHUM para anon e authenticated, RLS ligada, " +
+      "zero policies, `organization_id` NOT NULL com FK em cascata, e o isolamento entre " +
+      "duas organizações medido (cada uma lê e reivindica só os seus pedidos; o filtro da " +
+      "organização é a cerca do service role). Guarda o que o agente quer executar num " +
+      "sistema externo e os dados que preencheu (0552, #95), que só o servidor lê.",
+  },
+  {
     tabela: "ad_conversion_dispatches",
     razao:
       "tests/invariants/credencial-de-anuncios-e-server-side.test.ts — mesmo " +

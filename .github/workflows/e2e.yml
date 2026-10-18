@@ -1187,6 +1187,7 @@ jobs:
         conexao-oficial-assistente.spec.ts
         disparo-em-massa-csv.spec.ts
         ferramentas-externas-pela-tela.spec.ts
+        acoes-externas-com-aprovacao.spec.ts
         filtro-por-marcador-pela-tela.spec.ts
         fonte-de-captacao-assina-os-envios.spec.ts
         inbox-busca-e-filtros-dizem-a-verdade.spec.ts

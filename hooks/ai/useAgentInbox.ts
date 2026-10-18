@@ -5,6 +5,17 @@ import { apiClient } from "@/lib/api/client";
 import type { AgentInboxSeverity } from "@/lib/ai/agent-inbox-copy";
 import type { DestinoDoAviso } from "@/lib/ai/inbox-destino";
 
+/** O pedido que o aviso de aprovação carrega (issue #95): o que o agente quer executar e os dados. */
+export interface PedidoDoAviso {
+  request_id: string;
+  tool_name: string;
+  effect: "consulta" | "altera";
+  origin: "live" | "assisted";
+  status: "pending" | "executing" | "executed" | "failed" | "rejected" | "expired";
+  expires_at: string;
+  summary: Array<{ campo: string; valor: string }>;
+}
+
 export interface AgentInboxItem {
   id: string;
   kind: string;
@@ -16,6 +27,8 @@ export interface AgentInboxItem {
   status: "open" | "ack" | "resolved";
   created_at: string;
   destination: DestinoDoAviso;
+  /** Só nos avisos de aprovação de ação externa. */
+  approval?: PedidoDoAviso;
 }
 
 export interface AgentInboxData {
@@ -36,6 +49,29 @@ export function useAgentInbox(status: "open" | "resolved" = "open") {
       apiClient
         .get<{ data: AgentInboxData }>(`/api/v1/ai/inbox?status=${status}`)
         .then((r) => r.data),
+  });
+}
+
+export type DesfechoDaDecisao =
+  | { id: string; status: "rejected" }
+  | { id: string; status: "executed"; ok: true; http_status: number; content?: string; truncated?: boolean }
+  | { id: string; status: "failed"; ok: false; uncertain: boolean; reason: string; message: string };
+
+/** Aprova ou recusa o pedido de uma ação externa (manager+). Aprovar EXECUTA a ação, uma única vez. */
+export function useDecidirPedidoExterno() {
+  return useMutation({
+    mutationFn: ({ id, decision, reason }: { id: string; decision: "approve" | "reject"; reason?: string }) =>
+      apiClient
+        .post<{ data: DesfechoDaDecisao }>(
+          `/api/v1/ai/external-tool-requests/${id}/decide`,
+          { decision, ...(reason ? { reason } : {}) },
+          // Aprovar chama o outro sistema (até 8 s): o prazo do navegador é maior que o do servidor.
+          { timeoutMs: 30_000 },
+        )
+        .then((r) => r.data),
+    // SEM invalidar na hora, de propósito: a decisão resolve o aviso, e recarregar a lista tiraria
+    // o cartão da tela antes de a pessoa ler o desfecho (a falha incerta, principalmente). A lista
+    // se atualiza no próximo ciclo; a tela guarda o cartão decidido até lá (`AgentInboxList`).
   });
 }
 

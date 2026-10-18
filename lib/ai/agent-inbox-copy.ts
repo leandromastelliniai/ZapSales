@@ -52,6 +52,9 @@ export const KIND_LABEL = {
   // chamada HTTP deu erro: quem lê é o dono do negócio, e o que ele precisa saber é
   // que o agente respondeu sem poder consultar. O motivo vai no corpo.
   external_tool_failed: "O agente não conseguiu consultar um sistema externo",
+  // Diz o que a PESSOA tem de fazer, não o estado da fila: do lado de lá existe um cliente
+  // esperando que uma ação seja aprovada. O que o agente quer fazer e os dados vão no corpo.
+  external_tool_approval: "O agente quer executar uma ação num sistema externo e espera a sua aprovação",
   // Diz o que o CLIENTE vive, não a configuração: do lado de lá as mensagens
   // chegam e ninguém responde. "Modo de teste sem número autorizado" descreve
   // o campo; "a IA não responde ninguém" é o que faz o operador agir.

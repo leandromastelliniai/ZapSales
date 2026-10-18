@@ -186,7 +186,12 @@ import { readSkillReference, skillHasReferences } from './skill-references';
 import { READ_ONLY_TOOLS, wrapToolsWithBreaker, type ToolBreakerThresholds } from './tool-breaker';
 import { loadChannelProvider, nomesDasFerramentas, runBeforeSend } from '../guardrails/before-send';
 import { montarFerramentasExternas, type DependenciasDoTurnoExterno } from '@/lib/ai/ferramentas-externas/turno';
-import { dependenciasDoMotor as dependenciasDasFerramentasExternas } from '@/lib/ai/ferramentas-externas/repositorio-do-turno';
+import {
+  dependenciasDoMotor as dependenciasDasFerramentasExternas,
+  pedidosDaConversa,
+  temPedidoPendenteNaConversa,
+} from '@/lib/ai/ferramentas-externas/repositorio-do-turno';
+import { blocoDePedidosDaConversa } from '@/lib/ai/ferramentas-externas/pedidos-bloco';
 import {
   criarAudioDoTurno,
   ultimaMensagemDoClienteFoiAudio,
@@ -2658,10 +2663,22 @@ async function executarTurnoDoAgente(
   // de `get-lead-context.ts:193` diz o mesmo). Passar essa variável para um
   // parâmetro chamado `contactId` é correto pelo VALOR; o nome é que mente, e é
   // o que a issue #509 conserta. Não troque por um `lead_id` "mais coerente".
-  const compromissosBlock =
+  const compromissosDoContato =
     preview?.kind === 'sandbox'
       ? ''
       : await buildCompromissosBlock(pool, tenantId, leadId, new Date());
+  // O que aconteceu com as AÇÕES EXTERNAS que o agente pediu nesta conversa (issue #95): a
+  // aprovação é feita por uma pessoa FORA do turno, e é aqui que o agente fica sabendo se a
+  // ação foi feita, recusada, expirou ou falhou sem certeza — para nunca afirmar o que não
+  // aconteceu. Vazio (e sem consulta ao banco) para todo agente sem ferramentas externas.
+  const pedidosExternosBlock =
+    preview?.kind !== 'sandbox' &&
+    agentConfig !== null &&
+    agentConfig.externalToolIds.length > 0 &&
+    input.conversationId
+      ? blocoDePedidosDaConversa(await pedidosDaConversa(pool, tenantId, input.conversationId), new Date())
+      : '';
+  const compromissosBlock = [compromissosDoContato, pedidosExternosBlock].filter((b) => b !== '').join('\n\n');
   // Observabilidade da memória (Fase 2A): SÓ ids/contagens no log — headline/corpo
   // são PII e nunca saem do prompt. Prova auditável de que a memória durável do
   // lead entrou no contexto DESTE turno.
@@ -2905,6 +2922,12 @@ async function executarTurnoDoAgente(
   const mcpToolIdsDoTurno: string[] = [];
   /** Nomes (`ext_<identificador>`) das ferramentas externas montadas neste turno. */
   const nomesDasFerramentasExternas: string[] = [];
+  /**
+   * Este turno deixou um pedido de aprovação PENDENTE (issue #95)? Sustenta a frase «depende de
+   * uma confirmação da equipe» diante do `casePromiseGate`: a promessa de que uma pessoa vai
+   * decidir tem estado real por trás (o pedido na Central), então não pede um caso à parte.
+   */
+  let pedidoPendenteNoTurno = false;
 
   const rawTools: ToolSet = {
     get_lead_context: tool({
@@ -3242,7 +3265,12 @@ async function executarTurnoDoAgente(
           // sem query — o casePromiseGate já é no-op nesse caso de qualquer forma.
           const hasOpenCase =
             agentConfig?.casesEnabled === true
-              ? await hasOpenCaseForContact(pool, tenantId, input.conversationId)
+              ? (await hasOpenCaseForContact(pool, tenantId, input.conversationId)) ||
+                // Um pedido de aprovação PENDENTE (deste turno ou de antes) é o estado real por trás
+                // de «depende de uma confirmação da equipe»: não exige um caso à parte.
+                pedidoPendenteNoTurno ||
+                (agentConfig.externalToolIds.length > 0 &&
+                  (await temPedidoPendenteNaConversa(pool, tenantId, input.conversationId)))
               : false;
           // RESPOSTA EM ÁUDIO (#91): decidida SÓ aqui — chamada de dentro do `send` da cadeia,
           // isto é, depois de ela aprovar o texto (`lib/ai/resposta-em-audio/turno.ts`). Com
@@ -4120,32 +4148,46 @@ async function executarTurnoDoAgente(
     // turno: ferramenta extra é privilégio, não invariante.
     if (agentConfig !== null && agentConfig.externalToolIds.length > 0) {
       try {
+        const doMotor = dependenciasDasFerramentasExternas({
+          db: pool,
+          organizationId: tenantId,
+          agentId: agentConfig.agentId,
+          jobId: preview ? null : liveJob().id,
+          // Cenário de teste não tem conversa: vem vazio, e uuid vazio não existe — vira «sem conversa».
+          conversationId: input.conversationId || null,
+          log: runLog,
+        });
         const externas = await montarFerramentasExternas(
           {
             ids: agentConfig.externalToolIds,
-            previa: preview
-              ? {
-                  registrar: (chamada) => {
-                    (preview.result.externalCalls ??= []).push(chamada);
-                  },
-                }
-              : null,
+            // Aba Teste (sandbox): nada sai e nada é pedido — a chamada é só mostrada. Rascunho do
+            // modo Assistido: roda como o turno real, e TODA ferramenta espera aprovação.
+            modo: preview?.kind === 'assisted' ? 'assistido' : 'ao_vivo',
+            previa:
+              preview?.kind === 'sandbox'
+                ? {
+                    registrar: (chamada) => {
+                      (preview.result.externalCalls ??= []).push(chamada);
+                    },
+                  }
+                : null,
           },
           {
-            ...dependenciasDasFerramentasExternas({
-              db: pool,
-              organizationId: tenantId,
-              agentId: agentConfig.agentId,
-              jobId: preview ? null : liveJob().id,
-              log: runLog,
-            }),
+            ...doMotor,
+            abrirPedido: async (a) => {
+              const aberto = await doMotor.abrirPedido(a);
+              if (aberto.pedido.status === 'pending') pedidoPendenteNoTurno = true;
+              return aberto;
+            },
             ...deps.ferramentasExternas,
           },
         );
         for (const [name, externa] of Object.entries(externas.tools)) {
           if (name in rawTools) continue;
           rawTools[name] = externa;
-          nomesDasFerramentasExternas.push(name);
+          // Só as CONSULTAS entram na lista de leitura do breaker: repetir o mesmo erro de uma
+          // ação que ALTERA algo não é «leitura sem progresso», é uma escrita falhando.
+          if (!externas.alteram.includes(name)) nomesDasFerramentasExternas.push(name);
         }
         if (externas.nomes.length > 0) {
           runLog.info('ferramentas externas montadas no turno', { externas: externas.nomes });
@@ -4207,6 +4249,8 @@ async function executarTurnoDoAgente(
                 ferramentas: previewContext.agenda?.ferramentas ?? [],
                 toolCalledThisTurn: agendaToolCalledThisTurn,
               },
+              // O rascunho do modo Assistido abriu um pedido pendente: a frase «depende da equipe» tem estado.
+              ...(pedidoPendenteNoTurno ? { hasOpenCase: true } : {}),
             }),
             audioDoTurno,
           )

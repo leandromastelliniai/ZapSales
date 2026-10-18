@@ -3648,7 +3648,7 @@ Spec: `tests/e2e/ferramentas-externas-pela-tela.spec.ts` (**escrita, não execut
 | J52.1 | Instalação NOVA, sem nenhuma ferramenta | a tela diz «O agente ainda não consulta nenhum sistema»; o grupo do editor diz «Você ainda não cadastrou nenhuma ferramenta externa» com o caminho para cadastrar; nenhum agente existente muda | spec escrita |
 | J52.2 | Cadastrar nome, «quando usar», endereço https e campos | a chave de assinatura aparece UMA vez; a lista mostra só os 4 últimos; a chave não aparece no HTML nem na lista | **PASS (unit)** — `lib/ai/ferramentas-externas/*.test.ts`; pela tela: spec escrita |
 | J52.3 | Endereço da rede interna / privada / local, sem https, ou com usuário e senha | recusado antes de gravar, com a frase do porquê | **PASS (unit)** — `esquema.test.ts`, `chamar.test.ts` (política única, sem abrir conexão) |
-| J52.4 | Escolher «Altera dados» | bloqueado, com o motivo escrito na tela e 422 `external_tool_mutating_blocked` na rota; no banco só existe inativa | **PASS (unit + invariante, PGlite)** — `esquema.test.ts`, `ferramentas-externas-do-agente.test.ts` |
+| J52.4 | Escolher «Altera dados» | **[SUPERADO pela J53, #95]** na #94 era bloqueado (422 `external_tool_mutating_blocked`, só inativa no banco); a 0552 liberou, com aprovação por padrão — ver J53.1 | era PASS na #94; hoje o comportamento é o da J53 |
 | J52.5 | «Testar de verdade» com dados de exemplo | chamada real assinada; mostra o status, o tempo, o que o outro sistema devolveu e o que foi enviado; falha mostra a frase do que fazer | **PASS (unit, receptor HTTP real)** — `chamar.test.ts`; pela tela: spec escrita |
 | J52.6 | O agente chama a ferramenta numa conversa | o receptor recebe a chamada ASSINADA com só os dados que o agente preencheu; o agente recebe o resultado como dado não confiável; a resposta sai ao cliente; a auditoria registra sem chave, argumentos nem resposta | **PASS (unit, receptor real)** — `turno.test.ts`; turno completo: **ESCRITO, não executado** — `tests/invariants/ferramenta-externa-no-turno.test.ts` |
 | J52.7 | A resposta do outro sistema traz instruções («ignore as regras…») | chega como VALOR do campo `dado`, com o aviso à frente; o conjunto de ferramentas não muda; um identificador interno repetido pelo agente é VETADO antes do envio | **PASS (unit)**; turno completo: invariante escrita |
@@ -3664,3 +3664,40 @@ local; esta máquina não tem Docker) — a spec está escrita e a prova em prod
 temporária; (b) os invariantes de turno completo (`ferramenta-externa-no-turno`, como `resposta-em-audio-no-turno`)
 **não rodam sob PGlite** — travam no claim da fila, por natureza do harness; só o caso da prévia roda aqui, e o gate
 é o job `invariants` do CI; (c) um ERP real: o receptor dos testes é um servidor HTTP efêmero.
+
+
+## J53 — O agente executa uma ação em outro sistema, com aprovação `[P1]` (2026-10-18, issue #95)
+
+Contexto: parte da #86. Depois da consulta (J52), o agente pode **alterar** algo no outro sistema (criar pedido,
+cadastrar cliente) — sempre com «nada altera o mundo sem aprovação por padrão». Tabela `agent_external_tool_requests`
+e coluna `agent_external_tools.require_approval` (migration 0552); regra em `lib/ai/ferramentas-externas/`
+(`aprovacao.ts`, `turno.ts`, `repositorio-do-turno.ts`, `pedidos-api.ts`); rota
+`POST /api/v1/ai/external-tool-requests/:id/decide`; cron `external-tool-requests-expiry`; mapa em
+`docs/architecture/aprovacao-de-acoes-externas.architecture.json`; guia de quem recebe em
+`docs/integracao/ferramentas-externas-do-agente.md` §6.
+
+Spec: `tests/e2e/acoes-externas-com-aprovacao.spec.ts` (**escrita, não executada** — veja «Não coberto»).
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J53.1 | Cadastrar «Altera dados» | a escolha é livre; «Pedir aprovação» liga sozinho (chave fica NULA no banco = padrão do efeito); desligar avisa que o agente executa sozinho e que a ação não é repetida; a lista mostra «Pede aprovação» | **PASS (unit)** — `ferramentas-externas-tela.test.tsx`; pela tela: spec escrita |
+| J53.2 | O agente chama a ação que altera (chave padrão) | NADA sai para o outro sistema; o pedido fica pendente com os dados; o aviso nasce na Central; o agente lê «aguardando aprovação» e «depende da equipe» NÃO é vetado pela conferência de promessa | **PASS (unit)** — `turno.test.ts`; turno completo (receptor real): **ESCRITO, não executado** — `ferramenta-externa-no-turno.test.ts` |
+| J53.3 | Aprovar na Central | pede confirmação; executa UMA vez com `delivery_id` = id do pedido; o cartão mostra o desfecho; o aviso é resolvido; auditoria `approved` + `executed` | **PASS (unit)** — `decide/route.test.ts`, `aprovacao-do-pedido-na-central.test.tsx`; pela tela: spec escrita |
+| J53.4 | Clique duplo / duas decisões simultâneas | uma 200 e uma 409; o outro sistema é chamado uma vez | **PASS (unit + invariante, PGlite: reivindicação condicional)**; simultâneo real: CI/spec |
+| J53.5 | Recusar | nada é enviado; fica «Recusada»; o agente lê que NÃO foi feita | **PASS (unit)** |
+| J53.6 | Pedido sem decisão por 24 h | expira (cron e também na própria decisão tardia → 409); o agente lê «expirou»; aviso sai da Central | **PASS (unit + invariante, PGlite)** |
+| J53.7 | Falha incerta (5xx / prazo) numa ação que altera | UMA tentativa; pedido «falha incerta»; o agente não afirma nem nega; a Central diz que NÃO foi repetida; a repetição do modelo não chama de novo | **PASS (unit, receptor HTTP real)** — `chamar.test.ts`; turno completo: invariante escrita |
+| J53.8 | Chave desligada numa ação que altera | executa direto, uma vez; a repetição do modelo reencontra o pedido executado | **PASS (unit)**; turno completo: invariante escrita |
+| J53.9 | Agente em modo Assistido | TODA ferramenta externa (inclusive consulta com a chave desligada) abre um pedido; nada sai | **PASS (invariante, PGlite)** — `ferramenta-externa-no-turno.test.ts` (caso Assistido, motor real) |
+| J53.10 | Aba Teste | a ação que altera não executa nem abre pedido: «seria feita» + «altera dados» + «pediria aprovação» | **PASS (invariante, PGlite)** |
+| J53.11 | O agente no turno seguinte | lê o bloco com o estado dos pedidos da conversa (feito / recusado / expirou) | **PASS (unit)** — `pedidos-bloco.test.ts`; turno completo: invariante escrita |
+| J53.12 | A tabela não é servida pelo PostgREST; duas organizações não veem nem reivindicam os pedidos uma da outra | privilégio NENHUM a `anon`/`authenticated`, RLS sem policy, cascade, índice único da chamada viva | **PASS (invariante, PGlite)** — `pedidos-de-acao-externa.test.ts` (19 casos) |
+| J53.13 | Baseline: instalação do zero | a 0552 aplica; o estado de uma ação que altera ATIVA já é aceito | **PASS (PGlite, install)**; update: CI |
+
+**Não coberto ainda:** (a) a prova pela tela em ambiente fresco estilo VPS, sem as chaves opcionais (esta máquina não
+tem Docker nem Supabase local) — a spec está escrita e roda no job `e2e`; a prova em produção segue a receita de
+organização temporária da VPS; (b) os invariantes de turno completo (`ferramenta-externa-no-turno`, casos «ação que
+ALTERA algo») **não rodam sob PGlite** — travam no claim da fila, por natureza do harness, e o caso da #94 («consulta
+feliz») trava igual na própria `main`; o gate é o job `invariants` do CI; só os casos da prévia e do modo Assistido
+rodaram aqui; (c) um ERP real: o receptor dos testes é um servidor HTTP efêmero (a organização nunca alcança
+127.0.0.1, então a spec de tela aprova contra um endereço público que não responde e mede a falha incerta).

@@ -20,7 +20,13 @@ import { randomUUID } from "node:crypto";
 import { buscarSeguro, ErroDeRedeSegura, type PoliticaDeDestino } from "@/lib/net/rede-segura";
 import { assinaturaComCarimbo } from "@/lib/webhooks/assinatura-de-saida";
 
-import { FRASE_DA_FALHA, LIMITES_DA_CHAMADA, type EfeitoDaFerramenta, type MotivoDeFalha } from "./tipos";
+import {
+  FRASE_DA_FALHA,
+  LIMITES_DA_CHAMADA,
+  MOTIVOS_DE_FALHA_CERTA,
+  type EfeitoDaFerramenta,
+  type MotivoDeFalha,
+} from "./tipos";
 
 export interface FerramentaChamavel {
   slug: string;
@@ -34,6 +40,12 @@ export interface EntradaDaChamada {
   segredo: string | null;
   /** O que o agente preencheu, JÁ validado contra o esquema da ferramenta. */
   argumentos: Record<string, unknown>;
+  /**
+   * O id desta entrega (`delivery_id` / `X-Webhook-Delivery`). Sem ele, cada chamada
+   * sorteia um. O PEDIDO aprovado passa o próprio id: quem recebe deduplica por ele, e
+   * a ação que altera algo não vira dois efeitos nem se alguém tentar de novo.
+   */
+  idDeEntrega?: string;
 }
 
 export interface DependenciasDaChamada {
@@ -64,6 +76,11 @@ export type ResultadoDaChamada =
       httpStatus: number | null;
       tentativas: number;
       duracaoMs: number;
+      /**
+       * `true` quando o outro sistema PODE ter feito o que foi pedido e a resposta se
+       * perdeu (prazo, rede, 5xx). Só tem consequência para ferramenta que altera.
+       */
+      desfechoIncerto: boolean;
     };
 
 const CARACTERES_DE_CONTROLE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;
@@ -110,16 +127,15 @@ export async function chamarFerramentaExterna(
     httpStatus,
     tentativas,
     duracaoMs: agora() - inicio,
+    desfechoIncerto: !MOTIVOS_DE_FALHA_CERTA.has(motivo),
   });
+  const altera = entrada.ferramenta.efeito === "altera";
 
-  // Nesta etapa só consulta executa. A trava mora aqui TAMBÉM (e não só na rota e
-  // no turno): uma linha escrita por fora da tela não passa a executar.
-  if (entrada.ferramenta.efeito !== "consulta") return falhou("altera_bloqueada", 0);
   // Sem a chave não há assinatura, e chamada sem assinatura o receptor não distingue
   // de uma forjada: falha fechada, a ferramenta não sai.
   if (!entrada.segredo) return falhou("segredo_indisponivel", 0);
 
-  const entrega = randomUUID();
+  const entrega = entrada.idDeEntrega ?? randomUUID();
   const corpo = JSON.stringify({
     event: "agent.tool_call",
     occurred_at: new Date(inicio).toISOString(),
@@ -128,7 +144,9 @@ export async function chamarFerramentaExterna(
     arguments: entrada.argumentos,
   });
   const politica: PoliticaDeDestino = deps.politica ?? { permitirHttp: process.env.NODE_ENV !== "production" };
-  const teto = LIMITES_DA_CHAMADA.tentativasDaConsulta;
+  // Consulta repete uma vez. Ação que ALTERA não repete nunca: o prazo estourado ou o 5xx não
+  // dizem se o outro sistema já fez — repetir poderia criar o pedido duas vezes.
+  const teto = altera ? 1 : LIMITES_DA_CHAMADA.tentativasDaConsulta;
 
   let ultimo: { motivo: MotivoDeFalha; httpStatus: number | null } = { motivo: "rede", httpStatus: null };
   for (let tentativa = 1; tentativa <= teto; tentativa++) {
@@ -196,7 +214,10 @@ export type ResultadoParaOAgente =
  * (isso é para o dono, na Central): carrega a ordem que evita o dano real, que é o
  * agente dizer ao cliente algo que a consulta não confirmou.
  */
-export function resultadoParaOAgente(r: ResultadoDaChamada): ResultadoParaOAgente {
+export function resultadoParaOAgente(
+  r: ResultadoDaChamada,
+  efeito: EfeitoDaFerramenta = "consulta",
+): ResultadoParaOAgente {
   if (r.ok) {
     const teto = LIMITES_DA_CHAMADA.maxCaracteresParaOAgente;
     const passou = r.conteudo.length > teto;
@@ -208,6 +229,20 @@ export function resultadoParaOAgente(r: ResultadoDaChamada): ResultadoParaOAgent
       http_status: r.httpStatus,
       dado: passou ? r.conteudo.slice(0, teto) : r.conteudo,
       truncado: r.truncado || passou,
+    };
+  }
+  if (efeito === "altera") {
+    return {
+      ok: false,
+      error: {
+        code: "external_tool_failed",
+        message: r.desfechoIncerto
+          ? "Não foi possível confirmar se a ação foi realizada no sistema externo. NÃO afirme ao cliente que foi feita " +
+            "nem que não foi, e não tente de novo por conta própria (poderia ser feita em dobro). Diga que vai conferir " +
+            "e que uma pessoa da equipe confirma em seguida."
+          : "A ação NÃO foi feita: o sistema externo recusou ou não chegou a receber o pedido. Não afirme ao cliente que " +
+            "foi realizada; diga que não conseguiu concluir agora e ofereça chamar um atendente.",
+      },
     };
   }
   return {

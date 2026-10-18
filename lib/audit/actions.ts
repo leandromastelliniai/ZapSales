@@ -1034,6 +1034,16 @@ export const AUDIT_ACTIONS = [
   "ai.external_tool_deleted",
   "ai.external_tool_tested",
   "ai.external_tool_called",
+  // Aprovação das ações externas (#95, 0552): o pedido nasce (agente), é aprovado ou recusado
+  // por uma pessoa, expira por prazo e é executado UMA vez. O metadata diz quem, qual
+  // ferramenta e um resumo dos dados SEM segredos — nunca a chave de assinatura, o corpo
+  // enviado nem o que o outro sistema respondeu.
+  "ai.external_tool_request_created",
+  "ai.external_tool_request_approved",
+  "ai.external_tool_request_rejected",
+  "ai.external_tool_request_expired",
+  "ai.external_tool_request_executed",
+  "ai.external_tool_request_pruned",
 
   // A assinatura do emissor (#2066, PR #2079): quem ligou ou desligou o nome de
   // quem fala nas mensagens ao cliente, e com que nome a IA passou a assinar.

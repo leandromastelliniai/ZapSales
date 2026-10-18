@@ -3,7 +3,8 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
  * UMA FERRAMENTA EXTERNA (issue #94).
  *
  *   GET    — a ferramenta, sem a chave. Manager.
- *   PATCH  — edita nome, "quando usar", endereço e campos; liga e desliga (`ativa`). Manager.
+ *   PATCH  — edita nome, "quando usar", endereço, campos, efeito e a chave «pedir aprovação»
+ *            (com a validade do pedido); liga e desliga (`ativa`). Manager.
  *   DELETE — apaga, e só se nenhuma versão de agente a cita (histórico imutável); quem já
  *            foi usada se DESATIVA. Manager.
  *
@@ -70,8 +71,6 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
   }
   const parsed = editarFerramentaSchema.safeParse(raw);
   if (!parsed.success) {
-    const altera = parsed.error.issues.find((i) => i.path[0] === "efeito");
-    if (altera) return fail("external_tool_mutating_blocked", t(altera.message), 422, { requestId });
     return fail("validation_failed", t("Confira os campos da ferramenta: algum valor está fora do permitido."), 422, {
       requestId,
       details: parsed.error.flatten(),
@@ -103,7 +102,13 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
       resourceId: id,
       requestId,
       // Os NOMES dos campos que mudaram — nunca os valores (o endereço pode levar um token).
-      metadata: { slug: ferramenta.slug, fields: camposAlterados(patch), ...(patch.ativa !== undefined ? { active: patch.ativa } : {}) },
+      metadata: {
+        slug: ferramenta.slug,
+        fields: camposAlterados(patch),
+        ...(patch.ativa !== undefined ? { active: patch.ativa } : {}),
+        // O valor da chave «pedir aprovação» NÃO é segredo: quem desligou a proteção fica no rastro.
+        ...(patch.pedir_aprovacao !== undefined ? { require_approval: patch.pedir_aprovacao } : {}),
+      },
     });
     return ok(ferramenta, { requestId });
   } catch {

@@ -83,6 +83,10 @@ export type InboxKind =
   // aviso que o DONO vê, para consertar a integração. Sem referência: o título leva
   // o nome da ferramenta.
   | 'external_tool_failed'
+  // (migration 0552, issue #95) Uma ferramenta externa do agente quer EXECUTAR algo e espera
+  // um humano. O item da Central carrega o pedido (ref_kind='external_tool_request') com os
+  // botões de aprovar e recusar; resolve sozinho quando alguém decide ou o prazo vence.
+  | 'external_tool_approval'
   | 'proposal_acceptance_rate_drop'
   | 'proposal_promised_not_created'
   // (migration 0312) O fluxo de follow-up PUBLICADO que nunca vai disparar:

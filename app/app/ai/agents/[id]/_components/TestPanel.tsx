@@ -66,7 +66,15 @@ interface TestResult {
    * Consultas a ferramentas EXTERNAS que o agente faria (#94). No teste nenhuma é feita:
    * aparecem aqui como "seria feita", com os dados que o agente preencheu.
    */
-  externalCalls?: Array<{ tool: string; name: string; arguments: unknown; executed: false }>;
+  externalCalls?: Array<{
+    tool: string;
+    name: string;
+    arguments: unknown;
+    executed: false;
+    /** O que a ferramenta faz lá, e se ao vivo esta chamada esperaria um humano aprovar (#95). */
+    effect?: "consulta" | "altera";
+    wouldAskApproval?: boolean;
+  }>;
   impediments?: Array<{ code: string; message: string }>;
   restrictions?: string[];
   /** Ver lib/ai/agents/avaliar-resposta-de-teste.ts. */
@@ -232,13 +240,23 @@ function DetalhesDaResposta({ r }: { r: TestResult }) {
       {r.externalCalls && r.externalCalls.length > 0 ? (
         <div className="space-y-1 rounded-md border border-border/60 p-2 text-xs" data-testid="teste-consultas-externas">
           <p className="font-medium">
-            {t("Consultas a sistemas externos que o agente FARIA (no teste elas não são feitas):")}
+            {t("Chamadas a sistemas externos que o agente FARIA (no teste elas não são feitas):")}
           </p>
           <ul className="space-y-1">
             {r.externalCalls.map((c, i) => (
               <li key={`${c.tool}-${i}`} data-testid="teste-consulta-externa">
                 <span className="font-medium">{c.name}</span>{" "}
-                <span className="rounded-md bg-muted px-1 py-0.5 text-[11px]">{t("seria feita")}</span>
+                <span className="rounded-md bg-muted px-1 py-0.5 text-[11px]">{t("seria feita")}</span>{" "}
+                {c.effect === "altera" ? (
+                  <span className="rounded-md bg-muted px-1 py-0.5 text-[11px]" data-testid="teste-externa-altera">
+                    {t("altera dados")}
+                  </span>
+                ) : null}{" "}
+                {c.wouldAskApproval ? (
+                  <span className="rounded-md bg-muted px-1 py-0.5 text-[11px]" data-testid="teste-externa-aprovacao">
+                    {t("pediria aprovação")}
+                  </span>
+                ) : null}
                 <pre className="mt-1 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-muted-foreground">
                   {JSON.stringify(c.arguments, null, 2)}
                 </pre>

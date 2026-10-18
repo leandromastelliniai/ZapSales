@@ -733,10 +733,10 @@ planilha, ERP, Make, n8n). Destino (doutrina de extensões): *núcleo* — melho
 tem dependência paga; "se nenhuma organização cadastrar uma ferramenta, a operação comum continua
 inteira": sim, e a versão de todo agente que já existia nasce com `external_tool_ids = '{}'`.
 
-**Nesta etapa só entram ferramentas de CONSULTA.** O vocabulário do efeito já tem `altera` (para a etapa
-da aprovação), mas a linha só pode existir **inativa** (CHECK `agent_external_tools_altera_so_inativa`),
-a rota recusa com `external_tool_mutating_blocked` + o motivo escrito, e o motor do turno nem monta nem
-executa o que não é consulta — três travas independentes.
+**Na #94 só entravam ferramentas de CONSULTA; a #95 (§12d) liberou as que ALTERAM algo.** O texto antigo
+dizia que `altera` só existia inativa (CHECK `agent_external_tools_altera_so_inativa`), que a rota
+recusava com `external_tool_mutating_blocked` e que o motor nem montava o que não era consulta — as três
+travas **saíram** na 0552, e a proteção passou a ser o pedido de aprovação (§12d).
 
 **Dados**
 
@@ -787,6 +787,80 @@ diff de versões · Central › aviso `external_tool_failed`.
 
 Mapa vivo: `docs/architecture/ferramentas-externas-do-agente.architecture.json`. Arquivos:
 `lib/ai/ferramentas-externas/`.
+
+---
+
+## 12d. Ações externas que alteram algo, com aprovação (issue #95, parte da #86)
+
+A ferramenta externa pode **alterar** algo no outro sistema (criar pedido, cadastrar cliente) com a
+proteção de que **nada altera o mundo sem aprovação por padrão**. Destino: *núcleo* (a operação comum
+continua inteira sem nenhuma ferramenta; o que já existia — consultas — não muda).
+
+**Decisão «pede aprovação?»** (`lib/ai/ferramentas-externas/aprovacao.ts`, `decidirSePedeAprovacao`), nesta
+ordem: (1) agente em modo **Assistido** → **sempre pede**, qualquer que seja a chave; (2) chave explícita
+(`require_approval` `true`/`false`) → vale a escolha de quem cadastrou (só manager+ a toca; o modelo nunca);
+(3) chave nunca tocada (`NULL`) → o **padrão do efeito**: *altera* pede, *consulta* não. O padrão seguro mora no
+`NULL`, e não num `default` da coluna: uma linha escrita por fora da tela continua pedindo aprovação.
+
+**O pedido** (`agent_external_tool_requests`, 0552 — server-side only como `agent_external_tools`): `tool_id`,
+`conversation_id` (FK `on delete set null`), `origin` (`live` | `assisted`), `status`
+(`pending → executing → executed | failed`, ou `rejected` | `expired`), `arguments` (os dados validados contra o
+esquema da ferramenta), `arguments_hash`, `uncertain`, `inbox_item_id`, `expires_at`, `decided_by/at`,
+`executed_at`, `outcome_http_status/reason`. Sem FK para `contacts` (fora da varredura de LGPD de «quem guarda
+pessoa»). **Reaproveita o molde da proposta «aguardando aprovação»** (a mesma máquina `pendente → decidido |
+vencido` das propostas de dado do contato, com UPDATE condicional por estado e cron de expiração, e o mesmo
+`awaiting_approval` que a prévia do modo Assistido devolve ao modelo) em vez de um segundo mecanismo de
+aprovação: a Central é o único lugar onde se decide.
+
+- **Execução única.** `pending → executing` é um `UPDATE … where status = 'pending' and expires_at > agora`: só
+  **uma** reivindicação vence (clique duplo, dois gestores, navegador reenviando). O índice único parcial
+  `(organização, ferramenta, conversa, hash dos dados)` das linhas vivas faz o mesmo para a **repetição do
+  modelo**: a mesma chamada reencontra o pedido (e, por 24 h, o executado ou de falha incerta).
+- **Sem repetição.** A chamada de uma ação que altera tem **1 tentativa**. Falha com desfecho incerto (prazo, rede,
+  5xx, redirecionamento) grava `uncertain = true`, o agente é orientado a não afirmar nem negar, e a repetição do
+  modelo não executa de novo. O id do pedido é o `delivery_id`: o receptor também pode deduplicar.
+- **Turno** (`montarFerramentasExternas`): aprovação pendente **não executa** — abre o pedido e devolve
+  `{ok, status: "awaiting_approval", request_id, message}`; chave desligada em ação que altera registra o pedido já
+  `executing` (para a trava de repetição) e executa; **aba Teste** (sandbox) não abre pedido nem executa, e
+  `result.externalCalls[]` ganha `effect` e `wouldAskApproval` («pediria aprovação»); **rascunho do modo Assistido**
+  abre pedidos reais (`origin = assisted`).
+- **O agente é informado**: o resultado da própria ferramenta e o bloco `[PEDIDOS A SISTEMAS EXTERNOS NESTA
+  CONVERSA]` no começo do turno seguinte (feito / recusado / expirou / falha incerta). Só `executed` autoriza
+  confirmar ao cliente. Um pedido **pendente** sustenta a frase «depende da equipe» perante o `casePromiseGate`
+  (equivale a um caso aberto para essa conferência).
+- **Central de avisos**: `agent_inbox_items.kind = external_tool_approval` (`ref_kind = external_tool_request`) com
+  o cartão do pedido — ferramenta, efeito, dados (resumo sem segredos), prazo e os botões **Aprovar e executar**
+  (pede confirmação) e **Recusar**. O `GET /api/v1/ai/inbox` anexa o pedido ao aviso. Decidir resolve o aviso; o
+  cartão decidido fica na tela até a pessoa sair da página, para ler o desfecho.
+- **Rotas**: `POST /api/v1/ai/external-tool-requests/:id/decide` (manager+, guarda de suporte) com
+  `{decision: "approve" | "reject", reason?}` → 200 com o desfecho; 409 `request_not_pending` (já decidido / clique
+  duplo) · 409 `request_expired` · 409 `tool_inactive` · 422 `request_arguments_outdated` (a ferramenta foi editada
+  e os dados já não cabem). Cron `GET|POST /api/v1/cron/external-tool-requests-expiry` (a cada 15 min): expira o
+  pendente vencido, resolve o aviso e audita **só quando houve efeito**.
+- **Auditoria** (`api_audit_log`, sem a chave, sem o corpo enviado, sem a resposta, dados só como resumo sem
+  segredos): `ai.external_tool_request_created` · `_approved` · `_rejected` · `_expired` · `_executed` (ok, status
+  HTTP, tentativas, duração, motivo, `uncertain`), além de `ai.external_tool_called`.
+- **Telas**: Ferramentas externas (escolher «Altera dados», chave «Pedir aprovação», validade; selo «Pede
+  aprovação»/«Executa direto»; o teste real avisa que a alteração é de verdade) · Central de avisos (cartão do
+  pedido) · aba Teste («seria feita», «altera dados», «pediria aprovação») · seletor do agente (a ferramenta que
+  altera pode ser ligada).
+
+Mapa vivo: `docs/architecture/aprovacao-de-acoes-externas.architecture.json`. Guia de quem recebe:
+`docs/integracao/ferramentas-externas-do-agente.md` §6.
+
+**LGPD:** os dados que o agente preencheu ficam em `arguments` do pedido (a execução precisa deles) e o que o
+outro sistema devolveu, em `outcome_content` (até 4.000 caracteres). Eles **não** entram na cascata de
+anonimização do contato — a tabela não tem FK para `contacts`. O que os alcança é a **poda**: o cron
+`external-tool-requests-expiry` apaga os dois campos de pedido **concluído há mais de 90 dias**
+(`data_pruned_at`; a linha, o estado e o desfecho ficam) e audita `ai.external_tool_request_pruned`. A
+auditoria só recebe o resumo, com campos sensíveis (`senha`, `token`, `cpf`, `cvv`, `pin`, `otp`, cartão…)
+mascarados por NOME do campo — valor sensível num campo de outro nome vai em claro, então nomeie os campos da
+ferramenta com cuidado. Dívida registrada: alcançar `arguments` na cascata do contato antes dos 90 dias.
+
+**Pedido preso em «executando».** Se o processo cair entre reivindicar e fechar, a rodada do cron passa o
+pedido (parado há mais de 15 minutos) para **falha incerta**, avisa a Central e audita — sem isso o índice da
+chamada viva bloquearia a mesma chamada para sempre. A rota de decisão também fecha como falha incerta se a
+execução lançar. Para o agente, «executando» é «sendo executada agora — não afirme que foi concluída».
 
 ---
 
