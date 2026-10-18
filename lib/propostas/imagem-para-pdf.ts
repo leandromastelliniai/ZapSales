@@ -12,6 +12,7 @@
 //
 // NUNCA LANÇA: imagem que não vem vira `null` ("sem imagem") e o layout fecha
 // sem buraco. Uma imagem ruim jamais barra o envio da proposta.
+import { logger } from "@/lib/logger";
 import { buscarSeguro, type PoliticaDeDestino } from "@/lib/net/rede-segura";
 
 /** Prazo total, de propósito curto: a imagem espera o envio, e o gestor também. */
@@ -45,6 +46,14 @@ function tipoPelosBytes(bytes: Buffer): "image/png" | "image/jpeg" | null {
   return null;
 }
 
+function hostDe(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return "url_invalida";
+  }
+}
+
 /** Os bytes da imagem como data URI, ou `null` quando não deu — por qualquer motivo. */
 export async function buscarImagemParaPdf(
   url: string,
@@ -59,12 +68,18 @@ export async function buscarImagemParaPdf(
       timeoutMs: opcoes.timeoutMs ?? TIMEOUT_PADRAO_MS,
       maxBytes: opcoes.maxBytes ?? MAX_BYTES_PADRAO,
     });
-    if (resposta.status < 200 || resposta.status >= 300) return null;
-    if (!String(resposta.headers["content-type"] ?? "").toLowerCase().startsWith("image/")) return null;
+    if (resposta.status < 200 || resposta.status >= 300) throw new Error(`http_${resposta.status}`);
+    if (!String(resposta.headers["content-type"] ?? "").toLowerCase().startsWith("image/")) throw new Error("nao_e_imagem");
     const tipo = tipoPelosBytes(resposta.corpo);
-    if (!tipo) return null;
+    if (!tipo) throw new Error("formato_nao_suportado");
     return `data:${tipo};base64,${resposta.corpo.toString("base64")}`;
-  } catch {
+  } catch (erro) {
+    // Sem isto a foto some do PDF e ninguém sabe por quê. Só o código e o host:
+    // a URL inteira pode carregar assinatura.
+    logger.warn("[imagem-para-pdf] imagem fora do PDF", {
+      motivo: erro instanceof Error ? erro.message : "erro_inesperado",
+      host: hostDe(url),
+    });
     return null;
   }
 }

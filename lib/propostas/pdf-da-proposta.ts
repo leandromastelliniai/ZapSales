@@ -136,6 +136,14 @@ export async function montarPdfDaProposta(
     };
   }
 
+  // O logo é buscado ao mesmo tempo que as fotos dos produtos: em série, o pior
+  // caso somaria dois prazos de rede ao envio.
+  const marca = await marcaDaOrganizacaoParaPdf(admin, orgId);
+  const logoBuscado = marca.logoUrl
+    ? politicaDoLogo().then((politica) => buscarImagemParaPdf(marca.logoUrl as string, { politica }))
+        .catch(() => null)
+    : Promise.resolve(null);
+
   // A imagem do item de catálogo (primeira foto/capa) viaja para o PDF.
   // Só leitura, filtrada pela organização; item manual (sem product_id)
   // contribui com null e o layout fecha sem buraco.
@@ -166,8 +174,7 @@ export async function montarPdfDaProposta(
     .eq("organization_id", orgId)
     .eq("id", proposta.contact_id)
     .maybeSingle();
-  const marca = await marcaDaOrganizacaoParaPdf(admin, orgId);
-  const logoDoPdf = marca.logoUrl ? await buscarImagemParaPdf(marca.logoUrl, { politica: await politicaDoLogo() }) : null;
+  const logoDoPdf = await logoBuscado;
   // O PDF sai no idioma da ORGANIZAÇÃO, e não no de quem apertou o botão: quem
   // o recebe é cliente dela. Lido aqui, e não por quem chama, para o envio e a
   // prévia não poderem divergir — a prévia que mostra outro idioma promete um
