@@ -75,13 +75,14 @@ describe("baixarMidiaExterna — teto de tamanho por tipo", () => {
   it("a tabela é a da Meta: imagem 5 MB, vídeo e áudio 16 MB, documento até o teto do bucket", () => {
     expect(TETO_DE_MIDIA_EXTERNA).toEqual({
       image: 5_000_000,
+      sticker: 500_000,
       video: 16_000_000,
       audio: 16_000_000,
       document: MAX_MEDIA_BYTES,
     });
   });
 
-  const tetos = { image: 1_000, video: 3_000, audio: 3_000, document: 3_000 };
+  const tetos = { image: 1_000, sticker: 500, video: 3_000, audio: 3_000, document: 3_000 };
   const corpoDe = (mime: string, bytes: number) =>
     servidor((_req, res) => {
       res.writeHead(200, { "content-type": mime });
@@ -160,14 +161,12 @@ describe("baixarMidiaExterna — o que a rede segura recusa", () => {
     ).rejects.toThrow("unsafe_url:private_ip");
   });
 
-  it("resolve o nome UMA vez e conecta no endereço julgado (sem segunda resolução)", async () => {
+  it("rebinding: o DNS responde público/liberado na 1ª vez e interno nas seguintes — só a 1ª vale, e a conexão fica nela", async () => {
     const srv = await imagem();
     const porta = new URL(srv.url).port;
+    const respostas = ["127.0.0.1", "169.254.169.254", "10.0.0.9"];
     let resolucoes = 0;
-    const resolver: ResolvedorDeNomes = async () => {
-      resolucoes += 1;
-      return [{ address: "127.0.0.1", family: 4 }];
-    };
+    const resolver: ResolvedorDeNomes = async () => [{ address: respostas[Math.min(resolucoes++, 2)]!, family: 4 }];
 
     const midia = await baixarMidiaExterna(`http://midia.exemplo.test:${porta}/x.png`, {
       type: "image",
@@ -175,20 +174,52 @@ describe("baixarMidiaExterna — o que a rede segura recusa", () => {
     });
 
     expect(midia.buffer.equals(PNG)).toBe(true);
+    expect(srv.acessos()).toBe(1);
+    // Uma única resolução: não existe segunda chance de o nome apontar para outro lugar.
     expect(resolucoes).toBe(1);
   });
 
-  it("redirecionamento para endereço interno é recusado, e o alvo interno nunca é acessado", async () => {
-    const interno = await imagem();
+  // O alvo interno é um servidor REAL em 127.0.0.2: só 127.0.0.1 é liberado pela válvula
+  // do teste, então 127.0.0.2 é "rede interna" de verdade e a contagem de acessos prova
+  // que nenhum pacote chegou lá.
+  async function internoEm127_0_0_2() {
+    const srv = http.createServer((_req, res) => {
+      acessosInternos += 1;
+      res.writeHead(200, { "content-type": "image/png" });
+      res.end(PNG);
+    });
+    let acessosInternos = 0;
+    await new Promise<void>((ok) => srv.listen(0, "127.0.0.2", ok));
+    abertos.push(srv);
+    return { porta: (srv.address() as AddressInfo).port, acessos: () => acessosInternos };
+  }
+
+  it("redirecionamento para IP interno é recusado, e o alvo interno nunca é acessado", async () => {
+    const interno = await internoEm127_0_0_2();
     const fachada = await servidor((_req, res) => {
-      // O alvo é o servidor interno por um nome que resolve para um IP privado NÃO liberado.
-      res.writeHead(302, { location: "http://169.254.169.254/latest/meta-data/" });
+      res.writeHead(302, { location: `http://127.0.0.2:${interno.porta}/segredo.png` });
       res.end();
     });
 
     await expect(
       baixarMidiaExterna(`${fachada.url}/foto.png`, { type: "image", politica: SO_LOOPBACK }),
     ).rejects.toThrow("unsafe_url:private_host");
+    expect(interno.acessos()).toBe(0);
+  });
+
+  it("redirecionamento para um NOME que resolve a endereço interno é recusado antes de conectar", async () => {
+    const interno = await internoEm127_0_0_2();
+    const fachada = await servidor((_req, res) => {
+      res.writeHead(302, { location: `http://interno.exemplo.test:${interno.porta}/segredo.png` });
+      res.end();
+    });
+
+    await expect(
+      baixarMidiaExterna(`${fachada.url}/foto.png`, {
+        type: "image",
+        politica: { ...SO_LOOPBACK, resolver: dns({ "interno.exemplo.test": ["127.0.0.2"], "127.0.0.1": ["127.0.0.1"] }) },
+      }),
+    ).rejects.toThrow("unsafe_url:private_ip");
     expect(interno.acessos()).toBe(0);
   });
 
@@ -276,11 +307,50 @@ describe("baixarMidiaExterna — o que o servidor devolve", () => {
     ).rejects.toMatchObject({ codigo: "unsupported_media_type" });
   });
 
-  it("sticker é imagem para fins de classe", async () => {
-    const srv = await responde(200, "image/webp");
+  it("figurinha tem de ser webp e cabe no teto de figurinha, não no de imagem", async () => {
+    const webp = await responde(200, "image/webp");
     await expect(
-      baixarMidiaExterna(srv.url, { type: "sticker", politica: SO_LOOPBACK }),
+      baixarMidiaExterna(webp.url, { type: "sticker", politica: SO_LOOPBACK }),
     ).resolves.toMatchObject({ kind: "image", mime: "image/webp" });
+
+    const png = await responde(200, "image/png");
+    await expect(
+      baixarMidiaExterna(png.url, { type: "sticker", politica: SO_LOOPBACK }),
+    ).rejects.toMatchObject({ codigo: "unsupported_media_type" });
+
+    const grande = await responde(200, "image/webp", Buffer.alloc(501, 1));
+    await expect(
+      baixarMidiaExterna(grande.url, {
+        type: "sticker",
+        politica: SO_LOOPBACK,
+        tetos: { image: 5_000, sticker: 500, video: 5_000, audio: 5_000, document: 5_000 },
+      }),
+    ).rejects.toMatchObject({ codigo: "payload_too_large" });
   });
+
+  it("o media_mime informado NÃO sobrepõe um tipo que o servidor declarou (página de login não vira PNG)", async () => {
+    const srv = await responde(200, "text/html", Buffer.from("<html>login</html>"));
+    await expect(
+      baixarMidiaExterna(srv.url, { type: "image", mimeInformado: "image/png", politica: SO_LOOPBACK }),
+    ).rejects.toMatchObject({ codigo: "unsupported_media_type" });
+  });
+
+  it("SVG não é imagem de mensagem (a Meta só aceita JPEG/PNG e SVG carrega script)", async () => {
+    const srv = await responde(200, "image/svg+xml", Buffer.from("<svg onload='x()'/>"));
+    await expect(
+      baixarMidiaExterna(srv.url, { type: "image", politica: SO_LOOPBACK }),
+    ).rejects.toMatchObject({ codigo: "unsupported_media_type" });
+  });
+
+  it.each(["text", "location", "contact", "template"])(
+    "type '%s' não é mídia: recusa sem abrir conexão",
+    async (type) => {
+      const srv = await responde(200, "image/png");
+      await expect(
+        baixarMidiaExterna(srv.url, { type, politica: SO_LOOPBACK }),
+      ).rejects.toMatchObject({ codigo: "unsupported_media_type" });
+      expect(srv.acessos()).toBe(0);
+    },
+  );
 });
 

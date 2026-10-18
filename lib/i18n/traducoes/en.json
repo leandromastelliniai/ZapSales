@@ -9991,5 +9991,10 @@
   "O servidor MCP desta ferramenta está desativado.": "This tool's MCP server is turned off.",
   "Os servidores MCP estão desligados nesta organização. Ligue-os em Ferramentas externas para aprovar, ou recuse o pedido.": "MCP servers are turned off in this organization. Turn them on in External tools to approve, or reject the request.",
   "O servidor MCP desta ferramenta está desativado. Reative-o para aprovar, ou recuse o pedido.": "This tool's MCP server is turned off. Turn it back on to approve, or reject the request.",
-  "O agente passa a poder usar ferramentas de servidores MCP de terceiros que um administrador cadastra; cada uma que altera algo espera aprovação.": "The agent can use tools from third-party MCP servers that an administrator registers; each one that changes something waits for approval."
+  "O agente passa a poder usar ferramentas de servidores MCP de terceiros que um administrador cadastra; cada uma que altera algo espera aprovação.": "The agent can use tools from third-party MCP servers that an administrator registers; each one that changes something waits for approval.",
+  "media_url recusada: o endereço não pode ser baixado pelo servidor.": "media_url rejected: the server cannot download that address.",
+  "O arquivo da media_url é maior que o limite aceito para este tipo de mídia.": "The media_url file is larger than the limit accepted for this media type.",
+  "A media_url não devolveu um arquivo do tipo informado (ou o tipo não é suportado).": "The media_url did not return a file of the given type (or the type is not supported).",
+  "Não foi possível baixar o arquivo da media_url.": "The media_url file could not be downloaded.",
+  "Erro ao guardar o arquivo da media_url.": "Error storing the media_url file."
 }

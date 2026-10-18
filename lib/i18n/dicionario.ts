@@ -5564,6 +5564,11 @@ export const DICIONARIO: Traducoes = {
   "O arquivo não está mais guardado. Envie o arquivo de novo e crie a mensagem com o caminho novo.": {
     es: "El archivo ya no está guardado. Sube el archivo de nuevo y crea el mensaje con la ruta nueva.",
   },
+  "media_url recusada: o endereço não pode ser baixado pelo servidor.": { es: "media_url rechazada: el servidor no puede descargar esa dirección." },
+  "O arquivo da media_url é maior que o limite aceito para este tipo de mídia.": { es: "El archivo de media_url supera el límite aceptado para este tipo de medio." },
+  "A media_url não devolveu um arquivo do tipo informado (ou o tipo não é suportado).": { es: "media_url no devolvió un archivo del tipo indicado (o el tipo no es compatible)." },
+  "Não foi possível baixar o arquivo da media_url.": { es: "No se pudo descargar el archivo de media_url." },
+  "Erro ao guardar o arquivo da media_url.": { es: "Error al guardar el archivo de media_url." },
   "Quando um lead ganhar uma tag": { es: "Cuando un lead reciba una etiqueta" },
   "Quando um contato ganhar uma tag": { es: "Cuando un contacto reciba una etiqueta" },
   "alterado pelo assistente": { es: "cambiado por el asistente" },

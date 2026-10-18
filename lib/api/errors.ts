@@ -114,6 +114,9 @@ export const ApiErrorCodes = {
   channel_without_session: "channel_without_session", // operação de sessão (reiniciar, parear) pedida a canal que não tem sessão no transporte — o oficial
   janela_fechada: "janela_fechada", // POST /messages por token/agente com texto livre fora das 24h em canal com restrição (131047) — a saída é modelo aprovado (#1614)
   media_unavailable: "media_unavailable", // POST /messages com media_storage_path cujo arquivo já saiu do bucket (poda de órfãos, 1 dia) — a saída é subir o arquivo de novo (#40)
+  unsafe_media_url: "unsafe_media_url", // POST /messages com media_url que a rede segura recusa (IP interno, esquema, DNS) — nada é baixado nem gravado (#88/#110)
+  media_url_unreachable: "media_url_unreachable", // POST /messages cuja media_url não pôde ser baixada (não responde, não é 2xx, redirects demais, prazo) (#110)
+  storage_upload_failed: "storage_upload_failed", // POST /messages com media_url baixada, mas o Storage recusou guardar o arquivo (#110)
   invalid_state_transition: "invalid_state_transition",
   invalid_owner: "invalid_owner", // novo dono não é membro ativo agent+ da org (bulk assign, G3-04)
   trigger_kind_not_implemented: "trigger_kind_not_implemented", // publish de followup-flow com kind sem motor de enrollment (stage_change/conversation_end)

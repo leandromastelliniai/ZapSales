@@ -92,9 +92,13 @@ O caminho do envio com `media_url` (`guardarMidiaDaUrl`, em `app/api/v1/messages
    uma vez e preso ao socket, **até 3 redirecionamentos**, cada um refeito pela política inteira
    (link encurtado e URL pré-assinada de CDN funcionam; redirect para endereço interno é recusado),
    prazo total de 30 s e **teto de bytes por tipo**, contado no que chega.
-3. O mime vem do servidor (ou, se ele só diz `application/octet-stream`, do `media_mime` informado) e
-   tem de ser da **classe** do `type` pedido — vídeo enviado como imagem, página HTML no lugar do
-   arquivo e corpo vazio são recusados. `sticker` conta como imagem.
+3. O mime que o servidor **declara** manda; o `media_mime` informado só desempata quando o servidor
+   não diz nada útil (vazio ou `application/octet-stream`) — senão uma página de login declarada
+   `text/html` seria enviada como PNG só porque o chamador escreveu `image/png`. Ele tem de ser da
+   **classe** do `type` pedido: vídeo enviado como imagem, página HTML no lugar do arquivo, SVG
+   (carrega script; a Meta só aceita JPEG/PNG) e corpo vazio são recusados. `sticker` é imagem
+   **webp**. Um `type` que não carrega arquivo (`text`, `location`, `contact`, `template`) com
+   `media_url` é recusado sem abrir conexão.
 4. Os bytes sobem para `whatsapp-media` em `{org}/{conversa}/out-{uuid}.{ext}` e o `input` passa a
    apontar para esse caminho: o envio segue pelo ramo de `media_storage_path` (URL assinada de 10
    minutos ao gateway). A linha da mensagem guarda `media_storage_path`, o mime e o tamanho **do que
@@ -109,8 +113,8 @@ O caminho do envio com `media_url` (`guardarMidiaDaUrl`, em `app/api/v1/messages
 | Tipo não suportado, ou diferente do `type` | 415 `unsupported_media_type` |
 | Falha ao guardar no bucket | 500 `storage_upload_failed` |
 
-**Tetos** (`TETO_DE_MIDIA_EXTERNA`) — os da Meta por tipo, válidos para qualquer canal: imagem e
-figurinha 5 MB, vídeo 16 MB, áudio 16 MB, documento 50 MB (a Meta aceita 100 MB; o bucket
+**Tetos** (`TETO_DE_MIDIA_EXTERNA`) — os da Meta por tipo, válidos para qualquer canal: imagem 5 MB,
+figurinha 500 KB (a animada; a estática é 100 KB), vídeo 16 MB, áudio 16 MB, documento 50 MB (a Meta aceita 100 MB; o bucket
 `whatsapp-media` limita em 50). Um arquivo que o canal oficial recusaria depois de aceitar não deve
 sair só porque o canal da vez é o QR.
 

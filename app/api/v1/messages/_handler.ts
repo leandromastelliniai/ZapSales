@@ -28,6 +28,7 @@ import { decidirPreGoLiveDoCanalViaSupabase } from "@/lib/ai/elegibilidade/consu
 import type { Actor, HandlerCtx } from "@/lib/api/handlers/types";
 import { audit } from "@/lib/audit";
 import { traduzir } from "@/lib/i18n/dicionario";
+import type { Idioma } from "@/lib/i18n/idiomas";
 import { assertOrgOperante } from "@/lib/organizacao/operante";
 import {
   CHANNEL_SESSION_REF_COLUMNS,
@@ -385,6 +386,7 @@ async function guardarMidiaDaUrl(
   organizationId: string,
   conversationId: string,
   requestId: string,
+  idioma: Idioma,
 ): Promise<SendMessageInput> {
   let midia;
   try {
@@ -396,7 +398,7 @@ async function guardarMidiaDaUrl(
         "unsafe_media_url",
         { motivo: erro.codigo },
         requestId,
-        "media_url recusada: o endereço não pode ser baixado pelo servidor.",
+        traduzir("media_url recusada: o endereço não pode ser baixado pelo servidor.", idioma),
       );
     }
     if (erro instanceof MidiaExternaRecusada && erro.codigo === "payload_too_large") {
@@ -405,7 +407,7 @@ async function guardarMidiaDaUrl(
         "payload_too_large",
         undefined,
         requestId,
-        "O arquivo da media_url é maior que o limite aceito para este tipo de mídia.",
+        traduzir("O arquivo da media_url é maior que o limite aceito para este tipo de mídia.", idioma),
       );
     }
     if (erro instanceof MidiaExternaRecusada && erro.codigo === "unsupported_media_type") {
@@ -414,7 +416,7 @@ async function guardarMidiaDaUrl(
         "unsupported_media_type",
         undefined,
         requestId,
-        "A media_url não devolveu um arquivo do tipo informado (ou o tipo não é suportado).",
+        traduzir("A media_url não devolveu um arquivo do tipo informado (ou o tipo não é suportado).", idioma),
       );
     }
     if (erro instanceof MidiaExternaRecusada || erro instanceof ErroDeRedeSegura) {
@@ -423,7 +425,7 @@ async function guardarMidiaDaUrl(
         "media_url_unreachable",
         { motivo: erro.codigo },
         requestId,
-        "Não foi possível baixar o arquivo da media_url.",
+        traduzir("Não foi possível baixar o arquivo da media_url.", idioma),
       );
     }
     throw erro;
@@ -439,7 +441,13 @@ async function guardarMidiaDaUrl(
       request_id: requestId,
       error_message: error.message,
     });
-    throw new ApiError(500, "storage_upload_failed", undefined, requestId, "Erro ao guardar o arquivo da media_url.");
+    throw new ApiError(
+      500,
+      "storage_upload_failed",
+      undefined,
+      requestId,
+      traduzir("Erro ao guardar o arquivo da media_url.", idioma),
+    );
   }
   return {
     ...input,
@@ -672,7 +680,7 @@ export async function sendMessageHandler(
   // segue pelo mesmo caminho de `media_storage_path`. A única `media_url` que vai
   // direto ao gateway é a assinada pelo próprio Storage (o PDF da proposta).
   if (input.media_url && !input.media_storage_path && !ehUrlAssinadaDoProprioStorage(input.media_url)) {
-    input = await guardarMidiaDaUrl(input, input.media_url, c.organization_id, c.id, ctx.requestId);
+    input = await guardarMidiaDaUrl(input, input.media_url, c.organization_id, c.id, ctx.requestId, ctx.idioma ?? "pt-BR");
   }
 
   let outboundBody = input.body ?? null;

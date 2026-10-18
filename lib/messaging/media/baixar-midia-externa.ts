@@ -18,14 +18,19 @@ export interface MidiaBaixada {
   kind: MessageKind;
 }
 
+/** Os `type` de mensagem que carregam um arquivo e, por isso, podem ter `media_url`. */
+export type TipoDeMidia = MessageKind | "sticker";
+
 /**
- * Teto de bytes por classe de mídia: os da Meta (imagem 5 MB, vídeo e áudio 16 MB,
- * documento 100 MB), com o documento limitado ao do bucket `whatsapp-media`. Valem
- * para qualquer canal — um arquivo que o canal oficial recusaria depois de aceitar
- * não deve sair só porque o canal da vez é o QR.
+ * Teto de bytes por tipo de mídia: os da Meta (imagem 5 MB, figurinha 500 KB —
+ * a animada; a estática é 100 KB —, vídeo e áudio 16 MB, documento 100 MB), com o
+ * documento limitado ao do bucket `whatsapp-media`. Valem para qualquer canal — um
+ * arquivo que o canal oficial recusaria depois de aceitar não deve sair só porque
+ * o canal da vez é o QR.
  */
-export const TETO_DE_MIDIA_EXTERNA: Record<MessageKind, number> = {
+export const TETO_DE_MIDIA_EXTERNA: Record<TipoDeMidia, number> = {
   image: 5_000_000,
+  sticker: 500_000,
   video: 16_000_000,
   audio: 16_000_000,
   document: MAX_MEDIA_BYTES,
@@ -39,7 +44,7 @@ export interface OpcoesDoDownload {
   /** Sobrepõe a política de destino — para teste. */
   politica?: PoliticaDeDestino;
   /** Sobrepõe a tabela de tetos — para teste. */
-  tetos?: Record<MessageKind, number>;
+  tetos?: Record<TipoDeMidia, number>;
   /** Prazo TOTAL do download (DNS, conexão, cabeçalhos, corpo e saltos). */
   timeoutMs?: number;
 }
@@ -58,21 +63,29 @@ export class MidiaExternaRecusada extends Error {
   }
 }
 
-/** O `type` da mensagem → a classe de mídia que fixa o teto. `sticker` é imagem. */
-function classeDoTipo(type: string): MessageKind {
-  if (type === "video" || type === "audio" || type === "document") return type;
-  return "image";
+/** O `type` da mensagem → o tipo de mídia que fixa o teto; `null` = não carrega arquivo. */
+function tipoDeMidia(type: string): TipoDeMidia | null {
+  return type === "image" || type === "sticker" || type === "video" || type === "audio" || type === "document"
+    ? type
+    : null;
 }
 
+/** Mime que não diz o que o arquivo é: só nestes o `media_mime` de quem chamou desempata. */
+const MIMES_SEM_INFORMACAO = new Set(["", "application/octet-stream", "binary/octet-stream"]);
+
 export async function baixarMidiaExterna(url: string, opcoes: OpcoesDoDownload): Promise<MidiaBaixada> {
+  // `text`, `location`, `contact` e `template` não carregam arquivo: uma `media_url`
+  // ali não é mídia, e baixá-la "como imagem" só faria o servidor buscar um endereço
+  // sem propósito. Recusa antes de abrir conexão.
+  const tipo = tipoDeMidia(opcoes.type);
+  if (!tipo) throw new MidiaExternaRecusada("unsupported_media_type");
   const tetos = opcoes.tetos ?? TETO_DE_MIDIA_EXTERNA;
-  const classePedida = classeDoTipo(opcoes.type);
   let res;
   try {
     res = await buscarSeguro(url, {
       permitirHttp: process.env.NODE_ENV !== "production",
       ...opcoes.politica,
-      maxBytes: tetos[classePedida],
+      maxBytes: tetos[tipo],
       timeoutMs: opcoes.timeoutMs ?? PRAZO_DO_DOWNLOAD_MS,
       maxRedirecionamentos: MAX_SALTOS,
     });
@@ -84,11 +97,15 @@ export async function baixarMidiaExterna(url: string, opcoes: OpcoesDoDownload):
   }
   if (res.status < 200 || res.status >= 300) throw new MidiaExternaRecusada("media_http_status");
 
+  // O que o servidor DECLARA manda. O `media_mime` de quem chamou só desempata quando
+  // o servidor não diz nada útil: senão uma página de login declarada `text/html`
+  // seria guardada e enviada como PNG só porque o chamador escreveu `image/png`.
   const doServidor = mimeBase(res.headers["content-type"]);
-  const informado = mimeBase(opcoes.mimeInformado);
-  const mime = kindFromMime(doServidor) ? doServidor : kindFromMime(informado) ? informado : "";
-  const kind = mime ? kindFromMime(mime) : null;
-  if (!kind || kind !== classePedida || res.corpo.length === 0) {
+  const mime = MIMES_SEM_INFORMACAO.has(doServidor) ? mimeBase(opcoes.mimeInformado) : doServidor;
+  const kind = kindFromMime(mime);
+  // SVG carrega script e a Meta só aceita JPEG/PNG; figurinha é webp.
+  const formaInvalida = mime === "image/svg+xml" || (tipo === "sticker" && mime !== "image/webp");
+  if (!kind || formaInvalida || kind !== (tipo === "sticker" ? "image" : tipo) || res.corpo.length === 0) {
     throw new MidiaExternaRecusada("unsupported_media_type");
   }
   return { buffer: res.corpo, mime, kind };
