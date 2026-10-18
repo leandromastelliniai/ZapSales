@@ -60,7 +60,7 @@ destinos internos que o dono da **instalação** autoriza
 | Download de extensões | `buscarSeguro` | Origem de catálogo: `julgarLiteralIpv6`; exceção HTTP só no loopback de ensaio. |
 | Ferramentas externas do agente — webhook (#94) e servidor MCP (#96) | `buscarSeguro` | Endereço de **organização**: sem a lista de destinos internos, `permitirHttp` só fora de produção, 3xx não seguido (a credencial/assinatura não vai atrás de um endereço que ninguém cadastrou), prazo total por tentativa e teto de bytes. O cliente MCP é próprio (`lib/ai/ferramentas-externas/mcp/cliente.ts`) **de propósito**: o cliente do SDK usa o `fetch` global, que resolve o nome de novo, segue redirecionamento e lê sem teto. |
 | Banco externo | `lookupJulgado` no socket do `pg` + `validarHostDeBanco` | `politicaDoBanco`: a mesma régua **mais a LAN RFC 1918** (Postgres na rede do dono é caso real). |
-| `media_url` (o gateway é quem baixa) | `assertUrlDeMidiaSegura` → `validarUrl` + `resolverEJulgar` | Só **julga**; ver "O que continua de fora". |
+| `media_url` | `buscarSeguro` (`lib/messaging/media/baixar-midia-externa.ts`) | O servidor baixa, sobe ao Storage e o gateway recebe a URL assinada nossa; ver "A `media_url` foi migrada (#110)". `permitirHttp` só fora de produção, **sem** lista de destinos internos, até 3 saltos (cada um julgado), teto de bytes por tipo. |
 | SDK de modelos — provedor de IA personalizado (#108) | `fetchParaDestinoDaOrganizacao` → `fetchSeguro` → `buscarSeguroEmFluxo` | Endereço de **organização**: sem a lista de destinos internos, `permitirHttp` só fora de produção, 3xx vira recusa. Cada chamada resolve, julga e conecta no endereço julgado, e o corpo (SSE) chega em **fluxo**. A allowlist do motor de borda (`contain`) fica na frente, e o transporte seguro vai por baixo dela. Ver "O corpo em fluxo". |
 
 ## O corpo em fluxo (SDK de modelos)
@@ -106,6 +106,58 @@ perfil, não de mecanismo**: o banco enxerga a LAN privada e o webhook não. Pro
 IPv4-mapped é recusado sem abrir conexão) e `lib/net/rede-segura/cliente.test.ts`
 ("lookupJulgado").
 
+## A `media_url` foi migrada (#110) — decisão: baixar aqui
+
+Quem baixava o arquivo era o gateway de mensageria, fora deste processo: o servidor só conseguia
+julgar o endereço (texto + DNS) antes de entregá-lo, e o gateway resolvia o nome de novo — a janela
+de rebinding. A WAHA não oferece como prender o IP do lado dela, então **julgar e registrar o risco
+(opção 2) deixaria a janela aberta para sempre**. Decisão do dono do produto, 18/10/2026: **opção 1**.
+
+O caminho do envio com `media_url` (`guardarMidiaDaUrl`, em `app/api/v1/messages/_handler.ts`):
+
+1. A única `media_url` que **não** é baixada é a URL assinada do **próprio Storage** desta instalação
+   (o PDF da proposta): assinar exige a service role, e o gateway já baixa exatamente esse endereço
+   no caminho de `media_storage_path`. Qualquer outra passa pelos passos abaixo.
+2. `baixarMidiaExterna` busca com `buscarSeguro`: HTTPS (o `http` só fora de produção), DNS resolvido
+   uma vez e preso ao socket, **até 3 redirecionamentos**, cada um refeito pela política inteira
+   (link encurtado e URL pré-assinada de CDN funcionam; redirect para endereço interno é recusado),
+   prazo total de 30 s e **teto de bytes por tipo**, contado no que chega.
+3. O mime que o servidor **declara** manda; o `media_mime` informado só desempata quando o servidor
+   não diz nada útil (vazio ou `application/octet-stream`) — senão uma página de login declarada
+   `text/html` seria enviada como PNG só porque o chamador escreveu `image/png`. Ele tem de ser da
+   **classe** do `type` pedido: vídeo enviado como imagem, página HTML no lugar do arquivo, SVG
+   (carrega script; a Meta só aceita JPEG/PNG) e corpo vazio são recusados. `sticker` é imagem
+   **webp**. Um `type` que não carrega arquivo (`text`, `location`, `contact`, `template`) com
+   `media_url` é recusado sem abrir conexão.
+4. Os bytes sobem para `whatsapp-media` em `{org}/{conversa}/out-{uuid}.{ext}` e o `input` passa a
+   apontar para esse caminho: o envio segue pelo ramo de `media_storage_path` (URL assinada de 10
+   minutos ao gateway). A linha da mensagem guarda `media_storage_path`, o mime e o tamanho **do que
+   foi guardado**; a `media_url` original fica como procedência. Tudo isso acontece **antes** de a
+   mensagem existir: qualquer recusa é um `ApiError` e nada é gravado nem enviado.
+
+| Situação | Resposta |
+|---|---|
+| Endereço recusado pela política (`unsafe_url:*`) | 422 `unsafe_media_url` (como antes) |
+| Origem não responde, 3xx em excesso, prazo, não é 2xx | 422 `media_url_unreachable` (`details.motivo`) |
+| Acima do teto do tipo | 413 `payload_too_large` |
+| Tipo não suportado, ou diferente do `type` | 415 `unsupported_media_type` |
+| Falha ao guardar no bucket | 500 `storage_upload_failed` |
+
+**Tetos** (`TETO_DE_MIDIA_EXTERNA`) — os da Meta por tipo, válidos para qualquer canal: imagem 5 MB,
+figurinha 500 KB (a animada; a estática é 100 KB), vídeo 16 MB, áudio 16 MB, documento 50 MB (a Meta aceita 100 MB; o bucket
+`whatsapp-media` limita em 50). Um arquivo que o canal oficial recusaria depois de aceitar não deve
+sair só porque o canal da vez é o QR.
+
+**Custo, dito às claras:** o envio por `media_url` externa agora gasta banda do servidor e fica mais
+lento (o download entra na requisição, com prazo de 30 s), e o arquivo ocupa a cota do Storage — a
+mesma de `whatsapp-media` — até a poda de órfãos/retenção levá-lo, como qualquer upload de saída.
+
+Prova: `lib/messaging/media/baixar-midia-externa.test.ts` (servidores reais em 127.0.0.1: IP interno,
+nome com endereço público e privado, resolução única, redirect para metadata, laço de redirects,
+resposta lenta, teto por tipo, mime errado) e os casos `4d` de
+`tests/unit/messages-handler-desfechos.test.ts` (o gateway recebe a URL assinada nossa e nunca o
+endereço do usuário).
+
 ## O que continua de fora (diferença registrada, não esquecida)
 
 1. **Teste de conectividade do provedor personalizado** (`validateCustomKey`, a chamada
@@ -115,8 +167,7 @@ IPv4-mapped é recusado sem abrir conexão) e `lib/net/rede-segura/cliente.test.
 2. **Imagem de produto e logo no PDF da proposta**: quem busca é o `@react-pdf` (biblioteca), com
    só o guarda textual na frente. Fechar exige buscar os bytes com `buscarSeguro` e entregar o
    `Buffer` ao renderizador.
-3. **`media_url`**: quem baixa é o gateway de mensageria, fora deste processo. Aqui só dá para
-   julgar antes de entregar o endereço.
+3. ~~**`media_url`**~~ — migrada na #110, ver "A `media_url` foi migrada" acima.
 
 As funções novas da #86 (treino por site, webhook como ferramenta do agente, MCP externo) **devem**
 sair por `buscarSeguro` — é a razão deste ticket vir antes.
