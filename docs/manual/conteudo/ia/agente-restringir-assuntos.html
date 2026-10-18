@@ -38,9 +38,9 @@
 <h2 id="o-que-nunca-e-barrado">O que nunca é “fora do assunto”</h2>
 <p>Mesmo com a restrição ligada, três coisas continuam funcionando:</p>
 <ul>
-  <li>O cliente <strong>pedir para falar com uma pessoa</strong>: o agente chama o atendente humano.</li>
-  <li>O cliente <strong>pedir para parar de receber mensagens</strong>: o pedido é respeitado (e a pessoa é marcada para não receber mais). Essa detecção é feita pelo sistema, antes de a IA responder.</li>
-  <li><strong>Cumprimentos</strong> (“oi”, “bom dia”).</li>
+  <li>O cliente <strong>pedir para falar com uma pessoa</strong>: a instrução manda o agente encaminhar o pedido (e as palavras de passagem do agente, como “falar com humano”, acionam a passagem pelo sistema).</li>
+  <li>O cliente <strong>pedir para parar de receber mensagens</strong>: o pedido é respeitado (e a pessoa é marcada para não receber mais). Essa detecção é feita pelo sistema, em código, antes de a IA responder.</li>
+  <li><strong>Cumprimentos</strong> (“oi”, “bom dia”): a instrução manda o agente tratá-los normalmente.</li>
 </ul>
 
 <h2 id="testar">Como testar</h2>
@@ -50,8 +50,8 @@
   <li>Digite algo <strong>fora</strong>, como “Quem ganhou o jogo de futebol ontem?”. O agente deve dar a sua resposta para o que está fora.</li>
   <li>Digite “Quero falar com um atendente”. O agente deve chamar uma pessoa, não recusar.</li>
 </ol>
-<p>Em uma medição feita em produção com um modelo de IA real, os três casos se comportaram assim, tanto pela aba de teste quanto chamando o recurso direto. Com o interruptor desligado, o mesmo modelo respondeu livremente à pergunta de futebol. Veja mais sobre a aba em <a href="#agente-teste-e-correcao">Testar e corrigir o agente</a>.</p>
-<aside class="nota atencao"><strong>É uma instrução, não uma trava.</strong><p>A restrição funciona como uma ordem escrita para a inteligência artificial, e os modelos costumam obedecer — mas nenhuma inteligência artificial obedece 100% das vezes. O que o sistema <em>garante por código</em> é só o que está em “O que nunca é fora do assunto”. Teste com as perguntas mais prováveis do seu público e releia as conversas reais nos primeiros dias.</p></aside>
+<p>Compare também com o interruptor <strong>desligado</strong>: o mesmo agente responde livremente à pergunta de futebol. Veja mais sobre a aba em <a href="#agente-teste-e-correcao">Testar e corrigir o agente</a>.</p>
+<aside class="nota atencao"><strong>É uma instrução, não uma trava.</strong><p>A restrição funciona como uma ordem escrita para a inteligência artificial, e os modelos costumam obedecer — mas nenhuma inteligência artificial obedece 100% das vezes. O que o sistema <em>garante por código</em> é só o pedido de parar de receber mensagens e as palavras de passagem para uma pessoa; o resto depende de a IA seguir a instrução. Teste com as perguntas mais prováveis do seu público e releia as conversas reais nos primeiros dias.</p></aside>
 <aside class="nota info"><strong>Teste custa crédito.</strong><p>A aba Teste chama a IA de verdade e consome crédito da sua conta no provedor (a própria tela avisa).</p></aside>
 
 <h2 id="cuidados">Cuidados</h2>

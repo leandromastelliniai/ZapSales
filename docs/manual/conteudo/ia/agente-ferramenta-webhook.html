@@ -99,8 +99,10 @@
 <h2 id="editar-apagar">Editar e apagar</h2>
 <ul>
   <li><strong>Editar</strong> muda nome, instrução, endereço e campos. Renomear não muda a identificação interna da ferramenta.</li>
-  <li><strong>Apagar</strong> pede confirmação (“Apagar esta ferramenta?”). Se algum agente já usou a ferramenta numa versão publicada, o sistema não deixa apagar, porque o histórico precisa dela: “Desative em vez de apagar.”.</li>
+  <li><strong>Apagar</strong> pede confirmação (“Apagar esta ferramenta?”). Se alguma versão de agente (publicada ou rascunho) já usa a ferramenta, o sistema não deixa apagar, porque o histórico precisa dela: “Desative em vez de apagar.”.</li>
 </ul>
+
+<aside class="nota atencao"><strong>Apagar e gerar nova chave não têm volta.</strong><p><span class="ui">Apagar</span> remove a ferramenta (e o agente deixa de consultar aquele sistema). <span class="ui">Gerar nova chave</span> invalida a anterior <strong>na hora</strong>: se o outro sistema confere a assinatura, ele passa a recusar as chamadas até receber a chave nova. Avise quem cuida do outro lado antes de gerar.</p></aside>
 
 <h2 id="cuidados">Cuidados</h2>
 <ul>

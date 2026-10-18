@@ -2877,7 +2877,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <ol class="legenda">
   <li><strong>Comece por um modelo.</strong> Só aparece ao <em>criar</em> um agente; ao editar um que já existe, o cartão some.</li>
   <li><strong>Os três modelos.</strong> Cada cartão traz o nome do ramo e uma frase dizendo para que serve.</li>
-  <li><strong>Aviso “Modelo aplicado”.</strong> Aparece depois que você escolhe e lembra que trocar de modelo substitui o que estiver preenchido abaixo.</li>
+  <li><strong>Aviso “Modelo aplicado”.</strong> Aparece depois que você escolhe e lembra que trocar de modelo substitui o perfil e as instruções que estão abaixo (e também os assuntos e a resposta para o que está fora; o nome só muda se estiver vazio).</li>
 </ol>
 <table class="tabela">
   <thead><tr><th>Modelo</th><th>Para quem</th><th>Tom de voz</th><th>Nome sugerido</th></tr></thead>
@@ -3006,9 +3006,9 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <h2 id="agente-restringir-assuntos--o-que-nunca-e-barrado">O que nunca é “fora do assunto”</h2>
 <p>Mesmo com a restrição ligada, três coisas continuam funcionando:</p>
 <ul>
-  <li>O cliente <strong>pedir para falar com uma pessoa</strong>: o agente chama o atendente humano.</li>
-  <li>O cliente <strong>pedir para parar de receber mensagens</strong>: o pedido é respeitado (e a pessoa é marcada para não receber mais). Essa detecção é feita pelo sistema, antes de a IA responder.</li>
-  <li><strong>Cumprimentos</strong> (“oi”, “bom dia”).</li>
+  <li>O cliente <strong>pedir para falar com uma pessoa</strong>: a instrução manda o agente encaminhar o pedido (e as palavras de passagem do agente, como “falar com humano”, acionam a passagem pelo sistema).</li>
+  <li>O cliente <strong>pedir para parar de receber mensagens</strong>: o pedido é respeitado (e a pessoa é marcada para não receber mais). Essa detecção é feita pelo sistema, em código, antes de a IA responder.</li>
+  <li><strong>Cumprimentos</strong> (“oi”, “bom dia”): a instrução manda o agente tratá-los normalmente.</li>
 </ul>
 
 <h2 id="agente-restringir-assuntos--testar">Como testar</h2>
@@ -3018,8 +3018,8 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <li>Digite algo <strong>fora</strong>, como “Quem ganhou o jogo de futebol ontem?”. O agente deve dar a sua resposta para o que está fora.</li>
   <li>Digite “Quero falar com um atendente”. O agente deve chamar uma pessoa, não recusar.</li>
 </ol>
-<p>Em uma medição feita em produção com um modelo de IA real, os três casos se comportaram assim, tanto pela aba de teste quanto chamando o recurso direto. Com o interruptor desligado, o mesmo modelo respondeu livremente à pergunta de futebol. Veja mais sobre a aba em <a href="#agente-teste-e-correcao">Testar e corrigir o agente</a>.</p>
-<aside class="nota atencao"><strong>É uma instrução, não uma trava.</strong><p>A restrição funciona como uma ordem escrita para a inteligência artificial, e os modelos costumam obedecer — mas nenhuma inteligência artificial obedece 100% das vezes. O que o sistema <em>garante por código</em> é só o que está em “O que nunca é fora do assunto”. Teste com as perguntas mais prováveis do seu público e releia as conversas reais nos primeiros dias.</p></aside>
+<p>Compare também com o interruptor <strong>desligado</strong>: o mesmo agente responde livremente à pergunta de futebol. Veja mais sobre a aba em <a href="#agente-teste-e-correcao">Testar e corrigir o agente</a>.</p>
+<aside class="nota atencao"><strong>É uma instrução, não uma trava.</strong><p>A restrição funciona como uma ordem escrita para a inteligência artificial, e os modelos costumam obedecer — mas nenhuma inteligência artificial obedece 100% das vezes. O que o sistema <em>garante por código</em> é só o pedido de parar de receber mensagens e as palavras de passagem para uma pessoa; o resto depende de a IA seguir a instrução. Teste com as perguntas mais prováveis do seu público e releia as conversas reais nos primeiros dias.</p></aside>
 <aside class="nota info"><strong>Teste custa crédito.</strong><p>A aba Teste chama a IA de verdade e consome crédito da sua conta no provedor (a própria tela avisa).</p></aside>
 
 <h2 id="agente-restringir-assuntos--cuidados">Cuidados</h2>
@@ -3180,7 +3180,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <li><strong>Verificações da resposta</strong> e um resumo “O teste não consegue verificar tudo (N verificações ficam de fora)”. Algumas conferências só acontecem no envio real; elas estão descritas na aba “Confere antes de enviar” do agente.</li>
 </ul>
 <p>Se o agente decidir não responder naquela troca, a tela diz “O agente não gerou uma resposta para enviar nesta troca.”.</p>
-<aside class="nota atencao"><strong>Limites do teste.</strong><ul><li>Até <strong>20 trocas</strong> por conversa; a tela não avisa antes — se precisar de mais, use <span class="ui">Reiniciar conversa</span>.</li><li>Cada mensagem tem até <strong>4.000 caracteres</strong>.</li><li>A conversa de teste <strong>não é guardada</strong>: se você recarregar a página ou trocar de versão, ela some.</li><li>Se uma troca falhar (por exemplo, por erro de chave), ela não entra na conversa e o texto continua na caixa para você tentar de novo. A mensagem típica é “Não foi possível executar o teste. Confira modelo, credencial e materiais do agente.”.</li><li>Se o orçamento de IA do mês estiver no modo <em>parar ao chegar no limite</em> e já tiver estourado, o teste é recusado. Ajuste em <a href="#uso-ia">Uso de IA</a>.</li></ul></aside>
+<aside class="nota atencao"><strong>Limites do teste.</strong><ul><li>Cerca de <strong>20 trocas</strong> por conversa; a tela não avisa antes de chegar ao limite — se precisar de mais, use <span class="ui">Reiniciar conversa</span>.</li><li>Cada mensagem tem até <strong>4.000 caracteres</strong>.</li><li>A conversa de teste <strong>não é guardada</strong>: se você recarregar a página ou trocar de versão, ela some.</li><li>Se uma troca falhar (por exemplo, por erro de chave), ela não entra na conversa e o texto continua na caixa para você tentar de novo. A mensagem típica é “Não foi possível executar o teste. Confira modelo, credencial e materiais do agente.”.</li><li>Se o orçamento de IA do mês estiver no modo <em>parar ao chegar no limite</em> e já tiver estourado, o teste é recusado. Ajuste em <a href="#uso-ia">Uso de IA</a>.</li></ul></aside>
 
 <h2 id="agente-teste-e-correcao--corrigir">Corrigir uma resposta</h2>
 <p>Quando o agente respondeu de um jeito que você não quer, escreva o que ele deveria ter dito. O sistema não muda o agente na hora: ele cria uma <strong>proposta</strong> para você aprovar.</p>
@@ -3350,8 +3350,10 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <h2 id="agente-ferramenta-webhook--editar-apagar">Editar e apagar</h2>
 <ul>
   <li><strong>Editar</strong> muda nome, instrução, endereço e campos. Renomear não muda a identificação interna da ferramenta.</li>
-  <li><strong>Apagar</strong> pede confirmação (“Apagar esta ferramenta?”). Se algum agente já usou a ferramenta numa versão publicada, o sistema não deixa apagar, porque o histórico precisa dela: “Desative em vez de apagar.”.</li>
+  <li><strong>Apagar</strong> pede confirmação (“Apagar esta ferramenta?”). Se alguma versão de agente (publicada ou rascunho) já usa a ferramenta, o sistema não deixa apagar, porque o histórico precisa dela: “Desative em vez de apagar.”.</li>
 </ul>
+
+<aside class="nota atencao"><strong>Apagar e gerar nova chave não têm volta.</strong><p><span class="ui">Apagar</span> remove a ferramenta (e o agente deixa de consultar aquele sistema). <span class="ui">Gerar nova chave</span> invalida a anterior <strong>na hora</strong>: se o outro sistema confere a assinatura, ele passa a recusar as chamadas até receber a chave nova. Avise quem cuida do outro lado antes de gerar.</p></aside>
 
 <h2 id="agente-ferramenta-webhook--cuidados">Cuidados</h2>
 <ul>
@@ -3416,6 +3418,10 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <img src="img/ia-aprovacao-confirmar.png" alt="Confirmação Executar esta ação agora? com os botões Cancelar e Aprovar e executar" loading="lazy">
   <figcaption>A confirmação antes de executar.</figcaption>
 </figure>
+<ol class="legenda">
+  <li><strong>Executar esta ação agora?</strong> “A ação é enviada ao outro sistema uma única vez, com os dados acima. Se o outro sistema não responder, ela não é repetida sozinha.”</li>
+  <li><strong>Aprovar e executar.</strong> Ao lado fica <em>Cancelar</em>, que fecha a janela sem decidir.</li>
+</ol>
 <p>O ZapSales chama o outro sistema na hora e mostra o resultado no próprio cartão:</p>
 <figure class="print">
   <img src="img/ia-aprovacao-executada.png" alt="Cartão do pedido com o selo Executada, a mensagem A ação foi executada e a resposta devolvida pelo outro sistema" loading="lazy">
@@ -3581,6 +3587,8 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <li><span class="ui">Apagar</span> não é permitido se alguma ferramenta do servidor já fez parte de uma versão de agente, porque o histórico precisa dela: desative o servidor em vez de apagar.</li>
 </ul>
 
+<aside class="nota atencao"><strong>Remover a credencial ou apagar o servidor não têm volta.</strong><p>Com <span class="ui">Remover a credencial guardada</span>, um servidor que exige credencial passa a recusar as chamadas do agente até você cadastrar outra. <span class="ui">Apagar</span> remove de vez o servidor, a credencial guardada e as ferramentas escolhidas (e só é permitido enquanto nenhuma versão de agente usar uma ferramenta dele). Falhas de chamada viram avisos na Central.</p></aside>
+
 <h2 id="agente-servidores-mcp--cuidados">Cuidados</h2>
 <ul>
   <li>Conecte só servidores de empresas em que você confia: o agente envia a eles os dados que preencher, e o que eles responderem pode ser repetido ao cliente.</li>
@@ -3608,7 +3616,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <li><strong>A última mensagem do cliente foi um áudio.</strong> Se ele escreveu, a resposta sai em texto.</li>
   <li>O canal aceita nota de voz: <strong>API Oficial da Meta</strong> ou <strong>WAHA</strong> (QR code). Outro canal recebe texto.</li>
   <li>A resposta cabe no limite de caracteres e não está vazia. Acima do limite, <strong>sai como texto</strong> (nunca é cortada).</li>
-  <li>No ElevenLabs, o agente tem uma voz escolhida.</li>
+  <li>No ElevenLabs, há uma voz escolhida (a do agente ou, na falta dela, a padrão da organização).</li>
 </ol>
 <p>Só vale para respostas a mensagens recebidas: <strong>campanhas e follow-ups continuam em texto</strong>. Se a resposta levar uma foto de produto, sai como foto com legenda, sem áudio.</p>
 
@@ -3690,7 +3698,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <ul>
   <li>Mantenha crédito na conta do serviço de voz; sem ele o agente volta a responder em texto.</li>
   <li>Quem é <strong>Gerente</strong> vê o cartão, mas só o <strong>Administrador</strong> consegue salvar, testar, ligar e remover a chave.</li>
-  <li>Sem chave não há áudio: se você usar <span class="ui">Remover chave</span>, os agentes passam a responder em texto.</li>
+  <li><strong>Remover chave</strong> vale para a organização inteira: sem chave não há áudio, e <em>todos</em> os agentes passam a responder em texto. Para voltar, é preciso gravar uma chave de novo.</li>
 </ul>
   </div>
 </article>
@@ -7823,7 +7831,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <aside class="nota atencao"><strong>Instalar é para sempre.</strong><p>Cria as tabelas do módulo no banco compartilhado (um banco só, esquema <code>public</code>), de forma idempotente, e fica na auditoria (<code>modulo.instalado</code>). <strong>A tela não desinstala nem suspende</strong>; considere a ação irreversível pela interface. Depois de instalado, cada empresa vê a porta do módulo (veja <a href="#honorarios">Honorários</a>). <em>Esta instalação não foi acionada nas capturas.</em> Quem não é o dono do servidor recebe: “Só o administrador da instalação pode gerenciar os pacotes disponíveis.”</p></aside>
   </div>
 </article>
-    <footer class="rodape"><div class="rodape-marca"><svg class="simbolo" viewBox="0 0 216 216" aria-hidden="true"><use href="#lg-simbolo"/></svg><strong>ZapSales</strong><span>by</span><svg class="fut" viewBox="0 0 654 115" role="img" aria-label="Futuristas"><use href="#lg-futuristas" width="654" height="115"/></svg></div>Manual do ZapSales · gerado em 18 de outubro de 2026 a partir do código na revisão <code>fd83e12</code>. Os prints vêm de uma organização de demonstração, com dados fictícios.</footer>
+    <footer class="rodape"><div class="rodape-marca"><svg class="simbolo" viewBox="0 0 216 216" aria-hidden="true"><use href="#lg-simbolo"/></svg><strong>ZapSales</strong><span>by</span><svg class="fut" viewBox="0 0 654 115" role="img" aria-label="Futuristas"><use href="#lg-futuristas" width="654" height="115"/></svg></div>Manual do ZapSales · gerado em 18 de outubro de 2026 a partir do código na revisão <code>5f15bb5</code>. Os prints vêm de uma organização de demonstração, com dados fictícios.</footer>
   </main>
   <aside class="nesta-pagina" id="toc-local" aria-label="Nesta página"></aside>
 </div>
