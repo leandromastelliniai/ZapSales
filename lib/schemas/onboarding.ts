@@ -4,6 +4,9 @@
  */
 import { z } from "zod";
 
+import { IDS_DE_MODELO } from "@/lib/ai/agents/modelos";
+import { IDIOMAS_DO_AGENTE } from "@/lib/ai/agents/perfil";
+
 export const welcomeSchema = z.object({
   display_name: z.string().min(2).max(120),
   /**
@@ -35,6 +38,13 @@ export type PromptTemplate = (typeof PROMPT_TEMPLATES)[number];
 export const aiAgentDefaultSchema = z.object({
   name: z.string().min(2).max(80).default("Atendente IA"),
   prompt_template: z.enum(PROMPT_TEMPLATES).default("ecommerce_friendly"),
+  /**
+   * O modelo por ramo (#92). Opcional: ausente = o "jeito de falar" acima, como
+   * sempre foi. Quando vem, o perfil e as instruções do modelo substituem o
+   * jeito, no `idioma` pedido (o da tela de quem está instalando).
+   */
+  ramo: z.enum(IDS_DE_MODELO).optional(),
+  idioma: z.enum(IDIOMAS_DO_AGENTE).default("pt-BR"),
   /**
    * As regras da casa — o que vale para QUALQUER agente desta organização
    * (horário, o que nunca prometer, como chamar o cliente). Vai para a memória

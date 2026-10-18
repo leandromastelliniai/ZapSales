@@ -12,6 +12,9 @@ import { createDefaultAgent, skipAi } from "@/app/actions/onboarding/createDefau
 import type { PromptTemplate } from "@/lib/schemas/onboarding";
 import { cn } from "@/lib/utils";
 import { PROVEDOR_POR_ID } from "@/lib/ai/pontos/provedores";
+import { MODELOS_DE_AGENTE, type IdDoModelo } from "@/lib/ai/agents/modelos";
+import { IDIOMAS_DO_AGENTE, type IdiomaDoAgente } from "@/lib/ai/agents/perfil";
+import { useIdioma } from "@/lib/i18n/IdiomaProvider";
 
 /**
  * O jeito de falar, não o "estilo de prompt".
@@ -56,6 +59,13 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
   const t = useT();
   const [name, setName] = useState("Atendente IA");
   const [jeito, setJeito] = useState<PromptTemplate>("ecommerce_friendly");
+  // O ramo (#92) é OPCIONAL e nasce vazio: sem escolher, o passo é o de sempre.
+  const [ramo, setRamo] = useState<IdDoModelo | "">("");
+  // O modelo vem no idioma da tela de quem instala; idioma sem modelo cai em português.
+  const idiomaDaTela = useIdioma();
+  const idiomaDoModelo: IdiomaDoAgente = (IDIOMAS_DO_AGENTE as readonly string[]).includes(idiomaDaTela)
+    ? (idiomaDaTela as IdiomaDoAgente)
+    : "pt-BR";
   const [regras, setRegras] = useState("");
   const [naoPublicado, setNaoPublicado] = useState<string | null>(null);
   const [causa, setCausa] = useState<"canal" | "modelo" | "chave" | null>(null);
@@ -128,7 +138,70 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
           </p>
         </div>
 
-        <fieldset className="space-y-2">
+        <fieldset className="space-y-2" data-testid="onboarding-ramo">
+          <legend className="text-sm font-medium">{t("O ramo do atendimento (opcional)")}</legend>
+          <p className="text-xs text-muted-foreground">
+            {t(
+              "Escolha o ramo e o perfil e as instruções já vêm prontos — dá para editar tudo depois. Ou pule e escolha só o jeito de falar.",
+            )}
+          </p>
+          <input type="hidden" name="idioma" value={idiomaDoModelo} />
+          <div className="grid gap-2">
+            {MODELOS_DE_AGENTE.map((m) => {
+              const c = m.conteudo[idiomaDoModelo];
+              return (
+                <label
+                  key={m.id}
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors",
+                    ramo === m.id ? "border-primary bg-primary/5" : "hover:bg-muted/40",
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="ramo"
+                    value={m.id}
+                    checked={ramo === m.id}
+                    onChange={() => setRamo(m.id)}
+                    className="mt-1"
+                    data-testid={`onboarding-ramo-${m.id}`}
+                  />
+                  <span>
+                    <span className="block text-sm font-medium">{c.titulo}</span>
+                    <span className="block text-xs text-muted-foreground">{c.descricao}</span>
+                  </span>
+                </label>
+              );
+            })}
+            <label
+              className={cn(
+                "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors",
+                ramo === "" ? "border-primary bg-primary/5" : "hover:bg-muted/40",
+              )}
+            >
+              <input
+                type="radio"
+                name="ramo"
+                value=""
+                checked={ramo === ""}
+                onChange={() => setRamo("")}
+                className="mt-1"
+                data-testid="onboarding-ramo-nenhum"
+              />
+              <span>
+                <span className="block text-sm font-medium">{t("Nenhum — só o jeito de falar")}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {t("Escolha abaixo como ele conversa.")}
+                </span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+
+        {/* Com um ramo, o modelo já define o tom; o jeito de falar só vale sem ele. O
+            campo segue no formulário (oculto) para o envio ser sempre o mesmo. */}
+        <input type="hidden" name="prompt_template" value={jeito} />
+        <fieldset className="space-y-2" hidden={ramo !== ""}>
           <legend className="text-sm font-medium">{t("O jeito dele falar")}</legend>
           <div className="grid gap-2">
             {JEITOS.map((j) => (
@@ -141,7 +214,6 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
               >
                 <input
                   type="radio"
-                  name="prompt_template"
                   value={j.id}
                   checked={jeito === j.id}
                   onChange={() => setJeito(j.id)}

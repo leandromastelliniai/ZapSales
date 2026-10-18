@@ -64,6 +64,7 @@ vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => clienteFalso()
 
 import { createDefaultAgent, type CreateAgentResult } from "@/app/actions/onboarding/createDefaultAgent";
 import { audit } from "@/lib/audit";
+import { aplicarModelo } from "@/lib/ai/agents/modelos";
 
 /**
  * Construtor de consulta no formato do PostgREST: encadeável, thenable, e com
@@ -465,18 +466,28 @@ function montarBanco(mundo: Mundo = {}): Estado {
   return estado;
 }
 
-function formulario(nome = "Atendente IA", regras?: string): FormData {
+function formulario(
+  nome = "Atendente IA",
+  regras?: string,
+  modelo?: { ramo?: string; idioma?: string },
+): FormData {
   const fd = new FormData();
   fd.set("name", nome);
   fd.set("prompt_template", "ecommerce_friendly");
   if (regras !== undefined) fd.set("regras_da_casa", regras);
+  if (modelo?.ramo !== undefined) fd.set("ramo", modelo.ramo);
+  if (modelo?.idioma !== undefined) fd.set("idioma", modelo.idioma);
   return fd;
 }
 
 /** A action redireciona LANÇANDO; quem chama precisa distinguir isso de defeito. */
-async function clicar(nome?: string, regras?: string): Promise<CreateAgentResult | "redirecionou"> {
+async function clicar(
+  nome?: string,
+  regras?: string,
+  modelo?: { ramo?: string; idioma?: string },
+): Promise<CreateAgentResult | "redirecionou"> {
   try {
-    return await createDefaultAgent(formulario(nome, regras));
+    return await createDefaultAgent(formulario(nome, regras, modelo));
   } catch (err) {
     if (err instanceof Error && err.message.startsWith("NEXT_REDIRECT")) return "redirecionou";
     throw err;
@@ -997,5 +1008,85 @@ describe("onboarding: qual chave o funcionário usa", () => {
     await clicar();
     expect(estado.agentes).toHaveLength(1);
     expect(estado.agentes[0]!.kind).toBe("mcp_agent");
+  });
+});
+
+describe("onboarding: o agente pode nascer de um modelo por ramo (#92)", () => {
+  const COLUNAS_DO_PERFIL = [
+    "profile_persona",
+    "profile_tone",
+    "profile_objective",
+    "profile_welcome",
+    "profile_language",
+    "restrict_topics",
+    "allowed_topics",
+    "off_topic_reply",
+  ];
+
+  it("com ramo: a 1ª versão leva o perfil do modelo, no idioma pedido, e as instruções dele", async () => {
+    const estado = montarBanco();
+
+    await clicar("Recepção", undefined, { ramo: "agendamento", idioma: "es" });
+
+    const versao = estado.versoes[0] as Record<string, unknown>;
+    const esperado = aplicarModelo("agendamento", "es");
+    expect(versao).toMatchObject({
+      profile_persona: esperado.profile_persona,
+      profile_tone: esperado.profile_tone,
+      profile_objective: esperado.profile_objective,
+      profile_welcome: esperado.profile_welcome,
+      profile_language: "es",
+      allowed_topics: esperado.allowed_topics,
+      off_topic_reply: esperado.off_topic_reply,
+    });
+    expect(String(versao.system_prompt)).toContain(esperado.system_prompt);
+    // O funcionário sabe ONDE trabalha, no idioma do modelo — nunca uma frase em português no meio.
+    expect(String(versao.system_prompt)).toContain("QA");
+    expect(String(versao.system_prompt)).not.toMatch(/Você atende/);
+  });
+
+  it("a restrição NUNCA nasce ligada pelo onboarding (a chave é decisão do dono)", async () => {
+    const estado = montarBanco();
+    await clicar("Recepção", undefined, { ramo: "vendas" });
+    expect((estado.versoes[0] as Record<string, unknown>).restrict_topics).toBe(false);
+  });
+
+  it("sem ramo: a versão sai EXATAMENTE como saía — nenhuma coluna de perfil, e o prompt do jeito escolhido (controle)", async () => {
+    const estado = montarBanco();
+    await clicar("Recepção");
+    const versao = estado.versoes[0] as Record<string, unknown>;
+    for (const coluna of COLUNAS_DO_PERFIL) expect(versao, coluna).not.toHaveProperty(coluna);
+    expect(String(versao.system_prompt)).toMatch(/^Você atende os clientes de QA/);
+  });
+
+  it("o agente em ai_agents leva o mesmo prompt composto (o que o editor legado mostra)", async () => {
+    const estado = montarBanco();
+    await clicar("Recepção", undefined, { ramo: "suporte" });
+    const agente = estado.agentes[0] as Record<string, unknown>;
+    expect(String(agente.system_prompt)).toContain(aplicarModelo("suporte", "pt-BR").system_prompt);
+  });
+
+  it("a auditoria registra o ramo escolhido", async () => {
+    montarBanco();
+    await clicar("Recepção", undefined, { ramo: "vendas" });
+    expect(audit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "onboarding.ai_configured",
+        metadata: expect.objectContaining({ ramo: "vendas" }),
+      }),
+    );
+  });
+
+  it("ramo que não existe é entrada inválida — não cai no padrão em silêncio", async () => {
+    const estado = montarBanco();
+    const res = await clicar("Recepção", undefined, { ramo: "astrologia" });
+    expect(res).toMatchObject({ ok: false, error: "invalid_input" });
+    expect(estado.agentes).toHaveLength(0);
+  });
+
+  it("idioma fora dos três do produto é entrada inválida", async () => {
+    montarBanco();
+    const res = await clicar("Recepção", undefined, { ramo: "vendas", idioma: "fr" });
+    expect(res).toMatchObject({ ok: false, error: "invalid_input" });
   });
 });
