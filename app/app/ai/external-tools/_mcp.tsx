@@ -52,7 +52,14 @@ interface EstadoDoMcp {
 
 const CHAVE_DO_ESTADO = ["ai", "mcp"] as const;
 const CHAVE_DOS_SERVIDORES = ["ai", "mcp-servers"] as const;
-const CHAVE_DAS_FERRAMENTAS = ["ai", "external-tools"] as const;
+/**
+ * A lista de ferramentas tem chave PRÓPRIA (filha da do seletor e da aba de webhooks). A aba de webhooks
+ * semeia `["ai","external-tools"]` com `initialData` só de webhooks, e com `staleTime` global esse dado vale
+ * como fresco: a aba MCP herdava uma lista sem as ferramentas MCP (achado no e2e do CI). Invalidar a chave
+ * PAI, como abaixo, atualiza as três.
+ */
+const CHAVE_DAS_FERRAMENTAS = ["ai", "external-tools", "mcp"] as const;
+const CHAVE_PAI_DAS_FERRAMENTAS = ["ai", "external-tools"] as const;
 
 function host(url: string): string {
   try {
@@ -100,7 +107,7 @@ export function ServidoresMcpClient({ souAdmin }: { souAdmin: boolean }) {
     await Promise.all([
       qc.invalidateQueries({ queryKey: CHAVE_DO_ESTADO }),
       qc.invalidateQueries({ queryKey: CHAVE_DOS_SERVIDORES }),
-      qc.invalidateQueries({ queryKey: CHAVE_DAS_FERRAMENTAS }),
+      qc.invalidateQueries({ queryKey: CHAVE_PAI_DAS_FERRAMENTAS }),
     ]);
   };
 
@@ -153,7 +160,7 @@ export function ServidoresMcpClient({ souAdmin }: { souAdmin: boolean }) {
     try {
       await apiClient.patch(`/api/v1/ai/external-tools/${f.id}`, { ativa });
       toast.success(ativa ? t("Ferramenta ativada.") : t("Ferramenta desativada."));
-      await qc.invalidateQueries({ queryKey: CHAVE_DAS_FERRAMENTAS });
+      await qc.invalidateQueries({ queryKey: CHAVE_PAI_DAS_FERRAMENTAS });
     } catch (err) {
       showApiError(err);
     }
