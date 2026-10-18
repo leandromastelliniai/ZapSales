@@ -1,0 +1,65 @@
+<!--meta {"id":"distribuicao","grupo":"organizacao","titulo":"Distribuição de atendimento","ordem":6,"resumo":"Quem recebe cada cliente novo (manual, rodízio ou menor carga), o que cada atendente enxerga, quando a IA volta a responder, responsáveis por número e a assinatura das mensagens.","palavras":["distribuição","rodízio","fila","visibilidade","atendente","carteira","ia volta","silêncio","assinatura","responsáveis por número","handoff","menor carga"],"onde":"Configurações › Sua empresa › Distribuição de atendimento","quem":"Gerente ou acima","rotas":["/app/settings/atendimento"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Decide duas coisas que andam juntas: <strong>quem recebe</strong> cada cliente novo e <strong>o que cada atendente enxerga</strong>. Distribuir sem restringir deixa todo mundo vendo a carteira do colega; restringir sem distribuir deixa o funil de cada um vazio.</p>
+<figure class="print">
+  <img src="img/distribuicao.png" alt="Tela Distribuição de atendimento com os modos de distribuição, a visibilidade, a devolução à IA, o silêncio, a conversa que fica com quem atendeu, os responsáveis por número e a assinatura2" loading="lazy">
+  <figcaption>A tela inteira, de cima a baixo.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Quem recebe o cliente novo.</strong> Vale para conversa que chega sem dono.</li>
+  <li><strong>Cada um pega o que quiser</strong> (<code>manual</code>, o padrão).</li>
+  <li><strong>Rodízio automático entre os atendentes</strong> (<code>round_robin</code>). A captura mostra este modo escolhido.</li>
+  <li><strong>Tentativas antes de desistir</strong> (aparecem nos modos automáticos).</li>
+  <li><strong>O que cada atendente enxerga.</strong></li>
+  <li><strong>Os seus, mais os que ainda não têm dono</strong> (o padrão do produto).</li>
+  <li><strong>Quando a pessoa some, a IA volta?</strong></li>
+  <li><strong>Quando alguém responde pelo celular, a IA espera quanto tempo?</strong></li>
+  <li><strong>Quando alguém responde, a conversa fica com essa pessoa?</strong></li>
+  <li><strong>Salvar.</strong> Um único botão para os cinco cartões de cima.</li>
+  <li><strong>Responsáveis por número.</strong></li>
+  <li><strong>Quem fala aparece na mensagem?</strong></li>
+</ol>
+
+<h2 id="quem-recebe">Quem recebe o cliente novo</h2>
+<table class="tabela">
+  <thead><tr><th>Opção</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Cada um pega o que quiser</strong> (padrão)</td><td>Todo cliente novo cai numa fila aberta e o primeiro atendente que clicar assume. Simples — e é onde nasce a discussão de “quem furou a fila”.</td></tr>
+    <tr><td><strong>Rodízio automático entre os atendentes</strong></td><td>Cliente 1 vai para o atendente A, o 2 para o B, e ao acabar a lista volta ao primeiro. Recebe sempre quem está há mais tempo sem receber, entre os <em>disponíveis e dentro do horário</em>.</td></tr>
+    <tr><td><strong>Vai para quem tem menos conversas na mão</strong></td><td>Cada cliente novo cai com quem tem o <em>menor</em> número de conversas abertas; no empate vale o rodízio. Para times grandes.</td></tr>
+  </tbody>
+</table>
+<p>Nos dois modos automáticos aparecem <strong>Tentativas antes de desistir</strong> (0 a 20, padrão 5: quando ninguém está disponível, o sistema tenta de novo mais tarde; ao estourar, a conversa fica na fila) e <strong>Espera entre tentativas (segundos)</strong> (1 a 3600, padrão 60). É a <em>mesma</em> configuração da aba Atendimento de <a href="#equipe">Equipe</a>.</p>
+
+<h2 id="visibilidade">O que cada atendente enxerga</h2>
+<p>Restringe <strong>apenas quem tem o papel Atendente</strong>; Gerente e Administrador continuam vendo tudo.</p>
+<table class="tabela">
+  <thead><tr><th>Opção</th><th>Efeito</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Todos veem tudo</strong></td><td>Qualquer atendente abre a conversa e o negócio de qualquer colega.</td></tr>
+    <tr><td><strong>Os seus, mais os que ainda não têm dono</strong> (padrão)</td><td>Vê a própria carteira e a fila de quem acabou de chegar; não vê o que já é de um colega.</td></tr>
+    <tr><td><strong>Só os seus</strong></td><td>Vê apenas o que foi direcionado a ele — nem a fila.</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>Combinação morta.</strong><p>“Só os seus” com distribuição “Cada um pega o que quiser”: ninguém enxerga a fila para pegar e nenhum cliente é atendido. A tela avisa: “Ligue o rodízio para que alguém receba.”</p></aside>
+<p>Isto muda a <strong>regra de leitura do banco de dados</strong>: o que o Atendente consegue ler de conversas e negócios passa a obedecer essa escolha, para toda a equipe, na hora e sem aviso.</p>
+
+<h2 id="ia-volta">Quando a IA volta a responder</h2>
+<ul>
+  <li><strong>Quando a pessoa some, a IA volta?</strong> Quando alguém assume uma conversa, o agente de IA para de responder nela até ser devolvido. Marcando “Devolver ao agente sozinho depois de um tempo sem resposta da equipe” (padrão desligado; ao marcar, 60 min) você define em <em>Minutos sem resposta da equipe</em> (5 a 1440 = 24 h). O tempo conta a partir do último sinal de uma pessoa (assumir, responder pela tela ou pelo celular). Só devolve onde há agente publicado.</li>
+  <li><strong>Resposta pelo celular.</strong> Quando alguém da equipe responde o cliente direto pelo celular, fora do sistema, a IA fica calada naquela conversa por <em>Minutos de silêncio da IA depois de uma resposta pelo celular</em> (5 a 1440, padrão 60). Cada nova resposta recomeça a contagem. Quem atende o dia inteiro pelo celular costuma preferir um prazo curto, como 15.</li>
+  <li><strong>A conversa fica com quem atendeu</strong> (padrão desligado). Ligada: responder pelo Inbox numa conversa sem dono passa a assumi-la, e a IA fica calada até alguém devolver; e a conversa encerrada que recebe mensagem volta direto para o último atendente (se ainda é da equipe), sem passar pela distribuição. Desligada: responder pela tela cala a IA por alguns minutos e a conversa encerrada volta para a fila.</li>
+</ul>
+<p>O botão <span class="ui">Salvar</span> (“Há mudanças não salvas.” enquanto houver) avisa “Distribuição de atendimento salva.”. Fica na <a href="#auditoria">Auditoria</a> como <code>routing.config_changed</code>.</p>
+
+<h2 id="responsaveis">Responsáveis por número</h2>
+<p>A capacidade e o horário de cada pessoa valem para todos os números; aqui você diz <strong>quem pode receber conversas de cada número</strong> de WhatsApp. Cada canal mostra o estado: “Usa todos os atendentes elegíveis da organização.” (padrão), “Ninguém configurado — as conversas ficarão na fila.” ou “Somente as pessoas selecionadas recebem este número.”, com uma caixa por membro ativo. Os botões são <span class="ui">Salvar responsáveis</span> e <span class="ui">Voltar ao padrão da organização</span>. Sem canais, aparece “Conecte um número para escolher os responsáveis.” (link para <a href="#conexoes">Conexões</a>).</p>
+
+<h2 id="assinatura">Quem fala aparece na mensagem?</h2>
+<p>Ligado, a mensagem que vai ao cliente ganha, <strong>em negrito na linha de cima</strong>, o nome de quem fala. O histórico do CRM guarda o texto como foi escrito. <strong>Campanhas, lembretes e integrações por chave não assinam.</strong></p>
+<ul>
+  <li><strong>Assinar as mensagens dos atendentes.</strong> Cada um aparece pelo próprio nome, com iniciais maiúsculas.</li>
+  <li><strong>Assinar as mensagens da IA.</strong> A IA aparece pelo <strong>Nome da IA</strong> (máx. 120; padrão “Assistente Virtual”; sem asteriscos nem quebra de linha), nunca pelo nome de um atendente.</li>
+  <li>Botão <span class="ui">Salvar assinatura</span> (“Assinatura salva.”). Tudo vem desligado de fábrica.</li>
+</ul>

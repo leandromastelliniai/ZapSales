@@ -1,0 +1,55 @@
+<!--meta {"id":"entrada-avisos","grupo":"entrada","titulo":"Termos, privacidade e telas de aviso","ordem":3,"resumo":"Os Termos de Uso e a Política de Privacidade da instalação e todas as telas de aviso e erro: sem permissão, não encontrada, erro, manutenção, conta suspensa, acesso revogado e acompanhamento encerrado.","palavras":["termos de uso","política de privacidade","legal","403","404","500","503","erro","conta suspensa","acesso revogado","acompanhamento encerrado","support-ended","algo deu errado"],"onde":"Endereços /legal/terms, /legal/privacy, /403, /404, /500, /503, /account-suspended, /acesso-revogado e /support-ended","quem":"As páginas legais e /403 a /503 são públicas; as de conta exigem login","rotas":[]} -->
+
+<h2 id="legal">Termos de Uso e Política de Privacidade</h2>
+<p>Duas páginas públicas (não exigem login) com as regras <strong>desta instalação</strong>, em nome de quem a opera — o “operador” — e <em>não</em> dos autores do software. Têm o link “Voltar” (para o login) e são linkadas no passo 1 do <a href="#onboarding">onboarding</a>.</p>
+<figure class="print media">
+  <img src="img/legal-termos.png" alt="Página Termos de Uso da instalação com a primeira seção Quem é quem" loading="lazy">
+  <figcaption>Os Termos de Uso.</figcaption>
+</figure>
+<ul>
+  <li><strong>Termos de Uso</strong> — “As regras de uso desta instalação do ZapSales.” Nove seções: Quem é quem, O que o sistema faz, Sua conta, Uso aceitável, Conteúdo e dados, Disponibilidade e garantias, Encerramento, Mudanças e Contato.</li>
+  <li><strong>Política de Privacidade</strong> — “Como esta instalação do ZapSales trata dados pessoais.” Oito seções: Quem é o controlador, Que dados são tratados, Para que são usados, Com quem são compartilhados, Por quanto tempo, Seus direitos, Segurança e Encarregado e contato.</li>
+</ul>
+<figure class="print media">
+  <img src="img/legal-privacidade.png" alt="Página Política de Privacidade da instalação com a seção Quem é o controlador" loading="lazy">
+  <figcaption>A Política de Privacidade.</figcaption>
+</figure>
+<p><strong>Quem é o “operador” depende de quem abre.</strong> Sem login, o texto usa o nome genérico “o operador desta instalação” (sem CNPJ) e o encarregado (DPO) da instalação. Com login, usa a <em>empresa ativa</em>: razão social ou nome de exibição, CNPJ e o e-mail do DPO da empresa (ou o da instalação). Se a empresa publicou uma URL própria de política (<a href="#dados-da-empresa">Organização</a>), a Política de Privacidade <em>redireciona</em> para ela (só com login). O e-mail do encarregado da instalação vem das <a href="#admin-destinos--credenciais">Credenciais</a>; sem nenhum: “O operador ainda não publicou um endereço de contato do encarregado de dados nesta instalação. Os pedidos devem ser feitos pelos canais de atendimento da própria organização.” O texto afirma que a verificação em duas etapas é opcional para todos e só pode ser exigida de quem administra.</p>
+
+<h2 id="erros">Telas de erro e de status</h2>
+<div class="grade-imagens">
+<figure class="print media">
+  <img src="img/erro-403.png" alt="Tela 403 Sem permissão com os botões Voltar e Voltar pra Inbox" loading="lazy">
+  <figcaption>403 — Sem permissão.</figcaption>
+</figure>
+<figure class="print media">
+  <img src="img/erro-404.png" alt="Tela 404 Página não encontrada" loading="lazy">
+  <figcaption>404 — Página não encontrada.</figcaption>
+</figure>
+<figure class="print media">
+  <img src="img/erro-500.png" alt="Tela 500 Erro interno" loading="lazy">
+  <figcaption>500 — Erro interno.</figcaption>
+</figure>
+</div>
+<table class="tabela">
+  <thead><tr><th>Tela</th><th>Texto</th><th>Quando aparece</th></tr></thead>
+  <tbody>
+    <tr><td><strong>/403</strong></td><td>“403 — Sem permissão. Você não tem acesso a essa área.” Botões <em>Voltar</em> e <em>Voltar pra Inbox</em>.</td><td>Dezenas de telas mandam para cá quem não tem o papel mínimo (por exemplo, Agentes exige Gerente).</td></tr>
+    <tr><td><strong>/404</strong></td><td>“404 — Página não encontrada. Verifique o link ou volte pra inbox.”</td><td>Endereço que não existe — e também as telas de módulo desligado e as de configuração do painel para quem não é administrador da plataforma.</td></tr>
+    <tr><td><strong>/500</strong></td><td>“500 — Erro interno. Algo quebrou do nosso lado. Já registramos o ocorrido; tente de novo em instantes.”</td><td>Erro do servidor.</td></tr>
+    <tr><td><strong>/503</strong></td><td>“503 — Em manutenção. Voltamos em alguns minutos.” (sempre em português)</td><td>Manutenção. Não confirmado o que redireciona para /500 e /503; podem ser usadas pelo proxy.</td></tr>
+    <tr><td><strong>Algo deu errado</strong></td><td>“Tente novamente em instantes. Se persistir, contate o suporte com o ID abaixo.” Botões <em>Copiar ID</em> (“Copiado!”) e <em>Tentar de novo</em>.</td><td>Erro inesperado <em>dentro</em> de uma tela. O ID é o do evento de monitoramento; peça ao suporte com ele.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="conta">Conta suspensa, acesso revogado e acompanhamento encerrado</h2>
+<ul>
+  <li><strong>Conta suspensa</strong> (<code>/account-suspended</code>, exige login) — “Conta suspensa” e o nome da empresa. Quem <em>não</em> administra vê: “Sua conta está suspensa. Avise o administrador da sua empresa.”. Quem administra vê “Entre em contato com &lt;e-mail de suporte&gt; para mais informações.” (o <em>E-mail de suporte</em> das <a href="#admin-destinos--credenciais">Credenciais</a>) ou, sem e-mail, “Fale com quem administra este sistema para saber o motivo e como reativá-la.”. Botões <em>Ir para outra organização</em> / <em>Voltar para &lt;nome&gt;</em> e <em>Sair</em>. O Administrador vê ainda a seção <strong>“Solicitações LGPD”</strong> (“Os pedidos de LGPD dos seus clientes continuam com prazo durante a suspensão.”) com a lista e o detalhe da tela <a href="#lgpd">LGPD</a>. Se a empresa voltar a operar, redireciona para o sistema. É o destino quando um dono <a href="#admin-tenants--suspender">suspende a empresa</a>.</li>
+  <li><strong>Acesso revogado</strong> (<code>/acesso-revogado</code>, exige login) — “Seu acesso a esta organização foi retirado. Se você acredita que isso é um engano, fale com quem administra a empresa — só ela pode devolvê-lo.” Uma faixa avisa: “Recebeu um convite novo? Abra o link que chegou no seu e-mail — ele funciona mesmo com esta tela aberta, e devolve o seu acesso.” Botão <em>Sair</em>. Aparece quando a pessoa não tem empresa ativa e o vínculo anterior foi revogado.</li>
+  <li><strong>Encerre o acompanhamento para continuar</strong> (<code>/support-ended</code>, exige login) — “O prazo ou as permissões desta sessão mudaram. Saia do acompanhamento para voltar à sua organização.” com a faixa “Acompanhamento encerrado &lt;nome&gt;” e o botão <em>Sair do acompanhamento</em>. É para onde o navegador vai quando o <a href="#admin-tenants--acompanhar">acompanhamento de 1 hora</a> acaba. Se você não está em acompanhamento, a página leva ao Inbox.</li>
+  <li><strong>Atalho dos e-mails de LGPD</strong> (<code>/lgpd/pedido/&lt;id&gt;</code>) — sem tela: redireciona para a Conta suspensa com o pedido aberto (ou para o início).</li>
+  <li><strong>Cadastro obrigatório de MFA</strong> — se a empresa ou o dono do servidor exigir a verificação em duas etapas, uma janela em tela cheia “Configure a verificação em duas etapas” bloqueia o sistema até o cadastro (passos descritos em <a href="#config-seguranca">Segurança</a>). Por padrão, numa instalação nova, <em>não</em> é exigida.</li>
+</ul>
+
+<h2 id="internas">Páginas internas que não são do produto</h2>
+<p>Existem páginas de bancada para quem desenvolve o sistema e que <strong>não são telas de cliente</strong>: <code>/design</code> (“Design Showcase”, exploração do sistema de design), <code>/vitrine-agenda</code>, <code>/vitrine-inbox</code> e <code>/vitrine-sistema</code> (bancadas de componentes com dados de mentira; as duas últimas só são públicas fora de produção). Todas pedem para o buscador não indexar. O comportamento público de <code>/design</code> em produção <em>não foi confirmado</em>.</p>

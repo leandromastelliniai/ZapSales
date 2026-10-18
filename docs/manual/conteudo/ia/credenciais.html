@@ -1,0 +1,45 @@
+<!--meta {"id":"credenciais","grupo":"ia","titulo":"Credenciais","ordem":6,"resumo":"As chaves de acesso à IA: a conta de inteligência artificial é sua, e a chave dela, cadastrada aqui, é o que permite aos agentes pensarem.","palavras":["credencial","credenciais","chave","api key","anthropic","openai","google","gemini","openrouter","deepseek","validada","inválida","revalidar","chaves de acesso à ia"],"onde":"Agente de IA › Credenciais (Ver tudo em IA › Montar o agente)","quem":"Ver: Gerente ou acima. Adicionar, editar, revalidar e excluir: Administrador.","rotas":["/app/ai/credentials"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Os agentes de IA “pensam” usando o serviço de uma empresa de inteligência artificial (<strong>Anthropic/Claude, OpenAI/GPT, Google/Gemini</strong>, entre outras). A conta nessa empresa é <strong>sua</strong>: você contrata direto com ela, e a cobrança vai para o seu cartão. Esta tela guarda a <strong>chave de acesso</strong> que liga o ZapSales à sua conta. O título da tela é <em>“Chaves de acesso à IA”</em>.</p>
+<aside class="nota info"><strong>Onde pegar uma chave.</strong><p>Cada cartão e cada janela têm o link <em>“Onde pegar a chave”</em>, que leva ao site do provedor. Uma chave é uma sequência longa de letras e números (por exemplo, começa com <code>sk-ant-</code> na Anthropic). Trate-a como uma senha.</p></aside>
+<figure class="print">
+  <img src="img/ia-credenciais.png" alt="Tela Chaves de acesso à IA com credenciais agrupadas por provedor, numerada de 1 a 10" loading="lazy">
+  <figcaption>Credenciais agrupadas por provedor: uma validada, uma inválida e uma inativa.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Adicionar credencial.</strong> Só Administrador. Veja <a href="#credenciais--adicionar">abaixo</a>.</li>
+  <li><strong>Grupo do provedor.</strong> As chaves aparecem agrupadas (Anthropic, OpenAI, Google, OpenRouter…); só aparece o grupo que tem chave.</li>
+  <li><strong>O cartão da credencial.</strong> O nome e os <strong>quatro últimos caracteres</strong> da chave (<code>…a1B2</code>). A chave inteira nunca mais aparece na tela, nem para você.</li>
+  <li><strong>Situação.</strong> <em>Validada</em> (testada com o provedor), <em>Validando…</em> (menos de 2 minutos sem resultado), <em>Não validada</em> (mais de 2 minutos sem resultado), <em>Inválida</em> (o provedor recusou) ou <em>Inativa</em>.</li>
+  <li><strong>Modelos.</strong> Quantos modelos o provedor devolveu para essa chave.</li>
+  <li><strong>Em uso por.</strong> Quantas versões de agente apontam para essa chave.</li>
+  <li><strong>Editar</strong> (lápis).</li>
+  <li><strong>Revalidar</strong> (setas). Testa a chave de novo com o provedor.</li>
+  <li><strong>Excluir</strong> (lixeira). Fica <strong>travada</strong> enquanto a chave estiver em uso por qualquer versão de agente, inclusive no histórico.</li>
+  <li><strong>Inválida.</strong> Mostra, em vermelho, o motivo (“O provedor recusou a chave. Confira se copiou inteira ou gere uma nova”) e o link <em>Onde pegar a chave</em>.</li>
+</ol>
+
+<h2 id="adicionar">Adicionar uma chave</h2>
+<figure class="print media">
+  <img src="img/ia-credenciais-nova.png" alt="Janela Adicionar credencial, com provedor, nome e chave" loading="lazy">
+  <figcaption>A janela “Adicionar credencial”.</figcaption>
+</figure>
+<ol class="passos">
+  <li>Clique em <span class="ui">Adicionar credencial</span>.</li>
+  <li>Escolha o <strong>Provedor</strong>. Abaixo do campo, uma frase diz quando usar aquele provedor.</li>
+  <li>Se escolher o <strong>provedor personalizado</strong>, informe o <strong>Endereço (base URL)</strong>, começando com <code>http://</code> ou <code>https://</code>. Endereços de rede interna são recusados.</li>
+  <li>Em <strong>Nome</strong> (opcional, até 80 caracteres), dê um apelido, como <em>“Chave da loja”</em>. Em branco, vira o nome do provedor.</li>
+  <li>Cole a <strong>Chave</strong> (entre 8 e 2.048 caracteres).</li>
+  <li>Clique em <span class="ui">Salvar e validar</span>.</li>
+</ol>
+<p>O sistema <strong>guarda a chave cifrada</strong> e começa a <strong>validar em segundo plano</strong>, chamando o provedor para listar os modelos (isso usa a internet e costuma custar nada ou quase nada). Em cerca de 3 segundos o cartão muda para <em>Validada — N modelos disponíveis</em> ou para o erro. Para o provedor personalizado, o teste de conexão é feito <em>antes</em> de gravar; se falhar, nada é gravado.</p>
+<h3>Editar, revalidar e excluir</h3>
+<ul>
+  <li><strong>Editar:</strong> dá para mudar o nome e, se quiser, <strong>trocar a chave</strong> (campo “Nova chave”). Os agentes ligados continuam ligados: no próximo atendimento já usam a chave nova. Em branco, só o nome muda.</li>
+  <li><strong>Revalidar:</strong> refaz o teste com o provedor.</li>
+  <li><strong>Excluir:</strong> só depois que nenhuma versão de agente usa a chave. Como versões publicadas e substituídas não aceitam apontar para outra chave, o caminho para trocar é <strong>Editar</strong>, não excluir.</li>
+</ul>
+<aside class="nota atencao"><strong>Chave inválida ou sem saldo derruba o atendimento.</strong><p>Se a chave for revogada ou a conta do provedor ficar sem crédito, o agente deixa de responder. Os sintomas aparecem em <a href="#execucoes">Execuções</a> e na <a href="#alertas">Central de avisos</a>. Mantenha crédito na conta do provedor.</p></aside>
+<aside class="nota info"><strong>“Nenhuma chave cadastrada ainda” não significa que a IA não funciona.</strong><p>Quem instalou o sistema pelo kit pode ter deixado uma chave no arquivo de configuração do servidor (a <em>chave da instalação</em>). Nesse caso os agentes funcionam usando-a, e esta tela continua vazia. O seletor de chave do agente oferece “A chave desta instalação”.</p></aside>
+<aside class="nota info"><strong>E o “Jev”?</strong><p>A chave da TypeSafe AI (o Jev) também é cadastrada aqui, mas ele <strong>não conversa com o cliente</strong>: a chave dele serve só para decisões rápidas. Veja <a href="#provedores">Provedores</a>. Se só existe a chave do Jev, a tela avisa que falta a chave da IA principal.</p></aside>

@@ -1,0 +1,39 @@
+<!--meta {"id":"honorarios","grupo":"analise","titulo":"Honorários","ordem":5,"resumo":"Módulo opcional para escritórios que cobram por caso: o modelo de cobrança (fixo, êxito ou misto) e o calendário de parcelas, ligado ao caixa. Não fotografado nesta edição do manual.","palavras":["honorários","advocacia","contrato","parcelas","êxito","fixo","misto","repasse","pagar parcela"],"onde":"Análise › Ver tudo em Análise › Honorários (só com o módulo instalado na instalação)","quem":"Todos abrem. Criar contrato, criar parcela e pagar parcela: Gerente ou acima.","modulo":"Honorários (advocacia)","rotas":["/app/honorarios"]} -->
+
+<aside class="nota atencao"><strong>Esta página foi escrita a partir do código, sem print da tela.</strong><p>O módulo Honorários é um módulo de <em>tabela</em>: instalá-lo cria tabelas no banco da instalação e <strong>não pode ser desinstalado pela tela</strong>. Por isso não foi instalado na produção só para a captura, e esta página <strong>não tem imagens anotadas</strong>. Tudo abaixo foi conferido no código-fonte, não na tela em funcionamento.</p></aside>
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Para escritórios de advocacia (ou qualquer negócio que cobra “por caso”): guarda <strong>como cada caso é cobrado</strong> — valor fixo, percentual sobre o êxito ou os dois — e o <strong>calendário de parcelas</strong>. Ao marcar uma parcela como paga, o dinheiro entra no caixa e aparece no <a href="#faturamento">Faturamento</a>.</p>
+<aside class="nota atencao"><strong>É um módulo opcional, instalado pelo administrador da instalação.</strong><p>Quem administra a instalação (um administrador da <em>plataforma</em>) o instala em <em>Admin › Módulos</em> (“Honorários (advocacia)” — botão <span class="ui">Instalar</span>). A instalação vale para <strong>todas</strong> as organizações. Desligado, a porta some do menu, do hub e da busca para todo papel. Se você abrir o endereço mesmo assim, a página mostra: “O módulo de honorários não está instalado nesta instalação. Peça ao administrador para instalar em Configurações da instalação › Módulos.” (o caminho real é <em>Admin › Módulos</em>).</p></aside>
+
+<h2 id="tela">O que a tela tem</h2>
+<ul>
+  <li><strong>Cabeçalho:</strong> “Honorários — O modelo de cobrança de cada caso e o calendário de parcelas.” e o botão <em>Como funciona</em>.</li>
+  <li><strong>Novo contrato</strong> (só Gerente ou acima): <em>Modelo</em> (<strong>Fixo</strong>, padrão; <strong>Êxito</strong>; <strong>Misto</strong>), <em>Valor fixo</em> (em Fixo e Misto), <em>% de êxito</em> (em Êxito e Misto), <em>Repasse ao advogado (%)</em> (opcional) e <em>ID do lead (opcional)</em> — o identificador do negócio, que aparece no endereço do negócio. O botão <span class="ui">Criar contrato</span> só habilita com o valor ou o percentual exigido pelo modelo.</li>
+  <li><strong>Contratos:</strong> uma tabela com o modelo, o resumo do valor (“R$ 5.000,00 + 10% de êxito”) e a data de criação (até 200, os mais novos primeiro). Clique numa linha para abrir as <strong>Parcelas</strong>. Não há editar nem excluir contrato. O repasse e o lead <em>não</em> aparecem na lista.</li>
+  <li><strong>Parcelas</strong> (do contrato escolhido): <em>Número</em>, <em>Vencimento</em>, <em>Valor</em> e <span class="ui">Adicionar parcela</span>; o seletor <em>Conta para receber o pagamento</em> (obrigatório para pagar) e a tabela com número, vencimento, valor, situação (<em>pago</em> ou <em>pendente</em>) e o botão <span class="ui">Pagar</span> (só em parcela pendente, sem confirmação).</li>
+</ul>
+<h3>Regras de cada modelo</h3>
+<table class="tabela">
+  <thead><tr><th>Modelo</th><th>Exige</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Fixo</strong></td><td>Valor fixo maior que zero.</td></tr>
+    <tr><td><strong>Êxito</strong></td><td>Percentual de êxito entre 0,01 e 100.</td></tr>
+    <tr><td><strong>Misto</strong></td><td>Os dois.</td></tr>
+  </tbody>
+</table>
+<p>O repasse ao advogado vai de 0 a 100 e é apenas um <em>registro</em>. O lead precisa ser de um negócio da mesma organização (“Lead inválido para esta organização.”).</p>
+
+<h2 id="pagar">O que acontece ao pagar uma parcela</h2>
+<ol class="passos">
+  <li>Escolha a <strong>conta</strong> que vai receber e clique em <span class="ui">Pagar</span> (Gerente ou acima).</li>
+  <li>Numa operação única, o sistema cria um <strong>lançamento de entrada já pago</strong> nessa conta (“Parcela N de honorários”), marca a parcela como paga e liga as duas.</li>
+  <li>O lançamento aparece no <a href="#faturamento">Faturamento</a> (em <em>Entrou</em> e na lista), sem a etiqueta “de comanda”.</li>
+</ol>
+<p><strong>Não tem volta pela tela</strong>: não existe desfazer pagamento nem editar ou excluir parcela. Repetir o pagamento de uma parcela paga é recusado (“Esta parcela já está paga.”). Não manda mensagem a ninguém.</p>
+<aside class="nota atencao"><strong>Cuidados ao digitar valores e datas.</strong><p>O <em>valor fixo do contrato</em> não usa o leitor de dinheiro das outras telas: troca só a primeira vírgula por ponto. <code>5000</code>, <code>5000,00</code> e <code>5000.00</code> valem R$ 5.000,00, mas <code>5.000,00</code> fica ilegível e <code>1.234</code> é lido como R$ 1,23. O valor da <em>parcela</em> usa o leitor normal. Os valores aparecem sempre em R$. Pelo código, o vencimento pode ser exibido com <strong>um dia a menos</strong> (efeito do fuso); confira a data na própria tela antes de cobrar.</p></aside>
+<ul>
+  <li>No banco a parcela pode estar “atrasado”, mas nenhuma rotina que grave isso foi encontrada: uma parcela vencida segue como “pendente”, e a tela não destaca as vencidas.</li>
+  <li>Agentes (Atendentes) <strong>não</strong> criam contratos nem pagam parcelas — diferente do Faturamento, onde lançam.</li>
+  <li>Auditoria: <code>honorarios.contrato_criado</code>, <code>honorarios.parcela_criada</code> e <code>honorarios.parcela_paga</code>.</li>
+</ul>

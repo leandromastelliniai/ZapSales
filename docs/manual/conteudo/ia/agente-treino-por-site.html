@@ -1,0 +1,102 @@
+<!--meta {"id":"agente-treino-por-site","grupo":"ia","titulo":"Treinar o agente com o seu site","ordem":2.3,"resumo":"Cadastre as páginas do seu site (até 20) e o agente aprende o texto delas. A leitura é sempre manual: quando o site mudar, você pede para ler de novo.","palavras":["site","treino por site","páginas","url","endereço","ler de novo","conhecimento","material","embedding","chave de embedding","aguardando leitura","entrou pela metade","não foi lida","rastrear","crawler"],"onde":"Agente de IA › Conhecimento › Adicionar material › Site","quem":"Gerente ou acima. O agente só usa o material depois que ele for marcado na tela do agente.","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Seu site já responde às perguntas mais comuns: preços, horários, como funciona, política de troca. Em vez de copiar esse texto para o sistema, você informa os <strong>endereços das páginas</strong> e o ZapSales lê o texto principal de cada uma. Depois disso o agente consulta o que aprendeu quando um cliente pergunta. Cada trecho guarda o nome da página de onde veio, para que o agente possa citá-la.</p>
+<p>Este é mais um tipo de material da tela <a href="#conhecimento">Conhecimento</a> (ao lado de perguntas e respostas, documento, conversas anteriores e catálogo).</p>
+<aside class="nota atencao"><strong>O que este recurso NÃO faz.</strong><ul><li><strong>Não percorre o site inteiro.</strong> Ele lê <em>exatamente</em> as páginas que você listar. Não segue links, não procura um mapa do site, não entra em páginas que pedem login.</li><li><strong>Não atualiza sozinho.</strong> A leitura é sempre manual: se você mudou um preço no site, peça para ler de novo.</li><li><strong>Só lê texto.</strong> Não lê PDF nem imagem apontados pela página, e só enxerga o HTML que o site entrega (páginas que só montam o conteúdo depois, por programação no navegador, podem chegar como “sem texto”).</li></ul></aside>
+
+<h2 id="requisitos">Antes de começar</h2>
+<p>Para aprender, o sistema transforma o texto em números que permitem buscar por sentido (isso se chama <strong>embedding</strong>). Para isso ele precisa de uma <strong>chave de embedding</strong>: uma chave de IA da OpenAI ou OpenRouter (a tela de <a href="#credenciais">Credenciais</a> também aceita a do Google) cadastrada em <span class="ui">Agente de IA › Credenciais</span>. <strong>Sem a chave</strong>, você consegue cadastrar o site, mas nenhuma página é lida: o material fica <em>Esperando a chave</em> e entra sozinho depois que você cadastrar uma (o sistema tenta de novo a cada 60 minutos, e um aviso aparece na <a href="#alertas">Central de avisos</a>).</p>
+
+<h2 id="cadastrar">Cadastrar um site</h2>
+<figure class="print">
+  <img src="img/ia-conhecimento-site-novo.png" alt="Janela Ensinar algo novo ao agente com o tipo Site escolhido, o nome do material e a caixa de endereços" loading="lazy">
+  <figcaption>A janela “Ensinar algo novo ao agente” com o tipo <em>Site</em>.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Site.</strong> O cartão do tipo: “Páginas do seu site (até 20). O agente lê o texto principal de cada uma e aprende com ele. Você refaz a leitura quando o site mudar.”</li>
+  <li><strong>Nome do material.</strong> Um apelido seu, por exemplo <em>Site da loja</em> (mínimo de 2 caracteres).</li>
+  <li><strong>Endereços das páginas (um por linha).</strong> Só endereços que começam com <code>https://</code>, até 20 páginas.</li>
+  <li><strong>Adicionar ao acervo.</strong> Grava o material e começa a ler.</li>
+</ol>
+<ol class="passos">
+  <li>Abra <span class="ui">Agente de IA › Conhecimento</span> (se não achar no menu lateral, use <span class="ui">Ver tudo em IA</span> ou a busca).</li>
+  <li>Clique em <span class="ui">Adicionar material</span>.</li>
+  <li>Na pergunta “Que tipo de material é”, escolha <span class="ui">Site</span>.</li>
+  <li>Dê um nome e cole os endereços, <strong>um por linha</strong>.</li>
+  <li>Clique em <span class="ui">Adicionar ao acervo</span>.</li>
+</ol>
+<p>Com a chave cadastrada, a tela avisa “Site cadastrado. Estou lendo as páginas — em instantes o agente já sabe.”. Sem ela: “Material cadastrado. Ele fica esperando uma chave de embedding para ser preparado.”</p>
+<h3 id="enderecos">O que é aceito como endereço</h3>
+<table class="tabela">
+  <thead><tr><th>Regra</th><th>O que a tela diz quando você erra</th></tr></thead>
+  <tbody>
+    <tr><td>Só <code>https://</code></td><td>“Só endereços https:// são aceitos: …”</td></tr>
+    <tr><td>Sem usuário e senha no endereço</td><td>“Endereço com usuário e senha não é aceito: …”</td></tr>
+    <tr><td>Endereço público — nada de rede interna, privada ou local</td><td>“Endereço interno, privado ou local não é aceito: …”</td></tr>
+    <tr><td>Pelo menos um endereço</td><td>“Informe o endereço de ao menos uma página.”</td></tr>
+    <tr><td>No máximo 20 páginas</td><td>“No máximo 20 páginas por fonte.”</td></tr>
+  </tbody>
+</table>
+<aside class="nota info"><strong>Por que endereço interno é recusado.</strong><p>O sistema busca a página <em>de dentro do servidor</em>. Se aceitasse qualquer endereço, alguém poderia usar o recurso para espiar serviços internos da empresa (como um painel de administração). Por isso só entram endereços públicos. Se um nome público apontar para dentro, a recusa vem na hora da leitura: “Este endereço aponta para uma rede interna, privada ou local — por segurança, o sistema não lê esse tipo de endereço.”</p></aside>
+<p>Endereços repetidos e o que vem depois de <code>#</code> são unificados em um só.</p>
+
+<h2 id="paginas">Acompanhar a leitura</h2>
+<p>O cartão do material mostra um globo e o tipo <em>Site</em>, o <strong>estado do material</strong> e quatro botões: <span class="ui">Ler o site de novo</span> (enquanto roda: “Lendo…”), <span class="ui">Ver as páginas</span>, <span class="ui">Ver o que ele aprendeu</span> (só quando já existem trechos) e <span class="ui">Arquivar</span>.</p>
+<figure class="print">
+  <img src="img/ia-conhecimento-site-paginas.png" alt="Janela Páginas do site com três páginas: uma lida, uma que não foi lida com o motivo e uma aguardando leitura" loading="lazy">
+  <figcaption>“Ver as páginas”: o estado de cada endereço e o motivo quando a leitura falha.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo de página lida.</strong> Ao lado vem o título da página (no exemplo, <em>Example Domain</em>) e o endereço. Os selos possíveis são <em>Aguardando leitura</em>, <em>Lida</em> e <em>Não foi lida</em>.</li>
+  <li><strong>Linha de detalhe.</strong> “Lida em (data e hora) · N trechos · Mudou em (data)”, ou “Ainda não lida”. Trecho é um pedaço de texto que o agente consegue consultar.</li>
+  <li><strong>Selo “Não foi lida”.</strong> Logo abaixo, em vermelho, vem o motivo: aqui “O site respondeu 404.” (a página não existe).</li>
+  <li><strong>Endereços das páginas.</strong> A lista editável. O botão <span class="ui">Salvar endereços</span> só liga depois que você muda algo.</li>
+  <li><strong>Ler o site de novo.</strong> Fica desligado enquanto houver edição não salva.</li>
+</ol>
+<h3 id="estados">O estado do material</h3>
+<table class="tabela">
+  <thead><tr><th>Selo</th><th>O que significa</th></tr></thead>
+  <tbody>
+    <tr><td><strong>O agente já sabe</strong></td><td>Todas as páginas foram lidas.</td></tr>
+    <tr><td><strong>Preparando…</strong></td><td>A leitura está em andamento.</td></tr>
+    <tr><td><strong>Entrou pela metade</strong></td><td>Algumas páginas falharam, as outras entraram. O agente já usa o que foi lido. O cartão diz “N de M páginas do site não foram lidas — veja o motivo de cada uma em ‘Ver as páginas’.”</td></tr>
+    <tr><td><strong>Não entrou</strong></td><td>Nenhuma página pôde ser lida (“Nenhuma página do site pôde ser lida.”).</td></tr>
+    <tr><td><strong>Esperando a chave</strong></td><td>Falta a chave de embedding. Cadastre-a em Credenciais.</td></tr>
+    <tr><td><strong>Arquivado</strong></td><td>Você arquivou; o agente não usa.</td></tr>
+  </tbody>
+</table>
+<p>No alto da tela, o painel <strong>Estado da base de conhecimento</strong> conta os materiais “pela metade” à parte dos com erro, e só mostra “tudo pronto” quando nenhum estiver incompleto.</p>
+<h3 id="motivos">Quando uma página “Não foi lida”</h3>
+<p>O motivo aparece em <span class="ui">Ver as páginas</span>. Os mais comuns:</p>
+<table class="tabela">
+  <thead><tr><th>Mensagem</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td>O site respondeu 404 (ou outro código)</td><td>A página não existe mais ou o endereço foi digitado errado. Corrija o endereço.</td></tr>
+    <tr><td>O site demorou demais para responder</td><td>O limite é de 15 segundos por página. Tente de novo mais tarde.</td></tr>
+    <tr><td>A página é grande demais para o agente ler</td><td>O limite é de 2 MB por página. Use uma página mais enxuta.</td></tr>
+    <tr><td>A página não é um texto que o agente consiga ler (PDF, imagem ou outro formato)</td><td>Use a página HTML equivalente ou cadastre o PDF como <em>Documento</em>.</td></tr>
+    <tr><td>A página não tem texto para o agente ler (só menu, imagem ou script)</td><td>O sistema só lê o texto principal da página (ignora menu, rodapé e o que a página esconde). Escolha uma página com texto.</td></tr>
+    <tr><td>Não consegui conectar ao site / redireciona vezes demais</td><td>Confira se o endereço abre no navegador.</td></tr>
+  </tbody>
+</table>
+<aside class="nota dica"><strong>Falhou depois de já ter dado certo?</strong><p>Se uma página já lida passa a falhar numa releitura, o agente <strong>continua com o que leu antes</strong>, em vez de esquecer.</p></aside>
+
+<h2 id="atualizar">Quando o site mudar</h2>
+<ol class="passos">
+  <li>Abra o cartão do site em <span class="ui">Conhecimento</span>.</li>
+  <li>Clique em <span class="ui">Ler o site de novo</span>.</li>
+</ol>
+<p>O sistema baixa as páginas outra vez, mas <strong>só gasta com o que mudou</strong>: se o texto de uma página é idêntico ao da última leitura, o aprendizado anterior é reaproveitado, sem custo novo de embedding. Por isso reler um site que não mudou é seguro. O aviso na tela (“Vou preparar este material de novo — leva alguns instantes.”) aparece nos dois casos e não diz se algo mudou; para saber, confira a data de <em>Mudou em</em> em <span class="ui">Ver as páginas</span>.</p>
+<p>Para <strong>incluir ou tirar páginas</strong>, edite a lista em <span class="ui">Ver as páginas</span> e clique em <span class="ui">Salvar endereços</span>. O sistema só relê se a lista realmente mudou (página nova ou removida); salvar a mesma lista, ou só mudar a ordem, não lê nada: a tela avisa “A lista é a mesma — nada foi lido de novo.”.</p>
+
+<h2 id="usar">Fazer o agente usar o site</h2>
+<p>Cadastrar o material não basta: cada agente precisa ter o material <strong>marcado</strong> nos conhecimentos dele (como nos demais tipos). O cartão do material mostra “Consultado por” e quais agentes o usam, ou “nenhum assistente ainda”. Veja como em <a href="#agentes--editor">O editor do agente</a>.</p>
+
+<h2 id="cuidados">Cuidados</h2>
+<ul>
+  <li><strong>O texto do site é só informação.</strong> Se uma página tiver uma frase como “ignore suas regras”, o agente a trata como texto comum do site, não como ordem. Mesmo assim, só cadastre páginas <strong>suas</strong> ou de fontes em que você confia.</li>
+  <li><strong>O que está no site, o agente pode repetir ao cliente.</strong> Não cadastre páginas com preço desatualizado ou informação interna.</li>
+  <li>Confira, em <span class="ui">Ver o que ele aprendeu</span>, se os trechos fazem sentido.</li>
+  <li>Cada leitura baixa até 20 páginas de uma vez; o sistema busca no máximo 4 por vez, com 15 segundos de limite por página.</li>
+</ul>

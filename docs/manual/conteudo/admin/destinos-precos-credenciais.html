@@ -1,0 +1,56 @@
+<!--meta {"id":"admin-destinos","grupo":"admin","titulo":"Destinos internos, Preços da Meta e Credenciais","ordem":10,"resumo":"Três telas de configuração global: liberar endereços da rede interna do servidor, manter a tabela de preços da Meta e a cotação do dólar, e ver o estado das credenciais-chave do servidor.","palavras":["destinos internos","rede interna","cidr","preços da meta","cotação do dólar","tabela de preços","marketing","utilidade","autenticação","atendimento","credenciais","configuração da instalação","dpo","e-mail de suporte","segredos"],"onde":"Modo administrador › Destinos internos, Preços da Meta e Credenciais (/admin/destinos-internos, /admin/precos-da-meta, /admin/configuracao)","quem":"Administrador da plataforma; salvar exige escopo full e a verificação em dia","rotas":[]} -->
+
+<h2 id="destinos">Destinos internos</h2>
+<p>Por padrão, o servidor <em>recusa</em> falar com endereços da própria rede interna (como <code>10.0.0.5</code> ou <code>192.168.1.20</code>) por segurança. Aqui você libera um endereço específico — por exemplo, um modelo de IA rodando na própria VPS.</p>
+<figure class="print media">
+  <img src="img/admin-destinos-internos.png" alt="Tela Destinos internos com o cartão Endereços liberados e o campo Um endereço por linha, numerada de 1 a 3" loading="lazy">
+  <figcaption>A tela Destinos internos, com a lista vazia.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Endereços liberados.</strong> O endereço continua precisando ser <code>https</code> em produção e só vale para o que a <em>instalação</em> configura. O endereço que uma <em>empresa</em> escolhe no painel dela segue sem poder apontar para dentro.</li>
+  <li><strong>Um endereço por linha.</strong> Aceita um IP (<code>10.1.2.7</code>) ou uma faixa CIDR (<code>10.1.0.0/16</code>). Nome de máquina não entra: o que se confere é o endereço para o qual o nome aponta na hora.</li>
+  <li><strong>Salvar.</strong> “Lista salva.” Linhas inválidas voltam como “Não entendi estas linhas: …”.</li>
+</ol>
+<aside class="nota atencao"><strong>Cada endereço é uma porta.</strong><p>“Cada endereço aqui é uma porta que este servidor passa a poder abrir para dentro da própria rede, levando junto a chave da instalação. Declare o endereço do serviço que você mesmo colocou lá — nunca uma faixa inteira por conveniência.” Quando a lista ainda vem do arquivo do servidor, uma nota avisa que, ao salvar, o arquivo deixa de ser consultado. Auditoria: <code>platform.internal_destinations_updated</code>.</p></aside>
+
+<h2 id="precos">Preços da Meta</h2>
+<p>Quanto a Meta cobra por mensagem, por país de quem recebe e por categoria. É a base da <strong>estimativa antes do disparo</strong>, do custo de cada mensagem e do <strong>teto de gasto</strong> das campanhas oficiais.</p>
+<figure class="print">
+  <img src="img/admin-precos-meta.png" alt="Tela Preços da Meta com a tabela de preços por país e o cartão Cotação do dólar, numerada de 1 a 7" loading="lazy">
+  <figcaption>A tela Preços da Meta.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Tabela de preços.</strong> Preço de uma mensagem, em reais, para quem recebe naquele país.</li>
+  <li><strong>País.</strong> Duas letras (BR).</li>
+  <li><strong>Prefixo.</strong> Só números (55). O país é o de quem <em>recebe</em>, reconhecido pelo prefixo do telefone.</li>
+  <li><strong>Marketing (R$)</strong> — e, ao lado, Utilidade, Autenticação e Atendimento. Aceita vírgula ou ponto; vazio = categoria fora da tabela. A semente do produto traz BR/55: Marketing 0,3217; Utilidade, Autenticação e Atendimento 0,035.</li>
+  <li><strong>Acrescentar país.</strong> E, em cada linha, <span class="ui">Tirar</span>.</li>
+  <li><strong>Cotação do dólar.</strong> “R$ por US$ 1”: o custo de IA é registrado em dólar e a Meta cobra em reais; esta cotação soma os dois no relatório da campanha. Em branco vale a referência do produto (R$ 5,4). Ela <em>não acompanha o câmbio do dia</em>.</li>
+  <li><strong>Salvar.</strong> “Preços salvos.”</li>
+</ol>
+<ul>
+  <li>Destinatário de país fora da tabela aparece <em>à parte</em> na estimativa, sem preço inventado.</li>
+  <li><strong>Salva a tabela inteira:</strong> o que sumiu da tela sai do banco. Vale para todas as empresas, não muda o custo de mensagens que já saíram e <strong>não é cobrança</strong> — é só estimativa e teto.</li>
+  <li>Erros: “Preço que não entendi em &lt;país&gt; · &lt;categoria&gt;”, “O mesmo país aparece duas vezes. Deixe uma linha por país.”, “A cotação precisa ser um número maior que zero, ou ficar em branco.”. Auditoria: <code>platform.meta_pricing_updated</code>.</li>
+</ul>
+
+<h2 id="credenciais">Credenciais (“Configuração da instalação”)</h2>
+<p>No menu o item se chama <strong>Credenciais</strong>, mas o título da página é “Configuração da instalação”: mostra o estado das configurações-chave do servidor e deixa trocar, sem SSH, as <em>poucas</em> que podem ser trocadas pela tela.</p>
+<figure class="print">
+  <img src="img/admin-configuracao.png" alt="Tela Configuração da instalação com os grupos E-mail, Segurança e privacidade, WhatsApp, Banco de dados e outros, numerada de 1 a 7" loading="lazy">
+  <figcaption>A tela Credenciais (os últimos caracteres dos segredos foram trocados por “abcd”).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>E-mail.</strong> “Sem isto o sistema não envia convite para a equipe nem recuperação de senha.” O serviço de envio fica na tela <a href="#admin-cadastro--email">E-mail</a>.</li>
+  <li><strong>E-mail de suporte.</strong> Editável: o endereço que o sistema mostra quando alguém precisa de ajuda (aparece, por exemplo, em Plano e cobrança e em Conta suspensa).</li>
+  <li><strong>Segurança e privacidade.</strong> Tem o campo editável <em>E-mail do encarregado de dados (DPO)</em> — o contato obrigatório pela LGPD, que aparece nos documentos legais — e três campos só de diagnóstico: “Senha das tarefas automáticas”, “Chave que tranca as credenciais” e “Chave que assina os documentos de privacidade”.</li>
+  <li><strong>Origem.</strong> O selo de cada campo: “Definido aqui nesta tela”, “Vem do arquivo de instalação do servidor” ou “Não configurado”.</li>
+  <li><strong>… · por quê?</strong> Nos campos de diagnóstico, abre a explicação de como trocar (no arquivo de instalação do servidor). Motivos: “Necessária para o sistema ligar”, “É a chave que protege as outras”, “Gravada quando o programa foi montado”, “Tem um par em outro programa do servidor”, “Lida por outro programa ao ligar”.</li>
+  <li><strong>WhatsApp.</strong> “Senha de acesso ao WhatsApp” e “Senha de conferência das mensagens recebidas” (diagnóstico).</li>
+  <li><strong>Banco de dados.</strong> “Endereço do banco de dados” e “Senha administrativa do banco”. Seguem “Fila de tarefas” e “Inteligência artificial”.</li>
+</ol>
+<ul>
+  <li>Só <strong>3 chaves</strong> são editáveis pela tela (E-mail de suporte, DPO e as duas do serviço externo de e-mail, que vivem em E-mail). O resto é diagnóstico: trocar segredos dos contêineres <em>exige editar o arquivo do servidor e reiniciar</em>.</li>
+  <li>Cada campo editável tem <span class="ui">Salvar</span> (“Pronto, já está valendo.”) e <span class="ui">Voltar ao padrão</span> (só se veio do banco; “Voltou para o valor do arquivo de instalação.”). A tela <strong>nunca mostra valores de segredo</strong>, só os 4 últimos caracteres.</li>
+  <li>Erros: “Escreva um valor, ou use ‘Voltar ao padrão’ para limpar.”, “Esta instalação está sem a chave que protege segredos guardados, então nada foi salvo…”. Auditoria: <code>platform.config_changed</code> (com os últimos 4 dígitos, nunca o valor) e <code>platform.config_reset</code>.</li>
+</ul>

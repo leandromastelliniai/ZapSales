@@ -1,0 +1,254 @@
+<!--meta {"id":"disparo-em-massa","grupo":"crm","titulo":"Disparo em massa","ordem":3,"resumo":"Manda a mesma mensagem para muita gente de uma vez: você escolhe o público (ou sobe uma planilha CSV), escreve o texto, prepara a lista, testa e inicia. Funciona por número de QR code ou pela API Oficial.","palavras":["disparo em massa","campanha","campanhas","envio em massa","broadcast","csv","planilha","lista de contatos","modelo aprovado","api oficial","banimento","teto de gasto","lista de exclusão","textos salvos","preparar lista","enviar teste","pausar","cancelar","duplicar"],"onde":"CRM › Disparo em massa","quem":"Gerente ou acima, em todas as telas. Atendente e Somente leitura veem o menu escondido e, se digitarem o endereço, a tela dá erro de permissão.","rotas":["/app/campaigns","/app/campaigns/new","/app/campaigns/[id]","/app/campaigns/[id]/edit","/app/campaigns/settings"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O <strong>Disparo em massa</strong> (as “campanhas”) fala com uma lista de pessoas de uma só vez: uma promoção, um aviso, a reativação de quem sumiu. Você <strong>escolhe o público</strong> (por etiquetas, tempo sem falar, funil… ou <strong>subindo uma planilha CSV</strong>), <strong>escreve a mensagem</strong>, o sistema <strong>monta a lista</strong> e você <strong>inicia o envio</strong>. Quem responde cai no funil e no agente certos, com o contexto da campanha.</p>
+<p>São cinco telas: a <a href="#disparo-em-massa--lista">lista</a>, <a href="#disparo-em-massa--nova">nova campanha</a>, o <a href="#disparo-em-massa--detalhe">detalhe</a> (onde você conduz), <a href="#disparo-em-massa--editar">editar</a> e a <a href="#disparo-em-massa--config">configuração</a>.</p>
+<aside class="nota perigo"><strong>Iniciar um envio manda mensagens reais a muitas pessoas e não tem volta.</strong><p>Criar a campanha e preparar a lista <em>não enviam nada</em>. O envio só começa em <span class="ui">Iniciar envio</span> (ou <span class="ui">Retomar</span>). Cancelar impede quem ainda não recebeu, mas <strong>o que já saiu não volta</strong>.</p></aside>
+
+<h3>Dois modos, decididos pelo número escolhido</h3>
+<table class="tabela">
+  <thead><tr><th></th><th>Número de QR code (WAHA)</th><th>Número da API Oficial da Meta</th></tr></thead>
+  <tbody>
+    <tr><td><strong>O que se envia</strong></td><td>Texto livre, com <code>{{nome}}</code>, <code>{{primeiro_nome}}</code> e <code>{{saudacao}}</code>.</td><td>Um <strong>modelo aprovado pela Meta</strong>, dizendo de onde vem cada variável.</td></tr>
+    <tr><td><strong>Ritmo</strong></td><td>No máximo <strong>1 mensagem por minuto</strong> por campanha (cerca de 60 por hora), pelo motor anti-banimento do número: intervalo, janela 7h–22h e aquecimento.</td><td>Em lotes de até 50 por rodada, sem intervalo anti-banimento. A janela e os tetos da campanha continuam valendo.</td></tr>
+    <tr><td><strong>Risco</strong></td><td>O WhatsApp pode <strong>banir o número</strong>. É preciso aceitar um aviso de risco antes de iniciar.</td><td>Sem risco de banimento do mesmo tipo, mas <strong>a Meta cobra por mensagem de modelo</strong>. Há estimativa e teto de gasto na tela.</td></tr>
+    <tr><td><strong>Número oficial só dispara com modelo</strong></td><td>—</td><td>Sim. Sem modelo aprovado, a campanha é recusada.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="lista">A lista de campanhas</h2>
+<figure class="print">
+  <img src="img/campanhas-lista.png" alt="Lista de campanhas do Disparo em massa com seis campanhas em situações diferentes, numerada de 1 a 10" loading="lazy">
+  <figcaption>As campanhas da loja de demonstração, uma em cada situação.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Painel de ajuda.</li>
+  <li><strong>Configuração.</strong> Abre a <a href="#disparo-em-massa--config">configuração de campanhas</a> (não está no menu: só se chega por aqui).</li>
+  <li><strong>Nova campanha.</strong> Abre o formulário de criação.</li>
+  <li><strong>Situação.</strong> Filtra a lista por uma das nove situações (ou “Todas”).</li>
+  <li><strong>Uma campanha.</strong> A linha inteira é um link para o detalhe. Mostra o nome e quantas pessoas estão na lista.</li>
+  <li><strong>“N contatos na lista · M fora”.</strong> N são os que vão receber; M ficaram de fora na preparação. Antes de preparar, a linha diz “lista ainda não preparada”.</li>
+  <li><strong>Concluída.</strong> Ninguém mais a enviar. A data diz “terminou …”.</li>
+  <li><strong>Pausada.</strong> Parada à mão ou pelo sistema.</li>
+  <li><strong>Pronta para iniciar.</strong> A lista está montada e congelada.</li>
+  <li><strong>Agendada.</strong> Marcada para começar numa data (“começa 17/10/2026, 19:44”).</li>
+</ol>
+<p>A lista mostra 30 campanhas por vez, da mais nova para a mais antiga, com o botão <span class="ui">Carregar mais</span>. Não tem busca por nome. Sem nenhuma campanha, a tela diz “Nenhuma campanha ainda.”.</p>
+
+<h3>As situações de uma campanha</h3>
+<table class="tabela">
+  <thead><tr><th>Selo</th><th>O que significa</th><th>O que dá para fazer</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Rascunho</strong></td><td>Criada e editável; nada foi enviado.</td><td>Editar, Preparar lista, Cancelar campanha, Duplicar.</td></tr>
+    <tr><td><strong>Montando a lista</strong></td><td>Passagem curta, enquanto a lista é montada.</td><td>Só Duplicar.</td></tr>
+    <tr><td><strong>Pronta para iniciar</strong></td><td>Lista montada e congelada.</td><td>Enviar teste, Iniciar envio, Cancelar campanha, Duplicar.</td></tr>
+    <tr><td><strong>Agendada</strong></td><td>Tem data para começar.</td><td>Pausar, Cancelar campanha, Duplicar.</td></tr>
+    <tr><td><strong>Enviando</strong></td><td>O sistema envia no ritmo do número.</td><td>Pausar, Cancelar campanha, Duplicar.</td></tr>
+    <tr><td><strong>Pausada</strong></td><td>Manual ou automática (com motivo).</td><td>Retomar, Cancelar campanha, Duplicar.</td></tr>
+    <tr><td><strong>Concluída</strong></td><td>Não resta ninguém a enviar.</td><td>Só Duplicar.</td></tr>
+    <tr><td><strong>Cancelada</strong></td><td>Encerrada de vez.</td><td>Só Duplicar.</td></tr>
+    <tr><td><strong>Falhou</strong></td><td>Falha do sistema.</td><td>Só Duplicar.</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>A tela não tem botão para agendar.</strong><p>“Agendada” só existe quando a campanha é agendada por integração (API). Pela tela, uma campanha pronta é iniciada na hora.</p></aside>
+
+<h2 id="nova">Criar uma campanha</h2>
+<p>A tela <strong>Nova campanha</strong> é um formulário de uma página só, com cinco cartões. <em>“Isto cria um rascunho. Nada é enviado antes de você preparar a lista e iniciar.”</em></p>
+<figure class="print">
+  <img src="img/campanhas-nova.png" alt="Formulário Nova campanha completo, com os cartões Informações, Público, Mensagem, Quem responder e Ritmo desta campanha, numerado de 1 a 21" loading="lazy">
+  <figcaption>O formulário de nova campanha, de cima a baixo.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome da campanha.</strong> Obrigatório (até 160 caracteres). Só você vê.</li>
+  <li><strong>Enviar pelo número.</strong> Obrigatório. Lista todos os números da organização. Trocar de número <strong>zera</strong> o modelo e as variáveis escolhidos. Sem nenhum número aparece “Nenhum número conectado. Conecte um em Conexões antes de criar a campanha.”.</li>
+  <li><strong>Base legal do envio.</strong> Obrigatória. <em>Consentimento</em> (estas pessoas pediram para receber) ou <em>Interesse legítimo</em>, que exige a <em>referência da avaliação (LIA)</em> registrada. Quem recebe pode perguntar por que recebeu, e a resposta precisa existir antes do envio.</li>
+  <li><strong>Subir uma lista de contatos (CSV).</strong> Veja <a href="#disparo-em-massa--csv">abaixo</a>.</li>
+  <li><strong>Baixar planilha modelo.</strong> Baixa o arquivo <code>lista-para-disparo.csv</code>, já com as colunas e três linhas de exemplo.</li>
+  <li><strong>Enviar lista.</strong> Lê o arquivo escolhido e cria os contatos.</li>
+  <li><strong>Com alguma destas etiquetas.</strong> Separe por vírgula. Entra quem tem <em>qualquer uma</em>.</li>
+  <li><strong>Sem nenhuma destas etiquetas.</strong> Tira quem tem alguma destas.</li>
+  <li><strong>Sem falar com a gente há (dias).</strong> Quem está parado há pelo menos esse número de dias. Quem nunca interagiu <em>entra</em>.</li>
+  <li><strong>Com negócio no funil / Na etapa.</strong> Filtra por quem tem negócio num funil (e, opcionalmente, numa etapa).</li>
+  <li><strong>Máximo de contatos nesta campanha.</strong> De 1 a 5.000 (padrão 100). Vale só para o recorte por critérios; a planilha entra <em>além</em> dele.</li>
+  <li><strong>Ver quantas pessoas.</strong> Faz a conta sem gravar nada: “<em>N</em> podem receber · <em>M</em> ficam de fora”, com o motivo de cada exclusão. Fica apagado sem critério. Em campanha oficial com modelo mostra também o <strong>custo estimado</strong> pela tabela da Meta.</li>
+  <li><strong>Texto da mensagem</strong> (número de QR code). Obrigatório, até 4.096 caracteres. “Escreva como você falaria com uma pessoa só.”.</li>
+  <li><strong>Variáveis.</strong> Os botões <code>{{nome}}</code>, <code>{{primeiro_nome}}</code> e <code>{{saudacao}}</code> acrescentam o marcador ao fim do texto. Quem não tiver o dado que a mensagem usa <strong>fica de fora</strong>, com o motivo — “mensagem com buraco não sai”. Variável desconhecida (por exemplo <code>{{xyz}}</code>) <strong>vai literal</strong> para o cliente.</li>
+  <li><strong>Vira card no funil / Na etapa.</strong> Para onde vai quem responder. Em branco, o card nasce no funil do número.</li>
+  <li><strong>Quem atende a resposta.</strong> O agente de IA que conversa com quem responde (só agentes publicados). Em branco, o agente publicado no número.</li>
+  <li><strong>Quem assume a resposta.</strong> <em>O agente de IA</em> (padrão), <em>A fila de atendentes</em> (a IA fica calada) ou <em>A IA, e depois um atendente</em> (exige escolher o agente).</li>
+  <li><strong>O que a campanha oferece.</strong> Até 2.000 caracteres (“avaliação por R$ 99 até sexta-feira…”). O agente recebe isto junto com o nome da campanha e a mensagem que a pessoa leu.</li>
+  <li><strong>Ritmo desta campanha.</strong> Intervalo mínimo, máximo por dia e por hora, e a janela (a partir das… / parar às…). Em branco vale o ritmo do número; o que você puser <strong>só pode deixar mais devagar</strong>. Informe início e fim juntos. Em campanha oficial aparece também o <em>teto de gasto da Meta</em>.</li>
+  <li><strong>Cancelar.</strong> Volta à lista sem criar nada.</li>
+  <li><strong>Salvar rascunho.</strong> Cria a campanha em <em>Rascunho</em> e abre o detalhe. Só habilita quando o essencial está preenchido.</li>
+</ol>
+<p>O botão <span class="ui">Salvar rascunho</span> só habilita com: nome, número, um critério ou lista subida, texto (ou modelo, no número oficial) e, quando a base é interesse legítimo, a referência LIA. Não existe “todos os contatos”: o público sempre exige um recorte.</p>
+<aside class="nota info"><strong>Quem já está em outra campanha não entra.</strong><p>Quem está numa campanha “viva” (rascunho, pronta, agendada, enviando ou pausada) fica de fora desta, com o motivo “Já está em outra campanha ainda não concluída”. Um <em>rascunho esquecido</em> também segura a pessoa. Concluída ou cancelada, não.</p></aside>
+
+<h3>Quem fica de fora da lista</h3>
+<table class="tabela">
+  <thead><tr><th>Motivo mostrado</th><th>Quando acontece</th></tr></thead>
+  <tbody>
+    <tr><td>Excluído à mão desta campanha</td><td>Você mesmo tirou.</td></tr>
+    <tr><td>Pediu para não receber mensagens</td><td>O contato está bloqueado (pediu para parar).</td></tr>
+    <tr><td>Contato anonimizado (LGPD)</td><td>Os dados foram anonimizados.</td></tr>
+    <tr><td>Recusou receber contato comercial</td><td>Recusou marketing.</td></tr>
+    <tr><td>Sem telefone no cadastro</td><td>—</td></tr>
+    <tr><td>Telefone fora do formato de envio</td><td>Precisa de “+” e de 8 a 15 dígitos.</td></tr>
+    <tr><td>Já está em outra campanha ainda não concluída</td><td>Veja acima.</td></tr>
+    <tr><td>Está na lista de exclusão de campanhas</td><td>Veja a <a href="#disparo-em-massa--config">configuração</a>.</td></tr>
+    <tr><td>Mesmo telefone de outro contato da lista</td><td>Entra o primeiro; o repetido fica de fora.</td></tr>
+    <tr><td>Falta um dado que a mensagem usa</td><td>Por exemplo, a mensagem usa o nome e o contato não tem.</td></tr>
+  </tbody>
+</table>
+<p><strong>Esses vetos são revalidados na hora de cada envio</strong>: quem pediu para parar entre “Preparar” e o envio é pulado. A campanha <em>nunca</em> alcança grupos de WhatsApp: só contatos do tipo pessoa.</p>
+
+<h3 id="csv">Subir uma planilha CSV</h3>
+<p>Em vez de (ou além de) critérios, você pode subir uma planilha de pessoas. Quem está na planilha <strong>entra em Contatos</strong> (se já existir, é reaproveitado) e recebe a campanha.</p>
+<ol class="passos">
+  <li>Clique em <span class="ui">Baixar planilha modelo</span> e preencha. As colunas: <code>nome</code>, <code>telefone</code> (as que importam para o WhatsApp), e opcionais <code>email</code>, <code>cpf</code>, <code>nascimento</code> e <code>tags</code> (várias etiquetas separadas por <kbd>|</kbd>).</li>
+  <li>Salve como <strong>CSV UTF-8</strong> (no Excel: Salvar como). No Excel, deixe a coluna telefone como <strong>Texto</strong>, senão ele troca o número por 5,51E+12.</li>
+  <li>Em <em>Arquivo CSV</em>, escolha o arquivo e clique em <span class="ui">Enviar lista</span>. Dá para subir várias planilhas: elas se somam, sem repetir (até 5.000 pessoas).</li>
+  <li>O resultado diz “N linhas lidas · X novo(s) em Contatos · Y já existiam” e lista, se houver, os erros por linha (“Linha 4: telefone inválido…”). A linha com erro é pulada; as outras seguem.</li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Como escrever o telefone</th><th>Vale?</th></tr></thead>
+  <tbody>
+    <tr><td><code>+5511999998888</code></td><td>Recomendado: o sinal de +, o código do país (55), o DDD (11) e o número.</td></tr>
+    <tr><td><code>(11) 99999-8888</code></td><td>Só DDD e número: o sistema assume Brasil e acrescenta +55.</td></tr>
+    <tr><td><code>5511999998888</code></td><td>Com o 55, sem o +.</td></tr>
+    <tr><td><code>+351912345678</code></td><td>Outro país: escreva sempre o + e o código do país.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li>Limites: arquivo <strong>.csv</strong> de até <strong>5 MB</strong> e <strong>500 linhas por arquivo</strong> (divida a planilha se passar).</li>
+  <li>O separador (vírgula, ponto e vírgula ou tab) é detectado sozinho. As colunas aceitam nomes em português, inglês e espanhol (por exemplo <code>telefone</code>, <code>celular</code>, <code>whatsapp</code>).</li>
+  <li>Quem já existe pelo telefone <strong>ou</strong> e-mail não é recriado, mas <strong>entra na lista</strong> da campanha.</li>
+  <li>A planilha <strong>não fura o opt-out</strong>: quem já pediu para parar continua sendo excluído.</li>
+  <li><span class="ui">Tirar a lista</span> zera só a lista subida na tela; os contatos que já foram criados <strong>continuam em Contatos</strong>.</li>
+</ul>
+<aside class="nota atencao"><strong>Subir o CSV cria contatos de verdade na hora.</strong><p>Isso acontece <em>antes</em> de você salvar o rascunho. Mesmo que cancele a campanha depois, os contatos novos ficam em <a href="#contatos">Contatos</a>, com a origem “import_csv”.</p></aside>
+
+<h3>Número da API Oficial: o modelo aprovado</h3>
+<p>Quando o número escolhido é da API Oficial, o cartão “Mensagem” muda: você escolhe um <strong>modelo aprovado</strong> (só aparecem os com situação <em>Aprovado</em>) e, para cada variável <code>{{1}}</code>, <code>{{2}}</code>…, <em>de onde ela vem</em>: primeiro nome, nome completo, telefone, e-mail, um campo personalizado do contato ou um texto fixo igual para todos. Variáveis de mídia (imagem, vídeo, documento) pedem o link público do arquivo. Sem modelo aprovado, a tela avisa que é preciso criar ou sincronizar em <a href="#conexoes">Conexões › Modelos</a>.</p>
+<ul>
+  <li><strong>Modo dois números:</strong> o modelo sai pelo número oficial, com um botão que abre conversa com um número de QR code, e a conversa segue nele. Exige que o modelo tenha um botão de link <code>wa.me</code>.</li>
+  <li><strong>O que cada botão faz:</strong> para modelos com botões de resposta rápida, cada botão pode mover o card para uma etapa, entregar ao agente de IA ou a um atendente, marcar o negócio como perdido ou parar as mensagens (opt-out). O toque age na hora, sem passar pela IA.</li>
+  <li><strong>Teto de gasto da Meta nesta campanha (R$):</strong> ao chegar nele, a campanha pausa sozinha e diz por quê.</li>
+</ul>
+
+<h2 id="detalhe">O detalhe: conduzir e acompanhar</h2>
+<p>Clique numa campanha para abrir o painel de condução. É aqui que se prepara a lista, testa, inicia, pausa e acompanha os números.</p>
+<figure class="print">
+  <img src="img/campanhas-detalhe.png" alt="Detalhe de uma campanha concluída, com os números, o progresso, a mensagem e a lista de quem recebeu, numerado de 1 a 13" loading="lazy">
+  <figcaption>O detalhe de uma campanha concluída.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>← Disparo em massa.</strong> Volta à lista.</li>
+  <li><strong>Nome da campanha.</strong></li>
+  <li><strong>Situação.</strong> Se houve falha, aparece também “Último problema: …” com o código técnico.</li>
+  <li><strong>Botões da situação.</strong> Eles <em>somem</em> quando impossíveis (não ficam apagados). Em Concluída resta só <span class="ui">Duplicar</span>.</li>
+  <li><strong>Na lista.</strong> Quantas pessoas vão (ou foram) receber.</li>
+  <li><strong>Enviadas.</strong></li>
+  <li><strong>Entregues.</strong></li>
+  <li><strong>Responderam.</strong> Conta quem respondeu até o prazo definido na <a href="#disparo-em-massa--config">configuração</a> (72 horas por padrão).</li>
+  <li><strong>Progresso.</strong> A barra e a frase “0 ainda não enviadas · 1 falharam · 1 pediram para parar”.</li>
+  <li><strong>Mensagem.</strong> O texto (ou o modelo e as variáveis), a base legal e, quando aceito, a data do aviso de risco.</li>
+  <li><strong>Filtrar destinatários.</strong> Todos, Ainda não enviadas, Enviadas, Entregues, Lidas, Responderam, Fora da lista e Falharam.</li>
+  <li><strong>Um destinatário.</strong> O nome e, à direita, o estado: <em>Na fila, Enviando, Enviada, Entregue, Lida, Respondeu, Falhou, Fora da lista, Cancelada</em> ou <em>Pediu para parar</em>. Quem falhou mostra o motivo.</li>
+  <li><strong>Motivo de exclusão.</strong> Em vez do estado, quem ficou fora mostra a frase do motivo (“Sem telefone no cadastro”).</li>
+</ol>
+<aside class="nota info"><strong>Por que “Enviadas” pode ser maior que “Na lista”.</strong><p>Os números contam <em>carimbos</em> (quando foi enviada, entregue, lida, respondida), e quem enviou e depois pediu para parar continua contado como enviado. São cumulativos: quem leu também conta como entregue e enviado.</p></aside>
+<p>A tela se atualiza sozinha a cada 10 segundos enquanto a campanha monta, envia ou está agendada, e por 2 horas depois de concluída. A lista de destinatários mostra 50 por vez (<span class="ui">Carregar mais</span>).</p>
+
+<h3>As ações</h3>
+<table class="tabela">
+  <thead><tr><th>Ação</th><th>O que faz de verdade</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Preparar lista</strong></td><td>Roda na hora: busca as pessoas do recorte, aplica os vetos e <strong>congela</strong> um destinatário por pessoa (com o texto já pronto). Nada é enviado. Se o recorte não achar ninguém — “O recorte não encontrou nenhum contato. Ajuste o filtro.” — ou ninguém puder receber, a campanha volta a Rascunho.</td></tr>
+    <tr><td><strong>Enviar teste</strong></td><td>Manda <strong>uma mensagem real</strong>, pelo número da campanha, a um contato que você escolher. Veja abaixo.</td></tr>
+    <tr><td><strong>Iniciar envio</strong></td><td>Pede confirmação (“Começar a enviar para N pessoa(s)? O envio segue o ritmo do número e pode levar horas.”). Depois a campanha vira <em>Enviando</em>. Em número de QR code exige antes o aceite do risco de banimento.</td></tr>
+    <tr><td><strong>Pausar</strong></td><td>Para os novos envios. Sem confirmação. A mensagem que já estava saindo não é desfeita.</td></tr>
+    <tr><td><strong>Retomar</strong></td><td>Reinicia de onde parou, com as mesmas recusas do Iniciar. Uma campanha que pausou por teto de gasto só retoma depois de aumentar o teto.</td></tr>
+    <tr><td><strong>Cancelar campanha</strong></td><td>Pede confirmação: “Cancelar é definitivo: quem ainda não recebeu não recebe mais, e a campanha não volta a rodar.”. O que já saiu continua enviado.</td></tr>
+    <tr><td><strong>Duplicar</strong></td><td>Cria uma cópia em <em>Rascunho</em>, chamada “nome (cópia)”, com tudo menos os destinatários e o aceite do risco. A tela <strong>não abre</strong> a cópia: ela aparece na lista. É a única forma de “mudar” uma campanha já preparada.</td></tr>
+    <tr><td><strong>Salvar ritmo</strong></td><td>Ajusta intervalo, tetos e janela. Funciona em qualquer situação viva, inclusive enviando. Campo vazio herda o número; o valor 0 é recusado.</td></tr>
+  </tbody>
+</table>
+
+<figure class="print media">
+  <img src="img/campanhas-risco.png" alt="Aviso Risco de banimento do número, com a caixa de aceite e os botões Aceitar o risco e continuar e Voltar, numerado de 1 a 8" loading="lazy">
+  <figcaption>Ao tentar iniciar uma campanha de número de QR code, o aviso de risco aparece primeiro.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Enviar teste.</strong></li>
+  <li><strong>Iniciar envio.</strong></li>
+  <li><strong>Cancelar campanha.</strong></li>
+  <li><strong>Duplicar.</strong></li>
+  <li><strong>O aviso.</strong> “Esta campanha dispara por um número conectado por QR code, fora da API Oficial. O WhatsApp pode banir o número que manda mensagem em massa — principalmente para quem nunca falou com você —, e um número banido não volta.”</li>
+  <li><strong>Entendi o risco…</strong> A caixa que destrava o botão.</li>
+  <li><strong>Aceitar o risco e continuar.</strong> Grava quem aceitou e quando, e só então inicia. A cópia da campanha <strong>não herda</strong> o aceite.</li>
+  <li><strong>Voltar.</strong> Fecha o aviso sem iniciar.</li>
+</ol>
+
+<figure class="print media">
+  <img src="img/campanhas-teste.png" alt="Cartão Enviar teste com o campo de busca de contato e a lista de contatos com o botão Enviar para este, numerado de 1 e 2" loading="lazy">
+  <figcaption>O cartão “Enviar teste”, em campanha “Pronta para iniciar”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Busque o contato pelo nome ou telefone.</strong> A lista mostra até 8 contatos, cada um com <span class="ui">Enviar para este</span>.</li>
+  <li><strong>Fechar.</strong> Fecha o cartão (fica logo abaixo da lista).</li>
+</ol>
+<aside class="nota atencao"><strong>O teste manda uma mensagem de verdade.</strong><p>Sai pelo mesmo número e com o mesmo texto do envio real, inclusive o horário da saudação. Respeita os vetos (bloqueado, anonimizado, recusou marketing). Não entra nos números da campanha, mas <strong>gasta o ritmo do número</strong> e, em campanha oficial, <strong>a Meta cobra</strong>. A tela não mostra um aviso de sucesso além de fechar o cartão: confira no <a href="#inbox">Inbox</a>.</p></aside>
+
+<figure class="print">
+  <img src="img/campanhas-pausada.png" alt="Campanha pausada automaticamente por teto de gasto, com o cartão explicativo e o formulário de ritmo, numerado de 1 a 5" loading="lazy">
+  <figcaption>Uma campanha que o sistema pausou sozinho, com o motivo explicado.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Retomar.</strong></li>
+  <li><strong>Cancelar campanha.</strong></li>
+  <li><strong>Pausada automaticamente.</strong> A frase do motivo — aqui, “A campanha atingiu o teto de gasto: R$ 150,00 de R$ 150,00. Aumente o teto da campanha para retomar.”.</li>
+  <li><strong>Ritmo desta campanha.</strong> Os mesmos campos da criação (o intervalo aparece também em campanha oficial).</li>
+  <li><strong>Salvar ritmo.</strong> Grava o ritmo. Mostra “Ritmo salvo.”.</li>
+</ol>
+<p>Pausas automáticas: <em>qualidade do número vermelha</em>, <em>modelo rejeitado, pausado, desativado ou recategorizado</em>, <em>risco de banimento não aceito</em> (campanha agendada que chegou na hora sem o aceite) e <em>teto de gasto</em>. Retomar com número de qualidade vermelha ou modelo reprovado é recusado.</p>
+
+<h3>Outros cartões do detalhe</h3>
+<ul>
+  <li><strong>Custo</strong> (só campanha oficial): custo da Meta (parte estimado até a Meta confirmar), custo de IA do atendimento a quem recebeu, total e custo por lead que respondeu.</li>
+  <li><strong>Limite diário do portfólio na Meta</strong> (só oficial): “N de TETO contatos nas últimas 24 h”. O limite é do portfólio inteiro, somando números e campanhas. Quando bate, os envios esperam sozinhos. Sem faixa informada, vale a inicial de 250.</li>
+  <li><strong>Quem responder</strong>: o funil e o agente que a campanha declarou.</li>
+  <li><strong>Números desta campanha</strong>: quando há rodízio entre números, lista quais.</li>
+</ul>
+<aside class="nota info"><strong>“Enviando” e parado.</strong><p>Uma campanha de texto livre pode parecer “Enviando” sem andar quando o número está fora do ar, fora da janela de envio ou no limite do aquecimento. Espera por ritmo não é falha: o destinatário fica “Na fila” com “Nova tentativa em …”. Concluída não significa que todos leram.</p></aside>
+
+<h2 id="editar">Editar uma campanha</h2>
+<p>O botão <span class="ui">Editar</span> só aparece em <em>Rascunho</em>. A tela é o mesmo formulário da criação, já preenchido, com o título “Editar campanha” e o aviso “Enquanto é rascunho, tudo muda. Depois de preparada, só o ritmo.”. Não tem “Falar também por estes números” nem o cartão de ritmo (o ritmo se ajusta no detalhe). O botão é <span class="ui">Salvar alterações</span>; depois de salvar, você volta ao detalhe e a campanha continua em Rascunho — é preciso <em>Preparar lista</em> de novo.</p>
+<aside class="nota atencao"><strong>Depois de “Pronta para iniciar” não há como editar o texto ou o público.</strong><p>A tela de edição de uma campanha preparada diz “volte a campanha para rascunho”, mas <strong>não existe um botão para isso</strong>. O caminho é <span class="ui">Duplicar</span> e preparar a cópia.</p></aside>
+
+<h2 id="config">Configuração de campanhas</h2>
+<figure class="print">
+  <img src="img/campanhas-config.png" alt="Configuração de campanhas com os padrões da organização, os textos salvos e a lista de exclusão, numerada de 1 a 11" loading="lazy">
+  <figcaption>A configuração de campanhas.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>← Disparo em massa.</strong></li>
+  <li><strong>Padrões desta organização.</strong> Valem para todas as campanhas, e não para uma só.</li>
+  <li><strong>Contar como resposta até (horas depois do envio).</strong> Padrão 72 (de 1 a 720). Uma mensagem que chega depois desse prazo é conversa nova, não resposta à campanha. <strong>Muda o número de “Responderam”, inclusive nas campanhas já enviadas.</strong></li>
+  <li><strong>Teto de gasto da Meta da empresa no mês (R$).</strong> Soma tudo o que a Meta cobra no mês. Ao chegar nele, as campanhas oficiais em andamento pausam. O mês vira à meia-noite do dia 1, no fuso da organização.</li>
+  <li><strong>Salvar padrões.</strong> Grava (“Padrões salvos.”).</li>
+  <li><strong>Textos salvos.</strong> Um bloco de notas com a copy que você reusa.</li>
+  <li><strong>Salvar texto.</strong> Nome (até 120) e texto (até 4.096). Nome repetido é recusado.</li>
+  <li><strong>Apagar.</strong> Apaga o texto na hora, sem confirmação.</li>
+  <li><strong>Lista de exclusão.</strong> Números que nenhuma campanha alcança. Diferente de quem pediu para parar: aqui o atendimento continua normal se a pessoa escrever.</li>
+  <li><strong>Excluir das campanhas.</strong> Informe o telefone com DDI e DDD (por exemplo <code>+5548999990000</code>) e, se quiser, o motivo.</li>
+  <li><strong>Tirar da lista.</strong> Remove o número da lista, sem confirmação. A lista mostra “termina em 0001” e o motivo.</li>
+</ol>
+<aside class="nota atencao"><strong>Só dois dos padrões têm efeito comprovado.</strong><p>“Contar como resposta até” e o “Teto de gasto mensal” funcionam. Os padrões de <em>intervalo, janela e tetos por dia e por hora</em> são gravados, mas <strong>não encontrei no código quem os aplique às campanhas novas</strong>; trate-os como “salvo, sem efeito” e defina o ritmo dentro de cada campanha ou na proteção do número, em <a href="#conexoes">Conexões › Proteção de envio</a>.</p></aside>
+<aside class="nota atencao"><strong>Os “Textos salvos” não são puxados pelo formulário.</strong><p>Não existe botão “usar texto salvo” ao criar uma campanha: copie e cole. A lista serve só como bloco de notas.</p></aside>
+<aside class="nota atencao"><strong>Digite o telefone da exclusão com o código do país.</strong><p>A lista só tira símbolos e põe um “+” na frente. “(48) 99999-0000” vira <code>+48999990000</code> — outro número — e a exclusão <strong>nunca casa</strong> com o contato <code>+5548999990000</code>. O número fica guardado como código de verificação (hash), e só os 4 últimos dígitos aparecem na lista.</p></aside>
+<p>Quando a organização tem número da API Oficial, a configuração mostra também o cartão <strong>“Mensagens de atendimento grátis do mês”</strong>: a Meta dá 1.000 mensagens de atendimento grátis por número a cada mês; você recebe um aviso na Central em 80% e em 100%.</p>
+
+<h2 id="auditoria">O que fica registrado</h2>
+<p>Criar, preparar, iniciar, retomar, agendar, pausar, cancelar, duplicar, aceitar o risco, enviar teste, a pausa automática, as mudanças de configuração e a lista de exclusão geram registro na <a href="#auditoria">Auditoria</a>. <strong>Editar um rascunho e os textos salvos não são auditados.</strong> Na conversa de quem respondeu, o <a href="#inbox">Inbox</a> mostra “Respondendo à campanha [nome]” com um link para a campanha (só para Gerente ou acima).</p>
+<aside class="nota dica"><strong>Uma ordem segura para a primeira campanha.</strong><p>Comece com um recorte pequeno (máximo de 10 a 20 pessoas), prepare a lista, confira quem ficou fora, envie um <strong>teste para você mesmo</strong> e só então inicie. Prefira o número da API Oficial para volume.</p></aside>

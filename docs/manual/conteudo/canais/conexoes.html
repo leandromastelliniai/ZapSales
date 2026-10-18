@@ -1,0 +1,211 @@
+<!--meta {"id":"conexoes","grupo":"canais","titulo":"Conexões","ordem":1,"resumo":"Os números de WhatsApp do negócio: conectar por QR code ou pela API Oficial da Meta, ver a saúde de cada um, ajustar a proteção contra bloqueio, controlar o acesso da IA, ligar grupos e cadastrar telefone e chamada de voz.","palavras":["conexões","whatsapp","qr code","código de pareamento","api oficial","meta","waba","proteção de envio","aquecimento","teto diário","janela de disparo","grupos","acesso da ia","modo de teste","reconectar","excluir número","webhook","qualidade","telefone","voz","waha"],"onde":"Canais › Conexões (também no menu lateral)","quem":"Somente Administrador abre a tela. Quem não é administrador é levado à página “sem permissão”.","rotas":["/app/connections"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Em <strong>Conexões</strong> o dono liga os números de WhatsApp do negócio ao sistema, vê <strong>se cada um está funcionando</strong> e ajusta as proteções contra bloqueio. Também cadastra o telefone fixo (DID) de voz e liga a chamada de voz. É daqui que sai o número usado pelos <a href="#agentes">agentes</a>, pelo <a href="#inbox">Inbox</a> e pelo <a href="#disparo-em-massa">Disparo em massa</a>.</p>
+<p>A tela tem <strong>quatro abas</strong>: <em>Números por QR</em> (padrão), <em>API Oficial (Meta)</em> (com as sub-abas <em>Conexão</em> e <em>Templates da Meta</em>), <em>Telefone</em> e <em>Chamada de voz</em>. A aba fica no endereço da página (<code>?aba=oficial</code>, <code>telefonia</code>, <code>voz</code>).</p>
+<aside class="nota atencao"><strong>Esta página foi fotografada com um número fictício.</strong><p>Para não mexer no WhatsApp real da instalação, a organização de demonstração tem <strong>um número de teste que não existe no servidor de WhatsApp</strong>. Por isso ele aparece como <em>“Parado”</em>, e as ações que criariam ou derrubariam uma conexão (conectar, reconectar, gerar novo QR, excluir) <strong>não foram executadas</strong> — foram descritas a partir do código. A tela de exclusão foi aberta e cancelada.</p></aside>
+<aside class="nota info"><strong>O que você precisa ter na instalação.</strong><p>Para conectar por QR a instalação precisa do <em>serviço de WhatsApp</em> (WAHA). Sem ele aparece “O serviço do WhatsApp não está configurado.” e os botões de conectar, reconectar e excluir ficam apagados. A aba API Oficial funciona <em>sem</em> o WAHA. A chamada de voz depende do serviço WaCalls (<code>WACALLS_API_BASE_URL</code>).</p></aside>
+
+<h2 id="qr">Aba Números por QR</h2>
+<p>Apesar do nome, esta aba lista <strong>todos os canais de mensagem</strong> da organização — inclusive o número oficial, que aparece com o selo “API oficial”.</p>
+<figure class="print">
+  <img src="img/conexoes-qr.png" alt="Tela Conexões na aba Números por QR, com o cartão de um número, a saúde, o acesso da IA e os botões de cada número, numerada de 1 a 13" loading="lazy">
+  <figcaption>A aba “Números por QR” com um número fictício parado.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Painel de ajuda.</li>
+  <li><strong>Números por QR.</strong></li>
+  <li><strong>API Oficial (Meta).</strong></li>
+  <li><strong>Telefone.</strong></li>
+  <li><strong>Chamada de voz.</strong></li>
+  <li><strong>Atualizar saúde.</strong> Pergunta ao WhatsApp, ao vivo, como está cada número e grava o resultado. Ao abrir a tela essa verificação já roda uma vez sozinha, e a lista se atualiza a cada 10 segundos.</li>
+  <li><strong>Conectar novo WhatsApp.</strong> Cria um número novo e abre o diálogo do QR. <strong>Cria de verdade</strong> uma conexão no servidor de WhatsApp.</li>
+  <li><strong>Configurar acesso da IA.</strong> Veja <a href="#conexoes--ia">Acesso da IA</a>.</li>
+  <li><strong>Reconectar.</strong> Só em número de QR. Veja <a href="#conexoes--reconectar">abaixo</a>.</li>
+  <li><strong>Proteção de envio.</strong> Veja <a href="#conexoes--protecao">abaixo</a>.</li>
+  <li><strong>Grupos.</strong> Veja <a href="#conexoes--grupos">abaixo</a>.</li>
+  <li><strong>Lixeira (excluir).</strong> Veja <a href="#conexoes--excluir">abaixo</a>.</li>
+  <li><strong>Para integrar.</strong> Dados para ligar outro sistema ao mesmo número. Na aba QR a lista de campos é vazia: “O token não aparece aqui”, com o aviso “Não compartilhe esta sessão. Crie uma conexão separada por QR no outro sistema.”.</li>
+</ol>
+<p>O <strong>cartão de cada número</strong> mostra, de cima para baixo: o <em>nome</em> (apelido, senão o telefone, senão o nome técnico da sessão — um número recém-criado não tem apelido); o <em>selo de situação</em>; “Verificado [data e hora]” ou “Ainda não verificado”; o <em>acesso da IA</em>; e uma frase sobre os <em>responsáveis</em> (“Usa todos os atendentes elegíveis da organização.”, “Somente as pessoas selecionadas recebem este número.” ou “Ninguém configurado — as conversas ficarão na fila.”). O link <span class="ui">Configurar responsáveis por número</span> leva a <em>Configurações › Distribuição de atendimento</em>.</p>
+<p>“Novos canais começam em modo de teste, sem respostas automáticas até você autorizar números ou liberar o público.” A tela <strong>não tem</strong> renomear, pausar, “canal padrão” nem desarquivar um canal excluído.</p>
+<h3>As situações de um número</h3>
+<table class="tabela">
+  <thead><tr><th>Selo</th><th>O que significa</th><th>Mensagens?</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Conectado</strong> (verde)</td><td>A sessão está de pé.</td><td>Entram e saem.</td></tr>
+    <tr><td><strong>Escaneie o QR</strong> (amarelo)</td><td>Aguardando a leitura do QR ou do código.</td><td>Não.</td></tr>
+    <tr><td><strong>Conectando…</strong> (amarelo)</td><td>Subindo (normal em todo reinício).</td><td>Não.</td></tr>
+    <tr><td><strong>Parado</strong> (vermelho)</td><td>A sessão parou — ou <em>sumiu</em> do servidor de WhatsApp.</td><td>Não.</td></tr>
+    <tr><td><strong>Caiu</strong> (vermelho)</td><td>Falha; em geral o aparelho foi desvinculado pelo celular.</td><td>Não.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li>Uma <strong>bolinha</strong> ao lado de “Conexões” no menu mostra a saúde geral: vermelha pulsando (“Uma conexão caiu”), amarela (“Conectando…”), verde (“Todas as conexões ativas”) ou cinza.</li>
+  <li>Uma <strong>faixa vermelha</strong> aparece em todas as telas quando um número está desconectado: “WhatsApp [apelido] está desconectado — nenhuma mensagem entra nem sai.”, com o botão <em>Escanear o QR</em> ou <em>Ver conexões</em>. Quem não é administrador vê “Peça a quem administra para revisar a conexão do WhatsApp.”.</li>
+  <li>Quando um número cai, a <a href="#alertas">Central de avisos</a> recebe um aviso crítico, que se resolve sozinho quando ele volta a “Conectado”.</li>
+  <li>Em segundo plano, um vigia confere os números a cada 5 minutos e um reconciliador do servidor corrige o estado a cada 60 segundos (religando sessões “Parado”, mas nunca “Caiu” nem “Escaneie o QR”). <strong>Um número que não existe no servidor de WhatsApp é gravado como “Parado”</strong>: foi o que aconteceu com o número de demonstração.</li>
+</ul>
+
+<h3 id="conectar">Conectar um número por QR</h3>
+<ol class="passos">
+  <li>Clique em <span class="ui">Conectar novo WhatsApp</span>. O diálogo se chama “Conectar novo WhatsApp” (ou “Reconectar [nome]”) e diz “Preparando o código…”.</li>
+  <li>Escolha <strong>QR Code</strong> (padrão) ou <strong>Conectar por código</strong>.</li>
+  <li><strong>QR Code:</strong> no celular, abra <em>WhatsApp → Aparelhos conectados → Conectar um aparelho</em> e leia. O QR se renova sozinho a cada 15 segundos (ele vale cerca de 20).</li>
+  <li><strong>Código:</strong> escreva o telefone com código do país e DDD, clique em <span class="ui">Gerar código</span> e, no celular, <em>… → Conectar com número de telefone</em>, digitando o código <code>XXXX-XXXX</code> mostrado. Só um pedido a cada 30 segundos.</li>
+  <li>Quando conectar, o diálogo mostra “Conectado!” e fecha com o aviso “WhatsApp conectado!”.</li>
+</ol>
+<p>Fechar o diálogo <strong>não cancela</strong>: a sessão continua esperando o pareamento. Se o aparelho foi desvinculado, o diálogo diz “Este número foi desvinculado do WhatsApp. Para usá-lo de novo é preciso parear outra vez.” com o botão <span class="ui">Gerar novo QR</span>. O novo número nasce com <strong>modo de teste da IA</strong> e teto diário de 250 envios.</p>
+
+<h3 id="reconectar">Reconectar e “Gerar novo QR”</h3>
+<ul>
+  <li><strong>Reconectar</strong> (modo suave): para e religa a sessão, <em>mantendo a credencial</em>. Na maioria das quedas o número volta sozinho, sem QR. Não aparece no número oficial.</li>
+  <li><strong>Gerar novo QR:</strong> <strong>desloga o aparelho</strong> e descarta a credencial — é preciso ler o QR de novo e o risco de bloqueio é alto se repetido. Use só depois que o modo suave falhou.</li>
+</ul>
+
+<h3 id="excluir">Excluir um número</h3>
+<figure class="print media">
+  <img src="img/conexoes-excluir.png" alt="Janela Excluir Atendimento da loja com o que está ligado ao número, numerada de 1 a 3" loading="lazy">
+  <figcaption>A confirmação de exclusão mostra o que está ligado ao número.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Pergunta.</strong> “O número será desconectado do WhatsApp e sai desta lista.” Em seguida o sistema <em>verifica o que está ligado</em> ao número.</li>
+  <li><strong>Cancelar.</strong></li>
+  <li><strong>Excluir.</strong></li>
+</ol>
+<p>Se o número tem histórico, ele é <strong>arquivado</strong>, não apagado. A janela avisa o impacto: “Continua no inbox: 6 conversas e 12 mensagens.” e “Fica salvo, mas sem número — para de atender: 2 versões de agente e 1 roteador de IA.”. Se não há nada ligado: “Este número não tem conversa, mensagem nem configuração ligada a ele.” e a linha é apagada. Excluir <strong>desloga o aparelho</strong> antes de mexer no banco; sem o serviço de WhatsApp a exclusão de número QR fica indisponível. “Para usar este número de novo, será preciso conectá-lo outra vez.” Reconectar um número já excluído é recusado.</p>
+
+<h2 id="protecao">Proteção de envio</h2>
+<p>O painel “Proteção de envio — [número]” define os limites que protegem o número contra bloqueio do WhatsApp. <strong>Campo vazio usa o padrão seguro do sistema</strong> (mostrado dentro do campo).</p>
+<figure class="print">
+  <img src="img/conexoes-protecao.png" alt="Painel Proteção de envio com a data de uso, o aquecimento, as janelas, o ritmo, o atraso humano, o teto diário e o fuso, numerado de 1 a 10" loading="lazy">
+  <figcaption>O painel “Proteção de envio”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Este número é usado desde.</strong> A idade do <em>número</em> (não da conexão). Em branco, ele é tratado como recém-criado e começa liberando pouco por dia. Uma data já salva não some se você limpar o campo: informe outra para mudar.</li>
+  <li><strong>Este número já está aquecido — pular o aquecimento.</strong> Vale só o teto diário. “Pular o aquecimento num número novo é o caminho mais rápido para o bloqueio.” O painel mostra quanto o aquecimento libera hoje (“Hoje o aquecimento libera 20 envio(s) — o número tem 0 dia(s) de uso.”).</li>
+  <li><strong>Janela de resposta (horário local).</strong> Início 0–23 e fim 1–24. Quando o cliente escreve, o agente responde nessa janela. Em branco, segue a de disparo. Use 0 e 24 para responder a qualquer hora.</li>
+  <li><strong>Janela de disparo.</strong> Início e fim. Disparos em massa, prospecção e retomadas de conversa só saem aqui; fora dela o envio fica agendado para a próxima abertura (7h–22h por padrão).</li>
+  <li><strong>Enviar aos domingos.</strong> Ligado por padrão.</li>
+  <li><strong>Ritmo entre envios (segundos).</strong> Intervalo mínimo + “variação de até” (0 a 600 s). Padrão: 1,2 s mais até 0,8 s. “Ritmo cravado parece robô para o WhatsApp.”</li>
+  <li><strong>Atraso humano antes da primeira resposta (ms).</strong> “Ver a notificação”, “Por caractere”, “Mínimo” e “Máximo”: quanto o agente “pensa” antes de responder. O mínimo precisa ser menor ou igual ao máximo.</li>
+  <li><strong>Teto diário de envios.</strong> De 1 a 10.000. Vale o <em>menor</em> entre o teto e o aquecimento. Não dá para apagar o teto por aqui.</li>
+  <li><strong>Fuso horário da janela.</strong> A janela é avaliada nesse fuso. “Usar o padrão” ou uma lista (São Paulo, Buenos Aires, Lisboa, Nova York…).</li>
+  <li><strong>Salvar proteção.</strong> “Proteção de envio atualizada.”</li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Idade do número</th><th>Teto do aquecimento</th></tr></thead>
+  <tbody>
+    <tr><td>0 a 3 dias</td><td>até 20 por dia</td></tr>
+    <tr><td>4 a 7 dias</td><td>até 50 por dia</td></tr>
+    <tr><td>8 a 14 dias</td><td>até 100 por dia</td></tr>
+    <tr><td>15 a 30 dias</td><td>até 200 por dia</td></tr>
+    <tr><td>31 dias em diante</td><td>sem limite de aquecimento</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>Onde a proteção vale.</strong><p>O aquecimento, o teto diário e o ritmo valem para <strong>números de QR</strong> e para o que o sistema envia <em>sozinho</em> (agente de IA, follow-ups, prospecção, campanhas) e para envio por token de API. No <strong>número oficial</strong>, só a janela de horário, o domingo e o fuso valem, mesmo que a tela mostre a ficha. O envio digitado por um atendente na tela do Inbox não passa por esses freios.</p></aside>
+
+<h2 id="ia">Acesso da IA</h2>
+<figure class="print media">
+  <img src="img/conexoes-acesso-ia.png" alt="Painel Acesso da IA no WhatsApp com a lista de números autorizados para teste, numerado de 1 e 2" loading="lazy">
+  <figcaption>O painel “Acesso da IA no WhatsApp”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Números autorizados para teste.</strong> Um telefone com DDI por linha (<code>+5511999998888</code>). “Lista vazia no modo de teste bloqueia todas as respostas automáticas.”</li>
+  <li><strong>Ativar modo de teste</strong> (ou <em>Salvar lista de teste</em>, se já está em teste).</li>
+</ol>
+<ul>
+  <li>O selo de cada número diz: <strong>IA em modo de teste</strong> (a IA só responde aos números autorizados), <strong>IA aberta ao público</strong> ou <strong>IA restrita por origem</strong> (legado).</li>
+  <li><strong>Liberar atendimento ao público</strong> pede confirmação (“A IA poderá atender qualquer pessoa que enviar mensagem neste canal”) e só aparece quando o canal não está aberto.</li>
+  <li>“As mensagens continuam chegando ao Inbox, e sua equipe pode responder manualmente. Os testes são mensagens reais no WhatsApp, com os custos normais de uso.” O agente precisa estar publicado e ligado a este canal; bloqueios do contato e atendimento humano continuam valendo.</li>
+</ul>
+
+<h2 id="grupos">Grupos</h2>
+<p>O painel “Grupos” diz: “Grupos ligados aparecem no chat para os atendentes responderem. A IA nunca responde em grupo.” Tem busca (“Buscar grupo”), contador (“N de M ligados”), um interruptor por grupo e os botões <em>Ligar todos</em> / <em>Desligar todos</em> (com confirmação, um grupo por vez).</p>
+<ul>
+  <li><strong>Só entram no sistema os grupos ligados.</strong> Ligar o <em>primeiro</em> grupo muda o filtro do WhatsApp (todos os grupos passam a chegar, e o sistema descarta os não ligados); desligar o último volta a ignorar.</li>
+  <li>A mudança de filtro <strong>reinicia a sessão do WhatsApp por alguns segundos</strong>.</li>
+  <li>A lista vem <em>ao vivo</em> do WhatsApp: o número precisa estar “Conectado”, senão aparece “O WhatsApp deste número não respondeu.”.</li>
+  <li>O botão aparece também no número oficial, mas ele não lista grupos (“Não consegui ler os grupos deste número.”).</li>
+  <li>Grupos pessoais e de família também aparecem — use a busca para ligar só os de cliente.</li>
+</ul>
+
+<h2 id="oficial">Aba API Oficial (Meta)</h2>
+<p>A <strong>API Oficial</strong> é a conexão aprovada pela Meta — o caminho recomendado para campanhas em massa. Ela exige uma <strong>conta do WhatsApp Business</strong> (WABA), um aplicativo na Meta e um token. Cada organização tem <strong>um número oficial</strong>; escolher outro substitui o atual.</p>
+<figure class="print">
+  <img src="img/conexoes-oficial.png" alt="Aba API Oficial com o assistente Conectar número oficial e o passo Credenciais do seu app na Meta, numerada de 1 a 8" loading="lazy">
+  <figcaption>A sub-aba “Conexão”, antes de conectar o número oficial.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Conexão.</strong> A sub-aba padrão.</li>
+  <li><strong>Templates da Meta.</strong> Veja <a href="#modelos-da-meta">Modelos de mensagem da Meta</a>.</li>
+  <li><strong>Conectar número oficial.</strong> O assistente: “testa a credencial com a Meta, mostra os números da sua conta e faz o registro e o webhook sozinho. Nada é gravado até o último passo.”</li>
+  <li><strong>Token do usuário do sistema.</strong> De 20 a 1.000 caracteres, com as permissões <code>whatsapp_business_management</code> e <code>whatsapp_business_messaging</code> e <strong>sem data de validade</strong>.</li>
+  <li><strong>Chave secreta do aplicativo.</strong> De <em>Configurações do app › Básico</em>. É com ela que o sistema confere que cada mensagem veio da Meta. Use um app só desta empresa.</li>
+  <li><strong>Token de verificação do webhook (opcional).</strong> Em branco, o sistema gera um forte e o envia à Meta.</li>
+  <li><strong>Testar credencial.</strong> Consulta a Meta. <strong>Não grava nada.</strong></li>
+  <li><strong>Prefiro informar os IDs manualmente.</strong> Abre o formulário manual.</li>
+</ol>
+<h3>O passo a passo do assistente</h3>
+<ol class="passos">
+  <li><strong>Credenciais do seu app na Meta</strong> — cole o token e a chave secreta e clique em <span class="ui">Testar credencial</span>. O teste devolve <em>problemas</em> (que impedem conectar) ou <em>avisos</em>: token expirado, token inválido, falta de permissão, <em>app em modo de desenvolvimento</em> (a Meta só entrega as mensagens dos clientes com o app em “Live”), chave secreta de outro app, token sem acesso a nenhuma conta do WhatsApp, ou token com data para expirar (aviso).</li>
+  <li><strong>Escolha o número</strong> — para cada conta alcançada há um <em>checklist</em>: <em>App da Meta em Live</em>, <em>Forma de pagamento</em> e <em>Empresa verificada</em>. Só “app não liberado” bloqueia; os outros orientam (sem pagamento só saem as mensagens de atendimento grátis; sem verificação o limite de mensagens fica baixo). Escolha o número; se a conta só tem um, ele já vem escolhido.</li>
+  <li><strong>Registrar e conectar</strong> — informe o <strong>PIN de confirmação em duas etapas</strong> (6 dígitos: se o número já tem PIN, use o mesmo; se não, o que você digitar vira o PIN) e <em>Para que serve este número?</em> (<strong>Atendimento</strong>, <strong>Campanha</strong> ou <strong>Ambos</strong>). Clique em <span class="ui">Registrar e conectar</span>.</li>
+</ol>
+<p>Outras formas de conectar, com o mesmo resultado: <strong>Conectar com Facebook</strong> (só aparece se a instalação ligou o Embedded Signup: você entra com a sua conta do Facebook, escolhe a empresa e o número) e o <strong>formulário manual</strong>.</p>
+<figure class="print media">
+  <img src="img/conexoes-oficial-manual.png" alt="Formulário manual Conectar canal oficial com os IDs e o token de acesso, numerado de 1 a 5" loading="lazy">
+  <figcaption>O formulário manual “Conectar canal oficial”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>ID do número de telefone.</strong> Obrigatório, mínimo 5 caracteres.</li>
+  <li><strong>ID da conta do WhatsApp Business.</strong> Obrigatório.</li>
+  <li><strong>ID da conta de mensagens.</strong> Opcional; só é obrigatório quando o token alcança mais de uma conta de mensagens neste número.</li>
+  <li><strong>Token de acesso.</strong> Guardado cifrado; não é exibido de volta em nenhum momento.</li>
+  <li><strong>Validar e conectar.</strong> A credencial é <em>validada com a Meta antes de gravar</em> — se o número não responder, nada é salvo.</li>
+</ol>
+<h3>O que a conexão faz</h3>
+<ol class="passos">
+  <li>Confere, na Meta, que o número responde ao token e <strong>pertence à conta (WABA) informada</strong>.</li>
+  <li>Com a chave secreta, confere que ela é do mesmo app do token.</li>
+  <li>Com o PIN, <strong>registra o número na API da Meta</strong> (isto altera o registro do número lá; erros possíveis: PIN incorreto, número ainda não verificado por código, tentativas demais, “Registros demais para este número: a Meta permite 10 em 72 horas.”).</li>
+  <li><strong>Grava</strong> a sessão com tudo cifrado e o estado “Conectado”.</li>
+  <li>Registra o <strong>webhook</strong> do número na Meta. Se falhar, o canal <em>envia mas não recebe</em>: aparece “Webhook pendente” com o motivo e o botão <span class="ui">Tentar de novo</span>.</li>
+  <li>Com app próprio, assina os campos de saúde e de modelos no app. Se falhar, o canal fica conectado sem saúde.</li>
+</ol>
+<h3>Depois de conectado</h3>
+<ul>
+  <li><strong>Cartão do canal:</strong> nome verificado na Meta, telefone, o estado cru em inglês (<code>WORKING</code>), “credencial guardada” ou “sem credencial” (vermelho), “app próprio” ou “app da instalação” e “uso: Atendimento, Campanha, Ambos ou Não declarado”.</li>
+  <li><strong>Saúde do número:</strong> <em>Qualidade</em> (Verde, Amarela, Vermelha, Sem avaliação), <em>Limite do portfólio</em> (“até 250 conversas por dia”, “até 1.000”… ou “Ilimitado”) e <em>Última atualização</em>. A Meta avisa por webhook quando a qualidade ou o limite mudam; se a qualidade cai, um aviso vai para a Central, e campanhas do número podem pausar sozinhas.</li>
+  <li><strong>Uso do número:</strong> declare <em>Atendimento</em>, <em>Campanha</em> ou <em>Ambos</em>; grava na hora (“Uso do número salvo.”). Se não declarado, o sistema avisa que isso orienta os disparos.</li>
+  <li><strong>Webhook:</strong> “Webhook registrado pela instalação” (não precisa colar nada na Meta) ou “Cole isto no painel da Meta”, com a <em>URL de callback</em>, o <em>token de verificação</em> e os <em>campos a assinar</em> (<code>messages</code>, <code>message_template_status_update</code>, <code>phone_number_quality_update</code>…). Sem webhook “o canal envia, mas não recebe — as respostas do cliente não chegam e a janela de 24 horas nunca abre”.</li>
+  <li><strong>Para integrar:</strong> endpoint e IDs, com <span class="ui">Copiar dados</span>. O token nunca aparece. <em>Um número tem um único webhook</em>: para operar em dois sistemas ao mesmo tempo, um deles precisa reencaminhar as mensagens ao outro.</li>
+</ul>
+<p>O número oficial <strong>não</strong> usa o aquecimento, o teto diário nem o ritmo do motor de proteção. O risco dele é de <em>qualidade</em> e de <em>limite da Meta</em>, e cada mensagem de modelo é cobrada pela Meta.</p>
+
+<h2 id="telefone">Aba Telefone</h2>
+<p>“Números que recebem ligações. Cada número aponta pra um agente de voz e um modo de atendimento.” Sem nenhum número: “Nenhum número cadastrado ainda.”. O botão <span class="ui">Novo número</span> abre o cadastro.</p>
+<figure class="print media">
+  <img src="img/conexoes-telefone-novo.png" alt="Janela Novo número com o número, o rótulo, o modo de atendimento e o agente de voz, numerada de 1 a 5" loading="lazy">
+  <figcaption>A janela “Novo número”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Número (E.164).</strong> De 8 a 20 caracteres, o “+” é opcional.</li>
+  <li><strong>Rótulo (opcional).</strong> Até 120 caracteres.</li>
+  <li><strong>Modo de atendimento.</strong> <em>IA responde</em> (padrão), <em>Time humano</em> ou <em>IA, depois time humano</em>.</li>
+  <li><strong>Agente de voz.</strong> “Nenhum agente” ou um agente de voz publicado. Sem nenhum: “Nenhum agente de voz publicado ainda — crie um em IA › Agentes.”.</li>
+  <li><strong>Cadastrar.</strong> Cria o número já ativo.</li>
+</ol>
+<p>Cada número cadastrado mostra o selo <em>Ativo/Inativo</em>, o seletor de modo, o seletor de agente de voz e o interruptor <em>Ativo</em> — <strong>cada mudança grava na hora</strong>, sem botão salvar. O número é <strong>único em todo o sistema</strong> (“Esse número já está cadastrado.”). Sem o troncal de voz configurado no servidor: “Troncal de voz não configurado no servidor.”. Cadastrar e editar ficam na auditoria (<code>phone_number.created</code>, <code>.updated</code>).</p>
+
+<h2 id="voz">Aba Chamada de voz</h2>
+<p>Liga a chamada de voz <em>pelo próprio WhatsApp</em>: um <strong>segundo aparelho vinculado</strong> ao mesmo número, só para ligar e atender. Há três estados:</p>
+<ul>
+  <li><strong>“A chamada de voz não está configurada.”</strong> — falta o endereço do serviço (<code>WACALLS_API_BASE_URL</code>) na instalação. <em>Foi o que a conta de demonstração mostrou.</em></li>
+  <li><strong>“A chamada de voz está desligada nesta empresa.”</strong> — ligue antes em <em>Configurações › Segurança</em>, onde está o aviso sobre o risco de bloqueio.</li>
+  <li><strong>Cartão “Chamada de voz por WhatsApp”</strong> — selo <em>Conectado</em> ou <em>Não pareado</em>. Não pareado: botão <span class="ui">Parear chamada de voz</span> (com “Risco aceito: um segundo aparelho vinculado ao mesmo número pode ser sinalizado pelo WhatsApp.”); depois aparece o QR para ler em <em>Aparelhos conectados</em>. Pareado: “Pronto para ligar — o botão de chamar aparece nos contatos com telefone.”.</li>
+</ul>
+<p>Não há botão de desparear nesta aba. Esta é a chamada pelo <em>WhatsApp</em>; as ligações por linha telefônica comum (SIP) ficam em <a href="#chamadas">Chamadas</a>.</p>
+
+<h2 id="papeis">Quem pode o quê</h2>
+<p>A tela só abre para o <strong>Administrador</strong>. Cada ação de gravação é auditada (<code>channel.connected</code>, <code>channel.reconnected</code>, <code>channel.deleted</code> ou <code>channel.archived</code>, <code>ai.pacing_knobs_updated</code>, <code>channel.ai_access_updated</code>, <code>channel.usage_declared</code>…), exige a verificação em duas etapas quando você tem esse fator e é bloqueada em sessão de suporte somente-leitura. Nenhuma ação desta tela manda mensagem a clientes.</p>

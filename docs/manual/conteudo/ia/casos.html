@@ -1,0 +1,65 @@
+<!--meta {"id":"casos","grupo":"ia","titulo":"Casos","ordem":13,"resumo":"Quando a IA trava em algo que só uma pessoa resolve, ela abre um caso aqui e continua conversando com o cliente enquanto espera a sua decisão.","palavras":["caso","casos","escalação","escalar","handoff","passar para humano","aguardando você","concluí","ia travou","decisão"],"onde":"Agente de IA › Casos (também no menu lateral, com contador)","quem":"Atendente ou acima. Atendente vê só os casos das conversas que tem permissão de ver; Gerente e Administrador veem todos.","rotas":["/app/ai/cases"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O agente de IA atende sozinho até esbarrar em algo que ele não pode ou não sabe resolver: confirmar um pagamento, aprovar uma troca, negociar um valor. Nessa hora ele <strong>abre um caso</strong> para a sua equipe, explicando o que o cliente precisa e por que ele travou, e <strong>continua conversando com o cliente</strong> enquanto espera a sua resposta. A resposta que você der volta para a IA, que conduz o cliente.</p>
+<p>O número vermelho ao lado de <span class="ui">Casos</span> no menu lateral é a quantidade de casos abertos.</p>
+<aside class="nota info"><strong>Caso não é o mesmo que passar a conversa para uma pessoa.</strong><p>Enquanto o caso está aberto, a IA segue atendendo o cliente. Só quando você escolhe <em>“Não consigo — passar pra humano”</em> a conversa deixa de ser da IA e vira um atendimento de pessoa.</p></aside>
+<figure class="print">
+  <img src="img/ia-casos.png" alt="Tela Casos com a lista de casos abertos à esquerda e o detalhe de um caso à direita, numerados de 1 a 10" loading="lazy">
+  <figcaption>A tela de Casos com o primeiro caso aberto.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Aba “Abertos”.</strong> Casos que esperam alguém (você ou o cliente). O número é quantos há.</li>
+  <li><strong>Aba “Concluídos”.</strong> Casos concluídos, cancelados ou repassados a uma pessoa.</li>
+  <li><strong>“Aguardando você”.</strong> O caso espera a sua decisão. É o único estado em que dá para responder.</li>
+  <li><strong>“Aguardando o cliente”.</strong> A IA perguntou algo ao cliente; quando ele responder, o caso volta para você.</li>
+  <li><strong>O que o cliente precisa.</strong> Resumo escrito pela IA.</li>
+  <li><strong>Por que a IA travou.</strong> O bloqueio que a IA encontrou.</li>
+  <li><strong>As três decisões.</strong> Veja <a href="#casos--decidir">Responder um caso</a>.</li>
+  <li><strong>Sua resposta para a IA.</strong> Obrigatória, até 4.000 caracteres.</li>
+  <li><strong>Enviar.</strong> Só acende depois que você escolhe uma das três opções e escreve a resposta.</li>
+  <li><strong>Conversar sobre o caso.</strong> Uma conversa privada com a IA para entender o caso antes de decidir. Veja abaixo.</li>
+</ol>
+
+<h2 id="lista">A lista</h2>
+<p>Cada linha mostra o título do caso, a <strong>situação</strong> e, abaixo, <em>tipo · contato · há quanto tempo</em>. Os tipos são: <em>Horário, Dúvida, Algo deu errado, Pagamento, Acesso ou cadastro</em> e <em>Outro</em>. A IA escolhe o tipo só para ajudar a triar.</p>
+<table class="tabela">
+  <thead><tr><th>Situação</th><th>Significa</th></tr></thead>
+  <tbody>
+    <tr><td><span class="selo">Aguardando você</span></td><td>Precisa da sua decisão.</td></tr>
+    <tr><td><span class="selo">Aguardando o cliente</span></td><td>A IA está esperando o cliente responder.</td></tr>
+    <tr><td><span class="selo ok">Concluído</span></td><td>Foi resolvido.</td></tr>
+    <tr><td><span class="selo">Virou atendimento humano</span></td><td>A conversa foi passada para uma pessoa.</td></tr>
+    <tr><td><span class="selo">Cancelado</span></td><td>O caso foi encerrado sem resposta.</td></tr>
+  </tbody>
+</table>
+<p>Um caso marcado como <strong>“Aberto automaticamente”</strong> foi aberto pelo próprio sistema: a IA prometeu passar a conversa para uma pessoa mas não abriu o caso, então o sistema abriu por ela.</p>
+
+<h2 id="decidir">Responder um caso</h2>
+<p>No painel <em>“O que você quer fazer?”</em> há três opções. <strong>Nenhuma vem marcada</strong>:</p>
+<table class="tabela">
+  <thead><tr><th>Opção</th><th>O que acontece</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Concluí</strong></td><td>A IA avisa o cliente e encerra o assunto. A IA escreve e <strong>envia uma mensagem de verdade ao cliente</strong> no WhatsApp, usando o que você escreveu como base. Não dá para reabrir.</td></tr>
+    <tr><td><strong>Preciso de info do cliente</strong></td><td>A IA pergunta ao cliente e o caso passa para “Aguardando o cliente”. Quando ele responde, o caso volta para você.</td></tr>
+    <tr><td><strong>Não consigo — passar pra humano</strong></td><td>Sai da IA: a conversa vira um atendimento humano de verdade (com um resumo da passagem), o cliente é avisado e o caso fica como “Virou atendimento humano”.</td></tr>
+  </tbody>
+</table>
+<ol class="passos">
+  <li>Abra o caso e leia <em>“O que o cliente precisa”</em> e <em>“Por que a IA travou”</em>. Se precisar, use <em>Conversar sobre o caso</em>.</li>
+  <li>Escolha uma das três opções.</li>
+  <li>Escreva sua resposta para a IA (por exemplo, <em>“Pix confirmado, pode liberar o pedido”</em>).</li>
+  <li>Clique em <span class="ui">Enviar</span>.</li>
+</ol>
+<aside class="nota perigo"><strong>Enviar faz mensagem sair para o cliente e não tem volta.</strong><p>“Concluí” e “Preciso de info do cliente” fazem a IA escrever ao cliente de verdade; “Passar pra humano” também o avisa. Releia a sua resposta antes de enviar. Se duas pessoas respondem ao mesmo tempo, a segunda recebe o aviso de que o caso já foi respondido.</p></aside>
+
+<h2 id="conversar">Conversar sobre o caso</h2>
+<p>Abaixo da decisão há um chat interno. Ele serve para você perguntar à IA antes de decidir, por exemplo <em>“Por que a IA não resolveu sozinha?”</em>, <em>“O que o cliente já tentou?”</em> ou <em>“O que muda se eu concluir agora?”</em> (as três sugestões só preenchem o campo: não enviam sozinhas). Digite sua pergunta e clique em <span class="ui">Perguntar</span> (ou tecle <kbd>Ctrl</kbd> + <kbd>Enter</kbd>).</p>
+<ul>
+  <li>É uma <strong>conversa interna</strong>: o cliente não vê nada, e a IA aqui não envia mensagem nem muda o caso.</li>
+  <li>Cada pergunta <strong>gasta IA</strong> na sua chave. Há limites: 12 perguntas por minuto por pessoa e 120 por caso a cada 24 horas.</li>
+  <li>Se o agente que abriu o caso foi removido, arquivado ou pausado, quem responde é o <em>assistente padrão da organização</em>, que não conhece as instruções daquele agente (a tela avisa). Se nenhum provedor de IA estiver configurado, ela manda configurar em <span class="ui">IA › Provedores</span>.</li>
+</ul>
+<h3>A linha do tempo</h3>
+<p>No pé do caso, uma <strong>linha do tempo</strong> registra, em ordem, o que aconteceu: <em>A IA abriu o caso, A IA perguntou ao cliente, O cliente respondeu, Você respondeu, Concluído, Virou atendimento humano</em> e, quando o aviso por WhatsApp está ligado, <em>Avisamos o suporte no WhatsApp</em>.</p>
+<aside class="nota dica"><strong>Quer ser avisado por WhatsApp quando abrir um caso?</strong><p>Veja <a href="#aviso-whatsapp">Aviso no WhatsApp</a>. Quem tem papel de Atendente também recebe o aviso na <a href="#alertas">Central de avisos</a>, no sino do cabeçalho.</p></aside>

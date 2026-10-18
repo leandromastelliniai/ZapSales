@@ -1,0 +1,44 @@
+<!--meta {"id":"uso-ia","grupo":"ia","titulo":"Uso e orçamento","ordem":18,"resumo":"Quanto a IA custou, quantos atendimentos fez, quanto demorou para responder e quantas vezes chamou uma pessoa — e o teto de gasto mensal, para avisar ou parar a IA.","palavras":["uso","orçamento","custo","gasto","limite","dólar","tokens","parar a ia","avisar","teto","latência","handoff"],"onde":"Agente de IA › Uso e orçamento (Ver tudo em IA › Acompanhar o agente)","quem":"Gerente ou acima. Editar o limite de gasto: Administrador.","rotas":["/app/ai/usage"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Esta tela (“Uso de IA”) mostra, para os <strong>últimos 30 dias</strong>, o que a inteligência artificial custa e como ela se comporta. Também é onde se define o <strong>orçamento mensal</strong>: um teto de gasto que pode apenas <em>avisar</em> ou <em>parar a IA</em> quando for atingido.</p>
+<aside class="nota info"><strong>Tudo está em dólar.</strong><p>Os provedores de IA cobram em dólar, e a tela mostra assim (US$), inclusive o orçamento.</p></aside>
+<figure class="print">
+  <img src="img/ia-uso.png" alt="Tela Uso de IA com o cartão de orçamento mensal, os filtros, os quatro quadros de números e os gráficos, numerados de 1 a 12" loading="lazy">
+  <figcaption>Uso de IA numa organização de demonstração.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Orçamento mensal de IA.</strong> O gasto do mês corrente, com a barra de progresso. Fica azul, amarela ao passar do percentual de aviso e vermelha ao chegar a 100%.</li>
+  <li><strong>Editar limite.</strong> Só para Administrador. Veja <a href="#uso-ia--orcamento">Definir o orçamento</a>.</li>
+  <li><strong>Faixa amarela de aviso.</strong> Aparece quando algo torna o número menos confiável. Aqui: o produto ainda não sabe o preço do modelo em uso, então o gasto mostrado é <em>menor que o real</em> e a parada no limite pode não acontecer. Enquanto isso, acompanhe o gasto no painel do provedor.</li>
+  <li><strong>Gasto do mês.</strong> “US$ 1,60 gastos de US$ 5,00”, mais o percentual do limite e a frase do que acontece ao chegar nele.</li>
+  <li><strong>Filtro Agente.</strong> Todos, ou um agente específico.</li>
+  <li><strong>Filtro Tipo de uso.</strong> Veja o aviso abaixo.</li>
+  <li><strong>De / Até.</strong> Mudam o período (por padrão, 30 dias; no máximo, 90). Os filtros ficam no endereço da página.</li>
+  <li><strong>Custo no período.</strong></li>
+  <li><strong>Atendimentos com IA.</strong> Na verdade, o número de <em>chamadas</em> à IA (inclusive as que falharam), não de conversas: um atendimento gera várias.</li>
+  <li><strong>Passaram para uma pessoa.</strong> A proporção entre as vezes que a IA passou o atendimento para uma pessoa e as mensagens recebidas. Quanto mais alto, mais a IA precisou de ajuda.</li>
+  <li><strong>Tempo de resposta.</strong> O pior caso comum (p95), com a mediana: “a maioria responde em 4,2 s; este é o pior caso comum”.</li>
+  <li><strong>Gráficos.</strong> Quatro linhas por dia: quanto gastou (US$), volume de texto processado, tempo de resposta (a mediana e o pior caso comum) e quanto foi para uma pessoa (%).</li>
+</ol>
+<aside class="nota atencao"><strong>O filtro “Tipo de uso” usa nomes técnicos antigos.</strong><p>Ele oferece nomes como <code>bot_respond</code> ou <code>sentiment_classify</code> e não inclui o tipo principal (a resposta ao cliente). Filtrar por um tipo que não tem registros mostra “Sem dados”. Se um filtro devolver vazio, volte para “Todas”.</p></aside>
+
+<h2 id="orcamento">Definir o orçamento</h2>
+<p>Clique em <span class="ui">Editar limite</span> (Administrador). A janela <em>“Orçamento de IA”</em> oferece três comportamentos:</p>
+<table class="tabela">
+  <thead><tr><th>Opção</th><th>O que acontece</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Só acompanhar</strong></td><td>A IA nunca para por gasto. Você vê o número aqui e decide.</td></tr>
+    <tr><td><strong>Me avisar ao passar de N%</strong></td><td>Ao passar do percentual escolhido, abre-se um aviso na Central. A IA <strong>continua respondendo</strong>.</td></tr>
+    <tr><td><strong>Parar a IA ao chegar no limite</strong></td><td>A IA para de responder. As conversas em andamento <strong>vão para a fila de atendimento humano</strong>: ninguém fica sem resposta, mas alguém precisa responder. Cada conversa volta ao automático pelo botão “Devolver ao automático” no cabeçalho dela.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>Limite mensal (US$):</strong> para avisar ou parar, o mínimo é <strong>US$ 1,00</strong> (valores menores são considerados erro de digitação).</li>
+  <li><strong>Avisar ao chegar em (%):</strong> de 50 a 99.</li>
+  <li><strong>A parada tem escada:</strong> não dá para ir de “Só acompanhar” direto para “Parar a IA”. Primeiro salve “Me avisar”; depois a parada fica liberada.</li>
+  <li><strong>A parada só vale 72 horas depois de armada</strong>, para você ver o aviso chegar antes de alguma conversa parar. A caixa <em>“Começar a valer agora, sem esperar as 72 horas”</em> dispensa a espera.</li>
+  <li>Afrouxar (de “Parar” para “Avisar” ou “Só acompanhar”) vale na hora.</li>
+</ul>
+<aside class="nota perigo"><strong>“Parar a IA” de fato para o atendimento automático.</strong><p>Ao atingir o limite, os clientes deixam de ter resposta automática até alguém devolver cada conversa ao automático. Use-o sabendo que sua equipe precisa estar pronta para assumir.</p></aside>
+<aside class="nota info"><strong>A instalação pode sobrepor a sua escolha.</strong><p>O dono do servidor pode desligar a proteção ou deixá-la só avisando, em <em>Recursos opcionais</em>, no painel de administração. Quando isso acontece, uma faixa amarela explica que a sua escolha aqui não vale.</p></aside>

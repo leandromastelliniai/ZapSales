@@ -1,0 +1,71 @@
+<!--meta {"id":"admin-visao","grupo":"admin","titulo":"O painel do dono do servidor (visão geral)","ordem":1,"resumo":"O que é o “Modo administrador”, quem entra, como é a moldura do painel, o que vale para todas as empresas, quais telas mostram dados reais e como conceder ou retirar esse acesso.","palavras":["admin","painel","modo administrador","modo plataforma","platform admin","super admin","dono do servidor","instalação","cross-tenant","tenant","mfa","somente leitura","dba","acesso negado","forbidden"],"onde":"Menu do usuário (avatar) › Modo administrador — endereço /admin","quem":"Só o dono do servidor (administrador da plataforma). Quem não é vê “Acesso negado”.","rotas":[]} -->
+
+<h2 id="visao-geral">O que é</h2>
+<p>O <strong>painel do dono do servidor</strong> (chamado “Modo administrador”, “Admin Plataforma” ou, na faixa do topo, <strong>“MODO PLATAFORMA — operação cross-tenant”</strong>) é a área de quem <em>instalou e mantém</em> o ZapSales. Em vez de mostrar uma empresa, mostra <strong>todas as empresas hospedadas na instalação</strong> (no jargão do painel, cada empresa é um “tenant”) e tem as configurações que valem <strong>para todas ao mesmo tempo</strong>: marca, e-mail, cadastro, Google, Meta, módulos.</p>
+<aside class="nota atencao"><strong>Só para quem opera o servidor.</strong><p>Um cliente que usa o ZapSales dentro da própria empresa <em>nunca</em> vê esta área, nem como Administrador da empresa. Administrador da empresa e “administrador da plataforma” são coisas diferentes: o primeiro manda <em>numa</em> empresa; o segundo manda na <em>instalação</em>.</p></aside>
+<aside class="nota info"><strong>Sobre os prints deste capítulo.</strong><p>As capturas foram feitas numa instalação real, com acesso <strong>somente leitura</strong> e com os dados de outras empresas, e-mails reais e segredos <strong>escondidos ou trocados</strong> por nomes de exemplo (por isso aparece, por exemplo, “Padaria Exemplo”). Nenhuma configuração global foi alterada para fazer as imagens.</p></aside>
+
+<h2 id="entrar">Como se chega</h2>
+<figure class="print media">
+  <img src="img/admin-porta.png" alt="Menu do usuário aberto com o item Modo administrador — Configurar este servidor, numerado de 1 a 1" loading="lazy">
+  <figcaption>O item “Modo administrador” no menu do usuário.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Modo administrador — “Configurar este servidor”.</strong> Só aparece para quem é administrador da plataforma. Leva a <code>/admin</code>, que abre o <a href="#admin-dashboard">Dashboard</a>.</li>
+</ol>
+<p>Quem instala o sistema com o <code>kit/instalar.sh</code> já é criado como administrador da plataforma (“Bootstrap inicial do self-host (dono da instância)”); por isso o dono vê o item desde o primeiro login. Dentro do painel, o rodapé do menu tem <span class="ui">Voltar pra app</span> e a faixa amarela do topo tem <span class="ui">Sair pra app pessoal</span>.</p>
+
+<h2 id="moldura">A moldura do painel</h2>
+<figure class="print">
+  <img src="img/admin-menu.png" alt="Painel administrativo com a faixa MODO PLATAFORMA no topo e o menu lateral, numerado de 1 a 7" loading="lazy">
+  <figcaption>A moldura do painel: faixa do topo e menu lateral.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>MODO PLATAFORMA.</strong> Faixa amarela fixa: lembrete visual de que as ações afetam a instalação inteira. À direita há o botão de tema (claro/escuro).</li>
+  <li><strong>Sair pra app pessoal.</strong> Volta ao <code>/app</code>.</li>
+  <li><strong>Dashboard.</strong></li>
+  <li><strong>Tenants.</strong></li>
+  <li><strong>Marca.</strong></li>
+  <li><strong>Módulos.</strong> O último item.</li>
+  <li><strong>Voltar pra app</strong> e o e-mail de quem está logado, no rodapé do menu.</li>
+</ol>
+<p>O menu lateral, na ordem: <a href="#admin-dashboard">Dashboard</a>, <a href="#admin-usage--inbox">Inbox</a>, <a href="#admin-tenants">Tenants</a>, <a href="#admin-audit">Audit</a>, <a href="#admin-audit--lgpd">LGPD</a>, <a href="#admin-audit--incidentes">Incidents</a>, <a href="#admin-usage">Usage</a>, <a href="#admin-usage--users">Users</a>, <a href="#admin-usage--platform-admins">Platform Admins</a>, <a href="#admin-marca">Marca</a>, <a href="#admin-google">Google Agenda</a>, <a href="#admin-google--meta">API Oficial (Meta)</a>, <a href="#admin-cadastro">Cadastro</a>, <a href="#admin-cadastro--email">E-mail</a>, <a href="#admin-sistema">Recursos opcionais</a>, <a href="#admin-destinos">Destinos internos</a>, <a href="#admin-destinos--precos">Preços da Meta</a>, <a href="#admin-destinos--credenciais">Credenciais</a>, <a href="#admin-extensoes">Extensões</a> e <a href="#admin-extensoes--modulos">Módulos</a>. Em telas pequenas o menu vira uma gaveta (botão hambúrguer, “Abrir menu de navegação”). Os rótulos “Dashboard”, “Inbox”, “Tenants”, “Audit”, “Incidents”, “Usage”, “Users” e “Platform Admins” são mantidos em inglês.</p>
+
+<h2 id="acesso">Quem pode abrir e quem pode alterar</h2>
+<ul>
+  <li><strong>Abrir (ler):</strong> qualquer administrador da plataforma <em>ativo</em>. Sem login, vai para a tela de entrada; sem ser administrador (ou revogado), vai para <a href="#admin-acesso-negado">Acesso negado</a>; se a linha dele exige verificação em duas etapas e a sessão não a provou, vai para a verificação.</li>
+  <li><strong>Alterar (escrever):</strong> exige o escopo <code>full</code> <em>e</em> a verificação em duas etapas em dia (quem <em>tem</em> o fator precisa tê-lo provado na sessão). O escopo <code>support_readonly</code> abre o painel inteiro, mas <strong>toda gravação é recusada</strong> (“Seu acesso à administração da plataforma é somente leitura.”) — útil para demonstrar sem risco.</li>
+  <li>Telas de configuração (Marca, Google, Meta, Cadastro, E-mail, Recursos opcionais, Destinos internos, Preços da Meta, Credenciais, Extensões, Módulos) respondem <strong>“página não encontrada”</strong> para quem não é administrador da plataforma: para os demais, elas simplesmente não existem.</li>
+  <li>Toda leitura também deixa rastro: abrir listas e telas do painel grava ações como <code>platform_admin.tenants_listed</code> na <a href="#auditoria">Auditoria</a>, marcadas como feitas “como administrador da plataforma”.</li>
+</ul>
+<figure class="print media">
+  <img src="img/admin-acesso-negado.png" alt="Tela Acesso negado com os botões Início e Voltar para /app" loading="lazy">
+  <figcaption>A tela de acesso negado (<code>/admin/forbidden</code>).</figcaption>
+</figure>
+<p id="admin-acesso-negado"><strong>Acesso negado.</strong> Mostra: “Esta área é restrita a administradores da plataforma com MFA ativo. Se você acredita que isso é um erro, contate o time de operações.” e os botões <span class="ui">Início</span> e <span class="ui">Voltar para /app</span>. O texto fala em “MFA ativo”, mas na instalação padrão a verificação em duas etapas <em>não</em> é exigida do dono; a mensagem é a mesma para quem simplesmente não é administrador.</p>
+
+<h2 id="conceder">Como virar (e deixar de ser) administrador da plataforma</h2>
+<p>Não existe tela nem API para conceder ou retirar esse poder — é de propósito (“somente via DBA + dupla confirmação”). Quem tem acesso ao banco de dados faz uma inclusão na tabela <code>platform_admins</code> (com <code>user_id</code>, <code>granted_by</code>, <code>reason</code>, <code>scope</code> = <code>full</code> ou <code>support_readonly</code> e <code>mfa_required</code>) e, para retirar, preenche <code>revoked_at</code> (nada é apagado). Veja também a tela <a href="#admin-usage--platform-admins">Platform Admins</a>, que só lista.</p>
+
+<h2 id="alcance">O que cada tela alcança</h2>
+<table class="tabela">
+  <thead><tr><th>Efeito</th><th>Telas</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Só leitura</strong></td><td>Dashboard, Inbox, Audit, LGPD, Usage, Users, Platform Admins, Extensões e as abas Saúde e Agente da ficha do tenant.</td></tr>
+    <tr><td><strong>Vale para <em>todas</em> as empresas</strong></td><td>Marca, Google Agenda, API Oficial (Meta), Cadastro, E-mail, Recursos opcionais, Destinos internos, Preços da Meta, Credenciais e Módulos.</td></tr>
+    <tr><td><strong>Afeta <em>uma</em> empresa</strong></td><td>Novo tenant, Suspender/Reativar, Acompanhar organização e Resolver incidente.</td></tr>
+  </tbody>
+</table>
+<h3 id="dados-reais">Telas que mostram dados de clientes</h3>
+<p>Todo o painel usa um acesso que ignora o isolamento por empresa. Por isso <strong>Dashboard, Inbox (mensagens reais), Tenants, Audit, LGPD, Incidents, Usage, Users, Platform Admins e Cadastro (pedidos)</strong> expõem dados reais de clientes e funcionários: não tire prints deles sem esconder o que é pessoal. As telas de configuração não têm dados de clientes, mas mostram os <em>4 últimos caracteres</em> de segredos, remetentes e endereços.</p>
+<h3 id="irreversiveis">Ações difíceis de desfazer</h3>
+<ul>
+  <li><strong>Resolver incidente:</strong> não há reabrir.</li>
+  <li><strong>Recusar pedido de cadastro:</strong> é final para aquela conta.</li>
+  <li><strong>Suspender empresa:</strong> reversível, mas mensagens na fila e tarefas agendadas são <em>descartadas</em> e não voltam.</li>
+  <li><strong>Instalar módulo:</strong> cria tabelas no banco; a tela não desinstala.</li>
+  <li><strong>Salvar a tabela de Preços da Meta:</strong> apaga do banco as linhas que você tirou.</li>
+  <li><strong>Trocar a credencial do Google ou o token da Meta:</strong> derruba as conexões existentes.</li>
+</ul>
+<h3 id="estado-limpo">Como o painel fica numa instalação nova</h3>
+<p>Dashboard com “Tenants Ativos 1”, zeros e “Nenhum alerta crítico no momento. Tudo certo!”; Tenants com 1 linha (“Onboarding” até a empresa concluir os primeiros passos); Users com 1 pessoa; Platform Admins com 1 linha (escopo <code>full</code>); Extensões vazias; Módulos com o cartão “Honorários (advocacia)” e o botão “Instalar”; Preços da Meta já com o Brasil; Cadastro em modo aberto.</p>
