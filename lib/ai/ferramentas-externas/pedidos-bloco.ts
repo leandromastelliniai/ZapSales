@@ -27,6 +27,14 @@ export interface PedidoParaOBloco {
 
 const MAXIMO_DE_PEDIDOS = 8;
 
+/**
+ * O valor veio do cliente, em última instância. Aqui ele não pode fechar a aspa do delimitador nem
+ * abrir uma linha nova no prompt: o que entra é uma só linha, sem « » e sem quebras.
+ */
+function limpaParaOPrompt(valor: string): string {
+  return valor.replace(/[«»\r\n\u2028\u2029]+/g, " ");
+}
+
 export function blocoDePedidosDaConversa(pedidos: readonly PedidoParaOBloco[], agora: Date): string {
   if (pedidos.length === 0) return "";
   const recentes = [...pedidos]
@@ -35,7 +43,7 @@ export function blocoDePedidosDaConversa(pedidos: readonly PedidoParaOBloco[], a
   const linhas = recentes.map((p) => {
     const estado = estadoEfetivoDoPedido({ status: p.status, expires_at: p.expires_at }, agora);
     const dados = resumoDosDados(p.arguments)
-      .map((l) => `${l.campo}=«${l.valor}»`)
+      .map((l) => `${l.campo}=«${limpaParaOPrompt(l.valor)}»`)
       .join(", ");
     // «Chamar de novo não refaz a ação» só é verdade DENTRO da janela da repetição.
     const dentroDaJanela = agora.getTime() - new Date(p.created_at).getTime() < JANELA_DA_REPETICAO_HORAS * 3_600_000;

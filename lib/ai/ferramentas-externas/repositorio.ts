@@ -192,7 +192,10 @@ export async function editarFerramenta(
   if (patch.url !== undefined) mudanca.url = patch.url;
   if (patch.parametros !== undefined) mudanca.parameters = patch.parametros;
   if (patch.efeito !== undefined) mudanca.effect = patch.efeito;
+  // Trocar o EFEITO sem decidir a chave devolve a chave ao padrão do efeito. Sem isto, uma consulta
+  // que alguém desligou de propósito virava «altera dados» herdando uma decisão que não era para ela.
   if (patch.pedir_aprovacao !== undefined) mudanca.require_approval = patch.pedir_aprovacao;
+  else if (patch.efeito !== undefined) mudanca.require_approval = null;
   if (patch.validade_horas !== undefined) mudanca.approval_ttl_hours = patch.validade_horas;
   if (patch.ativa !== undefined) mudanca.active = patch.ativa;
   // O identificador (`slug`) NÃO muda quando o nome muda: versões publicadas e o

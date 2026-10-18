@@ -1043,6 +1043,7 @@ export const AUDIT_ACTIONS = [
   "ai.external_tool_request_rejected",
   "ai.external_tool_request_expired",
   "ai.external_tool_request_executed",
+  "ai.external_tool_request_pruned",
 
   // A assinatura do emissor (#2066, PR #2079): quem ligou ou desligou o nome de
   // quem fala nas mensagens ao cliente, e com que nome a IA passou a assinar.

@@ -731,10 +731,10 @@ planilha, ERP, Make, n8n). Destino (doutrina de extensões): *núcleo* — melho
 tem dependência paga; "se nenhuma organização cadastrar uma ferramenta, a operação comum continua
 inteira": sim, e a versão de todo agente que já existia nasce com `external_tool_ids = '{}'`.
 
-**Nesta etapa só entram ferramentas de CONSULTA.** O vocabulário do efeito já tem `altera` (para a etapa
-da aprovação), mas a linha só pode existir **inativa** (CHECK `agent_external_tools_altera_so_inativa`),
-a rota recusa com `external_tool_mutating_blocked` + o motivo escrito, e o motor do turno nem monta nem
-executa o que não é consulta — três travas independentes.
+**Na #94 só entravam ferramentas de CONSULTA; a #95 (§12d) liberou as que ALTERAM algo.** O texto antigo
+dizia que `altera` só existia inativa (CHECK `agent_external_tools_altera_so_inativa`), que a rota
+recusava com `external_tool_mutating_blocked` e que o motor nem montava o que não era consulta — as três
+travas **saíram** na 0552, e a proteção passou a ser o pedido de aprovação (§12d).
 
 **Dados**
 
@@ -846,9 +846,19 @@ aprovação: a Central é o único lugar onde se decide.
 Mapa vivo: `docs/architecture/aprovacao-de-acoes-externas.architecture.json`. Guia de quem recebe:
 `docs/integracao/ferramentas-externas-do-agente.md` §6.
 
-**Limite conhecido (LGPD):** os dados que o agente preencheu ficam em `arguments` do pedido (a execução precisa
-deles). Eles não entram na cascata de anonimização do contato — a tabela não tem FK para `contacts`. Dívida
-registrada: uma poda dos `arguments` de pedido concluído há mais de N dias.
+**LGPD:** os dados que o agente preencheu ficam em `arguments` do pedido (a execução precisa deles) e o que o
+outro sistema devolveu, em `outcome_content` (até 4.000 caracteres). Eles **não** entram na cascata de
+anonimização do contato — a tabela não tem FK para `contacts`. O que os alcança é a **poda**: o cron
+`external-tool-requests-expiry` apaga os dois campos de pedido **concluído há mais de 90 dias**
+(`data_pruned_at`; a linha, o estado e o desfecho ficam) e audita `ai.external_tool_request_pruned`. A
+auditoria só recebe o resumo, com campos sensíveis (`senha`, `token`, `cpf`, `cvv`, `pin`, `otp`, cartão…)
+mascarados por NOME do campo — valor sensível num campo de outro nome vai em claro, então nomeie os campos da
+ferramenta com cuidado. Dívida registrada: alcançar `arguments` na cascata do contato antes dos 90 dias.
+
+**Pedido preso em «executando».** Se o processo cair entre reivindicar e fechar, a rodada do cron passa o
+pedido (parado há mais de 15 minutos) para **falha incerta**, avisa a Central e audita — sem isso o índice da
+chamada viva bloquearia a mesma chamada para sempre. A rota de decisão também fecha como falha incerta se a
+execução lançar. Para o agente, «executando» é «sendo executada agora — não afirme que foi concluída».
 
 ---
 

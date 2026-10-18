@@ -212,7 +212,9 @@ export async function montarFerramentasExternas(
     await deps.auditar({ ferramenta: f, resultado });
     if (!resultado.ok) {
       await deps.abrirAviso({
-        titulo: `A ${f.effect === "altera" ? "ação" : "consulta"} «${f.name}» falhou`,
+        // Ação que altera leva o pedido no título: a Central deduplica por título, e duas falhas
+        // incertas da mesma ferramenta são dois avisos (a segunda não pode ser engolida).
+        titulo: `A ${f.effect === "altera" ? "ação" : "consulta"} «${f.name}» falhou${pedido ? ` (#${pedido.id.slice(0, 4)})` : ""}`,
         corpo:
           f.effect === "altera"
             ? `O agente tentou executar «${f.name}» durante um atendimento e não conseguiu: ${fraseDoMotivo(resultado.motivo)} ` +

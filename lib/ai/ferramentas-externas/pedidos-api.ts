@@ -307,3 +307,61 @@ export async function abrirAvisoDeFalhaDoPedido(
     });
   }
 }
+
+/** Quanto tempo um pedido pode ficar «executando» antes de ser dado como travado (o prazo da chamada é de 8 s). */
+export const TRAVADO_APOS_MINUTOS = 15;
+/** Depois disto, os dados guardados de um pedido CONCLUÍDO são apagados (a linha e o desfecho ficam). */
+export const PODA_DOS_DADOS_APOS_DIAS = 90;
+
+export interface PedidoTravado {
+  id: string;
+  organization_id: string;
+  tool_id: string;
+  tool_name: string;
+}
+
+/**
+ * O pedido que ficou em `executing` porque o processo caiu entre reivindicar e fechar. O prazo da
+ * chamada é de 8 s: passados 15 minutos, ninguém mais a está fazendo. Não se SABE se o outro sistema
+ * recebeu, então fecha como falha INCERTA (nunca é repetida) e o aviso diz isso. Sem esta rodada o
+ * pedido bloquearia a mesma chamada para sempre (índice da chamada viva) e o agente leria «em curso».
+ */
+export async function recuperarTravados(admin: SupabaseClient, agora: Date = new Date()): Promise<PedidoTravado[]> {
+  const limite = new Date(agora.getTime() - TRAVADO_APOS_MINUTOS * 60_000).toISOString();
+  const { data, error } = await admin
+    .from("agent_external_tool_requests")
+    .update({ status: "failed", uncertain: true, outcome_reason: "travado" })
+    .eq("status", "executing")
+    .lte("updated_at", limite)
+    .select("id, organization_id, tool_id, agent_external_tools(name)");
+  if (error) throw new Error(`recuperação dos pedidos travados falhou: ${error.message}`);
+  return ((data ?? []) as unknown as Array<{
+    id: string;
+    organization_id: string;
+    tool_id: string;
+    agent_external_tools: { name: string } | null;
+  }>).map((l) => ({
+    id: l.id,
+    organization_id: l.organization_id,
+    tool_id: l.tool_id,
+    tool_name: l.agent_external_tools?.name ?? "ferramenta externa",
+  }));
+}
+
+/**
+ * Apaga os DADOS (`arguments`, `outcome_content`) de pedido concluído há mais de 90 dias. O pedido, o
+ * estado e o desfecho ficam; o que sai é o dado pessoal que o agente preencheu e o que o outro sistema
+ * devolveu. Devolve quantos foram podados (a rodada só audita se foi > 0).
+ */
+export async function podarDadosAntigos(admin: SupabaseClient, agora: Date = new Date()): Promise<number> {
+  const limite = new Date(agora.getTime() - PODA_DOS_DADOS_APOS_DIAS * 86_400_000).toISOString();
+  const { data, error } = await admin
+    .from("agent_external_tool_requests")
+    .update({ arguments: {}, outcome_content: null, data_pruned_at: agora.toISOString() })
+    .in("status", ["executed", "failed", "rejected", "expired"])
+    .lte("updated_at", limite)
+    .is("data_pruned_at", null)
+    .select("id");
+  if (error) throw new Error(`poda dos dados dos pedidos falhou: ${error.message}`);
+  return (data ?? []).length;
+}

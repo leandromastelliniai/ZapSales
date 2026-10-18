@@ -29,7 +29,7 @@ import { type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { resumoDosDados } from "@/lib/ai/ferramentas-externas/aprovacao";
-import { chamarFerramentaExterna, fraseDoMotivo } from "@/lib/ai/ferramentas-externas/chamar";
+import { chamarFerramentaExterna, fraseDoMotivo, type ResultadoDaChamada } from "@/lib/ai/ferramentas-externas/chamar";
 import { parametrosLidos, validarArgumentos } from "@/lib/ai/ferramentas-externas/esquema";
 import {
   abrirAvisoDeFalhaDoPedido,
@@ -45,6 +45,7 @@ import { fail, ok } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { logger } from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -165,13 +166,25 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     }
     void audit({ ...base, action: "ai.external_tool_request_approved", metadata: { ...identidade, summary: resumo } });
 
-    const chave = await lerChaveDaFerramenta(admin, org.orgId, pedido.tool_id);
-    const resultado = await chamarFerramentaExterna({
-      ferramenta: { slug: pedido.tool_slug, url: pedido.tool_url, efeito: pedido.effect },
-      segredo: chave,
-      argumentos: validado.valor,
-      idDeEntrega: id,
-    });
+    // Daqui em diante o pedido está «executando»: qualquer exceção ANTES do desfecho o deixaria preso
+    // (e bloqueando a mesma chamada). Não se sabe se saiu, então fecha como falha incerta.
+    let resultado: ResultadoDaChamada;
+    try {
+      const chave = await lerChaveDaFerramenta(admin, org.orgId, pedido.tool_id);
+      resultado = await chamarFerramentaExterna({
+        ferramenta: { slug: pedido.tool_slug, url: pedido.tool_url, efeito: pedido.effect },
+        segredo: chave,
+        argumentos: validado.valor,
+        idDeEntrega: id,
+      });
+    } catch (err) {
+      logger.error("[ferramentas-externas] a execução do pedido lançou — fechando como falha incerta", {
+        organization_id: org.orgId,
+        request_id: id,
+        error: (err instanceof Error ? err.message : String(err)).slice(0, 120),
+      });
+      resultado = { ok: false, motivo: "rede", httpStatus: null, tentativas: 0, duracaoMs: 0, desfechoIncerto: true };
+    }
     await finalizar(admin, org.orgId, id, resultado);
     await resolverAviso(admin, org.orgId, pedido.inbox_item_id);
     void audit({
@@ -203,7 +216,8 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     }
 
     await abrirAvisoDeFalhaDoPedido(admin, org.orgId, {
-      titulo: `A ação «${pedido.tool_name}» falhou`,
+      // O título leva o pedido: duas falhas da mesma ferramenta são dois avisos (a Central deduplica por título).
+      titulo: `A ação «${pedido.tool_name}» falhou (#${id.slice(0, 4)})`,
       corpo:
         `A ação «${pedido.tool_name}» foi aprovada e não foi concluída: ${fraseDoMotivo(resultado.motivo)} ` +
         (resultado.desfechoIncerto

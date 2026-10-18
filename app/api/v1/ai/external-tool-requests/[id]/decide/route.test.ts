@@ -244,6 +244,28 @@ describe("aprovar executa UMA vez", () => {
     expect(JSON.stringify(deps.audit.mock.calls[1])).toContain('"ok":false');
   });
 
+  it("exceção entre a reivindicação e o desfecho: o pedido NÃO fica preso em «executando» — fecha como falha incerta", async () => {
+    deps.lerChave.mockRejectedValue(new Error("cifra caiu"));
+    const res = await POST(req({ decision: "approve" }), ctx());
+    expect(res.status).toBe(200);
+    expect((await res.json()).data).toMatchObject({ status: "failed", ok: false, uncertain: true });
+    expect(deps.chamar).not.toHaveBeenCalled();
+    expect(deps.repo.finalizar).toHaveBeenCalledWith({}, ORG, ID, expect.objectContaining({ ok: false, desfechoIncerto: true }));
+  });
+
+  it("a falha de uma segunda aprovação da MESMA ferramenta também gera aviso (o título leva o pedido)", async () => {
+    deps.chamar.mockResolvedValue({
+      ok: false,
+      motivo: "timeout",
+      httpStatus: null,
+      tentativas: 1,
+      duracaoMs: 8000,
+      desfechoIncerto: true,
+    });
+    await POST(req({ decision: "approve" }), ctx());
+    expect(deps.repo.abrirAvisoDeFalhaDoPedido.mock.calls[0]![2].titulo).toContain(`#${ID.slice(0, 4)}`);
+  });
+
   it("sem a chave de assinatura a chamada não sai e o pedido fecha como falha CERTA", async () => {
     deps.lerChave.mockResolvedValue(null);
     deps.chamar.mockResolvedValue({

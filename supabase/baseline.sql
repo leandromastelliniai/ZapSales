@@ -46126,6 +46126,9 @@ create table if not exists public.agent_external_tool_requests (
   -- que o agente lê o resultado de uma ação aprovada, quando repete a chamada — como DADO NÃO
   -- CONFIÁVEL, no canal de resultado de ferramenta, nunca no prompt.
   outcome_content text,
+  -- Quando os DADOS (arguments, outcome_content) foram apagados pela poda de 90 dias (LGPD). A linha,
+  -- o estado e o desfecho ficam.
+  data_pruned_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint agent_external_tool_requests_content_len check (outcome_content is null or char_length(outcome_content) <= 4000),

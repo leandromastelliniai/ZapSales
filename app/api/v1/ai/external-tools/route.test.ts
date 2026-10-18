@@ -247,6 +247,16 @@ describe("/:id — ler, editar, apagar", () => {
     );
   });
 
+  it("a auditoria registra o NOVO valor da chave de aprovação (quem desligou a proteção fica no rastro)", async () => {
+    deps.repo.editarFerramenta.mockResolvedValue({ ...FERRAMENTA, effect: "altera", require_approval: false });
+    await PATCH(req("PATCH", `/x/${ID}`, { pedir_aprovacao: false }), ctx());
+    expect(deps.audit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ fields: ["pedir_aprovacao"], require_approval: false }),
+      }),
+    );
+  });
+
   it("edita o efeito e a chave de aprovação; a auditoria guarda os NOMES dos campos, nunca os valores", async () => {
     deps.repo.editarFerramenta.mockResolvedValue({ ...FERRAMENTA, effect: "altera", require_approval: false });
     const res = await PATCH(req("PATCH", `/x/${ID}`, { efeito: "altera", pedir_aprovacao: false }), ctx());

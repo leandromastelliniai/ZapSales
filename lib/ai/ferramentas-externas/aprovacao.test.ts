@@ -59,6 +59,12 @@ describe("resumoDosDados — o que a Central e a auditoria mostram, sem segredos
     expect(r.find((l) => l.campo === "cliente")!.valor).toBe("Ana");
   });
 
+  it("esconde também documento, cartão e códigos de uso único (a auditoria guarda 5 anos)", () => {
+    const r = resumoDosDados({ cpf: "123.456.789-00", cvv: "123", pin: "9999", codigo_otp: "551122", numero_do_cartao: "4111", nome: "Ana" });
+    expect(r.filter((l) => l.campo !== "nome").every((l) => l.valor === "•••")).toBe(true);
+    expect(r.find((l) => l.campo === "nome")!.valor).toBe("Ana");
+  });
+
   it("ignora campo ausente e mostra booleano e número como texto", () => {
     expect(resumoDosDados({ a: undefined, b: true, c: 3 })).toEqual([
       { campo: "b", valor: "sim" },
@@ -96,6 +102,12 @@ describe("fraseDoEstadoParaOAgente — o agente nunca afirma execução antes de
     expect(f).toMatch(/aguardando aprovação/i);
     expect(f).toMatch(/não foi (feita|executada|realizada)/i);
     expect(f).toMatch(/não afirme/i);
+  });
+  it("em execução: a ação está em voo — nem «aguardando aprovação» nem «feita»", () => {
+    const f = fraseDoEstadoParaOAgente({ estado: "executing", incerto: false });
+    expect(f).toMatch(/sendo executada agora/i);
+    expect(f).toMatch(/não afirme que foi concluída/i);
+    expect(f).not.toMatch(/aguardando aprovação/i);
   });
   it("executada: pode confirmar", () => {
     expect(fraseDoEstadoParaOAgente({ estado: "executed", incerto: false })).toMatch(/foi executada/i);

@@ -102,7 +102,13 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
       resourceId: id,
       requestId,
       // Os NOMES dos campos que mudaram — nunca os valores (o endereço pode levar um token).
-      metadata: { slug: ferramenta.slug, fields: camposAlterados(patch), ...(patch.ativa !== undefined ? { active: patch.ativa } : {}) },
+      metadata: {
+        slug: ferramenta.slug,
+        fields: camposAlterados(patch),
+        ...(patch.ativa !== undefined ? { active: patch.ativa } : {}),
+        // O valor da chave «pedir aprovação» NÃO é segredo: quem desligou a proteção fica no rastro.
+        ...(patch.pedir_aprovacao !== undefined ? { require_approval: patch.pedir_aprovacao } : {}),
+      },
     });
     return ok(ferramenta, { requestId });
   } catch {

@@ -41,7 +41,8 @@ export function decidirSePedeAprovacao(entrada: {
   return entrada.effect === "altera" ? { pede: true, porque: "padrao_do_efeito" } : { pede: false, porque: null };
 }
 
-const CAMPO_QUE_PARECE_SEGREDO = /senha|password|passwd|token|secret|segredo|chave|apikey|api_key|authorization/i;
+const CAMPO_QUE_PARECE_SEGREDO =
+  /senha|password|passwd|token|secret|segredo|chave|apikey|api_key|authorization|cpf|cnpj|rg\b|cvv|cartao|cartão|card|pin\b|otp|codigo_de_seguranca|iban|conta_bancaria/i;
 const LIMITE_DO_VALOR = 80;
 
 export interface LinhaDoResumo {
@@ -95,8 +96,12 @@ export function estadoEfetivoDoPedido(
  */
 export function fraseDoEstadoParaOAgente(p: { estado: EstadoDoPedido; incerto: boolean }): string {
   switch (p.estado) {
-    case "pending":
     case "executing":
+      return (
+        "A ação está sendo executada agora, mas ainda não há confirmação do outro sistema. NÃO afirme que foi concluída " +
+        "nem que não foi: diga que está sendo processada e que o cliente será avisado."
+      );
+    case "pending":
       return (
         "Pedido aguardando aprovação humana. A ação NÃO foi feita ainda. NÃO afirme ao cliente que foi feita nem " +
         "que será feita com certeza: diga que depende de uma confirmação da equipe e que ele será avisado."

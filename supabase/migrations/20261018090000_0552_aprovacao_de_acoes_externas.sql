@@ -35,8 +35,11 @@
 --
 -- Função NOVA em `public`: nenhuma ⇒ o item 9 da doutrina de migrations não é acionado.
 -- Sem FK para `contacts` (só para a conversa, `on delete set null`): a tabela não entra
--- na varredura de LGPD de «quem guarda pessoa», e as colunas não carregam nome de
--- conteúdo pessoal.
+-- na varredura de LGPD de «quem guarda pessoa». ⚠️ Isso NÃO quer dizer que ela não guarde dado
+-- pessoal: `arguments` leva o que o agente preencheu (nome, telefone…) e `outcome_content` o que o outro
+-- sistema devolveu. A cascata de anonimização do contato não os alcança; o que os alcança é a PODA
+-- de 90 dias do cron `external-tool-requests-expiry` (marca `data_pruned_at`), e a auditoria só
+-- recebe um resumo com campos sensíveis mascarados.
 
 alter table public.agent_external_tools
   add column if not exists require_approval boolean,
@@ -83,6 +86,9 @@ create table if not exists public.agent_external_tool_requests (
   -- que o agente lê o resultado de uma ação aprovada, quando repete a chamada — como DADO NÃO
   -- CONFIÁVEL, no canal de resultado de ferramenta, nunca no prompt.
   outcome_content text,
+  -- Quando os DADOS (arguments, outcome_content) foram apagados pela poda de 90 dias (LGPD). A linha,
+  -- o estado e o desfecho ficam.
+  data_pruned_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint agent_external_tool_requests_content_len check (outcome_content is null or char_length(outcome_content) <= 4000),

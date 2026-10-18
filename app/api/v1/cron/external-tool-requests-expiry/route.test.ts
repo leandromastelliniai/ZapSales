@@ -10,12 +10,20 @@ const deps = vi.hoisted(() => ({
   audit: vi.fn(),
   admin: vi.fn(),
   expirar: vi.fn(),
+  recuperar: vi.fn(),
+  aviso: vi.fn(),
+  podar: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/cron-auth", () => ({ autorizaCron: deps.cron }));
 vi.mock("@/lib/audit", () => ({ audit: deps.audit }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: deps.admin }));
-vi.mock("@/lib/ai/ferramentas-externas/pedidos-api", () => ({ expirarVencidos: deps.expirar }));
+vi.mock("@/lib/ai/ferramentas-externas/pedidos-api", () => ({
+  expirarVencidos: deps.expirar,
+  recuperarTravados: deps.recuperar,
+  podarDadosAntigos: deps.podar,
+  abrirAvisoDeFalhaDoPedido: deps.aviso,
+}));
 
 import { GET, POST } from "./route";
 
@@ -25,6 +33,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   deps.cron.mockReturnValue(true);
   deps.admin.mockReturnValue({});
+  deps.expirar.mockResolvedValue([]);
+  deps.recuperar.mockResolvedValue([]);
+  deps.podar.mockResolvedValue(0);
 });
 
 describe("external-tool-requests-expiry", () => {
@@ -38,7 +49,7 @@ describe("external-tool-requests-expiry", () => {
     deps.expirar.mockResolvedValue([]);
     const res = await GET(req());
     expect(res.status).toBe(200);
-    expect((await res.json()).data).toEqual({ expired: 0 });
+    expect((await res.json()).data).toEqual({ expired: 0, recovered: 0 });
     expect(deps.audit).not.toHaveBeenCalled();
   });
 
@@ -48,13 +59,35 @@ describe("external-tool-requests-expiry", () => {
       { id: "p2", organization_id: "org-b", tool_id: "t2", inbox_item_id: "i2" },
     ]);
     const res = await POST(req());
-    expect((await res.json()).data).toEqual({ expired: 2 });
+    expect((await res.json()).data).toEqual({ expired: 2, recovered: 0 });
     expect(deps.audit).toHaveBeenCalledTimes(2);
     expect(deps.audit.mock.calls.map(([a]) => [(a as { organizationId: string }).organizationId, (a as { resourceId: string }).resourceId])).toEqual([
       ["org-a", "p1"],
       ["org-b", "p2"],
     ]);
     expect(deps.audit.mock.calls[0]![0]).toMatchObject({ action: "ai.external_tool_request_expired" });
+  });
+
+  it("pedido preso em «executando» (o processo caiu no meio): vira falha INCERTA, avisa a Central e audita", async () => {
+    deps.recuperar.mockResolvedValue([{ id: "p9", organization_id: "org-a", tool_id: "t9", tool_name: "Criar pedido" }]);
+    const res = await POST(req());
+    expect((await res.json()).data).toEqual({ expired: 0, recovered: 1 });
+    expect(deps.aviso).toHaveBeenCalledTimes(1);
+    expect(deps.aviso.mock.calls[0]![1]).toBe("org-a");
+    expect(deps.aviso.mock.calls[0]![2].corpo).toMatch(/não sabemos se foi/i);
+    expect(deps.audit).toHaveBeenCalledTimes(1);
+    expect(deps.audit.mock.calls[0]![0]).toMatchObject({
+      action: "ai.external_tool_request_executed",
+      organizationId: "org-a",
+      metadata: expect.objectContaining({ ok: false, uncertain: true, by: "cron" }),
+    });
+  });
+
+  it("dados de pedido concluído há mais de 90 dias são podados, e só então a rodada audita", async () => {
+    deps.podar.mockResolvedValue(3);
+    await POST(req());
+    expect(deps.audit).toHaveBeenCalledTimes(1);
+    expect(deps.audit.mock.calls[0]![0]).toMatchObject({ action: "ai.external_tool_request_pruned", metadata: { pruned: 3 } });
   });
 
   it("falha ao expirar vira 500 sem auditar", async () => {
