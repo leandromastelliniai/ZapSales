@@ -9802,5 +9802,9 @@
   "O outro sistema respondeu com erro.": "The other system answered with an error.",
   "O outro sistema recusou o pedido (erro de endereço, acesso ou dados).": "The other system refused the request (address, access or data error).",
   "Não foi possível alcançar o outro sistema.": "The other system could not be reached.",
-  "Cada agente tem no máximo 27 capacidades, somando as do sistema e as ferramentas externas. Desligue alguma antes de ligar outra.": "Each agent can have at most 27 capabilities, adding the system ones and the external tools. Turn one off before turning another on."
+  "Cada agente tem no máximo 27 capacidades, somando as do sistema e as ferramentas externas. Desligue alguma antes de ligar outra.": "Each agent can have at most 27 capabilities, adding the system ones and the external tools. Turn one off before turning another on.",
+  "O ramo do atendimento (opcional)": "Line of business (optional)",
+  "Escolha o ramo e o perfil e as instruções já vêm prontos — dá para editar tudo depois. Ou pule e escolha só o jeito de falar.": "Pick the line of business and the profile and instructions come ready; you can edit everything later. Or skip and just choose how it talks.",
+  "Nenhum — só o jeito de falar": "None — just how it talks",
+  "Escolha abaixo como ele conversa.": "Choose below how it talks."
 }

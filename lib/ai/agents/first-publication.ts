@@ -2,6 +2,7 @@ import { listSelectableChannels, type SelectableChannel } from "@/lib/channels/s
 import { createAdminClient } from "@/lib/supabase/admin";
 import { capacidadesPadraoDoOnboarding } from "./capacidades-padrao";
 import { escolherModeloDoProvedor } from "./escolher-modelo";
+import type { ColunasDoModelo } from "./modelos";
 import { chaveDePlataforma } from "@/lib/ai/runtime/agent";
 import { publishAgentVersion } from "./publish";
 interface AgenteDoOnboarding {
@@ -88,6 +89,11 @@ export async function publishFirstVersion(
   systemPrompt: string,
   userId: string,
   selection?: { channelId: string; provider: string; model: string; credentialId: string | null },
+  /**
+   * O perfil de um modelo por ramo (#92), quando o dono escolheu um no onboarding.
+   * Ausente = a versão nasce SEM nenhuma coluna de perfil, como sempre nasceu.
+   */
+  perfil?: ColunasDoModelo,
 ): Promise<PublishOutcome> {
   // Já publicado numa passagem anterior: republicar colidiria com
   // `ai_agent_versions_unique_number` sem ganhar nada.
@@ -269,6 +275,7 @@ export async function publishFirstVersion(
       version_number: 1,
       provisioning_origin: selection ? "legacy_reconciliation" : "onboarding",
       system_prompt: systemPrompt,
+      ...(perfil ?? {}),
       // Provedor e modelo saem SEMPRE da mesma origem — o par é indivisível.
       // Emprestar só o id do modelo de outro provedor manda um nome que o
       // endpoint não conhece.

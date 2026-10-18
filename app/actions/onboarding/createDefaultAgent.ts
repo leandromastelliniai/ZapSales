@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { publishFirstVersion } from "@/lib/ai/agents/first-publication";
+import { aplicarModelo, colunasDoModelo, instrucoesComNegocio } from "@/lib/ai/agents/modelos";
 import { audit } from "@/lib/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { aiAgentDefaultSchema, type PromptTemplate } from "@/lib/schemas/onboarding";
@@ -117,6 +118,10 @@ export async function createDefaultAgent(formData: FormData): Promise<CreateAgen
     name: String(formData.get("name") ?? "Atendente IA").trim(),
     prompt_template: String(formData.get("prompt_template") ?? "ecommerce_friendly"),
     regras_da_casa: String(formData.get("regras_da_casa") ?? "").trim() || undefined,
+    // Modelo por ramo (#92). Ausente é o caminho de sempre; presente e inválido
+    // reprova na validação em vez de cair no padrão em silêncio.
+    ramo: String(formData.get("ramo") ?? "").trim() || undefined,
+    idioma: String(formData.get("idioma") ?? "").trim() || undefined,
   };
 
   let input;
@@ -142,7 +147,12 @@ export async function createDefaultAgent(formData: FormData): Promise<CreateAgen
     oQueFaz = undefined;
   }
 
-  const systemPrompt = PROMPT_BODIES[input.prompt_template](ondeTrabalha(ctx.orgName, oQueFaz));
+  // Com um ramo escolhido, o perfil e as instruções do modelo (no idioma da tela)
+  // substituem o "jeito de falar"; o funcionário continua sabendo onde trabalha.
+  const modelo = input.ramo ? aplicarModelo(input.ramo, input.idioma) : null;
+  const systemPrompt = modelo
+    ? instrucoesComNegocio(modelo.system_prompt, input.idioma, ondeTrabalha(ctx.orgName, oQueFaz))
+    : PROMPT_BODIES[input.prompt_template](ondeTrabalha(ctx.orgName, oQueFaz));
 
   // O agente padrão do onboarding é UM por organização, e o banco já garante
   // isso: `ai_agents_one_default_per_org` é índice único parcial em
@@ -217,7 +227,15 @@ export async function createDefaultAgent(formData: FormData): Promise<CreateAgen
     if (!pub.ok) regrasNaoSalvas = pub.mensagem;
   }
 
-  const publicacao = await publishFirstVersion(admin, ctx.orgId, agent, systemPrompt, ctx.userId);
+  const publicacao = await publishFirstVersion(
+    admin,
+    ctx.orgId,
+    agent,
+    systemPrompt,
+    ctx.userId,
+    undefined,
+    modelo ? colunasDoModelo(modelo) : undefined,
+  );
 
   // Estado, audit e evento saem em QUALQUER desfecho da publicação: o agente
   // existe, e o passo do onboarding é "configurar IA", não "publicar". Deixar
@@ -241,6 +259,7 @@ export async function createDefaultAgent(formData: FormData): Promise<CreateAgen
     resourceId: agent.id,
     metadata: {
       prompt_template: input.prompt_template,
+      ...(input.ramo ? { ramo: input.ramo, idioma: input.idioma } : {}),
       name: input.name,
       published: publicacao.published,
       ...(publicacao.published ? {} : { publish_blocked_by: publicacao.reason }),
