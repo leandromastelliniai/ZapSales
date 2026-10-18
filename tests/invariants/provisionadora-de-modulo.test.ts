@@ -272,6 +272,37 @@ describe("as rotinas de proteção da D5 existem e protegem (migration 0325)", (
     );
   });
 
+  it("instalar trava SÓ a tabela do módulo — nenhuma tabela do núcleo fica com ACCESS EXCLUSIVE (#130)", () => {
+    // A proteção de módulo chamava a varredura inteira das travas do suporte:
+    // `drop policy` + `create policy` em ~126 tabelas do núcleo (inclusive
+    // `organizations` e `user_organizations`, que a autenticação lê em toda
+    // requisição), numa transação só e sem ordem. `drop policy` pede ACCESS
+    // EXCLUSIVE, então a instalação segurava o produto inteiro e, na inversão de
+    // ordem com a leitura da autenticação, dava `40P01 deadlock detected` (visto
+    // 4 vezes no CI, sempre durante a instalação do módulo de honorários).
+    //
+    // A prova é feita na MESMA transação da instalação: o que a sessão segura em
+    // `pg_locks` antes do commit é exatamente o que as outras requisições
+    // esperariam. O controle positivo é a própria tabela da sonda — sem ele, "zero
+    // tabelas do núcleo" seria também o que um `pg_locks` cego devolveria.
+    const saida = sql(`
+      begin;
+      create table public.sonda_protecao_0325 (
+        id uuid primary key default gen_random_uuid(),
+        organization_id uuid not null references public.organizations(id) on delete cascade);
+      do $inst$ begin perform public.fn_proteger_modulo_provisionado(); end $inst$;
+      select 'sonda=' || coalesce(bool_or(c.relname = 'sonda_protecao_0325'), false)::text
+             || '|nucleo=' || coalesce(string_agg(c.relname, ',' order by c.relname)
+                                       filter (where c.relname <> 'sonda_protecao_0325'), '')
+        from pg_locks l join pg_class c on c.oid = l.relation
+       where l.pid = pg_backend_pid() and l.locktype = 'relation'
+         and l.mode = 'AccessExclusiveLock' and c.relkind = 'r';
+      rollback;`);
+    // `psql -tA` imprime também a tag de cada comando (BEGIN, CREATE TABLE, DO…).
+    const medida = saida.split("\n").find((linha) => linha.startsWith("sonda="));
+    expect(medida, "a instalação segurou ACCESS EXCLUSIVE em tabela do núcleo").toBe("sonda=true|nucleo=");
+  });
+
   it("não toca em tabela que já decidiu a própria proteção", () => {
     // A régua da 0325 é `not relrowsecurity`. O módulo que liga a RLS ele mesmo
     // — porque quer policy por papel, ou server-only — fica fora do alcance
