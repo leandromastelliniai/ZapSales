@@ -2905,10 +2905,10 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 </figure>
 <ol class="legenda">
   <li><strong>Quem ele é.</strong> Uma frase que apresenta o personagem, por exemplo <em>“Marina, recepcionista simpática da Clínica Sorriso”</em>. Até 600 caracteres.</li>
-  <li><strong>Tom de voz.</strong> Três botões: <em>Formal</em> (correto e cerimonioso, sem gírias), <em>Normal</em> (cordial e direto) e <em>Descontraído</em> (leve e próximo, como conversa entre conhecidos). Clicar de novo no botão marcado desmarca.</li>
+  <li><strong>Tom de voz.</strong> Um agente novo já vem com <em>Normal</em> marcado. Três botões: <em>Formal</em> (correto e cerimonioso, sem gírias), <em>Normal</em> (cordial e direto) e <em>Descontraído</em> (leve e próximo, como conversa entre conhecidos). Clicar de novo no botão marcado desmarca.</li>
   <li><strong>O que ele persegue na conversa.</strong> O objetivo, por exemplo <em>“Entender o que a pessoa precisa e marcar uma avaliação gratuita”</em>. Até 600 caracteres.</li>
   <li><strong>Mensagem de boas-vindas.</strong> Até 500 caracteres.</li>
-  <li><strong>Idioma das respostas.</strong> <em>Não definido (segue as instruções)</em>, <em>Português (BR)</em>, <em>Español</em> ou <em>English</em>.</li>
+  <li><strong>Idioma das respostas.</strong> <em>Não definido (segue as instruções)</em>, <em>Português (BR)</em>, <em>Español</em> ou <em>English</em>. Um agente novo já vem com o idioma da sua tela (no print, <em>Português (BR)</em>); os agentes que já existiam continuam em <em>Não definido</em>.</li>
   <li><strong>Ver como o agente recebe isto.</strong> Bloco que abre e mostra o texto final que o agente lê.</li>
 </ol>
 <p>Cada campo de texto mostra um contador (por exemplo <em>0/600</em>) que fica vermelho quando o limite é passado, e o formulário avisa “Pode ter até 600 caracteres.” até você cortar.</p>
@@ -3085,8 +3085,9 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <figcaption>“Ver as páginas”: o estado de cada endereço e o motivo quando a leitura falha.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Selo de cada página.</strong> <em>Aguardando leitura</em>, <em>Lida</em> ou <em>Não foi lida</em>.</li>
+  <li><strong>Selo de página lida.</strong> Ao lado vem o título da página (no exemplo, <em>Example Domain</em>) e o endereço. Os selos possíveis são <em>Aguardando leitura</em>, <em>Lida</em> e <em>Não foi lida</em>.</li>
   <li><strong>Linha de detalhe.</strong> “Lida em (data e hora) · N trechos · Mudou em (data)”, ou “Ainda não lida”. Trecho é um pedaço de texto que o agente consegue consultar.</li>
+  <li><strong>Selo “Não foi lida”.</strong> Logo abaixo, em vermelho, vem o motivo: aqui “O site respondeu 404.” (a página não existe).</li>
   <li><strong>Endereços das páginas.</strong> A lista editável. O botão <span class="ui">Salvar endereços</span> só liga depois que você muda algo.</li>
   <li><strong>Ler o site de novo.</strong> Fica desligado enquanto houver edição não salva.</li>
 </ol>
@@ -3187,12 +3188,30 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <img src="img/ia-agente-corrigir.png" alt="Caixa Corrigir esta resposta aberta sob uma resposta do agente, com a pergunta O que o agente deveria ter dito?" loading="lazy">
   <figcaption>“Corrigir esta resposta”, aberto sob a resposta do agente.</figcaption>
 </figure>
+<ol class="legenda">
+  <li><strong>O que o agente deveria ter dito?</strong> A pergunta da caixa.</li>
+  <li><strong>A resposta que você esperava.</strong> Até 1.500 caracteres.</li>
+  <li><strong>O aviso.</strong> “Isto cria uma proposta na aba Propostas. O agente só muda depois que você aprovar — nada é alterado agora.”</li>
+  <li><strong>Enviar como proposta.</strong> Ao lado fica o botão <em>Cancelar</em>.</li>
+</ol>
 <ol class="passos">
   <li>Sob a resposta errada, clique em <span class="ui">Corrigir esta resposta</span>.</li>
   <li>Em <strong>O que o agente deveria ter dito?</strong>, escreva a resposta que você esperava (até 1.500 caracteres).</li>
   <li>Clique em <span class="ui">Enviar como proposta</span>. A tela confirma: “Proposta criada. Ela aparece na aba Propostas e só muda o agente depois que você aprovar.”</li>
   <li>Abra a aba <strong>Propostas</strong>. O item é do tipo <em>Correção de resposta</em>, com o selo <em>pendente</em>.</li>
   <li>Expanda <span class="ui">Ver a conversa de origem</span> se quiser rever o que foi dito, e clique em <span class="ui">Aplicar como versão nova</span> para aprovar.</li>
+</ol>
+<figure class="print">
+  <img src="img/ia-agente-proposta-correcao.png" alt="Aba Propostas com uma proposta pendente do tipo Correção de resposta, a frase que entrará nas instruções e o botão Aplicar como versão nova" loading="lazy">
+  <figcaption>A proposta criada, esperando a sua decisão na aba Propostas.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo “pendente”.</strong> Espera a sua decisão.</li>
+  <li><strong>Tipo e idade.</strong> “Correção de resposta · proposta em 33 segundos”.</li>
+  <li><strong>A frase que o sistema montou</strong> a partir da fala do cliente, da resposta do agente e da sua correção.</li>
+  <li><strong>O aviso.</strong> “Se você aplicar, esta frase entra no fim das instruções do agente, numa versão nova. Enquanto não aplicar, o agente continua como está.”</li>
+  <li><strong>Ver a conversa de origem.</strong> Abre a conversa do teste que gerou a proposta.</li>
+  <li><strong>Aplicar como versão nova.</strong> Só Administrador. Publica na hora.</li>
 </ol>
 <p>Também dá para corrigir uma resposta de <strong>atendimento real</strong>: na aba <strong>Execuções</strong>, abra a execução e, na seção “Resposta enviada”, use o mesmo botão. Nesse caso a conversa de origem aparece com os dados pessoais mascarados. Execuções que não terminaram numa mensagem enviada dizem “Esta execução não terminou numa mensagem enviada pelo agente, então não há resposta para corrigir.”.</p>
 <h3 id="agente-teste-e-correcao--o-que-acontece">O que a correção faz de verdade</h3>
@@ -3295,6 +3314,12 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <img src="img/ia-ferramentas-externas-testar.png" alt="Janela Testar de verdade com o resultado Funcionou, o tempo de resposta e o que o outro sistema devolveu" loading="lazy">
   <figcaption>“Testar de verdade” com a resposta do outro sistema.</figcaption>
 </figure>
+<ol class="legenda">
+  <li><strong>O dado de exemplo.</strong> Um campo para cada dado que o agente preenche (aqui, <em>codigo_produto</em>).</li>
+  <li><strong>Chamar agora.</strong> Faz a chamada real.</li>
+  <li><strong>O resultado.</strong> “Funcionou. O outro sistema respondeu 200 em 537 ms.”</li>
+  <li><strong>O que o outro sistema devolveu.</strong> No exemplo, o receptor de teste devolve o que recebeu: o evento, o número da entrega e os cabeçalhos de assinatura.</li>
+</ol>
 <ol class="passos">
   <li>No cartão da ferramenta, clique em <span class="ui">Testar de verdade</span>.</li>
   <li>Escreva um valor de exemplo para cada campo.</li>
@@ -3387,7 +3412,21 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <li>Clique em <span class="ui">Aprovar e executar</span>.</li>
   <li>Na confirmação <strong>Executar esta ação agora?</strong> — “A ação é enviada ao outro sistema uma única vez, com os dados acima. Se o outro sistema não responder, ela não é repetida sozinha.” — clique de novo em <span class="ui">Aprovar e executar</span>.</li>
 </ol>
+<figure class="print media">
+  <img src="img/ia-aprovacao-confirmar.png" alt="Confirmação Executar esta ação agora? com os botões Cancelar e Aprovar e executar" loading="lazy">
+  <figcaption>A confirmação antes de executar.</figcaption>
+</figure>
 <p>O ZapSales chama o outro sistema na hora e mostra o resultado no próprio cartão:</p>
+<figure class="print">
+  <img src="img/ia-aprovacao-executada.png" alt="Cartão do pedido com o selo Executada, a mensagem A ação foi executada e a resposta devolvida pelo outro sistema" loading="lazy">
+  <figcaption>Depois de aprovar: o selo muda para <em>Executada</em> e o cartão mostra o que o outro sistema devolveu.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo “Executada”.</strong> Fica ao lado do selo “Altera dados”.</li>
+  <li><strong>O resultado.</strong> “A ação foi executada. O outro sistema respondeu 200.”</li>
+  <li><strong>O que o outro sistema devolveu.</strong> No exemplo, o receptor de teste devolve o próprio pedido recebido; repare no <code>delivery_id</code>: é o número do pedido.</li>
+</ol>
+<p>Os três resultados possíveis:</p>
 <table class="tabela">
   <thead><tr><th>Resultado</th><th>O que a tela diz</th><th>O que fazer</th></tr></thead>
   <tbody>
@@ -3459,6 +3498,11 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <img src="img/ia-mcp-desligado.png" alt="Aba Servidores MCP com o cartão Servidores MCP externos desligado, a caixa de aceite e o botão Ligar servidores MCP" loading="lazy">
   <figcaption>O recurso desligado, com a caixa de aceite.</figcaption>
 </figure>
+<ol class="legenda">
+  <li><strong>Selo “Desligado”.</strong> Vira “Ligado” depois do passo abaixo.</li>
+  <li><strong>A caixa de aceite.</strong> Sem marcá-la, o botão não liga.</li>
+  <li><strong>Ligar servidores MCP.</strong></li>
+</ol>
 <ol class="passos">
   <li>No cartão <strong>Servidores MCP externos</strong> (selo <em>Desligado</em>), leia e marque o aceite: <em>“Entendo que, ao ligar, o agente pode enviar aos servidores que eu cadastrar os dados que ele preencher ao usar uma ferramenta, e que o que eles responderem é tratado como informação, nunca como ordem.”</em></li>
   <li>Clique em <span class="ui">Ligar servidores MCP</span>. A tela confirma “Servidores MCP ligados.”.</li>
@@ -3501,12 +3545,12 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <figcaption>“Escolher ferramentas”: a lista lida ao vivo do servidor.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Caixa de seleção.</strong> Marque as que o agente poderá usar.</li>
-  <li><strong>“O servidor diz: só lê”.</strong> Uma dica que o servidor dá sobre si mesmo — <strong>não é garantia</strong>.</li>
-  <li><strong>O que ela faz no outro sistema.</strong> <em>Altera dados</em> (o padrão) ou <em>Só consulta</em>. Quem decide é você.</li>
-  <li><strong>Pedir aprovação.</strong> Mesma regra de <a href="#agente-aprovacao-de-acoes">Ações que alteram dados</a>.</li>
-  <li><strong>Quando o agente deve usar.</strong> Vem preenchido com a descrição do servidor; você pode editar.</li>
-  <li><strong>Salvar escolha (N).</strong> Grava.</li>
+  <li><strong>Caixa de seleção.</strong> Marque as que o agente poderá usar. Ao marcar, abrem-se as opções da ferramenta.</li>
+  <li><strong>Ferramenta que o agente ainda não consegue usar.</strong> No exemplo, a primeira ferramenta do servidor pede um campo em formato de lista ou objeto, que o agente ainda não sabe preencher. Ela aparece apagada, com o motivo.</li>
+  <li><strong>O que ela faz no outro sistema.</strong> <em>Altera dados</em> (o padrão) ou <em>Só consulta</em>. Quem decide é você: a anotação do servidor sobre ser só de leitura é uma dica, <strong>não vale como garantia</strong>.</li>
+  <li><strong>Pedir aprovação.</strong> Mesma regra de <a href="#agente-aprovacao-de-acoes">Ações que alteram dados</a>. Em “Só consulta” ela vem desmarcada.</li>
+  <li><strong>Quando o agente deve usar.</strong> Vem preenchido com a descrição do servidor (em inglês, no exemplo); você pode editar e traduzir.</li>
+  <li><strong>Salvar escolha (N).</strong> Grava; N é quantas ferramentas estão marcadas.</li>
 </ol>
 <ol class="passos">
   <li>No cartão do servidor, clique em <span class="ui">Escolher ferramentas</span>. A janela consulta o servidor ao vivo (“Conectando ao servidor e lendo as ferramentas…”). Acima de 8 ferramentas há o campo <span class="ui">Buscar ferramenta…</span>.</li>
@@ -3603,8 +3647,13 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <h2 id="agente-resposta-em-audio--agente">2. Ligar em cada agente</h2>
 <figure class="print media">
   <img src="img/ia-audio-agente.png" alt="Cartão Resposta em áudio no editor do agente com o interruptor Responder em áudio quando o cliente mandar áudio e a escolha de voz" loading="lazy">
-  <figcaption>O cartão no editor do agente (provedor ElevenLabs).</figcaption>
+  <figcaption>O cartão no editor do agente, com a organização usando o provedor compatível com a OpenAI.</figcaption>
 </figure>
+<ol class="legenda">
+  <li><strong>Responder em áudio quando o cliente mandar áudio.</strong> O interruptor do agente (vem desligado).</li>
+  <li><strong>O provedor em uso e o limite:</strong> “Provedor de voz: Compatível com a OpenAI. Respostas com mais de 1000 caracteres saem como texto.”</li>
+  <li><strong>A voz.</strong> No provedor compatível com a OpenAI não há escolha por agente: “A voz e o modelo são os da organização, definidos em Provedores.”</li>
+</ol>
 <ol class="passos">
   <li>Abra o agente, aba <strong>Configuração</strong>, cartão <strong>Resposta em áudio</strong>.</li>
   <li>Ligue <span class="ui">Responder em áudio quando o cliente mandar áudio</span> (vem desligado).</li>
@@ -7774,7 +7823,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <aside class="nota atencao"><strong>Instalar é para sempre.</strong><p>Cria as tabelas do módulo no banco compartilhado (um banco só, esquema <code>public</code>), de forma idempotente, e fica na auditoria (<code>modulo.instalado</code>). <strong>A tela não desinstala nem suspende</strong>; considere a ação irreversível pela interface. Depois de instalado, cada empresa vê a porta do módulo (veja <a href="#honorarios">Honorários</a>). <em>Esta instalação não foi acionada nas capturas.</em> Quem não é o dono do servidor recebe: “Só o administrador da instalação pode gerenciar os pacotes disponíveis.”</p></aside>
   </div>
 </article>
-    <footer class="rodape"><div class="rodape-marca"><svg class="simbolo" viewBox="0 0 216 216" aria-hidden="true"><use href="#lg-simbolo"/></svg><strong>ZapSales</strong><span>by</span><svg class="fut" viewBox="0 0 654 115" role="img" aria-label="Futuristas"><use href="#lg-futuristas" width="654" height="115"/></svg></div>Manual do ZapSales · gerado em 18 de outubro de 2026 a partir do código na revisão <code>7af23fa</code>. Os prints vêm de uma organização de demonstração, com dados fictícios.</footer>
+    <footer class="rodape"><div class="rodape-marca"><svg class="simbolo" viewBox="0 0 216 216" aria-hidden="true"><use href="#lg-simbolo"/></svg><strong>ZapSales</strong><span>by</span><svg class="fut" viewBox="0 0 654 115" role="img" aria-label="Futuristas"><use href="#lg-futuristas" width="654" height="115"/></svg></div>Manual do ZapSales · gerado em 18 de outubro de 2026 a partir do código na revisão <code>fd83e12</code>. Os prints vêm de uma organização de demonstração, com dados fictícios.</footer>
   </main>
   <aside class="nesta-pagina" id="toc-local" aria-label="Nesta página"></aside>
 </div>

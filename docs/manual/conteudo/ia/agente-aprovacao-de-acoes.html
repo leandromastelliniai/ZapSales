@@ -43,7 +43,21 @@
   <li>Clique em <span class="ui">Aprovar e executar</span>.</li>
   <li>Na confirmação <strong>Executar esta ação agora?</strong> — “A ação é enviada ao outro sistema uma única vez, com os dados acima. Se o outro sistema não responder, ela não é repetida sozinha.” — clique de novo em <span class="ui">Aprovar e executar</span>.</li>
 </ol>
+<figure class="print media">
+  <img src="img/ia-aprovacao-confirmar.png" alt="Confirmação Executar esta ação agora? com os botões Cancelar e Aprovar e executar" loading="lazy">
+  <figcaption>A confirmação antes de executar.</figcaption>
+</figure>
 <p>O ZapSales chama o outro sistema na hora e mostra o resultado no próprio cartão:</p>
+<figure class="print">
+  <img src="img/ia-aprovacao-executada.png" alt="Cartão do pedido com o selo Executada, a mensagem A ação foi executada e a resposta devolvida pelo outro sistema" loading="lazy">
+  <figcaption>Depois de aprovar: o selo muda para <em>Executada</em> e o cartão mostra o que o outro sistema devolveu.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo “Executada”.</strong> Fica ao lado do selo “Altera dados”.</li>
+  <li><strong>O resultado.</strong> “A ação foi executada. O outro sistema respondeu 200.”</li>
+  <li><strong>O que o outro sistema devolveu.</strong> No exemplo, o receptor de teste devolve o próprio pedido recebido; repare no <code>delivery_id</code>: é o número do pedido.</li>
+</ol>
+<p>Os três resultados possíveis:</p>
 <table class="tabela">
   <thead><tr><th>Resultado</th><th>O que a tela diz</th><th>O que fazer</th></tr></thead>
   <tbody>
