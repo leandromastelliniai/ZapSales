@@ -18,6 +18,10 @@
 -- baseline: é ela que CONVERGE uma trava existente mas desatualizada (privilégio que mudou), e
 -- isso acontece na atualização do clone, não na instalação de um módulo.
 --
+-- ⚠️ Duas funções carregam a MESMA forma das três policies (`fn_aplicar_travas_de_suporte` e a nova,
+-- além do nome `support_write_*` e do `< 3`). Mudar o conjunto de travas (uma quarta policy, outro
+-- predicado) é mudar as duas — senão a instalação de módulo e a atualização do clone divergem.
+--
 -- Idempotente: `create or replace`; reaplicar não muda nada.
 
 create or replace function public.fn_aplicar_travas_de_suporte_em_tabelas_sem_trava()
@@ -38,7 +42,8 @@ begin
       and (has_table_privilege('authenticated', c.oid, 'insert')
            or has_table_privilege('authenticated', c.oid, 'update')
            or has_table_privilege('authenticated', c.oid, 'delete'))
-      -- só quem ainda NÃO tem as três travas. Esta consulta lê o catálogo e não trava tabela alguma;
+      -- só quem tem as três travas AUSENTES ou INCOMPLETAS (uma ou duas). Esta consulta lê o catálogo
+      -- e não trava tabela alguma;
       -- o `drop policy` do corpo trava, e por isso ele só roda onde há o que criar.
       and (select count(*) from pg_policy p
             where p.polrelid = c.oid

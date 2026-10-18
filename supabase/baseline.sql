@@ -46178,6 +46178,67 @@ create trigger trg_agent_external_tool_requests_updated_at
 notify pgrst, 'reload schema';
 
 
+-- ---- instalar um módulo não trava o núcleo (migration 0554, issue #130) ----
+--
+-- O texto completo está no cabeçalho de 20261018200000_0554_*.sql. Resumo: a proteção de módulo
+-- aplica as travas do suporte só na tabela que ainda não as tem, em vez de varrer ~126 tabelas.
+
+create or replace function public.fn_aplicar_travas_de_suporte_em_tabelas_sem_trava()
+returns void
+language plpgsql
+set search_path = public
+as $f$
+declare r record; v_col text;
+begin
+ for r in
+   select c.oid, c.relname
+     from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity
+      and (exists (select 1 from pg_attribute a
+                    where a.attrelid = c.oid and a.attname = 'organization_id' and not a.attisdropped)
+           or c.relname = 'organizations')
+      -- tabela só do servidor mantém ZERO policies (contrato mais restritivo): nada a criar
+      and (has_table_privilege('authenticated', c.oid, 'insert')
+           or has_table_privilege('authenticated', c.oid, 'update')
+           or has_table_privilege('authenticated', c.oid, 'delete'))
+      -- só quem tem as três travas AUSENTES ou INCOMPLETAS (uma ou duas). Esta consulta lê o catálogo
+      -- e não trava tabela alguma;
+      -- o `drop policy` do corpo trava, e por isso ele só roda onde há o que criar.
+      and (select count(*) from pg_policy p
+            where p.polrelid = c.oid
+              and p.polname in ('support_write_insert', 'support_write_update', 'support_write_delete')) < 3
+    order by c.oid
+ loop
+   v_col := case when r.relname = 'organizations' then 'id' else 'organization_id' end;
+   execute format('drop policy if exists support_write_insert on public.%I', r.relname);
+   execute format('create policy support_write_insert on public.%I as restrictive for insert to authenticated with check (public.fn_support_write_allowed(%I))', r.relname, v_col);
+   execute format('drop policy if exists support_write_update on public.%I', r.relname);
+   execute format('create policy support_write_update on public.%I as restrictive for update to authenticated using (public.fn_support_write_allowed(%I)) with check (public.fn_support_write_allowed(%I))', r.relname, v_col, v_col);
+   execute format('drop policy if exists support_write_delete on public.%I', r.relname);
+   execute format('create policy support_write_delete on public.%I as restrictive for delete to authenticated using (public.fn_support_write_allowed(%I))', r.relname, v_col);
+ end loop;
+end $f$;
+
+-- Mesma regra da `fn_aplicar_travas_de_suporte` (só quem aplica o schema a chama; não é `security
+-- definer`): EXECUTE sai das duas origens e dos papéis que o default ACL do Supabase alcança.
+revoke execute on function public.fn_aplicar_travas_de_suporte_em_tabelas_sem_trava()
+  from public, anon, authenticated, service_role;
+
+-- O ponto de entrada que a provisionadora de um módulo chama (ADR-0002, D5). A ORDEM continua a
+-- mesma — isolamento primeiro, travas do suporte depois —, mas as travas agora só alcançam o que
+-- ainda não as tem, isto é, a tabela que o módulo acabou de criar.
+create or replace function public.fn_proteger_modulo_provisionado()
+returns void
+language plpgsql
+set search_path = public
+as $f$
+begin
+  perform public.fn_proteger_tabelas_de_organizacao();
+  perform public.fn_aplicar_travas_de_suporte_em_tabelas_sem_trava();
+end $f$;
+
+revoke execute on function public.fn_proteger_modulo_provisionado() from public, anon, authenticated, service_role;
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria
@@ -48611,63 +48672,3 @@ comment on column public.agent_external_tools.mcp_hint_read_only is
   'O que o servidor DECLAROU (annotations.readOnlyHint). Só uma dica para a tela: o risco que vale é effect.';
 
 notify pgrst, 'reload schema';
-
--- ---- instalar um módulo não trava o núcleo (migration 0554, issue #130) ----
---
--- O texto completo está no cabeçalho de 20261018200000_0554_*.sql. Resumo: a proteção de módulo
--- aplica as travas do suporte só na tabela que ainda não as tem, em vez de varrer ~126 tabelas.
-
-create or replace function public.fn_aplicar_travas_de_suporte_em_tabelas_sem_trava()
-returns void
-language plpgsql
-set search_path = public
-as $f$
-declare r record; v_col text;
-begin
- for r in
-   select c.oid, c.relname
-     from pg_class c join pg_namespace n on n.oid = c.relnamespace
-    where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity
-      and (exists (select 1 from pg_attribute a
-                    where a.attrelid = c.oid and a.attname = 'organization_id' and not a.attisdropped)
-           or c.relname = 'organizations')
-      -- tabela só do servidor mantém ZERO policies (contrato mais restritivo): nada a criar
-      and (has_table_privilege('authenticated', c.oid, 'insert')
-           or has_table_privilege('authenticated', c.oid, 'update')
-           or has_table_privilege('authenticated', c.oid, 'delete'))
-      -- só quem ainda NÃO tem as três travas. Esta consulta lê o catálogo e não trava tabela alguma;
-      -- o `drop policy` do corpo trava, e por isso ele só roda onde há o que criar.
-      and (select count(*) from pg_policy p
-            where p.polrelid = c.oid
-              and p.polname in ('support_write_insert', 'support_write_update', 'support_write_delete')) < 3
-    order by c.oid
- loop
-   v_col := case when r.relname = 'organizations' then 'id' else 'organization_id' end;
-   execute format('drop policy if exists support_write_insert on public.%I', r.relname);
-   execute format('create policy support_write_insert on public.%I as restrictive for insert to authenticated with check (public.fn_support_write_allowed(%I))', r.relname, v_col);
-   execute format('drop policy if exists support_write_update on public.%I', r.relname);
-   execute format('create policy support_write_update on public.%I as restrictive for update to authenticated using (public.fn_support_write_allowed(%I)) with check (public.fn_support_write_allowed(%I))', r.relname, v_col, v_col);
-   execute format('drop policy if exists support_write_delete on public.%I', r.relname);
-   execute format('create policy support_write_delete on public.%I as restrictive for delete to authenticated using (public.fn_support_write_allowed(%I))', r.relname, v_col);
- end loop;
-end $f$;
-
--- Mesma regra da `fn_aplicar_travas_de_suporte` (só quem aplica o schema a chama; não é `security
--- definer`): EXECUTE sai das duas origens e dos papéis que o default ACL do Supabase alcança.
-revoke execute on function public.fn_aplicar_travas_de_suporte_em_tabelas_sem_trava()
-  from public, anon, authenticated, service_role;
-
--- O ponto de entrada que a provisionadora de um módulo chama (ADR-0002, D5). A ORDEM continua a
--- mesma — isolamento primeiro, travas do suporte depois —, mas as travas agora só alcançam o que
--- ainda não as tem, isto é, a tabela que o módulo acabou de criar.
-create or replace function public.fn_proteger_modulo_provisionado()
-returns void
-language plpgsql
-set search_path = public
-as $f$
-begin
-  perform public.fn_proteger_tabelas_de_organizacao();
-  perform public.fn_aplicar_travas_de_suporte_em_tabelas_sem_trava();
-end $f$;
-
-revoke execute on function public.fn_proteger_modulo_provisionado() from public, anon, authenticated, service_role;

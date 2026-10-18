@@ -294,13 +294,16 @@ describe("as rotinas de proteção da D5 existem e protegem (migration 0325)", (
       select 'sonda=' || coalesce(bool_or(c.relname = 'sonda_protecao_0325'), false)::text
              || '|nucleo=' || coalesce(string_agg(c.relname, ',' order by c.relname)
                                        filter (where c.relname <> 'sonda_protecao_0325'), '')
+             || '|travas=' || (select count(*) from pg_policy p
+                                where p.polrelid = 'public.sonda_protecao_0325'::regclass
+                                  and p.polname like 'support\\_write\\_%')::text
         from pg_locks l join pg_class c on c.oid = l.relation
        where l.pid = pg_backend_pid() and l.locktype = 'relation'
          and l.mode = 'AccessExclusiveLock' and c.relkind = 'r';
       rollback;`);
     // `psql -tA` imprime também a tag de cada comando (BEGIN, CREATE TABLE, DO…).
     const medida = saida.split("\n").find((linha) => linha.startsWith("sonda="));
-    expect(medida, "a instalação segurou ACCESS EXCLUSIVE em tabela do núcleo").toBe("sonda=true|nucleo=");
+    expect(medida, "a instalação segurou ACCESS EXCLUSIVE em tabela do núcleo").toBe("sonda=true|nucleo=|travas=3");
   });
 
   it("não toca em tabela que já decidiu a própria proteção", () => {
