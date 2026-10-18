@@ -1,0 +1,57 @@
+<!--meta {"id":"financeiro","grupo":"organizacao","titulo":"Financeiro","ordem":11,"resumo":"Cadastre uma vez para onde o dinheiro vai: contas, formas de pagamento, plano de contas, regras de comissão e lançamentos que se repetem todo mês.","palavras":["financeiro","contas","forma de pagamento","plano de contas","comissão","recorrência","lançamento recorrente","aluguel","caixa","banco","pix","conta de destino"],"onde":"Configurações › Sua empresa › Financeiro","quem":"Todos veem as listas. Cadastrar e desativar: Gerente ou acima.","rotas":["/app/settings/tenant/financeiro"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O <strong>Financeiro</strong> é a configuração de base do dinheiro: <em>onde ele fica</em> (contas), <em>como o cliente paga</em> (formas de pagamento), <em>como cada lançamento é classificado</em> (plano de contas), <em>quanto cada pessoa recebe</em> (comissão) e <em>o que se repete todo mês</em> (aluguel, internet). É isto que faz uma <a href="#comandas">Comanda</a> fechada virar um lançamento no lugar certo.</p>
+<aside class="nota atencao"><strong>Numa instalação nova está tudo vazio.</strong><p>Não vem nenhuma conta, forma de pagamento ou plano de contas pronto. O mínimo para fechar uma comanda: <strong>uma conta</strong> e <strong>uma forma de pagamento apontando para essa conta</strong>.</p></aside>
+<aside class="nota info"><strong>Nada aqui move dinheiro nem manda mensagem.</strong><p>É só cadastro. Não usa IA nem serviço externo.</p></aside>
+
+<figure class="print">
+  <img src="img/financeiro-config.png" alt="Tela Financeiro com os cartões Contas, Formas de pagamento, Plano de contas, Comissão e Todo mês, numerada de 1 a 8" loading="lazy">
+  <figcaption>As cinco seções da tela, numa página só (sem abas).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Contas.</strong> Onde o dinheiro fica. Cada linha é “nome · tipo”.</li>
+  <li><strong>Formas de pagamento.</strong> Cada forma aponta para uma conta (“Pix → Banco Itaú”).</li>
+  <li><strong>Plano de contas.</strong> A classificação dos lançamentos, separada em <em>Entrada</em> e <em>Saída</em>.</li>
+  <li><strong>Comissão.</strong> Regras de quanto cada pessoa recebe.</li>
+  <li><strong>Todo mês.</strong> Lançamentos recorrentes.</li>
+  <li><strong>Adicionar conta.</strong></li>
+  <li><strong>Adicionar forma.</strong></li>
+  <li><strong>Desativar.</strong> Tira o item da lista de escolha, sem apagar.</li>
+</ol>
+
+<h2 id="contas">Contas</h2>
+<p>“Onde o dinheiro fica. O saldo que aparece nos relatórios é sempre somado dos lançamentos — o valor aqui é só o ponto de partida.” Informe o <strong>Nome da conta</strong> (de 2 a 80 caracteres; placeholder “Ex.: Caixa”) e o <strong>Tipo da conta</strong>: <em>Caixa</em> (padrão), <em>Banco</em> ou <em>Outra</em> (use para maquininha, por exemplo). Clique em <span class="ui">Adicionar conta</span>. O saldo inicial e a moeda <strong>não têm campo na tela</strong>: gravam 0 e BRL.</p>
+
+<h2 id="formas">Formas de pagamento</h2>
+<p>“Como o cliente paga. A conta escolhida aqui é onde esse dinheiro entra quando a comanda é fechada.” Informe o nome (“Ex.: Pix”) e a <strong>Conta de destino</strong>, ou deixe “Decidir depois”.</p>
+<aside class="nota atencao"><strong>Forma sem conta não fecha comanda.</strong><p>Uma forma “Decidir depois” aparece na lista como <em>“Boleto → ⚠️ sem conta definida”</em>. Enquanto estiver assim, a Comanda recusa finalizar com ela. Se a conta foi removida, aparece “conta removida”.</p></aside>
+
+<h2 id="plano">Plano de contas</h2>
+<p>“Como cada lançamento é classificado. Entrada e saída são coisas diferentes.” Informe o nome (“Ex.: Serviços”) e escolha <strong>Entrada ou saída?</strong> (começa vazio e é obrigatório). Ao finalizar uma comanda, a entrada é classificada no <strong>primeiro plano de entrada ativo</strong>, pela data de criação.</p>
+
+<h2 id="comissao">Comissão</h2>
+<p>“Quanto cada pessoa recebe por atendimento. Sem regra, a comissão é zero.” <strong>A regra mais específica vence:</strong> pessoa e serviço vence pessoa, que vence serviço. <em>Não é o maior percentual que ganha.</em></p>
+<ul>
+  <li><strong>Pessoa</strong> (“Qualquer pessoa” ou um membro que não seja Somente leitura), <strong>Serviço</strong> (“Qualquer serviço” ou um tipo da Agenda) e <strong>Percentual</strong> (de 0 a 100, aceita vírgula).</li>
+  <li>É preciso escolher <strong>ao menos uma pessoa ou um serviço</strong> (“Escolha ao menos uma pessoa ou um serviço.”). A combinação pessoa + serviço não pode repetir.</li>
+  <li>O botão <span class="ui">×</span> (“Remover regra”) tira a regra. Sem nenhuma, a tela diz “Todo item entra com zero.”.</li>
+</ul>
+<aside class="nota atencao"><strong>No teste, o seletor “Pessoa” só ofereceu “Qualquer pessoa”.</strong><p>Pela leitura do código, a lista de pessoas e a regra podem aparecer sem o nome (a regra vira “alguém”). Se o seu seletor também vier sem nomes, use a regra por <em>serviço</em>. E lembre: a tela de Comandas só aplica comissão por serviço (veja <a href="#comandas--finalizar">Comandas</a>).</p></aside>
+
+<h2 id="todo-mes">Todo mês (lançamentos recorrentes)</h2>
+<p>“Aluguel, internet, contador. O sistema abre a conta no dia certo.” Informe: <strong>Nome do lançamento</strong>, <strong>Entrada ou saída</strong> (padrão Saída), <strong>Conta</strong>, <strong>Valor</strong> (maior que zero) e <strong>Dia do mês</strong> (1 a 31, padrão 5). Em dia acima de 28, a dica avisa que nos meses mais curtos cai no último dia.</p>
+<ul>
+  <li>O lançamento <strong>nasce como conta a pagar, nunca como paga</strong>: “o sistema sabe que vence, não sabe se você pagou”. Ele aparece em <a href="#faturamento">Faturamento</a> como <em>pendente</em>.</li>
+  <li>Uma tarefa diária do servidor cria, no dia certo, o lançamento do mês. É idempotente: não duplica.</li>
+  <li>O <span class="ui">×</span> remove o molde (“Remover lançamento recorrente”).</li>
+</ul>
+
+<h2 id="regras">Regras gerais</h2>
+<ul>
+  <li>O nome é único entre os itens <em>ativos</em>, sem diferenciar maiúsculas de minúsculas (“esse nome já existe”).</li>
+  <li><strong>Desativar não apaga</strong>: lançamentos antigos continuam apontando para o item. Não pede confirmação, e <strong>a tela não tem “reativar”</strong>.</li>
+  <li>Uma conta que tem forma de pagamento apontando para ela não pode ser apagada; desativar é livre.</li>
+  <li>Cada cadastro e cada desativação ficam registrados na auditoria (<code>financeiro.catalogo_criado</code> e <code>financeiro.catalogo_inativado</code>).</li>
+  <li>Para <strong>Somente leitura</strong> e <strong>Atendente</strong>, a tela mostra as listas sem formulários e sem botões.</li>
+</ul>

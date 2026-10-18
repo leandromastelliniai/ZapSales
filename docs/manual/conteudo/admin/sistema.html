@@ -1,0 +1,45 @@
+<!--meta {"id":"admin-sistema","grupo":"admin","titulo":"Recursos opcionais da instalação","ordem":9,"resumo":"A central única onde o dono liga e desliga o que é opcional na instalação inteira (módulos e comportamento) e vê o que depende do servidor.","palavras":["recursos opcionais","módulos","banco de dados externo","fluxos de atendimento","propostas","empresas e pessoas","comportamento","proteção de gasto de ia","assinatura","divulgação de pagamento","conferência de promessa","depende do servidor","sistema"],"onde":"Modo administrador › Recursos opcionais (/admin/sistema)","quem":"Administrador da plataforma; mexer nos interruptores exige escopo full e a verificação em dia","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>É a versão do dono para a tela <a href="#recursos-opcionais">Recursos opcionais</a> da empresa: <strong>tudo o que se liga e desliga nesta instalação, num lugar só</strong>. Vale para todas as empresas hospedadas aqui e <strong>salva na hora</strong> (um clique; se falhar, o interruptor volta e diz “Não deu para salvar. Tente de novo em instantes.”). Reversível com um clique.</p>
+<figure class="print">
+  <img src="img/admin-sistema.png" alt="Tela Recursos opcionais do painel com os blocos Módulos, Comportamento e Depende do servidor, numerada de 1 a 5" loading="lazy">
+  <figcaption>A tela Recursos opcionais do painel.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Módulos.</strong> O primeiro bloco.</li>
+  <li><strong>Módulos opcionais.</strong> “Recursos que a maioria das instalações não usa. Desligados, eles não aparecem para nenhuma empresa daqui.”</li>
+  <li><strong>Comportamento.</strong> “O que esta instalação faz.”</li>
+  <li><strong>Proteção de gasto de IA.</strong> Um dos quatro controles.</li>
+  <li><strong>Depende do servidor.</strong> Só leitura.</li>
+</ol>
+
+<h2 id="modulos">Módulos</h2>
+<p>Quatro interruptores, <strong>todos desligados por padrão</strong>:</p>
+<table class="tabela">
+  <thead><tr><th>Módulo</th><th>O que liga</th><th>Tela</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Banco de dados externo</strong></td><td>Cada empresa pode conectar o banco de outro sistema para o agente consultar. “Isso guarda a senha daquele banco neste servidor e abre conexão com ele.”</td><td><a href="#dados-externos">Dados externos</a></td></tr>
+    <tr><td><strong>Fluxos de atendimento</strong></td><td>Roteiros de perguntas que a IA conduz na conversa (nome, CPF, interesse…) e que gravam as respostas na ficha do cliente.</td><td><a href="#fluxos-de-atendimento">Fluxos de atendimento</a></td></tr>
+    <tr><td><strong>Propostas comerciais</strong></td><td>A IA levanta o que o cliente precisa, monta a proposta pelos modelos da empresa e o PDF sai pelo WhatsApp. Cada empresa liga em Configurações › Propostas.</td><td><a href="#propostas-config">Propostas</a></td></tr>
+    <tr><td><strong>Empresas e pessoas (venda para empresas)</strong></td><td>Cadastro de Empresas por CNPJ (dados públicos da BrasilAPI — consultar um CNPJ manda o número para a BrasilAPI), Pessoas e importação CSV/Excel.</td><td><a href="#empresas">Empresas</a></td></tr>
+  </tbody>
+</table>
+<p>Desligado, a tela, o item de menu e as ferramentas do agente <em>somem</em> para todas as empresas. Embaixo, uma linha para cada módulo que não é de interruptor — hoje o <a href="#honorarios">Honorários</a> — com o botão <span class="ui">Ajustar</span>, que leva a <a href="#admin-extensoes--modulos">Módulos</a>. Cada mudança fica na auditoria (<code>platform.modulo_updated</code>, com de/para).</p>
+
+<h2 id="comportamento">Comportamento</h2>
+<p>Quatro controles que são gravados juntos:</p>
+<ul>
+  <li><strong>Proteção de gasto de IA</strong> — o que acontece quando o gasto passa do teto que a <em>empresa</em> escolheu: “Respeita o teto de cada empresa” (padrão), “Só avisa, nunca para a IA” ou “Desligada”. Não liga a proteção de ninguém: <em>só pode afrouxá-la</em>.</li>
+  <li><strong>Exigir assinatura nas entregas do canal</strong> — interruptor desligado por padrão. Ligado, toda entrega de webhook precisa vir assinada com o segredo da sessão. <strong>Ligar sem que o servidor de canal assine corta a entrada de mensagens.</strong></li>
+  <li><strong>Divulgação de pagamento no atendimento</strong> — “Injetar” (padrão) acrescenta o texto de divulgação à primeira mensagem; “Vetar” bloqueia o envio sem ele e devolve ao modelo a razão para reescrever.</li>
+  <li><strong>Conferência de promessa antes de enviar</strong> — ligado por padrão: cada envio passa por uma conferência de modelo para não prometer o que a empresa não cumpre. Custa <em>uma chamada de modelo por envio</em>.</li>
+</ul>
+<p>Depois vêm duas linhas com o botão <span class="ui">Ajustar</span> e o selo “Veja na tela dele”: <strong>Quem pode criar conta</strong> (→ <a href="#admin-cadastro">Cadastro</a>) e <strong>Destinos internos</strong> (→ <a href="#admin-destinos">Destinos internos</a>). Quem cuida do servidor pode declarar um valor no arquivo de ambiente, mas ele <em>só responde até a primeira leitura do banco</em>: a partir daí, manda o que está nesta tela. Auditoria: <code>platform.comportamento_updated</code>.</p>
+
+<h2 id="servidor">Depende do servidor</h2>
+<p>“Só leitura. Estes dependem de credencial ou do arquivo de ambiente do servidor. Nenhum valor de segredo aparece aqui.” Cada linha mostra o selo <em>Configurado</em>, <em>Não configurado</em> ou <em>Não dá para ver daqui</em> e, quando existe tela, o botão <span class="ui">Ajustar</span>:</p>
+<ul>
+  <li><strong>E-mail</strong> (→ <a href="#admin-cadastro--email">E-mail</a>) e <strong>Google Agenda</strong> (→ <a href="#admin-google">Google Agenda</a>) e <strong>API Oficial da Meta</strong> (→ <a href="#admin-google--meta">API Oficial</a>).</li>
+  <li><strong>Chamada de voz pelo WhatsApp</strong> (variáveis do serviço de chamadas e o perfil de voz), <strong>Telefonia por SIP</strong> (perfil de telefonia e Asterisk; “Não dá para ver daqui”), <strong>Google Ads</strong> (três variáveis <code>GOOGLE_ADS_*</code>), <strong>Notificação com a aba fechada</strong> (o par de chaves VAPID) e <strong>Transcrição de áudio por outro serviço</strong>.</li>
+</ul>

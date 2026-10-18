@@ -1,0 +1,25 @@
+<!--meta {"id":"admin-extensoes","grupo":"admin","titulo":"Extensões e Módulos da instalação","ordem":11,"resumo":"De onde vêm as extensões aceitas pelo servidor e quem as usa, e a instalação de módulos oficiais com tabelas próprias (hoje, Honorários).","palavras":["extensões","catálogo admitido","módulos","honorários","advocacia","instalar","tabelas próprias","instalação"],"onde":"Modo administrador › Extensões e Módulos (/admin/extensoes, /admin/modulos)","quem":"Administrador da plataforma. Instalar módulo exige escopo full e a verificação em dia.","rotas":[]} -->
+
+<h2 id="extensoes">Extensões da instalação</h2>
+<p>Mostra o que este servidor <em>conhece</em>, de onde veio e <em>quem está usando</em>. É só leitura: “Instalar e configurar continua sendo feito dentro de cada empresa” (veja <a href="#extensoes">Extensões</a>, onde o dono do servidor admite catálogos e instala pacotes).</p>
+<figure class="print media">
+  <img src="img/admin-extensoes.png" alt="Tela Extensões da instalação com os cartões De onde vêm as extensões e Instaladas neste servidor, vazios, numerada de 1 a 2" loading="lazy">
+  <figcaption>A tela Extensões da instalação, sem nada admitido ainda.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>De onde vêm as extensões.</strong> O catálogo admitido neste servidor (a origem que o instalador aceita), com “Revisão N · admitido em &lt;data&gt; · impressão digital &lt;12 caracteres&gt;”. Vazio: “Nenhum catálogo admitido ainda — enquanto não houver, não há extensão para instalar.”</li>
+  <li><strong>Instaladas neste servidor.</strong> “Cada extensão é instalada uma vez no servidor e ligada por empresa.” Cada linha: <code>publicador/nome vX.Y</code> e “N de M empresa(s) com ela ligada · instalada em &lt;data&gt;” (ou “Nenhuma empresa usa esta extensão”). Vazio: “Nenhuma extensão instalada ainda.”</li>
+</ol>
+<p>O rodapé tem o link “Extensões da empresa →” (para <code>/app/extensions</code>).</p>
+
+<h2 id="modulos">Módulos da instalação</h2>
+<p>Instala módulos oficiais que criam <strong>tabelas próprias no banco</strong> — quem não instala não carrega essas tabelas. Instalar aqui vale para todas as empresas. Hoje existe um único módulo.</p>
+<figure class="print media">
+  <img src="img/admin-modulos.png" alt="Tela Módulos da instalação com o cartão Honorários (advocacia) e o botão Instalar, numerada de 1 a 2" loading="lazy">
+  <figcaption>A tela Módulos da instalação.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Honorários (advocacia).</strong> “Contrato de honorários (fixo, êxito ou misto) e o calendário de parcelas, ligado ao caixa do núcleo. Para escritórios de advocacia que cobram por caso.” Mostra o selo <em>Instalado</em> (verde) ou <em>Suspenso</em> (vermelho, com o motivo).</li>
+  <li><strong>Instalar.</strong> “Instalando…”. Só aparece se o módulo ainda não foi instalado.</li>
+</ol>
+<aside class="nota atencao"><strong>Instalar é para sempre.</strong><p>Cria as tabelas do módulo no banco compartilhado (um banco só, esquema <code>public</code>), de forma idempotente, e fica na auditoria (<code>modulo.instalado</code>). <strong>A tela não desinstala nem suspende</strong>; considere a ação irreversível pela interface. Depois de instalado, cada empresa vê a porta do módulo (veja <a href="#honorarios">Honorários</a>). <em>Esta instalação não foi acionada nas capturas.</em> Quem não é o dono do servidor recebe: “Só o administrador da instalação pode gerenciar os pacotes disponíveis.”</p></aside>

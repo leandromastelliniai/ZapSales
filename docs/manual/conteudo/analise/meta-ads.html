@@ -1,0 +1,55 @@
+<!--meta {"id":"meta-ads","grupo":"analise","titulo":"Meta Ads","ordem":6,"resumo":"Campanha por campanha, quanto os anúncios do Facebook e Instagram gastaram e quantos resultados trouxeram no período, lido direto da Meta quando você clica em Atualizar.","palavras":["meta ads","anúncios","facebook","instagram","campanhas","custo por resultado","valor gasto","cpm","ctr","connect rate","hook rate","thruplays","token","ads_read"],"onde":"Análise › Meta Ads (também no menu lateral)","quem":"Gerente ou acima. Conectar a conta: só Administrador.","rotas":["/app/ads/meta"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O <strong>Meta Ads</strong> mostra, campanha por campanha, <strong>quanto os anúncios do Facebook e do Instagram gastaram</strong> e quantos <strong>resultados</strong> trouxeram no período. Os números vêm <em>ao vivo</em> da Meta no momento em que você abre a tela ou clica em <span class="ui">Atualizar</span> — <strong>nada fica guardado no ZapSales</strong>. É uma conexão <em>só de leitura</em>: nada é criado, pausado ou alterado na sua conta de anúncios, e nenhuma verba é gasta.</p>
+<aside class="nota atencao"><strong>Só funciona depois de conectar a conta.</strong><p>Quem administra a organização precisa colar um token de acesso com a permissão <code>ads_read</code> em <a href="#meta-ads-config">Configurações › Meta Ads</a>. Sem isso, a tela mostra “Nenhuma conta de anúncios conectada.”. <strong>Esta página foi fotografada nesse estado</strong>: a conta de demonstração não tem token, e a tabela abaixo foi descrita a partir do código, sem dados reais.</p></aside>
+
+<figure class="print media">
+  <img src="img/meta-ads-vazio.png" alt="Tela Meta Ads sem conta conectada, com a mensagem e o link Conectar conta de anúncios, numerada de 1 a 3" loading="lazy">
+  <figcaption>A tela de Meta Ads antes de conectar uma conta.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong></li>
+  <li><strong>“Nenhuma conta de anúncios conectada.”</strong> Para Administrador, completa: “Conecte um token de acesso com permissão de leitura de anúncios para ver as campanhas aqui.”. Para Gerente: “Peça a quem administra a organização para conectar a conta de anúncios em Configurações.”</li>
+  <li><strong>Conectar conta de anúncios.</strong> Só o Administrador vê o link, que leva a <a href="#meta-ads-config">Configurações › Meta Ads</a>.</li>
+</ol>
+
+<h2 id="filtros">Com a conta conectada</h2>
+<ul>
+  <li><strong>Conta de anúncios:</strong> as contas que o token alcança. Quando a conta não está normal, o nome ganha um sufixo (“— pendência de cobrança”, “— desativada”, “— em análise de risco”, “— aguardando pagamento”, “— encerrada”…). A tela escolhe, nesta ordem: a que você escolheu, a “conta padrão” salva, a primeira conta ativa e, por último, a primeira da lista.</li>
+  <li><strong>Período:</strong> <em>Últimos 7 dias</em> (padrão), <em>14</em>, <em>30</em>, <em>90</em> ou <em>Personalizado</em> (com “De” e “Até”; “Até” no máximo ontem). O fim do período é <strong>sempre ontem</strong> (o dia de hoje está incompleto). As datas são calculadas em UTC: à noite no Brasil, o “ontem” pode ser o dia corrente.</li>
+  <li><strong>Atualizar:</strong> relê a Meta (“Atualizando…”). Trocar a conta ou o período também relê sozinho.</li>
+  <li>Rodapé da tabela: “Período: AAAA-MM-DD a AAAA-MM-DD · lido em [data e hora]”. Sem campanhas: “Nenhuma campanha neste período. Ou a conta ainda não tem campanhas, ou elas foram criadas depois da data escolhida.”.</li>
+</ul>
+<h3>As colunas da tabela</h3>
+<p>A tabela tem 15 colunas e rola na horizontal (a coluna “Campanha” fica fixa). <strong>Ausência de dado aparece como “—” em cinza, nunca como zero inventado.</strong> Valores em reais usam a moeda <em>da conta de anúncios</em>, não a da instalação.</p>
+<table class="tabela">
+  <thead><tr><th>Coluna</th><th>O que é</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Campanha</strong></td><td>O nome atual.</td></tr>
+    <tr><td><strong>Status</strong></td><td>A situação configurada: Ativa, Pausada, Excluída, Arquivada.</td></tr>
+    <tr><td><strong>Veiculação</strong></td><td>A situação <em>efetiva</em> — a que explica por que uma campanha “ativa” não entrega: Ativa (verde), Com problemas, Em análise e Aguardando dados de cobrança (âmbar), Reprovada (vermelho), Campanha pausada, Conjunto pausado, Pré-aprovada, Em processamento…</td></tr>
+    <tr><td><strong>Resultado</strong></td><td>O número que a Meta chama de resultado, com o tipo embaixo (“Conversas iniciadas”, “Cadastros”, “Compras”, “Cliques no link”, “Alcance”…). O tipo vem da Meta por conjunto de anúncios, então a coluna pode misturar objetivos diferentes entre linhas.</td></tr>
+    <tr><td><strong>Custo por Resultado</strong></td><td>O valor da Meta ou, na falta, o gasto ÷ resultado.</td></tr>
+    <tr><td><strong>Valor Gasto</strong>, <strong>Impressões</strong>, <strong>Alcance</strong> (pessoas únicas)</td><td>Como a Meta informa.</td></tr>
+    <tr><td><strong>CPM</strong> e <strong>CTR</strong></td><td>Custo por mil impressões e taxa de cliques.</td></tr>
+    <tr><td><strong>Connect rate</strong></td><td>“Visualizações da página ÷ cliques no link”. Sem dado, “—” com a dica de que a Meta não devolveu esses campos.</td></tr>
+    <tr><td><strong>Frequência</strong> e <strong>CPC</strong></td><td>Quantas vezes cada pessoa viu; custo por clique (nos cliques totais).</td></tr>
+    <tr><td><strong>Hook Rate (reproduções)</strong></td><td>“Reproduções de vídeo ÷ impressões”. <strong>Não é o hook rate de mercado</strong> (3 segundos) — a Meta retirou esse campo; este número tende a ser maior.</td></tr>
+    <tr><td><strong>ThruPlays</strong></td><td>A soma das reproduções completas segundo a Meta.</td></tr>
+  </tbody>
+</table>
+<h3>Mensagens de erro</h3>
+<table class="tabela">
+  <thead><tr><th>Mensagem</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td>“A plataforma recusou o token de acesso — ele expirou ou foi revogado.”</td><td>Gere um novo em Configurações › Meta Ads.</td></tr>
+    <tr><td>“O token não tem permissão de leitura de anúncios (ads_read), ou não alcança esta conta.”</td><td>Refaça o token no Meta for Developers marcando <code>ads_read</code>.</td></tr>
+    <tr><td>“A plataforma limitou as chamadas por excesso de consultas.”</td><td>Espere alguns minutos antes de atualizar de novo.</td></tr>
+    <tr><td>“A plataforma recusou um campo desta consulta.”</td><td>Problema do sistema, não da conta: avise quem mantém a instalação.</td></tr>
+    <tr><td>“A chave de criptografia da instalação não está disponível…”</td><td>Configuração do servidor.</td></tr>
+    <tr><td>“Não consegui falar com a plataforma agora.”</td><td>Tente atualizar em instantes.</td></tr>
+  </tbody>
+</table>
+<p>Cada leitura gasta 2 chamadas na cota da Meta (campanhas e resultados), mais 1 para a lista de contas (guardada 5 minutos no navegador). Não há nova tentativa automática. O token vai no cabeçalho da requisição, nunca na endereço.</p>
+<aside class="nota info"><strong>Dois tokens diferentes.</strong><p>O token de <em>leitura</em> (esta tela, <code>ads_read</code>) é diferente do token de <em>conversões</em> (que escreve eventos na Meta; veja <a href="#conversoes">Conversões</a>). Ficam em telas e tabelas separadas; colar um no lugar do outro é o erro mais comum.</p></aside>

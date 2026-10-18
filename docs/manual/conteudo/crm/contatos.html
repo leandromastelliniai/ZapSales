@@ -1,0 +1,134 @@
+<!--meta {"id":"contatos","grupo":"crm","titulo":"Contatos","ordem":2,"resumo":"As pessoas do outro lado da conversa e o histórico de cada uma. Aqui você cadastra, busca, importa, junta duplicados e cuida dos dados pessoais conforme a LGPD.","palavras":["cliente","pessoa","cadastro","telefone","e-mail","email","importar csv","duplicado","juntar","mesclar","excluir","apagar","anonimizar","lgpd","tags","origem","bloqueado","desbloquear","ficha"],"onde":"CRM › Contatos","quem":"Ver: todos os papéis. Criar, editar, excluir e importar: Atendente ou acima. Juntar duplicados: Gerente ou acima. Desbloquear e anonimizar (LGPD): Administrador.","rotas":["/app/contacts","/app/contacts/[id]"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O <span class="ui">Contatos</span> é o cadastro de todas as pessoas que já falaram com você. Cada pessoa aparece <strong>uma só vez</strong>, e o que você sabe sobre ela fica junto: telefone, e-mail, etiquetas, de onde ela veio, a conversa no WhatsApp e os negócios dela no funil.</p>
+<p>São duas telas: a <a href="#contatos--lista">lista</a>, para achar e organizar pessoas, e a <a href="#contatos--ficha">ficha</a>, para ver uma pessoa em detalhe.</p>
+<aside class="nota info"><strong>Contato, lead e conversa não são a mesma coisa.</strong><p>O <em>contato</em> é a pessoa. O <em>lead</em> é um negócio dela no funil, e a <em>conversa</em> é a troca de mensagens. Uma pessoa tem um cadastro de contato e pode ter várias conversas e negócios. Veja <a href="#conceitos">Conceitos básicos</a>.</p></aside>
+
+<h2 id="lista">A lista de contatos</h2>
+<figure class="print">
+  <img src="img/contatos-lista.png" alt="Lista de contatos com os botões do topo, os filtros e a tabela numerados de 1 a 14" loading="lazy">
+  <figcaption>A lista de contatos. Os 12 contatos da organização de demonstração.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Abre o painel de ajuda da tela.</li>
+  <li><strong>Duplicados.</strong> Procura a mesma pessoa cadastrada duas vezes e deixa você juntar os cadastros. Veja <a href="#contatos--duplicados">Juntar contatos duplicados</a>.</li>
+  <li><strong>Importar CSV.</strong> Traz uma lista de pessoas de uma planilha. Veja <a href="#contatos--importar">Importar uma planilha</a>.</li>
+  <li><strong>Novo contato.</strong> Cadastra uma pessoa à mão. Veja <a href="#contatos--novo">Cadastrar um contato</a>.</li>
+  <li><strong>Busca.</strong> Procura por nome, e-mail ou telefone enquanto você digita.</li>
+  <li><strong>Tag.</strong> Filtra pelas etiquetas. Você pode marcar mais de uma e escolher entre <em>Todas (E)</em> e <em>Qualquer uma (OU)</em>. Fica desativado enquanto nenhum contato tem etiqueta.</li>
+  <li><strong>Origem.</strong> Filtra por onde a pessoa veio (veja a tabela abaixo).</li>
+  <li><strong>Itens por página.</strong> Escolha entre 25, 50 e 100 contatos por vez.</li>
+  <li><strong>Cabeçalhos com setinha</strong> (Nome, Email, Telefone e Última atividade). Clique para ordenar por aquela coluna; clique de novo para inverter a ordem. A lista já vem ordenada pela <em>última atividade</em>, da mais recente para a mais antiga.</li>
+  <li><strong>Linha do contato.</strong> Clique no nome para abrir a <a href="#contatos--ficha">ficha</a>.</li>
+  <li><strong>Tags</strong> do contato.</li>
+  <li><strong>Status.</strong> <span class="selo ok">Ativo</span> é o normal. Veja os outros na tabela abaixo.</li>
+  <li><strong>Balão de conversa.</strong> Abre a conversa dessa pessoa no <a href="#inbox">Inbox</a>. Se ela ainda não tem conversa, o botão <em>inicia</em> uma. Um número aparece quando há mensagens não lidas.</li>
+  <li><strong>Lixeira.</strong> Exclui o contato (veja <a href="#contatos--excluir">Excluir um contato</a>).</li>
+</ol>
+
+<h3>As origens</h3>
+<p>A <strong>origem</strong> diz como a pessoa chegou ao seu cadastro. O filtro <span class="ui">Todas as origens</span> oferece:</p>
+<table class="tabela">
+  <thead><tr><th>Origem</th><th>Quer dizer</th></tr></thead>
+  <tbody>
+    <tr><td>Manual</td><td>Alguém da equipe cadastrou à mão.</td></tr>
+    <tr><td>WhatsApp</td><td>A pessoa mandou mensagem e o sistema criou o cadastro sozinho.</td></tr>
+    <tr><td>Site (landing page)</td><td>Veio de um formulário do seu site.</td></tr>
+    <tr><td>Importado (CSV)</td><td>Veio de uma planilha importada.</td></tr>
+    <tr><td>Anúncio da Meta / Anúncio do Google</td><td>Veio de um clique em anúncio.</td></tr>
+  </tbody>
+</table>
+
+<h3>Os status</h3>
+<table class="tabela">
+  <thead><tr><th>Selo</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td><span class="selo ok">Ativo</span></td><td>Contato normal, que pode receber mensagens.</td></tr>
+    <tr><td><span class="selo">Cliente</span></td><td>Quem já foi atendido como cliente. Só aparece quando a organização usa a regra “Clientes pela agenda”, em <span class="ui">Configurações › Tipos de agendamento</span>.</td></tr>
+    <tr><td><span class="selo">Bloqueado</span></td><td>A pessoa pediu para não receber mais mensagens. O sistema não manda campanha, follow-up nem resposta de IA para ela. Só um Administrador pode desbloquear.</td></tr>
+    <tr><td><span class="selo">Anonimizado</span></td><td>Os dados pessoais foram apagados a pedido do titular (LGPD). Não tem volta.</td></tr>
+  </tbody>
+</table>
+<p>No fim da lista aparece quantos contatos foram carregados. Quando há mais do que a página comporta, o botão <span class="ui">Carregar mais</span> traz os próximos.</p>
+
+<h2 id="novo">Cadastrar um contato</h2>
+<p>Clique em <span class="ui">Novo contato</span>.</p>
+<figure class="print media">
+  <img src="img/contatos-novo.png" alt="Janela Novo contato com os campos Nome, Email, Telefone, CPF e Tags" loading="lazy">
+  <figcaption>A janela “Novo contato”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome.</strong> Como você chama a pessoa.</li>
+  <li><strong>Email.</strong></li>
+  <li><strong>Telefone (E.164).</strong> O telefone <strong>com o código do país</strong>, começando com <code>+</code> e só com números depois. Exemplo: <code>+5511999998888</code> (55 é o Brasil, 11 é o DDD). Sem o <code>+</code> e o código do país o sistema recusa.</li>
+  <li><strong>CPF (opcional).</strong> Se quiser guardar.</li>
+  <li><strong>Tags.</strong> Etiquetas separadas por vírgula, como <em>vip, recompra</em>.</li>
+  <li><strong>Criar contato.</strong> Salva. <span class="ui">Cancelar</span> fecha sem salvar.</li>
+</ol>
+<aside class="nota atencao"><strong>Preencha pelo menos o e-mail ou o telefone.</strong><p>O sistema precisa de um deles para identificar a pessoa. Sem os dois, ele não deixa criar o contato.</p></aside>
+
+<h2 id="importar">Importar uma planilha de contatos</h2>
+<p>Se você já tem uma lista de pessoas numa planilha, clique em <span class="ui">Importar CSV</span>.</p>
+<ol class="passos">
+  <li>Prepare a planilha com <strong>uma linha por pessoa</strong> e uma linha de cabeçalho. As colunas reconhecidas são: <code>nome</code>, <code>telefone</code>, <code>email</code>, <code>cpf</code>, <code>nascimento</code> e <code>tags</code>.</li>
+  <li>Salve como CSV. No Excel: <em>Salvar como › CSV UTF-8</em>. O limite é de <strong>500 linhas por arquivo</strong>: se a lista for maior, divida em vários arquivos.</li>
+  <li>Em <span class="ui">Importar CSV</span>, escolha o arquivo em <strong>Arquivo CSV</strong> e clique em <span class="ui">Importar</span>.</li>
+  <li>Ao terminar, o sistema mostra um resumo: quantas linhas foram lidas, <strong>quantas foram importadas</strong>, quantas <strong>já existiam</strong> (essas não são duplicadas) e quantas deram <strong>erro</strong>. Use <span class="ui">Importar outro arquivo</span> para seguir, ou <span class="ui">Concluir</span> para fechar.</li>
+</ol>
+<aside class="nota dica"><strong>Importar não cria duplicados.</strong><p>Quem já existe no cadastro é contado como “já existente” e fica de fora. Se algumas linhas derem erro, o resumo avisa quantas foram: confira o telefone (precisa do código do país) e o e-mail dessas linhas.</p></aside>
+
+<h2 id="duplicados">Juntar contatos duplicados</h2>
+<p>Às vezes a mesma pessoa vira dois cadastros: uma vez pelo WhatsApp e outra numa planilha, por exemplo. O botão <span class="ui">Duplicados</span> mostra os grupos em que o sistema suspeita que seja a mesma pessoa e diz o motivo: <em>mesmo telefone</em>, <em>mesmo e-mail</em> ou <em>telefone que o WhatsApp deixou em conflito</em>.</p>
+<ol class="passos">
+  <li>Clique em <span class="ui">Duplicados</span>. Se não houver nenhum, a janela diz “Nenhum contato duplicado encontrado”.</li>
+  <li>Em cada grupo, escolha qual cadastro <strong>fica</strong>. O outro é marcado como “será absorvido por quem fica”.</li>
+  <li>Clique em <span class="ui">Juntar</span> e confirme em <span class="ui">Juntar contatos</span>.</li>
+</ol>
+<aside class="nota perigo"><strong>Não há como desfazer.</strong><p>Ao juntar, o cadastro absorvido sai da lista, e as mensagens, os negócios e o histórico dele passam para o que ficou. Confira com calma qual cadastro deve ficar. Só Gerente ou Administrador pode juntar.</p></aside>
+
+<h2 id="ficha">A ficha do contato</h2>
+<p>Clique no nome de uma pessoa na lista para abrir a ficha dela.</p>
+<figure class="print">
+  <img src="img/contatos-ficha.png" alt="Ficha do contato Ana Paula Ferreira, com abas Visão geral, Timeline e LGPD, e dados numerados" loading="lazy">
+  <figcaption>A ficha do contato, na aba “Visão geral”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Editar.</strong> Abre a janela para mudar os dados (nome, e-mail, telefone, data de nascimento e tags). Se o seu funil padrão tem <em>campos personalizados</em>, eles aparecem ali também. Fica bloqueado para contatos anonimizados.</li>
+  <li><strong>Nome, e-mail, telefone e tags.</strong> O resumo no alto da ficha.</li>
+  <li><strong>Abrir conversa no Inbox.</strong> Mostra a última mensagem e leva à conversa. O número roxo é quantas mensagens ainda não foram lidas.</li>
+  <li><strong>Aba Visão geral.</strong> Os dados completos do contato.</li>
+  <li><strong>Aba Timeline.</strong> O histórico de tudo o que aconteceu com essa pessoa.</li>
+  <li><strong>Aba LGPD.</strong> Só aparece para Administrador. É onde se anonimiza o contato.</li>
+  <li><strong>Nome · WhatsApp.</strong> O nome que a pessoa usa no próprio WhatsApp, que pode ser diferente do nome que você cadastrou.</li>
+  <li><strong>Origem.</strong> De onde o contato veio. Quando veio de um anúncio, a ficha mostra também a campanha, o conjunto e o anúncio.</li>
+  <li><strong>Tags.</strong> As etiquetas do contato.</li>
+</ol>
+<p>Abaixo desses dados, a aba <em>Visão geral</em> pode mostrar a seção <strong>“Respostas dos roteiros de atendimento”</strong>, com o que a pessoa respondeu em cada pergunta de um roteiro (ou <em>“não respondido”</em>).</p>
+<aside class="nota info"><strong>Contato bloqueado ou anonimizado</strong><p>Um contato <strong>bloqueado</strong> mostra um selo amarelo e o botão <span class="ui">Desbloquear</span> (só para Administrador): ao desbloquear, o sistema volta a permitir campanhas, follow-ups e respostas da IA para essa pessoa, e a ação fica registrada na auditoria em nome de quem desbloqueou. Um contato <strong>anonimizado</strong> mostra um aviso no alto e não pode ser editado.</p></aside>
+
+<h3>A aba Timeline</h3>
+<p>Mostra as atividades registradas dessa pessoa, separadas por dia, com <span class="ui">Carregar mais</span> no fim quando há muitas. Para um contato recém-cadastrado, ou numa organização nova, ela diz <em>“Nenhuma atividade registrada ainda”</em> — é normal. Ela vai se enchendo conforme você atende.</p>
+<figure class="print media">
+  <img src="img/contatos-timeline.png" alt="Aba Timeline da ficha de um contato recém-cadastrado, ainda sem atividades" loading="lazy">
+  <figcaption>A aba Timeline de um contato novo, ainda sem atividades.</figcaption>
+</figure>
+
+<h2 id="lgpd">LGPD: anonimizar um contato</h2>
+<p>A LGPD dá a cada pessoa o direito de pedir que seus dados sejam apagados. No ZapSales, isso se faz <strong>anonimizando</strong> o contato, na aba <span class="ui">LGPD</span> da ficha (só Administrador vê a aba).</p>
+<figure class="print media">
+  <img src="img/contatos-lgpd.png" alt="Aba LGPD da ficha do contato, com o botão vermelho Anonimizar contato" loading="lazy">
+  <figcaption>A aba LGPD, com o botão vermelho “Anonimizar contato”.</figcaption>
+</figure>
+<aside class="nota perigo"><strong>A anonimização é irreversível.</strong><p>O sistema diz na própria tela: use somente após confirmação formal do titular ou ordem judicial. Depois de feita, não há como recuperar os dados da pessoa.</p></aside>
+<ol class="passos">
+  <li>Abra a ficha do contato e a aba <span class="ui">LGPD</span>.</li>
+  <li>Clique em <span class="ui">Anonimizar contato</span>.</li>
+  <li>Escreva a <strong>justificativa</strong>, com no mínimo 10 caracteres — por exemplo, <em>“Solicitação formal do titular por e-mail em tal data”</em>. Ela fica registrada. Clique em <span class="ui">Continuar</span>.</li>
+  <li>Para confirmar, digite a palavra <code>ANONIMIZAR</code> no campo de confirmação e clique em <span class="ui">Anonimizar permanentemente</span>. <span class="ui">Voltar</span> retorna ao passo anterior.</li>
+</ol>
+<p>Depois disso, o contato passa a aparecer como <em>Anonimizado</em>, a edição fica bloqueada e a aba LGPD informa o dia e a hora em que aconteceu.</p>
+
+<h2 id="excluir">Excluir um contato</h2>
+<p>A <strong>lixeira</strong> da lista exclui o contato. O sistema pergunta antes: <em>“Isso remove [nome] e a conversa associada, se houver. Esta ação não pode ser desfeita.”</em></p>
+<aside class="nota atencao"><strong>Excluir não é o mesmo que anonimizar.</strong><p><strong>Excluir</strong> tira a pessoa e a conversa do sistema. <strong>Anonimizar</strong> apaga só os dados pessoais e <em>preserva</em> o histórico sem identificar ninguém, que é o que a LGPD pede quando a pessoa solicita a remoção. Se o pedido veio de um titular de dados, use a anonimização.</p></aside>

@@ -1,0 +1,98 @@
+<!--meta {"id":"agente-resposta-em-audio","grupo":"ia","titulo":"Resposta em áudio com a sua própria chave de voz","ordem":2.8,"resumo":"Quando o cliente manda um áudio, o agente pode responder com uma nota de voz. A voz vem de um provedor (compatível com a OpenAI ou ElevenLabs) com a chave da sua conta.","palavras":["áudio","resposta em áudio","nota de voz","voz","elevenlabs","openai","tts","texto para fala","chave de voz","provedor de voz","provedores","ffmpeg"],"onde":"Ligar na organização: Agente de IA › Provedores › Resposta em áudio. Ligar no agente: editor do agente › Configuração › Resposta em áudio","quem":"Salvar a chave, ligar e testar: Administrador. Gerente vê o cartão, mas não consegue gravar.","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Muita gente responde a um áudio com outro áudio. Com este recurso, quando o cliente manda uma <strong>mensagem de voz</strong>, o agente pode responder com uma <strong>nota de voz</strong> falada, em vez de texto. A fala é gerada por um serviço de voz que você contrata: o ZapSales usa a <strong>sua chave</strong>, e a cobrança vai para a sua conta nesse serviço.</p>
+<aside class="nota info"><strong>Como funciona, em linguagem simples.</strong><p>O agente escreve a resposta como sempre. Depois que todas as conferências de segurança aprovam o texto, o ZapSales manda esse texto ao serviço de voz, recebe um arquivo de som e o envia ao cliente como nota de voz. O texto também fica gravado na conversa. Se qualquer passo falhar, <strong>o cliente recebe o texto</strong> — ele nunca fica sem resposta.</p></aside>
+
+<h2 id="regra">Quando o agente responde em áudio</h2>
+<p>Nunca é “sempre”. O agente só responde em áudio se <strong>todas</strong> estas condições forem verdadeiras:</p>
+<ol>
+  <li>A resposta em áudio está <strong>ligada na organização</strong>, com a chave gravada e o aceite dado.</li>
+  <li>O <strong>agente</strong> está com a opção ligada (vem desligada).</li>
+  <li><strong>A última mensagem do cliente foi um áudio.</strong> Se ele escreveu, a resposta sai em texto.</li>
+  <li>O canal aceita nota de voz: <strong>API Oficial da Meta</strong> ou <strong>WAHA</strong> (QR code). Outro canal recebe texto.</li>
+  <li>A resposta cabe no limite de caracteres e não está vazia. Acima do limite, <strong>sai como texto</strong> (nunca é cortada).</li>
+  <li>No ElevenLabs, há uma voz escolhida (a do agente ou, na falta dela, a padrão da organização).</li>
+</ol>
+<p>Só vale para respostas a mensagens recebidas: <strong>campanhas e follow-ups continuam em texto</strong>. Se a resposta levar uma foto de produto, sai como foto com legenda, sem áudio.</p>
+
+<h2 id="organizacao">1. Ligar na organização</h2>
+<p>Abra <span class="ui">Agente de IA › Provedores</span> e procure o cartão <strong>Resposta em áudio</strong>. (A chave de voz é separada das chaves de IA: <strong>não</strong> fica em <a href="#credenciais">Credenciais</a>.) Numa instalação nova ele mostra “Indisponível” e “Desligada. Os agentes respondem sempre em texto.”.</p>
+<figure class="print">
+  <img src="img/ia-audio-provedores.png" alt="Cartão Resposta em áudio na tela Provedores com o provedor de voz, a chave, o limite de caracteres, o aceite e o interruptor" loading="lazy">
+  <figcaption>O cartão “Resposta em áudio” em Provedores.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Provedor de voz.</strong> <em>Compatível com a API de fala da OpenAI</em> ou <em>ElevenLabs</em>.</li>
+  <li><strong>Chave de voz.</strong> Entre 8 e 300 caracteres, sem espaços. Depois de gravada aparece “Chave gravada ···XXXX” e o campo vira “Trocar a chave de voz”.</li>
+  <li><strong>Campos só do provedor compatível com a OpenAI (opcionais):</strong> endereço da API (padrão <code>https://api.openai.com/v1</code>), modelo de voz (padrão <code>tts-1</code>) e voz (padrão <code>alloy</code>).</li>
+  <li><strong>Limite de caracteres por resposta em áudio</strong> e <strong>preço por mil caracteres</strong> (explicados abaixo).</li>
+  <li><strong>Aceite.</strong> “Entendo que o texto das respostas do agente será enviado ao provedor de voz que escolhi, com a minha chave.”</li>
+  <li><strong>Ligar a resposta em áudio nesta organização.</strong> Fica travado até haver chave e aceite.</li>
+  <li><strong>Salvar, Testar e Remover chave.</strong></li>
+</ol>
+<ol class="passos">
+  <li>Escolha o <strong>Provedor de voz</strong> e cole a <strong>Chave de voz</strong> (você cria a chave no site do provedor, na sua conta).</li>
+  <li>Marque o <strong>aceite</strong>.</li>
+  <li>Clique em <span class="ui">Salvar</span>.</li>
+  <li>Clique em <span class="ui">Testar</span>. O ZapSales gera de verdade a frase “Olá! Este é um teste da resposta em áudio.” — <strong>sem enviar a ninguém</strong>. A tela diz “Funcionou. O provedor gerou uma nota de voz de teste, sem enviar nada a ninguém.”. No ElevenLabs, sem voz padrão, o teste só prova a chave listando as vozes: “A chave funciona. A sua conta tem N vozes; cada agente escolhe a sua no editor.”</li>
+  <li>Ligue o interruptor <span class="ui">Ligar a resposta em áudio nesta organização</span>.</li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Campo</th><th>Padrão</th><th>Observação</th></tr></thead>
+  <tbody>
+    <tr><td>Limite de caracteres por resposta em áudio</td><td>1.000</td><td>De 100 a 4.000. Resposta maior vai como texto.</td></tr>
+    <tr><td>Preço por mil caracteres (centavos de dólar)</td><td>—</td><td>Opcional. Veja “Custo”.</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>O texto das respostas sai do ZapSales.</strong><p>Por isso existe o aceite: o texto que o agente escreve para o cliente é enviado ao serviço de voz que você escolheu. Confira a política de privacidade desse serviço.</p></aside>
+<p>Sem a chave: “Ligada, mas falta gravar a chave do provedor de voz. Enquanto isso, os agentes respondem em texto.”. Sem o aceite: “Falta o seu aceite para enviar o texto das respostas ao provedor de voz.”.</p>
+
+<h2 id="agente">2. Ligar em cada agente</h2>
+<figure class="print media">
+  <img src="img/ia-audio-agente.png" alt="Cartão Resposta em áudio no editor do agente com o interruptor Responder em áudio quando o cliente mandar áudio e a escolha de voz" loading="lazy">
+  <figcaption>O cartão no editor do agente, com a organização usando o provedor compatível com a OpenAI.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Responder em áudio quando o cliente mandar áudio.</strong> O interruptor do agente (vem desligado).</li>
+  <li><strong>O provedor em uso e o limite:</strong> “Provedor de voz: Compatível com a OpenAI. Respostas com mais de 1000 caracteres saem como texto.”</li>
+  <li><strong>A voz.</strong> No provedor compatível com a OpenAI não há escolha por agente: “A voz e o modelo são os da organização, definidos em Provedores.”</li>
+</ol>
+<ol class="passos">
+  <li>Abra o agente, aba <strong>Configuração</strong>, cartão <strong>Resposta em áudio</strong>.</li>
+  <li>Ligue <span class="ui">Responder em áudio quando o cliente mandar áudio</span> (vem desligado).</li>
+  <li>Com <strong>ElevenLabs</strong>, escolha a <strong>Voz do agente</strong> (a lista vem da sua conta; “Escolha uma voz”) e, se quiser, o <strong>Modelo de voz</strong>: <em>Padrão da organização</em>, <em>Multilíngue v2 (melhor qualidade)</em>, <em>Turbo v2.5 (mais rápido)</em> ou <em>Flash v2.5 (o mais rápido)</em>. Sem voz escolhida: “Sem voz escolhida, este agente responde em texto.”</li>
+  <li>Com o provedor compatível com a OpenAI não há escolha por agente: “A voz e o modelo são os da organização, definidos em Provedores.”</li>
+  <li>Salve e <a href="#agentes--publicar">publique</a> a versão. A opção faz parte da versão, então só vale depois de publicar.</li>
+</ol>
+<p>Se a organização ainda não terminou a configuração, o cartão do agente avisa “Falta gravar a chave do provedor de voz. Termine a configuração em Provedores.” e oferece o link <em>Abrir Provedores</em>.</p>
+<aside class="nota atencao"><strong>Número conectado por QR code: risco maior.</strong><p>Se o número do agente está conectado por QR code (WAHA), a tela avisa em amarelo: “o WhatsApp pode banir números com atividade automática fora do padrão. Notas de voz automáticas aumentam esse risco. Para áudio, a API Oficial é o caminho mais seguro.”</p></aside>
+
+<h2 id="testar">Simular antes de publicar</h2>
+<p>Na aba <a href="#agente-teste-e-correcao">Teste</a> do agente há a caixa <strong>Simular que o cliente mandou esta mensagem como um áudio</strong>. A prévia diz se a resposta <em>sairia em áudio</em> (“nota de voz”) ou <em>em TEXTO</em>, e o motivo. A simulação não gasta voz nem grava arquivo.</p>
+
+<h2 id="custo">Custo</h2>
+<ul>
+  <li>Cada tentativa de gerar voz é registrada com o tipo <em>voice_reply</em> e <strong>soma no gasto mensal</strong> de IA, que o teto do orçamento vigia.</li>
+  <li>O preço da OpenAI (<code>tts-1</code>: 1,5; <code>tts-1-hd</code>: 3 centavos de dólar por mil caracteres) é conhecido só para a própria OpenAI. Para outros provedores ou modelos, informe o <strong>preço por mil caracteres</strong>; sem ele o custo fica “desconhecido” (não zero) e aparece “N sem preço conhecido”.</li>
+  <li>Em <span class="ui">Agente de IA › Uso de IA</span>, o cartão <strong>Voz das respostas em áudio</strong> mostra “Neste mês: N respostas em áudio · N caracteres convertidos · US$ X”, e o cartão em Provedores mostra a “Última falha em conversa real”.</li>
+</ul>
+
+<h2 id="falhas">Quando a voz falha</h2>
+<p>A resposta sai em <strong>texto</strong>, e o motivo é registrado e aparece como “última falha”. Alguns motivos: chave recusada, conta sem créditos (“A conta do provedor de voz está sem créditos ou sem saldo. Recarregue lá e tente de novo.”), limite de uso, voz inexistente, provedor fora do ar, tempo esgotado (25 segundos) ou arquivo grande demais (acima de 10 MB).</p>
+
+<h2 id="nao-faz">O que não existe</h2>
+<ul>
+  <li>Só <strong>dois provedores</strong> de voz.</li>
+  <li>Não há seletor de idioma, velocidade ou tom: quem define é a voz e o modelo.</li>
+  <li>O agente não responde em áudio a mensagem de <em>texto</em>, nem em campanhas ou follow-ups.</li>
+  <li>No provedor compatível com a OpenAI a voz é uma só para a organização.</li>
+</ul>
+<aside class="nota info"><strong>Recurso novo.</strong><p>O teste do cartão (“Testar”) valida a sua chave, mas a primeira nota de voz a um cliente de verdade deve ser acompanhada por você. Faça um teste com o seu próprio número antes de ligar para todos: mande um áudio e confira a resposta.</p></aside>
+
+<h2 id="cuidados">Cuidados</h2>
+<ul>
+  <li>Mantenha crédito na conta do serviço de voz; sem ele o agente volta a responder em texto.</li>
+  <li>Quem é <strong>Gerente</strong> vê o cartão, mas só o <strong>Administrador</strong> consegue salvar, testar, ligar e remover a chave.</li>
+  <li><strong>Remover chave</strong> vale para a organização inteira: sem chave não há áudio, e <em>todos</em> os agentes passam a responder em texto. Para voltar, é preciso gravar uma chave de novo.</li>
+</ul>

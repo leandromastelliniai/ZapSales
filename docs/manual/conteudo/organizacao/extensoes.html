@@ -1,0 +1,58 @@
+<!--meta {"id":"extensoes","grupo":"organizacao","titulo":"Extensões","ordem":22,"resumo":"Guias instalados para orientar o trabalho no CRM, sem entregar dados nem rodar código de terceiros. A empresa decide se ativa; o dono do servidor decide o que existe.","palavras":["extensões","guias","catálogo","instalar","ativar","pacote","orientação","manifesto","permissões","densidade dos cards","hub crm"],"onde":"Configurações › Sua empresa › Extensões (também pelo hub CRM, em “Orientações instaladas”)","quem":"Todos veem a lista e abrem guias ativos. Ativar e configurar na própria empresa: Administrador. Admitir catálogo, instalar, atualizar e remover (vale para todas as empresas): só o dono do servidor.","rotas":["/app/extensions"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Uma <strong>extensão</strong> é um <em>guia</em>: cartões de orientação do trabalho (por exemplo, “Dia 1: leia dez conversas antes de responder uma”), com botões que abrem telas que já existem (Tarefas, Conversas, Funil, Contatos, Agenda ou Radar). Extensões <strong>não executam código nem leem os dados do CRM</strong>: só mostram texto e abrem uma tela.</p>
+<p>Há <strong>três níveis de poder</strong>:</p>
+<table class="tabela">
+  <thead><tr><th>O que</th><th>Quem</th></tr></thead>
+  <tbody>
+    <tr><td>Ver a lista e abrir um guia ativo</td><td>Qualquer papel</td></tr>
+    <tr><td>Ativar/desativar e configurar na <em>sua</em> empresa</td><td>Administrador da empresa</td></tr>
+    <tr><td>Admitir catálogo, instalar, atualizar, trocar de versão, desfazer e remover — <strong>para todas as empresas</strong></td><td>Só o dono do servidor (administrador da plataforma)</td></tr>
+  </tbody>
+</table>
+<figure class="print">
+  <img src="img/extensoes-vazio.png" alt="Tela Extensões sem nenhuma instalada, com as abas Instaladas e Catálogo e o filtro de categorias, numerada de 1 a 5" loading="lazy">
+  <figcaption>A tela Extensões numa instalação sem pacotes instalados.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Extensões.</strong> “Adicione guias ao CRM sem entregar dados ou executar código de terceiros.”</li>
+  <li><strong>Instaladas.</strong> O que o servidor já instalou.</li>
+  <li><strong>Catálogo.</strong> O que está disponível para instalar.</li>
+  <li><strong>Buscar e categoria.</strong> A busca por nome ou descrição e a lista “Todas as categorias” (Produtividade, Vendas, Atendimento).</li>
+  <li><strong>Nenhuma extensão instalada.</strong> “Quando a plataforma instalar um pacote revisado, ele aparecerá aqui para a organização decidir se ativa.”</li>
+</ol>
+<p>Na aba <em>Catálogo</em>, sem catálogo admitido, aparece “Nenhum catálogo revisado disponível — Peça ao responsável pela instalação para admitir um catálogo revisado.”. As capturas deste manual mostram a instalação <strong>sem nenhum pacote</strong>; o que segue vem do código e dos pacotes oficiais.</p>
+
+<h2 id="instaladas">Uma extensão instalada</h2>
+<p>Cada pacote vira um cartão com ícone, título, resumo e um selo: <strong>Ativa</strong>, <strong>Desativada</strong>, <strong>Incompatível</strong> (“Esta versão não pode ser ativada”, com o botão “Desativar nesta organização”) ou <strong>Removida</strong>. Mostra <em>Versão</em>, <em>Origem</em> e <em>Permissão</em> (a frase que diz quais telas ela abre, como “Abre Tarefas e Contatos; não lê seus dados.”). Para o Administrador da empresa:</p>
+<ul>
+  <li><strong>Ativa no CRM</strong> — “Os guias aparecem no hub do CRM.” Desativar preserva a configuração.</li>
+  <li><strong>Densidade dos cards</strong> — Confortável ou Compacta.</li>
+  <li><strong>Mostrar descrição nos cards.</strong></li>
+  <li><span class="ui">Abrir guia</span> (se ativa) e <span class="ui">Salvar configuração</span> (só habilita quando algo mudou).</li>
+</ul>
+<p>Quem não é Administrador vê “Este guia está pronto para uso.” / “Peça a um administrador da organização para ativar este guia.”. Em modo suporte ninguém configura.</p>
+<aside class="nota atencao"><strong>Limite de 8 extensões ativas por empresa.</strong><p>“O limite de extensões ativas foi atingido. Desative uma antes de ativar outra.”</p></aside>
+
+<h2 id="guia">O guia</h2>
+<p>O botão <span class="ui">Abrir guia</span> leva a <code>/app/extensions/&lt;nome&gt;</code>. Qualquer papel abre, se a extensão está <strong>ativa</strong> na empresa. Há um link <em>Voltar às extensões</em>, o selo “Ativa” com a versão, o título, o resumo e a frase de permissão. Cada card do pacote tem ícone, título, descrição (se ligada), blocos de texto e um botão de ação (“Abrir as pessoas”…). Ao clicar, o servidor <strong>reconfere</strong> a ativação e a permissão e leva a uma lista <em>fechada</em> de telas — nunca a um endereço vindo do pacote. Erros: “Conferindo acesso…”, “A ação não foi aberta”. Se a extensão não está ativa: “Este guia não está disponível”. Os guias também aparecem no hub do <a href="#crm-hub">CRM</a>, na seção “Orientações instaladas”.</p>
+
+<h2 id="dono">O que só o dono do servidor faz</h2>
+<ul>
+  <li><strong>Admitir catálogo.</strong> Um arquivo JSON de até 512 KiB (“Escolher arquivo JSON” e “Admitir catálogo”). A tela avisa: o arquivo não comprova quem o publicou — confirme a fonte antes. Registra quem admitiu, quando, a origem e a revisão.</li>
+  <li><strong>Instalar versão revisada / Atualizar / Trocar / Reinstalar</strong> na aba Catálogo (baixa o pacote do endereço do catálogo e confere sua impressão digital).</li>
+  <li>No cartão instalado, o bloco <strong>“Em todas as organizações”</strong>: <em>Desfazer a última troca (volta para X)</em> e <em>Remover da instalação</em> (“Não há desfazer: para reinstalar, o catálogo precisa estar no ar e listar a versão, e cada organização ativa de novo.”). Remover é lógico e preserva dados.</li>
+  <li><strong>Atividade recente:</strong> um histórico compartilhado entre abas das operações (admissão, instalação, atualização, troca, remoção, configuração). Toda operação é um recibo que não duplica, com saída pela tela.</li>
+</ul>
+<h3 id="oficiais">Os pacotes oficiais</h3>
+<p>O catálogo oficial do produto traz três pacotes (versão 1.0.0, licença MIT, textos em português e espanhol):</p>
+<table class="tabela">
+  <thead><tr><th>Pacote</th><th>Categoria</th><th>Abre</th><th>Cards</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Primeira semana no atendimento</strong></td><td>Produtividade</td><td>Tarefas e Contatos</td><td>“Dia 1: leia dez conversas antes de responder uma”; “Dia 3: sua fila é sua responsabilidade”.</td></tr>
+    <tr><td><strong>Carrinho abandonado</strong></td><td>Vendas</td><td>Conversas e Funil</td><td>“A primeira mensagem, em até 1 hora”; “Quando parar de insistir”.</td></tr>
+    <tr><td><strong>Retorno de paciente</strong></td><td>Atendimento</td><td>Conversas e Agenda</td><td>“Quem tratou e não remarcou”; “Encaixes que a semana ainda tem”.</td></tr>
+  </tbody>
+</table>
+<p>Os pedidos de instalação deixam <em>recibos</em> no navegador (para não duplicar). Se algo ficar pendente, aparecem os alertas “O estado exibido está desatualizado”, “Pedidos aguardando confirmação” (com <span class="ui">Verificar recibo</span>) e “Os pedidos estão bloqueados neste navegador” (libere o armazenamento do site).</p>

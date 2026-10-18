@@ -1,0 +1,40 @@
+<!--meta {"id":"alertas","grupo":"ia","titulo":"Alertas","ordem":15,"resumo":"A Central de avisos: tudo o que o assistente precisou escalar para a equipe (conexões caídas, tarefas que falharam, atendimentos passados a humanos), com um link para resolver cada coisa.","palavras":["central de avisos","sino","notificações","alerta","aviso","resolvido","marcar todos resolvidos","crítico","atenção"],"onde":"Agente de IA › Alertas (Ver tudo em IA › Acompanhar o agente) e o sino do cabeçalho","quem":"Para usar de verdade, Atendente ou acima. Quem é “Somente leitura” abre a tela mas recebe a mensagem de que o acesso aos avisos não está disponível.","rotas":["/app/ai/inbox"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>A <strong>Central de avisos</strong> é a caixa de entrada dos problemas e das decisões que o sistema não resolve sozinho: uma conexão de WhatsApp que caiu, uma tarefa que falhou, um atendimento que o agente passou para uma pessoa, o gasto de IA que passou do limite. Cada aviso vem com um <strong>link direto</strong> para a tela onde se resolve.</p>
+<p>Você chega aqui pelo <strong>sino</strong> do cabeçalho, que mostra uma bolinha vermelha com o número de avisos em aberto (acima de 99, aparece “99+”). A tela se atualiza sozinha a cada 30 segundos.</p>
+<figure class="print">
+  <img src="img/ia-alertas.png" alt="Central de avisos com seis avisos abertos, do mais grave ao menos grave, numerados de 1 a 8" loading="lazy">
+  <figcaption>A Central de avisos com seis avisos em aberto.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Aba “Abertos”.</strong> Os avisos que ainda pedem atenção. O número é o total em aberto, de qualquer gravidade. A outra aba, <em>Resolvidos</em>, guarda o histórico.</li>
+  <li><strong>Marcar todos resolvidos.</strong> Resolve <strong>todos</strong> os avisos abertos de uma vez (não só os que cabem na tela), sem pedir confirmação. Só aparece na aba Abertos, para Atendente ou acima.</li>
+  <li><strong>Gravidade.</strong> <em>crítico</em> (vermelho), <em>atenção</em> (amarelo) ou <em>informativo</em> (azul).</li>
+  <li><strong>Título do aviso</strong> — a frase gravada pelo sistema, com o tipo e há quanto tempo.</li>
+  <li><strong>Orientação ou aviso de acesso.</strong> Abaixo do título vem o que fazer. Quando o destino do aviso exige um papel que você não tem, aparece <em>“Este contexto não está disponível para você…”</em>.</li>
+  <li><strong>Marcar resolvido.</strong> Tira o aviso da lista de abertos. Na aba Resolvidos o botão vira <em>Reabrir</em>.</li>
+  <li><strong>Link de destino.</strong> Leva à tela certa: <em>Abrir atendimento, Abrir conversa, Revisar conexão, Abrir base de conhecimento, Abrir uso de IA</em> etc.</li>
+  <li><strong>Ordem.</strong> “Os mais graves primeiro; entre iguais, os mais recentes.”</li>
+</ol>
+
+<h2 id="tipos">Os tipos de aviso mais comuns</h2>
+<table class="tabela">
+  <thead><tr><th>Aviso</th><th>O que significa</th></tr></thead>
+  <tbody>
+    <tr><td>Um atendimento espera decisão da equipe</td><td>Há um <a href="#casos">caso</a> esperando você. Abra e escolha: concluir, pedir informação ao cliente ou passar para uma pessoa.</td></tr>
+    <tr><td>O assistente passou um atendimento para um humano</td><td>A IA transferiu a conversa. Está no Inbox.</td></tr>
+    <tr><td>Conexão do WhatsApp caiu — precisa escanear o QR de novo</td><td>O número deixou de receber mensagens. Reconecte em Conexões.</td></tr>
+    <tr><td>Uma tarefa do assistente falhou e parou de tentar</td><td>Algo que o sistema fazia em segundo plano não funcionou.</td></tr>
+    <tr><td>Um material que você enviou não entrou na base de conhecimento</td><td>Veja o motivo em <a href="#conhecimento">Conhecimento</a>.</td></tr>
+    <tr><td>O gasto de IA passou do aviso que você definiu / O orçamento de IA foi atingido</td><td>Veja <a href="#uso-ia">Uso e orçamento</a>. No segundo caso, a IA parou de responder.</td></tr>
+    <tr><td>Uma resposta ficou presa e não chegou ao cliente</td><td>Uma mensagem passou de 5 minutos “enviando” e foi marcada como falha. O sistema <strong>não reenvia sozinho</strong>, para evitar mensagem em dobro.</td></tr>
+    <tr><td>Um aviso de atendimento não chegou ao WhatsApp da equipe</td><td>Veja <a href="#aviso-whatsapp">Aviso no WhatsApp</a>.</td></tr>
+    <tr><td>Uma proposta está pronta para revisão · Um modelo de mensagem mudou de situação · Alguém ligou e ninguém atendeu</td><td>Outros avisos de rotina.</td></tr>
+  </tbody>
+</table>
+<p>Existem cerca de quarenta tipos. Um tipo novo, ainda sem tradução, aparece como <em>“Aviso do assistente”</em>.</p>
+
+<h2 id="cuidados">Cuidados</h2>
+<aside class="nota atencao"><strong>Marcar como resolvido não resolve o problema.</strong><p>O botão só tira o aviso da lista. A conexão continua caída, o caso continua aberto, o material continua sem entrar. Resolva a causa pelo link e só então marque.</p></aside>
+<aside class="nota info"><strong>Quem pode o quê.</strong><p>Ver, resolver e reabrir exige o papel de Atendente ou acima. O <em>link</em> de cada aviso depende do papel que a tela de destino exige: conexões, credenciais e agentes pedem Administrador; base de conhecimento, uso de IA, provedores e evolução pedem Gerente; conversas, casos e contatos pedem Atendente.</p></aside>

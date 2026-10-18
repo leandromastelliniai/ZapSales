@@ -1,0 +1,62 @@
+<!--meta {"id":"api-tokens","grupo":"organizacao","titulo":"API Tokens","ordem":20,"resumo":"Crie chaves de acesso para outros sistemas (ou agentes de IA externos) conversarem com o seu CRM, escolhendo o que cada chave pode fazer, e revogue-as quando não forem mais necessárias.","palavras":["api tokens","chave de acesso","token","bearer","zps","escopos","mcp","integração","revogar","expira","api"],"onde":"Configurações › Dados e acesso › API Tokens","quem":"Administrador","rotas":["/app/settings/api-tokens"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Uma <strong>chave de acesso</strong> (token) é como uma senha para <em>outro sistema</em> — o seu site, um ERP, um agente de IA externo — falar com o ZapSales sem precisar de login de pessoa. Aqui o Administrador cria e revoga essas chaves. Quem tiver a chave age na empresa, dentro dos <em>escopos</em> escolhidos, <strong>trate-a como uma senha</strong>.</p>
+<figure class="print">
+  <img src="img/api-tokens-lista.png" alt="Tela de API Tokens com a tabela de chaves, seus escopos, status e o botão Revogar, numerada de 1 a 7" loading="lazy">
+  <figcaption>A lista de chaves (exemplos fictícios).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Criar token.</strong></li>
+  <li><strong>Nome.</strong> O nome que você deu.</li>
+  <li><strong>Prefixo.</strong> <code>zps_xxxxxxxx…</code>, só os primeiros caracteres, para você reconhecer a chave. O prefixo é sempre <code>zps_</code>.</li>
+  <li><strong>Escopos.</strong> Etiquetas com o que a chave pode fazer.</li>
+  <li><strong>Status.</strong> <em>Ativo</em> ou <em>Revogado</em>.</li>
+  <li><strong>Expira.</strong> A data, ou “—” (não expira).</li>
+  <li><strong>Revogar.</strong> Só nas chaves ativas, <strong>sem janela de confirmação</strong> (“Token revogado.”).</li>
+</ol>
+<p>Vazio: “Nenhum token criado ainda.”. A tabela não mostra o “último uso”, embora o sistema o guarde.</p>
+
+<h2 id="criar">Criar uma chave</h2>
+<figure class="print media">
+  <img src="img/api-tokens-criar.png" alt="Janela Criar novo token com o nome, os escopos marcáveis, a validade e o botão Criar, numerada de 1 a 5" loading="lazy">
+  <figcaption>A janela “Criar novo token”, com dois escopos marcados.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome.</strong> De 2 a 100 caracteres (“Worker de import”).</li>
+  <li><strong>Escopos.</strong> Marque ao menos um (“Selecione ao menos um escopo.”).</li>
+  <li><strong>role:manager.</strong> Faz a chave valer como Gerente. Sem ele a chave age como Atendente.</li>
+  <li><strong>Expira em (dias) — opcional.</strong> De 1 a 365; em branco = nunca expira.</li>
+  <li><strong>Criar.</strong></li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Escopo</th><th>O que permite</th></tr></thead>
+  <tbody>
+    <tr><td><code>mcp:read</code></td><td>Agentes de IA podem <strong>ler</strong> o CRM (protocolo MCP).</td></tr>
+    <tr><td><code>mcp:write</code></td><td>Agentes de IA podem <strong>agir</strong> no CRM (MCP).</td></tr>
+    <tr><td><code>role:manager</code></td><td>Tratar a chave como Gerente (necessário para criar e atribuir).</td></tr>
+    <tr><td><code>contacts:read</code> / <code>contacts:write</code></td><td>Ler contatos / criar e editar contatos.</td></tr>
+    <tr><td><code>leads:read</code> / <code>leads:write</code></td><td>Ler leads / criar e editar leads.</td></tr>
+    <tr><td><code>messages:read</code> / <code>messages:write</code></td><td>Ler mensagens / enviar mensagens.</td></tr>
+    <tr><td><code>messages:on_behalf</code></td><td>A integração pode enviar em nome de um atendente.</td></tr>
+    <tr><td><code>audit:read</code></td><td>Ler o log de auditoria.</td></tr>
+  </tbody>
+</table>
+<h3 id="uma-vez">O texto da chave aparece uma única vez</h3>
+<figure class="print media">
+  <img src="img/api-tokens-criado.png" alt="Janela Token criado mostrando a chave completa, o botão Copiar para clipboard e o aviso, numerada de 1 a 3" loading="lazy">
+  <figcaption>A janela “Token criado”. A chave mostrada foi revogada logo depois da captura.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Copie e guarde agora.</strong> “não conseguiremos exibir novamente.”</li>
+  <li><strong>Copiar para clipboard.</strong> “Token copiado.”</li>
+  <li><strong>Aviso.</strong> “Salve este token agora — ele não será mostrado novamente.”</li>
+</ol>
+<ul>
+  <li>O formato é <code>zps_&lt;8 caracteres&gt;_&lt;segredo&gt;</code>. O servidor guarda <strong>só uma impressão digital (hash SHA-256)</strong> e o prefixo; o texto completo nunca volta. Perdeu? Revogue e crie outra.</li>
+  <li>A chave vai no cabeçalho <code>Authorization: Bearer zps_…</code>, <strong>nunca na URL</strong>.</li>
+  <li><strong>Revogar</strong> faz a chave deixar de valer na hora e é irreversível; ela continua na lista como “Revogado”.</li>
+  <li>No máximo <strong>50 chaves ativas</strong> por empresa (as revogadas e vencidas não contam): “Teto de tokens ativos por organização atingido: N de 50.”</li>
+  <li>Criar e revogar ficam na <a href="#auditoria">Auditoria</a> (<code>token.created</code>, <code>token.revoked</code>). Não envia e-mail.</li>
+</ul>
+<aside class="nota info"><strong>Nem toda rota aceita chave.</strong><p>A habilitação é <em>por rota</em> (cerca de 20 rotas da API e o endereço do MCP). O sistema aceita qualquer texto como escopo, mas a tela só oferece estes 11. A expiração é só por data.</p></aside>

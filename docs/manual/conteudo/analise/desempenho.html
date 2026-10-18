@@ -1,0 +1,65 @@
+<!--meta {"id":"desempenho","grupo":"analise","titulo":"Desempenho","ordem":2,"resumo":"Os números dos últimos 30 dias: quanto custou chegar a cada resultado (atrito, automação, custo humano, contenção), perdas por motivo, previsão de faturamento, funil e performance por atendente.","palavras":["desempenho","métricas","atrito","conversão","automação","custo humano","contenção","perdas","previsão","funil","performance por atendente","régua do abandono","ponderado"],"onde":"Análise › Desempenho (também no menu lateral)","quem":"Todos abrem. Atendente vê só o próprio recorte; Gerente e Administrador veem tudo e editam a régua do abandono. Somente leitura pode ver mensagens de erro.","rotas":["/app/metrics"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O <strong>Desempenho</strong> mostra, dos <strong>últimos 30 dias</strong>, <em>quanto custou</em> — para o cliente e para a equipe — chegar a cada resultado; quantos negócios abertos há em cada etapa; quantos foram ganhos e perdidos por atendente; <strong>por que</strong> se perdeu negócio e quanto se espera faturar nos próximos meses. Tudo é calculado na hora, a cada abertura, a partir da operação: não há cron nem tabela de métricas.</p>
+<p>A tela não tem seletor de período: a janela é sempre “agora menos 30 dias”, em horário universal (UTC), sem corte à meia-noite local.</p>
+<aside class="nota atencao"><strong>Somente leitura pode ver erro.</strong><p>Os cartões de atrito, funil e performance exigem no mínimo o papel Atendente (e Perdas, Gerente). Quem é <em>Somente leitura</em> abre a página mas recebe “Erro ao carregar métricas.”.</p></aside>
+<aside class="nota info"><strong>Os números levam alguns segundos.</strong><p>Enquanto a primeira leitura não termina aparece “Carregando…”, e <em>nenhum</em> cartão é mostrado. Depois de carregar, a tela guarda os números por 30 segundos (a Previsão, 60).</p></aside>
+
+<figure class="print">
+  <img src="img/desempenho.png" alt="Tela Desempenho completa com o filtro de atendente, os quatro cartões de atrito, perdas, previsão, funil e performance por atendente, numerada de 1 a 11" loading="lazy">
+  <figcaption>O Desempenho completo, com os dados fictícios da loja.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Abre “Passo a passo” e “Palavras desta tela” (Atrito, Desfecho, Perdida no silêncio).</li>
+  <li><strong>Atendente.</strong> Só Gerente ou acima. Filtra <em>apenas</em> o Funil e a Performance por atendente: o atrito, as perdas e a previsão são da operação toda. Lista os membros, menos os Somente leitura, e marca “(você)”.</li>
+  <li><strong>Régua do abandono.</strong> Veja <a href="#desempenho--atrito">Atrito</a>.</li>
+  <li><strong>Conversão</strong> — um dos quatro cartões do atrito.</li>
+  <li><strong>Automação.</strong></li>
+  <li><strong>Custo humano.</strong></li>
+  <li><strong>Contenção.</strong></li>
+  <li><strong>Perdas.</strong> Só Gerente ou acima.</li>
+  <li><strong>Previsão.</strong></li>
+  <li><strong>Funil.</strong> “Funil · N abertos”.</li>
+  <li><strong>Performance por atendente.</strong> Para o Atendente, “Sua performance”.</li>
+</ol>
+
+<h2 id="atrito">Atrito</h2>
+<p>“O que o resultado custou para os dois lados.” O subtítulo diz a <strong>base</strong>: “1 demanda encerrada nos últimos 30 dias, e 10 ainda abertas.” (uma <em>demanda</em> é o assunto ou pedido do cliente: abre e fecha, e pode atravessar canais). Sem nenhuma encerrada: “Nenhuma demanda encerrada no período — os números abaixo ainda não têm base.”.</p>
+<p><strong>Régua do abandono.</strong> “Contar como perdida no silêncio após [72] horas sem resposta.” Gerente ou acima edita o número (de 1 a 2.160) e clica em <span class="ui">Salvar</span>, que só aparece quando o valor muda. O valor vale para <strong>todos</strong> os períodos exibidos daí em diante (não há histórico da régua) e grava <code>metrics.atrito_regua_changed</code> na auditoria. Para os demais, o texto é só informativo.</p>
+<p>São <strong>quatro cartões</strong>. Cada um é um par: à esquerda o número de “eficiência”; à direita “O que isso custou”, uma lista de medidas. Percentuais usam ponto decimal (“12.5%”), médias têm uma casa, tempos aparecem como “45s”, “5min” ou “1h 30min”, e “—” significa <em>“não houve dado suficiente para medir, e não que o valor seja zero”</em>.</p>
+<table class="tabela">
+  <thead><tr><th>Cartão</th><th>O que mede</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Conversão</strong></td><td><em>Negócios ganhos</em> (no período); <em>turnos até o desfecho</em> (mediana de mensagens por demanda encerrada); <em>insistência do agente</em> (média e pior caso de retornos por conta própria); <em>descadastros</em> (quem pediu para sair); e <em>conversas que morreram no silêncio</em> (a última mensagem foi nossa, passaram mais de N horas e ninguém encerrou).</td></tr>
+    <tr><td><strong>Automação</strong></td><td><em>Respostas dadas pelo agente</em> (IA ÷ IA + humano no sistema + humano fora do sistema); <em>passagens para humano</em>; <em>respostas humanas fora do sistema</em> (o time respondeu pelo celular); <em>clientes que repetiram depois da passagem</em> (voltou a falar em até 24 h repetindo algo já dito); e <em>perguntas que a pessoa teve de repetir</em> (só a repergunta quase literal).</td></tr>
+    <tr><td><strong>Custo humano</strong></td><td><em>Demandas encerradas</em>; <em>intervenções humanas por demanda</em>; <em>espera na fila humana</em> (mediana e p90 — “a experiência de quem espera mais”); <em>demandas abertas sem próximo passo</em> (agora, não só no período); <em>demandas que precisaram subir de nível</em>; e <em>esperas sem resposta por mais de 4 h</em> (régua fixa).</td></tr>
+    <tr><td><strong>Contenção</strong></td><td><em>Mensagens enviadas pelo agente</em>; <em>vetos por execução</em> (quanto o sistema precisou se conter antes de falar); <em>mensagens enviadas por integração</em> e <em>por automação</em> — que <strong>não</strong> entram no número do agente.</td></tr>
+  </tbody>
+</table>
+<aside class="nota info"><strong>Por que a “taxa do agente” pode parecer baixa.</strong><p>Mensagens enviadas por automação (regras, texto fixo de follow-up, lembrete de agenda) ou por integração com token de servidor não contam como “resposta do agente”. Onde há muita automação ou integração, o número do agente cai — não é defeito.</p></aside>
+<aside class="nota info"><strong>Cada pessoa vê números ligeiramente diferentes.</strong><p>O Atendente e o Gerente podem ver valores diferentes nos mesmos cartões, de boa-fé: o que cada um vê é limitado pelas regras de visibilidade (por exemplo, quem atende em modo “só os meus” vê só as conversas dele).</p></aside>
+
+<h2 id="perdas">Perdas</h2>
+<p>Só Gerente ou acima. “Por motivo, categoria e etapa de saída — quantidade e valor por moeda.” Conta os negócios <em>perdidos</em> nos últimos 30 dias, de todos os funis (até 5.000; se passar, o aviso “Cortado no limite de leitura” aparece). São três tabelas lado a lado — <strong>Por motivo</strong>, <strong>Por categoria</strong> e <strong>Por etapa de saída</strong> — e a tabela <strong>Valor por moeda</strong>, que nunca soma moedas diferentes.</p>
+<ul>
+  <li>Motivos conhecidos aparecem em português (“Preço”, “Sem resposta do cliente”, “Produto indisponível”…); sem motivo, “Sem motivo registrado”.</li>
+  <li>A <em>categoria</em> vem da configuração do funil (veja <a href="#etapas-do-funil--vocabulario">Etapas do funil</a>); sem ela, “Sem categoria”.</li>
+  <li>Negócio levado para outro funil <strong>não conta como perda</strong>.</li>
+  <li>Sem perdas: “Nenhuma perda na janela.”.</li>
+</ul>
+
+<h2 id="previsao">Previsão</h2>
+<p>“Chance de fechamento definida em cada etapa do funil.” É a previsão do <strong>funil padrão</strong>, só de negócios <em>abertos</em>. A tabela mostra, por mês e moeda, o <strong>Ponderado</strong> (valor × chance da etapa), o <strong>Bruto</strong> (a soma dos valores) e o número de negócios; o mês vem da data prevista de fechamento.</p>
+<ul>
+  <li>A chance de cada etapa é a que você definiu em <a href="#etapas-do-funil">Etapas do funil</a>. Etapa de ganho vale 100 e de perda, 0.</li>
+  <li>Há dois blocos à parte: <em>“Sem data prevista — entram, mas sem mês no cronograma”</em> e <em>“Sem chance definida na etapa — falta calibrar”</em> (esses <strong>não entram</strong> no ponderado).</li>
+  <li>Moedas nunca se somam. Vazio: “Nenhum negócio aberto com valor neste funil.”.</li>
+</ul>
+
+<h2 id="funil">Funil e performance</h2>
+<ul>
+  <li><strong>Funil · N abertos.</strong> Uma barra por etapa, com o número de negócios abertos <em>agora</em> (uma foto de agora, sem janela de 30 dias). Respeita o filtro de atendente. Com mais de um funil, as etapas de todos aparecem misturadas, sem o nome do funil.</li>
+  <li><strong>Performance por atendente.</strong> Colunas: <em>Atendente, Ganhos, Perdidos, Conversas, 1ª resposta (média)</em>. “Conversas” conta as <em>atribuições novas</em> no período; “1ª resposta” é o tempo médio entre a primeira mensagem do cliente e a primeira resposta humana. Ordenado por ganhos. Vazio: “Sem atividade no período (ganhos/perdidos, conversas ou respostas).”.</li>
+</ul>
+<aside class="nota dica"><strong>Um bom hábito semanal.</strong><p>Olhe primeiro o <em>Custo humano › demandas abertas sem próximo passo</em> e o <em>Atrito › conversas que morreram no silêncio</em>: são clientes que estão esperando sem que nada esteja combinado. Depois confira as <em>Perdas</em> — se “Sem resposta do cliente” cresce, o problema é o seguimento, não o preço.</p></aside>

@@ -1,0 +1,86 @@
+<!--meta {"id":"etapas-do-funil","grupo":"crm","titulo":"Etapas do funil","ordem":10,"resumo":"Ajuste as colunas de cada funil, diga para onde o agente de IA leva o cartão em cada passo do atendimento e, como Administrador, defina o vocabulário, os motivos de ganho e perda e os campos extras do negócio.","palavras":["etapas","colunas","funil","pipeline","chance de fechamento","janela de esfriando","arquivar etapa","mapeamento do agente","vocabulário","motivos de perda","motivos de ganho","campos personalizados","reabertura","ganho","perda"],"onde":"CRM › Ver tudo em CRM › Etapas do funil (também pela busca ⌘K)","quem":"Gerente ou acima abre e ajusta etapas e o mapeamento do agente. Só o Administrador vê e altera “Vocabulário e campos”.","rotas":["/app/settings/tenant/pipelines"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Cada <a href="#funis">funil</a> é um quadro de colunas (etapas) por onde o cliente avança. Esta tela é onde o Gerente <strong>ajusta essas colunas</strong> e onde decide <strong>para onde o agente de IA leva o cartão</strong> em cada fase do atendimento. O Administrador também define as <em>palavras</em> do funil, os motivos de perda e ganho e os campos extras do negócio.</p>
+<aside class="nota atencao"><strong>Aqui não se cria nem se renomeia o funil.</strong><p>Criar funil, renomear, tornar padrão, arquivar e excluir são feitos em <a href="#funis">Funis</a>. Esta tela mexe nas <em>etapas</em> de cada funil. Todo funil precisa de <strong>exatamente uma etapa de fechamento</strong> (onde o negócio vira venda) e <strong>uma de perda</strong>: a marcação <em>muda de lugar</em>, nunca se apaga.</p></aside>
+<aside class="nota info"><strong>Onde fica a porta.</strong><p>“Etapas do funil” não está no menu lateral. Abra por <span class="ui">Ver tudo em CRM</span> (seção “Preparar a venda”) ou pela busca <kbd>⌘K</kbd>. Quem não é Gerente é levado à página “sem permissão”.</p></aside>
+
+<h2 id="etapas">As etapas de um funil</h2>
+<p>A tela mostra um cartão por funil (os arquivados não aparecem). Cada cartão tem três blocos: <strong>Etapas deste funil</strong>, <strong>Para onde o card vai em cada passo</strong> e, só para Administrador, <strong>Vocabulário e campos</strong>.</p>
+<figure class="print">
+  <img src="img/etapas-funil.png" alt="Tela Etapas do funil com o funil Pedidos e as primeiras colunas, com nome, chance, ordem, papel, arquivar, janela de esfriando e aviso na Central, numerada de 1 a 10" loading="lazy">
+  <figcaption>As etapas do funil “Pedidos”: cada coluna do quadro é uma linha.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Painel de ajuda.</li>
+  <li><strong>O funil.</strong> Nome e endereço interno (“/pedidos”).</li>
+  <li><strong>Nome da coluna.</strong> Clique e escreva para renomear. Grava ao apertar <kbd>Enter</kbd> ou ao sair do campo; <kbd>Esc</kbd> descarta. Até 80 caracteres; o nome não pode repetir o de outra etapa viva do mesmo funil.</li>
+  <li><strong>Chance de fechamento (0 a 100).</strong> Quanto você acredita que um negócio nessa etapa fecha. Alimenta a previsão “ponderada” no topo das colunas do quadro. Vazio = sem calibração. Nas etapas de ganho e perda o campo fica apagado (valem 100 e 0).</li>
+  <li><strong>Ordem.</strong> As setas ▲ ▼ movem a coluna uma posição.</li>
+  <li><strong>O que acontece nesta coluna.</strong> <em>Nada especial</em>, <em>Aqui o cliente fecha</em> ou <em>Aqui o cliente desiste</em>.</li>
+  <li><strong>Arquivar.</strong> Tira a coluna do quadro. Veja <a href="#etapas-do-funil--arquivar">abaixo</a>.</li>
+  <li><strong>Janela de esfriando.</strong> Em dias e horas (de 1 hora a 8.760). Depois desse tempo sem atividade o negócio passa a contar como “esfriando” no <a href="#radar">Radar</a>. Vazio = 24 horas (e crítico em 72).</li>
+  <li><strong>Avisar a equipe na Central quando um negócio entrar aqui.</strong> Desligado por padrão. Ligado, cada negócio que chega à etapa abre um aviso na Central.</li>
+  <li><strong>“O assistente usa esta etapa para …”.</strong> Aparece quando um passo do agente aponta para essa etapa; o link “Mudar isso” leva ao mapeamento.</li>
+</ol>
+<ul>
+  <li>Se a última mudança de uma etapa foi feita pelo assistente ou automaticamente, aparece um selo “alterado pelo assistente há … — ver o que mudou” (leva à <a href="#auditoria">Auditoria</a>). Mudanças feitas por pessoas não mostram selo.</li>
+  <li>Para criar uma etapa nova use <span class="ui">Acrescentar etapa ao fim</span>: escreva o nome e clique em <span class="ui">Criar</span> (ou <kbd>Enter</kbd>). Ela entra no fim do funil e não mexe em nenhum negócio.</li>
+  <li>Cada mudança fica na auditoria (<code>pipeline.stage_created</code>, <code>pipeline.stage_updated</code>…). Nada aqui manda mensagem a clientes.</li>
+</ul>
+<aside class="nota atencao"><strong>Trocar o papel de uma etapa muda o destino dos negócios.</strong><p>Marcar uma etapa como “de fechamento” ou “de perda” faz os negócios que <em>entrarem</em> nela passarem a ser ganhos ou perdidos. Se já existe outra etapa com o papel, a tela pergunta: “Só uma etapa pode ser a de fechamento. Marcar esta desmarca «X».” (<span class="ui">Marcar mesmo assim</span> / <span class="ui">Cancelar</span>). A etapa que o assistente usa para “Ganho” ou “Perdido” não pode deixar de ser de fechamento ou perda — mude o mapeamento antes.</p></aside>
+
+<h3 id="arquivar">Arquivar uma etapa</h3>
+<ol class="passos">
+  <li>Clique em <span class="ui">Arquivar</span> na linha. Aparece o aviso: “A coluna sai do quadro e para de receber negócios novos. Nada é apagado — o histórico de quem passou por ela continua guardado —, mas <strong>não dá para trazer a coluna de volta por aqui</strong>.”.</li>
+  <li>Se há negócios na etapa, a tela pergunta <em>“Para onde ele(s) vai/vão?”</em> e pede para <strong>Escolher a etapa</strong> de destino (só etapas abertas). Se não existe outra etapa aberta, é preciso criar uma antes.</li>
+  <li>Clique em <span class="ui">Mover os negócios e arquivar</span>. Os negócios — inclusive os ganhos e perdidos — vão para o destino, cada um recebe um registro na linha do tempo (“Mudou de estágio … a etapa «X» foi arquivada”), e a etapa é arquivada.</li>
+</ol>
+<p>A tela recusa arquivar a <em>única</em> etapa do funil, a de <em>ganho</em> ou de <em>perda</em>, ou escolher como destino uma etapa de ganho ou perda. Se a etapa é a que o assistente usa num passo, o aviso lembra que ele <em>para de mover o cartão naquele passo</em> até você escolher outra.</p>
+<aside class="nota perigo"><strong>Arquivar é irreversível pela tela.</strong><p>Não existe “desarquivar etapa” aqui. O registro continua no banco (para o histórico), mas a coluna não volta para o quadro.</p></aside>
+
+<h2 id="mapeamento">Para onde o card vai em cada passo</h2>
+<figure class="print">
+  <img src="img/etapas-funil-mapa.png" alt="Bloco Para onde o card vai em cada passo, com os sete passos do atendimento e o seletor de etapa de cada um, e o começo do bloco Vocabulário e campos, numerado de 1 a 6" loading="lazy">
+  <figcaption>O mapeamento do agente e o início de “Vocabulário e campos”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O bloco.</strong> “Quando o agente avança no atendimento, o card do cliente pode andar sozinho no seu funil. Escolha para qual etapa ele vai em cada momento.”</li>
+  <li><strong>Um passo.</strong> Sete linhas fixas, cada uma com o seu seletor: <em>Novo lead</em> (a pessoa acabou de chamar e ninguém respondeu ainda), <em>Primeiro contato</em> (o agente já respondeu pela primeira vez), <em>Em qualificação</em>, <em>Qualificado</em>, <em>Em negociação</em> (preço, proposta ou agendamento), <em>Ganho</em> e <em>Perdido</em>.</li>
+  <li><strong>Ganho e Perdido.</strong> “Ganho” só oferece etapas de fechamento; “Perdido”, só etapas de perda.</li>
+  <li><strong>Salvar estas escolhas.</strong> Grava (“Escolhas salvas.”). Fica apagado sem mudança.</li>
+  <li><strong>Vocabulário e campos.</strong> Só para Administrador.</li>
+  <li><strong>Motivos de perda e de ganho.</strong> Listas separadas por vírgula.</li>
+</ol>
+<ul>
+  <li>Deixar um passo em <em>“Não mover o card”</em> é uma escolha válida: o card fica onde está e o agente segue trabalhando.</li>
+  <li>Uma etapa só pode servir a <strong>um</strong> passo: as já usadas somem das outras listas.</li>
+  <li><strong>Efeito real:</strong> a partir daqui o agente de IA <strong>passa a mover os cartões sozinho</strong>. O clique não manda mensagem ao cliente por si.</li>
+</ul>
+
+<h2 id="vocabulario">Vocabulário e campos (só Administrador)</h2>
+<p>Este bloco só aparece para o Administrador, e um único botão, <span class="ui">Salvar vocabulário e campos</span>, grava tudo de uma vez (“[funil] atualizado.”).</p>
+<table class="tabela">
+  <thead><tr><th>Item</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Lead · Deal · Won · Lost</strong></td><td>Quatro campos (os rótulos aparecem em inglês) que definem as palavras do funil: o que é um <em>lead</em>, um <em>negócio</em>, <em>ganho</em> e <em>perdido</em>. Numa loja virtual, por exemplo: Cliente, Pedido, Pago, Cancelado. De 1 a 40 caracteres. Hoje essas palavras só aparecem na barra de seleção em lote do quadro (“1 Cliente selecionado”).</td></tr>
+    <tr><td><strong>Motivos de perda</strong></td><td>Separados por vírgula (até 50). Cada um pode ter uma categoria (<em>Cliente, Concorrência, Mérito, Nós, Ausência</em> ou <em>Sem categoria</em>), usada no relatório de perdas. Os motivos cadastrados <strong>substituem</strong> a lista padrão na janela “Marcar como perdido”. Um motivo não pode conter vírgula.</td></tr>
+    <tr><td><strong>Motivos de ganho</strong></td><td>Sem lista, o motivo de ganho é texto livre; com lista, só o que está nela é aceito. A caixa <em>“Exigir motivo de ganho ao fechar como ganho”</em> torna o motivo obrigatório (o menu do cartão “Marcar como ganho” <em>não pergunta</em> e será recusado).</td></tr>
+    <tr><td><strong>Negócio encerrado que volta abre um negócio novo</strong></td><td>Desligado, arrastar um negócio perdido ou ganho para uma etapa aberta <em>reabre o mesmo negócio</em>. Ligado, o encerrado fica como está e o quadro oferece criar uma nova tentativa com o mesmo contato.</td></tr>
+    <tr><td><strong>Campos do lead neste funil</strong></td><td>Campos extras que aparecem na ficha do negócio (e onde o follow-up pode gravar a resposta). Cada um tem <em>chave</em> (letras, números e _, começando por letra), <em>rótulo</em> e <em>tipo</em> (text, textarea, number, date, select, multiselect, boolean, email, phone, url). Até 50 campos. <span class="ui">Adicionar campo</span> cria um novo; a lixeira remove.</td></tr>
+    <tr><td><strong>Exigir o preenchimento</strong></td><td>Para cada campo, marque as etapas (e “Ao ganhar” / “Ao perder”) em que ele precisa estar preenchido para o negócio entrar ou ser fechado. Sem marca nenhuma, nunca é exigido.</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>Mudar a chave de um campo existente não migra os valores.</strong><p>Os valores já gravados nos negócios ficam sob a chave antiga. Prefira mudar o <em>rótulo</em>.</p></aside>
+<aside class="nota info"><strong>Cor da etapa e “obrigatório” não têm campo aqui.</strong><p>A cor de cada coluna e a marca <em>required</em> dos campos personalizados existem no sistema, mas esta tela não as edita.</p></aside>
+
+<h2 id="papeis">Quem pode o quê</h2>
+<table class="tabela">
+  <thead><tr><th>Ação</th><th>Papel mínimo</th></tr></thead>
+  <tbody>
+    <tr><td>Abrir a tela, ajustar etapas e o mapeamento do agente</td><td>Gerente</td></tr>
+    <tr><td>Vocabulário, motivos, reabertura e campos personalizados</td><td>Administrador</td></tr>
+    <tr><td>Criar, renomear, arquivar e excluir <em>funis</em> (em Funis)</td><td>Gerente</td></tr>
+  </tbody>
+</table>
+<p>Se não houver nenhum funil, a tela mostra “Você ainda não tem nenhum funil.” — mas esse aviso está desatualizado: o funil se cria em <a href="#funis">Funis</a> (“Criar meu primeiro funil”), e toda organização nova já nasce com um funil “Pedidos”.</p>

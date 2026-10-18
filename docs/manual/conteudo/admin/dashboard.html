@@ -1,0 +1,28 @@
+<!--meta {"id":"admin-dashboard","grupo":"admin","titulo":"Dashboard","ordem":2,"resumo":"A visão de relance de todas as empresas da instalação: quantas estão ativas e o que está pegando fogo (WhatsApp caído, prazo de LGPD, estouro de orçamento de IA, filas paradas).","palavras":["dashboard","painel","kpi","alertas","tenants ativos","pendentes","waha","lgpd em risco","budgets ia","cross-tenant"],"onde":"Modo administrador › Dashboard (/admin/dashboard)","quem":"Administrador da plataforma (só leitura)","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Responde, de relance: <em>“alguma empresa da minha instalação está com problema agora?”</em>. Atualiza sozinho <strong>a cada 30 segundos</strong> e também em tempo real quando chega um alerta novo (aparece um aviso amarelo “Novo Alerta WAHA”, “Novo Prazo LGPD”, “Novo Budget IA” ou “Novo Overflow de conversas”).</p>
+<figure class="print">
+  <img src="img/admin-dashboard.png" alt="Dashboard do painel com cinco cartões de indicadores e a lista Alertas ativos, numerado de 1 a 6" loading="lazy">
+  <figcaption>O Dashboard (organização de demonstração).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Subtítulo.</strong> “Visão cross-tenant — atualiza a cada 30 segundos.”</li>
+  <li><strong>Tenants Ativos.</strong> Quantas empresas estão com status ativo.</li>
+  <li><strong>Pendentes &gt;10min.</strong> Conversas esperando resposta há mais de 10 minutos (amarelo se &gt; 0).</li>
+  <li><strong>Alertas WAHA.</strong> Números de WhatsApp com problema: suspeita de banimento, desconexão inesperada ou desconectados nas últimas 24 horas (amarelo se &gt; 0). “WAHA” é o nome do programa que conecta o WhatsApp.</li>
+  <li><strong>LGPD em Risco.</strong> Pedidos de titulares ainda abertos cujo prazo vence em até 5 dias — inclui os já vencidos (vermelho se &gt; 0).</li>
+  <li><strong>Budgets IA.</strong> Empresas cujo gasto <em>acumulado</em> de IA já passou de 80% do teto (amarelo se &gt; 0).</li>
+</ol>
+<p>Abaixo dos cartões fica <strong>“Alertas ativos”</strong> (na captura, 1 alerta). Sem alertas aparece “Nenhum alerta crítico no momento. Tudo certo!”. Cada linha mostra o nome da empresa, a severidade (<em>Crítico</em>, <em>Atenção</em> ou <em>Info</em>), o tipo (<em>WAHA</em>, <em>LGPD</em>, <em>IA Budget</em> ou <em>Overflow</em>) e a mensagem; clicar leva ao destino. São listados os 10 primeiros, com “+N alertas adicionais” no rodapé.</p>
+<table class="tabela">
+  <thead><tr><th>Tipo</th><th>Mensagem</th><th>Severidade</th><th>Leva a</th></tr></thead>
+  <tbody>
+    <tr><td>WAHA</td><td>“Sessão WAHA com suspeita de banimento” / “Sessão desconectada inesperadamente”</td><td>Crítico / Atenção</td><td>Saúde da empresa</td></tr>
+    <tr><td>LGPD</td><td>“Requisição LGPD vencida em DD/MM” / “Prazo LGPD expira em DD/MM”</td><td>Crítico / Atenção</td><td><a href="#admin-audit--lgpd">LGPD</a></td></tr>
+    <tr><td>IA Budget</td><td>“Budget IA N% do teto (gasto acumulado)”, com aviso extra se a empresa escolheu parar a IA no limite</td><td>Atenção</td><td>Saúde da empresa</td></tr>
+    <tr><td>Overflow</td><td>“N conversas pendentes sem atendimento” (acima de 50 numa empresa)</td><td>Atenção</td><td>Saúde da empresa</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>Dois cuidados ao ler.</strong><p>(1) “Budgets IA” usa o gasto <em>acumulado desde a instalação</em>, que não zera todo mês; pode divergir do número “do mês” da aba Saúde de uma empresa. (2) “LGPD em Risco” usa uma janela larga (5 dias) e conta também os pedidos já vencidos, bem diferente do “Crítico (menos de 24 h)” da tela <a href="#admin-audit--lgpd">LGPD</a> do painel.</p></aside>
+<p>O Dashboard só lê; não há botões nem formulários. O número de “Tenants Ativos” e os nomes dos alertas são dados reais de todas as empresas (por isso nas capturas deste manual aparecem a empresa de demonstração e uma de exemplo).</p>
