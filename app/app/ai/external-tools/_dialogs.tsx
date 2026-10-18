@@ -458,7 +458,9 @@ function CorpoDoTeste({ ferramenta, onFechar }: { ferramenta: FerramentaExterna;
   }
 
   return (
-    <div className="space-y-4">
+    // `min-w-0`: o diálogo é uma grade, e uma resposta longa sem espaço (um JSON, um token) empurrava a
+    // largura da coluna para além da borda — o botão "Fechar" saía da tela.
+    <div className="min-w-0 space-y-4">
       <p className="text-sm font-medium">{ferramenta.name}</p>
 
       {ferramenta.parameters.length === 0 ? (
@@ -501,7 +503,7 @@ function CorpoDoTeste({ ferramenta, onFechar }: { ferramenta: FerramentaExterna;
           role="status"
           data-testid="resultado-do-teste"
           data-ok={resultado.ok ? "sim" : "nao"}
-          className={`space-y-2 rounded-md border p-3 text-sm ${
+          className={`min-w-0 space-y-2 overflow-hidden rounded-md border p-3 text-sm ${
             resultado.ok ? "border-success/40 bg-success-bg text-success-fg" : "border-destructive/40 bg-destructive/10 text-destructive"
           }`}
         >
@@ -521,14 +523,14 @@ function CorpoDoTeste({ ferramenta, onFechar }: { ferramenta: FerramentaExterna;
                 {t("O que o outro sistema devolveu")}
                 {resultado.truncated ? ` (${t("cortado")})` : ""}:
               </p>
-              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted p-2 font-mono text-xs" data-testid="conteudo-do-teste">
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-2 font-mono text-xs [overflow-wrap:anywhere]" data-testid="conteudo-do-teste">
                 {resultado.content || t("(resposta vazia)")}
               </pre>
             </div>
           ) : null}
           <details className="text-xs text-foreground">
             <summary className="cursor-pointer text-muted-foreground">{t("O que foi enviado")}</summary>
-            <pre className="mt-1 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-2 font-mono">
+            <pre className="mt-1 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-2 font-mono [overflow-wrap:anywhere]">
               {JSON.stringify(resultado.sent, null, 2)}
             </pre>
           </details>
