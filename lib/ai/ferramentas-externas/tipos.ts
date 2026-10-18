@@ -21,7 +21,7 @@ export const EFEITOS_DA_FERRAMENTA = ["consulta", "altera"] as const;
 export type EfeitoDaFerramenta = (typeof EFEITOS_DA_FERRAMENTA)[number];
 
 /**
- * De onde a ferramenta vem (issue #96). `webhook` = o endereço que a pessoa cadastrou e o ZapSales
+ * De onde a ferramenta vem (issue #96). `webhook` = o endereço que a pessoa cadastrou e o sistema
  * assina (#94). `mcp` = uma ferramenta que um servidor MCP de terceiros oferece e o administrador
  * escolheu. Igual ao CHECK de `agent_external_tools.kind` (vigiado por
  * `tests/invariants/vocabulario-banco-x-typescript.test.ts`).
@@ -125,7 +125,7 @@ export const FRASE_DA_FALHA: Record<MotivoDeFalha, string> = {
   rede: "Não foi possível alcançar o outro sistema.",
   credencial_recusada:
     "O servidor recusou a credencial (não autorizado). Confira ou troque a credencial na tela do servidor MCP.",
-  protocolo_invalido: "O endereço respondeu, mas não é um servidor MCP que o ZapSales consiga usar.",
+  protocolo_invalido: "O endereço respondeu, mas não é um servidor MCP que o sistema consiga usar.",
   ferramenta_com_erro: "A ferramenta do servidor MCP respondeu com erro.",
 };
 

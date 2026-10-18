@@ -47,7 +47,9 @@ export function FerramentasExternasClient({ inicial }: { inicial: FerramentaExte
     queryFn: async () => (await apiClient.get<{ data: FerramentaExterna[] }>("/api/v1/ai/external-tools")).data,
     initialData: inicial,
   });
-  const ferramentas = lista.data ?? [];
+  // A mesma lista serve ao seletor do agente e traz também as ferramentas de servidor MCP (#96): estas
+  // se gerenciam na aba «Servidores MCP», não aqui.
+  const ferramentas = (lista.data ?? []).filter((f) => f.kind === "webhook");
 
   const [formulario, setFormulario] = useState<{ aberto: boolean; editando: FerramentaExterna | null }>({
     aberto: false,
@@ -151,7 +153,7 @@ export function FerramentasExternasClient({ inicial }: { inicial: FerramentaExte
                     </div>
                     <p className="max-w-[65ch] text-sm text-muted-foreground">{f.when_to_use}</p>
                     <p className="text-xs text-muted-foreground">
-                      {enderecoCurto(f.url)} · {f.parameters.length}{" "}
+                      {enderecoCurto(f.url ?? "")} · {f.parameters.length}{" "}
                       {f.parameters.length === 1 ? t("campo") : t("campos")} · {t("chave")} …{f.secret_last4}
                     </p>
                   </div>

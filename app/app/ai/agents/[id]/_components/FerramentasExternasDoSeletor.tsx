@@ -30,10 +30,11 @@ interface Props {
 /** O que a rota serve — o tipo do repositório, sem puxar o módulo de servidor para o browser. */
 type FerramentaDaLista = Pick<
   FerramentaExterna,
-  "id" | "name" | "agent_name" | "when_to_use" | "url" | "effect" | "require_approval" | "active"
+  "id" | "name" | "agent_name" | "when_to_use" | "url" | "effect" | "require_approval" | "active" | "kind" | "mcp" | "unavailable_reason"
 >;
 
-function enderecoCurto(url: string): string {
+function enderecoCurto(url: string | null): string {
+  if (!url) return "";
   try {
     return new URL(url).host;
   } catch {
@@ -91,8 +92,9 @@ export function FerramentasExternasDoSeletor({ value, onChange, semVagas, disabl
           {ferramentas.map((f) => {
             const marcada = value.includes(f.id);
             // Desativada: só dá para DESMARCAR. A que altera dados pode ser ligada — o que a segura é
-            // o pedido de aprovação, na hora da chamada.
-            const naoLiga = !f.active;
+            // o pedido de aprovação, na hora da chamada. A de servidor MCP também não liga quando o
+            // recurso está desligado ou o servidor desativado (o motor não a monta).
+            const naoLiga = !f.active || f.unavailable_reason !== null;
             const pedeAprovacao = decidirSePedeAprovacao({
               effect: f.effect,
               requireApproval: f.require_approval,
@@ -126,15 +128,30 @@ export function FerramentasExternasDoSeletor({ value, onChange, semVagas, disabl
                         {t("Pede aprovação")}
                       </Badge>
                     ) : null}
+                    {f.mcp ? (
+                      <Badge variant="outline" className="text-[11px] border-border/60 text-muted-foreground" data-testid={`ferramenta-mcp-${f.id}`}>
+                        {t("Servidor MCP")}
+                      </Badge>
+                    ) : null}
                     {!f.active ? (
                       <Badge variant="outline" className="text-[11px] border-warning/40 text-warning-fg">
                         {t("Desativada")}
                       </Badge>
                     ) : null}
-                    <span className="text-xs text-muted-foreground">· {enderecoCurto(f.url)}</span>
+                    <span className="text-xs text-muted-foreground">
+                      · {f.mcp ? (f.mcp.server_name ?? t("servidor MCP")) : enderecoCurto(f.url)}
+                    </span>
                   </span>
                   <span className="block text-xs text-muted-foreground">{f.when_to_use}</span>
-                  {!f.active ? (
+                  {f.unavailable_reason === "mcp_desligado" ? (
+                    <span className="block text-xs text-info-fg" data-testid={`indisponivel-${f.id}`}>
+                      {t("Os servidores MCP estão desligados: o agente não usa esta ferramenta até um administrador ligar de novo em Ferramentas externas › Servidores MCP.")}
+                    </span>
+                  ) : f.unavailable_reason === "servidor_desativado" ? (
+                    <span className="block text-xs text-info-fg" data-testid={`indisponivel-${f.id}`}>
+                      {t("O servidor desta ferramenta está desativado: o agente não a usa até um administrador reativar.")}
+                    </span>
+                  ) : !f.active ? (
                     <span className="block text-xs text-info-fg">
                       {t("Desativada: o agente não a usa até alguém reativar em Ferramentas externas.")}
                     </span>

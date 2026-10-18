@@ -2,7 +2,8 @@
 
 > **Para quem é:** quem mantém o sistema que RECEBE a chamada que o agente de IA
 > faz durante uma conversa (estoque, planilha, ERP, Make, n8n) — seja uma **consulta** ou uma
-> **ação que altera algo** (criar pedido, cadastrar cliente; seção 6).
+> **ação que altera algo** (criar pedido, cadastrar cliente; seção 6) — ou quem opera um
+> **servidor MCP** que o agente usa (seção 7).
 > **O que responde:** o que chega em cada chamada, como conferir que veio do
 > ZapSales, o que devolver e o que o agente faz com a resposta.
 > **Fonte da verdade no código:** `lib/ai/ferramentas-externas/chamar.ts`. A
@@ -110,3 +111,67 @@ O pedido aparece na Central com **o que o agente quer executar e os dados que pr
 cara de segredo — `senha`, `token`, `chave`… — aparecem como «•••»). **Aprovar** executa uma vez; **recusar** cancela
 sem enviar nada; sem decisão em **24 horas** (configurável por ferramenta, de 1 a 168) o pedido **expira** e o
 agente passa a saber que a ação não foi feita. Aprovar e recusar é de **gerente para cima**.
+
+
+---
+
+## 7. Servidores MCP de terceiros (issue #96)
+
+> **Para quem é:** quem opera um **servidor MCP** que o agente vai usar (ou quem decide conectar um). Aqui o
+> sentido é o contrário das seções 1–6: **o ZapSales é o cliente** e o seu servidor é quem recebe. Nada disto
+> existe numa instalação que não ligou o recurso — ele vem **desligado** e a instalação funciona sem ele.
+
+### O que o ZapSales fala
+
+MCP por HTTP, no formato **«Streamable HTTP»** (versões `2025-06-18`, `2025-03-26` e `2024-11-05`). Para listar ou
+chamar uma ferramenta ele faz, na ordem: `initialize` → `notifications/initialized` → `tools/list` **ou**
+`tools/call`, e fecha a sessão se o servidor abriu uma (`Mcp-Session-Id`). A resposta de cada `POST` pode vir como
+JSON ou como fluxo SSE com a resposta dentro; o fluxo separado de notificações do servidor **não** é aberto. O
+transporte antigo «HTTP + SSE» (um endpoint `/sse` separado) **não** é suportado.
+
+### Credencial
+
+Vai a cada pedido, no cabeçalho que o administrador escolheu: **`Authorization: Bearer <credencial>`** (o padrão)
+ou **outro cabeçalho** com o valor cru (`X-API-Key: <credencial>`). Ela é guardada cifrada, **nunca é mostrada
+de novo** e não vai a log, a auditoria nem a resposta de rota. Cabeçalhos que o próprio protocolo usa
+(`Host`, `Content-Type`, `Mcp-Session-Id`…) não podem levar a credencial.
+
+### O que vai na chamada
+
+Só o nome da ferramenta e os **campos que o agente preencheu**. Nenhum dado da organização, do contato ou da
+conversa viaja. Uma ação aprovada leva ainda `_meta: { "agent/delivery_id": "<id do pedido>" }`: é o identificador
+estável do pedido — **deduplique por ele**, e uma ação nunca é feita em dobro nem se alguém tentar de novo.
+
+### O que o ZapSales faz com a resposta
+
+- Só **texto** chega ao agente. Imagem, áudio e recurso binário são substituídos por «[conteúdo do tipo … omitido]».
+  Sem texto, `structuredContent` é usado como JSON.
+- **Limite:** 64 KB lidos por resposta (acima disso a chamada falha) e 4.000 caracteres entregues ao agente (o
+  resto é cortado, com aviso).
+- É sempre **informação, nunca ordem**: chega ao agente dentro de um campo `dado`, com o aviso à frente, e a
+  mensagem que o agente escrever passa pela conferência de vocabulário interno antes de sair ao cliente.
+- `isError: true` numa chamada é falha **incerta** (o que a ferramenta já fez antes de falhar, ninguém sabe): o
+  texto do erro **não** vai ao agente — só o administrador o vê, ao testar na tela.
+
+### Tentativas e desfecho incerto
+
+Uma **consulta** repete **uma vez** em falha de rede ou 5xx. Uma ação que **altera** algo tem **uma tentativa só**: se
+a resposta se perde (prazo de 15 s, queda, 5xx), o pedido fecha como «falha incerta» e **não é repetido**. Falhas
+**antes** de a chamada sair (credencial recusada, endereço que não é MCP) são sempre «certas» — nada foi executado.
+
+### O que a tela de quem cadastra mostra
+
+O administrador vê as ferramentas que o servidor oferece e **escolhe** quais ficam disponíveis. O padrão de cada
+uma é **«Altera dados»**, que pede aprovação; `annotations.readOnlyHint` é só uma **dica** exibida ao lado. A
+descrição e o esquema que o administrador viu são os que valem: se o servidor mudar a ferramenta depois, a tela
+avisa («Mudou no servidor») e o agente segue com a definição de antes até alguém salvar de novo.
+
+**Campos suportados:** texto, número, inteiro e sim/não (até 10 por ferramenta); um `enum` de textos vira texto
+com as opções na descrição. Campo **opcional** que seja lista ou objeto é ignorado (a tela diz quais); campo
+**obrigatório** que seja lista ou objeto torna a ferramenta **não suportada** — ela aparece desabilitada, com o motivo.
+
+### Endereço
+
+Mesma regra da seção 5: `https`, sem usuário e senha, **nunca** da rede interna, privada ou local — no cadastro e
+a cada chamada, com o nome resolvido uma vez e a conexão presa ao endereço julgado. Redirecionamento **não** é
+seguido (a credencial não vai atrás de um endereço que ninguém cadastrou).

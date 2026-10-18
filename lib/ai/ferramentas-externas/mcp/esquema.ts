@@ -1,7 +1,7 @@
 /**
  * Do que um servidor MCP DECLARA ao que o agente PREENCHE.
  *
- * O servidor descreve cada ferramenta com um esquema JSON arbitrário. O agente, no ZapSales,
+ * O servidor descreve cada ferramenta com um esquema JSON arbitrário. O agente, aqui,
  * preenche campos simples (texto, número, inteiro, sim/não — `ParametroDaFerramenta`), os
  * mesmos das ferramentas por webhook: assim a conferência do que o modelo preencheu, o
  * resumo do pedido de aprovação na Central e a tela são UMA só.
@@ -56,7 +56,6 @@ function tipoSimples(propriedade: Record<string, unknown>): TipoDeParametro | nu
  */
 export function sanitizarTextoDoServidor(texto: string, maximo: number): string {
   const limpo = texto
-    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "")
     .replace(/<\/?\s*(system|assistant|user|developer|tool|instructions?)\b[^>]*>/gi, " ")
     .replace(/\[\/?\s*(INST|SYS)\s*\]|<<\/?\s*SYS\s*>>|<\|[^|>]*\|>/gi, " ")

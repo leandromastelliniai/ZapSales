@@ -9,7 +9,7 @@
 
 import { FRASE_DA_FALHA, fraseDaRecusaDeEndereco, type MotivoDeFalha } from "../tipos";
 
-/** As versões do protocolo que o ZapSales sabe falar, da mais nova para a mais velha. */
+/** As versões do protocolo que o sistema sabe falar, da mais nova para a mais velha. */
 export const VERSOES_DO_PROTOCOLO = ["2025-06-18", "2025-03-26", "2024-11-05"] as const;
 
 /**
@@ -48,7 +48,7 @@ export const CABECALHO_PADRAO_DA_CREDENCIAL = "authorization";
 /**
  * Cabeçalhos que a credencial NÃO pode usar: os que o protocolo ou o transporte controlam.
  * Um nome aqui deixaria a pessoa (ou um colar errado) quebrar a conversa com o servidor ou
- * fazer passar uma credencial por um cabeçalho que o ZapSales usa para outra coisa.
+ * fazer passar uma credencial por um cabeçalho que o sistema usa para outra coisa.
  */
 export const CABECALHOS_RESERVADOS: ReadonlySet<string> = new Set([
   "host",
@@ -70,19 +70,27 @@ export const CABECALHOS_RESERVADOS: ReadonlySet<string> = new Set([
   "mcp-protocol-version",
 ]);
 
-/**
- * A recusa de um nome de cabeçalho para a credencial, em português simples — ou `null`
- * se o nome serve. Mora aqui (e não no Zod) para a tela e a rota darem a mesma frase.
- */
-export function recusaDoCabecalho(nome: string): string | null {
-  if (!/^[A-Za-z][A-Za-z0-9-]{0,39}$/.test(nome)) {
-    return "O nome do cabeçalho pode ter só letras, números e hífen (ex.: X-API-Key).";
-  }
+/** As frases de uma recusa de nome de cabeçalho — objeto constante para a tela traduzir cada uma. */
+export const FRASE_DO_CABECALHO_RECUSADO = {
+  formato: "O nome do cabeçalho pode ter só letras, números e hífen (ex.: X-API-Key).",
+  reservado:
+    "Este cabeçalho é usado pelo próprio protocolo e não pode levar a credencial. Use Authorization ou outro nome.",
+} as const;
+
+/** Por que o nome não serve, ou `null` se serve. Mora aqui (e não no Zod) para a tela e a rota darem a mesma resposta. */
+export function motivoDaRecusaDoCabecalho(nome: string): keyof typeof FRASE_DO_CABECALHO_RECUSADO | null {
+  if (!/^[A-Za-z][A-Za-z0-9-]{0,39}$/.test(nome)) return "formato";
   const minusculo = nome.toLowerCase();
   if (CABECALHOS_RESERVADOS.has(minusculo) || minusculo.startsWith("proxy-") || minusculo.startsWith("sec-")) {
-    return "Este cabeçalho é usado pelo próprio protocolo e não pode levar a credencial. Use Authorization ou outro nome.";
+    return "reservado";
   }
   return null;
+}
+
+/** A recusa de um nome de cabeçalho para a credencial, em português simples — ou `null` se o nome serve. */
+export function recusaDoCabecalho(nome: string): string | null {
+  const motivo = motivoDaRecusaDoCabecalho(nome);
+  return motivo ? FRASE_DO_CABECALHO_RECUSADO[motivo] : null;
 }
 
 /** Por que uma ferramenta que o servidor oferece NÃO pode ser usada pelo agente. Vocabulário fechado. */
@@ -102,26 +110,31 @@ export const FRASE_DA_FERRAMENTA_NAO_SUPORTADA: Record<MotivoDeFerramentaNaoSupo
   esquema_invalido: "A definição dos campos desta ferramenta não está no formato esperado.",
 };
 
+/** As frases de por que a conexão não deu certo — constantes, para a tela e a API traduzirem cada uma. */
+export const FRASE_DA_CONEXAO = {
+  credencial_recusada: "O servidor recusou a credencial. Confira a credencial e o cabeçalho em que ela é enviada.",
+  nao_encontrado:
+    "O endereço respondeu «não encontrado» (erro 404). Confira o caminho do servidor MCP — costuma terminar em /mcp.",
+  nao_aceitou:
+    "O endereço respondeu, mas não aceitou o pedido do protocolo MCP. O servidor precisa falar MCP por HTTP («Streamable HTTP»).",
+  nao_e_mcp:
+    "O endereço respondeu, mas não é um servidor MCP que o sistema consiga usar. O servidor precisa falar MCP por HTTP («Streamable HTTP»).",
+} as const;
+
 /**
  * A frase, sem jargão, de por que a conexão com o servidor não deu certo — para o administrador
- * que acabou de cadastrar ou testar. Diz o que olhar, não só o que aconteceu.
+ * que acabou de cadastrar ou testar. Diz o que olhar, não só o que aconteceu. Devolve sempre uma
+ * frase CONSTANTE (o número do erro HTTP viaja à parte, no campo `http_status`).
  */
 export function fraseDaConexao(falha: { motivo: MotivoDeFalha; httpStatus: number | null; detalhe?: string }): string {
   if (falha.motivo === "recusada_pela_politica") {
     return fraseDaRecusaDeEndereco(falha.detalhe ?? "unsafe_url:private_ip");
   }
-  if (falha.motivo === "credencial_recusada") {
-    return `O servidor recusou a credencial${falha.httpStatus ? ` (erro ${falha.httpStatus})` : ""}. Confira a credencial e o cabeçalho em que ela é enviada.`;
-  }
+  if (falha.motivo === "credencial_recusada") return FRASE_DA_CONEXAO.credencial_recusada;
   if (falha.motivo === "recusada_pelo_outro_sistema") {
-    if (falha.httpStatus === 404) {
-      return "O endereço respondeu «não encontrado» (erro 404). Confira o caminho do servidor MCP — costuma terminar em /mcp.";
-    }
-    return `O endereço respondeu, mas não aceitou o pedido do protocolo MCP${falha.httpStatus ? ` (erro ${falha.httpStatus})` : ""}. O servidor precisa falar MCP por HTTP («Streamable HTTP»).`;
+    return falha.httpStatus === 404 ? FRASE_DA_CONEXAO.nao_encontrado : FRASE_DA_CONEXAO.nao_aceitou;
   }
-  if (falha.motivo === "protocolo_invalido") {
-    return "O endereço respondeu, mas não é um servidor MCP que o ZapSales consiga usar. O servidor precisa falar MCP por HTTP («Streamable HTTP»).";
-  }
+  if (falha.motivo === "protocolo_invalido") return FRASE_DA_CONEXAO.nao_e_mcp;
   return FRASE_DA_FALHA[falha.motivo];
 }
 

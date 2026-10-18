@@ -275,6 +275,17 @@ const PROVA_PROPRIA: readonly Excecao[] = [
       "agente (0551, #94), que só o servidor lê.",
   },
   {
+    tabela: "mcp_servers",
+    razao:
+      "tests/invariants/servidores-mcp-do-agente.test.ts — mesmo desenho da linha de " +
+      "`agent_external_tools`: privilégio NENHUM para anon e authenticated, RLS ligada, " +
+      "zero policies, `organization_id` NOT NULL com FK em cascata, e o isolamento entre " +
+      "duas organizações medido (a ferramenta nunca aponta para o servidor de outra " +
+      "organização — FK composta —, e o motor só lê o que é da organização do turno; o " +
+      "filtro da organização é a cerca do service role). Guarda o endereço do servidor MCP " +
+      "de terceiro e a credencial dele, cifrada (0553, #96), que só o servidor lê.",
+  },
+  {
     tabela: "agent_external_tool_requests",
     razao:
       "tests/invariants/pedidos-de-acao-externa.test.ts — mesmo desenho da linha de " +

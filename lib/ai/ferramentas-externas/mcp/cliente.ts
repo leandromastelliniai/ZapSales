@@ -1,5 +1,5 @@
 /**
- * O CLIENTE MCP do ZapSales: fala com um servidor MCP de terceiros pelo transporte
+ * O CLIENTE MCP do produto: fala com um servidor MCP de terceiros pelo transporte
  * Streamable HTTP, e SÓ pela rede segura única (`lib/net/rede-segura`).
  *
  * Por que não o cliente do SDK: o transporte dele abre o `fetch` global, que resolve o nome
@@ -32,6 +32,7 @@ import {
   CABECALHO_PADRAO_DA_CREDENCIAL,
   LIMITES_DO_MCP,
   VERSOES_DO_PROTOCOLO,
+  recusaDoCabecalho,
   type FerramentaDoServidor,
   type InfoDoServidor,
 } from "./tipos";
@@ -148,6 +149,11 @@ async function comSessao<T>(
   const politica = politicaPadrao(deps);
   const credencial = valorDaCredencial(servidor);
   const nomeDoCabecalho = servidor.cabecalho.toLowerCase();
+  // Linha escrita por fora da tela com um cabeçalho que o protocolo controla (`content-type`, `host`…):
+  // a credencial NÃO sai por ele — falha fechada, antes de qualquer conexão.
+  if (credencial && recusaDoCabecalho(servidor.cabecalho) !== null) {
+    return { ok: false, falha: new FalhaMcp("protocolo_invalido", null, undefined, false) };
+  }
 
   let idDaSessao: string | null = null;
   let versao: string | null = null;
@@ -157,7 +163,7 @@ async function comSessao<T>(
   const cabecalhos = (): Record<string, string> => ({
     "content-type": "application/json",
     accept: "application/json, text/event-stream",
-    "user-agent": "ZapSales-MCP/1.0",
+    "user-agent": "AgentMcpClient/1.0",
     ...(versao ? { "mcp-protocol-version": versao } : {}),
     ...(idDaSessao ? { "mcp-session-id": idDaSessao } : {}),
     ...(credencial ? { [nomeDoCabecalho]: credencial } : {}),
@@ -198,7 +204,9 @@ async function comSessao<T>(
       throw new FalhaMcp(motivo, res.status);
     }
     const recebido = res.headers["mcp-session-id"];
-    if (metodo === "initialize" && typeof recebido === "string" && recebido.length > 0) idDaSessao = recebido;
+    // O id da sessão volta em todo pedido seguinte: só aceita o que um cabeçalho pode carregar (ASCII
+    // visível, curto) — o que o servidor mandar fora disso é ignorado, não repassado.
+    if (metodo === "initialize" && typeof recebido === "string" && /^[!-~]{1,256}$/.test(recebido)) idDaSessao = recebido;
     const tipo = String(res.headers["content-type"] ?? "");
     const mensagem = mensagensDoCorpo(tipo, res.corpo.toString("utf8")).find((m) => m.id === id);
     if (!mensagem) throw new FalhaMcp("protocolo_invalido", res.status);
@@ -246,7 +254,7 @@ async function comSessao<T>(
           {
             protocolVersion: VERSOES_DO_PROTOCOLO[0],
             capabilities: {},
-            clientInfo: { name: "zapsales", version: "1.0.0" },
+            clientInfo: { name: "agent-mcp-client", version: "1.0.0" },
           },
           LIMITES_DO_MCP.maxBytesDaResposta,
         ),
@@ -410,7 +418,7 @@ export async function chamarFerramentaDoServidor(
           {
             name: entrada.ferramenta,
             arguments: entrada.argumentos,
-            ...(entrada.idDeEntrega ? { _meta: { "zapsales/delivery_id": entrada.idDeEntrega } } : {}),
+            ...(entrada.idDeEntrega ? { _meta: { "agent/delivery_id": entrada.idDeEntrega } } : {}),
           },
           LIMITES_DO_MCP.maxBytesDaResposta,
         ),

@@ -84,6 +84,13 @@ describe("listarFerramentasDoServidor — descobrir o que o servidor oferece", (
     expect(servidor.recebidos[0]!.headers.authorization).toBeUndefined();
   });
 
+  it("cabeçalho de credencial que o protocolo controla (linha escrita por fora da tela): falha fechada, sem abrir conexão", async () => {
+    servidor = await subirServidorMcp();
+    const r = await listarFerramentasDoServidor(conectar(servidor.url, { credencial: "abc", cabecalho: "Content-Type" }), LIBERA_LOCAL);
+    expect(r).toMatchObject({ ok: false, motivo: "protocolo_invalido" });
+    expect(servidor.recebidos).toHaveLength(0);
+  });
+
   it("quem colou «Bearer …» inteiro não manda «Bearer Bearer»", async () => {
     servidor = await subirServidorMcp({ token: "abc" });
     const r = await listarFerramentasDoServidor(conectar(servidor.url, { credencial: "Bearer abc" }), LIBERA_LOCAL);
@@ -154,7 +161,7 @@ describe("chamarFerramentaDoServidor — a chamada de verdade", () => {
     );
     const chamada = servidor.recebidos.find((x) => (x.corpo as { method?: string } | null)?.method === "tools/call")!;
     expect((chamada.corpo as { params: { _meta: unknown } }).params._meta).toEqual({
-      "zapsales/delivery_id": "11111111-2222-4333-8444-555555555555",
+      "agent/delivery_id": "11111111-2222-4333-8444-555555555555",
     });
   });
 
