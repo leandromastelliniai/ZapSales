@@ -61,7 +61,37 @@ destinos internos que o dono da **instalação** autoriza
 | Ferramentas externas do agente — webhook (#94) e servidor MCP (#96) | `buscarSeguro` | Endereço de **organização**: sem a lista de destinos internos, `permitirHttp` só fora de produção, 3xx não seguido (a credencial/assinatura não vai atrás de um endereço que ninguém cadastrou), prazo total por tentativa e teto de bytes. O cliente MCP é próprio (`lib/ai/ferramentas-externas/mcp/cliente.ts`) **de propósito**: o cliente do SDK usa o `fetch` global, que resolve o nome de novo, segue redirecionamento e lê sem teto. |
 | Banco externo | `lookupJulgado` no socket do `pg` + `validarHostDeBanco` | `politicaDoBanco`: a mesma régua **mais a LAN RFC 1918** (Postgres na rede do dono é caso real). |
 | `media_url` (o gateway é quem baixa) | `assertUrlDeMidiaSegura` → `validarUrl` + `resolverEJulgar` | Só **julga**; ver "O que continua de fora". |
-| Provedor de IA personalizado | `motivoDaRecusaDeDestino` (+ lista da instalação) | Só **julga**; ver abaixo. |
+| SDK de modelos — provedor de IA personalizado (#108) | `fetchParaDestinoDaOrganizacao` → `fetchSeguro` → `buscarSeguroEmFluxo` | Endereço de **organização**: sem a lista de destinos internos, `permitirHttp` só fora de produção, 3xx vira recusa. Cada chamada resolve, julga e conecta no endereço julgado, e o corpo (SSE) chega em **fluxo**. A allowlist do motor de borda (`contain`) fica na frente, e o transporte seguro vai por baixo dela. Ver "O corpo em fluxo". |
+
+## O corpo em fluxo (SDK de modelos)
+
+Issue #108. A resposta de um modelo é SSE e dura o tempo da geração, então `buscarSeguro` (corpo
+inteiro, prazo total de 10 s) não serve. `buscarSeguroEmFluxo` abre a conexão pelo **mesmo
+caminho** (`abrirConexao`: URL, DNS uma vez, julgamento do conjunto, `lookup` fixado, redirecionamento
+recomeçando do zero), devolve o `ReadableStream` assim que os cabeçalhos chegam e lê o socket só
+quando o consumidor pede. Os limites trocam de natureza, e os três derrubam o socket:
+
+| Limite | Padrão | O que mede |
+|---|---|---|
+| `timeoutMs` | 10 s (`fetchSeguro`: 300 s) | só os **cabeçalhos** (DNS, conexão, todos os saltos) |
+| `timeoutEntreTrechosMs` | 60 s (`fetchSeguro`: 300 s) | silêncio do servidor entre dois trechos; sem leitor (contrapressão) ele não corre |
+| `maxBytes` | 64 MiB | o corpo **inteiro**, contado trecho a trecho sobre o que sai **decodificado** |
+
+`gzip`/`deflate`/`br` são decodificados aqui (o `fetch` fazia, o `http` cru não) e os cabeçalhos
+`content-encoding`/`content-length` saem da resposta; o teto vale depois da descompressão, o que
+cobre a bomba de descompressão. 204/205/304 e `HEAD` voltam com `corpo: null`.
+
+`fetchSeguro(politica)` é o adaptador para quem só aceita um `fetch`: entra string, `URL` ou
+`Request` (corpo em string, bytes ou `FormData` — `new Request(...)` normaliza, inclusive a fronteira
+do multipart) e sai um `Response` padrão. Não segue redirecionamento, e o cancelamento do SDK sai
+como o motivo do próprio `AbortSignal`. Os prazos padrão de 300 s são os do `fetch` global (undici):
+uma completação **sem** streaming só devolve cabeçalhos quando termina, e a duração máxima de uma
+chamada é o `AbortSignal` de quem chama.
+
+`fetchParaDestinoDaOrganizacao(envolver?)` monta o transporte com a política da organização e o
+entrega a `envolver`, que devolve o `fetch` final — é por onde o motor de borda põe a allowlist de
+egress antes dele. Julgar a cada chamada continua pegando o nome que passou a resolver para dentro
+depois do cadastro, e agora não há segunda resolução entre o julgamento e a conexão.
 
 ## O acesso a banco externo foi avaliado — e migrado
 
@@ -78,12 +108,10 @@ IPv4-mapped é recusado sem abrir conexão) e `lib/net/rede-segura/cliente.test.
 
 ## O que continua de fora (diferença registrada, não esquecida)
 
-1. **SDK de modelos com endereço da organização** (`fetchParaDestinoDaOrganizacao`, provedor
-   personalizado): o **julgamento** é o desta política, a cada chamada e sem seguir redirect, mas a
-   **conexão** é o `fetch` do SDK, que resolve o nome de novo. Fechar exige trocar o transporte por
-   `buscarSeguro` com corpo **em fluxo** (a resposta de um modelo é SSE; `buscarSeguro` entrega o
-   corpo inteiro) e aceitar `Request`/`FormData` como entrada. É a próxima peça natural deste
-   módulo, não uma decisão de deixar aberto.
+1. **Teste de conectividade do provedor personalizado** (`validateCustomKey`, a chamada
+   `GET {base}/models` ao cadastrar a chave): julga com `motivoDaRecusaDeDestino` e depois chama o
+   `fetch` global — a mesma janela de rebinding que a #108 fechou para o SDK, aberta aqui por
+   esquecimento de escopo. Fechar é trocar a chamada por `fetchParaDestinoDaOrganizacao()`.
 2. **Imagem de produto e logo no PDF da proposta**: quem busca é o `@react-pdf` (biblioteca), com
    só o guarda textual na frente. Fechar exige buscar os bytes com `buscarSeguro` e entregar o
    `Buffer` ao renderizador.
@@ -96,7 +124,7 @@ sair por `buscarSeguro` — é a razão deste ticket vir antes.
 ## Como verificar
 
 ```bash
-pnpm vitest run lib/net lib/external-db lib/extensions/download-rebinding.test.ts lib/automation lib/ai/ferramentas-externas
+pnpm vitest run lib/net lib/external-db lib/extensions/download-rebinding.test.ts lib/automation lib/ai/ferramentas-externas lib/ai/resposta-em-audio tests/unit/provedor-personalizado.test.ts
 ```
 
 Os casos hostis (IP privado, IPv6 especial, rebinding entre resolução e conexão, redirecionamento
