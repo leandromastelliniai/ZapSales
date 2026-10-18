@@ -121,11 +121,11 @@
     },
     {
       "id": "midia",
-      "lane": "fachadas",
-      "label": "assertUrlDeMidiaSegura",
-      "sublabel": "media_url: o gateway é quem baixa, fora deste processo — só dá para julgar antes",
+      "lane": "consumidores",
+      "label": "Envio por media_url (#110)",
+      "sublabel": "lib/messaging/media/baixar-midia-externa.ts · baixa aqui com teto por tipo (Meta), sobe ao Storage e entrega ao gateway a URL assinada nossa · só a URL assinada do próprio Storage segue direto",
       "type": "lib",
-      "dot": "violet"
+      "dot": "amber"
     },
     {
       "id": "sdk",
@@ -172,6 +172,14 @@
       "lane": "prova",
       "label": "download-rebinding.test.ts",
       "sublabel": "o teste de rebinding das extensões segue verde sobre a política única",
+      "type": "tool",
+      "dot": "sky"
+    },
+    {
+      "id": "testeMidia",
+      "lane": "prova",
+      "label": "baixar-midia-externa.test.ts + messages-handler-desfechos.test.ts",
+      "sublabel": "servidores reais: IP interno, nome com endereço misto, resolução única, redirect para metadata, teto por tipo, mime errado; no handler o gateway só vê a URL assinada nossa",
       "type": "tool",
       "dot": "sky"
     }
@@ -258,8 +266,8 @@
     {
       "id": "e14",
       "from": "midia",
-      "to": "fachadaUrl",
-      "label": "julga antes de entregar"
+      "to": "buscar",
+      "label": "baixa o arquivo (redirect revalidado, teto de bytes por tipo)"
     },
     {
       "id": "e15",
@@ -302,6 +310,12 @@
       "from": "testeDownload",
       "to": "extensoes",
       "label": "prova"
+    },
+    {
+      "id": "e22",
+      "from": "testeMidia",
+      "to": "midia",
+      "label": "prova"
     }
   ],
   "cards": [
@@ -327,7 +341,7 @@
       "id": "card-fora",
       "tone": "red",
       "title": "Não-ligações declaradas",
-      "body": "O SDK de modelos (SSE precisa de corpo em fluxo), a imagem do PDF (busca o @react-pdf) e a media_url (baixa o gateway) julgam pela política mas não têm a conexão presa. Detalhe e plano em docs/specs/rede-segura-unica.md."
+      "body": "O SDK de modelos (SSE precisa de corpo em fluxo) e a imagem do PDF (busca o @react-pdf) julgam pela política mas não têm a conexão presa. A media_url deixou de estar aqui na #110: o servidor baixa o arquivo e o gateway só recebe a URL assinada do Storage. Detalhe e plano em docs/specs/rede-segura-unica.md."
     }
   ]
 }

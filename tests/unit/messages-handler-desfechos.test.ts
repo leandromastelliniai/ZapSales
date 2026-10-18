@@ -13,6 +13,9 @@
  * exige Postgres real — e a pasta `tests/invariants/` está fora do `test:unit` e
  * do CI. Duplicar scaffolding é o preço de uma rede que gateia PR em segundos.
  */
+import * as http from 'node:http';
+import type { AddressInfo } from 'node:net';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { sendMessageHandler } from '@/app/api/v1/messages/_handler';
@@ -40,9 +43,26 @@ const signedUrl = vi.fn<() => Promise<{ data: { signedUrl: string } | null; erro
 const exists = vi.fn<() => Promise<{ data: boolean; error: { message: string } | null }>>(
   async () => ({ data: true, error: null }),
 );
+// O envio por `media_url` externa (#110) guarda no bucket os bytes que baixou.
+const upload = vi.fn<(...args: unknown[]) => Promise<{ data: unknown; error: { message: string } | null }>>(
+  async () => ({ data: {}, error: null }),
+);
 vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => ({ storage: { from: () => ({ createSignedUrl: signedUrl, exists }) } }),
+  createAdminClient: () => ({ storage: { from: () => ({ createSignedUrl: signedUrl, exists, upload }) } }),
 }));
+// O download roda de verdade (rede segura, contra um servidor real em 127.0.0.1); só
+// o loopback é liberado, pelo mesmo gancho `ipPermitido` que a instalação usa.
+vi.mock('@/lib/messaging/media/baixar-midia-externa', async (original) => {
+  const real = await original<typeof import('@/lib/messaging/media/baixar-midia-externa')>();
+  return {
+    ...real,
+    baixarMidiaExterna: (url: string, opcoes: Parameters<typeof real.baixarMidiaExterna>[1]) =>
+      real.baixarMidiaExterna(url, {
+        ...opcoes,
+        politica: { permitirHttp: true, ipPermitido: (ip: string) => ip === '127.0.0.1' },
+      }),
+  };
+});
 // Audit é fire-and-forget e escreve em outra tabela; fora do escopo dos desfechos.
 vi.mock('@/lib/audit', () => ({ audit: vi.fn(async () => {}) }));
 
@@ -268,6 +288,142 @@ describe('sendMessageHandler — os 6 desfechos do envio', () => {
     ).rejects.toMatchObject({ status: 422, code: 'unsafe_media_url' });
     expect(duble.capturas.inserts.messages).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // Issue #110: quem baixa a `media_url` externa é ESTE processo, pela rede segura —
+  // o gateway só recebe a URL assinada do nosso Storage, nunca o endereço do usuário.
+  describe('4d. media_url externa (#110)', () => {
+    const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex');
+    const servidores: http.Server[] = [];
+
+    async function origem(tratar: http.RequestListener): Promise<string> {
+      const srv = http.createServer(tratar);
+      await new Promise<void>((ok) => srv.listen(0, '127.0.0.1', ok));
+      servidores.push(srv);
+      return `http://127.0.0.1:${(srv.address() as AddressInfo).port}`;
+    }
+
+    afterEach(async () => {
+      await Promise.all(
+        servidores.splice(0).map(
+          (s) =>
+            new Promise<void>((ok) => {
+              s.closeAllConnections();
+              s.close(() => ok());
+            }),
+        ),
+      );
+      upload.mockClear();
+    });
+
+    it('baixa o arquivo, guarda no bucket e entrega ao gateway a URL assinada NOSSA', async () => {
+      wahaConfigured(true);
+      const base = await origem((_req, res) => {
+        res.writeHead(200, { 'content-type': 'image/png' });
+        res.end(PNG);
+      });
+      const urlDoUsuario = `${base}/foto.png`;
+      const fetchMock = vi.fn(async (..._args: unknown[]) => Response.json({ id: { _serialized: 'EXT1' } }));
+      vi.stubGlobal('fetch', fetchMock);
+      const duble = criarDubleDoHandler({ conversation: conversationRow() });
+
+      const msg = await sendMessageHandler(
+        duble.supabase,
+        ctx,
+        textInput({ type: 'image', body: undefined, media_url: urlDoUsuario }),
+      );
+
+      expect(msg.status).toBe('sent');
+      expect(msg.external_id).toBe('EXT1');
+      // Os bytes foram guardados sob a conversa, com a extensão do que chegou.
+      expect(upload).toHaveBeenCalledTimes(1);
+      const [caminho, bytes, opcoes] = upload.mock.calls[0] as [string, Buffer, { contentType: string }];
+      expect(caminho).toMatch(new RegExp(`^${ORG}/${CONV}/out-[0-9a-f-]{36}\\.png$`));
+      expect(Buffer.from(bytes).equals(PNG)).toBe(true);
+      expect(opcoes.contentType).toBe('image/png');
+      // A linha aponta para o arquivo guardado (é ele que a LGPD apaga e a tela mostra).
+      const gravada = duble.capturas.inserts.messages?.[0] as Record<string, unknown>;
+      expect(gravada.media_storage_path).toBe(caminho);
+      expect(gravada.media_mime).toBe('image/png');
+      expect(gravada.media_size_bytes).toBe(PNG.length);
+      // O gateway recebeu a URL assinada do Storage — e o endereço do usuário nunca chegou a ele.
+      const sendImage = fetchMock.mock.calls.find(([url]) => String(url) === `${WAHA_BASE}/api/sendImage`);
+      expect(sendImage, 'sendImage não foi chamado').toBeTruthy();
+      const corpo = String((sendImage![1] as RequestInit).body);
+      expect(corpo).toContain('https://signed.example/a.jpg');
+      expect(corpo).not.toContain(urlDoUsuario);
+    });
+
+    it('a URL assinada do PRÓPRIO Storage segue direto ao gateway, sem baixar nem guardar de novo', async () => {
+      wahaConfigured(true);
+      const fetchMock = vi.fn(async (..._args: unknown[]) => Response.json({ id: { _serialized: 'FILE2' } }));
+      vi.stubGlobal('fetch', fetchMock);
+
+      await sendMessageHandler(
+        dubleDo(conversationRow()),
+        ctx,
+        textInput({ type: 'document', body: undefined, media_url: URL_ASSINADA_DO_PROPRIO_STORAGE, media_mime: 'application/pdf' }),
+      );
+
+      expect(upload).not.toHaveBeenCalled();
+      expect(fetchMock.mock.calls.some(([url]) => String(url) === `${WAHA_BASE}/api/sendFile`)).toBe(true);
+    });
+
+    it.each([
+      ['servidor responde 404', 404, 'text/html', 422, 'media_url_unreachable'],
+      ['servidor devolve uma página HTML no lugar da imagem', 200, 'text/html', 415, 'unsupported_media_type'],
+    ])('%s: recusa antes de gravar e antes de enviar', async (_nome, status, mime, esperadoStatus, esperadoCodigo) => {
+      wahaConfigured(true);
+      const base = await origem((_req, res) => {
+        res.writeHead(status, { 'content-type': mime });
+        res.end('<html></html>');
+      });
+      const fetchMock = vi.fn();
+      vi.stubGlobal('fetch', fetchMock);
+      const duble = criarDubleDoHandler({ conversation: conversationRow() });
+
+      await expect(
+        sendMessageHandler(duble.supabase, ctx, textInput({ type: 'image', body: undefined, media_url: `${base}/x.png` })),
+      ).rejects.toMatchObject({ status: esperadoStatus, code: esperadoCodigo });
+      expect(duble.capturas.inserts.messages).toEqual([]);
+      expect(upload).not.toHaveBeenCalled();
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('arquivo acima do teto da Meta para o tipo: 413 payload_too_large, nada guardado', async () => {
+      wahaConfigured(true);
+      const base = await origem((_req, res) => {
+        // Anuncia 1 byte acima do teto de imagem e deixa a conexão aberta: o cliente
+        // recusa pelo Content-Length, sem ler o corpo.
+        res.writeHead(200, { 'content-type': 'image/png', 'content-length': '5000001' });
+        res.write(Buffer.alloc(16, 1));
+      });
+      const duble = criarDubleDoHandler({ conversation: conversationRow() });
+
+      await expect(
+        sendMessageHandler(duble.supabase, ctx, textInput({ type: 'image', body: undefined, media_url: `${base}/enorme.png` })),
+      ).rejects.toMatchObject({ status: 413, code: 'payload_too_large' });
+      expect(duble.capturas.inserts.messages).toEqual([]);
+      expect(upload).not.toHaveBeenCalled();
+    });
+
+    it('falha ao guardar no bucket: 500 storage_upload_failed, nada gravado, nada enviado', async () => {
+      wahaConfigured(true);
+      upload.mockResolvedValueOnce({ data: null, error: { message: 'bucket cheio' } });
+      const base = await origem((_req, res) => {
+        res.writeHead(200, { 'content-type': 'image/png' });
+        res.end(PNG);
+      });
+      const fetchMock = vi.fn();
+      vi.stubGlobal('fetch', fetchMock);
+      const duble = criarDubleDoHandler({ conversation: conversationRow() });
+
+      await expect(
+        sendMessageHandler(duble.supabase, ctx, textInput({ type: 'image', body: undefined, media_url: `${base}/x.png` })),
+      ).rejects.toMatchObject({ status: 500, code: 'storage_upload_failed' });
+      expect(duble.capturas.inserts.messages).toEqual([]);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
   });
 
   it('5. texto puro: sent + external_id + ack 0, pelo endpoint de texto', async () => {
