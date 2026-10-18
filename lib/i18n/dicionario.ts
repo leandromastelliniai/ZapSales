@@ -14718,6 +14718,10 @@ export const DICIONARIO: Traducoes = {
   "Em risco": { es: "En riesgo" },
   "Em voo": { es: "En curso" },
   // Restringir assuntos e a galeria de modelos por ramo (issue #92).
+  "O ramo do atendimento (opcional)": { es: "El rubro de la atención (opcional)" },
+  "Escolha o ramo e o perfil e as instruções já vêm prontos — dá para editar tudo depois. Ou pule e escolha só o jeito de falar.": { es: "Elige el rubro y el perfil y las instrucciones ya vienen listos; puedes editar todo después. O sáltalo y elige solo la forma de hablar." },
+  "Nenhum — só o jeito de falar": { es: "Ninguno: solo la forma de hablar" },
+  "Escolha abaixo como ele conversa.": { es: "Elige abajo cómo conversa." },
   "No máximo": { es: "Como máximo" },
   "assuntos.": { es: "asuntos." },
   "Cada assunto pode ter até": { es: "Cada asunto puede tener hasta" },

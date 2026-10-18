@@ -9854,5 +9854,9 @@
   "Consultas e ações em outro sistema (estoque, planilha, ERP) que o agente faz durante a conversa; as que alteram algo esperam a sua aprovação.": "Lookups and actions in another system (stock, spreadsheet, ERP) that the agent performs during the conversation; the ones that change something wait for your approval.",
   "A ação foi executada no outro sistema.": "The action was run in the other system.",
   "A ação foi aprovada e não foi concluída. Veja o aviso da falha: se o resultado ficou incerto, ela não foi repetida.": "The action was approved and not completed. See the failure notice: if the outcome is uncertain, it was not repeated.",
-  "A ação está sendo executada agora.": "The action is being run right now."
+  "A ação está sendo executada agora.": "The action is being run right now.",
+  "O ramo do atendimento (opcional)": "Line of business (optional)",
+  "Escolha o ramo e o perfil e as instruções já vêm prontos — dá para editar tudo depois. Ou pule e escolha só o jeito de falar.": "Pick the line of business and the profile and instructions come ready; you can edit everything later. Or skip and just choose how it talks.",
+  "Nenhum — só o jeito de falar": "None — just how it talks",
+  "Escolha abaixo como ele conversa.": "Choose below how it talks."
 }

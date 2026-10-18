@@ -233,6 +233,54 @@ export const MODELOS_DE_AGENTE: readonly ModeloDeAgente[] = [
   },
 ];
 
+/**
+ * As colunas de `ai_agent_versions` que um modelo preenche — o que o onboarding
+ * grava na 1ª versão (o formulário de criar agente usa `CamposDoModelo` direto).
+ * `restrict_topics` sai SEMPRE `false`: a lista vem sugerida, a chave é do dono.
+ */
+export interface ColunasDoModelo {
+  profile_persona: string;
+  profile_tone: TomDoAgente;
+  profile_objective: string;
+  profile_welcome: string;
+  profile_language: IdiomaDoAgente;
+  restrict_topics: false;
+  allowed_topics: string[];
+  off_topic_reply: string;
+}
+
+export function colunasDoModelo(c: CamposDoModelo): ColunasDoModelo {
+  return {
+    profile_persona: c.profile_persona,
+    profile_tone: c.profile_tone,
+    profile_objective: c.profile_objective,
+    profile_welcome: c.profile_welcome,
+    profile_language: c.profile_language,
+    restrict_topics: false,
+    allowed_topics: c.allowed_topics,
+    off_topic_reply: c.off_topic_reply,
+  };
+}
+
+const ONDE_TRABALHA: Record<IdiomaDoAgente, string> = {
+  "pt-BR": "O negócio",
+  es: "El negocio",
+  en: "The business",
+};
+
+/**
+ * As instruções de um modelo com o NEGÓCIO acrescentado, no idioma do modelo. No
+ * onboarding o funcionário já nasce sabendo onde trabalha (nome e ramo que o dono
+ * escreveu), como nos "jeitos de falar" — o modelo sozinho diria só "a empresa".
+ */
+export function instrucoesComNegocio(
+  instrucoes: string,
+  idioma: IdiomaDoAgente,
+  negocio: string,
+): string {
+  return `${instrucoes}\n\n${ONDE_TRABALHA[idioma]}: ${negocio}`;
+}
+
 export function modeloPorId(id: string): ModeloDeAgente | undefined {
   return MODELOS_DE_AGENTE.find((m) => m.id === id);
 }

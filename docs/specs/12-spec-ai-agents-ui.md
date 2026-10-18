@@ -199,6 +199,8 @@ Na coluna das instruções, o formulário **"Como ele se apresenta"** (`PerfilGu
 
 ### 3.2.0.1 Modelos por ramo e restringir assuntos (issue #92)
 
+**No onboarding** (passo "Configurar IA"): a mesma lista de modelos aparece como "O ramo do atendimento (opcional)", com "Nenhum" como padrão — sem escolher, o passo é o de sempre ("jeito de falar"). Com um ramo, a action grava na 1ª versão o perfil do modelo (`colunasDoModelo`, restrição sempre desligada) e as instruções dele com o nome e o ramo do negócio (`instrucoesComNegocio`), no idioma da tela (`idioma` vem do formulário e é validado contra os três do produto).
+
 Na **criação** (nunca na edição: trocar de modelo apagaria o que o dono configurou), uma galeria **"Comece por um modelo"** (`ModelosDoAgente.tsx`) oferece vendas, suporte e agendamento. Escolher um preenche nome (se ainda vazio), perfil, instruções livres e a lista sugerida de assuntos, **no idioma da tela** (`lib/ai/agents/modelos.ts`); tudo segue editável, e trocar de modelo substitui o que foi preenchido (a tela avisa). No `PerfilGuiado`, o bloco **"Restringir assuntos"** tem a chave, a lista (um assunto por linha, até 20) e a resposta para o que está fora; chave ligada com lista vazia mostra aviso e não restringe. O painel "Ver como o agente recebe isto" mostra a seção `## Assuntos permitidos` (a mesma `comporInstrucoes` do motor), e o diff de versões e a confirmação de publicar mostram a mudança da restrição.
 
 ### 3.2.1 Follow-up e retornos do agente
