@@ -20,6 +20,9 @@
  *     com teto de saltos. Cabeçalho de credencial não atravessa origens.
  *  5. **Limites:** prazo TOTAL (DNS + conexão + cabeçalhos + corpo, o que pega a
  *     resposta lenta) e teto de bytes contado no corpo lido (o que pega a gigante).
+ *     `buscarSeguroEmFluxo` (corpo em fluxo, para SSE) troca o prazo total por
+ *     prazo de cabeçalhos + silêncio máximo entre trechos; o teto de bytes vale
+ *     para o corpo inteiro, contado trecho a trecho.
  *
  * `ipPermitido` é a única válvula: o IP especial que o dono da INSTALAÇÃO
  * autorizou (`destinos-internos-autorizados.ts`). Vale por endereço, nunca por
@@ -175,7 +178,7 @@ export interface OpcoesDeBusca extends PoliticaDeDestino {
    * ao `fetch` com `redirect: "manual"`. Cada salto passa pela política inteira.
    */
   maxRedirecionamentos?: number;
-  /** Prazo TOTAL (DNS, conexão, cabeçalhos e corpo, todos os saltos). Padrão 10 s. */
+  /** Prazo TOTAL (DNS, conexão, cabeçalhos e corpo, todos os saltos). Padrão 10 s. Em fluxo, ver `OpcoesDeFluxo`. */
   timeoutMs?: number;
   /** Teto do corpo lido, em bytes, contado sobre o que chega. Padrão 1 MiB. */
   maxBytes?: number;
@@ -321,19 +324,27 @@ function comoErroDeRede(erro: unknown): ErroDeRedeSegura {
   return erro instanceof ErroDeRedeSegura ? erro : new ErroDeRedeSegura("net:connection_failed", { cause: erro });
 }
 
-export async function buscarSeguro(bruta: string, opcoes: OpcoesDeBusca = {}): Promise<RespostaSegura> {
+/**
+ * O prazo e o cancelamento de uma busca, iguais para o corpo inteiro e para o
+ * corpo em fluxo: um `AbortController` que o prazo e o sinal de quem chamou
+ * disparam, e uma promessa (`estouro`) que rejeita quando ele dispara — para a
+ * corrida contra o trabalho em curso. O que estiver em voo nesse instante é
+ * derrubado: socket aberto depois do estouro seria exatamente o vazamento que o
+ * teto de tempo existe para evitar.
+ */
+function iniciarPrazo(timeoutMs: number, sinalDeFora: AbortSignal | undefined) {
   const controle = new AbortController();
-  const prazo = setTimeout(() => controle.abort(new ErroDeRedeSegura("net:timeout")), opcoes.timeoutMs ?? TIMEOUT_PADRAO_MS);
+  const prazo = setTimeout(() => controle.abort(new ErroDeRedeSegura("net:timeout")), timeoutMs);
   const aoCancelar = () => controle.abort(new ErroDeRedeSegura("net:aborted"));
-  if (opcoes.signal?.aborted) aoCancelar();
-  else opcoes.signal?.addEventListener("abort", aoCancelar, { once: true });
+  if (sinalDeFora?.aborted) aoCancelar();
+  else sinalDeFora?.addEventListener("abort", aoCancelar, { once: true });
 
-  // O que estiver em voo quando o prazo vence é derrubado: socket aberto depois
-  // do estouro seria exatamente o vazamento que o teto de tempo existe para evitar.
   let emVoo: http.IncomingMessage | null = null;
   const estouro = new Promise<never>((_, rejeitar) => {
     const falhar = () => {
-      emVoo?.destroy();
+      // Com o motivo: quem ainda lê o corpo (o fluxo) erra com `net:timeout`/`net:aborted`,
+      // e não com um "fechou antes da hora" que não diz por quê.
+      emVoo?.destroy(controle.signal.reason);
       rejeitar(controle.signal.reason);
     };
     if (controle.signal.aborted) falhar();
@@ -341,8 +352,28 @@ export async function buscarSeguro(bruta: string, opcoes: OpcoesDeBusca = {}): P
   });
   estouro.catch(() => undefined);
 
+  return {
+    controle,
+    estouro,
+    /** Registra a resposta aberta, para o estouro poder derrubá-la. */
+    aoReceber: (resposta: http.IncomingMessage) => {
+      emVoo = resposta;
+    },
+    /** O prazo acabou de ser cumprido (ou a busca terminou). */
+    encerrarPrazo: () => clearTimeout(prazo),
+    /** Larga o sinal de quem chamou. */
+    soltarSinal: () => sinalDeFora?.removeEventListener("abort", aoCancelar),
+  };
+}
+
+export async function buscarSeguro(bruta: string, opcoes: OpcoesDeBusca = {}): Promise<RespostaSegura> {
+  const { controle, estouro, aoReceber, encerrarPrazo, soltarSinal } = iniciarPrazo(
+    opcoes.timeoutMs ?? TIMEOUT_PADRAO_MS,
+    opcoes.signal,
+  );
+
   const executar = async (): Promise<RespostaSegura> => {
-    const { status, resposta, urlFinal } = await abrirConexao(bruta, opcoes, controle.signal, (r) => (emVoo = r));
+    const { status, resposta, urlFinal } = await abrirConexao(bruta, opcoes, controle.signal, aoReceber);
     if (opcoes.lerResposta === false) {
       resposta.destroy();
       return { status, headers: resposta.headers, corpo: Buffer.alloc(0), urlFinal };
@@ -356,19 +387,14 @@ export async function buscarSeguro(bruta: string, opcoes: OpcoesDeBusca = {}): P
   } catch (erro) {
     throw comoErroDeRede(erro);
   } finally {
-    clearTimeout(prazo);
-    opcoes.signal?.removeEventListener("abort", aoCancelar);
+    encerrarPrazo();
+    soltarSinal();
   }
 }
 
 // ─── O corpo em fluxo ───────────────────────────────────────────────────────
 
-export interface OpcoesDeFluxo extends PoliticaDeDestino {
-  metodo?: string;
-  headers?: Record<string, string>;
-  corpo?: string | Uint8Array;
-  /** Igual a `OpcoesDeBusca.maxRedirecionamentos`; padrão 0. */
-  maxRedirecionamentos?: number;
+export interface OpcoesDeFluxo extends Omit<OpcoesDeBusca, "timeoutMs" | "maxBytes" | "lerResposta"> {
   /** Prazo para os CABEÇALHOS chegarem (DNS, conexão, todos os saltos). Padrão 10 s. */
   timeoutMs?: number;
   /**
@@ -379,8 +405,6 @@ export interface OpcoesDeFluxo extends PoliticaDeDestino {
   timeoutEntreTrechosMs?: number;
   /** Teto do corpo INTEIRO, em bytes, contado sobre o que sai decodificado. Padrão 64 MiB. */
   maxBytes?: number;
-  /** Cancelamento de quem chamou; vale também durante a leitura do corpo. */
-  signal?: AbortSignal;
 }
 
 const SILENCIO_PADRAO_MS = 60_000;
@@ -470,34 +494,21 @@ function paraFluxoWeb(
  * `ErroDeRedeSegura` correspondente.
  */
 export async function buscarSeguroEmFluxo(bruta: string, opcoes: OpcoesDeFluxo = {}): Promise<RespostaEmFluxo> {
-  const controle = new AbortController();
-  const prazo = setTimeout(() => controle.abort(new ErroDeRedeSegura("net:timeout")), opcoes.timeoutMs ?? TIMEOUT_PADRAO_MS);
-  const aoCancelar = () => controle.abort(new ErroDeRedeSegura("net:aborted"));
-  if (opcoes.signal?.aborted) aoCancelar();
-  else opcoes.signal?.addEventListener("abort", aoCancelar, { once: true });
-  const soltarSinal = () => opcoes.signal?.removeEventListener("abort", aoCancelar);
-
-  let emVoo: http.IncomingMessage | null = null;
-  const estouro = new Promise<never>((_, rejeitar) => {
-    const falhar = () => {
-      emVoo?.destroy(controle.signal.reason);
-      rejeitar(controle.signal.reason);
-    };
-    if (controle.signal.aborted) falhar();
-    else controle.signal.addEventListener("abort", falhar, { once: true });
-  });
-  estouro.catch(() => undefined);
+  const { controle, estouro, aoReceber, encerrarPrazo, soltarSinal } = iniciarPrazo(
+    opcoes.timeoutMs ?? TIMEOUT_PADRAO_MS,
+    opcoes.signal,
+  );
 
   let conexao: Conexao;
   try {
-    conexao = await Promise.race([abrirConexao(bruta, opcoes, controle.signal, (r) => (emVoo = r)), estouro]);
+    conexao = await Promise.race([abrirConexao(bruta, opcoes, controle.signal, aoReceber), estouro]);
   } catch (erro) {
     soltarSinal();
     throw comoErroDeRede(erro);
   } finally {
     // Os cabeçalhos chegaram (ou falhou): o prazo de cabeçalhos acabou. Daqui em
     // diante só o silêncio entre trechos e o cancelamento de quem chamou valem.
-    clearTimeout(prazo);
+    encerrarPrazo();
   }
 
   const { status, resposta, urlFinal } = conexao;
@@ -523,10 +534,8 @@ export async function buscarSeguroEmFluxo(bruta: string, opcoes: OpcoesDeFluxo =
     throw new ErroDeRedeSegura("net:response_too_large");
   }
 
-  // Cancelar durante a leitura derruba a resposta com o motivo, e o fluxo erra com ele.
-  const aoAbortar = () => resposta.destroy(controle.signal.reason);
-  controle.signal.addEventListener("abort", aoAbortar, { once: true });
-
+  // Cancelar durante a leitura já é coberto por `iniciarPrazo`: o sinal derruba a
+  // resposta em voo com o motivo, e o fluxo erra com ele.
   let fonte: Readable = resposta;
   if (decodificador) {
     pipeline(resposta, decodificador, () => undefined);
@@ -536,10 +545,7 @@ export async function buscarSeguroEmFluxo(bruta: string, opcoes: OpcoesDeFluxo =
     resposta,
     fonte,
     { maxBytes, silencioMs: opcoes.timeoutEntreTrechosMs ?? SILENCIO_PADRAO_MS },
-    () => {
-      controle.signal.removeEventListener("abort", aoAbortar);
-      soltarSinal();
-    },
+    soltarSinal,
   );
   return { status, headers, corpo, urlFinal };
 }

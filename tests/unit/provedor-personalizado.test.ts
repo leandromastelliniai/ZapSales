@@ -18,7 +18,7 @@ import * as http from "node:http";
 import type { AddressInfo } from "node:net";
 
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText, streamText } from "ai";
+import { APICallError, generateText, streamText } from "ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createDefaultRegistry } from "@/lib/agent-engine/edge/llm/providers";
@@ -289,6 +289,26 @@ describe("o endereço da empresa não alcança a rede interna do servidor", () =
 
       expect(res.status).toBe(200);
       expect(resolucoes, "uma resolução só: não há segunda janela").toBe(1);
+    });
+
+    it("provedor fora do ar: o SDK vê queda de rede (retentável) e a mensagem que o classificador de falhas reconhece", async () => {
+      // Sobe um servidor só para saber uma porta livre e o fecha: a conexão é recusada.
+      const srv = http.createServer();
+      await new Promise<void>((ok) => srv.listen(0, "127.0.0.1", ok));
+      const base = `http://gw.exemplo:${(srv.address() as AddressInfo).port}/v1`;
+      await new Promise<void>((ok) => srv.close(() => ok()));
+      const modelo = createOpenAI({
+        apiKey: "sk-x",
+        baseURL: base,
+        fetch: fetchParaDestinoDaOrganizacao(undefined, LOOPBACK),
+      }).chat("gpt-x");
+
+      const erro = await generateText({ model: modelo, prompt: "oi", maxRetries: 0 }).catch((e: unknown) => e);
+
+      expect(APICallError.isInstance(erro)).toBe(true);
+      expect((erro as APICallError).isRetryable).toBe(true);
+      // `run-model-call.ts` classifica `provedor_indisponivel` por esta mensagem.
+      expect((erro as APICallError).message).toMatch(/ECONNREFUSED|fetch failed|timeout|network/i);
     });
 
     it("a resposta SSE de um modelo chega em fluxo pelo SDK: o 1º trecho de texto sai antes de o servidor terminar", async () => {

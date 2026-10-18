@@ -12,12 +12,19 @@
  * Contrato com o SDK:
  *  - entra o que o `fetch` aceita (string, `URL` ou `Request`; corpo em string,
  *    bytes ou `FormData`). `new Request(...)` normaliza tudo isso, inclusive a
- *    fronteira do multipart;
+ *    fronteira do multipart. O corpo da REQUISIÇÃO é lido inteiro antes de
+ *    sair (chat e áudio cabem; upload em fluxo não é suportado);
  *  - **não segue redirecionamento** (devolve o 3xx, como `redirect: "manual"`),
  *    a menos que `maxRedirecionamentos` venha na política;
- *  - recusa e falha de transporte saem como exceção com o código da política
- *    (`unsafe_url:*`, `net:*`) — que é o `message`; o cancelamento do SDK sai
- *    como o motivo do próprio `AbortSignal`, como no `fetch`;
+ *  - **os erros têm a forma do `fetch`**, porque é nela que o SDK e os
+ *    classificadores se apoiam: falha de conexão e prazo estourado saem como
+ *    `TypeError("fetch failed")` com a causa (é o que o SDK retenta e o que
+ *    `run-model-call.ts` lê como provedor indisponível); uma queda no meio do
+ *    corpo, como `TypeError("terminated")`; o cancelamento do SDK, como o motivo
+ *    do próprio `AbortSignal` (`AbortError`/`TimeoutError`), antes ou durante a
+ *    leitura. Já a **recusa da política** (`unsafe_url:*`) e o teto de bytes
+ *    (`net:response_too_large`) não são falha de rede e saem com o próprio
+ *    código, que é o `message`;
  *  - os prazos padrão são os do `fetch` global (undici: 300 s para cabeçalhos e
  *    300 s de silêncio no corpo), e não os 10 s do webhook: uma completação sem
  *    streaming só devolve cabeçalhos quando termina. O teto de duração de uma
@@ -39,6 +46,37 @@ function cabecalhosDaResposta(brutos: Record<string, string | string[] | undefin
   return headers;
 }
 
+/** A falha como o `fetch` a teria dado; o que não é falha de rede segue com o próprio código. */
+function comoErroDeFetch(erro: unknown, sinal: AbortSignal, mensagem: "fetch failed" | "terminated"): unknown {
+  if (sinal.aborted) return sinal.reason ?? new DOMException("This operation was aborted", "AbortError");
+  if (erro instanceof ErroDeRedeSegura) {
+    if (erro.codigo === "net:connection_failed") return new TypeError(mensagem, { cause: erro.cause ?? erro });
+    if (erro.codigo === "net:timeout") return new TypeError(mensagem, { cause: erro });
+  }
+  return erro;
+}
+
+/** Repassa o corpo trocando o erro de transporte pelo erro do `fetch`. */
+function corpoComErrosDeFetch(corpo: ReadableStream<Uint8Array> | null, sinal: AbortSignal): ReadableStream<Uint8Array> | null {
+  if (!corpo) return null;
+  const leitor = corpo.getReader();
+  return new ReadableStream<Uint8Array>(
+    {
+      async pull(controle) {
+        try {
+          const { value, done } = await leitor.read();
+          if (done) controle.close();
+          else controle.enqueue(value);
+        } catch (erro) {
+          throw comoErroDeFetch(erro, sinal, "terminated");
+        }
+      },
+      cancel: (motivo) => leitor.cancel(motivo),
+    },
+    { highWaterMark: 0 },
+  );
+}
+
 export function fetchSeguro(opcoes: OpcoesDoFetchSeguro = {}): typeof fetch {
   return async (input, init) => {
     const req = new Request(input, init);
@@ -55,15 +93,10 @@ export function fetchSeguro(opcoes: OpcoesDoFetchSeguro = {}): typeof fetch {
         signal: req.signal,
       });
     } catch (erro) {
-      // O SDK distingue "cancelei" (AbortError/TimeoutError do próprio sinal) de
-      // "falhou": devolve o motivo do sinal, e não o código de transporte.
-      if (req.signal.aborted && erro instanceof ErroDeRedeSegura && erro.codigo === "net:aborted") {
-        throw req.signal.reason ?? new DOMException("This operation was aborted", "AbortError");
-      }
-      throw erro;
+      throw comoErroDeFetch(erro, req.signal, "fetch failed");
     }
 
-    const res = new Response(resposta.corpo, {
+    const res = new Response(corpoComErrosDeFetch(resposta.corpo, req.signal), {
       status: resposta.status,
       headers: cabecalhosDaResposta(resposta.headers),
     });

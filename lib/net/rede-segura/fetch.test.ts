@@ -212,3 +212,85 @@ describe("fetchSeguro — a política continua sendo a da rede segura", () => {
     expect(chamadas).toBe(1);
   });
 });
+
+describe("fetchSeguro — os erros têm a forma que o SDK e os classificadores esperam", () => {
+  // O SDK da Vercel só retenta (e só escreve "Cannot connect to API: ...") diante de
+  // `TypeError("fetch failed")` com `cause`; `run-model-call.ts` classifica
+  // `provedor_indisponivel` pela MENSAGEM (`ECONNREFUSED|fetch failed|timeout|network`).
+  // O `fetch` global sempre falou assim, então quem o substitui fala igual.
+  async function portaFechada(): Promise<string> {
+    const s = await servidor(() => undefined);
+    const url = s.url;
+    await s.fechar();
+    return url;
+  }
+
+  it("conexão recusada vira TypeError('fetch failed') com a causa do socket", async () => {
+    const url = await portaFechada();
+
+    const erro = await fetchSeguro(SO_LOOPBACK)(url).catch((e: unknown) => e);
+
+    expect(erro).toBeInstanceOf(TypeError);
+    expect((erro as TypeError).message).toBe("fetch failed");
+    expect(String(((erro as TypeError).cause as Error).message)).toMatch(/ECONNREFUSED/);
+  });
+
+  it("prazo de cabeçalhos estourado também é 'fetch failed', com o código do prazo na causa", async () => {
+    const s = await servidor(() => undefined);
+
+    const erro = await fetchSeguro({ ...SO_LOOPBACK, timeoutMs: 100 })(s.url).catch((e: unknown) => e);
+
+    expect(erro).toBeInstanceOf(TypeError);
+    expect((erro as TypeError).message).toBe("fetch failed");
+    expect(((erro as TypeError).cause as Error).message).toBe("net:timeout");
+  });
+
+  it("recusa da política NÃO é falha de rede: segue com o código unsafe_url, sem virar 'fetch failed'", async () => {
+    const erro = await fetchSeguro()("https://10.0.0.5/x").catch((e: unknown) => e);
+
+    expect(erro).not.toBeInstanceOf(TypeError);
+    expect((erro as Error).message).toBe("unsafe_url:private_host");
+  });
+
+  it("cancelar DURANTE a leitura do corpo erra com o motivo do sinal (AbortError), como o fetch", async () => {
+    const s = await servidor((_req, res) => {
+      res.writeHead(200);
+      res.write("começou;");
+    });
+    const cancelar = new AbortController();
+    const res = await fetchSeguro(SO_LOOPBACK)(s.url, { signal: cancelar.signal });
+    const leitor = res.body!.getReader();
+    await leitor.read();
+
+    cancelar.abort();
+
+    const erro = await leitor.read().catch((e: unknown) => e);
+    expect((erro as Error).name).toBe("AbortError");
+  });
+
+  it("silêncio do servidor no meio do corpo é falha de rede ('terminated'), não recusa", async () => {
+    const s = await servidor((_req, res) => {
+      res.writeHead(200);
+      res.write("começou;");
+    });
+    const res = await fetchSeguro({ ...SO_LOOPBACK, timeoutEntreTrechosMs: 100 })(s.url);
+    const leitor = res.body!.getReader();
+    await leitor.read();
+
+    const erro = await leitor.read().catch((e: unknown) => e);
+
+    expect(erro).toBeInstanceOf(TypeError);
+    expect((erro as TypeError).message).toBe("terminated");
+    expect(((erro as TypeError).cause as Error).message).toBe("net:timeout");
+  });
+
+  it("teto de bytes estourado no meio do corpo continua sendo o código do teto", async () => {
+    const s = await servidor((_req, res) => {
+      res.writeHead(200);
+      res.end("x".repeat(5_000));
+    });
+    const res = await fetchSeguro({ ...SO_LOOPBACK, maxBytes: 100 })(s.url);
+
+    await expect(res.text()).rejects.toThrow("net:response_too_large");
+  });
+});

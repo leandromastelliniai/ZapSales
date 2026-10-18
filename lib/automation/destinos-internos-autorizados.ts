@@ -327,16 +327,19 @@ export async function motivoDaRecusaDeDestino(
  * `envolver` recebe o transporte seguro e devolve o `fetch` final: é por onde o
  * motor de borda põe a allowlist de egress ANTES dele (`contain`, em
  * `lib/agent-engine/edge/llm/providers.ts`). O padrão é o próprio transporte.
- * `politicaDeTeste` só existe para os testes apontarem o loopback e o DNS;
- * nenhum chamador de produção a passa.
+ * `politicaDeTeste` só existe para os testes apontarem o loopback e o DNS: em
+ * produção ela é IGNORADA (a válvula de IP nunca é passada em nome de uma
+ * organização, e isto não depende de comentário), e nunca altera `permitirHttp`.
  */
 export function fetchParaDestinoDaOrganizacao(
   envolver: (transporte: typeof fetch) => typeof fetch = (transporte) => transporte,
   politicaDeTeste: OpcoesDoFetchSeguro = {},
 ): typeof fetch {
   // `NODE_ENV` é lido a cada chamada, como a régua sempre fez.
-  const transporte: typeof fetch = (input, init) =>
-    fetchSeguro({ permitirHttp: process.env.NODE_ENV !== "production", ...politicaDeTeste })(input, init);
+  const transporte: typeof fetch = (input, init) => {
+    const emProducao = process.env.NODE_ENV === "production";
+    return fetchSeguro({ ...(emProducao ? {} : politicaDeTeste), permitirHttp: !emProducao })(input, init);
+  };
   const final = envolver(transporte);
   return async (input, init) => {
     const res = await final(input, init);
