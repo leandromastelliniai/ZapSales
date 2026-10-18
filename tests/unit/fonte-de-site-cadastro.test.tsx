@@ -185,6 +185,35 @@ describe("PaginasDoSiteDialog — o estado de cada página", () => {
   });
 });
 
+describe("PaginasDoSiteDialog — a mensagem ao salvar os endereços diz a verdade", () => {
+  async function salvarCom(resposta: Record<string, unknown>) {
+    const spy = vi.fn(async (_u: string, init?: RequestInit) =>
+      init?.method === "PATCH" ? json({ data: resposta }) : json({ data: PAGINAS }),
+    );
+    vi.stubGlobal("fetch", spy);
+    comQuery(<PaginasDoSiteDialog sourceId="ks-site" nome="Site da Loja" aberto onFechar={() => {}} onReler={() => {}} />);
+    await waitFor(() => expect(screen.getByTestId("site-pagina-0")).toBeTruthy());
+    fireEvent.change(screen.getByTestId("site-enderecos"), { target: { value: "https://loja.com.br/planos" } });
+    fireEvent.click(screen.getByTestId("site-salvar-enderecos"));
+    await waitFor(() => expect(toastOk).toHaveBeenCalledTimes(1));
+    return String(toastOk.mock.calls[0]![0]);
+  }
+
+  it("com chave e lista nova: 'Estou lendo as páginas'", async () => {
+    expect(await salvarCom({ id: "ks-site", indexacao_habilitada: true, pagina_lista_mudou: true })).toContain("Estou lendo as páginas");
+  });
+
+  it("SEM chave: não promete leitura — diz que o site fica esperando a chave", async () => {
+    const msg = await salvarCom({ id: "ks-site", indexacao_habilitada: false, pagina_lista_mudou: true });
+    expect(msg).not.toContain("Estou lendo");
+    expect(msg).toContain("chave de embedding");
+  });
+
+  it("lista igual: diz que nada foi lido de novo", async () => {
+    expect(await salvarCom({ id: "ks-site", indexacao_habilitada: true, pagina_lista_mudou: false })).toContain("nada foi lido de novo");
+  });
+});
+
 describe("KnowledgeSourceCard — material do tipo site", () => {
   function cartao(source: SourceRow) {
     return comQuery(

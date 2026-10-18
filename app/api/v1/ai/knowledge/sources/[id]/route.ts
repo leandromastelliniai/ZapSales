@@ -15,6 +15,7 @@ import { requireRole } from "@/lib/auth/require-role";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { audit } from "@/lib/audit";
+import { temChaveDeEmbedding } from "@/lib/ai/embeddings/chave";
 import { aceitaEnderecos, aceitaTextoColado, canonizarTipoDeFonte, rotuloDoTipo } from "@/lib/ai/rag/tipos-de-fonte";
 import { enderecosDoSiteSchema, FRASE_URLS_SO_PARA_SITE, hostsDasUrls, limitesDoSite } from "@/lib/ai/rag/ingest/site";
 import { definirPaginasDoSite } from "@/lib/ai/rag/ingest/site-paginas";
@@ -304,8 +305,11 @@ export async function PATCH(
     {
       id: sourceId,
       ...(itemsCount !== undefined ? { items_count: itemsCount } : {}),
-      // A tela só promete "estou lendo" quando a leitura vai de fato acontecer.
-      ...(enderecos !== undefined ? { pagina_lista_mudou: listaMudou } : {}),
+      // A tela só promete "estou lendo" quando a leitura vai de fato acontecer: a lista mudou E há
+      // chave de embedding (sem ela o indexador deixa o material esperando).
+      ...(enderecos !== undefined
+        ? { pagina_lista_mudou: listaMudou, indexacao_habilitada: await temChaveDeEmbedding(activeOrg.orgId) }
+        : {}),
     },
     { requestId },
   );

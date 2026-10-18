@@ -9806,5 +9806,8 @@
   "O ramo do atendimento (opcional)": "Line of business (optional)",
   "Escolha o ramo e o perfil e as instruções já vêm prontos — dá para editar tudo depois. Ou pule e escolha só o jeito de falar.": "Pick the line of business and the profile and instructions come ready; you can edit everything later. Or skip and just choose how it talks.",
   "Nenhum — só o jeito de falar": "None — just how it talks",
-  "Escolha abaixo como ele conversa.": "Choose below how it talks."
+  "Escolha abaixo como ele conversa.": "Choose below how it talks.",
+  "pela metade": "partly read",
+  "Em alguns materiais nem tudo foi lido, mas o agente já sabe o resto. O que faltou está em “Ver as páginas” no cartão de cada um.": "Not everything was read in some materials, but the agent already knows the rest. What was missed is under “View pages” on each card.",
+  "Endereços salvos. Falta uma chave de embedding: o site fica esperando e será lido quando você cadastrá-la.": "Addresses saved. An embedding key is missing: the site will wait and be read once you add one."
 }
