@@ -1,0 +1,101 @@
+<!--meta {"id":"agente-perfil-e-modelos","grupo":"ia","titulo":"Criar um agente pelo perfil e pelos modelos","ordem":2.1,"resumo":"Dois atalhos para criar um agente sem escrever instruções do zero: escolher um modelo pronto (Vendas, Suporte ou Agendamento) e preencher o perfil guiado — quem ele é, tom de voz, objetivo, boas-vindas e idioma.","palavras":["perfil guiado","modelo pronto","ramo","vendas","suporte","agendamento","persona","tom de voz","boas-vindas","idioma","temperatura","instruções livres","criar agente","onboarding","treinar"],"onde":"Agente de IA › Agentes › Novo agente (e, na primeira vez, no passo Treinar dos primeiros passos)","quem":"Criar, editar e publicar: Administrador. Gerente abre o agente só para leitura.","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Criar um <a href="#agentes">agente de IA</a> exige explicar a ele quem é, como fala e o que fazer. Quem nunca fez isso costuma ficar diante de uma caixa de texto vazia. Há dois atalhos, que você pode usar juntos:</p>
+<ul>
+  <li><strong>Modelo pronto:</strong> você escolhe o ramo (<em>Vendas</em>, <em>Suporte</em> ou <em>Agendamento</em>) e o formulário já vem preenchido. Você só ajusta ao seu negócio.</li>
+  <li><strong>Perfil guiado:</strong> um cartão com cinco perguntas simples (quem ele é, tom de voz, objetivo, boas-vindas e idioma). O sistema transforma as respostas em instruções para o agente.</li>
+</ul>
+<p>Nenhum dos dois é obrigatório. Você pode ignorá-los e escrever as instruções à mão, como sempre foi. Agentes que já existiam continuam exatamente como estavam.</p>
+<aside class="nota info"><strong>Antes de começar.</strong><p>Você precisa ser <strong>Administrador</strong>, ter uma <strong>chave de IA</strong> em <a href="#credenciais">Credenciais</a> (ou a chave da instalação) e, para o agente realmente atender, um <strong>número de WhatsApp conectado</strong> em <a href="#conexoes">Conexões</a>. Sem número, o rascunho é salvo, mas não atende ninguém.</p></aside>
+
+<h2 id="modelos">Começar por um modelo pronto</h2>
+<figure class="print">
+  <img src="img/ia-agente-modelos.png" alt="Tela Novo agente com o cartão Comece por um modelo mostrando os três modelos: Vendas, Suporte e Agendamento" loading="lazy">
+  <figcaption>O cartão “Comece por um modelo”, no alto da tela “Novo agente”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Comece por um modelo.</strong> Só aparece ao <em>criar</em> um agente; ao editar um que já existe, o cartão some.</li>
+  <li><strong>Os três modelos.</strong> Cada cartão traz o nome do ramo e uma frase dizendo para que serve.</li>
+  <li><strong>Aviso “Modelo aplicado”.</strong> Aparece depois que você escolhe e lembra que trocar de modelo substitui o que estiver preenchido abaixo.</li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Modelo</th><th>Para quem</th><th>Tom de voz</th><th>Nome sugerido</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Vendas</strong></td><td>Recebe o interessado, entende o que ele procura e conduz até a compra ou a proposta.</td><td>Descontraído</td><td>Atendente de vendas</td></tr>
+    <tr><td><strong>Suporte</strong></td><td>Resolve dúvidas e problemas de quem já é cliente e chama uma pessoa quando precisa.</td><td>Normal</td><td>Atendente de suporte</td></tr>
+    <tr><td><strong>Agendamento</strong></td><td>Marca, remarca e confirma horários — clínicas, salões, consultórios e serviços.</td><td>Normal</td><td>Atendente de agendamento</td></tr>
+  </tbody>
+</table>
+<h3 id="o-que-o-modelo-faz">O que acontece quando você escolhe um modelo</h3>
+<ul>
+  <li>O formulário é preenchido com <strong>instruções, quem ele é, tom de voz, objetivo, mensagem de boas-vindas e idioma</strong>. O texto segue o idioma da tela (português, espanhol ou inglês).</li>
+  <li>O <strong>nome</strong> só é sugerido se o campo estiver vazio; se você já digitou um, ele é mantido.</li>
+  <li>O modelo também deixa pronta a lista de <a href="#agente-restringir-assuntos">assuntos permitidos</a> e a resposta para o que estiver fora dela, mas <strong>deixa “Restringir assuntos” desligado</strong>. Ligar é decisão sua.</li>
+  <li>As instruções dos modelos mandam o agente <strong>não inventar preço, prazo, desconto nem estoque</strong> e dizer que vai confirmar com a equipe.</li>
+  <li><strong>Nada é gravado</strong> até você clicar em <span class="ui">Criar agente</span>. Dá para escolher, olhar, mudar de ideia e escolher outro.</li>
+</ul>
+<aside class="nota atencao"><strong>O modelo não conhece o seu negócio.</strong><p>Ele traz um jeito de atender, não os fatos da sua empresa: não escolhe o canal, não escolhe a chave de IA e não inventa preços nem horários. Troque o nome genérico pelo da sua empresa e ensine o que ele precisa saber em <a href="#conhecimento">Conhecimento</a>.</p></aside>
+
+<h2 id="perfil">O perfil guiado: “Como ele se apresenta”</h2>
+<p>Na coluna da direita do formulário há o cartão <strong>Como ele se apresenta</strong>. Todos os campos são opcionais, e o texto do cartão diz: o que você escrever ali <em>é combinado com as instruções livres</em>, e você pode ver o resultado no fim.</p>
+<figure class="print">
+  <img src="img/ia-agente-perfil-guiado.png" alt="Cartão Como ele se apresenta preenchido, com os campos Quem ele é, Tom de voz, O que ele persegue na conversa, Mensagem de boas-vindas e Idioma das respostas" loading="lazy">
+  <figcaption>O cartão do perfil guiado, preenchido para uma clínica de exemplo.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Quem ele é.</strong> Uma frase que apresenta o personagem, por exemplo <em>“Marina, recepcionista simpática da Clínica Sorriso”</em>. Até 600 caracteres.</li>
+  <li><strong>Tom de voz.</strong> Três botões: <em>Formal</em> (correto e cerimonioso, sem gírias), <em>Normal</em> (cordial e direto) e <em>Descontraído</em> (leve e próximo, como conversa entre conhecidos). Clicar de novo no botão marcado desmarca.</li>
+  <li><strong>O que ele persegue na conversa.</strong> O objetivo, por exemplo <em>“Entender o que a pessoa precisa e marcar uma avaliação gratuita”</em>. Até 600 caracteres.</li>
+  <li><strong>Mensagem de boas-vindas.</strong> Até 500 caracteres.</li>
+  <li><strong>Idioma das respostas.</strong> <em>Não definido (segue as instruções)</em>, <em>Português (BR)</em>, <em>Español</em> ou <em>English</em>.</li>
+  <li><strong>Ver como o agente recebe isto.</strong> Bloco que abre e mostra o texto final que o agente lê.</li>
+</ol>
+<p>Cada campo de texto mostra um contador (por exemplo <em>0/600</em>) que fica vermelho quando o limite é passado, e o formulário avisa “Pode ter até 600 caracteres.” até você cortar.</p>
+<aside class="nota atencao"><strong>A boas-vindas é um roteiro, não uma mensagem automática.</strong><p>O sistema <strong>não envia</strong> sozinho a mensagem de boas-vindas. Ela vira uma instrução: o agente <em>abre a conversa com algo nessa linha</em> quando fala com um contato novo e pode ajustar o nome da pessoa. Por isso a frase final pode variar um pouco de uma conversa para outra.</p></aside>
+
+<h3 id="como-vira-instrucao">Como o perfil vira instruções</h3>
+<p>O agente não lê o cartão; ele lê um <strong>texto</strong>. O sistema monta esse texto com uma seção <em>“Perfil do agente”</em>, que vem <strong>antes</strong> das suas instruções livres. Só entram os campos que você preencheu. Por exemplo, o tom <em>Descontraído</em> vira uma frase como “fale de forma leve e próxima, como numa conversa entre conhecidos, sem perder o respeito”.</p>
+<p>Para conferir, abra <span class="ui">Ver como o agente recebe isto</span>. Sem perfil preenchido, o bloco avisa que o agente lê só as instruções livres, exatamente como escritas. Com perfil, mostra “o perfil acima, depois as instruções livres”. Se você deixar tudo em branco, o agente funciona exatamente como funcionava antes do perfil existir.</p>
+
+<h2 id="avancado">Instruções livres e temperatura</h2>
+<p>Mais abaixo há o bloco <strong>Avançado: instruções livres e temperatura</strong>. Ele abre sozinho quando o agente não tem perfil e fica fechado quando tem. As <strong>instruções livres</strong> continuam valendo por inteiro: o perfil entra antes delas, e nada do que você escreve ali é trocado. São no mínimo 10 e no máximo 20.000 caracteres.</p>
+<h3 id="temperatura">Temperatura</h3>
+<p><strong>Temperatura</strong> é um botão de “criatividade” da inteligência artificial. É um número de <strong>0 a 1</strong>:</p>
+<ul>
+  <li><strong>Perto de 0:</strong> respostas mais previsíveis e parecidas entre si — bom para dar preço e prazo, onde variar é arriscado.</li>
+  <li><strong>Perto de 1:</strong> respostas mais variadas e soltas — bom para conversa mais leve, mas com mais chance de fugir do roteiro.</li>
+  <li><strong>Em branco:</strong> o agente usa o padrão do modelo de IA que você escolheu. A própria tela diz: <em>“Se você não entende o parâmetro, deixe em branco.”</em></li>
+</ul>
+<p>O campo se chama <span class="ui">Temperatura (0 a 1)</span> e aceita passos de 0,1. Fora da faixa, o formulário avisa “A temperatura vai de 0 a 1.”. O valor vale para as respostas do agente no WhatsApp e na aba <a href="#agente-teste-e-correcao">Teste</a>, e o que você define no agente tem prioridade sobre o padrão da organização.</p>
+<aside class="nota dica"><strong>Mude uma coisa de cada vez.</strong><p>O manual não tem uma medição que diga qual temperatura é “a melhor”: ela depende do modelo e do seu negócio. Se quiser mexer, altere o valor, publique uma versão e faça perguntas na aba <a href="#agente-teste-e-correcao">Teste</a> antes de deixar no ar.</p></aside>
+
+<h2 id="criar">Passo a passo</h2>
+<ol class="passos">
+  <li>Abra <span class="ui">Agente de IA › Agentes</span> e clique em <span class="ui">Novo agente</span>.</li>
+  <li>Em <span class="ui">Comece por um modelo</span>, clique em <strong>Vendas</strong>, <strong>Suporte</strong> ou <strong>Agendamento</strong> — ou pule este passo.</li>
+  <li>No cartão <span class="ui">Como ele se apresenta</span>, troque o texto genérico pelo da sua empresa: nome, objetivo e boas-vindas.</li>
+  <li>Escolha o <strong>modelo de IA</strong> e a <strong>chave de acesso</strong>. Sem eles o formulário avisa em vermelho (“Escolha o modelo de inteligência artificial.” e “Escolha a chave de acesso…”).</li>
+  <li>Clique em <span class="ui">Criar agente</span>. O agente é criado como rascunho e abre na página dele.</li>
+  <li>Abra a aba <strong>Teste</strong> e converse com ele.</li>
+  <li>Quando estiver bom, clique em <span class="ui">Publicar</span>. A janela de confirmação resume o que mudou (campos do perfil, assuntos, temperatura). Confirme.</li>
+</ol>
+
+<h2 id="primeiros-passos">Na primeira vez: o passo “Treinar”</h2>
+<p>Quem está nos primeiros passos do sistema (onboarding) encontra o mesmo atalho no passo <strong>Treinar</strong>, com o título <em>“Treine seu funcionário”</em>. Ele pergunta:</p>
+<ol>
+  <li><strong>Como ele vai se chamar</strong> (padrão: <em>Atendente IA</em>).</li>
+  <li><strong>O ramo do atendimento (opcional):</strong> Vendas, Suporte, Agendamento ou <em>Nenhum — só o jeito de falar</em> (o padrão).</li>
+  <li><strong>O jeito dele falar</strong> (<em>Próximo e caloroso</em>, <em>Objetivo e cordial</em> ou <em>Curto e prático</em>). Esta pergunta some quando você escolhe um ramo, porque o ramo já traz o tom.</li>
+  <li><strong>As regras da casa (opcional).</strong></li>
+</ol>
+<p>Os botões são <span class="ui">Pular</span> e <span class="ui">Criar e continuar</span>. Se você escolheu um ramo, o perfil e as instruções do modelo entram na primeira versão do agente, e ao final delas o sistema acrescenta “O negócio: …” com o nome da empresa e o que ela faz. A restrição de assuntos <strong>nunca</strong> nasce ligada por aqui.</p>
+<aside class="nota atencao"><strong>Sem número conectado, o ramo não é gravado.</strong><p>Nos primeiros passos, se ainda não houver um número de WhatsApp conectado, o agente é criado <em>sem versão</em> e o perfil do modelo não é gravado nesse momento: ao abrir o agente depois, o editor mostra os padrões, não o modelo escolhido. Conecte o número e escolha o modelo de novo no <span class="ui">Novo agente</span> se isso acontecer.</p></aside>
+
+<h2 id="cuidados">Cuidados</h2>
+<ul>
+  <li><strong>Só na criação.</strong> A galeria de modelos aparece ao criar. Em um agente que já existe, ajuste o perfil e as instruções diretamente; não há “trocar de modelo”.</li>
+  <li><strong>São só três ramos.</strong> Se o seu negócio é outro, escolha o mais próximo e reescreva as instruções.</li>
+  <li><strong>Perfil não é garantia.</strong> É uma instrução para a IA, que costuma segui-la, mas não é um bloqueio por código. Sempre teste antes de publicar.</li>
+  <li><strong>Publicar coloca no ar.</strong> A versão publicada passa a responder clientes de verdade. Veja <a href="#agentes--publicar">Salvar e publicar</a>.</li>
+</ul>

@@ -1,0 +1,97 @@
+<!--meta {"id":"agente-aprovacao-de-acoes","grupo":"ia","titulo":"Ações que alteram dados, com a sua aprovação","ordem":2.6,"resumo":"O agente pode pedir para criar um pedido ou cadastrar um cliente em outro sistema, mas nada é feito sem uma pessoa aprovar na Central de avisos. Aprovar executa uma única vez.","palavras":["aprovação","aprovar","recusar","altera dados","pedir aprovação","ação externa","central de avisos","expira","expirada","modo assistido","executar","falha incerta","criar pedido","cadastrar cliente"],"onde":"Cadastro: Agente de IA › Ferramentas externas. Decisão: Central de avisos (Agente de IA › Alertas)","quem":"Cadastrar a ferramenta e aprovar ou recusar: Gerente ou acima. Atendente vê o pedido, sem os botões.","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Uma <a href="#agente-ferramenta-webhook">consulta</a> só lê uma informação em outro sistema. Uma <strong>ação que altera dados</strong> faz algo: cria um pedido, cadastra um cliente, muda ou apaga um registro. Se o agente errar, o estrago é real. Por isso o ZapSales tem uma regra de segurança: <strong>por padrão, nada que altera o outro sistema acontece sem que uma pessoa aprove</strong>.</p>
+<aside class="nota info"><strong>Resumo do caminho.</strong><ol><li>O cliente pede algo (“quero 2 camisetas azuis”).</li><li>O agente decide usar a ação “Criar pedido” e preenche os dados.</li><li><strong>Nada é enviado.</strong> Surge um pedido de aprovação na <a href="#alertas">Central de avisos</a>.</li><li>Um gerente <strong>aprova</strong> (a ação é executada uma vez) ou <strong>recusa</strong> (nada acontece).</li><li>O agente fica sabendo do resultado e responde ao cliente de acordo.</li></ol></aside>
+
+<h2 id="cadastrar">Cadastrar uma ação que altera dados</h2>
+<p>É o mesmo cadastro de <span class="ui">Ferramentas externas</span> descrito em <a href="#agente-ferramenta-webhook">Ferramentas externas: o agente consulta outro sistema</a>. A diferença está em dois pontos do formulário:</p>
+<figure class="print">
+  <img src="img/ia-ferramentas-externas-altera-dados.png" alt="Janela Nova ferramenta externa com Altera dados escolhido e o grupo Aprovação antes de executar com a caixa Pedir aprovação marcada e a validade em horas" loading="lazy">
+  <figcaption>O formulário com “Altera dados” e “Pedir aprovação” marcado.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O que a ferramenta faz no outro sistema.</strong> <em>Só consulta</em> (“lê uma informação e devolve ao agente. Não muda nada lá.”) ou <em>Altera dados</em> (“cria, muda ou apaga algo no outro sistema.”).</li>
+  <li><strong>Pedir aprovação.</strong> Caixa de marcar: “o agente só executa depois que uma pessoa aprovar na Central de avisos, uma única vez.” Nasce <strong>marcada</strong> para “Altera dados” e desmarcada para “Só consulta”.</li>
+  <li><strong>Se ninguém decidir, o pedido expira em (horas).</strong> Padrão 24 horas; aceita de 1 a 168. Fora disso: “A validade do pedido é de 1 a 168 horas.”</li>
+</ol>
+<aside class="nota atencao"><strong>Modo Assistido ignora a caixa.</strong><p>Quando o agente está em <strong>Assistido: revisar antes de enviar</strong>, <em>toda</em> ferramenta externa espera aprovação, esteja a caixa marcada ou não. A tela lembra isso no formulário.</p></aside>
+<h3 id="desligar">Desligar a aprovação</h3>
+<p>Você pode desmarcar <span class="ui">Pedir aprovação</span>, mesmo numa ação que altera dados, mas a tela avisa em destaque:</p>
+<aside class="nota perigo"><strong>Sem aprovação, o agente executa sozinho.</strong><p>“Sem aprovação, o agente executa esta ação sozinho assim que decidir usá-la. Se o outro sistema não responder, a ação não é repetida — para nunca ser feita em dobro.” Desligue só para ações que você aceitaria ver feitas por engano, e comece com a aprovação ligada.</p></aside>
+<p>No cartão da lista, os selos mostram a escolha: <em>Altera dados</em> e <em>Pede aprovação</em> ou <em>Executa direto</em>.</p>
+
+<h2 id="pedido">O pedido na Central de avisos</h2>
+<p>Quando o agente decide usar uma ação que pede aprovação, abre-se um aviso na <span class="ui">Central de avisos</span> (menu <span class="ui">Agente de IA › Ver tudo em IA › Alertas</span>). O <strong>sino</strong> no alto da tela mostra o número de avisos abertos. Não há aviso por e-mail ou WhatsApp: quem aprova precisa olhar a Central ou o sino.</p>
+<figure class="print">
+  <img src="img/ia-aprovacao-central.png" alt="Central de avisos com um pedido de aprovação de Criar pedido, mostrando os dados preenchidos pelo agente e os botões Aprovar e executar e Recusar" loading="lazy">
+  <figcaption>Um pedido de aprovação na Central de avisos.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Título.</strong> Por exemplo: “Aprovar «Criar pedido» — produto: camiseta azul (#5572)”. O <code>#</code> com 4 caracteres identifica o pedido.</li>
+  <li><strong>Dados que o agente preencheu.</strong> Campos com cara de segredo (senha, token, chave, CPF, CNPJ, cartão…) aparecem como “•••”, e cada valor é cortado em 80 caracteres.</li>
+  <li><strong>“Nada foi enviado ao outro sistema.”</strong> E até quando vale: “Se ninguém decidir, o pedido expira em …”.</li>
+  <li><strong>Aprovar e executar</strong> e <strong>Recusar.</strong></li>
+  <li><strong>Abertos e Resolvidos.</strong> As abas da Central; o botão “Marcar resolvido” encerra o aviso.</li>
+</ol>
+<p>Se o pedido veio de um agente em modo Assistido, aparece o selo “Rascunho do modo Assistido”.</p>
+
+<h2 id="decidir">Aprovar ou recusar</h2>
+<h3 id="aprovar">Aprovar</h3>
+<ol class="passos">
+  <li>Leia os <strong>dados</strong> do pedido com atenção: é isso que será enviado.</li>
+  <li>Clique em <span class="ui">Aprovar e executar</span>.</li>
+  <li>Na confirmação <strong>Executar esta ação agora?</strong> — “A ação é enviada ao outro sistema uma única vez, com os dados acima. Se o outro sistema não responder, ela não é repetida sozinha.” — clique de novo em <span class="ui">Aprovar e executar</span>.</li>
+</ol>
+<p>O ZapSales chama o outro sistema na hora e mostra o resultado no próprio cartão:</p>
+<table class="tabela">
+  <thead><tr><th>Resultado</th><th>O que a tela diz</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Executada</strong></td><td>“Ação executada no outro sistema.” / “A ação foi executada. O outro sistema respondeu 200.” (com “O que o outro sistema devolveu”)</td><td>Nada. O agente é informado.</td></tr>
+    <tr><td><strong>Não foi feita</strong></td><td>“A ação não foi feita.” (o outro sistema recusou)</td><td>Veja o motivo; corrija a ferramenta ou os dados.</td></tr>
+    <tr><td><strong>Falha incerta</strong></td><td>“Não foi possível confirmar se a ação foi feita no outro sistema. Ela não foi repetida: confira lá antes de refazer.”</td><td><strong>Confira no outro sistema.</strong> Um novo aviso “A ação «X» falhou” explica que ela pode ter sido feita e a resposta se perdeu.</td></tr>
+  </tbody>
+</table>
+<p><strong>Aprovar executa uma única vez</strong>, mesmo que a pessoa clique duas vezes ou que dois gerentes aprovem ao mesmo tempo: quem chegar depois recebe “Este pedido já foi decidido por outra pessoa.”. Uma ação que altera dados <strong>nunca é repetida automaticamente</strong>, justamente para não criar dois pedidos iguais. O número do pedido (<code>delivery_id</code>) é enviado ao outro sistema, que pode usá-lo para reconhecer uma repetição.</p>
+<h3 id="recusar">Recusar</h3>
+<p>Clique em <span class="ui">Recusar</span>. Não há confirmação nem campo de motivo. A tela diz “Pedido recusado. Nada foi enviado ao outro sistema.”.</p>
+<h3 id="expirar">Se ninguém decidir</h3>
+<p>Passado o prazo (24 horas, se você não mudou), o pedido <strong>expira</strong>: “O pedido expirou sem decisão. A ação não foi feita e o agente foi informado.”. Um pedido vencido nunca é executado, mesmo antes de a tela mostrar “Expirada”. O sistema confere os prazos a cada 15 minutos.</p>
+<aside class="nota atencao"><strong>Situações que impedem de aprovar.</strong><ul><li><strong>A ferramenta foi editada depois do pedido</strong> e os dados já não cabem nos campos: “Recuse o pedido.”</li><li><strong>A ferramenta está desativada:</strong> reative-a para aprovar, ou recuse.</li></ul></aside>
+
+<h2 id="cliente">O que o cliente vê enquanto espera</h2>
+<p>O ZapSales <strong>não avisa o cliente automaticamente</strong> quando você aprova, recusa ou o pedido expira. O que existe é uma orientação ao agente, que passa a conhecer o estado do pedido <strong>na próxima mensagem da conversa</strong>:</p>
+<ul>
+  <li><strong>Pendente:</strong> o agente diz que depende de uma confirmação da equipe.</li>
+  <li><strong>Recusada ou expirada:</strong> o agente oferece outro caminho ou chama um atendente.</li>
+  <li><strong>Executada:</strong> só então ele pode confirmar ao cliente que foi feito. Antes disso ele é instruído a <strong>nunca afirmar</strong> que algo foi feito.</li>
+</ul>
+<p>Se o assunto for urgente, avise o cliente você mesmo pela <a href="#inbox">Inbox</a>.</p>
+
+<h2 id="testar">Testar sem fazer</h2>
+<ul>
+  <li>Na aba <a href="#agente-teste-e-correcao">Teste</a> do agente, a ação <strong>não é executada</strong> e não abre pedido. Ela aparece como “seria feita”, com os selos <em>altera dados</em> e <em>pediria aprovação</em>.</li>
+  <li>O botão <span class="ui">Testar de verdade</span> de uma ferramenta que altera dados mostra o aviso em destaque: <strong>“Esta ferramenta ALTERA dados no outro sistema. Chamar agora faz a alteração de verdade, com os dados de exemplo — sem pedir aprovação, porque quem clica aqui é você.”</strong> O botão se chama <span class="ui">Executar de verdade</span>. Use um ambiente de testes do outro sistema, se houver.</li>
+</ul>
+
+<h2 id="quem-pode">Quem pode o quê</h2>
+<table class="tabela">
+  <thead><tr><th>Ação</th><th>Papel mínimo</th></tr></thead>
+  <tbody>
+    <tr><td>Cadastrar a ferramenta e escolher se pede aprovação</td><td>Gerente</td></tr>
+    <tr><td>Ver o pedido na Central e marcar o aviso como resolvido</td><td>Atendente</td></tr>
+    <tr><td>Aprovar ou recusar</td><td>Gerente (atendentes veem “Peça a um gerente para aprovar ou recusar.”)</td></tr>
+  </tbody>
+</table>
+<p>O acesso temporário de suporte da plataforma não pode aprovar.</p>
+
+<h2 id="rastro">Rastro</h2>
+<p>Cada pedido criado, aprovado, recusado, expirado e executado fica na <a href="#auditoria">Auditoria</a>, com quem decidiu, qual ferramenta e um resumo dos dados sem segredos. Chave de assinatura, corpo enviado e resposta nunca são gravados. Hoje esses registros aparecem na tela de Auditoria com o nome técnico da ação (<code>ai.external_tool_request_…</code>). Os dados de pedidos concluídos são apagados após 90 dias.</p>
+
+<h2 id="cuidados">Cuidados</h2>
+<ul>
+  <li><strong>Não existe desfazer.</strong> Uma ação executada só se desfaz no outro sistema.</li>
+  <li>Não há aprovação em lote: cada pedido é decidido individualmente.</li>
+  <li>Se a mesma conversa repetir o mesmo pedido com os mesmos dados em 24 horas, o agente recebe o estado do pedido existente em vez de abrir outro.</li>
+  <li>Um pedido preso em “executando” por mais de 15 minutos vira “falha incerta” e abre um aviso.</li>
+</ul>
