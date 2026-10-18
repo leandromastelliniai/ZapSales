@@ -79,4 +79,20 @@ describe("renderDocumentoPdf", () => {
     expect(texto).not.toContain("Prévia — sem número");
     expect(texto).not.toContain("Proposta 0000");
   });
+
+  // Issue #109: as imagens chegam ao renderizador como data URI (os bytes já
+  // buscados pela rede segura), não como URL. Sem este caso, uma troca que o
+  // `@react-pdf` ignorasse em silêncio — PDF sem foto e sem erro — passaria.
+  it("desenha logo e foto de item recebidos como data URI (PDF maior que o sem imagem)", async () => {
+    const png =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    const sem = await renderDocumentoPdf(BASE);
+    const com = await renderDocumentoPdf({
+      ...BASE,
+      itens: [{ ...BASE.itens[0]!, imagemUrl: png }],
+      marca: { ...BASE.marca, logoUrl: png },
+    });
+    expect(com.subarray(0, 4).toString()).toBe("%PDF");
+    expect(com.byteLength).toBeGreaterThan(sem.byteLength);
+  });
 });

@@ -28,6 +28,29 @@ const mocks: Record<string, any> = vi.hoisted(() => ({
   traduzir: vi.fn((txt: string) => txt),
 }));
 
+// A imagem do PDF é buscada pela rede segura (#109), que o renderizador (mockado
+// aqui) nunca vê. Só o TRANSPORTE é dublê: o `validarUrl` é o real, então file://,
+// loopback, link-local e faixa privada continuam sendo recusados de verdade; o
+// que passa recebe os bytes de um PNG.
+const PNG_DE_TESTE = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+);
+const DATA_URI_DE_TESTE = `data:image/png;base64,${PNG_DE_TESTE.toString("base64")}`;
+vi.mock("@/lib/net/rede-segura", async (importOriginal) => {
+  const original = (await importOriginal()) as typeof import("@/lib/net/rede-segura");
+  return {
+    ...original,
+    buscarSeguro: vi.fn(async (url: string, politica: import("@/lib/net/rede-segura").PoliticaDeDestino) => {
+      original.validarUrl(url, politica);
+      return { status: 200, headers: { "content-type": "image/png" }, corpo: PNG_DE_TESTE, urlFinal: url };
+    }),
+  };
+});
+vi.mock("@/lib/automation/destinos-internos-autorizados", async (importOriginal) => {
+  const original = (await importOriginal()) as Record<string, unknown>;
+  return { ...original, destinosInternosAutorizados: vi.fn(async () => []) };
+});
 vi.mock("@/lib/propostas/porta", () => ({ sePropostasDesligadas: vi.fn(async () => null) }));
 vi.mock("@/lib/auth/require-role", () => ({ requireRole: mocks.requireRole }));
 vi.mock("@/lib/impersonate/support", () => ({ requireSupportWrite: mocks.requireSupportWrite }));
@@ -688,16 +711,16 @@ describe("POST /api/v1/proposals/[id]/send", () => {
     const res = await mundo.POST();
     expect(res.status).toBe(200);
     expect(mocks.renderDocumentoPdf).toHaveBeenCalledWith(
-      expect.objectContaining({ marca: { app_name: "Clínica X", accent_hex: "#111111", logoUrl: "https://logo" } }),
+      expect.objectContaining({ marca: { app_name: "Clínica X", accent_hex: "#111111", logoUrl: DATA_URI_DE_TESTE } }),
     );
   });
 
-  it("item com product_id: PDF recebe a imagem do produto de catálogo", async () => {
+  it("item com product_id: PDF recebe os bytes da imagem do produto de catálogo (data URI, não a URL)", async () => {
     const mundo = montarMundoDeEnvio({ papel: "manager", itemDeCatalogo: true });
     const res = await mundo.POST();
     expect(res.status).toBe(200);
     expect(mocks.renderDocumentoPdf).toHaveBeenCalledWith(
-      expect.objectContaining({ itens: expect.arrayContaining([expect.objectContaining({ imagemUrl: "https://cdn/produto.png" })]) }),
+      expect.objectContaining({ itens: expect.arrayContaining([expect.objectContaining({ imagemUrl: DATA_URI_DE_TESTE })]) }),
     );
   });
 
@@ -717,7 +740,7 @@ describe("POST /api/v1/proposals/[id]/send", () => {
     ["http://10.255.255.1/x.png", "faixa privada 10.x"],
     ["não é url nenhuma", "string inválida"],
   ])(
-    "imagem_url do catálogo é %s (%s): PDF recebe imagemUrl null, nunca a string bruta (achado Importante da revisão C4 — SSRF/leitura local)",
+    "imagem_url do catálogo é %s (%s): PDF recebe imagemUrl null, nunca a string bruta nem uma busca (achado Importante da revisão C4 — SSRF/leitura local)",
     async (urlPerigosa) => {
       const mundo = montarMundoDeEnvio({ papel: "manager", itemDeCatalogo: true, imagemUrlDoCatalogo: urlPerigosa });
       const res = await mundo.POST();
@@ -728,12 +751,12 @@ describe("POST /api/v1/proposals/[id]/send", () => {
     },
   );
 
-  it("imagem_url do catálogo é https pública normal: PDF recebe a URL normalmente", async () => {
+  it("imagem_url do catálogo é https pública normal: PDF recebe os bytes buscados, não a URL", async () => {
     const mundo = montarMundoDeEnvio({ papel: "manager", itemDeCatalogo: true, imagemUrlDoCatalogo: "https://cdn.exemplo.com/produto.png" });
     const res = await mundo.POST();
     expect(res.status).toBe(200);
     expect(mocks.renderDocumentoPdf).toHaveBeenCalledWith(
-      expect.objectContaining({ itens: expect.arrayContaining([expect.objectContaining({ imagemUrl: "https://cdn.exemplo.com/produto.png" })]) }),
+      expect.objectContaining({ itens: expect.arrayContaining([expect.objectContaining({ imagemUrl: DATA_URI_DE_TESTE })]) }),
     );
   });
 

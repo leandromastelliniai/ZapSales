@@ -60,6 +60,7 @@ destinos internos que o dono da **instalação** autoriza
 | Download de extensões | `buscarSeguro` | Origem de catálogo: `julgarLiteralIpv6`; exceção HTTP só no loopback de ensaio. |
 | Ferramentas externas do agente — webhook (#94) e servidor MCP (#96) | `buscarSeguro` | Endereço de **organização**: sem a lista de destinos internos, `permitirHttp` só fora de produção, 3xx não seguido (a credencial/assinatura não vai atrás de um endereço que ninguém cadastrou), prazo total por tentativa e teto de bytes. O cliente MCP é próprio (`lib/ai/ferramentas-externas/mcp/cliente.ts`) **de propósito**: o cliente do SDK usa o `fetch` global, que resolve o nome de novo, segue redirecionamento e lê sem teto. |
 | Banco externo | `lookupJulgado` no socket do `pg` + `validarHostDeBanco` | `politicaDoBanco`: a mesma régua **mais a LAN RFC 1918** (Postgres na rede do dono é caso real). |
+| Imagem de produto e logo do PDF da proposta (#109) | `buscarSeguro`, via `lib/propostas/imagem-para-pdf.ts` | Os **bytes** são buscados aqui e o `@react-pdf` recebe um data URI — ele nunca busca nada. Produto: endereço de **organização** (sem a lista de destinos internos). Logo: o host é o Storage do operador, então vale a lista da **instalação**. `https` (`http` só fora de produção), até 3 saltos revalidados, **5 s** e **2 MiB** no total, só **PNG/JPEG farejados pelos bytes** (o `Content-Type` é de quem escolheu a URL). Qualquer falha vira `null` = "sem imagem"; a proposta sai. |
 | `media_url` (o gateway é quem baixa) | `assertUrlDeMidiaSegura` → `validarUrl` + `resolverEJulgar` | Só **julga**; ver "O que continua de fora". |
 | Provedor de IA personalizado | `motivoDaRecusaDeDestino` (+ lista da instalação) | Só **julga**; ver abaixo. |
 
@@ -84,10 +85,7 @@ IPv4-mapped é recusado sem abrir conexão) e `lib/net/rede-segura/cliente.test.
    `buscarSeguro` com corpo **em fluxo** (a resposta de um modelo é SSE; `buscarSeguro` entrega o
    corpo inteiro) e aceitar `Request`/`FormData` como entrada. É a próxima peça natural deste
    módulo, não uma decisão de deixar aberto.
-2. **Imagem de produto e logo no PDF da proposta**: quem busca é o `@react-pdf` (biblioteca), com
-   só o guarda textual na frente. Fechar exige buscar os bytes com `buscarSeguro` e entregar o
-   `Buffer` ao renderizador.
-3. **`media_url`**: quem baixa é o gateway de mensageria, fora deste processo. Aqui só dá para
+2. **`media_url`**: quem baixa é o gateway de mensageria, fora deste processo. Aqui só dá para
    julgar antes de entregar o endereço.
 
 As funções novas da #86 (treino por site, webhook como ferramenta do agente, MCP externo) **devem**

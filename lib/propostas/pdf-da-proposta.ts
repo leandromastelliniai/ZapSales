@@ -14,10 +14,16 @@
 // que NÃO passa pela RLS.
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { assertSafeOutboundUrl } from "@/lib/automation/outbound-url";
+import {
+  destinosInternosAutorizados,
+  faixasDeclaradas,
+  listaCobreIp,
+} from "@/lib/automation/destinos-internos-autorizados";
 import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
 import { idiomaPeloCliente } from "@/lib/i18n/aviso-no-idioma";
 import { traduzir } from "@/lib/i18n/dicionario";
+import type { PoliticaDeDestino } from "@/lib/net/rede-segura";
+import { buscarImagemParaPdf } from "./imagem-para-pdf";
 import {
   montarDocumentoDaProposta,
   type PropostaParaDocumento,
@@ -56,6 +62,20 @@ export interface OpcoesDoPdfDaProposta {
 
 /** `ok: false` traz o motivo JÁ TRADUZIDO: quem chama só o escreve no 422. */
 export type PdfDaProposta = { ok: true; buffer: Buffer } | { ok: false; motivo: string };
+
+/**
+ * O logo mora no Storage do OPERADOR (`NEXT_PUBLIC_SUPABASE_URL`): quem escolheu
+ * o host foi a instalação, não a organização, então a válvula de destinos
+ * internos dela vale aqui — e só aqui. A imagem de produto é endereço de
+ * organização e passa pela régua sem válvula.
+ */
+async function politicaDoLogo(): Promise<PoliticaDeDestino> {
+  const faixas = faixasDeclaradas(await destinosInternosAutorizados());
+  return {
+    permitirHttp: process.env.NODE_ENV !== "production",
+    ...(faixas.length > 0 ? { ipPermitido: (ip: string) => listaCobreIp(ip, faixas) } : {}),
+  };
+}
 
 interface ItemDaPropostaParaPdf {
   descricao: string;
@@ -127,26 +147,17 @@ export async function montarPdfDaProposta(
       .select("id, imagem_url")
       .eq("organization_id", orgId)
       .in("id", idsDeProduto);
-    // Achado Importante da revisão C4: `imagem_url` é gravável por qualquer
-    // manager+ da organização (rota de produto) e o schema só exige "é uma
-    // URL", sem restringir protocolo/destino — `file://`, IP privado/
-    // link-local e host inalcançável chegavam direto ao `<Image src>` do
-    // react-pdf, que busca no SERVIDOR (leitura de arquivo local do
-    // contêiner, SSRF para a rede interna, ou trava o envio até o timeout).
-    // Mesmo guard textual que `call-webhook.ts` já usa para egress outbound;
-    // falha = trata como "sem imagem" (null), nunca lança nem barra o envio.
-    for (const p of (produtos ?? []) as Array<{ id: string; imagem_url: string | null }>) {
-      if (p.imagem_url === null) {
-        imagensPorProduto.set(p.id, null);
-        continue;
-      }
-      try {
-        assertSafeOutboundUrl(p.imagem_url);
-        imagensPorProduto.set(p.id, p.imagem_url);
-      } catch {
-        imagensPorProduto.set(p.id, null);
-      }
-    }
+    // `imagem_url` é gravável por qualquer manager+ da organização e o schema só
+    // exige "é uma URL" (achado da revisão C4). O `@react-pdf` a buscaria no
+    // SERVIDOR com o `fetch` do Node — DNS resolvido de novo, redirect para onde
+    // for, leitura sem teto — e o guarda textual que havia aqui não via nada
+    // disso. Os bytes vêm da rede segura (#109) e o renderizador só recebe o
+    // resultado. Falha = null ("sem imagem"): nunca lança nem barra o envio.
+    const lidos = (produtos ?? []) as Array<{ id: string; imagem_url: string | null }>;
+    const buscadas = await Promise.all(
+      lidos.map(async (p) => [p.id, p.imagem_url === null ? null : await buscarImagemParaPdf(p.imagem_url)] as const),
+    );
+    for (const [id, imagem] of buscadas) imagensPorProduto.set(id, imagem);
   }
 
   const { data: contato } = await admin
@@ -156,6 +167,7 @@ export async function montarPdfDaProposta(
     .eq("id", proposta.contact_id)
     .maybeSingle();
   const marca = await marcaDaOrganizacaoParaPdf(admin, orgId);
+  const logoDoPdf = marca.logoUrl ? await buscarImagemParaPdf(marca.logoUrl, { politica: await politicaDoLogo() }) : null;
   // O PDF sai no idioma da ORGANIZAÇÃO, e não no de quem apertou o botão: quem
   // o recebe é cliente dela. Lido aqui, e não por quem chama, para o envio e a
   // prévia não poderem divergir — a prévia que mostra outro idioma promete um
@@ -185,7 +197,7 @@ export async function montarPdfDaProposta(
     moeda: proposta.moeda,
     validUntil: proposta.valid_until,
     condicoes: proposta.condicoes,
-    marca: { app_name: marca.appName, accent_hex: marca.accentHex, logoUrl: marca.logoUrl },
+    marca: { app_name: marca.appName, accent_hex: marca.accentHex, logoUrl: logoDoPdf },
     ...(opcoes.previa ? { previa: true } : {}),
     idioma,
   });

@@ -64,6 +64,14 @@
       "dot": "amber"
     },
     {
+      "id": "pdf",
+      "lane": "consumidores",
+      "label": "Imagem de produto e logo do PDF da proposta",
+      "sublabel": "lib/propostas/imagem-para-pdf.ts · os bytes vêm de buscarSeguro (5 s, 2 MiB, PNG/JPEG farejado) e o @react-pdf recebe data URI · falha = sem imagem, a proposta sai",
+      "type": "lib",
+      "dot": "amber"
+    },
+    {
       "id": "destinos",
       "lane": "consumidores",
       "label": "Destinos internos da instalação",
@@ -136,14 +144,6 @@
       "dot": "red"
     },
     {
-      "id": "pdf",
-      "lane": "fora",
-      "label": "Imagem de produto e logo no PDF",
-      "sublabel": "quem busca é o @react-pdf; só o guarda textual na frente",
-      "type": "lib",
-      "dot": "red"
-    },
-    {
       "id": "futuros",
       "lane": "fora",
       "label": "Funções novas da #86",
@@ -172,6 +172,14 @@
       "lane": "prova",
       "label": "download-rebinding.test.ts",
       "sublabel": "o teste de rebinding das extensões segue verde sobre a política única",
+      "type": "tool",
+      "dot": "sky"
+    },
+    {
+      "id": "testePdf",
+      "lane": "prova",
+      "label": "imagem-para-pdf.test.ts + pdf-da-proposta.test.ts",
+      "sublabel": "servidores HTTP reais: nome que resolve para IP interno, redirect para metadata, imagem grande e lenta, HTML com 200 · e a proposta sai sem a imagem",
       "type": "tool",
       "dot": "sky"
     }
@@ -270,8 +278,8 @@
     {
       "id": "e16",
       "from": "pdf",
-      "to": "fachadaUrl",
-      "label": "só o guarda textual"
+      "to": "buscar",
+      "label": "GET dos bytes da imagem"
     },
     {
       "id": "e17",
@@ -302,6 +310,18 @@
       "from": "testeDownload",
       "to": "extensoes",
       "label": "prova"
+    },
+    {
+      "id": "e22",
+      "from": "pdf",
+      "to": "destinos",
+      "label": "só o logo: lista da instalação"
+    },
+    {
+      "id": "e23",
+      "from": "testePdf",
+      "to": "pdf",
+      "label": "prova"
     }
   ],
   "cards": [
@@ -327,7 +347,7 @@
       "id": "card-fora",
       "tone": "red",
       "title": "Não-ligações declaradas",
-      "body": "O SDK de modelos (SSE precisa de corpo em fluxo), a imagem do PDF (busca o @react-pdf) e a media_url (baixa o gateway) julgam pela política mas não têm a conexão presa. Detalhe e plano em docs/specs/rede-segura-unica.md."
+      "body": "O SDK de modelos (SSE precisa de corpo em fluxo) e a media_url (baixa o gateway) julgam pela política mas não têm a conexão presa. A imagem do PDF saiu desta lista na #109: os bytes passam por buscarSeguro. Detalhe e plano em docs/specs/rede-segura-unica.md."
     }
   ]
 }
