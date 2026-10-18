@@ -235,7 +235,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 
 <div class="corpo">
   <nav class="indice" id="indice" aria-label="Índice do manual">
-    <p class="progresso"><b>62</b> de <b>62</b> telas do menu já documentadas</p>
+    <p class="progresso"><b>63</b> de <b>63</b> telas do menu já documentadas</p>
     <details class="grupo" data-grupo="comecando" open>
       <summary>Começando</summary>
       <ul>
@@ -277,6 +277,14 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
       <ul>
         <li><a href="#ia-hub" data-pagina="ia-hub">Ver tudo em IA</a></li>
         <li><a href="#agentes" data-pagina="agentes">Agentes</a></li>
+        <li><a href="#agente-perfil-e-modelos" data-pagina="agente-perfil-e-modelos">Criar um agente pelo perfil e pelos modelos</a></li>
+        <li><a href="#agente-restringir-assuntos" data-pagina="agente-restringir-assuntos">Restringir os assuntos do agente</a></li>
+        <li><a href="#agente-treino-por-site" data-pagina="agente-treino-por-site">Treinar o agente com o seu site</a></li>
+        <li><a href="#agente-teste-e-correcao" data-pagina="agente-teste-e-correcao">Testar o agente em várias trocas e corrigir respostas</a></li>
+        <li><a href="#agente-ferramenta-webhook" data-pagina="agente-ferramenta-webhook">Ferramentas externas: o agente consulta outro sistema (webhook)</a></li>
+        <li><a href="#agente-aprovacao-de-acoes" data-pagina="agente-aprovacao-de-acoes">Ações que alteram dados, com a sua aprovação</a></li>
+        <li><a href="#agente-servidores-mcp" data-pagina="agente-servidores-mcp">Servidores MCP: ferramentas de outros sistemas para o agente</a></li>
+        <li><a href="#agente-resposta-em-audio" data-pagina="agente-resposta-em-audio">Resposta em áudio com a sua própria chave de voz</a></li>
         <li><a href="#followups" data-pagina="followups">Follow-ups</a></li>
         <li><a href="#fluxos-de-atendimento" data-pagina="fluxos-de-atendimento">Fluxos de atendimento</a></li>
         <li><a href="#roteadores" data-pagina="roteadores">Roteadores</a></li>
@@ -2645,6 +2653,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <img src="img/ia-agente-novo.png" alt="Tela Novo agente, o formulário de configuração com o botão Criar agente" loading="lazy">
   <figcaption>A tela “Novo agente”.</figcaption>
 </figure>
+<aside class="nota dica"><strong>Atalhos para criar mais rápido.</strong><p>No alto da tela há o cartão <em>Comece por um modelo</em> (Vendas, Suporte ou Agendamento) e, na coluna da direita, o cartão <em>Como ele se apresenta</em> (perfil guiado). Veja <a href="#agente-perfil-e-modelos">Criar um agente pelo perfil e pelos modelos</a>. Para o agente conversar só sobre certos assuntos, veja <a href="#agente-restringir-assuntos">Restringir os assuntos do agente</a>.</p></aside>
 <ol class="passos">
   <li>Dê um <strong>nome</strong> e escreva as <strong>instruções</strong> (pelo menos uma frase).</li>
   <li>Escolha a <strong>empresa de inteligência artificial</strong>, o <strong>modelo</strong> e a <strong>chave de acesso</strong>.</li>
@@ -2776,20 +2785,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 
 <h2 id="agentes--abas">As outras abas</h2>
 <h3>Teste</h3>
-<figure class="print media">
-  <img src="img/ia-agente-teste.png" alt="Aba Teste do agente, com a versão alvo, o aviso de consumo de crédito e os campos de mensagem" loading="lazy">
-  <figcaption>A aba Teste.</figcaption>
-</figure>
-<ol class="legenda">
-  <li><strong>Versão alvo.</strong> A que será testada: o rascunho vigente, ou, se não houver, a publicada.</li>
-  <li><strong>Aviso.</strong> <em>“Modo teste consome créditos do provider. Nenhuma mensagem é enviada via WhatsApp.”</em></li>
-  <li><strong>Mensagem do cliente.</strong> Escreva o que um cliente diria. Obrigatória.</li>
-  <li><strong>Nome</strong> do cliente fictício (opcional).</li>
-  <li><strong>Telefone</strong> (opcional).</li>
-  <li><strong>Executar teste.</strong> Roda o agente de verdade, em modo de ensaio. Só Administrador.</li>
-  <li><strong>Resultado.</strong> Estado, latência, tokens, custo, cada ferramenta que o agente chamou e a <em>mensagem que seria enviada</em>. A tela avisa se a resposta usa palavras internas do sistema que o cliente não deveria ver.</li>
-</ol>
-<aside class="nota atencao"><strong>O teste gasta crédito de IA de verdade.</strong><p>Ele não manda nada ao WhatsApp nem mexe em contatos, mas chama o provedor de IA com a sua chave. Algumas verificações do envio real não são feitas no teste.</p></aside>
+<p>Converse com o agente como um cliente faria, com <strong>várias mensagens seguidas</strong>, sem enviar nada pelo WhatsApp. O teste usa o rascunho mais recente (ou a versão publicada, se não houver rascunho), mostra custo, tokens e latência de cada resposta e deixa <strong>corrigir uma resposta</strong> que saiu errada. Só Administrador envia mensagens de teste, e o teste <strong>gasta crédito de IA de verdade</strong>. O passo a passo está em <a href="#agente-teste-e-correcao">Testar o agente em várias trocas e corrigir respostas</a>.</p>
 
 <h3>Capacidades</h3>
 <figure class="print">
@@ -2818,7 +2814,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <li><strong>Estado vazio.</strong> “Nenhuma execução ainda.”</li>
 </ol>
 <p>Clicar numa linha abre o painel <em>Execução</em>, com início, fim, tokens, custo, o erro (se houve) e o <strong>trace</strong> passo a passo: cada ferramenta chamada, com argumentos, resultado e erro, e os botões <em>Ver conversa</em> e <em>Ver inbound</em>.</p>
-<aside class="nota atencao"><strong>Esta aba mostra principalmente os seus testes.</strong><p>Hoje ela só recebe as execuções de <em>teste</em> do agente. O registro do atendimento real, com falhas e custos, está em <a href="#execucoes">Execuções</a>, na área de IA.</p></aside>
+<aside class="nota info"><strong>Teste e produção na mesma lista.</strong><p>A coluna <em>Tipo</em> separa as execuções de <em>teste</em> das de <em>produção</em> (atendimento real). Numa execução de atendimento real, a seção “Resposta enviada” traz o botão <span class="ui">Corrigir esta resposta</span> (veja <a href="#agente-teste-e-correcao--corrigir">Corrigir uma resposta</a>). O registro geral de todos os agentes, com falhas e custos, está em <a href="#execucoes">Execuções</a>, na área de IA.</p></aside>
 
 <h3>Histórico</h3>
 <figure class="print media">
@@ -2844,7 +2840,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <ol class="legenda">
   <li><strong>Selo “aplicada”.</strong> Já foi usada.</li>
   <li><strong>Selo “pendente”.</strong> Espera a sua decisão. <strong>Nada se aplica sozinho.</strong></li>
-  <li><strong>Tipo e idade.</strong> <em>Regra de playbook, Caso exemplar, Gatilho de reengajamento</em> ou <em>Memória da organização</em>, e “proposta há…”.</li>
+  <li><strong>Tipo e idade.</strong> <em>Regra de playbook, Caso exemplar, Gatilho de reengajamento, Memória da organização</em> ou <em>Correção de resposta</em> (a que você cria com “Corrigir esta resposta”, veja <a href="#agente-teste-e-correcao--corrigir">aqui</a>), e “proposta há…”.</li>
   <li><strong>O texto da proposta.</strong></li>
   <li><strong>Aplicar como memória da org.</strong> Cria um <a href="#memoria">aprendizado</a> na Memória, que todos os agentes passam a usar.</li>
   <li><strong>Aplicar como versão nova.</strong> Cria uma versão nova do agente (a publicada <em>mais</em> o texto da proposta no fim das instruções) e <strong>publica na hora</strong>.</li>
@@ -2855,6 +2851,855 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <aside class="nota dica"><strong>Teste antes de publicar.</strong><p>Use a aba <em>Teste</em> com as perguntas mais comuns dos seus clientes, e confira se a mensagem que “seria enviada” está do jeito que você quer. Publique depois.</p></aside>
 <aside class="nota dica"><strong>Comece pequeno.</strong><p>Ligue poucos pacotes de ferramentas, marque só os materiais necessários e deixe o <em>modo assistido</em> nos primeiros dias: a IA prepara a resposta e uma pessoa aprova o envio.</p></aside>
 <aside class="nota info"><strong>Existem três horários diferentes.</strong><p>O horário de funcionamento <em>do agente</em> (cartão “Quando ele entra em ação”), o horário de envio dos <em>follow-ups</em> e as janelas de disparo e resposta <em>por número</em> (em Conexões) são independentes. Eles não se substituem.</p></aside>
+  </div>
+</article>
+
+<article class="pagina" id="agente-perfil-e-modelos" data-titulo="Criar um agente pelo perfil e pelos modelos" data-grupo="ia" data-grupo-titulo="Agente de IA" data-resumo="Dois atalhos para criar um agente sem escrever instruções do zero: escolher um modelo pronto (Vendas, Suporte ou Agendamento) e preencher o perfil guiado — quem ele é, tom de voz, objetivo, boas-vindas e idioma." data-palavras="perfil guiado modelo pronto ramo vendas suporte agendamento persona tom de voz boas-vindas idioma temperatura instruções livres criar agente onboarding treinar" hidden>
+  <p class="migalha"><a href="#inicio">Manual</a> › Agente de IA › Criar um agente pelo perfil e pelos modelos</p>
+  <h1>Criar um agente pelo perfil e pelos modelos</h1>
+  <p class="lede">Dois atalhos para criar um agente sem escrever instruções do zero: escolher um modelo pronto (Vendas, Suporte ou Agendamento) e preencher o perfil guiado — quem ele é, tom de voz, objetivo, boas-vindas e idioma.</p>
+  <dl class="ficha"><dt>Onde fica</dt><dd>Agente de IA › Agentes › Novo agente (e, na primeira vez, no passo Treinar dos primeiros passos)</dd><dt>Quem pode usar</dt><dd>Criar, editar e publicar: Administrador. Gerente abre o agente só para leitura.</dd></dl>
+  <div class="conteudo-pagina">
+<h2 id="agente-perfil-e-modelos--visao-geral">Para que serve</h2>
+<p>Criar um <a href="#agentes">agente de IA</a> exige explicar a ele quem é, como fala e o que fazer. Quem nunca fez isso costuma ficar diante de uma caixa de texto vazia. Há dois atalhos, que você pode usar juntos:</p>
+<ul>
+  <li><strong>Modelo pronto:</strong> você escolhe o ramo (<em>Vendas</em>, <em>Suporte</em> ou <em>Agendamento</em>) e o formulário já vem preenchido. Você só ajusta ao seu negócio.</li>
+  <li><strong>Perfil guiado:</strong> um cartão com cinco perguntas simples (quem ele é, tom de voz, objetivo, boas-vindas e idioma). O sistema transforma as respostas em instruções para o agente.</li>
+</ul>
+<p>Nenhum dos dois é obrigatório. Você pode ignorá-los e escrever as instruções à mão, como sempre foi. Agentes que já existiam continuam exatamente como estavam.</p>
+<aside class="nota info"><strong>Antes de começar.</strong><p>Você precisa ser <strong>Administrador</strong>, ter uma <strong>chave de IA</strong> em <a href="#credenciais">Credenciais</a> (ou a chave da instalação) e, para o agente realmente atender, um <strong>número de WhatsApp conectado</strong> em <a href="#conexoes">Conexões</a>. Sem número, o rascunho é salvo, mas não atende ninguém.</p></aside>
+
+<h2 id="agente-perfil-e-modelos--modelos">Começar por um modelo pronto</h2>
+<figure class="print">
+  <img src="img/ia-agente-modelos.png" alt="Tela Novo agente com o cartão Comece por um modelo mostrando os três modelos: Vendas, Suporte e Agendamento" loading="lazy">
+  <figcaption>O cartão “Comece por um modelo”, no alto da tela “Novo agente”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Comece por um modelo.</strong> Só aparece ao <em>criar</em> um agente; ao editar um que já existe, o cartão some.</li>
+  <li><strong>Os três modelos.</strong> Cada cartão traz o nome do ramo e uma frase dizendo para que serve.</li>
+  <li><strong>Aviso “Modelo aplicado”.</strong> Aparece depois que você escolhe e lembra que trocar de modelo substitui o perfil e as instruções que estão abaixo (e também os assuntos e a resposta para o que está fora; o nome só muda se estiver vazio).</li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Modelo</th><th>Para quem</th><th>Tom de voz</th><th>Nome sugerido</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Vendas</strong></td><td>Recebe o interessado, entende o que ele procura e conduz até a compra ou a proposta.</td><td>Descontraído</td><td>Atendente de vendas</td></tr>
+    <tr><td><strong>Suporte</strong></td><td>Resolve dúvidas e problemas de quem já é cliente e chama uma pessoa quando precisa.</td><td>Normal</td><td>Atendente de suporte</td></tr>
+    <tr><td><strong>Agendamento</strong></td><td>Marca, remarca e confirma horários — clínicas, salões, consultórios e serviços.</td><td>Normal</td><td>Atendente de agendamento</td></tr>
+  </tbody>
+</table>
+<h3 id="agente-perfil-e-modelos--o-que-o-modelo-faz">O que acontece quando você escolhe um modelo</h3>
+<ul>
+  <li>O formulário é preenchido com <strong>instruções, quem ele é, tom de voz, objetivo, mensagem de boas-vindas e idioma</strong>. O texto segue o idioma da tela (português, espanhol ou inglês).</li>
+  <li>O <strong>nome</strong> só é sugerido se o campo estiver vazio; se você já digitou um, ele é mantido.</li>
+  <li>O modelo também deixa pronta a lista de <a href="#agente-restringir-assuntos">assuntos permitidos</a> e a resposta para o que estiver fora dela, mas <strong>deixa “Restringir assuntos” desligado</strong>. Ligar é decisão sua.</li>
+  <li>As instruções dos modelos mandam o agente <strong>não inventar preço, prazo, desconto nem estoque</strong> e dizer que vai confirmar com a equipe.</li>
+  <li><strong>Nada é gravado</strong> até você clicar em <span class="ui">Criar agente</span>. Dá para escolher, olhar, mudar de ideia e escolher outro.</li>
+</ul>
+<aside class="nota atencao"><strong>O modelo não conhece o seu negócio.</strong><p>Ele traz um jeito de atender, não os fatos da sua empresa: não escolhe o canal, não escolhe a chave de IA e não inventa preços nem horários. Troque o nome genérico pelo da sua empresa e ensine o que ele precisa saber em <a href="#conhecimento">Conhecimento</a>.</p></aside>
+
+<h2 id="agente-perfil-e-modelos--perfil">O perfil guiado: “Como ele se apresenta”</h2>
+<p>Na coluna da direita do formulário há o cartão <strong>Como ele se apresenta</strong>. Todos os campos são opcionais, e o texto do cartão diz: o que você escrever ali <em>é combinado com as instruções livres</em>, e você pode ver o resultado no fim.</p>
+<figure class="print">
+  <img src="img/ia-agente-perfil-guiado.png" alt="Cartão Como ele se apresenta preenchido, com os campos Quem ele é, Tom de voz, O que ele persegue na conversa, Mensagem de boas-vindas e Idioma das respostas" loading="lazy">
+  <figcaption>O cartão do perfil guiado, preenchido para uma clínica de exemplo.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Quem ele é.</strong> Uma frase que apresenta o personagem, por exemplo <em>“Marina, recepcionista simpática da Clínica Sorriso”</em>. Até 600 caracteres.</li>
+  <li><strong>Tom de voz.</strong> Um agente novo já vem com <em>Normal</em> marcado. Três botões: <em>Formal</em> (correto e cerimonioso, sem gírias), <em>Normal</em> (cordial e direto) e <em>Descontraído</em> (leve e próximo, como conversa entre conhecidos). Clicar de novo no botão marcado desmarca.</li>
+  <li><strong>O que ele persegue na conversa.</strong> O objetivo, por exemplo <em>“Entender o que a pessoa precisa e marcar uma avaliação gratuita”</em>. Até 600 caracteres.</li>
+  <li><strong>Mensagem de boas-vindas.</strong> Até 500 caracteres.</li>
+  <li><strong>Idioma das respostas.</strong> <em>Não definido (segue as instruções)</em>, <em>Português (BR)</em>, <em>Español</em> ou <em>English</em>. Um agente novo já vem com o idioma da sua tela (no print, <em>Português (BR)</em>); os agentes que já existiam continuam em <em>Não definido</em>.</li>
+  <li><strong>Ver como o agente recebe isto.</strong> Bloco que abre e mostra o texto final que o agente lê.</li>
+</ol>
+<p>Cada campo de texto mostra um contador (por exemplo <em>0/600</em>) que fica vermelho quando o limite é passado, e o formulário avisa “Pode ter até 600 caracteres.” até você cortar.</p>
+<aside class="nota atencao"><strong>A boas-vindas é um roteiro, não uma mensagem automática.</strong><p>O sistema <strong>não envia</strong> sozinho a mensagem de boas-vindas. Ela vira uma instrução: o agente <em>abre a conversa com algo nessa linha</em> quando fala com um contato novo e pode ajustar o nome da pessoa. Por isso a frase final pode variar um pouco de uma conversa para outra.</p></aside>
+
+<h3 id="agente-perfil-e-modelos--como-vira-instrucao">Como o perfil vira instruções</h3>
+<p>O agente não lê o cartão; ele lê um <strong>texto</strong>. O sistema monta esse texto com uma seção <em>“Perfil do agente”</em>, que vem <strong>antes</strong> das suas instruções livres. Só entram os campos que você preencheu. Por exemplo, o tom <em>Descontraído</em> vira uma frase como “fale de forma leve e próxima, como numa conversa entre conhecidos, sem perder o respeito”.</p>
+<p>Para conferir, abra <span class="ui">Ver como o agente recebe isto</span>. Sem perfil preenchido, o bloco avisa que o agente lê só as instruções livres, exatamente como escritas. Com perfil, mostra “o perfil acima, depois as instruções livres”. Se você deixar tudo em branco, o agente funciona exatamente como funcionava antes do perfil existir.</p>
+
+<h2 id="agente-perfil-e-modelos--avancado">Instruções livres e temperatura</h2>
+<p>Mais abaixo há o bloco <strong>Avançado: instruções livres e temperatura</strong>. Ele abre sozinho quando o agente não tem perfil e fica fechado quando tem. As <strong>instruções livres</strong> continuam valendo por inteiro: o perfil entra antes delas, e nada do que você escreve ali é trocado. São no mínimo 10 e no máximo 20.000 caracteres.</p>
+<h3 id="agente-perfil-e-modelos--temperatura">Temperatura</h3>
+<p><strong>Temperatura</strong> é um botão de “criatividade” da inteligência artificial. É um número de <strong>0 a 1</strong>:</p>
+<ul>
+  <li><strong>Perto de 0:</strong> respostas mais previsíveis e parecidas entre si — bom para dar preço e prazo, onde variar é arriscado.</li>
+  <li><strong>Perto de 1:</strong> respostas mais variadas e soltas — bom para conversa mais leve, mas com mais chance de fugir do roteiro.</li>
+  <li><strong>Em branco:</strong> o agente usa o padrão do modelo de IA que você escolheu. A própria tela diz: <em>“Se você não entende o parâmetro, deixe em branco.”</em></li>
+</ul>
+<p>O campo se chama <span class="ui">Temperatura (0 a 1)</span> e aceita passos de 0,1. Fora da faixa, o formulário avisa “A temperatura vai de 0 a 1.”. O valor vale para as respostas do agente no WhatsApp e na aba <a href="#agente-teste-e-correcao">Teste</a>, e o que você define no agente tem prioridade sobre o padrão da organização.</p>
+<aside class="nota dica"><strong>Mude uma coisa de cada vez.</strong><p>O manual não tem uma medição que diga qual temperatura é “a melhor”: ela depende do modelo e do seu negócio. Se quiser mexer, altere o valor, publique uma versão e faça perguntas na aba <a href="#agente-teste-e-correcao">Teste</a> antes de deixar no ar.</p></aside>
+
+<h2 id="agente-perfil-e-modelos--criar">Passo a passo</h2>
+<ol class="passos">
+  <li>Abra <span class="ui">Agente de IA › Agentes</span> e clique em <span class="ui">Novo agente</span>.</li>
+  <li>Em <span class="ui">Comece por um modelo</span>, clique em <strong>Vendas</strong>, <strong>Suporte</strong> ou <strong>Agendamento</strong> — ou pule este passo.</li>
+  <li>No cartão <span class="ui">Como ele se apresenta</span>, troque o texto genérico pelo da sua empresa: nome, objetivo e boas-vindas.</li>
+  <li>Escolha o <strong>modelo de IA</strong> e a <strong>chave de acesso</strong>. Sem eles o formulário avisa em vermelho (“Escolha o modelo de inteligência artificial.” e “Escolha a chave de acesso…”).</li>
+  <li>Clique em <span class="ui">Criar agente</span>. O agente é criado como rascunho e abre na página dele.</li>
+  <li>Abra a aba <strong>Teste</strong> e converse com ele.</li>
+  <li>Quando estiver bom, clique em <span class="ui">Publicar</span>. A janela de confirmação resume o que mudou (campos do perfil, assuntos, temperatura). Confirme.</li>
+</ol>
+
+<h2 id="agente-perfil-e-modelos--primeiros-passos">Na primeira vez: o passo “Treinar”</h2>
+<p>Quem está nos primeiros passos do sistema (onboarding) encontra o mesmo atalho no passo <strong>Treinar</strong>, com o título <em>“Treine seu funcionário”</em>. Ele pergunta:</p>
+<ol>
+  <li><strong>Como ele vai se chamar</strong> (padrão: <em>Atendente IA</em>).</li>
+  <li><strong>O ramo do atendimento (opcional):</strong> Vendas, Suporte, Agendamento ou <em>Nenhum — só o jeito de falar</em> (o padrão).</li>
+  <li><strong>O jeito dele falar</strong> (<em>Próximo e caloroso</em>, <em>Objetivo e cordial</em> ou <em>Curto e prático</em>). Esta pergunta some quando você escolhe um ramo, porque o ramo já traz o tom.</li>
+  <li><strong>As regras da casa (opcional).</strong></li>
+</ol>
+<p>Os botões são <span class="ui">Pular</span> e <span class="ui">Criar e continuar</span>. Se você escolheu um ramo, o perfil e as instruções do modelo entram na primeira versão do agente, e ao final delas o sistema acrescenta “O negócio: …” com o nome da empresa e o que ela faz. A restrição de assuntos <strong>nunca</strong> nasce ligada por aqui.</p>
+<aside class="nota atencao"><strong>Sem número conectado, o ramo não é gravado.</strong><p>Nos primeiros passos, se ainda não houver um número de WhatsApp conectado, o agente é criado <em>sem versão</em> e o perfil do modelo não é gravado nesse momento: ao abrir o agente depois, o editor mostra os padrões, não o modelo escolhido. Conecte o número e escolha o modelo de novo no <span class="ui">Novo agente</span> se isso acontecer.</p></aside>
+
+<h2 id="agente-perfil-e-modelos--cuidados">Cuidados</h2>
+<ul>
+  <li><strong>Só na criação.</strong> A galeria de modelos aparece ao criar. Em um agente que já existe, ajuste o perfil e as instruções diretamente; não há “trocar de modelo”.</li>
+  <li><strong>São só três ramos.</strong> Se o seu negócio é outro, escolha o mais próximo e reescreva as instruções.</li>
+  <li><strong>Perfil não é garantia.</strong> É uma instrução para a IA, que costuma segui-la, mas não é um bloqueio por código. Sempre teste antes de publicar.</li>
+  <li><strong>Publicar coloca no ar.</strong> A versão publicada passa a responder clientes de verdade. Veja <a href="#agentes--publicar">Salvar e publicar</a>.</li>
+</ul>
+  </div>
+</article>
+
+<article class="pagina" id="agente-restringir-assuntos" data-titulo="Restringir os assuntos do agente" data-grupo="ia" data-grupo-titulo="Agente de IA" data-resumo="Faça o agente conversar só sobre o que você permitiu e responder uma frase sua para todo o resto — sem impedir o cliente de pedir uma pessoa ou de parar de receber mensagens." data-palavras="restringir assuntos temas assuntos permitidos fora do assunto fora do tema limitar resposta padrão escopo futebol política" hidden>
+  <p class="migalha"><a href="#inicio">Manual</a> › Agente de IA › Restringir os assuntos do agente</p>
+  <h1>Restringir os assuntos do agente</h1>
+  <p class="lede">Faça o agente conversar só sobre o que você permitiu e responder uma frase sua para todo o resto — sem impedir o cliente de pedir uma pessoa ou de parar de receber mensagens.</p>
+  <dl class="ficha"><dt>Onde fica</dt><dd>Agente de IA › Agentes › Novo agente (ou editar) › cartão Como ele se apresenta</dd><dt>Quem pode usar</dt><dd>Ligar, editar e publicar: Administrador. Gerente vê o agente só para leitura.</dd></dl>
+  <div class="conteudo-pagina">
+<h2 id="agente-restringir-assuntos--visao-geral">Para que serve</h2>
+<p>Um agente de IA conversa sobre qualquer coisa, se o cliente puxar o assunto: receita de bolo, jogo de futebol, política. Para um negócio isso é perda de tempo, custo (cada resposta consome crédito da sua conta de IA) e, às vezes, risco. A chave <strong>Restringir assuntos</strong> diz ao agente: <em>“converse somente sobre estes assuntos; sobre qualquer outro, responda esta frase”</em>.</p>
+<aside class="nota info"><strong>Como a tela chama isto.</strong><p>Na tela o interruptor se chama <strong>Restringir assuntos</strong>. Você também pode ouvir falar em “temas” — é a mesma coisa.</p></aside>
+
+<h2 id="agente-restringir-assuntos--configurar">Como configurar</h2>
+<figure class="print">
+  <img src="img/ia-agente-restringir-assuntos.png" alt="Cartão Como ele se apresenta com o interruptor Restringir assuntos ligado, a lista de assuntos permitidos e a resposta para o que está fora" loading="lazy">
+  <figcaption>“Restringir assuntos” ligado, com três assuntos permitidos e a resposta para o resto.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Restringir assuntos.</strong> O interruptor. Desligado, o agente conversa livremente.</li>
+  <li><strong>Assuntos permitidos (um por linha).</strong> Escreva um assunto por linha, por exemplo <em>Horários e endereço</em>, <em>Valores de consulta</em>, <em>Como agendar</em>.</li>
+  <li><strong>Resposta para o que está fora.</strong> A frase que o agente dá quando o cliente foge dos assuntos.</li>
+</ol>
+<ol class="passos">
+  <li>Abra o agente (ou <span class="ui">Novo agente</span>) e vá ao cartão <span class="ui">Como ele se apresenta</span>.</li>
+  <li>Ligue <span class="ui">Restringir assuntos</span>.</li>
+  <li>Em <span class="ui">Assuntos permitidos</span>, escreva um assunto por linha. O contador mostra quantos você usou (<em>n/20</em>).</li>
+  <li>Em <span class="ui">Resposta para o que está fora</span>, escreva o que o agente deve dizer. Exemplo: <em>“Posso ajudar só com horários e valores. Quer falar com uma pessoa?”</em>.</li>
+  <li>Salve o rascunho, teste (veja <a href="#agente-restringir-assuntos--testar">abaixo</a>) e só então publique.</li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Campo</th><th>Limite</th><th>Se passar</th></tr></thead>
+  <tbody>
+    <tr><td>Quantidade de assuntos</td><td>20</td><td>“No máximo 20 assuntos.”</td></tr>
+    <tr><td>Tamanho de cada assunto</td><td>120 caracteres</td><td>“Cada assunto pode ter até 120 caracteres.”</td></tr>
+    <tr><td>Resposta para o que está fora</td><td>500 caracteres</td><td>“Pode ter até 500 caracteres.”</td></tr>
+  </tbody>
+</table>
+<p>Se você deixar a <strong>resposta em branco</strong>, o agente recusa com educação, no tom dele, e lembra sobre o que pode ajudar. Não existe uma frase fixa do sistema: quem escolhe a frase é você (ou o modelo pronto, que já traz uma).</p>
+<aside class="nota atencao"><strong>Ligado com a lista vazia não restringe nada.</strong><p>Se você ligar o interruptor e não escrever nenhum assunto, o agente continua livre — a tela mostra o aviso amarelo “Escreva ao menos um assunto: com a lista vazia, nada é restringido.”.</p></aside>
+
+<h2 id="agente-restringir-assuntos--modelos">Os modelos já trazem sugestões</h2>
+<p>Os <a href="#agente-perfil-e-modelos--modelos">modelos prontos</a> deixam a lista e a resposta preenchidas, mas <strong>não ligam o interruptor</strong>. Por exemplo, o modelo Agendamento sugere os assuntos <em>Marcar, remarcar e cancelar horários</em>, <em>Serviços, duração e valores</em> e <em>Endereço, como chegar e o que levar</em>, e a resposta “Eu cuido da agenda: marcar, remarcar ou cancelar horários e tirar dúvidas sobre os serviços. Para outro assunto, posso chamar alguém da equipe?”. Revise os assuntos para os da sua empresa antes de ligar.</p>
+
+<h2 id="agente-restringir-assuntos--o-que-nunca-e-barrado">O que nunca é “fora do assunto”</h2>
+<p>Mesmo com a restrição ligada, três coisas continuam funcionando:</p>
+<ul>
+  <li>O cliente <strong>pedir para falar com uma pessoa</strong>: a instrução manda o agente encaminhar o pedido (e as palavras de passagem do agente, como “falar com humano”, acionam a passagem pelo sistema).</li>
+  <li>O cliente <strong>pedir para parar de receber mensagens</strong>: o pedido é respeitado (e a pessoa é marcada para não receber mais). Essa detecção é feita pelo sistema, em código, antes de a IA responder.</li>
+  <li><strong>Cumprimentos</strong> (“oi”, “bom dia”): a instrução manda o agente tratá-los normalmente.</li>
+</ul>
+
+<h2 id="agente-restringir-assuntos--testar">Como testar</h2>
+<ol class="passos">
+  <li>Salve o agente e abra a aba <strong>Teste</strong> (ela só liga depois que existe uma versão salva).</li>
+  <li>Digite algo <strong>dentro</strong> do assunto, como “Quero marcar uma consulta amanhã de manhã”. O agente deve responder normalmente.</li>
+  <li>Digite algo <strong>fora</strong>, como “Quem ganhou o jogo de futebol ontem?”. O agente deve dar a sua resposta para o que está fora.</li>
+  <li>Digite “Quero falar com um atendente”. O agente deve chamar uma pessoa, não recusar.</li>
+</ol>
+<p>Compare também com o interruptor <strong>desligado</strong>: o mesmo agente responde livremente à pergunta de futebol. Veja mais sobre a aba em <a href="#agente-teste-e-correcao">Testar e corrigir o agente</a>.</p>
+<aside class="nota atencao"><strong>É uma instrução, não uma trava.</strong><p>A restrição funciona como uma ordem escrita para a inteligência artificial, e os modelos costumam obedecer — mas nenhuma inteligência artificial obedece 100% das vezes. O que o sistema <em>garante por código</em> é só o pedido de parar de receber mensagens e as palavras de passagem para uma pessoa; o resto depende de a IA seguir a instrução. Teste com as perguntas mais prováveis do seu público e releia as conversas reais nos primeiros dias.</p></aside>
+<aside class="nota info"><strong>Teste custa crédito.</strong><p>A aba Teste chama a IA de verdade e consome crédito da sua conta no provedor (a própria tela avisa).</p></aside>
+
+<h2 id="agente-restringir-assuntos--cuidados">Cuidados</h2>
+<ul>
+  <li>Assuntos muito genéricos (“tudo sobre a empresa”) deixam a trava frouxa. Seja específico.</li>
+  <li>A mudança só vale para quem fala com o agente <strong>depois de publicada</strong>. O histórico de versões e a janela de confirmação mostram quando “Restringir assuntos” e “Assuntos permitidos” mudaram.</li>
+  <li>Você pode desligar a qualquer momento e publicar de novo; o agente volta a conversar livremente.</li>
+</ul>
+  </div>
+</article>
+
+<article class="pagina" id="agente-treino-por-site" data-titulo="Treinar o agente com o seu site" data-grupo="ia" data-grupo-titulo="Agente de IA" data-resumo="Cadastre as páginas do seu site (até 20) e o agente aprende o texto delas. A leitura é sempre manual: quando o site mudar, você pede para ler de novo." data-palavras="site treino por site páginas url endereço ler de novo conhecimento material embedding chave de embedding aguardando leitura entrou pela metade não foi lida rastrear crawler" hidden>
+  <p class="migalha"><a href="#inicio">Manual</a> › Agente de IA › Treinar o agente com o seu site</p>
+  <h1>Treinar o agente com o seu site</h1>
+  <p class="lede">Cadastre as páginas do seu site (até 20) e o agente aprende o texto delas. A leitura é sempre manual: quando o site mudar, você pede para ler de novo.</p>
+  <dl class="ficha"><dt>Onde fica</dt><dd>Agente de IA › Conhecimento › Adicionar material › Site</dd><dt>Quem pode usar</dt><dd>Gerente ou acima. O agente só usa o material depois que ele for marcado na tela do agente.</dd></dl>
+  <div class="conteudo-pagina">
+<h2 id="agente-treino-por-site--visao-geral">Para que serve</h2>
+<p>Seu site já responde às perguntas mais comuns: preços, horários, como funciona, política de troca. Em vez de copiar esse texto para o sistema, você informa os <strong>endereços das páginas</strong> e o ZapSales lê o texto principal de cada uma. Depois disso o agente consulta o que aprendeu quando um cliente pergunta. Cada trecho guarda o nome da página de onde veio, para que o agente possa citá-la.</p>
+<p>Este é mais um tipo de material da tela <a href="#conhecimento">Conhecimento</a> (ao lado de perguntas e respostas, documento, conversas anteriores e catálogo).</p>
+<aside class="nota atencao"><strong>O que este recurso NÃO faz.</strong><ul><li><strong>Não percorre o site inteiro.</strong> Ele lê <em>exatamente</em> as páginas que você listar. Não segue links, não procura um mapa do site, não entra em páginas que pedem login.</li><li><strong>Não atualiza sozinho.</strong> A leitura é sempre manual: se você mudou um preço no site, peça para ler de novo.</li><li><strong>Só lê texto.</strong> Não lê PDF nem imagem apontados pela página, e só enxerga o HTML que o site entrega (páginas que só montam o conteúdo depois, por programação no navegador, podem chegar como “sem texto”).</li></ul></aside>
+
+<h2 id="agente-treino-por-site--requisitos">Antes de começar</h2>
+<p>Para aprender, o sistema transforma o texto em números que permitem buscar por sentido (isso se chama <strong>embedding</strong>). Para isso ele precisa de uma <strong>chave de embedding</strong>: uma chave de IA da OpenAI ou OpenRouter (a tela de <a href="#credenciais">Credenciais</a> também aceita a do Google) cadastrada em <span class="ui">Agente de IA › Credenciais</span>. <strong>Sem a chave</strong>, você consegue cadastrar o site, mas nenhuma página é lida: o material fica <em>Esperando a chave</em> e entra sozinho depois que você cadastrar uma (o sistema tenta de novo a cada 60 minutos, e um aviso aparece na <a href="#alertas">Central de avisos</a>).</p>
+
+<h2 id="agente-treino-por-site--cadastrar">Cadastrar um site</h2>
+<figure class="print">
+  <img src="img/ia-conhecimento-site-novo.png" alt="Janela Ensinar algo novo ao agente com o tipo Site escolhido, o nome do material e a caixa de endereços" loading="lazy">
+  <figcaption>A janela “Ensinar algo novo ao agente” com o tipo <em>Site</em>.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Site.</strong> O cartão do tipo: “Páginas do seu site (até 20). O agente lê o texto principal de cada uma e aprende com ele. Você refaz a leitura quando o site mudar.”</li>
+  <li><strong>Nome do material.</strong> Um apelido seu, por exemplo <em>Site da loja</em> (mínimo de 2 caracteres).</li>
+  <li><strong>Endereços das páginas (um por linha).</strong> Só endereços que começam com <code>https://</code>, até 20 páginas.</li>
+  <li><strong>Adicionar ao acervo.</strong> Grava o material e começa a ler.</li>
+</ol>
+<ol class="passos">
+  <li>Abra <span class="ui">Agente de IA › Conhecimento</span> (se não achar no menu lateral, use <span class="ui">Ver tudo em IA</span> ou a busca).</li>
+  <li>Clique em <span class="ui">Adicionar material</span>.</li>
+  <li>Na pergunta “Que tipo de material é”, escolha <span class="ui">Site</span>.</li>
+  <li>Dê um nome e cole os endereços, <strong>um por linha</strong>.</li>
+  <li>Clique em <span class="ui">Adicionar ao acervo</span>.</li>
+</ol>
+<p>Com a chave cadastrada, a tela avisa “Site cadastrado. Estou lendo as páginas — em instantes o agente já sabe.”. Sem ela: “Material cadastrado. Ele fica esperando uma chave de embedding para ser preparado.”</p>
+<h3 id="agente-treino-por-site--enderecos">O que é aceito como endereço</h3>
+<table class="tabela">
+  <thead><tr><th>Regra</th><th>O que a tela diz quando você erra</th></tr></thead>
+  <tbody>
+    <tr><td>Só <code>https://</code></td><td>“Só endereços https:// são aceitos: …”</td></tr>
+    <tr><td>Sem usuário e senha no endereço</td><td>“Endereço com usuário e senha não é aceito: …”</td></tr>
+    <tr><td>Endereço público — nada de rede interna, privada ou local</td><td>“Endereço interno, privado ou local não é aceito: …”</td></tr>
+    <tr><td>Pelo menos um endereço</td><td>“Informe o endereço de ao menos uma página.”</td></tr>
+    <tr><td>No máximo 20 páginas</td><td>“No máximo 20 páginas por fonte.”</td></tr>
+  </tbody>
+</table>
+<aside class="nota info"><strong>Por que endereço interno é recusado.</strong><p>O sistema busca a página <em>de dentro do servidor</em>. Se aceitasse qualquer endereço, alguém poderia usar o recurso para espiar serviços internos da empresa (como um painel de administração). Por isso só entram endereços públicos. Se um nome público apontar para dentro, a recusa vem na hora da leitura: “Este endereço aponta para uma rede interna, privada ou local — por segurança, o sistema não lê esse tipo de endereço.”</p></aside>
+<p>Endereços repetidos e o que vem depois de <code>#</code> são unificados em um só.</p>
+
+<h2 id="agente-treino-por-site--paginas">Acompanhar a leitura</h2>
+<p>O cartão do material mostra um globo e o tipo <em>Site</em>, o <strong>estado do material</strong> e quatro botões: <span class="ui">Ler o site de novo</span> (enquanto roda: “Lendo…”), <span class="ui">Ver as páginas</span>, <span class="ui">Ver o que ele aprendeu</span> (só quando já existem trechos) e <span class="ui">Arquivar</span>.</p>
+<figure class="print">
+  <img src="img/ia-conhecimento-site-paginas.png" alt="Janela Páginas do site com três páginas: uma lida, uma que não foi lida com o motivo e uma aguardando leitura" loading="lazy">
+  <figcaption>“Ver as páginas”: o estado de cada endereço e o motivo quando a leitura falha.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo de página lida.</strong> Ao lado vem o título da página (no exemplo, <em>Example Domain</em>) e o endereço. Os selos possíveis são <em>Aguardando leitura</em>, <em>Lida</em> e <em>Não foi lida</em>.</li>
+  <li><strong>Linha de detalhe.</strong> “Lida em (data e hora) · N trechos · Mudou em (data)”, ou “Ainda não lida”. Trecho é um pedaço de texto que o agente consegue consultar.</li>
+  <li><strong>Selo “Não foi lida”.</strong> Logo abaixo, em vermelho, vem o motivo: aqui “O site respondeu 404.” (a página não existe).</li>
+  <li><strong>Endereços das páginas.</strong> A lista editável. O botão <span class="ui">Salvar endereços</span> só liga depois que você muda algo.</li>
+  <li><strong>Ler o site de novo.</strong> Fica desligado enquanto houver edição não salva.</li>
+</ol>
+<h3 id="agente-treino-por-site--estados">O estado do material</h3>
+<table class="tabela">
+  <thead><tr><th>Selo</th><th>O que significa</th></tr></thead>
+  <tbody>
+    <tr><td><strong>O agente já sabe</strong></td><td>Todas as páginas foram lidas.</td></tr>
+    <tr><td><strong>Preparando…</strong></td><td>A leitura está em andamento.</td></tr>
+    <tr><td><strong>Entrou pela metade</strong></td><td>Algumas páginas falharam, as outras entraram. O agente já usa o que foi lido. O cartão diz “N de M páginas do site não foram lidas — veja o motivo de cada uma em ‘Ver as páginas’.”</td></tr>
+    <tr><td><strong>Não entrou</strong></td><td>Nenhuma página pôde ser lida (“Nenhuma página do site pôde ser lida.”).</td></tr>
+    <tr><td><strong>Esperando a chave</strong></td><td>Falta a chave de embedding. Cadastre-a em Credenciais.</td></tr>
+    <tr><td><strong>Arquivado</strong></td><td>Você arquivou; o agente não usa.</td></tr>
+  </tbody>
+</table>
+<p>No alto da tela, o painel <strong>Estado da base de conhecimento</strong> conta os materiais “pela metade” à parte dos com erro, e só mostra “tudo pronto” quando nenhum estiver incompleto.</p>
+<h3 id="agente-treino-por-site--motivos">Quando uma página “Não foi lida”</h3>
+<p>O motivo aparece em <span class="ui">Ver as páginas</span>. Os mais comuns:</p>
+<table class="tabela">
+  <thead><tr><th>Mensagem</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td>O site respondeu 404 (ou outro código)</td><td>A página não existe mais ou o endereço foi digitado errado. Corrija o endereço.</td></tr>
+    <tr><td>O site demorou demais para responder</td><td>O limite é de 15 segundos por página. Tente de novo mais tarde.</td></tr>
+    <tr><td>A página é grande demais para o agente ler</td><td>O limite é de 2 MB por página. Use uma página mais enxuta.</td></tr>
+    <tr><td>A página não é um texto que o agente consiga ler (PDF, imagem ou outro formato)</td><td>Use a página HTML equivalente ou cadastre o PDF como <em>Documento</em>.</td></tr>
+    <tr><td>A página não tem texto para o agente ler (só menu, imagem ou script)</td><td>O sistema só lê o texto principal da página (ignora menu, rodapé e o que a página esconde). Escolha uma página com texto.</td></tr>
+    <tr><td>Não consegui conectar ao site / redireciona vezes demais</td><td>Confira se o endereço abre no navegador.</td></tr>
+  </tbody>
+</table>
+<aside class="nota dica"><strong>Falhou depois de já ter dado certo?</strong><p>Se uma página já lida passa a falhar numa releitura, o agente <strong>continua com o que leu antes</strong>, em vez de esquecer.</p></aside>
+
+<h2 id="agente-treino-por-site--atualizar">Quando o site mudar</h2>
+<ol class="passos">
+  <li>Abra o cartão do site em <span class="ui">Conhecimento</span>.</li>
+  <li>Clique em <span class="ui">Ler o site de novo</span>.</li>
+</ol>
+<p>O sistema baixa as páginas outra vez, mas <strong>só gasta com o que mudou</strong>: se o texto de uma página é idêntico ao da última leitura, o aprendizado anterior é reaproveitado, sem custo novo de embedding. Por isso reler um site que não mudou é seguro. O aviso na tela (“Vou preparar este material de novo — leva alguns instantes.”) aparece nos dois casos e não diz se algo mudou; para saber, confira a data de <em>Mudou em</em> em <span class="ui">Ver as páginas</span>.</p>
+<p>Para <strong>incluir ou tirar páginas</strong>, edite a lista em <span class="ui">Ver as páginas</span> e clique em <span class="ui">Salvar endereços</span>. O sistema só relê se a lista realmente mudou (página nova ou removida); salvar a mesma lista, ou só mudar a ordem, não lê nada: a tela avisa “A lista é a mesma — nada foi lido de novo.”.</p>
+
+<h2 id="agente-treino-por-site--usar">Fazer o agente usar o site</h2>
+<p>Cadastrar o material não basta: cada agente precisa ter o material <strong>marcado</strong> nos conhecimentos dele (como nos demais tipos). O cartão do material mostra “Consultado por” e quais agentes o usam, ou “nenhum assistente ainda”. Veja como em <a href="#agentes--editor">O editor do agente</a>.</p>
+
+<h2 id="agente-treino-por-site--cuidados">Cuidados</h2>
+<ul>
+  <li><strong>O texto do site é só informação.</strong> Se uma página tiver uma frase como “ignore suas regras”, o agente a trata como texto comum do site, não como ordem. Mesmo assim, só cadastre páginas <strong>suas</strong> ou de fontes em que você confia.</li>
+  <li><strong>O que está no site, o agente pode repetir ao cliente.</strong> Não cadastre páginas com preço desatualizado ou informação interna.</li>
+  <li>Confira, em <span class="ui">Ver o que ele aprendeu</span>, se os trechos fazem sentido.</li>
+  <li>Cada leitura baixa até 20 páginas de uma vez; o sistema busca no máximo 4 por vez, com 15 segundos de limite por página.</li>
+</ul>
+  </div>
+</article>
+
+<article class="pagina" id="agente-teste-e-correcao" data-titulo="Testar o agente em várias trocas e corrigir respostas" data-grupo="ia" data-grupo-titulo="Agente de IA" data-resumo="Converse com o agente como um cliente faria, com várias mensagens seguidas, sem enviar nada a ninguém. Se uma resposta saiu errada, escreva o que ele deveria ter dito: vira uma proposta que só muda o agente quando você aprovar." data-palavras="teste testar agente várias trocas conversa de teste reiniciar conversa corrigir resposta correção proposta aprovar custo do teste tokens latência aba teste simulação" hidden>
+  <p class="migalha"><a href="#inicio">Manual</a> › Agente de IA › Testar o agente em várias trocas e corrigir respostas</p>
+  <h1>Testar o agente em várias trocas e corrigir respostas</h1>
+  <p class="lede">Converse com o agente como um cliente faria, com várias mensagens seguidas, sem enviar nada a ninguém. Se uma resposta saiu errada, escreva o que ele deveria ter dito: vira uma proposta que só muda o agente quando você aprovar.</p>
+  <dl class="ficha"><dt>Onde fica</dt><dd>Agente de IA › Agentes › (abrir o agente) › aba Teste; propostas na aba Propostas</dd><dt>Quem pode usar</dt><dd>Testar e aplicar a correção: Administrador. Gerente abre a aba, mas não envia teste nem vê o botão de corrigir.</dd></dl>
+  <div class="conteudo-pagina">
+<h2 id="agente-teste-e-correcao--visao-geral">Para que serve</h2>
+<p>Antes de colocar um agente para falar com clientes, você precisa ver como ele reage. A aba <strong>Teste</strong> deixa você <strong>conversar com o agente como um cliente faria</strong>, com várias mensagens seguidas — cada troca lembra das anteriores. E, quando uma resposta não agrada, você pode <strong>corrigi-la</strong> ali mesmo.</p>
+<aside class="nota info"><strong>O teste é seguro para os seus clientes.</strong><p>Nenhuma mensagem é enviada pelo WhatsApp e nenhum contato, negócio ou funil é criado ou alterado. O cliente é simulado. Mas o teste <strong>usa a inteligência artificial de verdade</strong> e <strong>consome crédito</strong> da sua conta no provedor — a própria tela avisa (“Modo teste consome créditos do provider”) e o gasto entra no orçamento de IA da organização.</p></aside>
+
+<h2 id="agente-teste-e-correcao--testar">Conversar com o agente</h2>
+<figure class="print">
+  <img src="img/ia-agente-teste-conversa.png" alt="Aba Teste com uma conversa de três trocas, mostrando custo, tokens e latência de cada resposta, e o botão Reiniciar conversa" loading="lazy">
+  <figcaption>A aba Teste com uma conversa de várias trocas.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>A versão testada.</strong> Um selo mostra “v(número) (rascunho)” ou “(publicada)”. O teste usa o <em>rascunho</em> mais recente; se não houver, a versão publicada. Assim você testa antes de publicar.</li>
+  <li><strong>Reiniciar conversa.</strong> Esvazia a conversa na tela e recomeça do zero.</li>
+  <li><strong>A conversa.</strong> Suas mensagens e as respostas do agente, em ordem.</li>
+  <li><strong>Custo, tokens e latência</strong> de cada resposta.</li>
+  <li><strong>Ferramentas que o agente chamou.</strong></li>
+  <li><strong>Corrigir esta resposta.</strong> Veja <a href="#agente-teste-e-correcao--corrigir">abaixo</a>.</li>
+  <li><strong>Mensagem do cliente.</strong> Onde você escreve. <kbd>Enter</kbd> envia; <kbd>Shift</kbd>+<kbd>Enter</kbd> quebra a linha.</li>
+</ol>
+<ol class="passos">
+  <li>Abra <span class="ui">Agente de IA › Agentes</span> e entre no agente. A aba <strong>Teste</strong> só liga depois que existe ao menos uma versão salva.</li>
+  <li>Escreva a primeira mensagem, por exemplo <em>“Oi, quanto custa a consulta?”</em>, e clique em <span class="ui">Enviar</span> (ou aperte <kbd>Enter</kbd>). Enquanto ele pensa, aparece “O agente está respondendo…”.</li>
+  <li>Leia a resposta e escreva a próxima mensagem, como o cliente escreveria. O agente lembra das trocas anteriores.</li>
+  <li>Se quiser testar o cliente com outro nome ou telefone, preencha <span class="ui">Nome (opcional)</span> e <span class="ui">Telefone (opcional)</span> antes da primeira troca; depois dela ficam travados.</li>
+  <li>Para começar outra conversa do zero, clique em <span class="ui">Reiniciar conversa</span>.</li>
+</ol>
+<h3 id="agente-teste-e-correcao--o-que-aparece">O que aparece sob cada resposta</h3>
+<ul>
+  <li><strong>Tokens in/out:</strong> quanto texto entrou e saiu. <em>Token</em> é a unidade em que a IA conta texto: grosso modo, pedaços de palavra. A cobrança do provedor é por token.</li>
+  <li><strong>Custo:</strong> em dólar (<em>US$</em>), com quatro casas. Soma <strong>todas</strong> as chamadas que aquele turno fez à IA (a resposta principal e também as conferências), e é o mesmo valor que entra no seu orçamento de IA. A tela mostra o custo <em>de cada resposta</em>, não um total da conversa; como cada troca reenvia a conversa inteira à IA, o custo tende a crescer conforme a conversa fica longa.</li>
+  <li><strong>Latência:</strong> quanto tempo a resposta levou, em milissegundos.</li>
+  <li><strong>Ferramentas que o agente chamou:</strong> o que ele quis fazer além de responder. <strong>No teste, ações que alteram algo não são executadas</strong>, só mostradas; consultas a sistemas externos aparecem como “seria feita”, com os selos <em>altera dados</em> e <em>pediria aprovação</em> quando for o caso. Veja <a href="#agente-ferramenta-webhook">Ferramentas externas</a>.</li>
+  <li><strong>Verificações da resposta</strong> e um resumo “O teste não consegue verificar tudo (N verificações ficam de fora)”. Algumas conferências só acontecem no envio real; elas estão descritas na aba “Confere antes de enviar” do agente.</li>
+</ul>
+<p>Se o agente decidir não responder naquela troca, a tela diz “O agente não gerou uma resposta para enviar nesta troca.”.</p>
+<aside class="nota atencao"><strong>Limites do teste.</strong><ul><li>Cerca de <strong>20 trocas</strong> por conversa; a tela não avisa antes de chegar ao limite — se precisar de mais, use <span class="ui">Reiniciar conversa</span>.</li><li>Cada mensagem tem até <strong>4.000 caracteres</strong>.</li><li>A conversa de teste <strong>não é guardada</strong>: se você recarregar a página ou trocar de versão, ela some.</li><li>Se uma troca falhar (por exemplo, por erro de chave), ela não entra na conversa e o texto continua na caixa para você tentar de novo. A mensagem típica é “Não foi possível executar o teste. Confira modelo, credencial e materiais do agente.”.</li><li>Se o orçamento de IA do mês estiver no modo <em>parar ao chegar no limite</em> e já tiver estourado, o teste é recusado. Ajuste em <a href="#uso-ia">Uso de IA</a>.</li></ul></aside>
+
+<h2 id="agente-teste-e-correcao--corrigir">Corrigir uma resposta</h2>
+<p>Quando o agente respondeu de um jeito que você não quer, escreva o que ele deveria ter dito. O sistema não muda o agente na hora: ele cria uma <strong>proposta</strong> para você aprovar.</p>
+<figure class="print media">
+  <img src="img/ia-agente-corrigir.png" alt="Caixa Corrigir esta resposta aberta sob uma resposta do agente, com a pergunta O que o agente deveria ter dito?" loading="lazy">
+  <figcaption>“Corrigir esta resposta”, aberto sob a resposta do agente.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O que o agente deveria ter dito?</strong> A pergunta da caixa.</li>
+  <li><strong>A resposta que você esperava.</strong> Até 1.500 caracteres.</li>
+  <li><strong>O aviso.</strong> “Isto cria uma proposta na aba Propostas. O agente só muda depois que você aprovar — nada é alterado agora.”</li>
+  <li><strong>Enviar como proposta.</strong> Ao lado fica o botão <em>Cancelar</em>.</li>
+</ol>
+<ol class="passos">
+  <li>Sob a resposta errada, clique em <span class="ui">Corrigir esta resposta</span>.</li>
+  <li>Em <strong>O que o agente deveria ter dito?</strong>, escreva a resposta que você esperava (até 1.500 caracteres).</li>
+  <li>Clique em <span class="ui">Enviar como proposta</span>. A tela confirma: “Proposta criada. Ela aparece na aba Propostas e só muda o agente depois que você aprovar.”</li>
+  <li>Abra a aba <strong>Propostas</strong>. O item é do tipo <em>Correção de resposta</em>, com o selo <em>pendente</em>.</li>
+  <li>Expanda <span class="ui">Ver a conversa de origem</span> se quiser rever o que foi dito, e clique em <span class="ui">Aplicar como versão nova</span> para aprovar.</li>
+</ol>
+<figure class="print">
+  <img src="img/ia-agente-proposta-correcao.png" alt="Aba Propostas com uma proposta pendente do tipo Correção de resposta, a frase que entrará nas instruções e o botão Aplicar como versão nova" loading="lazy">
+  <figcaption>A proposta criada, esperando a sua decisão na aba Propostas.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo “pendente”.</strong> Espera a sua decisão.</li>
+  <li><strong>Tipo e idade.</strong> “Correção de resposta · proposta em 33 segundos”.</li>
+  <li><strong>A frase que o sistema montou</strong> a partir da fala do cliente, da resposta do agente e da sua correção.</li>
+  <li><strong>O aviso.</strong> “Se você aplicar, esta frase entra no fim das instruções do agente, numa versão nova. Enquanto não aplicar, o agente continua como está.”</li>
+  <li><strong>Ver a conversa de origem.</strong> Abre a conversa do teste que gerou a proposta.</li>
+  <li><strong>Aplicar como versão nova.</strong> Só Administrador. Publica na hora.</li>
+</ol>
+<p>Também dá para corrigir uma resposta de <strong>atendimento real</strong>: na aba <strong>Execuções</strong>, abra a execução e, na seção “Resposta enviada”, use o mesmo botão. Nesse caso a conversa de origem aparece com os dados pessoais mascarados. Execuções que não terminaram numa mensagem enviada dizem “Esta execução não terminou numa mensagem enviada pelo agente, então não há resposta para corrigir.”.</p>
+<h3 id="agente-teste-e-correcao--o-que-acontece">O que a correção faz de verdade</h3>
+<ul>
+  <li>Ao <strong>aplicar</strong>, o sistema copia a versão <em>publicada</em> do agente, acrescenta no fim das instruções uma seção <strong>“Correções aprovadas pela equipe”</strong> com uma frase do tipo <em>“Se o cliente disser algo como … , não responda … ; responda no sentido de: …”</em>, cria uma <strong>versão nova</strong> e a <strong>publica na hora</strong>.</li>
+  <li>Enquanto você não aplicar, <strong>nada muda</strong>: “o agente continua como está”.</li>
+  <li>A correção é <strong>uma linha nas instruções</strong>. Ela não vira conhecimento (não entra em <a href="#conhecimento">Conhecimento</a>) nem “caso exemplar”.</li>
+  <li>Cada proposta pertence a um agente. Para aplicar, o agente precisa ter uma versão publicada (“O agente precisa de uma versão publicada para receber a proposta.”). Um clique duplo cria uma proposta só.</li>
+  <li>A aplicação aparece em <a href="#auditoria">Auditoria</a>, e a aba <strong>Execuções</strong> marca cada execução como <em>teste</em> ou <em>produção</em>.</li>
+</ul>
+<aside class="nota perigo"><strong>Aplicar publica na hora.</strong><p>“Aplicar como versão nova” coloca a nova versão <strong>no ar</strong>, e ela passa a responder clientes de verdade. Confira a frase antes de aprovar e teste de novo depois. Para desfazer, reverta para a versão anterior (veja <a href="#agentes--publicar">Salvar e publicar</a>).</p></aside>
+<aside class="nota atencao"><strong>Escreva a resposta pensando em qualquer cliente.</strong><p>A frase entra nas instruções de todas as conversas do agente. Se você escrever “diga que o preço do João é R$ 80”, o agente passará a aplicar isso a todos. O que você escreve na correção <strong>não é mascarado</strong>; só a conversa de origem das execuções reais é.</p></aside>
+
+<h2 id="agente-teste-e-correcao--quem">Quem pode o quê</h2>
+<table class="tabela">
+  <thead><tr><th>Ação</th><th>Papel mínimo</th></tr></thead>
+  <tbody>
+    <tr><td>Ver a aba Teste</td><td>Gerente (somente leitura)</td></tr>
+    <tr><td>Enviar mensagens de teste</td><td>Administrador</td></tr>
+    <tr><td>Corrigir uma resposta (botão na tela)</td><td>Administrador</td></tr>
+    <tr><td>Aplicar a proposta como versão nova</td><td>Administrador</td></tr>
+  </tbody>
+</table>
+
+<h2 id="agente-teste-e-correcao--cuidados">Cuidados</h2>
+<ul>
+  <li>Teste as situações difíceis: cliente bravo, pergunta fora do assunto, pedido de desconto, pedido para falar com uma pessoa.</li>
+  <li>Teste <strong>antes</strong> de publicar e <strong>de novo</strong> depois de qualquer mudança (perfil, assuntos, conhecimento, correção).</li>
+  <li>O teste não prova tudo: algumas conferências do envio real ficam de fora, e a IA pode responder diferente da próxima vez. Releia conversas reais nos primeiros dias, em <a href="#execucoes">Execuções</a>.</li>
+</ul>
+  </div>
+</article>
+
+<article class="pagina" id="agente-ferramenta-webhook" data-titulo="Ferramentas externas: o agente consulta outro sistema (webhook)" data-grupo="ia" data-grupo-titulo="Agente de IA" data-resumo="Cadastre um endereço na internet (um webhook) para o agente consultar estoque, preço, pedido ou agenda de outro sistema durante a conversa, e use a resposta para atender melhor." data-palavras="webhook ferramentas externas ferramenta externa consulta estoque erp make n8n integração assinatura chave de assinatura whsec testar de verdade endereço https sistema externo" hidden>
+  <p class="migalha"><a href="#inicio">Manual</a> › Agente de IA › Ferramentas externas: o agente consulta outro sistema (webhook)</p>
+  <h1>Ferramentas externas: o agente consulta outro sistema (webhook)</h1>
+  <p class="lede">Cadastre um endereço na internet (um webhook) para o agente consultar estoque, preço, pedido ou agenda de outro sistema durante a conversa, e use a resposta para atender melhor.</p>
+  <dl class="ficha"><dt>Onde fica</dt><dd>Agente de IA › Ver tudo em IA › Ferramentas externas (também pela busca ⌘K); depois, na tela de cada agente, o grupo Ferramentas externas</dd><dt>Quem pode usar</dt><dd>Gerente ou acima, para ver, cadastrar, editar, testar, gerar nova chave e apagar.</dd><dt>Endereço</dt><dd><code>/app/ai/external-tools</code></dd></dl>
+  <div class="conteudo-pagina">
+<h2 id="agente-ferramenta-webhook--visao-geral">Para que serve</h2>
+<p>Muitas respostas que o cliente espera estão em <strong>outro sistema</strong> que a sua empresa já usa: “tem a camiseta azul no estoque?”, “em que fase está o meu pedido?”, “qual o preço atualizado?”. Uma <strong>ferramenta externa</strong> deixa o agente de IA ir buscar essa informação <strong>durante a conversa</strong> e responder com ela, em vez de adivinhar ou dizer “vou verificar”.</p>
+<aside class="nota info"><strong>O que é um webhook, em linguagem simples.</strong><p>Webhook é um <strong>endereço na internet que recebe um aviso</strong>. É como a caixa de correio de um sistema: o ZapSales entrega ali um bilhete (“quero consultar o estoque da camiseta azul”) e o outro sistema devolve uma resposta. Quem monta esse endereço do outro lado é a pessoa ou a ferramenta que cuida do seu sistema (um programador, ou um automatizador como o Make e o n8n, que oferecem um endereço pronto para isso).</p></aside>
+<p>Esta página trata das <strong>consultas</strong> (ferramentas que só leem). Para ferramentas que <em>alteram</em> algo no outro sistema — criar um pedido, cadastrar um cliente —, veja <a href="#agente-aprovacao-de-acoes">Ações que alteram dados, com aprovação</a>. A tela de cadastro é a mesma.</p>
+<aside class="nota atencao"><strong>Não confunda com “Webhooks” em Canais.</strong><p>O menu <a href="#webhooks">Webhooks</a> em Canais é outra coisa: serve para o ZapSales <em>avisar</em> seus sistemas de que algo aconteceu. Aqui é o contrário: o <em>agente</em> pergunta ao seu sistema.</p></aside>
+
+<h2 id="agente-ferramenta-webhook--onde">Onde fica</h2>
+<p>Abra <span class="ui">Agente de IA › Ver tudo em IA</span>, na seção <em>Montar o agente</em>, e clique em <span class="ui">Ferramentas externas</span> (ou digite “webhook” na busca <kbd>⌘K</kbd>). A tela tem duas abas: <strong>Webhooks</strong> (esta página) e <strong>Servidores MCP</strong> (veja <a href="#agente-servidores-mcp">Servidores MCP</a>).</p>
+<figure class="print">
+  <img src="img/ia-ferramentas-externas-lista.png" alt="Tela Ferramentas externas com a aba Webhooks e uma ferramenta cadastrada, mostrando selos, interruptor e botões" loading="lazy">
+  <figcaption>A lista de ferramentas externas, com uma consulta cadastrada.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Abas.</strong> <em>Webhooks</em> e <em>Servidores MCP</em>.</li>
+  <li><strong>Nova ferramenta.</strong></li>
+  <li><strong>Selos.</strong> O efeito (<em>Só consulta</em> ou <em>Altera dados</em>), se <em>Pede aprovação</em> ou <em>Executa direto</em>, e <em>Desativada</em> quando estiver desligada.</li>
+  <li><strong>Interruptor Ativa.</strong> Desligado, nenhum agente usa a ferramenta.</li>
+  <li><strong>Testar de verdade, Editar, Gerar nova chave e Apagar.</strong></li>
+</ol>
+<p>Sem nenhuma ferramenta, a tela mostra “Nenhuma ferramenta cadastrada ainda.”.</p>
+
+<h2 id="agente-ferramenta-webhook--cadastrar">Cadastrar uma consulta</h2>
+<figure class="print">
+  <img src="img/ia-ferramentas-externas-nova.png" alt="Janela Nova ferramenta externa com nome, quando usar, endereço https, dados que o agente preenche e o efeito Só consulta" loading="lazy">
+  <figcaption>A janela “Nova ferramenta externa”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome.</strong> Por exemplo <em>Consultar estoque</em> (3 a 60 caracteres).</li>
+  <li><strong>Quando o agente deve usar.</strong> Escreva como se instruísse uma pessoa. <strong>É assim que o agente decide</strong> se chama a ferramenta (10 a 600 caracteres).</li>
+  <li><strong>Endereço (https).</strong> O endereço do webhook. Só <code>https://</code>, sem usuário e senha.</li>
+  <li><strong>Dados que o agente preenche.</strong> Os campos que ele manda ao outro sistema.</li>
+  <li><strong>O que a ferramenta faz no outro sistema.</strong> <em>Só consulta</em>.</li>
+</ol>
+<ol class="passos">
+  <li>Clique em <span class="ui">Nova ferramenta</span>.</li>
+  <li>Preencha <strong>Nome</strong> e <strong>Quando o agente deve usar</strong>. Exemplo: <em>“Use quando o cliente perguntar se um produto tem em estoque. Preencha o código do produto.”</em></li>
+  <li>Cole o <strong>Endereço (https)</strong>.</li>
+  <li>Em <strong>Dados que o agente preenche</strong>, clique em <span class="ui">Adicionar campo</span> para cada informação que o agente deve enviar. Cada campo tem:
+    <ul>
+      <li><strong>Nome do campo:</strong> só letras minúsculas sem acento, números e <code>_</code> (por exemplo <code>codigo_produto</code>; até 40 caracteres);</li>
+      <li><strong>Tipo:</strong> <em>Texto</em> (até 500 caracteres), <em>Número</em>, <em>Número inteiro</em> ou <em>Sim ou não</em>;</li>
+      <li><strong>O que o agente coloca aqui:</strong> uma explicação de 3 a 200 caracteres, para ele saber o que preencher;</li>
+      <li><strong>Obrigatório:</strong> se marcado, o agente só chama a ferramenta com o campo preenchido. Até 10 campos por ferramenta.</li>
+    </ul>
+  </li>
+  <li>Deixe <strong>Só consulta</strong> em “O que a ferramenta faz no outro sistema”.</li>
+  <li>Clique em <span class="ui">Cadastrar</span>.</li>
+</ol>
+
+<h3 id="agente-ferramenta-webhook--chave">A chave de assinatura (aparece uma vez)</h3>
+<p>Ao cadastrar, abre a janela <strong>Guarde a chave de assinatura</strong>. É uma chave que começa com <code>whsec_</code>, mostrada <strong>uma única vez</strong>, com os botões <span class="ui">Copiar</span> e <span class="ui">Já guardei</span>. Depois disso, o cartão só mostra os quatro últimos caracteres (por exemplo, “chave …62af”).</p>
+<p>Para que serve: cada chamada do ZapSales ao seu endereço leva uma <strong>assinatura</strong> calculada com essa chave. Quem cuida do outro sistema usa a chave para conferir que a chamada veio mesmo do ZapSales e não de um impostor. Entregue-a a essa pessoa por um canal seguro. Se perder, use <span class="ui">Gerar nova chave</span>: <strong>a antiga deixa de valer na hora</strong>.</p>
+<aside class="nota info"><strong>Para quem vai montar o outro lado.</strong><p>O ZapSales sempre faz um <code>POST</code> com corpo JSON no endereço cadastrado. O corpo traz <code>event</code> (“agent.tool_call”), <code>occurred_at</code>, <code>delivery_id</code>, <code>tool</code> e <code>arguments</code> (os campos que o agente preencheu). A assinatura vai nos cabeçalhos <code>X-Webhook-Signature</code> (<code>t=…,v1=…</code>, HMAC-SHA256), <code>X-Webhook-Timestamp</code>, <code>X-Webhook-Delivery</code> e <code>X-Webhook-Attempt</code>. <strong>Dados do contato, da conversa e da empresa não vão</strong>: só o que o agente preencheu nos campos declarados. O guia técnico está em <code>docs/integracao/ferramentas-externas-do-agente.md</code>.</p></aside>
+<aside class="nota atencao"><strong>O que o formulário não oferece.</strong><p>Não há escolha de método (é sempre <code>POST</code>), nem campo para cabeçalhos ou senha: a “autenticação” é a assinatura. Redirecionamentos não são seguidos — cadastre o endereço final.</p></aside>
+
+<h2 id="agente-ferramenta-webhook--endereco-interno">Endereços internos são recusados</h2>
+<p>Por segurança, endereços da rede interna, privada ou local (por exemplo <code>https://10.0.0.5/…</code>) são recusados no cadastro, na edição e a cada chamada: “Este endereço não pode ser usado: endereços da rede interna, privada ou local são recusados por segurança.”. Outras mensagens possíveis: “Não consegui encontrar este endereço: o nome não existe ou não responde.” e “Este endereço não é válido: informe o endereço completo, começando com https://.”. O motivo é o mesmo da <a href="#agente-treino-por-site--enderecos">página sobre o site</a>.</p>
+
+<h2 id="agente-ferramenta-webhook--testar">Testar a ferramenta de verdade</h2>
+<figure class="print media">
+  <img src="img/ia-ferramentas-externas-testar.png" alt="Janela Testar de verdade com o resultado Funcionou, o tempo de resposta e o que o outro sistema devolveu" loading="lazy">
+  <figcaption>“Testar de verdade” com a resposta do outro sistema.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O dado de exemplo.</strong> Um campo para cada dado que o agente preenche (aqui, <em>codigo_produto</em>).</li>
+  <li><strong>Chamar agora.</strong> Faz a chamada real.</li>
+  <li><strong>O resultado.</strong> “Funcionou. O outro sistema respondeu 200 em 537 ms.”</li>
+  <li><strong>O que o outro sistema devolveu.</strong> No exemplo, o receptor de teste devolve o que recebeu: o evento, o número da entrega e os cabeçalhos de assinatura.</li>
+</ol>
+<ol class="passos">
+  <li>No cartão da ferramenta, clique em <span class="ui">Testar de verdade</span>.</li>
+  <li>Escreva um valor de exemplo para cada campo.</li>
+  <li>Clique em <span class="ui">Chamar agora</span>.</li>
+</ol>
+<p>Isto faz uma <strong>chamada real</strong> ao endereço, com a mesma assinatura, o mesmo prazo e os mesmos limites de uma chamada de verdade. <strong>Nada é enviado a nenhum cliente.</strong> O resultado diz <em>“Funcionou. O outro sistema respondeu 200 em N ms.”</em> com “O que o outro sistema devolveu”, ou <em>“Não funcionou.”</em> com o motivo e o código (HTTP). Em “O que foi enviado” (recolhido) você vê o pedido exato.</p>
+
+<h2 id="agente-ferramenta-webhook--ligar">Ligar a ferramenta a um agente</h2>
+<p>Cadastrar não basta: cada agente escolhe quais ferramentas usa.</p>
+<ol class="passos">
+  <li>Abra <span class="ui">Agente de IA › Agentes</span> e o agente que vai usar a ferramenta.</li>
+  <li>No seletor de capacidades, marque a ferramenta no grupo <strong>Ferramentas externas</strong>.</li>
+  <li>Salve e <a href="#agentes--publicar">publique</a> a versão. A escolha faz parte da versão, então só vale depois de publicar.</li>
+</ol>
+<p>Se a ferramenta estiver desativada, o seletor diz “Desativada: o agente não a usa até alguém reativar em Ferramentas externas.”. Cada agente aceita no máximo <strong>27 capacidades</strong>, somando as do sistema e as externas. Agentes no papel de <em>operador</em> não recebem ferramentas externas.</p>
+
+<h2 id="agente-ferramenta-webhook--como-funciona">O que acontece durante a conversa</h2>
+<ol>
+  <li>O agente lê o “Quando o agente deve usar” e decide se aquela consulta ajuda a responder.</li>
+  <li>Ele só chama com <strong>dados válidos</strong>. Se esquecer um campo obrigatório ou usar o tipo errado, a chamada nem sai; ele recebe uma orientação do que preencher.</li>
+  <li>O ZapSales faz o <code>POST</code> assinado, com prazo de <strong>8 segundos</strong>. Se o outro sistema falhar de forma passageira (erro 5xx, 408 ou 429), a consulta é tentada <strong>uma segunda vez</strong>.</li>
+  <li>A resposta (até 64 KB lida; até <strong>4.000 caracteres</strong> entregues ao agente, o resto é cortado) volta ao agente como <strong>informação, nunca como ordem</strong>: se o outro sistema devolver um texto como “ignore suas regras”, o agente é avisado de que qualquer ordem dentro da resposta é ignorada.</li>
+  <li>Se a consulta falhar, o agente é orientado a <strong>não afirmar</strong> o que dependia dela.</li>
+</ol>
+<p>Quando uma consulta falha, abre-se um aviso na <a href="#alertas">Central de avisos</a>: <em>“A consulta ‘X’ falhou”</em>, com o motivo, um por ferramenta. Os motivos possíveis: “O outro sistema não respondeu a tempo.”, “A resposta do outro sistema era grande demais e foi descartada.”, “O endereço respondeu com um redirecionamento, que não é seguido. Use o endereço final.”, “O outro sistema respondeu com erro.”, “O outro sistema recusou o pedido (erro de endereço, acesso ou dados).” e “Não foi possível alcançar o outro sistema.”.</p>
+<p>Na aba <a href="#agente-teste-e-correcao">Teste</a> do agente, a consulta <strong>não é feita</strong>: aparece marcada como “seria feita”.</p>
+
+<h2 id="agente-ferramenta-webhook--editar-apagar">Editar e apagar</h2>
+<ul>
+  <li><strong>Editar</strong> muda nome, instrução, endereço e campos. Renomear não muda a identificação interna da ferramenta.</li>
+  <li><strong>Apagar</strong> pede confirmação (“Apagar esta ferramenta?”). Se alguma versão de agente (publicada ou rascunho) já usa a ferramenta, o sistema não deixa apagar, porque o histórico precisa dela: “Desative em vez de apagar.”.</li>
+</ul>
+
+<aside class="nota atencao"><strong>Apagar e gerar nova chave não têm volta.</strong><p><span class="ui">Apagar</span> remove a ferramenta (e o agente deixa de consultar aquele sistema). <span class="ui">Gerar nova chave</span> invalida a anterior <strong>na hora</strong>: se o outro sistema confere a assinatura, ele passa a recusar as chamadas até receber a chave nova. Avise quem cuida do outro lado antes de gerar.</p></aside>
+
+<h2 id="agente-ferramenta-webhook--cuidados">Cuidados</h2>
+<ul>
+  <li>Cadastre só endereços de sistemas <strong>seus</strong> ou de fornecedores em que você confia. Tudo o que o endereço devolver pode ser repetido pelo agente ao cliente.</li>
+  <li>Se o endereço contiver um código secreto na própria URL, trate-o como senha: ele aparece para quem tem acesso a esta tela.</li>
+  <li>Ensine o agente a <strong>não prometer</strong> o que a consulta não confirmou. O texto de “Quando o agente deve usar” é a melhor hora para isso.</li>
+  <li>Criação, edição, teste e chamadas ficam registradas na <a href="#auditoria">Auditoria</a>, sem chave, sem corpo e sem a resposta (só o servidor de destino). Na tela da Auditoria, esses registros aparecem hoje com o nome técnico da ação (<code>ai.external_tool_…</code>).</li>
+</ul>
+  </div>
+</article>
+
+<article class="pagina" id="agente-aprovacao-de-acoes" data-titulo="Ações que alteram dados, com a sua aprovação" data-grupo="ia" data-grupo-titulo="Agente de IA" data-resumo="O agente pode pedir para criar um pedido ou cadastrar um cliente em outro sistema, mas nada é feito sem uma pessoa aprovar na Central de avisos. Aprovar executa uma única vez." data-palavras="aprovação aprovar recusar altera dados pedir aprovação ação externa central de avisos expira expirada modo assistido executar falha incerta criar pedido cadastrar cliente" hidden>
+  <p class="migalha"><a href="#inicio">Manual</a> › Agente de IA › Ações que alteram dados, com a sua aprovação</p>
+  <h1>Ações que alteram dados, com a sua aprovação</h1>
+  <p class="lede">O agente pode pedir para criar um pedido ou cadastrar um cliente em outro sistema, mas nada é feito sem uma pessoa aprovar na Central de avisos. Aprovar executa uma única vez.</p>
+  <dl class="ficha"><dt>Onde fica</dt><dd>Cadastro: Agente de IA › Ferramentas externas. Decisão: Central de avisos (Agente de IA › Alertas)</dd><dt>Quem pode usar</dt><dd>Cadastrar a ferramenta e aprovar ou recusar: Gerente ou acima. Atendente vê o pedido, sem os botões.</dd></dl>
+  <div class="conteudo-pagina">
+<h2 id="agente-aprovacao-de-acoes--visao-geral">Para que serve</h2>
+<p>Uma <a href="#agente-ferramenta-webhook">consulta</a> só lê uma informação em outro sistema. Uma <strong>ação que altera dados</strong> faz algo: cria um pedido, cadastra um cliente, muda ou apaga um registro. Se o agente errar, o estrago é real. Por isso o ZapSales tem uma regra de segurança: <strong>por padrão, nada que altera o outro sistema acontece sem que uma pessoa aprove</strong>.</p>
+<aside class="nota info"><strong>Resumo do caminho.</strong><ol><li>O cliente pede algo (“quero 2 camisetas azuis”).</li><li>O agente decide usar a ação “Criar pedido” e preenche os dados.</li><li><strong>Nada é enviado.</strong> Surge um pedido de aprovação na <a href="#alertas">Central de avisos</a>.</li><li>Um gerente <strong>aprova</strong> (a ação é executada uma vez) ou <strong>recusa</strong> (nada acontece).</li><li>O agente fica sabendo do resultado e responde ao cliente de acordo.</li></ol></aside>
+
+<h2 id="agente-aprovacao-de-acoes--cadastrar">Cadastrar uma ação que altera dados</h2>
+<p>É o mesmo cadastro de <span class="ui">Ferramentas externas</span> descrito em <a href="#agente-ferramenta-webhook">Ferramentas externas: o agente consulta outro sistema</a>. A diferença está em dois pontos do formulário:</p>
+<figure class="print">
+  <img src="img/ia-ferramentas-externas-altera-dados.png" alt="Janela Nova ferramenta externa com Altera dados escolhido e o grupo Aprovação antes de executar com a caixa Pedir aprovação marcada e a validade em horas" loading="lazy">
+  <figcaption>O formulário com “Altera dados” e “Pedir aprovação” marcado.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O que a ferramenta faz no outro sistema.</strong> <em>Só consulta</em> (“lê uma informação e devolve ao agente. Não muda nada lá.”) ou <em>Altera dados</em> (“cria, muda ou apaga algo no outro sistema.”).</li>
+  <li><strong>Pedir aprovação.</strong> Caixa de marcar: “o agente só executa depois que uma pessoa aprovar na Central de avisos, uma única vez.” Nasce <strong>marcada</strong> para “Altera dados” e desmarcada para “Só consulta”.</li>
+  <li><strong>Se ninguém decidir, o pedido expira em (horas).</strong> Padrão 24 horas; aceita de 1 a 168. Fora disso: “A validade do pedido é de 1 a 168 horas.”</li>
+</ol>
+<aside class="nota atencao"><strong>Modo Assistido ignora a caixa.</strong><p>Quando o agente está em <strong>Assistido: revisar antes de enviar</strong>, <em>toda</em> ferramenta externa espera aprovação, esteja a caixa marcada ou não. A tela lembra isso no formulário.</p></aside>
+<h3 id="agente-aprovacao-de-acoes--desligar">Desligar a aprovação</h3>
+<p>Você pode desmarcar <span class="ui">Pedir aprovação</span>, mesmo numa ação que altera dados, mas a tela avisa em destaque:</p>
+<aside class="nota perigo"><strong>Sem aprovação, o agente executa sozinho.</strong><p>“Sem aprovação, o agente executa esta ação sozinho assim que decidir usá-la. Se o outro sistema não responder, a ação não é repetida — para nunca ser feita em dobro.” Desligue só para ações que você aceitaria ver feitas por engano, e comece com a aprovação ligada.</p></aside>
+<p>No cartão da lista, os selos mostram a escolha: <em>Altera dados</em> e <em>Pede aprovação</em> ou <em>Executa direto</em>.</p>
+
+<h2 id="agente-aprovacao-de-acoes--pedido">O pedido na Central de avisos</h2>
+<p>Quando o agente decide usar uma ação que pede aprovação, abre-se um aviso na <span class="ui">Central de avisos</span> (menu <span class="ui">Agente de IA › Ver tudo em IA › Alertas</span>). O <strong>sino</strong> no alto da tela mostra o número de avisos abertos. Não há aviso por e-mail ou WhatsApp: quem aprova precisa olhar a Central ou o sino.</p>
+<figure class="print">
+  <img src="img/ia-aprovacao-central.png" alt="Central de avisos com um pedido de aprovação de Criar pedido, mostrando os dados preenchidos pelo agente e os botões Aprovar e executar e Recusar" loading="lazy">
+  <figcaption>Um pedido de aprovação na Central de avisos.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Título.</strong> Por exemplo: “Aprovar «Criar pedido» — produto: camiseta azul (#5572)”. O <code>#</code> com 4 caracteres identifica o pedido.</li>
+  <li><strong>Dados que o agente preencheu.</strong> Campos com cara de segredo (senha, token, chave, CPF, CNPJ, cartão…) aparecem como “•••”, e cada valor é cortado em 80 caracteres.</li>
+  <li><strong>“Nada foi enviado ao outro sistema.”</strong> E até quando vale: “Se ninguém decidir, o pedido expira em …”.</li>
+  <li><strong>Aprovar e executar</strong> e <strong>Recusar.</strong></li>
+  <li><strong>Abertos e Resolvidos.</strong> As abas da Central; o botão “Marcar resolvido” encerra o aviso.</li>
+</ol>
+<p>Se o pedido veio de um agente em modo Assistido, aparece o selo “Rascunho do modo Assistido”.</p>
+
+<h2 id="agente-aprovacao-de-acoes--decidir">Aprovar ou recusar</h2>
+<h3 id="agente-aprovacao-de-acoes--aprovar">Aprovar</h3>
+<ol class="passos">
+  <li>Leia os <strong>dados</strong> do pedido com atenção: é isso que será enviado.</li>
+  <li>Clique em <span class="ui">Aprovar e executar</span>.</li>
+  <li>Na confirmação <strong>Executar esta ação agora?</strong> — “A ação é enviada ao outro sistema uma única vez, com os dados acima. Se o outro sistema não responder, ela não é repetida sozinha.” — clique de novo em <span class="ui">Aprovar e executar</span>.</li>
+</ol>
+<figure class="print media">
+  <img src="img/ia-aprovacao-confirmar.png" alt="Confirmação Executar esta ação agora? com os botões Cancelar e Aprovar e executar" loading="lazy">
+  <figcaption>A confirmação antes de executar.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Executar esta ação agora?</strong> “A ação é enviada ao outro sistema uma única vez, com os dados acima. Se o outro sistema não responder, ela não é repetida sozinha.”</li>
+  <li><strong>Aprovar e executar.</strong> Ao lado fica <em>Cancelar</em>, que fecha a janela sem decidir.</li>
+</ol>
+<p>O ZapSales chama o outro sistema na hora e mostra o resultado no próprio cartão:</p>
+<figure class="print">
+  <img src="img/ia-aprovacao-executada.png" alt="Cartão do pedido com o selo Executada, a mensagem A ação foi executada e a resposta devolvida pelo outro sistema" loading="lazy">
+  <figcaption>Depois de aprovar: o selo muda para <em>Executada</em> e o cartão mostra o que o outro sistema devolveu.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo “Executada”.</strong> Fica ao lado do selo “Altera dados”.</li>
+  <li><strong>O resultado.</strong> “A ação foi executada. O outro sistema respondeu 200.”</li>
+  <li><strong>O que o outro sistema devolveu.</strong> No exemplo, o receptor de teste devolve o próprio pedido recebido; repare no <code>delivery_id</code>: é o número do pedido.</li>
+</ol>
+<p>Os três resultados possíveis:</p>
+<table class="tabela">
+  <thead><tr><th>Resultado</th><th>O que a tela diz</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Executada</strong></td><td>“Ação executada no outro sistema.” / “A ação foi executada. O outro sistema respondeu 200.” (com “O que o outro sistema devolveu”)</td><td>Nada. O agente é informado.</td></tr>
+    <tr><td><strong>Não foi feita</strong></td><td>“A ação não foi feita.” (o outro sistema recusou)</td><td>Veja o motivo; corrija a ferramenta ou os dados.</td></tr>
+    <tr><td><strong>Falha incerta</strong></td><td>“Não foi possível confirmar se a ação foi feita no outro sistema. Ela não foi repetida: confira lá antes de refazer.”</td><td><strong>Confira no outro sistema.</strong> Um novo aviso “A ação «X» falhou” explica que ela pode ter sido feita e a resposta se perdeu.</td></tr>
+  </tbody>
+</table>
+<p><strong>Aprovar executa uma única vez</strong>, mesmo que a pessoa clique duas vezes ou que dois gerentes aprovem ao mesmo tempo: quem chegar depois recebe “Este pedido já foi decidido por outra pessoa.”. Uma ação que altera dados <strong>nunca é repetida automaticamente</strong>, justamente para não criar dois pedidos iguais. O número do pedido (<code>delivery_id</code>) é enviado ao outro sistema, que pode usá-lo para reconhecer uma repetição.</p>
+<h3 id="agente-aprovacao-de-acoes--recusar">Recusar</h3>
+<p>Clique em <span class="ui">Recusar</span>. Não há confirmação nem campo de motivo. A tela diz “Pedido recusado. Nada foi enviado ao outro sistema.”.</p>
+<h3 id="agente-aprovacao-de-acoes--expirar">Se ninguém decidir</h3>
+<p>Passado o prazo (24 horas, se você não mudou), o pedido <strong>expira</strong>: “O pedido expirou sem decisão. A ação não foi feita e o agente foi informado.”. Um pedido vencido nunca é executado, mesmo antes de a tela mostrar “Expirada”. O sistema confere os prazos a cada 15 minutos.</p>
+<aside class="nota atencao"><strong>Situações que impedem de aprovar.</strong><ul><li><strong>A ferramenta foi editada depois do pedido</strong> e os dados já não cabem nos campos: “Recuse o pedido.”</li><li><strong>A ferramenta está desativada:</strong> reative-a para aprovar, ou recuse.</li></ul></aside>
+
+<h2 id="agente-aprovacao-de-acoes--cliente">O que o cliente vê enquanto espera</h2>
+<p>O ZapSales <strong>não avisa o cliente automaticamente</strong> quando você aprova, recusa ou o pedido expira. O que existe é uma orientação ao agente, que passa a conhecer o estado do pedido <strong>na próxima mensagem da conversa</strong>:</p>
+<ul>
+  <li><strong>Pendente:</strong> o agente diz que depende de uma confirmação da equipe.</li>
+  <li><strong>Recusada ou expirada:</strong> o agente oferece outro caminho ou chama um atendente.</li>
+  <li><strong>Executada:</strong> só então ele pode confirmar ao cliente que foi feito. Antes disso ele é instruído a <strong>nunca afirmar</strong> que algo foi feito.</li>
+</ul>
+<p>Se o assunto for urgente, avise o cliente você mesmo pela <a href="#inbox">Inbox</a>.</p>
+
+<h2 id="agente-aprovacao-de-acoes--testar">Testar sem fazer</h2>
+<ul>
+  <li>Na aba <a href="#agente-teste-e-correcao">Teste</a> do agente, a ação <strong>não é executada</strong> e não abre pedido. Ela aparece como “seria feita”, com os selos <em>altera dados</em> e <em>pediria aprovação</em>.</li>
+  <li>O botão <span class="ui">Testar de verdade</span> de uma ferramenta que altera dados mostra o aviso em destaque: <strong>“Esta ferramenta ALTERA dados no outro sistema. Chamar agora faz a alteração de verdade, com os dados de exemplo — sem pedir aprovação, porque quem clica aqui é você.”</strong> O botão se chama <span class="ui">Executar de verdade</span>. Use um ambiente de testes do outro sistema, se houver.</li>
+</ul>
+
+<h2 id="agente-aprovacao-de-acoes--quem-pode">Quem pode o quê</h2>
+<table class="tabela">
+  <thead><tr><th>Ação</th><th>Papel mínimo</th></tr></thead>
+  <tbody>
+    <tr><td>Cadastrar a ferramenta e escolher se pede aprovação</td><td>Gerente</td></tr>
+    <tr><td>Ver o pedido na Central e marcar o aviso como resolvido</td><td>Atendente</td></tr>
+    <tr><td>Aprovar ou recusar</td><td>Gerente (atendentes veem “Peça a um gerente para aprovar ou recusar.”)</td></tr>
+  </tbody>
+</table>
+<p>O acesso temporário de suporte da plataforma não pode aprovar.</p>
+
+<h2 id="agente-aprovacao-de-acoes--rastro">Rastro</h2>
+<p>Cada pedido criado, aprovado, recusado, expirado e executado fica na <a href="#auditoria">Auditoria</a>, com quem decidiu, qual ferramenta e um resumo dos dados sem segredos. Chave de assinatura, corpo enviado e resposta nunca são gravados. Hoje esses registros aparecem na tela de Auditoria com o nome técnico da ação (<code>ai.external_tool_request_…</code>). Os dados de pedidos concluídos são apagados após 90 dias.</p>
+
+<h2 id="agente-aprovacao-de-acoes--cuidados">Cuidados</h2>
+<ul>
+  <li><strong>Não existe desfazer.</strong> Uma ação executada só se desfaz no outro sistema.</li>
+  <li>Não há aprovação em lote: cada pedido é decidido individualmente.</li>
+  <li>Se a mesma conversa repetir o mesmo pedido com os mesmos dados em 24 horas, o agente recebe o estado do pedido existente em vez de abrir outro.</li>
+  <li>Um pedido preso em “executando” por mais de 15 minutos vira “falha incerta” e abre um aviso.</li>
+</ul>
+  </div>
+</article>
+
+<article class="pagina" id="agente-servidores-mcp" data-titulo="Servidores MCP: ferramentas de outros sistemas para o agente" data-grupo="ia" data-grupo-titulo="Agente de IA" data-resumo="Conecte um servidor MCP — um sistema de terceiros que oferece ferramentas prontas — e escolha quais o agente pode usar. O que altera algo espera a sua aprovação." data-palavras="mcp servidor mcp servidores mcp model context protocol ferramentas externas descoberta erp credencial bearer x-api-key aprovação streamable http" hidden>
+  <p class="migalha"><a href="#inicio">Manual</a> › Agente de IA › Servidores MCP: ferramentas de outros sistemas para o agente</p>
+  <h1>Servidores MCP: ferramentas de outros sistemas para o agente</h1>
+  <p class="lede">Conecte um servidor MCP — um sistema de terceiros que oferece ferramentas prontas — e escolha quais o agente pode usar. O que altera algo espera a sua aprovação.</p>
+  <dl class="ficha"><dt>Onde fica</dt><dd>Agente de IA › Ver tudo em IA › Ferramentas externas › aba Servidores MCP</dd><dt>Quem pode usar</dt><dd>Ligar, cadastrar, testar e escolher ferramentas: Administrador. Aprovar pedidos na Central: Gerente. Marcar a ferramenta no agente: Administrador.</dd></dl>
+  <div class="conteudo-pagina">
+<h2 id="agente-servidores-mcp--visao-geral">Para que serve</h2>
+<p>Em vez de você cadastrar cada consulta uma a uma (como em <a href="#agente-ferramenta-webhook">webhooks</a>), alguns sistemas — ERPs, planilhas, agendas — oferecem um “cardápio” de ferramentas pronto para ser usado por uma IA. Esse cardápio é um <strong>servidor MCP</strong>. Você informa o endereço do servidor, o ZapSales <strong>descobre sozinho</strong> as ferramentas que ele oferece, e você escolhe quais o agente pode usar.</p>
+<aside class="nota info"><strong>O que é MCP, em linguagem simples.</strong><p>MCP (<em>Model Context Protocol</em>) é uma “língua comum” que sistemas de empresas diferentes usam para dizer a uma IA: <em>“eu sei fazer estas coisas, e para cada uma preciso destes dados”</em>. É como uma tomada padrão: você liga o agente ao servidor sem que alguém programe uma integração sob medida.</p></aside>
+<aside class="nota atencao"><strong>Não confunda com o MCP do próprio ZapSales.</strong><p>O ZapSales também tem um MCP <em>seu</em>, que permite a programas de fora lerem e usarem o CRM. Aqui é o contrário: o <strong>agente</strong> chama o servidor de <strong>outra empresa</strong>. O ZapSales funciona só como “cliente” do servidor MCP.</p></aside>
+
+<h2 id="agente-servidores-mcp--ligar">Ligar o recurso (uma vez)</h2>
+<p>Servidores MCP vêm <strong>desligados</strong> em toda organização. Abra <span class="ui">Agente de IA › Ver tudo em IA › Ferramentas externas</span> e clique na aba <strong>Servidores MCP</strong>.</p>
+<figure class="print">
+  <img src="img/ia-mcp-desligado.png" alt="Aba Servidores MCP com o cartão Servidores MCP externos desligado, a caixa de aceite e o botão Ligar servidores MCP" loading="lazy">
+  <figcaption>O recurso desligado, com a caixa de aceite.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo “Desligado”.</strong> Vira “Ligado” depois do passo abaixo.</li>
+  <li><strong>A caixa de aceite.</strong> Sem marcá-la, o botão não liga.</li>
+  <li><strong>Ligar servidores MCP.</strong></li>
+</ol>
+<ol class="passos">
+  <li>No cartão <strong>Servidores MCP externos</strong> (selo <em>Desligado</em>), leia e marque o aceite: <em>“Entendo que, ao ligar, o agente pode enviar aos servidores que eu cadastrar os dados que ele preencher ao usar uma ferramenta, e que o que eles responderem é tratado como informação, nunca como ordem.”</em></li>
+  <li>Clique em <span class="ui">Ligar servidores MCP</span>. A tela confirma “Servidores MCP ligados.”.</li>
+</ol>
+<p>Se você desligar depois (<span class="ui">Desligar</span>), nada é apagado: servidores, credenciais e ferramentas escolhidas ficam guardados. Mas um pedido de aprovação que esteja esperando não poderá ser executado até você ligar de novo (ele ainda pode ser recusado).</p>
+<p>Um gerente que abre a aba vê apenas o aviso de que os servidores MCP são cadastrados e escolhidos por um administrador.</p>
+
+<h2 id="agente-servidores-mcp--cadastrar">Adicionar um servidor</h2>
+<figure class="print media">
+  <img src="img/ia-mcp-adicionar.png" alt="Janela Adicionar servidor MCP com nome, endereço, credencial e como a credencial é enviada" loading="lazy">
+  <figcaption>A janela “Adicionar servidor MCP”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome do servidor.</strong> Por exemplo <em>ERP da loja</em> (3 a 60 caracteres, único na organização).</li>
+  <li><strong>Endereço do servidor.</strong> Só <code>https://</code>, público e sem usuário e senha. Costuma terminar em <code>/mcp</code>.</li>
+  <li><strong>Credencial (se o servidor pedir).</strong> A “senha” que o fornecedor deu. Fica guardada cifrada e nunca é mostrada de novo (só “credencial …xxxx”).</li>
+  <li><strong>Como a credencial é enviada.</strong> <em>Authorization: Bearer</em> (o mais comum) ou <em>Outro cabeçalho</em>, informando o nome (por exemplo <code>X-API-Key</code>); neste caso o valor vai sem “Bearer”.</li>
+</ol>
+<ol class="passos">
+  <li>Clique em <span class="ui">Adicionar servidor</span>.</li>
+  <li>Preencha os campos e clique em <span class="ui">Cadastrar e testar</span> (vira “Conectando…”).</li>
+  <li>O ZapSales conecta ao servidor e lê o cardápio. Se der certo: <em>“Conectou. N ferramenta(s) oferecida(s) pelo servidor.”</em> e o botão <span class="ui">Escolher ferramentas</span>.</li>
+</ol>
+<p>Se a conexão falhar, o servidor <strong>fica salvo</strong> e a tela diz “O servidor foi salvo, mas a conexão não deu certo.”, com a causa. Use <span class="ui">Editar</span> para corrigir e <span class="ui">Testar conexão</span> para tentar de novo. As causas mais comuns:</p>
+<table class="tabela">
+  <thead><tr><th>Mensagem</th><th>O que verificar</th></tr></thead>
+  <tbody>
+    <tr><td>O servidor recusou a credencial.</td><td>A credencial e o cabeçalho em que ela é enviada.</td></tr>
+    <tr><td>O endereço respondeu “não encontrado” (erro 404).</td><td>O caminho do servidor — costuma terminar em /mcp.</td></tr>
+    <tr><td>O endereço respondeu, mas não aceitou o pedido do protocolo MCP.</td><td>O servidor precisa falar MCP por HTTP (“Streamable HTTP”).</td></tr>
+    <tr><td>Este endereço não pode ser usado: endereços da rede interna, privada ou local são recusados por segurança.</td><td>Use o endereço público do servidor.</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>O que não é aceito.</strong><ul><li>O transporte antigo “HTTP+SSE” (endereços terminados em <code>/sse</code>); só o “Streamable HTTP”.</li><li>Servidores que exigem entrar com uma conta (OAuth): aqui a credencial é um valor colado.</li><li>Cabeçalhos reservados do protocolo (como <code>Host</code>, <code>Content-Type</code> e <code>Cookie</code>) não podem levar a credencial.</li></ul></aside>
+
+<h2 id="agente-servidores-mcp--escolher">Escolher as ferramentas</h2>
+<p>O agente <strong>não ganha</strong> automaticamente tudo o que o servidor oferece. Você decide, ferramenta por ferramenta.</p>
+<figure class="print">
+  <img src="img/ia-mcp-escolher.png" alt="Janela Escolher ferramentas com a lista de ferramentas do servidor, caixas de seleção, efeito e a caixa Pedir aprovação" loading="lazy">
+  <figcaption>“Escolher ferramentas”: a lista lida ao vivo do servidor.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Caixa de seleção.</strong> Marque as que o agente poderá usar. Ao marcar, abrem-se as opções da ferramenta.</li>
+  <li><strong>Ferramenta que o agente ainda não consegue usar.</strong> No exemplo, a primeira ferramenta do servidor pede um campo em formato de lista ou objeto, que o agente ainda não sabe preencher. Ela aparece apagada, com o motivo.</li>
+  <li><strong>O que ela faz no outro sistema.</strong> <em>Altera dados</em> (o padrão) ou <em>Só consulta</em>. Quem decide é você: a anotação do servidor sobre ser só de leitura é uma dica, <strong>não vale como garantia</strong>.</li>
+  <li><strong>Pedir aprovação.</strong> Mesma regra de <a href="#agente-aprovacao-de-acoes">Ações que alteram dados</a>. Em “Só consulta” ela vem desmarcada.</li>
+  <li><strong>Quando o agente deve usar.</strong> Vem preenchido com a descrição do servidor (em inglês, no exemplo); você pode editar e traduzir.</li>
+  <li><strong>Salvar escolha (N).</strong> Grava; N é quantas ferramentas estão marcadas.</li>
+</ol>
+<ol class="passos">
+  <li>No cartão do servidor, clique em <span class="ui">Escolher ferramentas</span>. A janela consulta o servidor ao vivo (“Conectando ao servidor e lendo as ferramentas…”). Acima de 8 ferramentas há o campo <span class="ui">Buscar ferramenta…</span>.</li>
+  <li>Marque as ferramentas desejadas. Para cada uma, confirme <strong>O que ela faz no outro sistema</strong>.</li>
+  <li>Deixe <span class="ui">Pedir aprovação</span> marcada, a menos que você tenha certeza.</li>
+  <li>Clique em <span class="ui">Salvar escolha</span>. A tela confirma “Escolha salva.”.</li>
+  <li>Abra o agente, e no grupo <strong>Ferramentas externas</strong> do seletor (aba Configuração, cartão “O que o agente pode fazer”) marque as ferramentas. Elas têm o selo <em>Servidor MCP</em>. Salve e <a href="#agentes--publicar">publique</a>.</li>
+</ol>
+<aside class="nota perigo"><strong>Cuidado com “Altera dados” nas ferramentas do servidor.</strong><p>Quando uma ferramenta não é marcada como “Só consulta”, o sistema trata-a como <strong>ação que altera dados</strong> e pede aprovação. Desligar essa proteção significa que o agente executa sozinho assim que decidir usá-la; a tela avisa: “Sem aprovação, o agente executa esta ação sozinho assim que decidir usá-la.”.</p></aside>
+<h3 id="agente-servidores-mcp--mudou">Quando o servidor muda</h3>
+<p>A definição da ferramenta que você escolheu fica <strong>fixada</strong>. Se o servidor mudar a descrição ou os campos, a janela mostra o selo <strong>Mudou no servidor</strong>, e o agente <strong>segue com a definição antiga</strong> até você abrir a janela e salvar de novo. Se a ferramenta sumiu, aparece <strong>O servidor não oferece mais</strong>. A lista não fica guardada: é lida ao vivo toda vez que a janela abre.</p>
+<h3 id="agente-servidores-mcp--nao-suportada">Ferramentas que o agente ainda não usa</h3>
+<p>Algumas ferramentas aparecem desabilitadas com “O agente ainda não consegue usar esta ferramenta:” e um dos motivos: pede campos demais (o agente preenche até 10); tem um campo obrigatório que não é texto, número ou sim/não (lista ou objeto); um campo tem nome que o agente não consegue usar; ou a definição não está no formato esperado.</p>
+
+<h2 id="agente-servidores-mcp--durante">Durante a conversa</h2>
+<ul>
+  <li>O agente chama a ferramenta com os dados que preencher, como nas outras <a href="#agente-ferramenta-webhook">ferramentas externas</a>. O prazo é de <strong>15 segundos</strong>.</li>
+  <li>A resposta do servidor é tratada como <strong>informação, nunca como ordem</strong>. Só texto volta ao agente (imagem e áudio são omitidos), e no máximo 4.000 caracteres.</li>
+  <li><strong>Consulta</strong> que falha é tentada duas vezes. <strong>Ação que altera dados</strong> é tentada uma vez só e nunca repetida, para não ser feita em dobro.</li>
+  <li>Se falhar, abre-se um aviso na <a href="#alertas">Central de avisos</a> (“A consulta «X» falhou” ou “A ação «X» falhou”), e o agente é orientado a não afirmar ao cliente o que dependia da chamada.</li>
+  <li>O teto de <strong>27 capacidades</strong> por agente é compartilhado entre as do sistema, os webhooks e as ferramentas MCP.</li>
+</ul>
+
+<h2 id="agente-servidores-mcp--editar-apagar">Editar, desativar e apagar</h2>
+<ul>
+  <li><span class="ui">Editar</span> muda nome, endereço e credencial (há a caixa “Remover a credencial guardada”).</li>
+  <li>O interruptor <strong>Ativo / Desativado</strong> liga e desliga o servidor sem apagar nada. Com o servidor desativado, o seletor do agente avisa que o agente não usa a ferramenta até um administrador reativar.</li>
+  <li><span class="ui">Apagar</span> não é permitido se alguma ferramenta do servidor já fez parte de uma versão de agente, porque o histórico precisa dela: desative o servidor em vez de apagar.</li>
+</ul>
+
+<aside class="nota atencao"><strong>Remover a credencial ou apagar o servidor não têm volta.</strong><p>Com <span class="ui">Remover a credencial guardada</span>, um servidor que exige credencial passa a recusar as chamadas do agente até você cadastrar outra. <span class="ui">Apagar</span> remove de vez o servidor, a credencial guardada e as ferramentas escolhidas (e só é permitido enquanto nenhuma versão de agente usar uma ferramenta dele). Falhas de chamada viram avisos na Central.</p></aside>
+
+<h2 id="agente-servidores-mcp--cuidados">Cuidados</h2>
+<ul>
+  <li>Conecte só servidores de empresas em que você confia: o agente envia a eles os dados que preencher, e o que eles responderem pode ser repetido ao cliente.</li>
+  <li>Comece com <strong>poucas ferramentas</strong> e com a aprovação ligada nas que alteram algo.</li>
+  <li>Este recurso é novo. O ZapSales avisa quando a conexão falha, mas confira o primeiro uso real na <a href="#auditoria">Auditoria</a> e na Central. Servidor, ferramenta escolhida e uso ficam registrados, sem credencial, dados enviados nem resposta.</li>
+</ul>
+  </div>
+</article>
+
+<article class="pagina" id="agente-resposta-em-audio" data-titulo="Resposta em áudio com a sua própria chave de voz" data-grupo="ia" data-grupo-titulo="Agente de IA" data-resumo="Quando o cliente manda um áudio, o agente pode responder com uma nota de voz. A voz vem de um provedor (compatível com a OpenAI ou ElevenLabs) com a chave da sua conta." data-palavras="áudio resposta em áudio nota de voz voz elevenlabs openai tts texto para fala chave de voz provedor de voz provedores ffmpeg" hidden>
+  <p class="migalha"><a href="#inicio">Manual</a> › Agente de IA › Resposta em áudio com a sua própria chave de voz</p>
+  <h1>Resposta em áudio com a sua própria chave de voz</h1>
+  <p class="lede">Quando o cliente manda um áudio, o agente pode responder com uma nota de voz. A voz vem de um provedor (compatível com a OpenAI ou ElevenLabs) com a chave da sua conta.</p>
+  <dl class="ficha"><dt>Onde fica</dt><dd>Ligar na organização: Agente de IA › Provedores › Resposta em áudio. Ligar no agente: editor do agente › Configuração › Resposta em áudio</dd><dt>Quem pode usar</dt><dd>Salvar a chave, ligar e testar: Administrador. Gerente vê o cartão, mas não consegue gravar.</dd></dl>
+  <div class="conteudo-pagina">
+<h2 id="agente-resposta-em-audio--visao-geral">Para que serve</h2>
+<p>Muita gente responde a um áudio com outro áudio. Com este recurso, quando o cliente manda uma <strong>mensagem de voz</strong>, o agente pode responder com uma <strong>nota de voz</strong> falada, em vez de texto. A fala é gerada por um serviço de voz que você contrata: o ZapSales usa a <strong>sua chave</strong>, e a cobrança vai para a sua conta nesse serviço.</p>
+<aside class="nota info"><strong>Como funciona, em linguagem simples.</strong><p>O agente escreve a resposta como sempre. Depois que todas as conferências de segurança aprovam o texto, o ZapSales manda esse texto ao serviço de voz, recebe um arquivo de som e o envia ao cliente como nota de voz. O texto também fica gravado na conversa. Se qualquer passo falhar, <strong>o cliente recebe o texto</strong> — ele nunca fica sem resposta.</p></aside>
+
+<h2 id="agente-resposta-em-audio--regra">Quando o agente responde em áudio</h2>
+<p>Nunca é “sempre”. O agente só responde em áudio se <strong>todas</strong> estas condições forem verdadeiras:</p>
+<ol>
+  <li>A resposta em áudio está <strong>ligada na organização</strong>, com a chave gravada e o aceite dado.</li>
+  <li>O <strong>agente</strong> está com a opção ligada (vem desligada).</li>
+  <li><strong>A última mensagem do cliente foi um áudio.</strong> Se ele escreveu, a resposta sai em texto.</li>
+  <li>O canal aceita nota de voz: <strong>API Oficial da Meta</strong> ou <strong>WAHA</strong> (QR code). Outro canal recebe texto.</li>
+  <li>A resposta cabe no limite de caracteres e não está vazia. Acima do limite, <strong>sai como texto</strong> (nunca é cortada).</li>
+  <li>No ElevenLabs, há uma voz escolhida (a do agente ou, na falta dela, a padrão da organização).</li>
+</ol>
+<p>Só vale para respostas a mensagens recebidas: <strong>campanhas e follow-ups continuam em texto</strong>. Se a resposta levar uma foto de produto, sai como foto com legenda, sem áudio.</p>
+
+<h2 id="agente-resposta-em-audio--organizacao">1. Ligar na organização</h2>
+<p>Abra <span class="ui">Agente de IA › Provedores</span> e procure o cartão <strong>Resposta em áudio</strong>. (A chave de voz é separada das chaves de IA: <strong>não</strong> fica em <a href="#credenciais">Credenciais</a>.) Numa instalação nova ele mostra “Indisponível” e “Desligada. Os agentes respondem sempre em texto.”.</p>
+<figure class="print">
+  <img src="img/ia-audio-provedores.png" alt="Cartão Resposta em áudio na tela Provedores com o provedor de voz, a chave, o limite de caracteres, o aceite e o interruptor" loading="lazy">
+  <figcaption>O cartão “Resposta em áudio” em Provedores.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Provedor de voz.</strong> <em>Compatível com a API de fala da OpenAI</em> ou <em>ElevenLabs</em>.</li>
+  <li><strong>Chave de voz.</strong> Entre 8 e 300 caracteres, sem espaços. Depois de gravada aparece “Chave gravada ···XXXX” e o campo vira “Trocar a chave de voz”.</li>
+  <li><strong>Campos só do provedor compatível com a OpenAI (opcionais):</strong> endereço da API (padrão <code>https://api.openai.com/v1</code>), modelo de voz (padrão <code>tts-1</code>) e voz (padrão <code>alloy</code>).</li>
+  <li><strong>Limite de caracteres por resposta em áudio</strong> e <strong>preço por mil caracteres</strong> (explicados abaixo).</li>
+  <li><strong>Aceite.</strong> “Entendo que o texto das respostas do agente será enviado ao provedor de voz que escolhi, com a minha chave.”</li>
+  <li><strong>Ligar a resposta em áudio nesta organização.</strong> Fica travado até haver chave e aceite.</li>
+  <li><strong>Salvar, Testar e Remover chave.</strong></li>
+</ol>
+<ol class="passos">
+  <li>Escolha o <strong>Provedor de voz</strong> e cole a <strong>Chave de voz</strong> (você cria a chave no site do provedor, na sua conta).</li>
+  <li>Marque o <strong>aceite</strong>.</li>
+  <li>Clique em <span class="ui">Salvar</span>.</li>
+  <li>Clique em <span class="ui">Testar</span>. O ZapSales gera de verdade a frase “Olá! Este é um teste da resposta em áudio.” — <strong>sem enviar a ninguém</strong>. A tela diz “Funcionou. O provedor gerou uma nota de voz de teste, sem enviar nada a ninguém.”. No ElevenLabs, sem voz padrão, o teste só prova a chave listando as vozes: “A chave funciona. A sua conta tem N vozes; cada agente escolhe a sua no editor.”</li>
+  <li>Ligue o interruptor <span class="ui">Ligar a resposta em áudio nesta organização</span>.</li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Campo</th><th>Padrão</th><th>Observação</th></tr></thead>
+  <tbody>
+    <tr><td>Limite de caracteres por resposta em áudio</td><td>1.000</td><td>De 100 a 4.000. Resposta maior vai como texto.</td></tr>
+    <tr><td>Preço por mil caracteres (centavos de dólar)</td><td>—</td><td>Opcional. Veja “Custo”.</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>O texto das respostas sai do ZapSales.</strong><p>Por isso existe o aceite: o texto que o agente escreve para o cliente é enviado ao serviço de voz que você escolheu. Confira a política de privacidade desse serviço.</p></aside>
+<p>Sem a chave: “Ligada, mas falta gravar a chave do provedor de voz. Enquanto isso, os agentes respondem em texto.”. Sem o aceite: “Falta o seu aceite para enviar o texto das respostas ao provedor de voz.”.</p>
+
+<h2 id="agente-resposta-em-audio--agente">2. Ligar em cada agente</h2>
+<figure class="print media">
+  <img src="img/ia-audio-agente.png" alt="Cartão Resposta em áudio no editor do agente com o interruptor Responder em áudio quando o cliente mandar áudio e a escolha de voz" loading="lazy">
+  <figcaption>O cartão no editor do agente, com a organização usando o provedor compatível com a OpenAI.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Responder em áudio quando o cliente mandar áudio.</strong> O interruptor do agente (vem desligado).</li>
+  <li><strong>O provedor em uso e o limite:</strong> “Provedor de voz: Compatível com a OpenAI. Respostas com mais de 1000 caracteres saem como texto.”</li>
+  <li><strong>A voz.</strong> No provedor compatível com a OpenAI não há escolha por agente: “A voz e o modelo são os da organização, definidos em Provedores.”</li>
+</ol>
+<ol class="passos">
+  <li>Abra o agente, aba <strong>Configuração</strong>, cartão <strong>Resposta em áudio</strong>.</li>
+  <li>Ligue <span class="ui">Responder em áudio quando o cliente mandar áudio</span> (vem desligado).</li>
+  <li>Com <strong>ElevenLabs</strong>, escolha a <strong>Voz do agente</strong> (a lista vem da sua conta; “Escolha uma voz”) e, se quiser, o <strong>Modelo de voz</strong>: <em>Padrão da organização</em>, <em>Multilíngue v2 (melhor qualidade)</em>, <em>Turbo v2.5 (mais rápido)</em> ou <em>Flash v2.5 (o mais rápido)</em>. Sem voz escolhida: “Sem voz escolhida, este agente responde em texto.”</li>
+  <li>Com o provedor compatível com a OpenAI não há escolha por agente: “A voz e o modelo são os da organização, definidos em Provedores.”</li>
+  <li>Salve e <a href="#agentes--publicar">publique</a> a versão. A opção faz parte da versão, então só vale depois de publicar.</li>
+</ol>
+<p>Se a organização ainda não terminou a configuração, o cartão do agente avisa “Falta gravar a chave do provedor de voz. Termine a configuração em Provedores.” e oferece o link <em>Abrir Provedores</em>.</p>
+<aside class="nota atencao"><strong>Número conectado por QR code: risco maior.</strong><p>Se o número do agente está conectado por QR code (WAHA), a tela avisa em amarelo: “o WhatsApp pode banir números com atividade automática fora do padrão. Notas de voz automáticas aumentam esse risco. Para áudio, a API Oficial é o caminho mais seguro.”</p></aside>
+
+<h2 id="agente-resposta-em-audio--testar">Simular antes de publicar</h2>
+<p>Na aba <a href="#agente-teste-e-correcao">Teste</a> do agente há a caixa <strong>Simular que o cliente mandou esta mensagem como um áudio</strong>. A prévia diz se a resposta <em>sairia em áudio</em> (“nota de voz”) ou <em>em TEXTO</em>, e o motivo. A simulação não gasta voz nem grava arquivo.</p>
+
+<h2 id="agente-resposta-em-audio--custo">Custo</h2>
+<ul>
+  <li>Cada tentativa de gerar voz é registrada com o tipo <em>voice_reply</em> e <strong>soma no gasto mensal</strong> de IA, que o teto do orçamento vigia.</li>
+  <li>O preço da OpenAI (<code>tts-1</code>: 1,5; <code>tts-1-hd</code>: 3 centavos de dólar por mil caracteres) é conhecido só para a própria OpenAI. Para outros provedores ou modelos, informe o <strong>preço por mil caracteres</strong>; sem ele o custo fica “desconhecido” (não zero) e aparece “N sem preço conhecido”.</li>
+  <li>Em <span class="ui">Agente de IA › Uso de IA</span>, o cartão <strong>Voz das respostas em áudio</strong> mostra “Neste mês: N respostas em áudio · N caracteres convertidos · US$ X”, e o cartão em Provedores mostra a “Última falha em conversa real”.</li>
+</ul>
+
+<h2 id="agente-resposta-em-audio--falhas">Quando a voz falha</h2>
+<p>A resposta sai em <strong>texto</strong>, e o motivo é registrado e aparece como “última falha”. Alguns motivos: chave recusada, conta sem créditos (“A conta do provedor de voz está sem créditos ou sem saldo. Recarregue lá e tente de novo.”), limite de uso, voz inexistente, provedor fora do ar, tempo esgotado (25 segundos) ou arquivo grande demais (acima de 10 MB).</p>
+
+<h2 id="agente-resposta-em-audio--nao-faz">O que não existe</h2>
+<ul>
+  <li>Só <strong>dois provedores</strong> de voz.</li>
+  <li>Não há seletor de idioma, velocidade ou tom: quem define é a voz e o modelo.</li>
+  <li>O agente não responde em áudio a mensagem de <em>texto</em>, nem em campanhas ou follow-ups.</li>
+  <li>No provedor compatível com a OpenAI a voz é uma só para a organização.</li>
+</ul>
+<aside class="nota info"><strong>Recurso novo.</strong><p>O teste do cartão (“Testar”) valida a sua chave, mas a primeira nota de voz a um cliente de verdade deve ser acompanhada por você. Faça um teste com o seu próprio número antes de ligar para todos: mande um áudio e confira a resposta.</p></aside>
+
+<h2 id="agente-resposta-em-audio--cuidados">Cuidados</h2>
+<ul>
+  <li>Mantenha crédito na conta do serviço de voz; sem ele o agente volta a responder em texto.</li>
+  <li>Quem é <strong>Gerente</strong> vê o cartão, mas só o <strong>Administrador</strong> consegue salvar, testar, ligar e remover a chave.</li>
+  <li><strong>Remover chave</strong> vale para a organização inteira: sem chave não há áudio, e <em>todos</em> os agentes passam a responder em texto. Para voltar, é preciso gravar uma chave de novo.</li>
+</ul>
   </div>
 </article>
 
@@ -3300,12 +4145,13 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <tbody>
     <tr><td><strong>Perguntas e respostas</strong></td><td>As dúvidas que se repetem, com a resposta pronta. É o formato que o agente cita melhor, porque cada resposta chega inteira.</td><td>Sim</td></tr>
     <tr><td><strong>Documento</strong></td><td>Um texto do negócio: política de troca, tabela de preços, manual, contrato. Você envia o arquivo ou cola o texto.</td><td>Sim</td></tr>
+    <tr><td><strong>Site</strong></td><td>Até 20 páginas do seu site, que o agente lê e aprende. Você cola os endereços (<code>https://</code>) e pede para ler de novo quando o site mudar.</td><td>Sim — veja <a href="#agente-treino-por-site">Treinar o agente com o seu site</a></td></tr>
     <tr><td><strong>Conversas anteriores</strong></td><td>Atendimentos resolvidos que alguém marcou como aproveitáveis, com os dados pessoais removidos.</td><td>Não se preenche por aqui: entra sozinho</td></tr>
     <tr><td><strong>Catálogo de produtos</strong></td><td>Os produtos sincronizados com a sua loja, com preço, descrição e disponibilidade.</td><td>Não se preenche por aqui: vem da sincronização com a loja</td></tr>
   </tbody>
 </table>
 <ol class="passos">
-  <li>Escolha <strong>Perguntas e respostas</strong> ou <strong>Documento</strong>.</li>
+  <li>Escolha <strong>Perguntas e respostas</strong>, <strong>Documento</strong> ou <strong>Site</strong> (este último tem página própria: <a href="#agente-treino-por-site">Treinar o agente com o seu site</a>).</li>
   <li>Em <strong>Nome do material</strong>, dê um nome (de 2 a 120 caracteres), como <em>“Perguntas frequentes da loja”</em>. O nome é a forma de você achá-lo depois e <strong>não pode repetir</strong> o de outro material ativo.</li>
   <li><strong>Perguntas e respostas:</strong> no campo <em>Conteúdo</em>, escreva uma linha <code>## Pergunta:</code> e uma linha <code>## Resposta:</code> para cada item, separando os itens por uma linha em branco. Esses dois marcadores precisam estar escritos exatamente assim.</li>
   <li><strong>Documento:</strong> escolha um arquivo (PDF, Markdown, CSV ou texto, até <strong>20 MB</strong>) ou cole o texto no campo. Um PDF só de imagens escaneadas não tem letra para ler; envie uma versão com texto selecionável. Planilha Excel: salve como CSV antes.</li>
@@ -6985,7 +7831,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <aside class="nota atencao"><strong>Instalar é para sempre.</strong><p>Cria as tabelas do módulo no banco compartilhado (um banco só, esquema <code>public</code>), de forma idempotente, e fica na auditoria (<code>modulo.instalado</code>). <strong>A tela não desinstala nem suspende</strong>; considere a ação irreversível pela interface. Depois de instalado, cada empresa vê a porta do módulo (veja <a href="#honorarios">Honorários</a>). <em>Esta instalação não foi acionada nas capturas.</em> Quem não é o dono do servidor recebe: “Só o administrador da instalação pode gerenciar os pacotes disponíveis.”</p></aside>
   </div>
 </article>
-    <footer class="rodape"><div class="rodape-marca"><svg class="simbolo" viewBox="0 0 216 216" aria-hidden="true"><use href="#lg-simbolo"/></svg><strong>ZapSales</strong><span>by</span><svg class="fut" viewBox="0 0 654 115" role="img" aria-label="Futuristas"><use href="#lg-futuristas" width="654" height="115"/></svg></div>Manual do ZapSales · gerado em 15 de outubro de 2026 a partir do código na revisão <code>5b3de1c</code>. Os prints vêm de uma organização de demonstração, com dados fictícios.</footer>
+    <footer class="rodape"><div class="rodape-marca"><svg class="simbolo" viewBox="0 0 216 216" aria-hidden="true"><use href="#lg-simbolo"/></svg><strong>ZapSales</strong><span>by</span><svg class="fut" viewBox="0 0 654 115" role="img" aria-label="Futuristas"><use href="#lg-futuristas" width="654" height="115"/></svg></div>Manual do ZapSales · gerado em 18 de outubro de 2026 a partir do código na revisão <code>410a39f</code>. Os prints vêm de uma organização de demonstração, com dados fictícios.</footer>
   </main>
   <aside class="nesta-pagina" id="toc-local" aria-label="Nesta página"></aside>
 </div>

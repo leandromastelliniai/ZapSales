@@ -1,0 +1,104 @@
+<!--meta {"id":"agente-servidores-mcp","grupo":"ia","titulo":"Servidores MCP: ferramentas de outros sistemas para o agente","ordem":2.7,"resumo":"Conecte um servidor MCP — um sistema de terceiros que oferece ferramentas prontas — e escolha quais o agente pode usar. O que altera algo espera a sua aprovação.","palavras":["mcp","servidor mcp","servidores mcp","model context protocol","ferramentas externas","descoberta","erp","credencial","bearer","x-api-key","aprovação","streamable http"],"onde":"Agente de IA › Ver tudo em IA › Ferramentas externas › aba Servidores MCP","quem":"Ligar, cadastrar, testar e escolher ferramentas: Administrador. Aprovar pedidos na Central: Gerente. Marcar a ferramenta no agente: Administrador.","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Em vez de você cadastrar cada consulta uma a uma (como em <a href="#agente-ferramenta-webhook">webhooks</a>), alguns sistemas — ERPs, planilhas, agendas — oferecem um “cardápio” de ferramentas pronto para ser usado por uma IA. Esse cardápio é um <strong>servidor MCP</strong>. Você informa o endereço do servidor, o ZapSales <strong>descobre sozinho</strong> as ferramentas que ele oferece, e você escolhe quais o agente pode usar.</p>
+<aside class="nota info"><strong>O que é MCP, em linguagem simples.</strong><p>MCP (<em>Model Context Protocol</em>) é uma “língua comum” que sistemas de empresas diferentes usam para dizer a uma IA: <em>“eu sei fazer estas coisas, e para cada uma preciso destes dados”</em>. É como uma tomada padrão: você liga o agente ao servidor sem que alguém programe uma integração sob medida.</p></aside>
+<aside class="nota atencao"><strong>Não confunda com o MCP do próprio ZapSales.</strong><p>O ZapSales também tem um MCP <em>seu</em>, que permite a programas de fora lerem e usarem o CRM. Aqui é o contrário: o <strong>agente</strong> chama o servidor de <strong>outra empresa</strong>. O ZapSales funciona só como “cliente” do servidor MCP.</p></aside>
+
+<h2 id="ligar">Ligar o recurso (uma vez)</h2>
+<p>Servidores MCP vêm <strong>desligados</strong> em toda organização. Abra <span class="ui">Agente de IA › Ver tudo em IA › Ferramentas externas</span> e clique na aba <strong>Servidores MCP</strong>.</p>
+<figure class="print">
+  <img src="img/ia-mcp-desligado.png" alt="Aba Servidores MCP com o cartão Servidores MCP externos desligado, a caixa de aceite e o botão Ligar servidores MCP" loading="lazy">
+  <figcaption>O recurso desligado, com a caixa de aceite.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo “Desligado”.</strong> Vira “Ligado” depois do passo abaixo.</li>
+  <li><strong>A caixa de aceite.</strong> Sem marcá-la, o botão não liga.</li>
+  <li><strong>Ligar servidores MCP.</strong></li>
+</ol>
+<ol class="passos">
+  <li>No cartão <strong>Servidores MCP externos</strong> (selo <em>Desligado</em>), leia e marque o aceite: <em>“Entendo que, ao ligar, o agente pode enviar aos servidores que eu cadastrar os dados que ele preencher ao usar uma ferramenta, e que o que eles responderem é tratado como informação, nunca como ordem.”</em></li>
+  <li>Clique em <span class="ui">Ligar servidores MCP</span>. A tela confirma “Servidores MCP ligados.”.</li>
+</ol>
+<p>Se você desligar depois (<span class="ui">Desligar</span>), nada é apagado: servidores, credenciais e ferramentas escolhidas ficam guardados. Mas um pedido de aprovação que esteja esperando não poderá ser executado até você ligar de novo (ele ainda pode ser recusado).</p>
+<p>Um gerente que abre a aba vê apenas o aviso de que os servidores MCP são cadastrados e escolhidos por um administrador.</p>
+
+<h2 id="cadastrar">Adicionar um servidor</h2>
+<figure class="print media">
+  <img src="img/ia-mcp-adicionar.png" alt="Janela Adicionar servidor MCP com nome, endereço, credencial e como a credencial é enviada" loading="lazy">
+  <figcaption>A janela “Adicionar servidor MCP”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome do servidor.</strong> Por exemplo <em>ERP da loja</em> (3 a 60 caracteres, único na organização).</li>
+  <li><strong>Endereço do servidor.</strong> Só <code>https://</code>, público e sem usuário e senha. Costuma terminar em <code>/mcp</code>.</li>
+  <li><strong>Credencial (se o servidor pedir).</strong> A “senha” que o fornecedor deu. Fica guardada cifrada e nunca é mostrada de novo (só “credencial …xxxx”).</li>
+  <li><strong>Como a credencial é enviada.</strong> <em>Authorization: Bearer</em> (o mais comum) ou <em>Outro cabeçalho</em>, informando o nome (por exemplo <code>X-API-Key</code>); neste caso o valor vai sem “Bearer”.</li>
+</ol>
+<ol class="passos">
+  <li>Clique em <span class="ui">Adicionar servidor</span>.</li>
+  <li>Preencha os campos e clique em <span class="ui">Cadastrar e testar</span> (vira “Conectando…”).</li>
+  <li>O ZapSales conecta ao servidor e lê o cardápio. Se der certo: <em>“Conectou. N ferramenta(s) oferecida(s) pelo servidor.”</em> e o botão <span class="ui">Escolher ferramentas</span>.</li>
+</ol>
+<p>Se a conexão falhar, o servidor <strong>fica salvo</strong> e a tela diz “O servidor foi salvo, mas a conexão não deu certo.”, com a causa. Use <span class="ui">Editar</span> para corrigir e <span class="ui">Testar conexão</span> para tentar de novo. As causas mais comuns:</p>
+<table class="tabela">
+  <thead><tr><th>Mensagem</th><th>O que verificar</th></tr></thead>
+  <tbody>
+    <tr><td>O servidor recusou a credencial.</td><td>A credencial e o cabeçalho em que ela é enviada.</td></tr>
+    <tr><td>O endereço respondeu “não encontrado” (erro 404).</td><td>O caminho do servidor — costuma terminar em /mcp.</td></tr>
+    <tr><td>O endereço respondeu, mas não aceitou o pedido do protocolo MCP.</td><td>O servidor precisa falar MCP por HTTP (“Streamable HTTP”).</td></tr>
+    <tr><td>Este endereço não pode ser usado: endereços da rede interna, privada ou local são recusados por segurança.</td><td>Use o endereço público do servidor.</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>O que não é aceito.</strong><ul><li>O transporte antigo “HTTP+SSE” (endereços terminados em <code>/sse</code>); só o “Streamable HTTP”.</li><li>Servidores que exigem entrar com uma conta (OAuth): aqui a credencial é um valor colado.</li><li>Cabeçalhos reservados do protocolo (como <code>Host</code>, <code>Content-Type</code> e <code>Cookie</code>) não podem levar a credencial.</li></ul></aside>
+
+<h2 id="escolher">Escolher as ferramentas</h2>
+<p>O agente <strong>não ganha</strong> automaticamente tudo o que o servidor oferece. Você decide, ferramenta por ferramenta.</p>
+<figure class="print">
+  <img src="img/ia-mcp-escolher.png" alt="Janela Escolher ferramentas com a lista de ferramentas do servidor, caixas de seleção, efeito e a caixa Pedir aprovação" loading="lazy">
+  <figcaption>“Escolher ferramentas”: a lista lida ao vivo do servidor.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Caixa de seleção.</strong> Marque as que o agente poderá usar. Ao marcar, abrem-se as opções da ferramenta.</li>
+  <li><strong>Ferramenta que o agente ainda não consegue usar.</strong> No exemplo, a primeira ferramenta do servidor pede um campo em formato de lista ou objeto, que o agente ainda não sabe preencher. Ela aparece apagada, com o motivo.</li>
+  <li><strong>O que ela faz no outro sistema.</strong> <em>Altera dados</em> (o padrão) ou <em>Só consulta</em>. Quem decide é você: a anotação do servidor sobre ser só de leitura é uma dica, <strong>não vale como garantia</strong>.</li>
+  <li><strong>Pedir aprovação.</strong> Mesma regra de <a href="#agente-aprovacao-de-acoes">Ações que alteram dados</a>. Em “Só consulta” ela vem desmarcada.</li>
+  <li><strong>Quando o agente deve usar.</strong> Vem preenchido com a descrição do servidor (em inglês, no exemplo); você pode editar e traduzir.</li>
+  <li><strong>Salvar escolha (N).</strong> Grava; N é quantas ferramentas estão marcadas.</li>
+</ol>
+<ol class="passos">
+  <li>No cartão do servidor, clique em <span class="ui">Escolher ferramentas</span>. A janela consulta o servidor ao vivo (“Conectando ao servidor e lendo as ferramentas…”). Acima de 8 ferramentas há o campo <span class="ui">Buscar ferramenta…</span>.</li>
+  <li>Marque as ferramentas desejadas. Para cada uma, confirme <strong>O que ela faz no outro sistema</strong>.</li>
+  <li>Deixe <span class="ui">Pedir aprovação</span> marcada, a menos que você tenha certeza.</li>
+  <li>Clique em <span class="ui">Salvar escolha</span>. A tela confirma “Escolha salva.”.</li>
+  <li>Abra o agente, e no grupo <strong>Ferramentas externas</strong> do seletor (aba Configuração, cartão “O que o agente pode fazer”) marque as ferramentas. Elas têm o selo <em>Servidor MCP</em>. Salve e <a href="#agentes--publicar">publique</a>.</li>
+</ol>
+<aside class="nota perigo"><strong>Cuidado com “Altera dados” nas ferramentas do servidor.</strong><p>Quando uma ferramenta não é marcada como “Só consulta”, o sistema trata-a como <strong>ação que altera dados</strong> e pede aprovação. Desligar essa proteção significa que o agente executa sozinho assim que decidir usá-la; a tela avisa: “Sem aprovação, o agente executa esta ação sozinho assim que decidir usá-la.”.</p></aside>
+<h3 id="mudou">Quando o servidor muda</h3>
+<p>A definição da ferramenta que você escolheu fica <strong>fixada</strong>. Se o servidor mudar a descrição ou os campos, a janela mostra o selo <strong>Mudou no servidor</strong>, e o agente <strong>segue com a definição antiga</strong> até você abrir a janela e salvar de novo. Se a ferramenta sumiu, aparece <strong>O servidor não oferece mais</strong>. A lista não fica guardada: é lida ao vivo toda vez que a janela abre.</p>
+<h3 id="nao-suportada">Ferramentas que o agente ainda não usa</h3>
+<p>Algumas ferramentas aparecem desabilitadas com “O agente ainda não consegue usar esta ferramenta:” e um dos motivos: pede campos demais (o agente preenche até 10); tem um campo obrigatório que não é texto, número ou sim/não (lista ou objeto); um campo tem nome que o agente não consegue usar; ou a definição não está no formato esperado.</p>
+
+<h2 id="durante">Durante a conversa</h2>
+<ul>
+  <li>O agente chama a ferramenta com os dados que preencher, como nas outras <a href="#agente-ferramenta-webhook">ferramentas externas</a>. O prazo é de <strong>15 segundos</strong>.</li>
+  <li>A resposta do servidor é tratada como <strong>informação, nunca como ordem</strong>. Só texto volta ao agente (imagem e áudio são omitidos), e no máximo 4.000 caracteres.</li>
+  <li><strong>Consulta</strong> que falha é tentada duas vezes. <strong>Ação que altera dados</strong> é tentada uma vez só e nunca repetida, para não ser feita em dobro.</li>
+  <li>Se falhar, abre-se um aviso na <a href="#alertas">Central de avisos</a> (“A consulta «X» falhou” ou “A ação «X» falhou”), e o agente é orientado a não afirmar ao cliente o que dependia da chamada.</li>
+  <li>O teto de <strong>27 capacidades</strong> por agente é compartilhado entre as do sistema, os webhooks e as ferramentas MCP.</li>
+</ul>
+
+<h2 id="editar-apagar">Editar, desativar e apagar</h2>
+<ul>
+  <li><span class="ui">Editar</span> muda nome, endereço e credencial (há a caixa “Remover a credencial guardada”).</li>
+  <li>O interruptor <strong>Ativo / Desativado</strong> liga e desliga o servidor sem apagar nada. Com o servidor desativado, o seletor do agente avisa que o agente não usa a ferramenta até um administrador reativar.</li>
+  <li><span class="ui">Apagar</span> não é permitido se alguma ferramenta do servidor já fez parte de uma versão de agente, porque o histórico precisa dela: desative o servidor em vez de apagar.</li>
+</ul>
+
+<aside class="nota atencao"><strong>Remover a credencial ou apagar o servidor não têm volta.</strong><p>Com <span class="ui">Remover a credencial guardada</span>, um servidor que exige credencial passa a recusar as chamadas do agente até você cadastrar outra. <span class="ui">Apagar</span> remove de vez o servidor, a credencial guardada e as ferramentas escolhidas (e só é permitido enquanto nenhuma versão de agente usar uma ferramenta dele). Falhas de chamada viram avisos na Central.</p></aside>
+
+<h2 id="cuidados">Cuidados</h2>
+<ul>
+  <li>Conecte só servidores de empresas em que você confia: o agente envia a eles os dados que preencher, e o que eles responderem pode ser repetido ao cliente.</li>
+  <li>Comece com <strong>poucas ferramentas</strong> e com a aprovação ligada nas que alteram algo.</li>
+  <li>Este recurso é novo. O ZapSales avisa quando a conexão falha, mas confira o primeiro uso real na <a href="#auditoria">Auditoria</a> e na Central. Servidor, ferramenta escolhida e uso ficam registrados, sem credencial, dados enviados nem resposta.</li>
+</ul>

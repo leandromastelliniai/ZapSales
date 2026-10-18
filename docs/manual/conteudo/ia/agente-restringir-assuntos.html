@@ -1,0 +1,62 @@
+<!--meta {"id":"agente-restringir-assuntos","grupo":"ia","titulo":"Restringir os assuntos do agente","ordem":2.2,"resumo":"Faça o agente conversar só sobre o que você permitiu e responder uma frase sua para todo o resto — sem impedir o cliente de pedir uma pessoa ou de parar de receber mensagens.","palavras":["restringir assuntos","temas","assuntos permitidos","fora do assunto","fora do tema","limitar","resposta padrão","escopo","futebol","política"],"onde":"Agente de IA › Agentes › Novo agente (ou editar) › cartão Como ele se apresenta","quem":"Ligar, editar e publicar: Administrador. Gerente vê o agente só para leitura.","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Um agente de IA conversa sobre qualquer coisa, se o cliente puxar o assunto: receita de bolo, jogo de futebol, política. Para um negócio isso é perda de tempo, custo (cada resposta consome crédito da sua conta de IA) e, às vezes, risco. A chave <strong>Restringir assuntos</strong> diz ao agente: <em>“converse somente sobre estes assuntos; sobre qualquer outro, responda esta frase”</em>.</p>
+<aside class="nota info"><strong>Como a tela chama isto.</strong><p>Na tela o interruptor se chama <strong>Restringir assuntos</strong>. Você também pode ouvir falar em “temas” — é a mesma coisa.</p></aside>
+
+<h2 id="configurar">Como configurar</h2>
+<figure class="print">
+  <img src="img/ia-agente-restringir-assuntos.png" alt="Cartão Como ele se apresenta com o interruptor Restringir assuntos ligado, a lista de assuntos permitidos e a resposta para o que está fora" loading="lazy">
+  <figcaption>“Restringir assuntos” ligado, com três assuntos permitidos e a resposta para o resto.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Restringir assuntos.</strong> O interruptor. Desligado, o agente conversa livremente.</li>
+  <li><strong>Assuntos permitidos (um por linha).</strong> Escreva um assunto por linha, por exemplo <em>Horários e endereço</em>, <em>Valores de consulta</em>, <em>Como agendar</em>.</li>
+  <li><strong>Resposta para o que está fora.</strong> A frase que o agente dá quando o cliente foge dos assuntos.</li>
+</ol>
+<ol class="passos">
+  <li>Abra o agente (ou <span class="ui">Novo agente</span>) e vá ao cartão <span class="ui">Como ele se apresenta</span>.</li>
+  <li>Ligue <span class="ui">Restringir assuntos</span>.</li>
+  <li>Em <span class="ui">Assuntos permitidos</span>, escreva um assunto por linha. O contador mostra quantos você usou (<em>n/20</em>).</li>
+  <li>Em <span class="ui">Resposta para o que está fora</span>, escreva o que o agente deve dizer. Exemplo: <em>“Posso ajudar só com horários e valores. Quer falar com uma pessoa?”</em>.</li>
+  <li>Salve o rascunho, teste (veja <a href="#agente-restringir-assuntos--testar">abaixo</a>) e só então publique.</li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Campo</th><th>Limite</th><th>Se passar</th></tr></thead>
+  <tbody>
+    <tr><td>Quantidade de assuntos</td><td>20</td><td>“No máximo 20 assuntos.”</td></tr>
+    <tr><td>Tamanho de cada assunto</td><td>120 caracteres</td><td>“Cada assunto pode ter até 120 caracteres.”</td></tr>
+    <tr><td>Resposta para o que está fora</td><td>500 caracteres</td><td>“Pode ter até 500 caracteres.”</td></tr>
+  </tbody>
+</table>
+<p>Se você deixar a <strong>resposta em branco</strong>, o agente recusa com educação, no tom dele, e lembra sobre o que pode ajudar. Não existe uma frase fixa do sistema: quem escolhe a frase é você (ou o modelo pronto, que já traz uma).</p>
+<aside class="nota atencao"><strong>Ligado com a lista vazia não restringe nada.</strong><p>Se você ligar o interruptor e não escrever nenhum assunto, o agente continua livre — a tela mostra o aviso amarelo “Escreva ao menos um assunto: com a lista vazia, nada é restringido.”.</p></aside>
+
+<h2 id="modelos">Os modelos já trazem sugestões</h2>
+<p>Os <a href="#agente-perfil-e-modelos--modelos">modelos prontos</a> deixam a lista e a resposta preenchidas, mas <strong>não ligam o interruptor</strong>. Por exemplo, o modelo Agendamento sugere os assuntos <em>Marcar, remarcar e cancelar horários</em>, <em>Serviços, duração e valores</em> e <em>Endereço, como chegar e o que levar</em>, e a resposta “Eu cuido da agenda: marcar, remarcar ou cancelar horários e tirar dúvidas sobre os serviços. Para outro assunto, posso chamar alguém da equipe?”. Revise os assuntos para os da sua empresa antes de ligar.</p>
+
+<h2 id="o-que-nunca-e-barrado">O que nunca é “fora do assunto”</h2>
+<p>Mesmo com a restrição ligada, três coisas continuam funcionando:</p>
+<ul>
+  <li>O cliente <strong>pedir para falar com uma pessoa</strong>: a instrução manda o agente encaminhar o pedido (e as palavras de passagem do agente, como “falar com humano”, acionam a passagem pelo sistema).</li>
+  <li>O cliente <strong>pedir para parar de receber mensagens</strong>: o pedido é respeitado (e a pessoa é marcada para não receber mais). Essa detecção é feita pelo sistema, em código, antes de a IA responder.</li>
+  <li><strong>Cumprimentos</strong> (“oi”, “bom dia”): a instrução manda o agente tratá-los normalmente.</li>
+</ul>
+
+<h2 id="testar">Como testar</h2>
+<ol class="passos">
+  <li>Salve o agente e abra a aba <strong>Teste</strong> (ela só liga depois que existe uma versão salva).</li>
+  <li>Digite algo <strong>dentro</strong> do assunto, como “Quero marcar uma consulta amanhã de manhã”. O agente deve responder normalmente.</li>
+  <li>Digite algo <strong>fora</strong>, como “Quem ganhou o jogo de futebol ontem?”. O agente deve dar a sua resposta para o que está fora.</li>
+  <li>Digite “Quero falar com um atendente”. O agente deve chamar uma pessoa, não recusar.</li>
+</ol>
+<p>Compare também com o interruptor <strong>desligado</strong>: o mesmo agente responde livremente à pergunta de futebol. Veja mais sobre a aba em <a href="#agente-teste-e-correcao">Testar e corrigir o agente</a>.</p>
+<aside class="nota atencao"><strong>É uma instrução, não uma trava.</strong><p>A restrição funciona como uma ordem escrita para a inteligência artificial, e os modelos costumam obedecer — mas nenhuma inteligência artificial obedece 100% das vezes. O que o sistema <em>garante por código</em> é só o pedido de parar de receber mensagens e as palavras de passagem para uma pessoa; o resto depende de a IA seguir a instrução. Teste com as perguntas mais prováveis do seu público e releia as conversas reais nos primeiros dias.</p></aside>
+<aside class="nota info"><strong>Teste custa crédito.</strong><p>A aba Teste chama a IA de verdade e consome crédito da sua conta no provedor (a própria tela avisa).</p></aside>
+
+<h2 id="cuidados">Cuidados</h2>
+<ul>
+  <li>Assuntos muito genéricos (“tudo sobre a empresa”) deixam a trava frouxa. Seja específico.</li>
+  <li>A mudança só vale para quem fala com o agente <strong>depois de publicada</strong>. O histórico de versões e a janela de confirmação mostram quando “Restringir assuntos” e “Assuntos permitidos” mudaram.</li>
+  <li>Você pode desligar a qualquer momento e publicar de novo; o agente volta a conversar livremente.</li>
+</ul>
