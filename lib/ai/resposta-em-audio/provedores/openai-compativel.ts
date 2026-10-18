@@ -2,11 +2,12 @@
  * O provedor COMPATÍVEL COM A API DE FALA DA OPENAI (`POST {base}/audio/speech`).
  *
  * Serve a OpenAI e qualquer servidor que fale o mesmo contrato (um serviço de
- * voz próprio, um gateway). A base é escolhida pela ORGANIZAÇÃO, e por isso toda
- * chamada passa pela régua de destino de organização — endereço interno,
- * privado ou local é recusado e redirecionamento não é seguido
- * (`fetchParaDestinoDaOrganizacao`). A chave vai em `Authorization: Bearer`,
- * nunca na URL.
+ * voz próprio, um gateway). Quando a base é escolhida pela ORGANIZAÇÃO, toda
+ * chamada passa pela rede segura — endereço interno, privado ou local é
+ * recusado, a conexão vai só ao endereço julgado e redirecionamento não é
+ * seguido (`fetchParaDestinoDaOrganizacao`, #108). Sem endereço o destino é a
+ * OpenAI, uma constante do produto que ninguém escolheu: não há o que julgar, e
+ * o `fetch` simples basta. A chave vai em `Authorization: Bearer`, nunca na URL.
  *
  * Pede `mp3` de propósito: é o único formato que todo servidor compatível
  * entrega. A nota de voz (ogg/opus) sai da conversão que o produto já tem
@@ -30,7 +31,7 @@ export interface OpcoesOpenaiCompativel {
   /** Modelo e voz padrão da organização — o agente, quando escolhe, vence. */
   modeloPadrao?: string | null;
   vozPadrao?: string | null;
-  /** Injetável para teste. O padrão é o `fetch` com a régua de destino de organização. */
+  /** Injetável para teste. O padrão é a rede segura (endereço da organização) ou o `fetch` simples (OpenAI). */
   fetch?: FetchDeVoz;
   prazoMs?: number;
 }
@@ -41,7 +42,7 @@ export function urlDaFala(endereco: string | null | undefined): string {
 }
 
 export function criarProvedorOpenaiCompativel(o: OpcoesOpenaiCompativel): ProvedorDeVoz {
-  const fetchFn = o.fetch ?? fetchParaDestinoDaOrganizacao(fetch);
+  const fetchFn = o.fetch ?? (o.endereco?.trim() ? fetchParaDestinoDaOrganizacao() : fetch);
   return {
     id: "openai_compativel",
     async sintetizar(pedido) {

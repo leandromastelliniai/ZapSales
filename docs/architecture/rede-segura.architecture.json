@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "titulo": "Rede segura única",
-  "descricao": "Toda saída do servidor para um endereço que um usuário informou passa por UMA política: HTTPS, DNS resolvido uma vez e preso ao socket (sem janela de rebinding), endereço especial IPv4/IPv6 recusado, redirect revalidado salto a salto, prazo total e teto de bytes. Issue #88; contrato em docs/specs/rede-segura-unica.md.",
+  "descricao": "Toda saída do servidor para um endereço que um usuário informou passa por UMA política: HTTPS, DNS resolvido uma vez e preso ao socket (sem janela de rebinding), endereço especial IPv4/IPv6 recusado, redirect revalidado salto a salto, prazo e teto de bytes (total, ou por trecho quando o corpo é em fluxo). Issue #88; contrato em docs/specs/rede-segura-unica.md.",
   "lanes": [
     {
       "id": "consumidores",
@@ -80,6 +80,14 @@
       "dot": "green"
     },
     {
+      "id": "fluxo",
+      "lane": "nucleo",
+      "label": "buscarSeguroEmFluxo + fetchSeguro",
+      "sublabel": "mesma conexão presa de buscarSeguro, corpo em fluxo (SSE) · prazo de cabeçalhos + silêncio entre trechos + teto de bytes do corpo todo · fetchSeguro aceita string/URL/Request/FormData e devolve Response padrão",
+      "type": "lib",
+      "dot": "green"
+    },
+    {
       "id": "lookup",
       "lane": "nucleo",
       "label": "lookupJulgado",
@@ -129,11 +137,11 @@
     },
     {
       "id": "sdk",
-      "lane": "fora",
+      "lane": "consumidores",
       "label": "fetch do SDK de modelos (provedor personalizado)",
-      "sublabel": "fetchParaDestinoDaOrganizacao · julgamento é o da política; a conexão ainda resolve de novo",
+      "sublabel": "fetchParaDestinoDaOrganizacao · lib/automation/destinos-internos-autorizados.ts · transporte é o fetchSeguro: resolve e julga a cada chamada, conecta só no endereço julgado, 3xx vira recusa · a allowlist do motor de borda (contain) fica na frente",
       "type": "lib",
-      "dot": "red"
+      "dot": "amber"
     },
     {
       "id": "pdf",
@@ -156,6 +164,14 @@
       "lane": "prova",
       "label": "cliente.test.ts + ip.test.ts",
       "sublabel": "servidores HTTP reais em 127.0.0.1: IP privado, IPv6 especial, rebinding, redirect interno, resposta gigante e lenta",
+      "type": "tool",
+      "dot": "sky"
+    },
+    {
+      "id": "testeFluxo",
+      "lane": "prova",
+      "label": "fluxo.test.ts + fetch.test.ts + provedor-personalizado.test.ts",
+      "sublabel": "servidor real: rebinding, 1º trecho SSE antes de o servidor terminar (inclusive pelo SDK da Vercel) · teto de bytes, silêncio, cancelamento, gzip, 3xx",
       "type": "tool",
       "dot": "sky"
     },
@@ -272,8 +288,8 @@
     {
       "id": "e15",
       "from": "sdk",
-      "to": "destinos",
-      "label": "motivoDaRecusaDeDestino a cada chamada"
+      "to": "fluxo",
+      "label": "transporte, a cada chamada"
     },
     {
       "id": "e16",
@@ -313,6 +329,36 @@
     },
     {
       "id": "e22",
+      "from": "fluxo",
+      "to": "url",
+      "label": "cada salto"
+    },
+    {
+      "id": "e23",
+      "from": "fluxo",
+      "to": "resolver",
+      "label": "cada salto"
+    },
+    {
+      "id": "e24",
+      "from": "fluxo",
+      "to": "buscar",
+      "label": "compartilha a abertura da conexão"
+    },
+    {
+      "id": "e25",
+      "from": "testeFluxo",
+      "to": "fluxo",
+      "label": "prova"
+    },
+    {
+      "id": "e26",
+      "from": "testeFluxo",
+      "to": "sdk",
+      "label": "prova"
+    },
+    {
+      "id": "e27",
       "from": "testeMidia",
       "to": "midia",
       "label": "prova"
@@ -338,10 +384,16 @@
       "body": "Por endereço, nunca por nome. É o gancho da lista de destinos internos que o dono da INSTALAÇÃO autoriza e da LAN do banco externo. Uma organização nunca a recebe."
     },
     {
+      "id": "card-fluxo",
+      "tone": "green",
+      "title": "O SDK de modelos tem a conexão presa (#108)",
+      "body": "A resposta de um modelo é SSE: o transporte devolve o Response assim que os cabeçalhos chegam e lê o corpo sob demanda. O prazo total vira prazo de cabeçalhos mais silêncio máximo entre trechos, e o teto de bytes vale para o corpo inteiro, já decodificado."
+    },
+    {
       "id": "card-fora",
       "tone": "red",
       "title": "Não-ligações declaradas",
-      "body": "O SDK de modelos (SSE precisa de corpo em fluxo) e a imagem do PDF (busca o @react-pdf) julgam pela política mas não têm a conexão presa. A media_url deixou de estar aqui na #110: o servidor baixa o arquivo e o gateway só recebe a URL assinada do Storage. Detalhe e plano em docs/specs/rede-segura-unica.md."
+      "body": "A imagem do PDF (busca o @react-pdf) e o teste de conectividade do provedor personalizado (validateCustomKey) julgam pela política mas não têm a conexão presa. A media_url deixou de estar aqui na #110: o servidor baixa o arquivo e o gateway só recebe a URL assinada do Storage. Detalhe e plano em docs/specs/rede-segura-unica.md."
     }
   ]
 }

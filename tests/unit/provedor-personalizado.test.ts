@@ -14,7 +14,11 @@
  *  3. O teste de CONECTIVIDADE antes de salvar diz o que falta: código certo,
  *     frase certa, e a rede só é consultada quando o endereço tem forma de URL.
  */
-import { generateText } from "ai";
+import * as http from "node:http";
+import type { AddressInfo } from "node:net";
+
+import { createOpenAI } from "@ai-sdk/openai";
+import { APICallError, generateText, streamText } from "ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createDefaultRegistry } from "@/lib/agent-engine/edge/llm/providers";
@@ -198,22 +202,146 @@ describe("o endereço da empresa não alcança a rede interna do servidor", () =
     expect(init.redirect).toBe("manual");
   });
 
-  it("no turno do agente, cada chamada passa pela régua: interno é recusado, público segue sem redirect", async () => {
-    const interno = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
-    const guardado = fetchParaDestinoDaOrganizacao(interno);
+  it("no turno do agente, cada chamada passa pela régua: nome que resolve para dentro é recusado", async () => {
+    const espiao = vi.fn();
+    vi.stubGlobal("fetch", espiao);
+    const guardado = fetchParaDestinoDaOrganizacao();
 
     await expect(guardado("http://db/v1/chat/completions", { method: "POST" })).rejects.toThrow(
       "unsafe_url:private_ip",
     );
-    expect(interno).not.toHaveBeenCalled();
-
-    await guardado("https://gw.exemplo/v1/chat/completions", { method: "POST" });
-    expect((interno.mock.calls[0] as [string, RequestInit])[1].redirect).toBe("manual");
-
-    interno.mockResolvedValueOnce(new Response(null, { status: 307, headers: { location: "http://10.0.0.1/" } }));
-    await expect(guardado("https://gw.exemplo/v1/chat/completions", { method: "POST" })).rejects.toThrow(
-      "unsafe_url:redirect_not_followed",
+    await expect(guardado("http://virou-interno.exemplo/v1/chat/completions", { method: "POST" })).rejects.toThrow(
+      "unsafe_url:private_ip",
     );
+    expect(espiao, "o fetch global não é mais o transporte").not.toHaveBeenCalled();
+  });
+
+  describe("a conexão é do transporte seguro (#108), provada contra servidor real", () => {
+    // O loopback é exatamente o que a régua da organização recusa; o teste o
+    // libera pelo gancho `ipPermitido` de teste, e tudo o mais segue valendo.
+    const LOOPBACK = {
+      ipPermitido: (ip: string) => ip === "127.0.0.1",
+      resolver: async () => [{ address: "127.0.0.1", family: 4 }],
+    };
+    const abertos: http.Server[] = [];
+    afterEach(() => {
+      for (const srv of abertos.splice(0)) {
+        srv.closeAllConnections();
+        srv.close();
+      }
+    });
+    async function subir(tratar: http.RequestListener): Promise<string> {
+      const srv = http.createServer(tratar);
+      abertos.push(srv);
+      await new Promise<void>((ok) => srv.listen(0, "127.0.0.1", ok));
+      return `http://gw.exemplo:${(srv.address() as AddressInfo).port}/v1`;
+    }
+
+    it("o 3xx não é seguido: vira recusa, e o destino do redirect não é tocado", async () => {
+      let alcancado = false;
+      const alvo = await subir((_req, res) => {
+        alcancado = true;
+        res.end("{}");
+      });
+      const base = await subir((_req, res) => {
+        res.writeHead(307, { location: `${alvo}/x` });
+        res.end();
+      });
+
+      await expect(
+        fetchParaDestinoDaOrganizacao(undefined, LOOPBACK)(`${base}/chat/completions`, { method: "POST", body: "{}" }),
+      ).rejects.toThrow("unsafe_url:redirect_not_followed");
+      expect(alcancado).toBe(false);
+    });
+
+    it("quem envolve o transporte (a allowlist do motor de borda) recebe o transporte seguro, não o fetch global", async () => {
+      const base = await subir((_req, res) => res.end('{"ok":1}'));
+      const espiaoGlobal = vi.fn();
+      vi.stubGlobal("fetch", espiaoGlobal);
+      const vistos: string[] = [];
+
+      const f = fetchParaDestinoDaOrganizacao(
+        (transporte) => (input, init) => {
+          vistos.push(String(input));
+          return transporte(input, init);
+        },
+        LOOPBACK,
+      );
+      const res = await f(`${base}/models`);
+
+      expect(await res.json()).toEqual({ ok: 1 });
+      expect(vistos).toHaveLength(1);
+      expect(espiaoGlobal).not.toHaveBeenCalled();
+    });
+
+    it("rebinding: o nome que resolve para público na checagem e para dentro na conexão não alcança o interno", async () => {
+      const base = await subir((_req, res) => res.end("{}"));
+      let resolucoes = 0;
+      const f = fetchParaDestinoDaOrganizacao(undefined, {
+        ipPermitido: LOOPBACK.ipPermitido,
+        resolver: async () => {
+          resolucoes += 1;
+          return [{ address: resolucoes === 1 ? "127.0.0.1" : "169.254.169.254", family: 4 }];
+        },
+      });
+
+      const res = await f(`${base}/models`);
+
+      expect(res.status).toBe(200);
+      expect(resolucoes, "uma resolução só: não há segunda janela").toBe(1);
+    });
+
+    it("provedor fora do ar: o SDK vê queda de rede (retentável) e a mensagem que o classificador de falhas reconhece", async () => {
+      // Sobe um servidor só para saber uma porta livre e o fecha: a conexão é recusada.
+      const srv = http.createServer();
+      await new Promise<void>((ok) => srv.listen(0, "127.0.0.1", ok));
+      const base = `http://gw.exemplo:${(srv.address() as AddressInfo).port}/v1`;
+      await new Promise<void>((ok) => srv.close(() => ok()));
+      const modelo = createOpenAI({
+        apiKey: "sk-x",
+        baseURL: base,
+        fetch: fetchParaDestinoDaOrganizacao(undefined, LOOPBACK),
+      }).chat("gpt-x");
+
+      const erro = await generateText({ model: modelo, prompt: "oi", maxRetries: 0 }).catch((e: unknown) => e);
+
+      expect(APICallError.isInstance(erro)).toBe(true);
+      expect((erro as APICallError).isRetryable).toBe(true);
+      // `run-model-call.ts` classifica `provedor_indisponivel` por esta mensagem.
+      expect((erro as APICallError).message).toMatch(/ECONNREFUSED|fetch failed|timeout|network/i);
+    });
+
+    it("a resposta SSE de um modelo chega em fluxo pelo SDK: o 1º trecho de texto sai antes de o servidor terminar", async () => {
+      const trecho = (content: string, fim = false) =>
+        `data: ${JSON.stringify({
+          id: "c1",
+          object: "chat.completion.chunk",
+          created: 0,
+          model: "gpt-x",
+          choices: [{ index: 0, delta: fim ? {} : { role: "assistant", content }, finish_reason: fim ? "stop" : null }],
+        })}\n\n`;
+      let terminar!: () => void;
+      const base = await subir((_req, res) => {
+        res.writeHead(200, { "content-type": "text/event-stream" });
+        res.write(trecho("Olá"));
+        terminar = () => res.end(trecho(" mundo") + trecho("", true) + "data: [DONE]\n\n");
+      });
+      const modelo = createOpenAI({
+        apiKey: "sk-x",
+        baseURL: base,
+        fetch: fetchParaDestinoDaOrganizacao(undefined, LOOPBACK),
+      }).chat("gpt-x");
+
+      const { textStream } = streamText({ model: modelo, prompt: "oi", maxRetries: 0 });
+      const leitor = textStream[Symbol.asyncIterator]();
+
+      // O servidor NÃO terminou: com o corpo bufferizado esta leitura travaria.
+      expect((await leitor.next()).value).toBe("Olá");
+      terminar();
+      let resto = "";
+      for (let r = await leitor.next(); !r.done; r = await leitor.next()) resto += r.value;
+      expect(resto).toBe(" mundo");
+    });
   });
 
   it.each([
