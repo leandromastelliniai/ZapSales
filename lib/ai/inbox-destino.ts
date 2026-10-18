@@ -126,6 +126,13 @@ export const POLITICAS_DE_AVISO = {
     orientacao: "Abra a ferramenta, confira o endereço e use o botão de teste para ver o que o outro sistema responde.",
     geral: { papel: "manager", href: "/app/ai/external-tools", rotulo: "Abrir ferramentas externas" },
   },
+  // O pedido de aprovação carrega os próprios botões na Central (aprovar e recusar). O destino
+  // é só a tela das ferramentas, onde se confere o que a ferramenta faz e se desliga a chave.
+  external_tool_approval: {
+    refs: [],
+    orientacao: "Confira os dados e aprove para executar a ação, ou recuse para cancelá-la. Sem decisão no prazo, o pedido expira e o agente é avisado.",
+    geral: { papel: "manager", href: "/app/ai/external-tools", rotulo: "Abrir ferramentas externas" },
+  },
   // Mesmo par de `message_send_stuck`, para a proposta — o cron devolve a
   // rascunho sozinho, sem reenviar; quem lê decide se envia de novo.
   proposta_travada: { refs: ["proposal"], orientacao: "Confira a proposta antes de decidir se precisa enviar novamente." },

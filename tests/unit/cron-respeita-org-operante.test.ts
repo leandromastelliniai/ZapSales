@@ -58,6 +58,7 @@ const SEM_FILTRO: Record<string, string> = {
   "contact-avatars": "baixa a foto de perfil: deliberadamente não gatilhado (spec §4)",
   "contact-birthdays": "só emite contact.birthday; o consumidor (automationRulesHandler) é 'pula'",
   "contact-phones": "só consulta o transporte para achar o telefone; nenhuma mensagem ao cliente",
+  "external-tool-requests-expiry": "só expira pedido vencido e resolve o aviso interno; nenhuma chamada ao outro sistema, sem custo nem saída",
   "contact-proposals-watcher": "só expira propostas de dado vencidas; escrita interna",
   "data-retention": "retenção e expurgo: obrigação, nunca bloqueada (spec §1.3)",
   "followup-sem-agente": "só abre aviso na Central sobre fluxo sem agente; sem custo nem saída",

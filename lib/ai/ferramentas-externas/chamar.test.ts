@@ -43,6 +43,7 @@ const LIBERA_LOCAL = { politica: { permitirHttp: true, ipPermitido: () => true }
 const SEM_ESPERA = { ...LIBERA_LOCAL, dormir: async () => {} };
 
 const consulta = (url: string) => ({ slug: "consultar_estoque", url, efeito: "consulta" as const });
+const altera = (url: string) => ({ slug: "criar_pedido", url, efeito: "altera" as const });
 
 describe("chamarFerramentaExterna — a chamada de verdade", () => {
   it("assina o corpo, manda só o que o agente preencheu e devolve o que o outro sistema respondeu", async () => {
@@ -85,14 +86,61 @@ describe("chamarFerramentaExterna — a chamada de verdade", () => {
     expect(recebidos).toHaveLength(0);
   });
 
-  it("não executa ferramenta que altera dados nesta etapa", async () => {
-    const { url, recebidos } = await receptor((_r, _n, res) => res.end("{}"));
+  it("ferramenta que ALTERA executa pela mesma rota assinada, com os dados e o id de entrega fixos", async () => {
+    const { url, recebidos } = await receptor((_r, _n, res) => res.end('{"pedido":"A-1"}'));
     const r = await chamarFerramentaExterna(
-      { ferramenta: { slug: "criar_pedido", url, efeito: "altera" }, segredo: "s", argumentos: {} },
+      { ferramenta: altera(url), segredo: "s", argumentos: { produto: "camiseta" }, idDeEntrega: "11111111-2222-4333-8444-555555555555" },
       LIBERA_LOCAL,
     );
-    expect(r).toMatchObject({ ok: false, motivo: "altera_bloqueada" });
-    expect(recebidos).toHaveLength(0);
+    expect(r).toMatchObject({ ok: true, httpStatus: 200, tentativas: 1 });
+    expect(recebidos).toHaveLength(1);
+    // O receptor deduplica por este id: é o do PEDIDO, o mesmo se alguém tentar de novo.
+    expect(recebidos[0]!.headers["x-webhook-delivery"]).toBe("11111111-2222-4333-8444-555555555555");
+    expect(JSON.parse(recebidos[0]!.corpo)).toMatchObject({ tool: "criar_pedido", delivery_id: "11111111-2222-4333-8444-555555555555" });
+  });
+
+  it("NUNCA repete uma chamada que altera: 5xx dá UMA tentativa e o desfecho fica incerto", async () => {
+    const { url, recebidos } = await receptor((_r, _n, res) => {
+      res.statusCode = 503;
+      res.end("fora do ar");
+    });
+    const r = await chamarFerramentaExterna({ ferramenta: altera(url), segredo: "s", argumentos: {} }, SEM_ESPERA);
+    expect(r).toMatchObject({ ok: false, motivo: "erro_do_outro_sistema", httpStatus: 503, tentativas: 1, desfechoIncerto: true });
+    expect(recebidos).toHaveLength(1);
+  });
+
+  it("alteração sem resposta (prazo estourado) também é incerta e não é repetida", async () => {
+    const { url, recebidos } = await receptor(() => {
+      /* nunca responde */
+    });
+    const r = await chamarFerramentaExterna(
+      { ferramenta: altera(url), segredo: "s", argumentos: {} },
+      { ...SEM_ESPERA, timeoutMs: 150 },
+    );
+    expect(r).toMatchObject({ ok: false, motivo: "timeout", tentativas: 1, desfechoIncerto: true });
+    expect(recebidos).toHaveLength(1);
+  });
+
+  it("recusa clara do outro sistema (4xx) é certa: nada foi alterado", async () => {
+    const { url } = await receptor((_r, _n, res) => {
+      res.statusCode = 422;
+      res.end("dados inválidos");
+    });
+    const r = await chamarFerramentaExterna({ ferramenta: altera(url), segredo: "s", argumentos: {} }, SEM_ESPERA);
+    expect(r).toMatchObject({ ok: false, motivo: "recusada_pelo_outro_sistema", desfechoIncerto: false });
+  });
+
+  it("endereço recusado pela política e chave ausente não saem da máquina: desfecho certo", async () => {
+    const semChave = await chamarFerramentaExterna(
+      { ferramenta: altera("https://erp.exemplo.com/h"), segredo: null, argumentos: {} },
+      SEM_ESPERA,
+    );
+    expect(semChave).toMatchObject({ ok: false, motivo: "segredo_indisponivel", desfechoIncerto: false });
+    const interno = await chamarFerramentaExterna(
+      { ferramenta: altera("https://127.0.0.1/x"), segredo: "s", argumentos: {} },
+      { dormir: async () => {} },
+    );
+    expect(interno).toMatchObject({ ok: false, motivo: "recusada_pela_politica", desfechoIncerto: false });
   });
 
   it("repete a CONSULTA uma vez quando o outro sistema falha (5xx) e usa o mesmo id de entrega", async () => {
@@ -229,6 +277,7 @@ describe("resultadoParaOAgente — o resultado é DADO, nunca instrução", () =
       httpStatus: null,
       tentativas: 2,
       duracaoMs: 16_000,
+      desfechoIncerto: true,
     });
     expect(r.ok).toBe(false);
     if (r.ok === false) {
@@ -237,5 +286,27 @@ describe("resultadoParaOAgente — o resultado é DADO, nunca instrução", () =
       // Nada de endereço, cabeçalho ou assinatura no que o modelo lê.
       expect(JSON.stringify(r)).not.toMatch(/https?:\/\//);
     }
+  });
+
+  it("falha INCERTA de ação que altera: nem afirma que foi feita, nem que não foi", () => {
+    const r = resultadoParaOAgente(
+      { ok: false, motivo: "timeout", httpStatus: null, tentativas: 1, duracaoMs: 8_000, desfechoIncerto: true },
+      "altera",
+    );
+    expect(r.ok).toBe(false);
+    if (r.ok === false) {
+      expect(r.error.message).toMatch(/não foi possível confirmar/i);
+      expect(r.error.message).toMatch(/não afirme/i);
+      expect(r.error.message).toMatch(/não tente de novo/i);
+    }
+  });
+
+  it("falha CERTA de ação que altera: a ação não foi feita", () => {
+    const r = resultadoParaOAgente(
+      { ok: false, motivo: "recusada_pelo_outro_sistema", httpStatus: 422, tentativas: 1, duracaoMs: 30, desfechoIncerto: false },
+      "altera",
+    );
+    expect(r.ok).toBe(false);
+    if (r.ok === false) expect(r.error.message).toMatch(/não foi (feita|realizada)/i);
   });
 });

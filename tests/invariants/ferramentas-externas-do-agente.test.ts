@@ -12,11 +12,11 @@
  *   - ISOLAMENTO entre duas organizações (mesmo identificador, uma linha cada), e a
  *     leitura com o filtro da organização A não vê a linha da B — o filtro à mão é a
  *     única cerca do service role;
- *   - "ALTERA DADOS" só existe INATIVA (a terceira trava, depois da rota e do motor);
+ *   - "ALTERA DADOS" já pode existir ATIVA (0552, #95): a proteção é o pedido de aprovação;
  *   - a coluna nova da VERSÃO é coberta pela trava de imutabilidade (versão publicada
  *     não muda de ferramentas por baixo) e o aviso `external_tool_failed` entra na
  *     Central, UM aberto por ferramenta;
- *   - o motor só carrega o que está ATIVO e é CONSULTA, e só da organização do turno.
+ *   - o motor só carrega o que está ATIVO, e só da organização do turno.
  */
 import { randomUUID } from "node:crypto";
 
@@ -125,12 +125,14 @@ describe("os CHECKs do cadastro", () => {
     expect(erro).toContain("agent_external_tools_effect_check");
   });
 
-  it('"altera dados" só pode existir INATIVA nesta etapa (terceira trava)', () => {
-    const ativa = erroDe(ferramenta(dono, "altera_ativa", { efeito: "altera", ativa: true }));
-    expect(ativa).not.toBeNull();
-    expect(ativa).toContain("agent_external_tools_altera_so_inativa");
-    // Controle: inativa passa — o vocabulário já tem o valor que a etapa da aprovação vai ligar.
-    expect(erroDe(ferramenta(dono, "altera_inativa", { efeito: "altera", ativa: false }))).toBeNull();
+  it("\"altera dados\" pode existir ATIVA (a trava provisória da 0551 saiu na 0552)", () => {
+    // A constraint `agent_external_tools_altera_so_inativa` era o chão da etapa só de consulta; a
+    // etapa da aprovação a retira. A proteção passou a ser o pedido de aprovação, medido em
+    // `pedidos-de-acao-externa.test.ts`.
+    expect(erroDe(ferramenta(dono, "altera_ativa", { efeito: "altera", ativa: true }))).toBeNull();
+    expect(
+      sql(`select count(*) from pg_constraint where conname = 'agent_external_tools_altera_so_inativa';`).trim(),
+    ).toBe("0");
   });
 
   it("recusa identificador fora do padrão e campos demais", () => {
@@ -175,15 +177,17 @@ describe("isolamento entre organizações", () => {
     expect(erro).toMatch(/duplicate key|agent_external_tools_org_slug_uk/);
   });
 
-  it("o motor carrega só o que é DA organização do turno, ATIVO e CONSULTA", async () => {
+  it("o motor carrega só o que é DA organização do turno e ATIVO (consulta e ação que altera)", async () => {
     const inativa = randomUUID();
     const altera = randomUUID();
     sql(`
       ${ferramenta(orgA, "desativada", { id: inativa, ativa: false })}
-      ${ferramenta(orgA, "muda_algo", { id: altera, efeito: "altera", ativa: false })}
+      ${ferramenta(orgA, "muda_algo", { id: altera, efeito: "altera", ativa: true })}
     `);
     const doTurnoA = await carregarFerramentasDoTurno(pool, orgA, [idA, idB, inativa, altera]);
-    expect(doTurnoA.map((f) => f.id)).toEqual([idA]);
+    // A ferramenta que ALTERA e está ativa também é carregada: o que a segura é o pedido de aprovação.
+    expect(doTurnoA.map((f) => f.id).sort()).toEqual([idA, altera].sort());
+    expect(doTurnoA.find((f) => f.id === altera)).toMatchObject({ effect: "altera", requireApproval: null, approvalTtlHours: 24 });
     // O id da B, citado por um turno da A, não vaza: só a organização do turno responde.
     const doTurnoB = await carregarFerramentasDoTurno(pool, orgB, [idA, idB]);
     expect(doTurnoB.map((f) => f.id)).toEqual([idB]);

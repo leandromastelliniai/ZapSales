@@ -15,9 +15,9 @@ import { z } from "zod";
 import {
   EFEITOS_DA_FERRAMENTA,
   LIMITES_DA_FERRAMENTA,
-  MOTIVO_DO_BLOQUEIO_DE_ALTERACAO,
   PREFIXO_DO_NOME_NO_AGENTE,
   TIPOS_DE_PARAMETRO,
+  VALIDADE_DO_PEDIDO_HORAS,
   type ParametroDaFerramenta,
 } from "./tipos";
 
@@ -101,9 +101,20 @@ export const urlDaFerramentaSchema = z
     }
   }, "Informe um endereço completo que comece com https:// e sem usuário e senha.");
 
-const efeitoSchema = z
-  .enum(EFEITOS_DA_FERRAMENTA)
-  .refine((efeito) => efeito === "consulta", { message: MOTIVO_DO_BLOQUEIO_DE_ALTERACAO });
+const efeitoSchema = z.enum(EFEITOS_DA_FERRAMENTA);
+
+/**
+ * A chave «pedir aprovação». AUSENTE quer dizer «o padrão do efeito»: ação que altera
+ * pede, consulta não. `true`/`false` é uma decisão explícita de quem cadastra — e só
+ * a rota de manager+ a recebe, nunca o modelo.
+ */
+const pedirAprovacaoSchema = z.boolean();
+/** Horas que o pedido espera por um humano. Ausente = o padrão da casa (24 h). */
+const validadeSchema = z
+  .number()
+  .int()
+  .min(VALIDADE_DO_PEDIDO_HORAS.min)
+  .max(VALIDADE_DO_PEDIDO_HORAS.max);
 
 const camposDeCadastro = {
   nome: z.string().trim().min(LIMITES_DA_FERRAMENTA.nome.min).max(LIMITES_DA_FERRAMENTA.nome.max),
@@ -113,7 +124,12 @@ const camposDeCadastro = {
 };
 
 export const criarFerramentaSchema = z
-  .object({ ...camposDeCadastro, efeito: efeitoSchema.default("consulta") })
+  .object({
+    ...camposDeCadastro,
+    efeito: efeitoSchema.default("consulta"),
+    pedir_aprovacao: pedirAprovacaoSchema.optional(),
+    validade_horas: validadeSchema.optional(),
+  })
   .strict();
 export type CriarFerramentaInput = z.infer<typeof criarFerramentaSchema>;
 
@@ -124,6 +140,8 @@ export const editarFerramentaSchema = z
     url: camposDeCadastro.url.optional(),
     parametros: camposDeCadastro.parametros.optional(),
     efeito: efeitoSchema.optional(),
+    pedir_aprovacao: pedirAprovacaoSchema.optional(),
+    validade_horas: validadeSchema.optional(),
     ativa: z.boolean().optional(),
   })
   .strict()

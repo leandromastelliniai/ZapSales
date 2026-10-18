@@ -3,15 +3,16 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
  * AS FERRAMENTAS EXTERNAS DO AGENTE (Agente de IA › Ferramentas externas) — issue #94.
  *
  *   GET  — a lista da organização, sem nenhuma chave (só os 4 últimos caracteres). Manager.
- *   POST — cadastra um webhook de CONSULTA. Manager. A chave de assinatura nasce aqui e
+ *   POST — cadastra um webhook: de CONSULTA ou de AÇÃO que altera algo no outro sistema. Manager. A chave de assinatura nasce aqui e
  *          volta em claro UMA vez, no corpo desta resposta (`signing_secret`); depois
  *          disso só a tela "nova chave" a troca.
  *
  * A organização vem da sessão, nunca do corpo (o schema é `strict` e recusa
  * `organization_id`). O endereço passa pela rede segura única ANTES de gravar —
- * `https`, público, nunca da rede interna — e de novo a cada chamada. "Altera dados"
- * é recusado com o motivo escrito: ferramenta que muda algo no outro sistema depende
- * da etapa de aprovação.
+ * `https`, público, nunca da rede interna — e de novo a cada chamada. «Altera dados»
+ * é aceito (issue #95) e nasce com «pedir aprovação» no PADRÃO DO EFEITO: ação que altera
+ * pede aprovação a menos que quem cadastra desligue a chave de propósito (`pedir_aprovacao:
+ * false`). Só manager+ chega aqui; o modelo nunca escolhe a chave.
  *
  * `Idempotency-Key` (uuid, TTL 24h) é aceito. O recibo guardado e reenviado NÃO leva a
  * chave de assinatura: ela só viaja na primeira resposta, e quem a perdeu pede outra.
@@ -79,9 +80,6 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
   const parsed = criarFerramentaSchema.safeParse(raw);
   if (!parsed.success) {
-    // "Altera dados" tem resposta própria: o motivo escrito, em vez de "campos inválidos".
-    const altera = parsed.error.issues.find((i) => i.path[0] === "efeito");
-    if (altera) return fail("external_tool_mutating_blocked", t(altera.message), 422, { requestId });
     return fail("validation_failed", t("Confira os campos da ferramenta: algum valor está fora do permitido."), 422, {
       requestId,
       details: parsed.error.flatten(),
@@ -132,6 +130,9 @@ export async function POST(req: NextRequest): Promise<Response> {
       metadata: {
         slug: criada.ferramenta.slug,
         effect: criada.ferramenta.effect,
+        // A decisão de quem cadastra: `null` = o padrão do efeito (altera pede aprovação).
+        require_approval: criada.ferramenta.require_approval,
+        approval_ttl_hours: criada.ferramenta.approval_ttl_hours,
         host: new URL(criada.ferramenta.url).host,
         parameters: criada.ferramenta.parameters.length,
       },

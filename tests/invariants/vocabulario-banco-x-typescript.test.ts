@@ -88,6 +88,22 @@ const PARES: Array<{
     simbolo: "EFEITOS_DA_FERRAMENTA",
   },
   {
+    tabela: "agent_external_tool_requests",
+    coluna: "status",
+    // lib/ai/ferramentas-externas/tipos.ts → ESTADOS_DO_PEDIDO (0552, aprovação das ações
+    // externas, #95). Um estado que entrasse só no banco seria um pedido que a Central e o
+    // agente não sabem ler; um só no TypeScript, um UPDATE que bate no CHECK (23514) na hora
+    // de aprovar.
+    arquivo: "lib/ai/ferramentas-externas/tipos.ts",
+    simbolo: "ESTADOS_DO_PEDIDO",
+  },
+  {
+    tabela: "agent_external_tool_requests",
+    coluna: "origin",
+    arquivo: "lib/ai/ferramentas-externas/tipos.ts",
+    simbolo: "ORIGENS_DO_PEDIDO",
+  },
+  {
     tabela: "extension_operations",
     coluna: "kind",
     // O recibo das extensões (0271). Quatro cópias no TypeScript viraram uma; um kind

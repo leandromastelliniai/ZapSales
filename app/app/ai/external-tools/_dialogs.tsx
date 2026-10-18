@@ -22,11 +22,13 @@ import { apiClient } from "@/lib/api/client";
 import { copyToClipboard } from "@/lib/clipboard";
 import { urlDaFerramentaSchema } from "@/lib/ai/ferramentas-externas/esquema";
 import type { FerramentaExterna } from "@/lib/ai/ferramentas-externas/repositorio";
+import { decidirSePedeAprovacao } from "@/lib/ai/ferramentas-externas/aprovacao";
 import {
   LIMITES_DA_FERRAMENTA,
-  MOTIVO_DO_BLOQUEIO_DE_ALTERACAO,
   ROTULO_DO_TIPO,
   TIPOS_DE_PARAMETRO,
+  VALIDADE_DO_PEDIDO_HORAS,
+  type EfeitoDaFerramenta,
   type ParametroDaFerramenta,
   type TipoDeParametro,
 } from "@/lib/ai/ferramentas-externas/tipos";
@@ -79,6 +81,11 @@ function Formulario({ editando, onFechar, onSalvo }: FormularioProps) {
   const [campos, setCampos] = useState<CampoDoFormulario[]>(
     editando?.parameters.map((p) => ({ ...p })) ?? [],
   );
+  const [efeito, setEfeito] = useState<EfeitoDaFerramenta>(editando?.effect ?? "consulta");
+  // `null` = a pessoa nunca mexeu na chave: vale o padrão do efeito (altera pede aprovação).
+  const [pedirAprovacao, setPedirAprovacao] = useState<boolean | null>(editando?.require_approval ?? null);
+  const [validade, setValidade] = useState(String(editando?.approval_ttl_hours ?? VALIDADE_DO_PEDIDO_HORAS.padrao));
+  const pede = decidirSePedeAprovacao({ effect: efeito, requireApproval: pedirAprovacao, modo: "ao_vivo" }).pede;
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   // Um clique duplo no "Salvar" reenvia a MESMA chave: o servidor cria uma ferramenta só.
@@ -104,6 +111,9 @@ function Formulario({ editando, onFechar, onSalvo }: FormularioProps) {
       if (c.descricao.trim().length < LIMITES_DA_FERRAMENTA.descricaoDoParametro.min)
         return t("Descreva cada campo para o agente saber o que preencher.");
     }
+    const horas = Number(validade);
+    if (pede && (!Number.isInteger(horas) || horas < VALIDADE_DO_PEDIDO_HORAS.min || horas > VALIDADE_DO_PEDIDO_HORAS.max))
+      return t("A validade do pedido é de 1 a 168 horas.");
     return null;
   }
 
@@ -116,6 +126,10 @@ function Formulario({ editando, onFechar, onSalvo }: FormularioProps) {
       quando_usar: quandoUsar.trim(),
       url: url.trim(),
       parametros: campos.map<ParametroDaFerramenta>((c) => ({ ...c, descricao: c.descricao.trim() })),
+      efeito,
+      // Só vai a escolha EXPLÍCITA; sem ela o servidor guarda «padrão do efeito».
+      ...(pedirAprovacao !== null ? { pedir_aprovacao: pedirAprovacao } : {}),
+      ...(pede ? { validade_horas: Number(validade) } : {}),
     };
     setSalvando(true);
     try {
@@ -288,19 +302,78 @@ function Formulario({ editando, onFechar, onSalvo }: FormularioProps) {
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">{t("O que a ferramenta faz no outro sistema")}</legend>
         <label className="flex items-start gap-2 text-sm">
-          <input type="radio" name="ft-efeito" checked readOnly className="mt-1 accent-primary" />
+          <input
+            type="radio"
+            name="ft-efeito"
+            value="consulta"
+            checked={efeito === "consulta"}
+            onChange={() => setEfeito("consulta")}
+            className="mt-1 accent-primary"
+          />
           <span>
             <strong>{t("Só consulta")}</strong> — {t("lê uma informação e devolve ao agente. Não muda nada lá.")}
           </span>
         </label>
-        <label className="flex items-start gap-2 text-sm opacity-60">
-          <input type="radio" name="ft-efeito" disabled className="mt-1" aria-describedby="ft-altera-motivo" />
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="radio"
+            name="ft-efeito"
+            value="altera"
+            checked={efeito === "altera"}
+            onChange={() => setEfeito("altera")}
+            className="mt-1 accent-primary"
+          />
           <span>
             <strong>{t("Altera dados")}</strong> — {t("cria, muda ou apaga algo no outro sistema.")}
           </span>
         </label>
-        <p id="ft-altera-motivo" data-testid="motivo-altera-bloqueada" className="text-xs text-info-fg">
-          {t(MOTIVO_DO_BLOQUEIO_DE_ALTERACAO)}
+      </fieldset>
+
+      <fieldset className="space-y-2 rounded-md border border-border/60 p-3" data-testid="aprovacao-da-ferramenta">
+        <legend className="px-1 text-sm font-medium">{t("Aprovação antes de executar")}</legend>
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={pede}
+            onChange={(e) => setPedirAprovacao(e.target.checked)}
+            className="mt-1 h-4 w-4 rounded-md border-border accent-primary"
+            data-testid="pedir-aprovacao"
+          />
+          <span>
+            <strong>{t("Pedir aprovação")}</strong> —{" "}
+            {t("o agente só executa depois que uma pessoa aprovar na Central de avisos, uma única vez.")}
+          </span>
+        </label>
+        {pede ? (
+          <div className="space-y-1.5 pl-6">
+            <Label htmlFor="ft-validade" className="text-xs">
+              {t("Se ninguém decidir, o pedido expira em (horas)")}
+            </Label>
+            <Input
+              id="ft-validade"
+              type="number"
+              inputMode="numeric"
+              min={VALIDADE_DO_PEDIDO_HORAS.min}
+              max={VALIDADE_DO_PEDIDO_HORAS.max}
+              step={1}
+              className="w-28"
+              value={validade}
+              onChange={(e) => setValidade(e.target.value)}
+              data-testid="validade-do-pedido"
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("O pedido aparece na Central de avisos com o que o agente quer fazer e os dados que ele preencheu.")}
+            </p>
+          </div>
+        ) : efeito === "altera" ? (
+          <p role="alert" data-testid="aviso-sem-aprovacao" className="pl-6 text-xs text-warning-fg">
+            {t(
+              "Sem aprovação, o agente executa esta ação sozinho assim que decidir usá-la. Se o outro sistema não responder, a ação não é repetida — para nunca ser feita em dobro.",
+            )}
+          </p>
+        ) : null}
+        <p className="pl-6 text-xs text-muted-foreground">
+          {t("Com o agente em modo Assistido, toda ferramenta externa espera aprovação, qualquer que seja esta chave.")}
         </p>
       </fieldset>
 
@@ -461,6 +534,14 @@ function CorpoDoTeste({ ferramenta, onFechar }: { ferramenta: FerramentaExterna;
     <div className="space-y-4">
       <p className="text-sm font-medium">{ferramenta.name}</p>
 
+      {ferramenta.effect === "altera" ? (
+        <p role="alert" data-testid="aviso-altera-teste" className="rounded-md border border-warning/40 bg-warning-bg p-2 text-xs text-warning-fg">
+          {t(
+            "Esta ferramenta ALTERA dados no outro sistema. Chamar agora faz a alteração de verdade, com os dados de exemplo — sem pedir aprovação, porque quem clica aqui é você.",
+          )}
+        </p>
+      ) : null}
+
       {ferramenta.parameters.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("Esta ferramenta não tem campos: a chamada vai sem dados.")}</p>
       ) : (
@@ -540,7 +621,7 @@ function CorpoDoTeste({ ferramenta, onFechar }: { ferramenta: FerramentaExterna;
           {t("Fechar")}
         </Button>
         <Button type="button" disabled={executando} onClick={() => void executar()} data-testid="executar-teste">
-          {executando ? t("Chamando…") : t("Chamar agora")}
+          {executando ? t("Chamando…") : ferramenta.effect === "altera" ? t("Executar de verdade") : t("Chamar agora")}
         </Button>
       </DialogFooter>
     </div>

@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/lib/api/client";
 import { useT } from "@/hooks/i18n/useT";
+import { decidirSePedeAprovacao } from "@/lib/ai/ferramentas-externas/aprovacao";
 import type { FerramentaExterna } from "@/lib/ai/ferramentas-externas/repositorio";
 
 interface Props {
@@ -29,7 +30,7 @@ interface Props {
 /** O que a rota serve — o tipo do repositório, sem puxar o módulo de servidor para o browser. */
 type FerramentaDaLista = Pick<
   FerramentaExterna,
-  "id" | "name" | "agent_name" | "when_to_use" | "url" | "effect" | "active"
+  "id" | "name" | "agent_name" | "when_to_use" | "url" | "effect" | "require_approval" | "active"
 >;
 
 function enderecoCurto(url: string): string {
@@ -67,7 +68,7 @@ export function FerramentasExternasDoSeletor({ value, onChange, semVagas, disabl
         <h4 className="text-sm font-medium">{t("Ferramentas externas")}</h4>
         <p className="text-xs text-muted-foreground">
           {t(
-            "Consultas a outro sistema (estoque, planilha, ERP) que o agente faz durante a conversa. Só aparecem aqui as que você cadastrou em Ferramentas externas.",
+            "Consultas e ações em outro sistema (estoque, planilha, ERP) que o agente faz durante a conversa. Só aparecem aqui as que você cadastrou em Ferramentas externas.",
           )}
         </p>
       </div>
@@ -89,8 +90,14 @@ export function FerramentasExternasDoSeletor({ value, onChange, semVagas, disabl
         <div className="space-y-1">
           {ferramentas.map((f) => {
             const marcada = value.includes(f.id);
-            // Desativada ou que altera dados: só dá para DESMARCAR (a rota e o motor recusam o resto).
-            const naoLiga = !f.active || f.effect !== "consulta";
+            // Desativada: só dá para DESMARCAR. A que altera dados pode ser ligada — o que a segura é
+            // o pedido de aprovação, na hora da chamada.
+            const naoLiga = !f.active;
+            const pedeAprovacao = decidirSePedeAprovacao({
+              effect: f.effect,
+              requireApproval: f.require_approval,
+              modo: "ao_vivo",
+            }).pede;
             return (
               <label
                 key={f.id}
@@ -114,6 +121,11 @@ export function FerramentasExternasDoSeletor({ value, onChange, semVagas, disabl
                     <Badge variant="outline" className="text-[11px] border-border/60 text-muted-foreground">
                       {f.effect === "consulta" ? t("Só consulta") : t("Altera dados")}
                     </Badge>
+                    {pedeAprovacao ? (
+                      <Badge variant="outline" className="text-[11px] border-border/60 text-muted-foreground">
+                        {t("Pede aprovação")}
+                      </Badge>
+                    ) : null}
                     {!f.active ? (
                       <Badge variant="outline" className="text-[11px] border-warning/40 text-warning-fg">
                         {t("Desativada")}

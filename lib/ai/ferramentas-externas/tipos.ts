@@ -11,10 +11,11 @@
 /**
  * O que a ferramenta faz com o outro sistema.
  *
- *  - `consulta` — só lê. Pode ter nova tentativa limitada e roda sem aprovação.
- *  - `altera`   — muda algo lá. NÃO pode ser ativada nesta etapa: o motivo está
- *    em `MOTIVO_DO_BLOQUEIO_DE_ALTERACAO` e a trava mora no servidor (rota) e no
- *    motor (turno), não só na tela. Entra quando a aprovação existir.
+ *  - `consulta` — só lê. Pode ter nova tentativa limitada e, por padrão, roda sem aprovação.
+ *  - `altera`   — muda algo lá (criar pedido, cadastrar). Nasce com «pedir aprovação»
+ *    LIGADA: nada altera o mundo sem um humano, a menos que quem cadastra desligue a
+ *    chave de propósito. Nunca é repetida automaticamente (envio em dobro é pior que
+ *    não-envio) e, no modo Assistido, espera aprovação qualquer que seja a chave.
  */
 export const EFEITOS_DA_FERRAMENTA = ["consulta", "altera"] as const;
 export type EfeitoDaFerramenta = (typeof EFEITOS_DA_FERRAMENTA)[number];
@@ -34,10 +35,6 @@ export const ROTULO_DO_EFEITO: Record<EfeitoDaFerramenta, string> = {
   consulta: "Só consulta",
   altera: "Altera dados",
 };
-
-/** Por que "altera dados" fica bloqueado. É frase de tela: diz o que fazer. */
-export const MOTIVO_DO_BLOQUEIO_DE_ALTERACAO =
-  "Ferramentas que alteram dados no outro sistema ainda não podem ser ligadas: elas precisam da etapa de aprovação, para o agente nunca executar sozinho uma ação errada. Por enquanto, cadastre só consultas.";
 
 export interface ParametroDaFerramenta {
   nome: string;
@@ -76,7 +73,6 @@ export const LIMITES_DA_CHAMADA = {
 
 /** Por que uma chamada não deu certo. Vocabulário fechado: vai para a Central e para a auditoria. */
 export const MOTIVOS_DE_FALHA = [
-  "altera_bloqueada",
   "recusada_pela_politica",
   "segredo_indisponivel",
   "timeout",
@@ -88,9 +84,20 @@ export const MOTIVOS_DE_FALHA = [
 ] as const;
 export type MotivoDeFalha = (typeof MOTIVOS_DE_FALHA)[number];
 
+/**
+ * Os motivos em que a chamada NEM SAIU da máquina ou o outro sistema recusou de forma
+ * clara (4xx): nada foi alterado lá. Todo o resto — prazo estourado, queda de rede, 5xx,
+ * resposta cortada, redirecionamento — deixa o desfecho INCERTO: o outro sistema pode
+ * ter feito a alteração e a resposta se perdeu. Incerto não se repete sozinho.
+ */
+export const MOTIVOS_DE_FALHA_CERTA: ReadonlySet<MotivoDeFalha> = new Set<MotivoDeFalha>([
+  "recusada_pela_politica",
+  "segredo_indisponivel",
+  "recusada_pelo_outro_sistema",
+]);
+
 /** A frase, sem jargão, do que aconteceu. Quem lê é o dono do negócio. */
 export const FRASE_DA_FALHA: Record<MotivoDeFalha, string> = {
-  altera_bloqueada: MOTIVO_DO_BLOQUEIO_DE_ALTERACAO,
   recusada_pela_politica:
     "O endereço da ferramenta foi recusado por segurança (precisa ser HTTPS e público, nunca da rede interna).",
   segredo_indisponivel:
@@ -116,3 +123,47 @@ export function fraseDaRecusaDeEndereco(codigo: string): string {
   }
   return "Este endereço não pode ser usado: endereços da rede interna, privada ou local são recusados por segurança.";
 }
+
+// ─── O pedido de aprovação (issue #95) ───────────────────────────────────────
+
+/**
+ * A vida de um pedido de execução. Vocabulário fechado, igual ao CHECK de
+ * `agent_external_tool_requests.status` (vigiado por
+ * `tests/invariants/vocabulario-banco-x-typescript.test.ts`).
+ *
+ *  - `pending`   — espera um humano na Central. Nada foi enviado.
+ *  - `executing` — alguém aprovou (ou a chave estava desligada) e a chamada está saindo.
+ *    É o estado que garante «uma única vez»: só UMA transição `pending → executing`
+ *    vence, as outras recebem 0 linhas.
+ *  - `executed`  — o outro sistema respondeu 2xx.
+ *  - `failed`    — a chamada não deu certo; `uncertain` diz se o outro sistema pode ter feito.
+ *  - `rejected`  — um humano recusou.
+ *  - `expired`   — ninguém decidiu a tempo.
+ */
+export const ESTADOS_DO_PEDIDO = ["pending", "executing", "executed", "failed", "rejected", "expired"] as const;
+export type EstadoDoPedido = (typeof ESTADOS_DO_PEDIDO)[number];
+
+/** De onde o pedido nasceu: um turno de atendimento ao vivo ou um rascunho do modo Assistido. */
+export const ORIGENS_DO_PEDIDO = ["live", "assisted"] as const;
+export type OrigemDoPedido = (typeof ORIGENS_DO_PEDIDO)[number];
+
+/** Quanto tempo um pedido espera por um humano antes de expirar (configurável por ferramenta). */
+export const VALIDADE_DO_PEDIDO_HORAS = { padrao: 24, min: 1, max: 168 } as const;
+
+export const ROTULO_DO_ESTADO: Record<EstadoDoPedido, string> = {
+  pending: "Aguardando aprovação",
+  executing: "Executando",
+  executed: "Executada",
+  failed: "Falhou",
+  rejected: "Recusada",
+  expired: "Expirada",
+};
+
+/**
+ * Quanto tempo um pedido JÁ FEITO continua valendo como resposta à MESMA chamada repetida:
+ * o executado e o de falha incerta valem por esta janela (o pendente e o em execução, enquanto
+ * vivos). Passada a janela, o cliente pode legitimamente pedir de novo. É a MESMA régua do SQL
+ * de abrir o pedido e do bloco que o agente lê — divergir faria o bloco prometer «não refaz a
+ * ação» num pedido que a repetição já refaria.
+ */
+export const JANELA_DA_REPETICAO_HORAS = 24;

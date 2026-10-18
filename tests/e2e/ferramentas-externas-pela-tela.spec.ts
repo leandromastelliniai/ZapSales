@@ -4,7 +4,7 @@
  * Issue #94 (parte da #86). O caminho de quem acabou de instalar e NÃO tem nenhuma
  * ferramenta: a tela abre dizendo que o agente ainda não consulta nenhum sistema; o
  * dono tenta cadastrar um endereço da rede interna e a tela RECUSA por segurança;
- * "Altera dados" aparece travado com o motivo escrito; cadastra uma consulta de
+ * "Altera dados" pode ser escolhido (e liga a aprovação sozinho — #95); cadastra uma consulta de
  * verdade (endereço público por IP, sem depender de DNS), vê a chave de assinatura UMA
  * vez, confere no banco que ela ficou CIFRADA e que a tela nunca mais a mostra; marca a
  * ferramenta no editor do agente (conta no teto) e a desativa.
@@ -94,9 +94,14 @@ test.describe("Ferramentas externas pela tela", () => {
       expect(gravadasAposRecusa).toBe(0);
       await captura(page, "ferramentas-02-endereco-interno-recusado");
 
-      // 3 · "Altera dados" está travado, com o motivo escrito (a etapa da aprovação ainda não existe).
-      await expect(formulario.getByLabel(/Altera dados/)).toBeDisabled();
-      await expect(page.getByTestId("motivo-altera-bloqueada")).toContainText("etapa de aprovação");
+      // 3 · "Altera dados" pode ser escolhido (#95) e liga «Pedir aprovação» sozinho; voltar a «Só
+      //     consulta» desliga — a escolha é do padrão do efeito, a pessoa nem precisou tocar na chave.
+      await expect(formulario.getByLabel(/Altera dados/)).toBeEnabled();
+      await expect(page.getByTestId("pedir-aprovacao")).not.toBeChecked();
+      await formulario.getByLabel(/Altera dados/).check();
+      await expect(page.getByTestId("pedir-aprovacao")).toBeChecked();
+      await formulario.getByLabel(/Só consulta/).check();
+      await expect(page.getByTestId("pedir-aprovacao")).not.toBeChecked();
 
       // 4 · Um campo que o agente preenche, e um endereço público de verdade.
       await page.getByTestId("adicionar-campo").click();

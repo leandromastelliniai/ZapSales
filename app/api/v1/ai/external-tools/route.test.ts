@@ -1,7 +1,7 @@
 /**
  * A API das ferramentas externas do agente (issue #94): a chave de assinatura aparece
  * UMA vez e nunca vai para a auditoria nem para o recibo de idempotência; a organização
- * vem da sessão; "altera dados" é recusado com o motivo escrito; endereço interno é
+ * vem da sessão; "altera dados" é aceito e a chave de aprovação é só de quem cadastra; endereço interno é
  * recusado antes de gravar; id de outra organização é 404; apagar o que uma versão
  * cita é 409; e o botão de teste chama de verdade só consulta, com dados válidos.
  */
@@ -133,13 +133,26 @@ describe("POST — cadastrar", () => {
     expect(deps.repo.criarFerramenta).not.toHaveBeenCalled();
   });
 
-  it("'altera dados' é recusado com o MOTIVO escrito e nada é gravado", async () => {
+  it("'altera dados' é aceito; sem escolha explícita a chave fica NULA (o padrão do efeito pede aprovação)", async () => {
     const res = await POST(req("POST", "/api/v1/ai/external-tools", { ...CORPO_VALIDO, efeito: "altera" }));
-    expect(res.status).toBe(422);
-    const corpo = await res.json();
-    expect(corpo.error.code).toBe("external_tool_mutating_blocked");
-    expect(corpo.error.message).toContain("etapa de aprovação");
-    expect(deps.repo.criarFerramenta).not.toHaveBeenCalled();
+    expect(res.status).toBe(201);
+    expect(deps.repo.criarFerramenta).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ dados: expect.objectContaining({ efeito: "altera" }) }),
+    );
+    const dados = deps.repo.criarFerramenta.mock.calls[0]![1].dados;
+    expect(dados.pedir_aprovacao).toBeUndefined();
+  });
+
+  it("quem cadastra pode desligar a chave de propósito e escolher a validade; o corpo não vira papel nem organização", async () => {
+    const res = await POST(
+      req("POST", "/api/v1/ai/external-tools", { ...CORPO_VALIDO, efeito: "altera", pedir_aprovacao: false, validade_horas: 6 }),
+    );
+    expect(res.status).toBe(201);
+    expect(deps.repo.criarFerramenta.mock.calls[0]![1].dados).toMatchObject({ pedir_aprovacao: false, validade_horas: 6 });
+    expect(deps.role).toHaveBeenCalledWith("manager", expect.anything());
+    const fora = await POST(req("POST", "/api/v1/ai/external-tools", { ...CORPO_VALIDO, validade_horas: 500 }));
+    expect(fora.status).toBe(422);
   });
 
   it("endereço da rede interna é recusado ANTES de gravar", async () => {
@@ -234,11 +247,16 @@ describe("/:id — ler, editar, apagar", () => {
     );
   });
 
-  it("não deixa editar para 'altera dados'", async () => {
-    const res = await PATCH(req("PATCH", `/x/${ID}`, { efeito: "altera" }), ctx());
-    expect(res.status).toBe(422);
-    expect((await res.json()).error.code).toBe("external_tool_mutating_blocked");
-    expect(deps.repo.editarFerramenta).not.toHaveBeenCalled();
+  it("edita o efeito e a chave de aprovação; a auditoria guarda os NOMES dos campos, nunca os valores", async () => {
+    deps.repo.editarFerramenta.mockResolvedValue({ ...FERRAMENTA, effect: "altera", require_approval: false });
+    const res = await PATCH(req("PATCH", `/x/${ID}`, { efeito: "altera", pedir_aprovacao: false }), ctx());
+    expect(res.status).toBe(200);
+    expect(deps.audit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "ai.external_tool_updated",
+        metadata: expect.objectContaining({ fields: ["efeito", "pedir_aprovacao"] }),
+      }),
+    );
   });
 
   it("trocar o endereço passa pela rede segura de novo", async () => {

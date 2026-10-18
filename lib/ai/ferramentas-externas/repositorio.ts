@@ -36,6 +36,13 @@ export interface FerramentaExterna {
   url: string;
   parameters: ParametroDaFerramenta[];
   effect: EfeitoDaFerramenta;
+  /**
+   * A chave «pedir aprovação». `null` = a pessoa nunca mexeu: vale o padrão do efeito (altera
+   * pede, consulta não). `true`/`false` é decisão dela.
+   */
+  require_approval: boolean | null;
+  /** Horas que um pedido desta ferramenta espera por um humano (1 a 168; padrão 24). */
+  approval_ttl_hours: number;
   active: boolean;
   /** Os 4 últimos caracteres da chave de assinatura — nunca a chave. */
   secret_last4: string;
@@ -45,7 +52,7 @@ export interface FerramentaExterna {
 
 /** Tudo menos a chave cifrada: a coluna `signing_secret_encrypted` nunca é selecionada para a tela. */
 const COLUNAS_PUBLICAS =
-  "id, name, slug, when_to_use, url, parameters, effect, active, signing_secret_last4, created_at, updated_at";
+  "id, name, slug, when_to_use, url, parameters, effect, require_approval, approval_ttl_hours, active, signing_secret_last4, created_at, updated_at";
 
 interface LinhaPublica {
   id: string;
@@ -55,6 +62,8 @@ interface LinhaPublica {
   url: string;
   parameters: unknown;
   effect: string;
+  require_approval: boolean | null;
+  approval_ttl_hours: number;
   active: boolean;
   signing_secret_last4: string;
   created_at: string;
@@ -74,6 +83,8 @@ export function paraFerramenta(l: LinhaPublica): FerramentaExterna {
     url: l.url,
     parameters: parametros.success ? parametros.data : [],
     effect: (EFEITOS_DA_FERRAMENTA as readonly string[]).includes(l.effect) ? (l.effect as EfeitoDaFerramenta) : "altera",
+    require_approval: l.require_approval,
+    approval_ttl_hours: l.approval_ttl_hours,
     active: l.active,
     secret_last4: l.signing_secret_last4,
     created_at: l.created_at,
@@ -147,6 +158,9 @@ export async function criarFerramenta(
         url: input.dados.url,
         parameters: input.dados.parametros,
         effect: input.dados.efeito,
+        // Ausente = «o padrão do efeito»: a coluna fica NULA e quem decide é `decidirSePedeAprovacao`.
+        require_approval: input.dados.pedir_aprovacao ?? null,
+        ...(input.dados.validade_horas !== undefined ? { approval_ttl_hours: input.dados.validade_horas } : {}),
         active: true,
         signing_secret_encrypted: cifrada,
         signing_secret_last4: chave.slice(-4),
@@ -178,6 +192,8 @@ export async function editarFerramenta(
   if (patch.url !== undefined) mudanca.url = patch.url;
   if (patch.parametros !== undefined) mudanca.parameters = patch.parametros;
   if (patch.efeito !== undefined) mudanca.effect = patch.efeito;
+  if (patch.pedir_aprovacao !== undefined) mudanca.require_approval = patch.pedir_aprovacao;
+  if (patch.validade_horas !== undefined) mudanca.approval_ttl_hours = patch.validade_horas;
   if (patch.ativa !== undefined) mudanca.active = patch.ativa;
   // O identificador (`slug`) NÃO muda quando o nome muda: versões publicadas e o
   // histórico de chamadas o conhecem, e renomeá-lo trocaria o nome que o modelo vê
@@ -274,15 +290,13 @@ export async function lerChaveDaFerramenta(
   }
 }
 
-export type ConferenciaDaVersao =
-  | { ok: true }
-  | { ok: false; motivo: "inexistente"; ausentes: string[] }
-  | { ok: false; motivo: "altera_bloqueada"; ids: string[] };
+export type ConferenciaDaVersao = { ok: true } | { ok: false; motivo: "inexistente"; ausentes: string[] };
 
 /**
  * A conferência que o schema compartilhado com o browser não faz (é consulta
- * cross-row): cada id citado por uma versão do agente existe, é desta organização e
- * é uma CONSULTA. Quem escreve a versão (rotas e ações) chama isto antes de gravar.
+ * cross-row): cada id citado por uma versão do agente existe e é desta organização. Quem
+ * escreve a versão (rotas e ações) chama isto antes de gravar. A ferramenta que ALTERA algo
+ * pode ser citada: o que a segura é o pedido de aprovação, na hora da chamada.
  */
 export async function conferirFerramentasDaVersao(
   admin: SupabaseClient,
@@ -293,14 +307,12 @@ export async function conferirFerramentasDaVersao(
   if (unicos.length === 0) return { ok: true };
   const { data, error } = await admin
     .from("agent_external_tools")
-    .select("id, effect")
+    .select("id")
     .eq("organization_id", organizationId)
     .in("id", unicos);
   if (error) throw new Error(`conferência das ferramentas externas falhou: ${error.message}`);
-  const achadas = new Map(((data ?? []) as Array<{ id: string; effect: string }>).map((l) => [l.id, l.effect]));
+  const achadas = new Set(((data ?? []) as Array<{ id: string }>).map((l) => l.id));
   const ausentes = unicos.filter((id) => !achadas.has(id));
   if (ausentes.length > 0) return { ok: false, motivo: "inexistente", ausentes };
-  const altera = unicos.filter((id) => achadas.get(id) !== "consulta");
-  if (altera.length > 0) return { ok: false, motivo: "altera_bloqueada", ids: altera };
   return { ok: true };
 }

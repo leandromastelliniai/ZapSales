@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   criarFerramentaSchema,
+  editarFerramentaSchema,
   esquemaDeEntrada,
   nomeNoAgente,
   slugDaFerramenta,
@@ -49,10 +50,31 @@ describe("criarFerramentaSchema", () => {
     if (r.success) expect(r.data.efeito).toBe("consulta");
   });
 
-  it("recusa 'altera dados' com o motivo escrito, não com erro genérico", () => {
+  it("aceita 'altera dados'; a aprovação fica no padrão do efeito até a pessoa decidir", () => {
     const r = criarFerramentaSchema.safeParse({ ...base, efeito: "altera" });
-    expect(r.success).toBe(false);
-    if (!r.success) expect(JSON.stringify(r.error.issues)).toContain("etapa de aprovação");
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.efeito).toBe("altera");
+      // Ausente = «o padrão do efeito» (altera pede aprovação). Só uma escolha explícita muda isso.
+      expect(r.data.pedir_aprovacao).toBeUndefined();
+      expect(r.data.validade_horas).toBeUndefined();
+    }
+  });
+
+  it("guarda a escolha explícita de pedir ou não aprovação e a validade do pedido", () => {
+    const desligada = criarFerramentaSchema.safeParse({ ...base, pedir_aprovacao: false, validade_horas: 48 });
+    expect(desligada.success).toBe(true);
+    if (desligada.success) expect(desligada.data).toMatchObject({ pedir_aprovacao: false, validade_horas: 48 });
+    for (const validade_horas of [0, 169, 1.5, "24"]) {
+      expect(criarFerramentaSchema.safeParse({ ...base, validade_horas }).success, String(validade_horas)).toBe(false);
+    }
+    expect(criarFerramentaSchema.safeParse({ ...base, pedir_aprovacao: "nao" }).success).toBe(false);
+  });
+
+  it("a edição também carrega a chave, a validade e o efeito", () => {
+    expect(editarFerramentaSchema.safeParse({ pedir_aprovacao: false }).success).toBe(true);
+    expect(editarFerramentaSchema.safeParse({ validade_horas: 12 }).success).toBe(true);
+    expect(editarFerramentaSchema.safeParse({ efeito: "altera" }).success).toBe(true);
   });
 
   it("recusa endereço sem protocolo, com outro protocolo ou com usuário e senha embutidos", () => {

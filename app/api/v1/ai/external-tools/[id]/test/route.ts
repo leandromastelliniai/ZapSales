@@ -13,8 +13,11 @@ import { requireSupportWrite } from "@/lib/impersonate/support";
  * de um cliente. A resposta é sempre 200 com `ok: true|false` e a frase do que fazer —
  * o erro do outro sistema é resultado do teste, não falha da rota.
  *
- * Só consulta executa (a mesma trava do turno). A chamada leva a mesma assinatura, o
- * mesmo prazo, o mesmo teto de resposta e a mesma rede segura de uma chamada do agente.
+ * Numa ferramenta que ALTERA algo, o teste é uma alteração de verdade no outro sistema, com
+ * os dados de exemplo — por isso a tela avisa antes, e a auditoria registra o efeito. A pessoa
+ * que clica É a aprovação, então o teste não passa pelo pedido. A chamada leva a mesma
+ * assinatura, o mesmo prazo, o mesmo teto de resposta e a mesma rede segura de uma chamada do
+ * agente; ação que altera tem UMA tentativa só.
  */
 import { randomUUID } from "node:crypto";
 import { type NextRequest } from "next/server";
@@ -89,6 +92,7 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       requestId,
       metadata: {
         slug: ferramenta.slug,
+        effect: ferramenta.effect,
         ok: resultado.ok,
         http_status: resultado.httpStatus,
         attempts: resultado.tentativas,

@@ -15,6 +15,8 @@ export default async function AgentInboxPage() {
   const activeOrg = await resolveActiveOrg(user);
   if (!activeOrg) redirect("/app");
   const canResolve = ROLE_RANK[activeOrg.role] >= ROLE_RANK.agent;
+  // Aprovar executa uma ação num sistema externo: é de gerente para cima (a mesma régua de cadastrar a ferramenta).
+  const canDecide = ROLE_RANK[activeOrg.role] >= ROLE_RANK.manager;
   const idioma = user.idioma;
 
   return (
@@ -27,7 +29,7 @@ export default async function AgentInboxPage() {
             idioma,
           )}
       />
-      <AgentInboxList canResolve={canResolve} />
+      <AgentInboxList canResolve={canResolve} canDecide={canDecide} />
     </CorpoDaPagina>
   );
 }

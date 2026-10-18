@@ -23,6 +23,7 @@ import {
 import { useT } from "@/hooks/i18n/useT";
 import { apiClient } from "@/lib/api/client";
 import type { FerramentaExterna } from "@/lib/ai/ferramentas-externas/repositorio";
+import { decidirSePedeAprovacao } from "@/lib/ai/ferramentas-externas/aprovacao";
 import { ROTULO_DO_EFEITO } from "@/lib/ai/ferramentas-externas/tipos";
 
 import { ChaveDaFerramentaDialog, FormularioDaFerramentaDialog, TesteDaFerramentaDialog } from "./_dialogs";
@@ -114,6 +115,9 @@ export function FerramentasExternasClient({ inicial }: { inicial: FerramentaExte
           <p className="max-w-[65ch] text-sm text-muted-foreground">
             {t(
               "Cadastre o endereço de um webhook (Make, n8n, planilha, ERP) e diga quando o agente deve usá-lo — por exemplo, para ver se um produto está em estoque. O agente só chama com os dados que você pedir, e o que o outro sistema responder chega a ele como informação, nunca como ordem.",
+            )}{" "}
+            {t(
+              "Ações que alteram algo (criar um pedido, cadastrar um cliente) esperam a sua aprovação na Central de avisos, a menos que você desligue essa chave.",
             )}
           </p>
         </Card>
@@ -128,6 +132,16 @@ export function FerramentasExternasClient({ inicial }: { inicial: FerramentaExte
                       <h2 className="text-base font-medium">{f.name}</h2>
                       <Badge variant="outline" className="text-[11px]">
                         {t(ROTULO_DO_EFEITO[f.effect])}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="text-[11px]"
+                        data-testid={`aprovacao-${f.id}`}
+                        data-pede={decidirSePedeAprovacao({ effect: f.effect, requireApproval: f.require_approval, modo: "ao_vivo" }).pede ? "sim" : "nao"}
+                      >
+                        {decidirSePedeAprovacao({ effect: f.effect, requireApproval: f.require_approval, modo: "ao_vivo" }).pede
+                          ? t("Pede aprovação")
+                          : t("Executa direto")}
                       </Badge>
                       {!f.active ? (
                         <Badge variant="outline" className="border-warning/40 text-[11px] text-warning-fg">

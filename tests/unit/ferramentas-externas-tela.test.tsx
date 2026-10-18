@@ -1,6 +1,7 @@
 /**
- * A tela de Ferramentas externas (issue #94), como a pessoa a usa: o formulário trava
- * "Altera dados" com o motivo escrito, pede o que falta em português antes de enviar,
+ * A tela de Ferramentas externas (issues #94 e #95), como a pessoa a usa: o formulário deixa
+ * escolher "Altera dados" (que nasce pedindo aprovação, e desligar isso avisa o risco), pede o
+ * que falta em português antes de enviar,
  * manda a MESMA chave de idempotência num clique duplo e entrega a chave de assinatura
  * uma vez; "Testar de verdade" manda os dados de exemplo no tipo declarado e explica a
  * falha em vez de dizer que funcionou.
@@ -33,6 +34,8 @@ const FERRAMENTA: FerramentaExterna = {
     { nome: "retirada", tipo: "booleano", descricao: "Vai retirar na loja", obrigatorio: false },
   ],
   effect: "consulta",
+  require_approval: null,
+  approval_ttl_hours: 24,
   active: true,
   secret_last4: "cdef",
   created_at: "2026-10-17T12:00:00Z",
@@ -66,12 +69,73 @@ function digitar(rotulo: string | RegExp, valor: string) {
 }
 
 describe("formulário da ferramenta", () => {
-  it("'Altera dados' está travado e o motivo está escrito na tela", () => {
+  it("nasce em «Só consulta», sem pedir aprovação; escolher «Altera dados» liga a aprovação sozinho", () => {
     render(envolver(<FormularioDaFerramentaDialog aberto editando={null} onFechar={() => undefined} onSalvo={() => undefined} />));
     const altera = screen.getByLabelText(/Altera dados/) as HTMLInputElement;
-    expect(altera.disabled).toBe(true);
-    expect(screen.getByTestId("motivo-altera-bloqueada").textContent).toContain("etapa de aprovação");
+    expect(altera.disabled).toBe(false);
     expect((screen.getByLabelText(/Só consulta/) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByTestId("pedir-aprovacao") as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(altera);
+    expect((screen.getByTestId("pedir-aprovacao") as HTMLInputElement).checked).toBe(true);
+    // A validade do pedido aparece junto, com o padrão de 24 horas.
+    expect((screen.getByTestId("validade-do-pedido") as HTMLInputElement).value).toBe("24");
+    expect(screen.queryByTestId("aviso-sem-aprovacao")).toBeNull();
+  });
+
+  it("desligar a aprovação numa ação que altera avisa, com todas as letras, que o agente executa sozinho", () => {
+    render(envolver(<FormularioDaFerramentaDialog aberto editando={null} onFechar={() => undefined} onSalvo={() => undefined} />));
+    fireEvent.click(screen.getByLabelText(/Altera dados/));
+    fireEvent.click(screen.getByTestId("pedir-aprovacao"));
+    const aviso = screen.getByTestId("aviso-sem-aprovacao");
+    expect(aviso.textContent).toContain("executa esta ação sozinho");
+    expect(aviso.textContent).toContain("não é repetida");
+    expect(screen.queryByTestId("validade-do-pedido")).toBeNull();
+    // E o aviso do modo Assistido está sempre à vista: a chave não vale lá.
+    expect(screen.getByTestId("aprovacao-da-ferramenta").textContent).toContain("modo Assistido");
+  });
+
+  it("«Altera dados» sem tocar na chave NÃO manda `pedir_aprovacao` (o padrão do efeito decide); tocar manda a escolha", async () => {
+    api.post.mockResolvedValue({ data: { signing_secret: "whsec_abc" } });
+    render(envolver(<FormularioDaFerramentaDialog aberto editando={null} onFechar={() => undefined} onSalvo={() => undefined} />));
+    digitar("Nome", "Criar pedido");
+    digitar("Quando o agente deve usar", "Quando o cliente confirmar que quer fechar o pedido.");
+    digitar("Endereço (https)", "https://erp.exemplo.com.br/hook");
+    fireEvent.click(screen.getByLabelText(/Altera dados/));
+    fireEvent.click(screen.getByTestId("salvar-ferramenta"));
+    await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
+    const padrao = api.post.mock.calls[0]![1] as Record<string, unknown>;
+    expect(padrao).toMatchObject({ efeito: "altera", validade_horas: 24 });
+    expect(padrao).not.toHaveProperty("pedir_aprovacao");
+
+    api.post.mockClear();
+    fireEvent.click(screen.getByTestId("pedir-aprovacao"));
+    fireEvent.click(screen.getByTestId("salvar-ferramenta"));
+    await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
+    const desligada = api.post.mock.calls[0]![1] as Record<string, unknown>;
+    expect(desligada).toMatchObject({ efeito: "altera", pedir_aprovacao: false });
+    expect(desligada).not.toHaveProperty("validade_horas");
+  });
+
+  it("validade fora de 1 a 168 horas é pedida em português antes de enviar", async () => {
+    render(envolver(<FormularioDaFerramentaDialog aberto editando={null} onFechar={() => undefined} onSalvo={() => undefined} />));
+    digitar("Nome", "Criar pedido");
+    digitar("Quando o agente deve usar", "Quando o cliente confirmar que quer fechar o pedido.");
+    digitar("Endereço (https)", "https://erp.exemplo.com.br/hook");
+    fireEvent.click(screen.getByLabelText(/Altera dados/));
+    fireEvent.change(screen.getByTestId("validade-do-pedido"), { target: { value: "500" } });
+    fireEvent.click(screen.getByTestId("salvar-ferramenta"));
+    expect((await screen.findByTestId("erro-do-formulario")).textContent).toContain("1 a 168 horas");
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it("o teste de uma ferramenta que ALTERA avisa que a alteração é de verdade", () => {
+    render(
+      envolver(
+        <TesteDaFerramentaDialog ferramenta={{ ...FERRAMENTA, effect: "altera" }} onFechar={() => undefined} />,
+      ),
+    );
+    expect(screen.getByTestId("aviso-altera-teste").textContent).toContain("ALTERA dados");
+    expect(screen.getByTestId("executar-teste").textContent).toContain("Executar de verdade");
   });
 
   it("pede o que falta, em português, antes de enviar — e não chama a API", async () => {
@@ -127,9 +191,10 @@ describe("formulário da ferramenta", () => {
       quando_usar: "Quando o cliente perguntar se um produto está disponível.",
       url: "https://erp.exemplo.com.br/hook",
       parametros: [{ nome: "produto", tipo: "texto", descricao: "Nome do produto que o cliente citou", obrigatorio: true }],
+      efeito: "consulta",
     });
     // O corpo não leva organização nem chave: o servidor decide as duas.
-    expect(JSON.stringify(corpo)).not.toMatch(/organization|secret|efeito/);
+    expect(JSON.stringify(corpo)).not.toMatch(/organization|secret/);
     expect(opcoes.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/);
   });
 

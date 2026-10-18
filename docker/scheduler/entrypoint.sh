@@ -94,6 +94,9 @@ CRONS="
 7 * * * *|60|api/v1/cron/case-stale-watcher
 */30 * * * *|60|api/v1/cron/contact-phones
 17 * * * *|60|api/v1/cron/contact-proposals-watcher
+# Pedido de ação externa do agente sem decisão além do prazo (24 h por padrão) expira. A cada 15 min:
+# o prazo é de horas, e o agente só lê o estado do pedido no turno seguinte — quinze minutos de atraso não mudam nada.
+*/15 * * * *|30|api/v1/cron/external-tool-requests-expiry
 23 * * * *|60|api/v1/cron/followup-sem-agente
 # O ANIVERSÁRIO. De hora em hora, e não uma vez ao dia, porque quem decide o
 # momento é o relógio de parede de CADA organização: a rodada só age naquela

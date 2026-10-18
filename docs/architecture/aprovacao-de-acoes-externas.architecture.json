@@ -1,0 +1,346 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Aprovação das ações externas do agente",
+    "subtitle": "O agente pode ALTERAR algo em outro sistema, mas nada altera o mundo sem aprovação por padrão: pedido com os dados na Central, execução única ao aprovar, expiração em 24 h, estado devolvido ao agente e falha incerta nunca repetida (migration 0552; issue #95, parte da #86)",
+    "output": "aprovacao-de-acoes-externas.html",
+    "quality_profile": "standard"
+  },
+  "lanes": [
+    {
+      "id": "ui",
+      "label": "Telas"
+    },
+    {
+      "id": "api",
+      "label": "Rotas"
+    },
+    {
+      "id": "data",
+      "label": "Banco"
+    },
+    {
+      "id": "agent",
+      "label": "Turno do agente"
+    },
+    {
+      "id": "ext",
+      "label": "Fora do produto"
+    }
+  ],
+  "mainPath": [
+    "tela",
+    "tabelaFerramenta",
+    "turno",
+    "abrir",
+    "aviso",
+    "cartao",
+    "rotaDecide",
+    "chamada",
+    "erp"
+  ],
+  "nodes": [
+    {
+      "id": "tela",
+      "lane": "ui",
+      "col": 1,
+      "type": "frontend",
+      "label": "Ferramentas externas — «Altera dados», chave «Pedir aprovação» e validade do pedido"
+    },
+    {
+      "id": "abaTeste",
+      "lane": "ui",
+      "col": 4,
+      "type": "frontend",
+      "label": "Aba Teste — «seria feita», «altera dados» e «pediria aprovação»"
+    },
+    {
+      "id": "cartao",
+      "lane": "ui",
+      "col": 7,
+      "type": "frontend",
+      "label": "Central de avisos — cartão do pedido: dados, «Aprovar e executar» e «Recusar»"
+    },
+    {
+      "id": "rotaFerramenta",
+      "lane": "api",
+      "col": 1,
+      "type": "api",
+      "label": "/api/v1/ai/external-tools (efeito, pedir_aprovacao, validade_horas) — manager"
+    },
+    {
+      "id": "rotaDecide",
+      "lane": "api",
+      "col": 7,
+      "type": "api",
+      "label": "/api/v1/ai/external-tool-requests/:id/decide — manager, guarda de suporte, execução única"
+    },
+    {
+      "id": "cron",
+      "lane": "api",
+      "col": 8,
+      "type": "api",
+      "label": "cron external-tool-requests-expiry (a cada 15 min) — expira o pedido sem decisão"
+    },
+    {
+      "id": "tabelaFerramenta",
+      "lane": "data",
+      "col": 1,
+      "type": "database",
+      "label": "agent_external_tools.require_approval (NULO = padrão do efeito) e approval_ttl_hours"
+    },
+    {
+      "id": "tabelaPedido",
+      "lane": "data",
+      "col": 5,
+      "type": "database",
+      "label": "agent_external_tool_requests (pendente → executando → executada/falha/recusada/expirada; só o servidor)"
+    },
+    {
+      "id": "aviso",
+      "lane": "data",
+      "col": 6,
+      "type": "database",
+      "label": "agent_inbox_items kind external_tool_approval (ref = o pedido)"
+    },
+    {
+      "id": "auditoria",
+      "lane": "data",
+      "col": 9,
+      "type": "database",
+      "label": "api_audit_log (ai.external_tool_request_created / approved / rejected / expired / executed — sem segredos)"
+    },
+    {
+      "id": "decisao",
+      "lane": "agent",
+      "col": 2,
+      "type": "service",
+      "label": "decidirSePedeAprovacao (Assistido: sempre; chave explícita; senão o padrão do efeito)"
+    },
+    {
+      "id": "turno",
+      "lane": "agent",
+      "col": 3,
+      "type": "service",
+      "label": "montarFerramentasExternas (consulta e ação que altera; prévia nunca executa)"
+    },
+    {
+      "id": "abrir",
+      "lane": "agent",
+      "col": 5,
+      "type": "service",
+      "label": "abrirPedidoNoBanco (cria pedido + aviso juntos; a MESMA chamada reencontra o pedido)"
+    },
+    {
+      "id": "bloco",
+      "lane": "agent",
+      "col": 3,
+      "type": "service",
+      "label": "bloco «PEDIDOS A SISTEMAS EXTERNOS» — o agente lê o que aconteceu com o que pediu"
+    },
+    {
+      "id": "gate",
+      "lane": "agent",
+      "col": 4,
+      "type": "service",
+      "label": "casePromiseGate — pedido pendente sustenta «depende da equipe»"
+    },
+    {
+      "id": "chamada",
+      "lane": "agent",
+      "col": 8,
+      "type": "service",
+      "label": "chamarFerramentaExterna (HMAC, id do pedido = id de entrega; ação que altera: UMA tentativa)"
+    },
+    {
+      "id": "erp",
+      "lane": "ext",
+      "col": 9,
+      "type": "external",
+      "label": "Sistema do cliente (ERP, Make, n8n) — deduplica pelo delivery_id"
+    }
+  ],
+  "edges": [
+    {
+      "id": "0",
+      "from": "tela",
+      "to": "rotaFerramenta",
+      "label": "cadastra com efeito, chave e validade"
+    },
+    {
+      "id": "1",
+      "from": "tela",
+      "to": "chamada",
+      "label": "«Testar de verdade»: quem clica é a aprovação; ação que altera, UMA tentativa"
+    },
+    {
+      "id": "2",
+      "from": "rotaFerramenta",
+      "to": "tabelaFerramenta",
+      "label": "grava (chave nula quando a pessoa não decidiu)"
+    },
+    {
+      "id": "3",
+      "from": "tabelaFerramenta",
+      "to": "decisao",
+      "label": "efeito + chave de aprovação"
+    },
+    {
+      "id": "4",
+      "from": "decisao",
+      "to": "turno",
+      "label": "pede aprovação? (modo Assistido, chave, padrão)"
+    },
+    {
+      "id": "5",
+      "from": "tabelaFerramenta",
+      "to": "turno",
+      "label": "ferramentas ativas da versão (consulta e altera)"
+    },
+    {
+      "id": "6",
+      "from": "turno",
+      "to": "abaTeste",
+      "label": "na prévia nada sai nem é pedido: registra «seria feita»"
+    },
+    {
+      "id": "7",
+      "from": "decisao",
+      "to": "abaTeste",
+      "label": "diz se ao vivo pediria aprovação"
+    },
+    {
+      "id": "8",
+      "from": "turno",
+      "to": "abrir",
+      "label": "ação que altera ou que espera: abre o pedido"
+    },
+    {
+      "id": "9",
+      "from": "abrir",
+      "to": "tabelaPedido",
+      "label": "grava o pedido (índice único: a mesma chamada viva é uma só)"
+    },
+    {
+      "id": "10",
+      "from": "abrir",
+      "to": "aviso",
+      "label": "abre o item da Central no mesmo comando"
+    },
+    {
+      "id": "11",
+      "from": "abrir",
+      "to": "auditoria",
+      "label": "ai.external_tool_request_created (resumo sem segredos)"
+    },
+    {
+      "id": "12",
+      "from": "aviso",
+      "to": "cartao",
+      "label": "a Central mostra o pedido, os dados e os botões"
+    },
+    {
+      "id": "13",
+      "from": "tabelaPedido",
+      "to": "cartao",
+      "label": "estado efetivo (pendente vencido já é expirado)"
+    },
+    {
+      "id": "14",
+      "from": "cartao",
+      "to": "rotaDecide",
+      "label": "aprovar / recusar"
+    },
+    {
+      "id": "15",
+      "from": "rotaDecide",
+      "to": "tabelaPedido",
+      "label": "UPDATE condicional pending→executing: execução única"
+    },
+    {
+      "id": "16",
+      "from": "rotaDecide",
+      "to": "chamada",
+      "label": "só quem venceu a reivindicação executa"
+    },
+    {
+      "id": "17",
+      "from": "chamada",
+      "to": "erp",
+      "label": "POST assinado, delivery_id = id do pedido"
+    },
+    {
+      "id": "18",
+      "from": "erp",
+      "to": "chamada",
+      "label": "resposta (status e corpo curto): 2xx = executada; prazo/5xx = falha incerta, sem repetir"
+    },
+    {
+      "id": "19",
+      "from": "chamada",
+      "to": "tabelaPedido",
+      "label": "fecha: executada, ou falha (certa / incerta)"
+    },
+    {
+      "id": "20",
+      "from": "rotaDecide",
+      "to": "auditoria",
+      "label": "approved / rejected / executed — ator e ferramenta"
+    },
+    {
+      "id": "21",
+      "from": "rotaDecide",
+      "to": "aviso",
+      "label": "resolve o item da Central"
+    },
+    {
+      "id": "22",
+      "from": "cron",
+      "to": "tabelaPedido",
+      "label": "pendente além do prazo vira expirado"
+    },
+    {
+      "id": "23",
+      "from": "cron",
+      "to": "aviso",
+      "label": "tira o aviso da Central"
+    },
+    {
+      "id": "24",
+      "from": "cron",
+      "to": "auditoria",
+      "label": "ai.external_tool_request_expired (só se houve efeito)"
+    },
+    {
+      "id": "25",
+      "from": "tabelaPedido",
+      "to": "bloco",
+      "label": "estado dos pedidos desta conversa"
+    },
+    {
+      "id": "26",
+      "from": "bloco",
+      "to": "turno",
+      "label": "o agente lê feito / recusado / expirou / falha incerta"
+    },
+    {
+      "id": "27",
+      "from": "tabelaPedido",
+      "to": "gate",
+      "label": "há pedido pendente nesta conversa?"
+    },
+    {
+      "id": "28",
+      "from": "gate",
+      "to": "turno",
+      "label": "«depende da equipe» sai sem exigir um caso à parte"
+    },
+    {
+      "id": "29",
+      "from": "turno",
+      "to": "chamada",
+      "label": "chave desligada: executa direto, uma vez, com o id do pedido"
+    }
+  ]
+}
