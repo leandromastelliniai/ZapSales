@@ -23,17 +23,36 @@ import {
   type CriarFerramentaInput,
   type EditarFerramentaInput,
 } from "./esquema";
-import type { EfeitoDaFerramenta, ParametroDaFerramenta } from "./tipos";
+import { lerConfigDeMcp } from "./mcp/config";
+import { lerCredencialDoServidor } from "./mcp/repositorio";
+import type { EfeitoDaFerramenta, ParametroDaFerramenta, TipoDaFerramenta } from "./tipos";
 import { EFEITOS_DA_FERRAMENTA } from "./tipos";
+
+/** Por que uma ferramenta de servidor MCP não está disponível para os agentes agora. */
+export type MotivoDeIndisponibilidade = "mcp_desligado" | "servidor_desativado";
 
 export interface FerramentaExterna {
   id: string;
+  /** `webhook` (#94) ou `mcp` (#96, escolhida num servidor MCP). */
+  kind: TipoDaFerramenta;
   name: string;
   slug: string;
   /** O nome que o modelo vê (`ext_<slug>`). */
   agent_name: string;
   when_to_use: string;
-  url: string;
+  /** Webhook: o endereço. MCP: `null` — o endereço é o do servidor (`mcp.server_name` diz qual). */
+  url: string | null;
+  /** Presente em `kind = 'mcp'`. */
+  mcp: {
+    server_id: string;
+    server_name: string | null;
+    /** O nome da ferramenta NO servidor. */
+    tool_name: string;
+    /** O que o servidor declarou (`readOnlyHint`). Só uma dica. */
+    hint_read_only: boolean | null;
+  } | null;
+  /** Por que a ferramenta não chega aos agentes agora, apesar de ativa (MCP desligado, servidor desativado). */
+  unavailable_reason: MotivoDeIndisponibilidade | null;
   parameters: ParametroDaFerramenta[];
   effect: EfeitoDaFerramenta;
   /**
@@ -44,43 +63,67 @@ export interface FerramentaExterna {
   /** Horas que um pedido desta ferramenta espera por um humano (1 a 168; padrão 24). */
   approval_ttl_hours: number;
   active: boolean;
-  /** Os 4 últimos caracteres da chave de assinatura — nunca a chave. */
-  secret_last4: string;
+  /** Os 4 últimos caracteres da chave de assinatura — nunca a chave. `null` em ferramenta MCP (sem chave). */
+  secret_last4: string | null;
   created_at: string;
   updated_at: string;
 }
 
 /** Tudo menos a chave cifrada: a coluna `signing_secret_encrypted` nunca é selecionada para a tela. */
 const COLUNAS_PUBLICAS =
-  "id, name, slug, when_to_use, url, parameters, effect, require_approval, approval_ttl_hours, active, signing_secret_last4, created_at, updated_at";
+  "id, kind, name, slug, when_to_use, url, parameters, effect, require_approval, approval_ttl_hours, active, signing_secret_last4, mcp_server_id, mcp_tool_name, mcp_hint_read_only, created_at, updated_at";
 
 interface LinhaPublica {
   id: string;
+  kind: string;
   name: string;
   slug: string;
   when_to_use: string;
-  url: string;
+  url: string | null;
   parameters: unknown;
   effect: string;
   require_approval: boolean | null;
   approval_ttl_hours: number;
   active: boolean;
-  signing_secret_last4: string;
+  signing_secret_last4: string | null;
+  mcp_server_id: string | null;
+  mcp_tool_name: string | null;
+  mcp_hint_read_only: boolean | null;
   created_at: string;
   updated_at: string;
 }
 
-export function paraFerramenta(l: LinhaPublica): FerramentaExterna {
+/** O que a lista precisa saber do servidor de uma ferramenta MCP (e do interruptor), lido uma vez. */
+export interface ContextoDoMcp {
+  ligado: boolean;
+  servidores: ReadonlyMap<string, { name: string; active: boolean }>;
+}
+
+const SEM_MCP: ContextoDoMcp = { ligado: false, servidores: new Map() };
+
+export function paraFerramenta(l: LinhaPublica, mcp: ContextoDoMcp = SEM_MCP): FerramentaExterna {
   // Leitura DEFENSIVA do jsonb: linha escrita por fora da tela com formato estranho
   // vira "sem campos" (a ferramenta chama sem argumentos), nunca um 500 na lista.
   const parametros = parametrosLidos.safeParse(l.parameters);
+  const ehMcp = l.kind === "mcp" && l.mcp_server_id !== null && l.mcp_tool_name !== null;
+  const servidor = ehMcp ? mcp.servidores.get(l.mcp_server_id as string) : undefined;
   return {
     id: l.id,
+    kind: ehMcp ? "mcp" : "webhook",
     name: l.name,
     slug: l.slug,
     agent_name: nomeNoAgente(l.slug),
     when_to_use: l.when_to_use,
-    url: l.url,
+    url: ehMcp ? null : l.url,
+    mcp: ehMcp
+      ? {
+          server_id: l.mcp_server_id as string,
+          server_name: servidor?.name ?? null,
+          tool_name: l.mcp_tool_name as string,
+          hint_read_only: l.mcp_hint_read_only,
+        }
+      : null,
+    unavailable_reason: !ehMcp ? null : !mcp.ligado ? "mcp_desligado" : servidor?.active === false ? "servidor_desativado" : null,
     parameters: parametros.success ? parametros.data : [],
     effect: (EFEITOS_DA_FERRAMENTA as readonly string[]).includes(l.effect) ? (l.effect as EfeitoDaFerramenta) : "altera",
     require_approval: l.require_approval,
@@ -97,14 +140,45 @@ export function novaChaveDeAssinatura(): string {
   return `whsec_${randomBytes(24).toString("hex")}`;
 }
 
-export async function listarFerramentas(admin: SupabaseClient, organizationId: string): Promise<FerramentaExterna[]> {
-  const { data, error } = await admin
-    .from("agent_external_tools")
-    .select(COLUNAS_PUBLICAS)
-    .eq("organization_id", organizationId)
-    .order("created_at", { ascending: true });
+/**
+ * O interruptor da organização e os servidores MCP, lidos só se a lista tem alguma ferramenta MCP
+ * (quem não usa o recurso não paga por ele).
+ */
+async function contextoDoMcp(
+  admin: SupabaseClient,
+  organizationId: string,
+  linhas: readonly LinhaPublica[],
+): Promise<ContextoDoMcp> {
+  if (!linhas.some((l) => l.kind === "mcp")) return SEM_MCP;
+  const [{ data: org, error: erroDaOrg }, { data: servidores, error: erroDosServidores }] = await Promise.all([
+    admin.from("organizations").select("settings").eq("id", organizationId).maybeSingle(),
+    admin.from("mcp_servers").select("id, name, active").eq("organization_id", organizationId),
+  ]);
+  if (erroDosServidores) throw new Error(`leitura dos servidores MCP falhou: ${erroDosServidores.message}`);
+  return {
+    // Falha de leitura do interruptor = desligado (falha fechada).
+    ligado: !erroDaOrg && lerConfigDeMcp((org as { settings?: unknown } | null)?.settings ?? {}).ligado,
+    servidores: new Map(
+      ((servidores ?? []) as Array<{ id: string; name: string; active: boolean }>).map((s) => [
+        s.id,
+        { name: s.name, active: s.active },
+      ]),
+    ),
+  };
+}
+
+export async function listarFerramentas(
+  admin: SupabaseClient,
+  organizationId: string,
+  opcoes: { tipo?: TipoDaFerramenta } = {},
+): Promise<FerramentaExterna[]> {
+  let consulta = admin.from("agent_external_tools").select(COLUNAS_PUBLICAS).eq("organization_id", organizationId);
+  if (opcoes.tipo) consulta = consulta.eq("kind", opcoes.tipo);
+  const { data, error } = await consulta.order("created_at", { ascending: true });
   if (error) throw new Error(`leitura das ferramentas externas falhou: ${error.message}`);
-  return ((data ?? []) as unknown as LinhaPublica[]).map(paraFerramenta);
+  const linhas = (data ?? []) as unknown as LinhaPublica[];
+  const mcp = await contextoDoMcp(admin, organizationId, linhas);
+  return linhas.map((l) => paraFerramenta(l, mcp));
 }
 
 export async function buscarFerramenta(
@@ -119,7 +193,9 @@ export async function buscarFerramenta(
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error(`leitura da ferramenta externa falhou: ${error.message}`);
-  return data ? paraFerramenta(data as unknown as LinhaPublica) : null;
+  if (!data) return null;
+  const linha = data as unknown as LinhaPublica;
+  return paraFerramenta(linha, await contextoDoMcp(admin, organizationId, [linha]));
 }
 
 export type ResultadoDaCriacao =
@@ -209,7 +285,9 @@ export async function editarFerramenta(
     .select(COLUNAS_PUBLICAS)
     .maybeSingle();
   if (error) throw new Error(`edição da ferramenta externa falhou: ${error.message}`);
-  return data ? paraFerramenta(data as unknown as LinhaPublica) : null;
+  if (!data) return null;
+  const linha = data as unknown as LinhaPublica;
+  return paraFerramenta(linha, await contextoDoMcp(admin, input.organizationId, [linha]));
 }
 
 export type ResultadoDaNovaChave =
@@ -265,7 +343,11 @@ export async function apagarFerramenta(
   return (data ?? []).length > 0 ? "apagada" : "nao_encontrada";
 }
 
-/** A chave de assinatura em claro, ou `null` (sem linha, cifra indisponível, leitura falhou). Nunca lança. */
+/**
+ * O segredo da ferramenta em claro, ou `null` (sem linha, cifra indisponível, leitura falhou). Nunca lança.
+ * Webhook: a chave de assinatura. MCP: a credencial do SERVIDOR dela (`null` também quando o servidor
+ * não tem credencial — quem chama sabe, pelo servidor, se havia uma a ler).
+ */
 export async function lerChaveDaFerramenta(
   admin: SupabaseClient,
   organizationId: string,
@@ -274,7 +356,7 @@ export async function lerChaveDaFerramenta(
   try {
     const { data, error } = await admin
       .from("agent_external_tools")
-      .select("signing_secret_encrypted")
+      .select("signing_secret_encrypted, mcp_server_id")
       .eq("organization_id", organizationId)
       .eq("id", id)
       .maybeSingle();
@@ -282,8 +364,9 @@ export async function lerChaveDaFerramenta(
       logger.warn("[ferramentas-externas] leitura da chave falhou", { organization_id: organizationId, error: error.message });
       return null;
     }
-    const cifrada = (data as { signing_secret_encrypted: string | null } | null)?.signing_secret_encrypted;
-    return cifrada ? await decryptWebhookSecret(admin, cifrada) : null;
+    const linha = data as { signing_secret_encrypted: string | null; mcp_server_id: string | null } | null;
+    if (linha?.mcp_server_id) return await lerCredencialDoServidor(admin, organizationId, linha.mcp_server_id);
+    return linha?.signing_secret_encrypted ? await decryptWebhookSecret(admin, linha.signing_secret_encrypted) : null;
   } catch (err) {
     logger.warn("[ferramentas-externas] leitura da chave falhou", {
       organization_id: organizationId,

@@ -46,7 +46,10 @@ export interface PedidoComFerramenta extends PedidoDeExecucao {
   agent_id: string | null;
   tool_active: boolean;
   tool_parameters: unknown;
-  tool_url: string;
+  /** Webhook: o endereço da ferramenta. MCP: `null` (o endereço é o do servidor). */
+  tool_url: string | null;
+  /** Presente quando a ferramenta vem de um servidor MCP (#96). */
+  tool_mcp: { servidor_id: string; nome_no_servidor: string } | null;
 }
 
 function paraPedido(l: LinhaDoPedido, ferramenta: { name: string; slug: string; effect: "consulta" | "altera" }): PedidoDeExecucao {
@@ -86,7 +89,7 @@ export async function buscarPedido(
   const linha = data as unknown as LinhaDoPedido;
   const { data: f, error: erroDaFerramenta } = await admin
     .from("agent_external_tools")
-    .select("name, slug, effect, active, parameters, url")
+    .select("name, slug, effect, active, parameters, url, kind, mcp_server_id, mcp_tool_name")
     .eq("organization_id", organizationId)
     .eq("id", linha.tool_id)
     .maybeSingle();
@@ -98,7 +101,10 @@ export async function buscarPedido(
     effect: "consulta" | "altera";
     active: boolean;
     parameters: unknown;
-    url: string;
+    url: string | null;
+    kind: string;
+    mcp_server_id: string | null;
+    mcp_tool_name: string | null;
   };
   return {
     ...paraPedido(linha, ferramenta),
@@ -108,6 +114,10 @@ export async function buscarPedido(
     tool_active: ferramenta.active,
     tool_parameters: ferramenta.parameters,
     tool_url: ferramenta.url,
+    tool_mcp:
+      ferramenta.kind === "mcp" && ferramenta.mcp_server_id && ferramenta.mcp_tool_name
+        ? { servidor_id: ferramenta.mcp_server_id, nome_no_servidor: ferramenta.mcp_tool_name }
+        : null,
   };
 }
 

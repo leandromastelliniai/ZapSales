@@ -81,13 +81,24 @@ export type ResultadoDaChamada =
        * perdeu (prazo, rede, 5xx). Só tem consequência para ferramenta que altera.
        */
       desfechoIncerto: boolean;
+      /**
+       * Uma frase curta do que o outro sistema disse (servidor MCP: o texto do erro da ferramenta),
+       * já sanitizada. É para o ADMINISTRADOR ler ao testar — nunca vai ao agente, à auditoria nem
+       * ao banco: texto de terceiro não entra no que o modelo lê.
+       */
+      detalhe?: string;
     };
 
 const CARACTERES_DE_CONTROLE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;
 
 /** JSON válido volta compacto (menos tokens, mesmo conteúdo); o resto segue como texto. */
 function conteudoDaResposta(corpo: Buffer): { texto: string; truncado: boolean } {
-  const bruto = corpo.toString("utf8").replace(CARACTERES_DE_CONTROLE, "").trim();
+  return conteudoDeTexto(corpo.toString("utf8"));
+}
+
+/** O mesmo tratamento, para quem já tem o texto (a resposta de uma ferramenta MCP). */
+export function conteudoDeTexto(bruto0: string): { texto: string; truncado: boolean } {
+  const bruto = bruto0.replace(CARACTERES_DE_CONTROLE, "").trim();
   let texto = bruto;
   try {
     texto = JSON.stringify(JSON.parse(bruto));
@@ -98,7 +109,7 @@ function conteudoDaResposta(corpo: Buffer): { texto: string; truncado: boolean }
   return texto.length > teto ? { texto: texto.slice(0, teto), truncado: true } : { texto, truncado: false };
 }
 
-function motivoDoErro(err: unknown): { motivo: MotivoDeFalha; repetivel: boolean } {
+export function motivoDoErro(err: unknown): { motivo: MotivoDeFalha; repetivel: boolean } {
   if (err instanceof ErroDeRedeSegura) {
     if (err.ehRecusa) return { motivo: "recusada_pela_politica", repetivel: false };
     if (err.codigo === "net:timeout") return { motivo: "timeout", repetivel: true };

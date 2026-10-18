@@ -29,8 +29,11 @@ import { type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { resumoDosDados } from "@/lib/ai/ferramentas-externas/aprovacao";
-import { chamarFerramentaExterna, fraseDoMotivo, type ResultadoDaChamada } from "@/lib/ai/ferramentas-externas/chamar";
+import { fraseDoMotivo, type ResultadoDaChamada } from "@/lib/ai/ferramentas-externas/chamar";
 import { parametrosLidos, validarArgumentos } from "@/lib/ai/ferramentas-externas/esquema";
+import { executarFerramentaExterna, type FerramentaExecutavel } from "@/lib/ai/ferramentas-externas/executar";
+import { lerConfigDeMcpDaOrganizacao } from "@/lib/ai/ferramentas-externas/mcp/config";
+import { carregarServidorParaChamar } from "@/lib/ai/ferramentas-externas/mcp/repositorio";
 import {
   abrirAvisoDeFalhaDoPedido,
   buscarPedido,
@@ -115,7 +118,13 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       resourceId: id,
       requestId,
     };
-    const identidade = { tool_id: pedido.tool_id, tool_slug: pedido.tool_slug, effect: pedido.effect };
+    const identidade = {
+      tool_id: pedido.tool_id,
+      tool_slug: pedido.tool_slug,
+      effect: pedido.effect,
+      kind: pedido.tool_mcp ? ("mcp" as const) : ("webhook" as const),
+      ...(pedido.tool_mcp ? { mcp_server_id: pedido.tool_mcp.servidor_id, mcp_tool: pedido.tool_mcp.nome_no_servidor } : {}),
+    };
 
     // Pendente vencido nunca executa, mesmo que o cron ainda não o tenha marcado.
     if (new Date(pedido.expires_at).getTime() <= Date.now()) {
@@ -160,6 +169,50 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       );
     }
 
+    // Ferramenta de servidor MCP (#96): o recurso tem de estar ligado e o servidor ativo AGORA. Conferido
+    // ANTES de reivindicar — o pedido segue pendente e pode ser aprovado depois (ou recusado), em vez de
+    // fechar como falha por uma porta que estava fechada de propósito.
+    let alvo: { ferramenta: FerramentaExecutavel; segredo: string | null };
+    if (pedido.tool_mcp) {
+      const config = await lerConfigDeMcpDaOrganizacao(admin, org.orgId);
+      if (!config?.ligado) {
+        return fail(
+          "mcp_disabled",
+          t("Os servidores MCP estão desligados nesta organização. Ligue-os em Ferramentas externas para aprovar, ou recuse o pedido."),
+          409,
+          { requestId },
+        );
+      }
+      const servidor = await carregarServidorParaChamar(admin, org.orgId, pedido.tool_mcp.servidor_id);
+      if (!servidor || !servidor.ativo) {
+        return fail(
+          "mcp_server_inactive",
+          t("O servidor MCP desta ferramenta está desativado. Reative-o para aprovar, ou recuse o pedido."),
+          409,
+          { requestId },
+        );
+      }
+      alvo = {
+        ferramenta: {
+          slug: pedido.tool_slug,
+          url: servidor.servidor.url,
+          efeito: pedido.effect,
+          mcp: {
+            cabecalho: servidor.servidor.cabecalho,
+            temCredencial: servidor.temCredencial,
+            nomeNoServidor: pedido.tool_mcp.nome_no_servidor,
+          },
+        },
+        // Havendo credencial e não a tendo lido, `executarFerramentaExterna` NÃO chama (falha certa).
+        segredo: servidor.servidor.credencial,
+      };
+    } else {
+      alvo = {
+        ferramenta: { slug: pedido.tool_slug, url: pedido.tool_url ?? "", efeito: pedido.effect },
+        segredo: null,
+      };
+    }
+
     // A trava da execução única: só quem vence este UPDATE chama o outro sistema.
     if (!(await reivindicar(admin, org.orgId, id, user.id))) {
       return fail("request_not_pending", t("Este pedido já foi decidido por outra pessoa."), 409, { requestId });
@@ -170,10 +223,11 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     // (e bloqueando a mesma chamada). Não se sabe se saiu, então fecha como falha incerta.
     let resultado: ResultadoDaChamada;
     try {
-      const chave = await lerChaveDaFerramenta(admin, org.orgId, pedido.tool_id);
-      resultado = await chamarFerramentaExterna({
-        ferramenta: { slug: pedido.tool_slug, url: pedido.tool_url, efeito: pedido.effect },
-        segredo: chave,
+      // Webhook: a chave de assinatura, lida agora. MCP: a credencial do servidor, já lida acima.
+      const segredo = pedido.tool_mcp ? alvo.segredo : await lerChaveDaFerramenta(admin, org.orgId, pedido.tool_id);
+      resultado = await executarFerramentaExterna({
+        ferramenta: alvo.ferramenta,
+        segredo,
         argumentos: validado.valor,
         idDeEntrega: id,
       });

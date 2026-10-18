@@ -1044,6 +1044,17 @@ export const AUDIT_ACTIONS = [
   "ai.external_tool_request_expired",
   "ai.external_tool_request_executed",
   "ai.external_tool_request_pruned",
+  // Servidores MCP externos (#96, 0553, Ferramentas externas › Servidores MCP): o interruptor da
+  // organização, o cadastro do servidor (criar, editar, apagar), o teste de conexão e a escolha das
+  // ferramentas. O metadata diz O QUE aconteceu (servidor, campos alterados, quantas ferramentas,
+  // motivo) — nunca a credencial, os dados enviados nem o que o servidor respondeu. A execução das
+  // ferramentas reaproveita `ai.external_tool_called` e `ai.external_tool_request_*`, com `kind: "mcp"`.
+  "ai.mcp_switch_changed",
+  "ai.mcp_server_created",
+  "ai.mcp_server_updated",
+  "ai.mcp_server_deleted",
+  "ai.mcp_server_tested",
+  "ai.mcp_tools_selected",
 
   // A assinatura do emissor (#2066, PR #2079): quem ligou ou desligou o nome de
   // quem fala nas mensagens ao cliente, e com que nome a IA passou a assinar.

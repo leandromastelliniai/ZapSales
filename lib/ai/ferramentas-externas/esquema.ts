@@ -72,8 +72,26 @@ export const parametroSchema = z
   })
   .strict();
 
-/** A leitura DEFENSIVA do jsonb `parameters`: quem lê do banco usa esta (cadastro e motor). */
-export const parametrosLidos = z.array(parametroSchema);
+/**
+ * A leitura DEFENSIVA do jsonb `parameters`: quem lê do banco usa esta (cadastro e motor).
+ *
+ * O nome do campo é lido com a regra LARGA: uma ferramenta de servidor MCP (issue #96) traz os
+ * nomes que o servidor escolheu (`customerId`), e o cadastro por webhook, que continua exigindo
+ * minúsculas ao CRIAR (`parametroSchema`), grava um subconjunto desta regra.
+ */
+const parametroLidoSchema = z
+  .object({
+    nome: z.string().min(1).max(LIMITES_DA_FERRAMENTA.nomeDoParametro.max).regex(/^[A-Za-z_][A-Za-z0-9_-]*$/),
+    tipo: z.enum(TIPOS_DE_PARAMETRO),
+    descricao: z
+      .string()
+      .trim()
+      .min(LIMITES_DA_FERRAMENTA.descricaoDoParametro.min)
+      .max(LIMITES_DA_FERRAMENTA.descricaoDoParametro.max),
+    obrigatorio: z.boolean().default(true),
+  })
+  .strict();
+export const parametrosLidos = z.array(parametroLidoSchema);
 
 const parametrosSchema = z
   .array(parametroSchema)
