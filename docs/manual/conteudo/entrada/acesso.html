@@ -1,0 +1,110 @@
+<!--meta {"id":"entrada-acesso","grupo":"entrada","titulo":"Entrar, recuperar senha e criar conta","ordem":1,"resumo":"As telas públicas de acesso: login (e-mail e senha ou Google), esqueci a senha, nova senha, verificação em duas etapas, código de recuperação, criar conta, configurar organização e aceitar convite.","palavras":["login","entrar","senha","esqueci minha senha","redefinir","verificação em duas etapas","mfa","código de recuperação","criar conta","cadastro","convite","aceitar convite","google","get started"],"onde":"Endereços /login, /login/forgot, /login/reset, /login/mfa, /login/recovery, /signup, /get-started e /team/accept-invite/<código>","quem":"Público (sem login). /get-started pede login e uma conta sem empresa.","rotas":[]} -->
+
+<h2 id="login">Entrar</h2>
+<p>A tela de entrada é a primeira que um usuário vê. O nome e o logo vêm da marca da <em>instalação</em>, e o idioma segue o do navegador (português por padrão). Quem já está logado é levado direto para o sistema.</p>
+<figure class="print media">
+  <img src="img/login.png" alt="Tela de login com os campos Email e Senha, o botão Entrar, Entrar com Google e os links Esqueci minha senha e Criar conta, numerada de 1 a 6" loading="lazy">
+  <figcaption>A tela Entrar (aparece escura quando o computador usa o tema escuro).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Email.</strong> “Email inválido” se estiver fora do formato.</li>
+  <li><strong>Senha.</strong> No mínimo 8 caracteres. O olho ao lado mostra ou oculta a senha.</li>
+  <li><strong>Entrar.</strong> “Entrando…”</li>
+  <li><strong>Entrar com Google.</strong> Aparece sempre; se o Google não está habilitado na instalação, avisa “O Google não está habilitado nesta instalação. Entre com e-mail e senha, ou peça a quem administra para habilitá-lo.”</li>
+  <li><strong>Esqueci minha senha.</strong></li>
+  <li><strong>Criar conta.</strong> Leva ao cadastro (“Não tem conta?”).</li>
+</ol>
+<p>Erros: “Email ou senha incorretos.”, “Muitas tentativas. Aguarde alguns minutos.”, “Dados inválidos. Confira os campos.”. <strong>Limite de segurança:</strong> 5 senhas erradas por e-mail em 5 minutos travam a conta pela janela, mesmo vindo de IPs diferentes (acertar na 3ª tentativa não custa nada), e há um teto por IP. Se a conta tem verificação em duas etapas, o próximo passo é a <a href="#entrada-acesso--mfa">tela do código</a>; senão o sistema vai para o endereço que você queria abrir ou para o início. A tela também pode mostrar faixas de aviso:</p>
+<figure class="print media">
+  <img src="img/login-aviso.png" alt="Tela de login com a faixa de aviso Link inválido ou expirado" loading="lazy">
+  <figcaption>Um aviso no alto da tela (aqui, “Link inválido ou expirado”).</figcaption>
+</figure>
+<table class="tabela">
+  <thead><tr><th>Quando</th><th>Mensagem</th></tr></thead>
+  <tbody>
+    <tr><td>Depois de redefinir a senha</td><td>“Senha redefinida com sucesso. Entre com a nova senha.”</td></tr>
+    <tr><td>Link de e-mail vencido</td><td>“Link inválido ou expirado. Peça um novo em Recuperar senha ou refaça o cadastro.”</td></tr>
+    <tr><td>Convite que não vale mais</td><td>“Sua conta foi confirmada, mas o convite não vale mais — ele expirou ou foi emitido para outro e-mail. Peça um novo a quem te convidou…”</td></tr>
+    <tr><td>Instalação só por convite</td><td>“Sua conta foi confirmada, mas esta instalação aceita cadastro apenas por convite — então não criamos uma empresa para você…”</td></tr>
+    <tr><td>Falha ao preparar a empresa</td><td>“Sua conta foi confirmada, mas houve um erro ao preparar seu ambiente. Tente entrar novamente em instantes.”</td></tr>
+    <tr><td>Google falhou ou foi cancelado</td><td>“Não foi possível concluir a entrada com o Google…” / “A entrada com o Google foi cancelada antes de terminar. Nada mudou na sua conta.”</td></tr>
+    <tr><td>Acesso retirado</td><td>“O acesso desta conta foi retirado por quem administra o sistema — então não criamos uma empresa nova para você…”</td></tr>
+  </tbody>
+</table>
+
+<h2 id="esqueci">Esqueci minha senha</h2>
+<figure class="print media">
+  <img src="img/login-esqueci.png" alt="Tela Recuperar senha com o campo Email e o botão Enviar link de redefinição, numerada de 1 a 3" loading="lazy">
+  <figcaption>Recuperar senha.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Email.</strong></li>
+  <li><strong>Enviar link de redefinição.</strong></li>
+  <li><strong>Entrar.</strong> “Lembrou a senha?”</li>
+</ol>
+<p>Depois de enviar aparece sempre “Verifique seu e-mail — Se existir uma conta com esse e-mail, enviamos um link para redefinir a senha.”: a mensagem é a mesma <strong>exista a conta ou não</strong>, para não revelar quais e-mails estão cadastrados. Limite: 3 pedidos por e-mail por hora. O e-mail é enviado pelo servidor de login; sem e-mail funcionando lá, o link pode não chegar.</p>
+
+<h2 id="nova-senha">Nova senha</h2>
+<figure class="print media">
+  <img src="img/login-reset.png" alt="Tela Definir nova senha com o medidor de força" loading="lazy">
+  <figcaption>A tela “Definir nova senha”, aberta sem o link do e-mail.</figcaption>
+</figure>
+<p>Aberta pelo link do e-mail. Pede <strong>Nova senha</strong> (com o medidor “Força da senha” de Muito fraca a Forte e os requisitos “8 ou mais caracteres”, “Uma letra”, “Um número”, “Um símbolo”) e <strong>Confirmar nova senha</strong> (“As senhas não coincidem”). Se a conta tem verificação em duas etapas, pede também o <em>código de 6 dígitos</em>. A nova senha precisa ser diferente da atual. Ao concluir, volta ao login com a faixa verde de sucesso. Sem o link válido: “Sessão de redefinição expirada. Peça um novo link em Recuperar senha.”</p>
+<aside class="nota info"><strong>Senha do cadastro × senha da redefinição.</strong><p>A redefinição exige letra, número <em>e</em> símbolo; o cadastro e o login só conferem o mínimo de 8 caracteres, embora o medidor apareça nos dois.</p></aside>
+
+<h2 id="mfa">Verificação em duas etapas</h2>
+<p>Depois da senha, quem tem o fator ativado vê “Verificação em duas etapas — Digite o código de 6 dígitos do seu autenticador.”. O campo de 6 dígitos envia sozinho ao completar; também há o botão <span class="ui">Verificar</span>. Erros: “Código inválido. Tente novamente.”. <strong>Três erros bloqueiam por 60 segundos</strong> (“Muitas tentativas. Aguarde 60s…”). É aqui que cai o dono do servidor quando o painel exige a verificação. O link <strong>“Perdi acesso ao autenticador”</strong> leva ao código de recuperação.</p>
+<h3 id="recuperar">Perdi o autenticador</h3>
+<figure class="print media">
+  <img src="img/login-recuperar.png" alt="Tela Recuperar acesso com os campos Email e Código de recuperação, numerada de 1 a 3" loading="lazy">
+  <figcaption>Recuperar acesso com um código de recuperação.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Email.</strong></li>
+  <li><strong>Código de recuperação.</strong> 8 caracteres, em maiúsculas (<code>ABCD2345</code>), um dos 10 guardados quando a verificação foi configurada.</li>
+  <li><strong>Recuperar acesso.</strong></li>
+</ol>
+<p>O código é <strong>consumido</strong> e <strong>todos os fatores de duas etapas da conta são apagados</strong> (irreversível); você entra só com a senha e recadastra a verificação. Erros: “Código inválido ou já utilizado.”, “Serviço de recuperação indisponível. Contate o administrador.”. Fica na auditoria (<code>auth.recovery_code_used</code>).</p>
+
+<h2 id="criar-conta">Criar conta</h2>
+<figure class="print media">
+  <img src="img/cadastro.png" alt="Tela Criar conta com Nome da empresa, Email, Senha, Confirmar senha e o botão Criar conta, numerada de 1 a 5" loading="lazy">
+  <figcaption>Criar conta, no modo aberto (o padrão).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome da empresa.</strong> De 2 a 120 caracteres.</li>
+  <li><strong>Email.</strong></li>
+  <li><strong>Senha.</strong> Mínimo de 8 caracteres, com o medidor de força.</li>
+  <li><strong>Confirmar senha.</strong></li>
+  <li><strong>Criar conta.</strong> “Criando conta…” Há também “Entrar com Google” e “Já tem conta? Entrar”.</li>
+</ol>
+<p>O que acontece depende do <a href="#admin-cadastro">modo de cadastro</a> da instalação:</p>
+<ul>
+  <li><strong>Aberto (padrão):</strong> depois de confirmar o e-mail, o sistema cria a empresa e leva ao <a href="#onboarding">primeiros passos</a>.</li>
+  <li><strong>Com aprovação:</strong> a frase extra “Nesta instalação, a empresa só é criada depois da aprovação de quem administra.”; o pedido vai para a fila do dono.</li>
+  <li><strong>Só por convite, sem convite:</strong> o título vira “Cadastro apenas por convite” (“Esta instalação não aceita cadastro aberto. Se você foi convidado, use o link que chegou no seu e-mail.”) com o botão <span class="ui">Entrar</span>.</li>
+  <li><strong>Com convite</strong> (<code>/signup?invite=…</code>): “Crie sua senha para entrar na empresa que te convidou”. Os campos são <em>Seu nome</em>, <em>Email</em> (somente leitura, vindo do convite), <em>Senha</em> e <em>Confirmar senha</em> — sem “Nome da empresa”.</li>
+</ul>
+<figure class="print media">
+  <img src="img/cadastro-convite-invalido.png" alt="Tela de cadastro com a faixa Esse convite expirou ou não é mais válido" loading="lazy">
+  <figcaption>Cadastro aberto por um convite que não vale mais.</figcaption>
+</figure>
+<p>Convite vencido mostra “Esse convite expirou ou não é mais válido. Peça um novo a quem te convidou — criar uma conta agora abriria uma empresa nova, e não é isso que você quer.” Depois de enviar, sem sessão ativa, aparece “Confirme seu e-mail — Enviamos um link de confirmação para &lt;email&gt;.” O link do e-mail passa pela rota de confirmação (que não tem tela). Conta já existente com convite: “Você já tem uma conta com este e-mail — Entre com ela para aceitar o convite.” Limite: 20 cadastros por IP por hora. O e-mail de confirmação é enviado pelo servidor de login, não pelo servidor de e-mail do painel.</p>
+
+<h2 id="get-started">Configure sua organização</h2>
+<p>Para quem confirmou a conta mas ficou <strong>sem empresa</strong> (falha ao preparar o ambiente ou modo com aprovação). Pede o <em>Nome da empresa</em> e o botão vira <span class="ui">Continuar para o onboarding</span> (modo aberto) ou <span class="ui">Enviar pedido</span> (com aprovação). Textos por estado: “Configure sua organização”, “Pedido enviado” (“Seu pedido… está com quem administra esta instalação. Quando ele for aprovado, é só entrar de novo.”) e “Pedido não aprovado”. A nota avisa: “Se você recebeu um convite, não crie uma organização nova. Use o link do convite…”. Limite de 3 tentativas por hora.</p>
+
+<h2 id="convite">Aceitar convite</h2>
+<figure class="print media">
+  <img src="img/convite-invalido.png" alt="Tela Convite inválido ou expirado" loading="lazy">
+  <figcaption>Um convite com código inválido.</figcaption>
+</figure>
+<p>O link que o Administrador manda (válido por <strong>24 horas</strong>; o convite <em>é</em> o link assinado). Os estados do cartão central:</p>
+<ul>
+  <li><strong>Convite inválido ou expirado</strong> — “Este link não é válido ou já passou da janela de 24h. Peça um novo convite ao admin do tenant.”</li>
+  <li><strong>Você foi convidado</strong> (sem login) — “Para aceitar o convite como &lt;papel&gt;, faça login com o email &lt;email&gt;.”, com <span class="ui">Fazer login</span> e “Ainda não tenho conta”. O papel aparece em inglês cru (admin, manager, agent, viewer).</li>
+  <li><strong>Email não corresponde</strong> — logado com outro e-mail: o convite é do e-mail dele. Botão <span class="ui">Sair</span>.</li>
+  <li><strong>Aceitar convite</strong> — logado com o e-mail certo: “Você foi convidado para entrar como &lt;papel&gt;.” e o botão <span class="ui">Aceitar convite</span>, que leva ao sistema. Falha: “Não foi possível aceitar este convite. Ele pode ter vencido ou seu acesso foi revogado.”</li>
+  <li><strong>Muitas tentativas</strong> — limite de 60 aberturas por hora por IP.</li>
+</ul>
+<p>Quem foi revogado e recebe um convite novo consegue usar o link mesmo vendo a tela de “Acesso revogado”. Os convites são emitidos pela <a href="#equipe">Equipe</a>, pelo <a href="#onboarding">onboarding</a> e pelo <a href="#admin-tenants">cadastro de empresa do painel</a>.</p>

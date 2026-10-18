@@ -1,0 +1,73 @@
+<!--meta {"id":"radar","grupo":"atendimento","titulo":"Radar","ordem":2,"resumo":"A lista de quem esfriou: negócios abertos em que ninguém mexe há tempo e que podem morrer sem resposta. Mostra o que é crítico, o que está em risco e o que já tem retorno combinado.","palavras":["radar","risco","esfriou","parado","crítico","em risco","em voo","sem próximo passo","assumir","demanda","retorno agendado"],"onde":"Atendimento › Radar","quem":"Todos abrem a tela. Quem é Atendente ou acima vê a lista e pode assumir; Atendente só enxerga os negócios que são dele ou que não têm dono.","rotas":["/app/radar"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Todo negócio aberto no funil que fica parado vira, com o tempo, um cliente perdido. O <strong>Radar de risco</strong> junta, numa lista só, os negócios abertos em que <strong>ninguém mexe há tempo</strong> e que precisam de você. É a tela para abrir de manhã e perguntar: <em>“quem eu estou deixando esfriar?”</em></p>
+<p>O Radar <strong>não envia nada e não altera nada sozinho</strong>. Ele só lê: a única ação que grava algo é o botão <span class="ui">Assumir</span>.</p>
+
+<figure class="print">
+  <img src="img/radar.png" alt="Tela Radar de risco com os três contadores no alto e a lista de negócios, cada um com selo de risco, dono e situação do próximo passo, numerada de 1 a 9" loading="lazy">
+  <figcaption>O Radar de risco da loja de demonstração: um crítico, um em risco e cinco em voo.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Abre um painel lateral com a explicação resumida da tela.</li>
+  <li><strong>Crítico.</strong> Quantos negócios estão parados há 72 horas ou mais, ou têm um compromisso que já passou sem que ninguém registrasse se o cliente veio.</li>
+  <li><strong>Em risco.</strong> Parados há 24 horas ou mais, sem nada combinado para o futuro.</li>
+  <li><strong>Em voo.</strong> Já têm um retorno agendado pela IA, ou um compromisso marcado na <a href="#agenda">Agenda</a> que protege o cliente. “Em voo” quer dizer que alguém já está cuidando — pode esperar.</li>
+  <li><strong>Uma linha da lista.</strong> É o negócio inteiro: o selo de risco, o título do negócio, o nome do cliente e há quanto tempo está parado. Clicar abre a conversa no <a href="#inbox">Inbox</a> (ou o <a href="#funis">funil</a>, quando o negócio não tem conversa).</li>
+  <li><strong>Ver compromisso.</strong> Só aparece quando existe um compromisso na Agenda ligado ao cliente. Leva direto ao compromisso.</li>
+  <li><strong>O próximo passo.</strong> A linha de baixo diz por que o negócio está (ou não) protegido: <em>“Presença não confirmada · revise o compromisso”</em>, <em>“Confirme a presença”</em>, <em>“Assistente retorna em 5h”</em> ou, em amarelo, <em>“Sem próximo passo agendado”</em>.</li>
+  <li><strong>O dono.</strong> <em>Agente: nome</em> (a IA é a dona), <em>Com atendente</em> (há uma pessoa responsável), <em>Assistente na conversa</em> ou <em>Sem dono</em>.</li>
+  <li><strong>Assumir.</strong> Aparece quando há conversa e ainda não há uma pessoa como dona. Veja abaixo o que ele faz.</li>
+</ol>
+
+<h2 id="como-classifica">Como o Radar decide quem entra</h2>
+<table class="tabela">
+  <thead><tr><th>Selo</th><th>Quando aparece</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Crítico</strong></td><td>O negócio está parado há 72 horas ou mais, ou tem um compromisso que já terminou e a presença não foi confirmada.</td></tr>
+    <tr><td><strong>Em risco</strong></td><td>Está parado há 24 horas ou mais e não há retorno nem compromisso à vista.</td></tr>
+    <tr><td><strong>Em voo</strong></td><td>Tem retorno agendado pela IA ou um compromisso vivo na Agenda (pendente ou confirmado). Esses entram na lista mesmo parados há dias.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li>Entram só negócios <strong>abertos</strong> de funis que <strong>não estão arquivados</strong>.</li>
+  <li>A ordem é: críticos, depois em risco, depois em voo; dentro de cada grupo, o mais frio primeiro.</li>
+  <li>O limite de “frio” vem da <strong>etapa do funil</strong>: se a etapa tem um prazo esperado (em <em>Configurações › Etapas do funil</em>), ele vale no lugar das 24 horas, e o crítico é o triplo dele.</li>
+  <li>A tela mostra os <strong>50 mais graves</strong>, mas os contadores do alto contam o conjunto inteiro.</li>
+  <li>A lista se atualiza sozinha a cada minuto.</li>
+</ul>
+<aside class="nota info"><strong>O compromisso protege, mas não resolve.</strong><p>Um compromisso futuro deixa o negócio “em voo”. Um compromisso que já passou e ficou sem desfecho vira <em>crítico</em>: registre na <a href="#agenda">Agenda</a> se o cliente compareceu ou faltou.</p></aside>
+
+<h2 id="avisos">As caixas de aviso amarelas</h2>
+<p>Acima da lista podem aparecer até três caixas amarelas (cada uma mostra no máximo 8 linhas). Elas só existem quando há algo a mostrar:</p>
+<ul>
+  <li><strong>Demandas abertas sem próximo passo</strong> — alguém está esperando e nada foi combinado. A linha mostra o nome do contato e há quantas horas a demanda está aberta.</li>
+  <li><strong>Propostas vencidas sem retomada</strong> — o cliente recebeu a proposta e não decidiu. Cada linha leva à proposta e mostra a data em que ela venceu. Só aparece com o recurso Propostas ligado.</li>
+  <li><strong>Propostas esperando revisão</strong> — rascunhos que a IA terminou e ninguém revisou. Confira antes de enviar.</li>
+</ul>
+
+<h2 id="assumir">Assumir uma conversa</h2>
+<p>O botão <span class="ui">Assumir</span> aparece nas linhas que têm conversa e ainda não têm um atendente como dono. Com um clique, sem janela de confirmação:</p>
+<ol class="passos">
+  <li>A conversa passa a ser <strong>sua</strong>.</li>
+  <li>A IA fica <strong>silenciada nessa conversa</strong>, para sempre — ela não responde mais ali, a menos que a conversa seja devolvida pelo Inbox.</li>
+  <li>A ação fica registrada na linha do tempo (“Assumiu o atendimento desta conversa”) e no registro de auditoria.</li>
+  <li>Aparece o aviso “Você assumiu a demanda”.</li>
+</ol>
+<p>Nada é enviado ao cliente por esse clique. Se outra pessoa assumiu antes, a tela avisa “Outro atendente já assumiu.”.</p>
+<aside class="nota atencao"><strong>Assumir silencia a IA de forma permanente nessa conversa.</strong><p>Use quando você realmente vai atender. Se assumiu por engano, devolva a conversa pelo <a href="#inbox">Inbox</a>.</p></aside>
+
+<h2 id="quando-vazio">Quando não há nada</h2>
+<p>Se todos os negócios abertos tiveram atividade recente ou já têm retorno marcado, a tela mostra um ✔ verde com <em>“Nenhuma demanda em risco”</em>. É o estado que você quer ver.</p>
+
+<h2 id="papeis">O que cada papel vê</h2>
+<table class="tabela">
+  <thead><tr><th>Papel</th><th>Resultado</th></tr></thead>
+  <tbody>
+    <tr><td>Somente leitura</td><td>Abre a tela, mas a lista chega vazia (a consulta exige Atendente). Não é um defeito: é a permissão.</td></tr>
+    <tr><td>Atendente</td><td>Vê só os negócios <strong>dele</strong> e os <strong>sem dono</strong> (a menos que a organização tenha escolhido “todos veem tudo”). Pode assumir.</td></tr>
+    <tr><td>Gerente e Administrador</td><td>Veem todos os negócios e podem assumir.</td></tr>
+  </tbody>
+</table>
+<p>Mais sobre os papéis em <a href="#conceitos--papeis">Papéis</a>.</p>
+<aside class="nota dica"><strong>Um bom hábito.</strong><p>Abra o Radar no começo do dia, comece pelos <em>Crítico</em> e depois pelos <em>Em risco</em>. Os <em>Em voo</em> só pedem atenção se o compromisso que os protege não acontecer.</p></aside>

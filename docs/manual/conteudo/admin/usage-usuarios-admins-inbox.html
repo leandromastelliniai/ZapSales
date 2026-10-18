@@ -1,0 +1,75 @@
+<!--meta {"id":"admin-usage","grupo":"admin","titulo":"Usage, Users, Platform Admins e Inbox","ordem":5,"resumo":"Quatro telas de leitura do painel: o consumo e o custo de IA por empresa, as pessoas de todas as empresas, quem é administrador da plataforma e o espiar de conversas de qualquer empresa.","palavras":["usage","uso","custo","ia","tokens","exportar csv","users","usuários","platform admins","inbox","conversas","somente leitura","dba"],"onde":"Modo administrador › Usage, Users, Platform Admins e Inbox (/admin/usage, /admin/users, /admin/platform-admins, /admin/inbox)","quem":"Administrador da plataforma (só leitura)","rotas":[]} -->
+
+<h2 id="usage">Usage — Uso &amp; Custo</h2>
+<p>Quanto cada empresa usou (mensagens, conversas, IA) e quanto isso custou em IA, por período.</p>
+<figure class="print">
+  <img src="img/admin-usage.png" alt="Tela Uso e Custo com o seletor de período, os gráficos e a tabela Uso por tenant, numerada de 1 a 6" loading="lazy">
+  <figcaption>A tela Uso &amp; Custo (só a empresa de demonstração).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Título.</strong> “Consumo de mensagens, conversas e AI por tenant”.</li>
+  <li><strong>Período.</strong> “Últimos 30 dias” (padrão), “Últimos 7 dias” ou “Últimos 90 dias”.</li>
+  <li><strong>Gráficos.</strong> “Mensagens / dia”, “Custo AI / dia” e “AI Tokens / dia”. Sem dados: “Sem dados no período”.</li>
+  <li><strong>Uso por tenant.</strong> A tabela: Tenant, Agente, Mensagens, Conversas, Invoc. AI, Tokens e Custo AI (do maior custo para o menor).</li>
+  <li><strong>Custo AI.</strong> A última coluna.</li>
+  <li><strong>Exportar CSV.</strong> Baixa <code>usage-&lt;periodo&gt;.csv</code> com os dados de <em>todas</em> as empresas (gerado no navegador).</li>
+</ol>
+<aside class="nota atencao"><strong>A moeda é dólar, mesmo onde está escrito “R$”.</strong><p>Os valores vêm do custo registrado em dólar; a tabela mostra “US$”, mas o título do gráfico diz “(R$)” e a coluna do CSV se chama <code>custo_reais</code> sem converter. Trate o custo como <em>dólares</em>.</p></aside>
+
+<h2 id="users">Users — Usuários</h2>
+<figure class="print">
+  <img src="img/admin-users.png" alt="Lista de usuários do painel com busca, filtros de tenant e role e as colunas Email, Nome, Tenant, Role, Último acesso e Status, numerada de 1 a 7" loading="lazy">
+  <figcaption>A lista de usuários (só a empresa de demonstração).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Busca.</strong> “Buscar por email ou nome…”.</li>
+  <li><strong>Tenant.</strong> “Todos os tenants” ou uma empresa.</li>
+  <li><strong>Role.</strong> “Todos os roles”, Admin, Manager, Agente ou Viewer.</li>
+  <li><strong>Role</strong> (coluna). Selo colorido por papel.</li>
+  <li><strong>Último acesso.</strong> Relativo.</li>
+  <li><strong>Status.</strong> <em>Ativo</em> ou <em>Revogado</em> (vínculo retirado).</li>
+  <li><strong>Ver.</strong></li>
+</ol>
+<p>É <strong>uma linha por vínculo</strong> entre pessoa e empresa (quem trabalha em duas empresas aparece duas vezes). 30 por página. O detalhe mostra o cartão “Informações do usuário” (e-mail confirmado, último acesso, criado em, <em>MFA</em> Ativo/Inativo, telefone), “Memberships” (empresa, papel, aceito em, status) e “Audit recente” (últimas 50 ações). <strong>Não há</strong> ação de redefinir senha, banir, revogar ou apagar usuário aqui.</p>
+
+<figure class="print media">
+  <img src="img/admin-user-detalhe.png" alt="Detalhe de um usuário com informações, memberships e a auditoria recente, numerado de 1 a 3" loading="lazy">
+  <figcaption>O detalhe de um usuário.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Informações do usuário.</strong> E-mail confirmado, último acesso, criado em e MFA.</li>
+  <li><strong>Memberships.</strong> As empresas a que a pessoa pertence, com papel e status.</li>
+  <li><strong>Audit recente.</strong> As últimas ações da pessoa (inclusive as aberturas de tela do próprio painel).</li>
+</ol>
+
+<h2 id="platform-admins">Platform Admins</h2>
+<figure class="print media">
+  <img src="img/admin-platform-admins.png" alt="Tela Platform Admins com o aviso de que o gerenciamento é restrito ao DBA e a tabela de administradores, numerada de 1 a 4" loading="lazy">
+  <figcaption>A tela Platform Admins.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>“Gerenciamento de Platform Admins é restrito ao DBA”.</strong> Adicionar, remover ou alterar é feito exclusivamente por SQL pelo DBA, com nota na auditoria. A página é informativa e não tem nenhum botão de alteração.</li>
+  <li><strong>Scope.</strong> <code>full</code> ou <code>support_readonly</code>.</li>
+  <li><strong>MFA.</strong> “Sim”/“Não” = se a verificação em duas etapas é exigida dessa pessoa.</li>
+  <li><strong>Motivo.</strong> O motivo registrado (cortado em 40 caracteres; o texto completo aparece ao passar o mouse).</li>
+</ol>
+<p>Colunas: <em>Usuário</em>, <em>Concedido em</em>, <em>Concedido por</em>, <em>Scope</em>, <em>MFA</em>, <em>Status</em> (Ativo ou Revogado, esmaecido) e <em>Motivo</em>. Há um link “Ver runbook →” que aponta para um arquivo que não existe no aplicativo (provavelmente um link quebrado). Como conceder e revogar: veja a <a href="#admin-visao">visão geral do painel</a>.</p>
+
+<h2 id="inbox">Inbox (leitura)</h2>
+<p>Permite <em>espiar</em>, sem responder, as conversas de qualquer empresa (suporte e diagnóstico). Três colunas: lista (360 px), conversa e painel lateral (320 px) — largura fixa, pensada para computador.</p>
+<figure class="print">
+  <img src="img/admin-inbox.png" alt="Inbox do painel com a lista de conversas, a busca, o filtro de status e a mensagem Selecione uma conversa, numerada de 1 a 3" loading="lazy">
+  <figcaption>O Inbox do painel (só conversas da empresa de demonstração).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Buscar mensagem…</strong> Busca só na <em>prévia da última mensagem</em>, não em todo o histórico.</li>
+  <li><strong>Status.</strong> “Todos”, “Pendente”, “Aberto” ou “Resolvido”.</li>
+  <li><strong>Selecione uma conversa.</strong> “Modo somente-leitura. Use “Impersonate” para responder como atendente do tenant.”</li>
+</ol>
+<ul>
+  <li>Cada item mostra o contato (ou o telefone, ou “Sem nome”), a hora, o selo da empresa, a prévia e o contador de não lidas. Atualiza em tempo real.</li>
+  <li>Aberta a conversa, aparecem as últimas 50 mensagens (todas as de saída rotuladas “Atendente”), o status em inglês cru (<code>pending</code>, <code>open</code>, <code>resolved</code>, <code>closed</code>) e, ao lado, os cartões “Contato” (telefone completo, e-mail parcialmente mascarado, selo “Bloqueado”) e “Tenant” (<span class="ui">Abrir tenant</span>).</li>
+  <li>O rodapé diz “Use “Impersonate” (em breve, S-11.07) para responder” — texto desatualizado: o <a href="#admin-tenants">acompanhamento</a> já existe.</li>
+  <li>Cada abertura grava auditoria (<code>platform_admin.conversation_viewed</code>, <code>platform_admin.inbox_listed</code>).</li>
+</ul>
+<aside class="nota atencao"><strong>Dado sensível.</strong><p>Esta tela expõe <em>mensagens reais</em> de clientes finais de todas as empresas, com o telefone completo. Use só para suporte e nunca tire print sem esconder o conteúdo.</p></aside>

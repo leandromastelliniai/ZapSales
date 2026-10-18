@@ -1,0 +1,73 @@
+<!--meta {"id":"auditoria","grupo":"analise","titulo":"Auditoria","ordem":7,"resumo":"O diário de tudo que foi mudado no sistema: quem fez, o quê e quando. O histórico não se apaga e pode ser filtrado e exportado em CSV.","palavras":["auditoria","log","histórico","quem mudou","quem fez","registro","rastro","exportar csv","filtro","ação","ator","lgpd","segurança"],"onde":"Análise › Ver tudo em Análise › Auditoria (não está no menu lateral; também pela busca ⌘K e pelos selos “ver o que mudou”)","quem":"Quem abre: Gerente ou acima. Quem enxerga linhas: na prática, o Administrador (veja o aviso abaixo).","rotas":["/app/audit"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>A <strong>Auditoria</strong> responde a pergunta <em>“quem mudou isto, e quando?”</em>. Toda alteração feita pela tela, pela API ou por uma chave de acesso gera uma linha neste diário: mover um lead de etapa, unir contatos, convidar alguém, criar uma chave, pausar uma campanha, mudar a marca. O histórico <strong>não se apaga</strong>: nem a própria equipe técnica consegue editar ou remover uma linha pelo sistema.</p>
+<p>A tela <strong>não está no menu lateral</strong>. Chegue pelo <a href="#analise-hub">hub Análise</a> (“Ver tudo em Análise”), pela busca <kbd>⌘K</kbd> (ou <kbd>Ctrl K</kbd>) digitando “Auditoria”, ou pelos selos “alterado pelo assistente… — ver o que mudou” de telas como Webhooks e Funis.</p>
+<aside class="nota atencao"><strong>Gerente abre, mas pode ver a lista vazia.</strong><p>A tela aceita Gerente, porém a regra de leitura do banco só libera as linhas para quem é <strong>Administrador</strong> da organização (ou super-admin). Um Gerente tende a ver “Nenhum log no período.”. O texto da tela diz “Só gestores veem”; as capturas deste manual foram feitas com um Administrador. <em>Este comportamento foi lido no código e não foi conferido com uma conta de Gerente.</em></p></aside>
+
+<h2 id="tela">A tela</h2>
+<figure class="print">
+  <img src="img/auditoria.png" alt="Tela de Auditoria com os filtros no topo, o botão Exportar CSV e a tabela de eventos, numerada de 1 a 9" loading="lazy">
+  <figcaption>A Auditoria de uma organização de demonstração.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> A ajuda da tela.</li>
+  <li><strong>Ação contém.</strong> Texto livre, até 100 caracteres, que procura dentro do <em>código técnico</em> da ação (por exemplo <code>lead.created</code>). Não entende a frase em português.</li>
+  <li><strong>Tipo de recurso.</strong> Igualdade exata com o tipo do item, até 64 caracteres (<code>contact</code>, <code>lead</code>, <code>webhook_source</code>, <code>automation_rule</code>…).</li>
+  <li><strong>De / Até.</strong> Data e hora no fuso do seu navegador.</li>
+  <li><strong>Exportar CSV.</strong> Baixa o resultado com os mesmos filtros.</li>
+  <li><strong>Ator.</strong> Quem fez.</li>
+  <li><strong>Ação.</strong> O que foi feito.</li>
+  <li><strong>Recurso.</strong> Sobre o quê.</li>
+  <li><strong>Detalhes.</strong> Um resumo técnico do que mudou.</li>
+</ol>
+<p>Os filtros se aplicam <strong>sozinhos ao digitar</strong>; não há botão “Aplicar”. A ordem é do mais recente para o mais antigo, 50 linhas por vez, com o botão <span class="ui">Carregar mais</span>.</p>
+
+<h3>As colunas</h3>
+<table class="tabela">
+  <thead><tr><th>Coluna</th><th>O que mostra</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Quando</strong></td><td>Data e hora locais, em 24 h.</td></tr>
+    <tr><td><strong>Ator</strong></td><td>O nome da pessoa da equipe. Se ela saiu da equipe: “Pessoa” e os 8 primeiros caracteres do identificador. Uma ação feita por chave de acesso aparece como “Chave de acesso” + 8 caracteres do id da chave. “Suporte da plataforma” indica que o suporte do ZapSales agiu. “Sistema” é o que o próprio sistema fez, sem pessoa por trás (automações, a IA, rotinas).</td></tr>
+    <tr><td><strong>Ação</strong></td><td>Uma frase em português em negrito e, embaixo, o código técnico em letra de máquina (“Uniu contatos duplicados” e <code>contact.merged</code>). Quando não há frase pronta, só o código.</td></tr>
+    <tr><td><strong>Recurso</strong></td><td>O tipo (“contato”, “lead”, “canal”…, ou o código cru) seguido dos 8 primeiros caracteres do identificador do item.</td></tr>
+    <tr><td><strong>ID da requisição</strong></td><td>Os 8 primeiros caracteres do identificador da chamada, ou “—”. É útil para o suporte ligar a linha ao rastro técnico.</td></tr>
+    <tr><td><strong>Detalhes</strong></td><td>O JSON do que mudou, cortado em 80 caracteres + “…”.</td></tr>
+  </tbody>
+</table>
+<aside class="nota info"><strong>Por que muitas linhas só têm o código?</strong><p>O vocabulário tem 456 códigos de ação, e a tela traduz cerca de 95 deles para português (os mais comuns: lead, contato, conversa, equipe, chaves, mensagens, canais, agenda, marca, LGPD). Os demais — webhooks (<code>webhook.source_created</code>), automações (<code>automation.rule_executed</code>), muitos da IA — aparecem só como código, e o tipo de recurso também pode vir cru (<code>webhook_source</code>). Isso é esperado.</p></aside>
+<p>Linhas “Sistema” com o recurso e o id (como as do agente de IA) são ações automáticas legítimas, não um ator misterioso.</p>
+
+<h2 id="filtrar">Filtrar</h2>
+<figure class="print media">
+  <img src="img/auditoria-filtro.png" alt="Auditoria filtrada por lead com apenas duas linhas, numerada de 1 a 2" loading="lazy">
+  <figcaption>Digitando “lead.” no filtro, só ficam as ações sobre leads.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Ação contém</strong> com o texto <code>lead.</code>.</li>
+  <li><strong>As linhas que sobraram.</strong> “Moveu um lead de etapa” e “Criou lead”.</li>
+</ol>
+<ul>
+  <li>Combine os filtros: tipo de recurso <code>contact</code> + intervalo de datas mostra tudo o que mexeu em contatos naquela semana.</li>
+  <li>Sem nenhum resultado, aparece “Nenhum log no período.” — com ou sem filtro.</li>
+  <li>Não há seletor com a lista de ações na tela: você digita parte do código. Códigos comuns: <code>lead.</code>, <code>contact.</code>, <code>member.</code>, <code>token.</code>, <code>campaign.</code>, <code>lgpd.</code>, <code>agenda.</code>, <code>webhook.</code>.</li>
+</ul>
+
+<h2 id="exportar">Exportar CSV</h2>
+<p>O botão <span class="ui">Exportar CSV</span> baixa um arquivo <code>audit-AAAA-MM-DD.csv</code> (UTF-8) com os <strong>mesmos filtros</strong> da tela. As colunas são: id, created_at, actor_user_id, action, resource_type, resource_id, request_id, actor_ip e metadata (o JSON completo, sem cortar).</p>
+<ul>
+  <li>No máximo <strong>10.000 linhas</strong>, as mais recentes, sem paginação. Para períodos maiores, exporte por intervalos de datas.</li>
+  <li>A exportação em si não gera uma linha de auditoria.</li>
+  <li>O arquivo traz o endereço IP de quem agiu, que é dado pessoal: guarde-o com o cuidado que a LGPD pede.</li>
+</ul>
+
+<h2 id="garantias">O que a Auditoria garante</h2>
+<ul>
+  <li><strong>Não se apaga nem se reescreve pelo sistema.</strong> A tabela só aceita novas linhas para os papéis que a aplicação usa; apagar ou alterar é impossível por ali.</li>
+  <li><strong>Retenção padrão de 5 anos</strong> (1.825 dias), com piso de 90 dias, configurável por quem administra a instalação. Uma rotina diária apaga <em>somente o que passou do prazo</em> e registra que o fez (<code>retention.sweep_run</code>). Não existe arquivo “frio” em outro lugar.</li>
+  <li><strong>Rotinas que não fizeram nada não geram linha.</strong> Só aparece o que de fato mudou algo.</li>
+  <li><strong>Segredos nunca entram</strong> nos detalhes: chaves, senhas e segredos de assinatura ficam de fora.</li>
+  <li>Se a gravação da linha falhar, a ação principal <em>não</em> é bloqueada; o erro vira alerta para quem opera o sistema.</li>
+  <li>Eventos sem organização (como o login) não aparecem aqui, pois a tela só mostra a organização ativa. O painel da plataforma tem a sua própria tela de auditoria (veja o painel administrativo).</li>
+</ul>
+<p>Para a leitura dos eventos de segurança, procure, por exemplo, <code>member.</code> (convites, mudança de papel, remoção de gente), <code>token.</code> (chaves criadas e revogadas), <code>platform_admin.impersonate</code> (suporte da plataforma entrando na conta) e <code>lgpd.</code> (consentimentos, exportações e anonimizações).</p>

@@ -1,0 +1,43 @@
+<!--meta {"id":"tags","grupo":"organizacao","titulo":"Tags","ordem":7,"resumo":"O vocabulário de etiquetas da empresa: quanto cada uma é usada, dar cor, renomear, juntar duplicadas ou excluir — para todos os contatos, leads, conversas e regras de agente de uma vez.","palavras":["tags","etiquetas","cor","renomear","juntar","excluir","duplicadas","vocabulário","regras de agente","add_tag"],"onde":"Configurações › Sua empresa › Tags","quem":"Gerente ou acima (nem o super-admin da plataforma passa sem esse papel)","rotas":["/app/settings/tags"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Etiquetas (tags) são marcações livres que agentes, Inbox, funil e contatos usam. Com o tempo nascem duplicatas (“Cliente Novo”, “cliente novo”, “novo-cliente”). Esta tela dá uma visão única e permite <strong>arrumar tudo de uma vez</strong>, na empresa inteira. A tela não tem o botão “Como funciona”.</p>
+<figure class="print">
+  <img src="img/tags-lista.png" alt="Tela de Tags com a tabela de etiquetas, as contagens de uso e os botões Cor, Renomear, Juntar e Excluir0" loading="lazy">
+  <figcaption>A tabela de etiquetas da organização de demonstração.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Etiqueta.</strong> Um chip com o nome (e a cor, se houver). O selo cinza <em>“em uso, fora do vocabulário”</em> (nas etiquetas “novo” e “recorrente”) indica que a etiqueta existe em registros mas nunca foi curada aqui.</li>
+  <li><strong>Contatos.</strong> Quantas vezes aparece em contatos.</li>
+  <li><strong>Leads.</strong> Quantas vezes aparece em negócios.</li>
+  <li><strong>Conversas.</strong> Quantas vezes aparece em conversas.</li>
+  <li><strong>Regras de agente.</strong> Quantas regras de agentes de IA (“adicionar etiqueta”) escrevem essa etiqueta; em negrito se maior que zero.</li>
+  <li><strong>Selo “em uso, fora do vocabulário”.</strong></li>
+  <li><strong>Cor.</strong></li>
+  <li><strong>Renomear.</strong></li>
+  <li><strong>Juntar.</strong></li>
+  <li><strong>Excluir.</strong></li>
+</ol>
+<p>As contagens são de <em>ocorrências</em>: uma etiqueta repetida na mesma linha conta duas vezes. A lista mostra no máximo as <strong>500 primeiras</strong>, em ordem alfabética, sem paginação. Vazio: “Nenhuma etiqueta nesta organização ainda. Elas aparecem aqui conforme os agentes, o Inbox e o funil usarem.”. Se a leitura falha, uma caixa vermelha diz “Não foi possível carregar as etiquetas agora. Recarregue a página.” — nunca uma lista vazia enganosa.</p>
+
+<h2 id="operar">As quatro operações</h2>
+<p>Clicar num botão abre, <strong>embaixo da tabela</strong> (não é uma janela), um cartão com uma frase e os campos da operação. <span class="ui">Confirmar</span> aplica; <span class="ui">Cancelar</span> fecha.</p>
+<figure class="print">
+  <img src="img/tags-cor.png" alt="Painel Cor da etiqueta aberto abaixo da tabela, com oito círculos de cor, o botão Sem cor e a prévia" loading="lazy">
+  <figcaption>O painel de cor de “Cliente Novo”, aberto abaixo da tabela.</figcaption>
+</figure>
+<table class="tabela">
+  <thead><tr><th>Operação</th><th>O que pede</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Cor</strong></td><td>Uma das 8 cores: Amarelo, Âmbar, Vermelho, Verde-água, Azul, Índigo, Roxo, Cinza — ou <em>Sem cor</em>. Mostra uma prévia. Não há seletor livre.</td><td>Só muda o vocabulário curado; a cor aparece nos chips do Inbox, do funil e dos filtros (em até ~5 minutos). Dar cor “cura” a etiqueta (some o selo).</td></tr>
+    <tr><td><strong>Renomear</strong></td><td>“Novo nome”, até 60 caracteres, não vazio.</td><td>Troca o nome em <em>todos</em> os contatos, leads e conversas (sem diferenciar maiúscula de minúscula), no vocabulário e nas regras de agente. “Etiqueta atualizada em N registro(s) e em M regra(s) de agente.”</td></tr>
+    <tr><td><strong>Juntar</strong></td><td>“Etiqueta de destino”: a que fica.</td><td>É a mesma operação do banco que Renomear: a etiqueta de origem vira a de destino em todo lugar. Use para unir duplicatas.</td></tr>
+    <tr><td><strong>Excluir</strong></td><td>Confirma o texto “Excluir X de N contato(s), N lead(s) e N conversa(s).”</td><td>Tira a etiqueta de todos os registros. <strong>Sem desfazer.</strong> “Etiqueta removida de N registro(s).”</td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>Excluir não apaga a regra de agente.</strong><p>Se uma regra de agente ainda escreve a etiqueta (coluna “Regras de agente” maior que zero), o painel avisa: “Atenção: N regra(s) de agente continuam escrevendo esta etiqueta. Excluir aqui não apaga a regra — o agente vai recriar a etiqueta no próximo atendimento.” Primeiro ajuste a regra no agente.</p></aside>
+<ul>
+  <li>Todas as operações valem para a <strong>organização inteira, na hora</strong>. Não disparam eventos nem automações.</li>
+  <li>Fica na <a href="#auditoria">Auditoria</a> como <code>tag_vocabulary.changed</code>. Quem tem o fator de duas etapas precisa tê-lo provado na sessão (“Confirme o segundo fator para mudar as etiquetas.”).</li>
+  <li>Mensagens possíveis de erro: “Só um gerente ou administrador da organização pode mudar as etiquetas.”, “Sua sessão expirou. Entre de novo.”, “Não foi possível concluir agora. Tente de novo.”</li>
+</ul>

@@ -1,0 +1,43 @@
+<!--meta {"id":"admin-cadastro","grupo":"admin","titulo":"Cadastro e E-mail da instalação","ordem":8,"resumo":"Quem pode criar conta nesta instalação (aberto, só por convite ou com aprovação) e por onde o sistema envia e-mail (servidor próprio ou serviço externo).","palavras":["cadastro","signup","convite","aprovação","pedidos","modo de cadastro","e-mail","smtp","resend","remetente","servidor de e-mail","testar conexão"],"onde":"Modo administrador › Cadastro e E-mail (/admin/cadastro, /admin/email)","quem":"Administrador da plataforma; salvar e testar exigem escopo full e a verificação em dia","rotas":[]} -->
+
+<h2 id="cadastro">Cadastro — quem pode criar conta</h2>
+<p>Decide quem consegue criar uma conta nesta instalação. Vale para a instalação inteira; quem já tem conta continua entrando normalmente.</p>
+<figure class="print">
+  <img src="img/admin-cadastro.png" alt="Tela Cadastro com o aviso de troca de modo e os interruptores Cadastro apenas por convite e Cadastro com aprovação, numerada de 1 a 3" loading="lazy">
+  <figcaption>A tela Cadastro, no modo aberto (o padrão).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Quem pode criar conta.</strong> O cartão dos modos.</li>
+  <li><strong>Cadastro apenas por convite.</strong> Ligado, só entra quem recebeu convite; quem abrir a tela de cadastro sem convite vê um aviso e vai ao login. Desligado: “qualquer pessoa pode criar uma conta e abrir a própria empresa. É como o sistema sempre funcionou.”</li>
+  <li><strong>Cadastro com aprovação.</strong> Ligado, quem cria conta sem convite <em>pede</em> a empresa, e ela só é criada quando você aprova nesta tela. Fica desabilitado enquanto “apenas por convite” estiver ligado.</li>
+</ol>
+<ul>
+  <li>São <strong>três modos</strong> mutuamente exclusivos: <code>aberto</code> (padrão), <code>so_convite</code> e <code>com_aprovacao</code>. Os interruptores salvam <em>na hora</em> (e voltam se falhar: “Não deu para salvar. Tente de novo em instantes.”).</li>
+  <li>Com “só convite” ligado, a única porta de entrada é o convite — inclusive para você, se precisar de uma conta nova. Convide pela <a href="#equipe">Equipe</a> antes de precisar.</li>
+  <li><strong>Aviso amarelo “A troca de modo ainda não chegou ao servidor.”</strong> Aparece quando o modo gravado diverge do estado do servidor de login. O CRM já segue o modo novo, mas o servidor de login continua com o anterior; a tela só avisa (na captura, o texto para instalações com Supabase separado: ligar “Allow new users to sign up” em Authentication → Sign In / Up, ou <code>DISABLE_SIGNUP=false</code>; na VPS do kit, rodar <code>bash kit/update.sh</code>).</li>
+  <li><strong>Pedidos aguardando aprovação</strong> (só no modo com aprovação): lista com o nome da empresa pedida e o e-mail, e os botões <span class="ui">Recusar</span> e <span class="ui">Aprovar</span>. Aprovar cria a empresa e torna quem pediu administrador dela; <strong>recusar é final</strong> para aquela conta. Vazio: “Nenhum pedido aguardando.”. Não há envio de e-mail ao solicitante nesta ação.</li>
+  <li>Auditoria: <code>platform.signup_mode_updated</code>, <code>registration.approved</code>, <code>registration.rejected</code>. A tela que o visitante vê é a <a href="#entrada-acesso">de cadastro</a>.</li>
+</ul>
+
+<h2 id="email">E-mail — servidor de e-mail da instalação</h2>
+<p>Convite de equipe, entrega de dados de LGPD e aviso de prazo saem por aqui. Preencher esta tela é a alternativa a contratar um serviço externo: o e-mail passa a sair pelo <strong>seu próprio servidor</strong> (SMTP).</p>
+<figure class="print">
+  <img src="img/admin-email.png" alt="Tela E-mail com os campos do servidor SMTP, os botões Testar conexão e Salvar e o cartão Serviço externo de envio, numerada de 1 a 8" loading="lazy">
+  <figcaption>A tela E-mail, sem nenhum caminho configurado.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Servidor de e-mail desta instalação.</strong> O estado aparece na faixa: “Em uso: o e-mail está saindo por este servidor.”, “O e-mail desta instalação já sai por um serviço externo…” ou, como na captura, “Nenhum caminho de e-mail configurado: os convites aparecem como link para copiar, em vez de chegar na caixa de entrada.”</li>
+  <li><strong>Endereço do servidor.</strong> Só o endereço (normalmente <code>smtp.seudominio.com</code>), sem <code>smtp://</code> na frente e sem a porta.</li>
+  <li><strong>Porta.</strong> De 1 a 65535 (587 é o comum).</li>
+  <li><strong>Segurança.</strong> “STARTTLS (normalmente a porta 587)”, “TLS/SSL (normalmente a porta 465)” ou “Sem criptografia”.</li>
+  <li><strong>Usuário.</strong> Até 320 caracteres.</li>
+  <li><strong>Senha.</strong> Guardada cifrada; depois de salva, deixar em branco mantém a atual.</li>
+  <li><strong>Testar conexão.</strong> Confere conexão <em>e login</em> no servidor <strong>já salvo</strong> — não envia e-mail de teste e <em>não testa o que você digitou</em>. Resultados: “Servidor de e-mail conectado e autenticado.”, “Preencha e salve o servidor e o remetente antes de testar.”, “O servidor respondeu, mas recusou o usuário e a senha.” ou “Não foi possível falar com o servidor. Confira o endereço, a porta e a segurança.”</li>
+  <li><strong>Serviço externo de envio.</strong> A alternativa: a <em>Chave do serviço de e-mail</em> e o <em>Endereço que aparece como remetente</em> (precisa ser de um domínio verificado no serviço). “Se as duas coisas estiverem configuradas, o servidor próprio tem preferência.”</li>
+</ol>
+<ul>
+  <li>Há ainda <em>E-mail que aparece como remetente</em> e <em>Nome que aparece como remetente</em>. O botão <span class="ui">Salvar</span> avisa “Servidor de e-mail salvo.”.</li>
+  <li>Cada campo do serviço externo mostra a origem (“Definido aqui nesta tela”, “Vem do arquivo de instalação do servidor” ou “Não configurado”), o valor atual (“Guardado, terminando em ••••XXXX” para segredos), <span class="ui">Salvar</span> (“Pronto, já está valendo.”) e <span class="ui">Voltar ao padrão</span>.</li>
+  <li>Vale para todas as empresas, é reversível e fica na auditoria (<code>platform_smtp_settings.updated</code>, <code>platform.config_changed</code>, <code>platform.config_reset</code>). Sem e-mail configurado, o convite aparece em tela como link para copiar.</li>
+  <li>Os e-mails de <strong>confirmação de conta e de recuperação de senha</strong> são enviados pelo servidor de login, não por esta tela: sem e-mail funcionando lá, a pessoa pode não conseguir ativar a conta ou recuperar a senha (<em>configuração padrão do kit não confirmada</em>).</li>
+</ul>

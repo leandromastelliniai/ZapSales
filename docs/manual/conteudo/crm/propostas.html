@@ -1,0 +1,112 @@
+<!--meta {"id":"propostas","grupo":"crm","titulo":"Propostas","ordem":14,"resumo":"Rascunhe, revise e envie propostas comerciais (PDF) pelo WhatsApp, do orçamento ao aceite. Módulo opcional que precisa ser ligado na instalação e na empresa.","palavras":["propostas","proposta comercial","orçamento","rascunho","enviar ao cliente","aceita","recusada","vencida","revisar","versão","modelo","pdf","assistente","validade"],"onde":"CRM › Ver tudo em CRM › Propostas (só com o módulo Propostas ligado na instalação e a empresa tendo ligado em Configurações › Propostas)","quem":"Todos veem. Criar, editar e registrar aceite ou recusa: Atendente ou acima. Escolher modelo, preencher campos, enviar, revisar e descartar: Gerente ou acima.","modulo":"Propostas","rotas":["/app/proposals","/app/proposals/novo","/app/proposals/[id]"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>As <strong>Propostas</strong> montam uma proposta comercial para um negócio do funil — itens, valores, textos do documento —, geram um <strong>PDF com a marca da empresa</strong>, enviam esse PDF ao cliente <strong>pelo WhatsApp</strong> e registram se foi aceita ou recusada. A IA também pode <em>rascunhar</em> propostas, que ficam esperando a sua revisão.</p>
+<aside class="nota atencao"><strong>Precisa de duas chaves ligadas.</strong><p>(1) O administrador da <em>instalação</em> liga o módulo “Propostas” em <em>Admin › Sistema</em>; (2) o administrador da <em>empresa</em> liga “Ligar propostas comerciais para esta organização” em <a href="#propostas-config">Configurações › Propostas</a>. Faltando qualquer uma, as telas, o menu e a busca somem (“página não encontrada”). Os dados não são apagados.</p></aside>
+<aside class="nota perigo"><strong>Enviar ao cliente manda uma mensagem real e não tem volta.</strong><p>O PDF vai como documento no WhatsApp do cliente. Só o botão <span class="ui">Enviar ao cliente</span> envia. Todo o resto — criar, editar, gerar com o assistente, <em>Ver como o cliente recebe</em> — não manda nada.</p></aside>
+
+<h2 id="lista">A lista de propostas</h2>
+<figure class="print">
+  <img src="img/propostas-lista.png" alt="Lista de propostas com número, título, status e valor, numerada de 1 a 9" loading="lazy">
+  <figcaption>As propostas da loja de demonstração, uma em cada situação.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong></li>
+  <li><strong>Nova proposta.</strong> Só para Atendente ou acima.</li>
+  <li><strong>Número.</strong> No formato <code>0001/2026 v1</code> (número, ano e versão), ou “Rascunho” enquanto ainda não tem número.</li>
+  <li><strong>Título.</strong> Um link para o editor.</li>
+  <li><strong>Status.</strong> <em>Rascunho, Enviando, Enviada, Aceita, Recusada, Vencida, Cancelada</em> ou <em>Substituída</em>.</li>
+  <li><strong>Valor.</strong> O total, na moeda da proposta.</li>
+  <li><strong>Aguardando revisão.</strong> Selo amarelo: um rascunho feito pela IA que ninguém revisou. Esses ficam sempre no alto da lista.</li>
+  <li><strong>Uma proposta enviada.</strong> Com número, ano e versão.</li>
+  <li><strong>Um rascunho.</strong> Ainda sem número.</li>
+</ol>
+<p>A lista não tem filtro, busca nem paginação (até 500 propostas, as mais novas depois dos rascunhos da IA). Vazia: “Nenhuma proposta cadastrada ainda.”.</p>
+<h3>O ciclo de vida de uma proposta</h3>
+<table class="tabela">
+  <thead><tr><th>Passo</th><th>Quem faz</th></tr></thead>
+  <tbody>
+    <tr><td>Rascunho → Enviando → <strong>Enviada</strong></td><td>O botão “Enviar ao cliente” (Gerente ou acima). Se a mensagem fica na fila (canal sem conexão), a proposta permanece “Enviando”.</td></tr>
+    <tr><td>Enviando → volta a Rascunho</td><td>Automático, depois de 5 minutos preso sem mensagem em fila ou na hora em que o envio falha. Mantém o número e abre um aviso crítico na Central (“Uma proposta não confirmou o envio”).</td></tr>
+    <tr><td>Enviada → <strong>Aceita</strong> ou <strong>Recusada</strong></td><td>Os botões manuais, por uma pessoa (Atendente ou acima).</td></tr>
+    <tr><td>Enviada → <strong>Vencida</strong></td><td>Automático, todo dia, quando a data de validade passou sem decisão. Abre o aviso “Uma proposta venceu sem decisão do cliente”.</td></tr>
+    <tr><td>Rascunho → <strong>Cancelada</strong></td><td>“Descartar rascunho” (Gerente ou acima).</td></tr>
+    <tr><td>Enviada → <strong>Substituída</strong></td><td>Quando uma nova versão (v2) é efetivamente enviada.</td></tr>
+  </tbody>
+</table>
+<p>Um negócio só pode ter <strong>um rascunho aberto</strong> por vez. A ficha do negócio (dentro de <a href="#funis">Funis</a>) também lista as propostas dele e tem “Nova proposta”.</p>
+
+<h2 id="nova">Criar uma proposta</h2>
+<figure class="print media">
+  <img src="img/propostas-nova.png" alt="Tela Nova Proposta Comercial com negócio, título, validade e condições, numerada de 1 a 7" loading="lazy">
+  <figcaption>A tela “Nova Proposta Comercial”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Voltar às propostas.</strong></li>
+  <li><strong>Negócio (Lead).</strong> Obrigatório. Cada opção é “título do negócio — nome do contato”. Com mais de 5 negócios, aparece um campo para filtrar por título, cliente ou telefone. Só entram negócios <em>com contato</em> (os 300 mais novos).</li>
+  <li><strong>Título da proposta.</strong> Obrigatório, até 200 caracteres. É o nome que o cliente e a lista veem.</li>
+  <li><strong>Validade da proposta.</strong> Já vem com hoje + 15 dias. Se você apagar a data, vale a validade padrão da empresa.</li>
+  <li><strong>Condições de pagamento / Observações.</strong> Até 4.000 caracteres. Vazio, usa as condições padrão da empresa.</li>
+  <li><strong>Cancelar.</strong></li>
+  <li><strong>Criar e abrir editor.</strong> Cria o rascunho e abre o editor. Não manda nada ao cliente.</li>
+</ol>
+<p>Sem negócios elegíveis, a tela avisa “Nenhum negócio elegível encontrado” e o botão fica apagado. Se o negócio já tem rascunho: “Este negócio já tem um rascunho de proposta aberto. Abra-o e continue por lá.”. Os itens, produtos e valores entram depois, no editor.</p>
+
+<h2 id="editor">O editor da proposta</h2>
+<p>É a tela mais longa: ela junta o <strong>documento</strong> (o texto que vira PDF), as <strong>condições</strong>, os <strong>itens</strong> e os botões de envio. Só um <strong>rascunho</strong> é editável; depois de enviada, qualquer mudança exige <em>Revisar</em>.</p>
+<figure class="print">
+  <img src="img/propostas-editor-topo.png" alt="Topo do editor de proposta com o título, o modelo do documento, a lista de pendências e as seções, numerado de 1 a 6" loading="lazy">
+  <figcaption>O topo do editor: título, modelo do documento e o que ainda falta preencher.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Título da proposta.</strong> Editável em rascunho.</li>
+  <li><strong>Modelo do documento.</strong> Escolhe o modelo de texto (veja <a href="#modelos-de-proposta">Modelos de proposta</a>). Sem modelo, o editor mostra “Nenhum modelo escolhido para esta proposta ainda.” — ou “A IA sugeriu o modelo X.” com o botão <em>Usar este modelo</em>. Trocar o modelo com seções reescritas pergunta antes, porque as mudanças se perdem.</li>
+  <li><strong>Pendências.</strong> “Não é possível enviar — N pendência(s). O que falta preencher:” lista os campos do modelo que ainda estão vazios.</li>
+  <li><strong>Preencher com a conversa.</strong> A IA lê até 60 mensagens da conversa e <em>sugere</em> valores para os campos de briefing. Gasta IA. Nada é aplicado sem você confirmar em cada <em>Preencher</em>.</li>
+  <li><strong>Preencher.</strong> Grava o valor digitado naquele campo. Campos calculados mostram uma dica: “Vem do total dos itens da proposta.”, “Vem do cadastro do contato.”.</li>
+  <li><strong>Salvar seção.</strong> Cada seção do documento é uma caixa de texto. Quando você a reescreve, aparece também <em>Voltar ao texto do modelo</em>.</li>
+</ol>
+<figure class="print">
+  <img src="img/propostas-editor-base.png" alt="Parte de baixo do editor de proposta com condições, validade, prazo, forma de pagamento, itens, assistente, total e botões, numerada de 1 a 14" loading="lazy">
+  <figcaption>A parte de baixo: condições, itens, assistente, total e os botões de ação.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Condições.</strong> Texto livre (até 4.000 caracteres).</li>
+  <li><strong>Válido até.</strong> A data limite dos valores.</li>
+  <li><strong>Prazo (dias úteis).</strong> De 1 a 365.</li>
+  <li><strong>Forma de pagamento.</strong> Texto livre da <em>proposta</em> (até 500 caracteres) — não tem relação com o Financeiro.</li>
+  <li><strong>Descrição</strong> (coluna). A tabela de itens tem: Descrição, Qtd, Preço unit., Desconto e Subtotal.</li>
+  <li><strong>Subtotal.</strong> Preço e desconto são digitados em reais. Preço vazio vale “A definir” e não entra no total. Item vindo do catálogo tem o preço travado.</li>
+  <li><strong>Assistente.</strong> Escreva um pedido (“baixa 10% e tira a hospedagem”, até 500 caracteres).</li>
+  <li><strong>Gerar.</strong> A IA propõe as mudanças; aparecem <em>Aplicar</em> e <em>Descartar</em>. Gasta IA; se o orçamento mensal de IA acabou, o campo fica apagado com o motivo.</li>
+  <li><strong>+ Item à mão.</strong> Adiciona uma linha em branco. Ao lado, a busca “Buscar produto no catálogo…” adiciona um item do <a href="#produtos">catálogo</a>.</li>
+  <li><strong>Total.</strong> A soma dos itens com preço.</li>
+  <li><strong>Enviar ao cliente.</strong> Veja abaixo. Fica apagado sem modelo confirmado.</li>
+  <li><strong>Descartar rascunho.</strong> Cancela (não apaga). Pede confirmação do navegador.</li>
+  <li><strong>Ver como o cliente recebe.</strong> Gera o <em>mesmo PDF</em> do envio, mas sem número e com “[a definir]” nos campos pendentes, numa nova aba. Não grava, não envia e não gasta número.</li>
+  <li><strong>Salvar.</strong> Grava o rascunho. Se outra pessoa mudou antes, o sistema pede para recarregar.</li>
+</ol>
+<ul>
+  <li><strong>Preço do catálogo mudou:</strong> uma faixa amarela avisa e oferece <em>Atualizar preços</em> ou <em>Ignorar aviso</em>. Mas ao salvar o servidor <strong>sempre aplica o preço atual do catálogo</strong>; ignorar só esconde a faixa.</li>
+  <li>Linhas totalmente em branco são descartadas ao salvar. Uma linha com preço e sem descrição é recusada (“Preencha a descrição do item N.”).</li>
+  <li>Se o último envio falhou, uma faixa vermelha diz “O último envio falhou: …”. Em “Enviando”, a faixa amarela diz “Na fila do WhatsApp — sai assim que o canal conectar.”.</li>
+</ul>
+
+<h3 id="enviar">O que acontece ao enviar</h3>
+<p>O botão <span class="ui">Enviar ao cliente</span> (Gerente ou acima) primeiro salva o que estiver na tela. O sistema recusa se: não há itens (“A proposta não tem itens.”), há item sem preço, não há modelo confirmado, faltam campos do documento, não existe conversa com o contato, está fora do horário de envio do número ou o limite diário foi atingido. Se passar:</p>
+<ol class="passos">
+  <li>Aloca o <strong>número</strong> da proposta (contador por organização e ano; o número fica reservado mesmo se o envio falhar).</li>
+  <li>Gera o <strong>PDF</strong> com a marca da empresa e o guarda num armazenamento privado.</li>
+  <li><strong>Manda o PDF como documento no WhatsApp</strong>, na conversa que originou a proposta ou, na falta dela, na conversa mais recente do contato — respeitando a janela de envio, o limite diário e o espaçamento anti-banimento.</li>
+  <li>Marca como <strong>Enviada</strong>, congela o modelo e o texto usados, <strong>atualiza o valor do negócio</strong> para o total da proposta, registra na linha do tempo e <strong>agenda um retorno automático</strong> (padrão: 3 dias depois, nunca depois da validade).</li>
+  <li>Se é a v2, a v1 vira <em>Substituída</em>.</li>
+</ol>
+<p>Não existe e-mail nem link público de aceite: <strong>o cliente recebe apenas o PDF</strong>. Se o envio falha, a proposta volta a rascunho com o motivo.</p>
+<h3>Depois de enviada</h3>
+<ul>
+  <li><strong>Marcar como aceita</strong> / <strong>Marcar como recusada</strong> (Atendente ou acima): só registram a decisão (a recusa pergunta o motivo, opcional). Cancelam o retorno automático. <strong>Não enviam nada ao cliente e não mexem na etapa nem no valor do negócio.</strong> É o registro manual do que o cliente respondeu.</li>
+  <li><strong>Revisar esta proposta</strong> (Gerente ou acima): cria uma <em>v2</em> em rascunho, copiando título, condições, validade, itens (re-precificados), modelo e textos, herdando o número com a versão +1. A v1 continua “Enviada” até a v2 ser enviada.</li>
+  <li>Todos os campos ficam desabilitados.</li>
+</ul>
+<aside class="nota atencao"><strong>Os botões aparecem para qualquer papel; a permissão é cobrada ao clicar.</strong><p>A tela mostra “Enviar ao cliente”, “Descartar”, “Marcar como…” e “Revisar” conforme a situação, sem esconder por papel. Quem não tem o papel recebe “Não foi possível enviar. Confira se você tem papel de gestor.”.</p></aside>
+<aside class="nota info"><strong>Auditoria.</strong><p>Cada passo é registrado: <code>proposal.drafted</code>, <code>proposal.edited</code>, <code>proposal.sent</code>, <code>proposal.aceita</code>, <code>proposal.recusada</code>, <code>proposal.revised</code>, <code>proposal.discarded</code>, <code>proposal.modelo_confirmado</code>, <code>proposal.assistant_applied</code>…</p></aside>

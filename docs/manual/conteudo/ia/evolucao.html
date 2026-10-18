@@ -1,0 +1,61 @@
+<!--meta {"id":"evolucao-ia","grupo":"analise","titulo":"Evolução da IA","ordem":10,"resumo":"O que o seu agente aprendeu no período, o que ele fez com isso, o que mudou no resultado e o que ainda está travando.","palavras":["evolução","aprendeu","melhoria","skills","regras","resultado","travando","lacunas","período","relatório","agente"],"onde":"Análise › Evolução da IA (Ver tudo em Análise › O histórico que se consulta)","quem":"Gerente ou acima.","rotas":["/app/ai/evolution"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>É o relatório de “o meu agente está melhorando?”. Em quatro blocos ele responde: <strong>o que o agente aprendeu</strong> no período, <strong>o que fez</strong> com isso, <strong>o que mudou</strong> nos seus negócios e <strong>o que ainda o impede</strong> de render mais. É só leitura: não altera nada, não gasta IA e não envia mensagem.</p>
+<p>Todos os números valem <strong>só para o período escolhido</strong> (por padrão, os últimos 30 dias; no máximo, 90). Para comparar um mês com o outro, mude as datas.</p>
+
+<h2 id="aprendeu">1. O que o seu agente aprendeu</h2>
+<figure class="print">
+  <img src="img/ia-evolucao-aprendeu.png" alt="Parte superior da Evolução da IA: período analisado, três cartões de aprendizado e a linha do tempo, numerados de 1 a 6" loading="lazy">
+  <figcaption>O período analisado e o bloco “O que seu agente aprendeu”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Período analisado.</strong> Define o intervalo de todos os números abaixo.</li>
+  <li><strong>De / Até.</strong> As datas do período.</li>
+  <li><strong>Regras que você ensinou.</strong> Quantas instruções foram publicadas na <a href="#memoria">Memória da IA</a> (conta também os aprendizados, de qualquer situação, criados no período).</li>
+  <li><strong>Melhorias que você aprovou.</strong> Sugestões que o sistema tirou dos próprios atendimentos e que você revisou e aceitou.</li>
+  <li><strong>Habilidades instaladas.</strong> <a href="#skills">Skills</a> instaladas ou atualizadas no período.</li>
+  <li><strong>Linha do tempo do aprendizado.</strong> Cada linha é uma coisa nova que o agente passou a saber, da mais recente para a mais antiga, com o tipo (<em>Regra que você ensinou, Melhoria que você aprovou, Habilidade instalada</em>) e o título.</li>
+</ol>
+<p>Se nada foi aprendido no período, a tela explica os três caminhos: publicar uma regra na Memória, aprovar uma sugestão na aba Propostas do agente ou instalar uma habilidade em Skills, com um link para cada.</p>
+
+<h2 id="fez">2. O que ele fez</h2>
+<figure class="print">
+  <img src="img/ia-evolucao-fez.png" alt="Bloco O que ele fez, com gráficos de habilidades usadas, conversas encaminhadas e consultas, numerados de 1 a 6" loading="lazy">
+  <figcaption>O trabalho do dia a dia do agente.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Habilidades usadas.</strong> Quantas vezes o agente puxou uma skill para dar conta da conversa.</li>
+  <li><strong>Conversas encaminhadas.</strong> Quantas vezes o sistema leu o que o cliente queria e escolheu qual agente deveria atender (o trabalho dos <em>roteadores</em>).</li>
+  <li><strong>Consultas aos seus materiais.</strong> Quantas vezes o agente foi procurar a resposta no que você escreveu, em vez de improvisar (a <a href="#conhecimento">base de conhecimento</a>).</li>
+  <li><strong>Consultas da equipe ao acervo.</strong> Quantas vezes alguém da <em>equipe</em> perguntou ao acervo pela caixa ao lado da conversa no Inbox. Não entra nos números do agente.</li>
+  <li><strong>Habilidades mais usadas.</strong> Ranking das skills, com barras.</li>
+  <li><strong>Assuntos mais procurados.</strong> O que os clientes mais quiseram, segundo o que o roteador entendeu de cada conversa.</li>
+</ol>
+
+<h2 id="resultado">3. O que mudou no resultado</h2>
+<figure class="print">
+  <img src="img/ia-evolucao-resultado.png" alt="Bloco O que mudou no resultado, com cinco cartões de números, numerados de 1 a 5" loading="lazy">
+  <figcaption>O que aconteceu com os negócios no período.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Negócios fechados pelo agente.</strong> Clientes que o agente marcou como fechados.</li>
+  <li><strong>Negócios perdidos pelo agente.</strong> Clientes que o agente marcou como perdidos.</li>
+  <li><strong>Mudanças de passo no atendimento.</strong> Quantas vezes o agente registrou que um cliente avançou.</li>
+  <li><strong>Casos que precisaram de uma pessoa.</strong> A cada 100 mensagens recebidas, quantas conversas o agente passou para uma pessoa. Leia como estimativa.</li>
+  <li><strong>Custo da IA no período</strong>, em dólar: o que você pagou aos provedores de IA.</li>
+</ol>
+<aside class="nota atencao"><strong>Só conta o que o <em>agente</em> registrou.</strong><p>Ganhos, perdas e mudanças de passo são os que o agente anotou. Um negócio que a sua equipe fechou movendo o cartão no quadro <strong>não entra</strong> nesses números. Por isso, não leia como “quanto a equipe vendeu”.</p></aside>
+<aside class="nota info"><strong>Sem atendimento no período, zero não é fracasso.</strong><p>Se não houve nenhuma mensagem recebida, a tela avisa que os zeros querem dizer “nada aconteceu”. Escolha um período com movimento.</p></aside>
+
+<h2 id="travando">4. O que está travando</h2>
+<figure class="print">
+  <img src="img/ia-evolucao-travando.png" alt="Bloco O que está travando, com três lacunas e botões de link, numerados de 1 a 3" loading="lazy">
+  <figcaption>Cada cartão amarelo é algo que limita o agente e o que fazer a respeito.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Passos do atendimento sem etapa no funil.</strong> O agente registra em que passo está o cliente, mas o seu funil não tem a etapa correspondente — então o cartão não se move sozinho. O botão <span class="ui">Escolher a etapa de cada passo</span> leva a <em>Configurações › Etapas do funil</em>.</li>
+  <li><strong>Perguntas sem resposta nos materiais.</strong> Assuntos que clientes perguntaram e que a base de conhecimento não cobre. <span class="ui">Abrir a base de conhecimento</span> para escrever o que falta.</li>
+  <li><strong>“Chegaram perto”.</strong> Perguntas em que havia material parecido, mas não o bastante para o agente arriscar. Provavelmente o conteúdo existe, mas está escrito com palavras diferentes das do cliente: reescreva com as perguntas do jeito que chegam.</li>
+</ol>
+<p>Também podem aparecer: conversas que não encontraram para onde ir (<span class="ui">Abrir os roteadores</span>) e falhas técnicas de leitura (<span class="ui">Conferir a conexão de IA</span>). Quando nada está travando, um cartão verde diz que toda pergunta achou resposta, toda conversa achou destino e todo passo tem etapa. Se ainda não houve evidência suficiente, a tela diz “ainda não dá para dizer” — volte depois que o agente tiver atendido.</p>

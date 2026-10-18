@@ -1,0 +1,40 @@
+<!--meta {"id":"pessoas","grupo":"crm","titulo":"Pessoas","ordem":12,"resumo":"Módulo opcional: as pessoas que decidem dentro de cada empresa (nome, e-mail, cargo e empresa). Os telefones e a conversa continuam em Contatos.","palavras":["pessoas","decisores","b2b","cargo","empresa","telefones","person"],"onde":"CRM › Ver tudo em CRM › Pessoas (só com o módulo “Empresas e pessoas” ligado na instalação)","quem":"Todos veem. Cadastrar: Gerente ou acima.","modulo":"Empresas e pessoas (crm_b2b)","rotas":["/app/people","/app/people/[id]"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Em <strong>Pessoas</strong> ficam os <em>decisores</em> de cada empresa: nome, e-mail, cargo e a empresa onde trabalham. É a metade “pessoa” do cadastro B2B; a metade “empresa” está em <a href="#empresas">Empresas</a>. <strong>Telefones e conversas continuam em <a href="#contatos">Contatos</a></strong> — uma pessoa é ligada a um ou mais contatos.</p>
+<aside class="nota atencao"><strong>Também depende do módulo opcional.</strong><p>Pessoas só existe quando o módulo “Empresas e pessoas” está ligado na instalação (veja o aviso em <a href="#empresas">Empresas</a>). Desligado, a tela, o menu e a busca somem (“página não encontrada”).</p></aside>
+
+<figure class="print">
+  <img src="img/pessoas-lista.png" alt="Lista de Pessoas com nome, e-mail e data de atualização, numerada de 1 a 6" loading="lazy">
+  <figcaption>A lista de pessoas (dados fictícios).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong></li>
+  <li><strong>Nova pessoa.</strong> Aparece para todos; só Gerente ou acima consegue criar.</li>
+  <li><strong>Busca.</strong> “Buscar por nome ou e-mail” (espera 250 ms depois de você parar de digitar).</li>
+  <li><strong>Nome.</strong> Clique para abrir a ficha.</li>
+  <li><strong>E-mail.</strong> Ou “—”.</li>
+  <li><strong>Atualizado.</strong> Data e hora da última alteração. A lista fica nessa ordem, as 50 mais recentes, sem “carregar mais”.</li>
+</ol>
+
+<h2 id="nova">Cadastrar uma pessoa</h2>
+<p>Clique em <span class="ui">Nova pessoa</span>. A janela pede só o <strong>Nome completo</strong> (obrigatório, até 300 caracteres) e o <strong>E-mail</strong> (opcional, mas, se informado, precisa ser válido). Clique em <span class="ui">Criar</span>.</p>
+<ul>
+  <li>Não há campo de empresa, cargo ou telefone aqui: uma pessoa criada à mão <strong>nasce sem empresa e sem telefone</strong>, e a tela não tem como vinculá-los. Os vínculos vêm das <a href="#importacoes">Importações</a> ou da API.</li>
+  <li>O sistema <strong>não detecta duplicados</strong>: duas pessoas com o mesmo nome coexistem.</li>
+  <li>Não existe excluir.</li>
+</ul>
+<aside class="nota atencao"><strong>Se não for aceita, a tela não diz nada.</strong><p>Diferente de Empresas, aqui, se o cadastro for negado (permissão) ou o e-mail for inválido, a janela <strong>simplesmente não fecha</strong> e nenhuma mensagem aparece. Confira o e-mail e o seu papel.</p></aside>
+
+<h2 id="ficha">A ficha da pessoa</h2>
+<figure class="print">
+  <img src="img/pessoas-ficha.png" alt="Ficha de uma pessoa com as empresas e os telefones ligados, numerada de 1 a 4" loading="lazy">
+  <figcaption>A ficha de Marina Souza.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>← Pessoas.</strong></li>
+  <li><strong>Nome e e-mail.</strong></li>
+  <li><strong>Empresas.</strong> Cada vínculo mostra o nome da empresa (um link para a <a href="#empresas--ficha">ficha da empresa</a>) e o cargo. Sem vínculo: “Sem vínculo empresarial.”.</li>
+  <li><strong>Telefones (contacts).</strong> Os números dos contatos ligados a esta pessoa; cada número leva a <a href="#contatos">Contatos</a>. Sem nenhum: “Nenhum telefone vinculado.”. Contatos mesclados não aparecem.</li>
+</ol>
+<p>As observações da pessoa não são exibidas. Se o endereço da ficha não existe, a tela fica em “Carregando…” para sempre.</p>

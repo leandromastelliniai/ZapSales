@@ -1,0 +1,26 @@
+<!--meta {"id":"linha-sip","grupo":"organizacao","titulo":"Linha telefônica (SIP)","ordem":21,"resumo":"Guarda as credenciais da operadora de telefonia (SIP) que o agente de voz da IA usa para fazer e receber chamadas, e gera o bloco que o dono do servidor cola no Asterisk.","palavras":["linha telefônica","sip","voip","telefonia","asterisk","tronco","trunk","provedor","chamadas","voz","pjsip"],"onde":"Configurações › Dados e acesso › Linha telefônica (SIP)","quem":"Ver a tela: Gerente ou acima (o cartão do hub só aparece para o Administrador). Salvar: Administrador.","rotas":["/app/settings/voip-trunk"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Se a empresa usa o <strong>agente de voz</strong> da IA (atender e fazer ligações telefônicas comuns), o sistema precisa das credenciais da sua <strong>operadora de telefonia</strong> (um provedor SIP). Esta tela guarda essas credenciais e gera o bloco de configuração para o servidor.</p>
+<aside class="nota atencao"><strong>Salvar aqui não liga a telefonia.</strong><p>A telefonia por SIP é um módulo do <em>servidor</em> (perfil <code>telefonia</code> do Docker). A tela existe mesmo sem ele e <strong>a aplicação do bloco no Asterisk é manual</strong>, feita por quem tem acesso ao servidor (a VPS).</p></aside>
+<figure class="print">
+  <img src="img/linha-sip.png" alt="Tela Linha telefônica com os campos Host, Porta, Usuário, Senha, From-domain, o interruptor Ativo e o botão Salvar, numerada de 1 a 7" loading="lazy">
+  <figcaption>A tela com uma linha de exemplo já cadastrada (dados fictícios).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Host.</strong> O endereço do provedor (<code>sip.provedor.example</code>); obrigatório, até 255 caracteres.</li>
+  <li><strong>Porta.</strong> Padrão 5060, de 1 a 65535.</li>
+  <li><strong>Usuário.</strong> Obrigatório, até 100.</li>
+  <li><strong>Senha.</strong> De 4 a 200 caracteres. Obrigatória só no primeiro cadastro (“Senha é obrigatória ao cadastrar o trunk pela primeira vez.”). Depois, o rótulo mostra “(configurada, termina em 4821)” e deixar em branco mantém a atual.</li>
+  <li><strong>From-domain (opcional).</strong> “IP público da VPS, se o provedor exigir”.</li>
+  <li><strong>Ativo.</strong> O interruptor (padrão ligado).</li>
+  <li><strong>Salvar.</strong></li>
+</ol>
+<h2 id="bloco">O bloco para colar no Asterisk</h2>
+<p>Logo depois de salvar aparece o cartão <strong>“Cole em asterisk/pjsip.conf”</strong>, com as seções do <em>endpoint</em>, <em>auth</em>, <em>aor</em> e <em>registration</em> da sua linha. Há o botão <span class="ui">Copiar</span> (vira “Copiado”). <strong>Ele só aparece naquele momento</strong>: a senha é guardada cifrada e o bloco completo não pode ser reconstruído depois. Se você não alterou a senha na sessão, o bloco traz “(senha não alterada nesta sessão — use a já configurada)”.</p>
+<ul>
+  <li>A senha fica cifrada (só os 4 últimos dígitos ficam legíveis). O nome do <em>endpoint</em> é derivado da empresa (<code>org-&lt;código&gt;-trunk-endpoint</code>).</li>
+  <li>Fica na <a href="#auditoria">Auditoria</a> (<code>voip_trunk.created</code> ou <code>.updated</code>, com host, porta, usuário e se a senha mudou). Não envia e-mail.</li>
+  <li>O Gerente vê os campos desabilitados e sem botão Salvar; como o cartão só aparece no hub para Administrador, o Gerente só chega digitando o endereço.</li>
+  <li>Esta tela <em>não foi salva</em> nas capturas.</li>
+</ul>

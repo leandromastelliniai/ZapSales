@@ -1,0 +1,53 @@
+<!--meta {"id":"faturamento","grupo":"analise","titulo":"Faturamento","ordem":3,"resumo":"Quanto entrou e saiu no período, por forma de pagamento, quais serviços e clientes mais renderam, quanto cada pessoa tem de comissão — e onde anotar receitas e despesas avulsas.","palavras":["faturamento","financeiro","entrou","saiu","saldo","ticket médio","lançamentos","comissão","despesa","receita","pagar","forma de pagamento"],"onde":"Análise › Ver tudo em Análise › Faturamento (também pela busca ⌘K)","quem":"Todos veem o relatório. Lançar, pagar e remover lançamentos: Atendente ou acima.","rotas":["/app/faturamento"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O <strong>Faturamento</strong> mostra, para o período que você escolher, <strong>quanto dinheiro entrou e saiu</strong>, por qual forma de pagamento, quais serviços e clientes mais renderam e <strong>quanto cada pessoa tem de comissão</strong>. Também é onde você anota receitas e despesas avulsas (aluguel, material, salário). Os números das comandas vêm das <a href="#comandas">Comandas</a>; contas e formas de pagamento vêm do <a href="#financeiro">Financeiro</a>.</p>
+<aside class="nota info"><strong>Onde fica a porta.</strong><p>Faturamento não está no menu lateral. Abra por <span class="ui">Ver tudo em Análise</span> (seção “Dinheiro”) ou pela busca <kbd>⌘K</kbd> / <kbd>Ctrl K</kbd>.</p></aside>
+
+<figure class="print">
+  <img src="img/faturamento.png" alt="Tela Faturamento com o período, os quatro cartões, os quadros por forma de pagamento, serviços, clientes e comissão e os lançamentos do período, numerada de 1 a 14" loading="lazy">
+  <figcaption>O Faturamento da loja de demonstração no mês corrente.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong></li>
+  <li><strong>De.</strong> O primeiro dia do período (padrão: dia 1 do mês).</li>
+  <li><strong>Até.</strong> O último dia (padrão: hoje). O relatório se atualiza ao mudar as datas, sem botão.</li>
+  <li><strong>Entrou.</strong> Soma dos lançamentos de <em>entrada já pagos</em> com data dentro do período.</li>
+  <li><strong>Saiu.</strong> O mesmo para saídas — inclui os estornos de comanda.</li>
+  <li><strong>Saldo.</strong> Entrou menos Saiu (só lançamentos pagos).</li>
+  <li><strong>Ticket médio.</strong> O faturado dividido pelo número de comandas finalizadas.</li>
+  <li><strong>Linha-resumo.</strong> “4 comanda(s) finalizada(s), 1 estornada(s) · R$ 1.187,00 faturado”. Faturado é a soma das comandas finalizadas no período, <em>inclusive as estornadas</em>.</li>
+  <li><strong>O aviso.</strong> “O faturado soma comandas; o que entrou soma lançamentos pagos. Os dois não precisam bater.”</li>
+  <li><strong>Por forma de pagamento.</strong> Forma, quantidade de comandas, valor e porcentagem do faturado, do maior para o menor.</li>
+  <li><strong>Serviços que mais faturaram.</strong> Top 10 por valor, pela descrição congelada na venda.</li>
+  <li><strong>Clientes que mais gastaram.</strong> Top 10, só de comandas com cliente.</li>
+  <li><strong>Comissão por pessoa.</strong> Itens com comissão e o valor, sem as estornadas. Sem nenhuma: “Nenhuma comissão no período.”.</li>
+  <li><strong>Lançamentos do período.</strong> O formulário de lançar e a lista (veja abaixo).</li>
+</ol>
+
+<h2 id="numeros">Como ler os números</h2>
+<table class="tabela">
+  <thead><tr><th>Número</th><th>De onde vem</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Entrou / Saiu / Saldo</strong></td><td>Só <strong>lançamentos pagos</strong>, pela <em>data do lançamento</em>. Lançamentos pendentes aparecem na lista mas <strong>não</strong> entram aqui.</td></tr>
+    <tr><td><strong>Faturado / Ticket médio</strong></td><td>As <strong>comandas finalizadas</strong>, pela data em que foram finalizadas. Comanda estornada continua contando aqui (o estorno aparece como <em>Saiu</em>).</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li>Se o período tem lançamentos em <strong>mais de uma moeda</strong>, a tela avisa “Moedas diferentes não se somam: cada uma tem o seu bloco.” e mostra um bloco por moeda. Hoje as comandas e lançamentos nascem em BRL; uma organização com outra moeda verá o movimento em R$.</li>
+  <li>O período vai de no máximo <strong>400 dias</strong>, e “De” não pode ser depois de “Até”. Qualquer problema aparece só como “Não foi possível carregar o período.”.</li>
+  <li>As datas padrão usam o horário universal (UTC): perto da meia-noite no Brasil, “hoje” pode ser o dia seguinte.</li>
+  <li>O relatório leva alguns segundos para aparecer: durante o carregamento os cartões ficam em branco.</li>
+</ul>
+
+<h2 id="lancamentos">Lançamentos do período</h2>
+<p>Abaixo do relatório fica o formulário (para Atendente ou acima), com: <strong>Tipo</strong> (<em>Saída</em>, o padrão, ou <em>Entrada</em>), <strong>Conta</strong> (as contas ativas do Financeiro), <strong>Descrição</strong> (até 300 caracteres), <strong>Valor</strong> (aceita <code>249,90</code>, <code>249.90</code> e <code>1.234,56</code>; de R$ 0,01 a R$ 10 milhões), <strong>Data</strong> (padrão hoje) e a caixa <strong>Já pago</strong> (marcada por padrão). Clique em <span class="ui">Lançar</span>.</p>
+<ul>
+  <li>O botão só habilita com descrição, valor legível e conta escolhida. Sem nenhuma conta cadastrada o botão nunca habilita: cadastre em <a href="#financeiro">Financeiro</a>.</li>
+  <li>Depois de lançar, só a descrição e o valor são limpos.</li>
+  <li>A lista mostra até 500 lançamentos do período, pagos e pendentes, com a data, a descrição, o valor (com “+” ou “−”) e a situação (<em>pago</em> ou <em>pendente</em>). A etiqueta <em>“de comanda”</em> aparece em <strong>qualquer lançamento que não é manual</strong> — comanda, estorno <em>e lançamento recorrente</em> (esse último não vem de comanda; o rótulo é impreciso).</li>
+  <li><strong>Pagar</strong> (só em pendente): marca como pago agora, sem confirmação. Não muda a data do lançamento: um lançamento do mês passado pago hoje continua contando no mês passado. Depois de pago, valor, conta, tipo e data ficam <strong>imutáveis</strong>.</li>
+  <li><strong>×</strong> (só em pendente e manual): apaga na hora, sem confirmação. Lançamento pago não se apaga (“registre um lançamento contrário”), e o de comanda se desfaz estornando a comanda.</li>
+</ul>
+<aside class="nota atencao"><strong>Para Somente leitura e quem não vê nomes.</strong><p>O formulário e os botões Pagar e × só existem para Atendente ou acima. E, para Somente leitura, a tabela “Comissão por pessoa” mostra todo mundo como “Sem responsável”, porque a lista de pessoas exige Atendente. Os nomes dos clientes vêm só dos 100 primeiros contatos: cliente fora desses 100 aparece como “Sem nome”.</p></aside>
+<p>Cada lançamento, pagamento e remoção fica na auditoria (<code>financeiro.lancamento_criado</code>, <code>.lancamento_pago</code>, <code>.lancamento_removido</code>). Nada aqui manda mensagem nem chama serviço externo.</p>

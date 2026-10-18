@@ -1,0 +1,76 @@
+<!--meta {"id":"lgpd","grupo":"organizacao","titulo":"LGPD (Solicitações)","ordem":19,"resumo":"Acompanhe e aprove os pedidos de titulares de dados (ver dados, anonimizar) dentro do prazo da lei, com a linha do tempo do SLA, a prévia dos dados e a trilha de auditoria.","palavras":["lgpd","solicitações","titular","anonimização","exportação","prazo","sla","dpo","privacidade","direito do titular","aprovar","prévia"],"onde":"Configurações › Dados e acesso › LGPD","quem":"Administrador. Menos que isso é levado de volta ao início.","rotas":["/app/lgpd/requests"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>A Lei Geral de Proteção de Dados dá ao cliente o direito de pedir uma <strong>cópia dos seus dados</strong> ou a <strong>anonimização</strong> deles, com prazo para a empresa responder. Esta tela é a <em>fila</em> desses pedidos: mostra o prazo de cada um, deixa você <strong>pré-visualizar</strong> o que há do titular e <strong>aprovar</strong> o atendimento. No menu e no hub o cartão se chama “LGPD”; o título da tela é “Solicitações LGPD”.</p>
+<aside class="nota atencao"><strong>Esta tela não cria pedidos.</strong><p>Ela só acompanha e aprova. Nesta versão, nenhuma tela chama o criador de pedidos; a anonimização direta de um contato é feita na <em>ficha do contato</em> (botão “Anonimizar contato”). <em>Não foi confirmado como os pedidos nascem em produção.</em> O pedido segue sendo contado dentro do prazo mesmo se a organização estiver suspensa.</p></aside>
+
+<h2 id="lista">A lista de solicitações</h2>
+<figure class="print">
+  <img src="img/lgpd-lista.png" alt="Lista de solicitações LGPD com a faixa de SLA crítico, os filtros e a tabela com prazo e status, numerada de 1 a 8" loading="lazy">
+  <figcaption>A lista, com cinco pedidos de exemplo (dados fictícios).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Faixa de SLA.</strong> Só aparece quando há pedido ativo (não concluído nem falho): vermelha “N solicitação crítica — SLA vencido ou inferior a 2 dias. Ação imediata requerida.” ou amarela “… em alerta — mais de 50% do prazo consumido.”</li>
+  <li><strong>Status.</strong> Recebido, Processando, Concluído, Falhou ou Revisão pendente.</li>
+  <li><strong>Tipo.</strong> Anonimização cliente, Solicitação dados ou Anonimização tenant.</li>
+  <li><strong>SLA.</strong> Vencido, Crítico, Alerta ou OK. Aplica-se só sobre a página carregada (25 por página).</li>
+  <li><strong>Sujeito.</strong> Só um código (“ctt:” + 8 caracteres do contato, ou o id do cliente) — <em>nunca o nome</em>.</li>
+  <li><strong>Vence.</strong> “em 5d”, “em 1d”, “atrasado hoje”, “4d atrasado”; vermelho se urgente.</li>
+  <li><strong>SLA.</strong> O selo do prazo.</li>
+  <li><strong>Ver.</strong> Abre o detalhe do pedido.</li>
+</ol>
+<p>As colunas são <em>ID</em> (8 primeiros caracteres), <em>Tipo</em>, <em>Sujeito</em>, <em>Recebido</em> (“agora”, “12d atrás”), <em>Vence</em>, <em>SLA</em> e <em>Status</em>. A ordem é pelo prazo mais próximo. O botão <span class="ui">Limpar filtros</span> aparece quando algum filtro está ligado, e à direita fica o total. Vazio: “Nenhuma solicitação LGPD — Solicitações de dados e anonimizações aparecerão aqui.”.</p>
+<table class="tabela">
+  <thead><tr><th>Selo de SLA</th><th>Quando</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Vencido</strong></td><td>Passou ao menos um dia civil inteiro do prazo.</td></tr>
+    <tr><td><strong>Crítico</strong></td><td>Restam 0 ou 1 dia.</td></tr>
+    <tr><td><strong>Alerta</strong></td><td>Já passou metade da janela entre o recebimento e o prazo.</td></tr>
+    <tr><td><strong>OK</strong></td><td>Todos os outros casos.</td></tr>
+  </tbody>
+</table>
+<p>Prazos: pedido de dados em <strong>7 dias úteis</strong>; anonimização em <strong>15 dias úteis</strong>. Fim de semana e feriados do país da organização (hoje, o Brasil) não contam, e o dia do prazo vai até 23:59.</p>
+<aside class="nota info"><strong>Dois detalhes que podem confundir.</strong><p>O selo de SLA é calculado pela data, mesmo para pedido <em>já concluído</em>: um pedido atendido no prazo ainda pode aparecer como “Vencido” se a data-limite já passou (nos dados de exemplo, a primeira linha). E o filtro de status “Revisão pendente” existe, mas o banco só guarda recebido, processando, concluído, falhou e expirado — esse filtro nunca encontra nada (deduzido do código).</p></aside>
+
+<h2 id="detalhe">O detalhe de uma solicitação</h2>
+<figure class="print">
+  <img src="img/lgpd-detalhe.png" alt="Detalhe de uma solicitação com o prazo, os botões Pré-visualizar dados e Aprovar anonimização, a linha do tempo do SLA e a trilha de auditoria, numerada de 1 a 7" loading="lazy">
+  <figcaption>O detalhe de um pedido de anonimização em estado “Recebido”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Solicitações.</strong> Volta para a lista.</li>
+  <li><strong>Número e selos.</strong> “#” + 8 caracteres do id, o status e o tipo; “Urgente” se for emergência. Embaixo: “Recebido em … · Vence em …”.</li>
+  <li><strong>Pré-visualizar dados.</strong></li>
+  <li><strong>Aprovar …</strong> Só aparece com status <em>Recebido</em>; o nome depende do tipo: “Aprovar export”, “Aprovar anonimização” ou “Aprovar anonimização (tenant)”.</li>
+  <li><strong>Linha do tempo SLA.</strong> Barra de progresso (verde até 75%, âmbar a partir de 75%, vermelha a partir de 100%) e marcos: para pedido de dados, “D+0 Recebido”, “D+5 Revisão intermediária”, “D+7 Entrega ao titular”; para anonimização, “D+0 Recebido”, “D+10 Processamento”, “D+15 Anonimização concluída” (datas corridas).</li>
+  <li><strong>Detalhes.</strong> ID completo, tipo, status, origem (manual, api ou support), escopo (contato ou organização), tentativas, ID do contato e, se houve falha, uma caixa “Erro”.</li>
+  <li><strong>Trilha de auditoria.</strong> As linhas da <a href="#auditoria">Auditoria</a> ligadas ao pedido (até 50). Vazio: “Nenhuma entrada de auditoria registrada para esta solicitação.”</li>
+</ol>
+<p>Se o pedido de dados já foi concluído e tem PDF, uma faixa diz “Relatório de exportação disponível (expira em 72h).” com o botão <span class="ui">Baixar PDF</span> (um endereço assinado de 72 horas). <em>Não há envio automático ao titular por esta tela</em> (não confirmado se algum processo envia e-mail).</p>
+
+<h3 id="previa">Pré-visualizar dados</h3>
+<figure class="print media">
+  <img src="img/lgpd-previa.png" alt="Janela Prévia de dados do titular exibindo a mensagem Falha ao carregar prévia" loading="lazy">
+  <figcaption>A prévia, que nesta instalação respondeu com erro (veja o aviso).</figcaption>
+</figure>
+<p>A janela <strong>“Prévia de dados do titular”</strong> mostra, <em>só para leitura</em>, o cartão do contato (nome, e-mail e telefone <strong>mascarados</strong>; “CPF: presente (valor ocultado)”), um aviso amarelo quando não há dado local, e sete contadores: <em>Conversas</em>, <em>Mensagens (total)</em>, <em>Leads</em>, <em>Pedidos</em>, <em>Atividades</em>, <em>Entradas de auditoria</em> e <em>Consentimentos</em>. O botão “Expandir amostra (10 itens por categoria)” mostra uma amostra em JSON (corpo das mensagens como “[masked]”). O rodapé diz “Gerado em … · PII mascarada · CPF não exibido”. Não grava nada.</p>
+<aside class="nota atencao"><strong>Defeito encontrado na produção testada.</strong><p>Na instalação usada para este manual a prévia respondeu “Falha ao carregar prévia.” (erro 500 do servidor). A causa, no log, foi o coletor de dados da LGPD consultar a tabela do módulo <em>Honorários</em> (<code>honorarios_contratos</code>), que <strong>não existe</strong> quando o módulo não está instalado. A exportação de dados do titular usa o mesmo coletor e pode ter o mesmo problema. Foi comunicado ao dono do produto.</p></aside>
+
+<h3 id="aprovar">Aprovar</h3>
+<figure class="print media">
+  <img src="img/lgpd-aprovar.png" alt="Janela Aprovar anonimização de contato com o campo de justificativa preenchido" loading="lazy">
+  <figcaption>A confirmação de aprovação, com a justificativa preenchida (cancelada nesta captura).</figcaption>
+</figure>
+<table class="tabela">
+  <thead><tr><th>Tipo</th><th>Título e texto</th></tr></thead>
+  <tbody>
+    <tr><td>Pedido de dados</td><td>“Aprovar exportação de dados” — será colocada em fila para exportação dos dados do titular. A ação não pode ser desfeita.</td></tr>
+    <tr><td>Anonimização de contato</td><td>“Aprovar anonimização de contato” — todos os dados pessoais do titular serão anonimizados (irreversível). O histórico de timestamps é preservado.</td></tr>
+    <tr><td>Anonimização de organização</td><td>“Aprovar anonimização de tenant” — afeta <strong>todos</strong> os contatos da organização.</td></tr>
+  </tbody>
+</table>
+<p>É obrigatório preencher a <strong>Justificativa</strong> (mínimo 10, máximo 500 caracteres) antes de <span class="ui">Confirmar aprovação</span>. Resultado: “Aprovação registrada — request mudou para processing”. O pedido passa a <em>Processando</em> e um processo em segundo plano exporta ou anonimiza. Só pedidos <em>Recebido</em> aprovam.</p>
+<aside class="nota atencao"><strong>Anonimizar é irreversível.</strong><p>O nome do contato vira “Cliente Anonimizado #N”; conversas, mensagens (com a mídia removida), atividades e demais dados pessoais são anonimizados, preservando só as datas. Reverter dá erro (<code>lgpd_anonymization_irreversible</code>). Registra <code>lgpd.manually_approved</code> (com a sua justificativa) na Auditoria.</p></aside>
+
+<h2 id="alertas">Alertas de prazo</h2>
+<p>Uma rotina diária (9h, horário de Brasília) alerta pedidos de dados com 5 dias ou mais e anonimizações com 10 dias ou mais, por e-mail ao <strong>DPO email</strong> cadastrado em <a href="#dados-da-empresa">Organização</a>. Sem e-mail de DPO, o e-mail é pulado (a equipe técnica ainda recebe o alerta).</p>
