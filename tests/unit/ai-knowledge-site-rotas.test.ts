@@ -16,6 +16,7 @@ import { requireRole } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { audit } from "@/lib/audit";
+import { temChaveDeEmbedding } from "@/lib/ai/embeddings/chave";
 import type { AuthUser } from "@/lib/auth/types";
 import { criarBancoEmMemoria, type Linha } from "../helpers/banco-em-memoria";
 
@@ -25,7 +26,7 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
 vi.mock("@/lib/impersonate/support", () => ({ requireSupportWrite: vi.fn(async () => null) }));
 vi.mock("@/lib/audit", () => ({ audit: vi.fn(async () => undefined) }));
-vi.mock("@/lib/ai/embeddings/chave", () => ({ temChaveDeEmbedding: vi.fn(async () => true) }));
+vi.mock("@/lib/ai/embeddings/chave", () => ({ temChaveDeEmbedding: vi.fn() }));
 
 const ORG = "22222222-2222-4222-8222-222222222222";
 const OUTRA_ORG = "99999999-9999-4999-8999-999999999999";
@@ -69,6 +70,7 @@ const auditorias = () => vi.mocked(audit).mock.calls.map((c) => c[0]);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(temChaveDeEmbedding).mockResolvedValue(true);
   banco = criarBancoEmMemoria({
     ai_knowledge_sources: [
       fonte(FONTE, ORG, "site", { source_metadata: {} }),
@@ -222,6 +224,16 @@ describe("PATCH /sources/:id — editar o site", () => {
 
     expect(eventos()).toHaveLength(0);
     expect(auditorias()).toEqual([]);
+  });
+
+  it("a resposta DIZ se a leitura vai acontecer: sem chave de embedding, não vai (a tela não promete o que não ocorre)", async () => {
+    vi.mocked(temChaveDeEmbedding).mockResolvedValue(false);
+    const sem = await editar(FONTE, { urls: ["https://loja.com.br/nova-pagina"] });
+    expect(((await sem.json()) as { data: { indexacao_habilitada: boolean } }).data.indexacao_habilitada).toBe(false);
+
+    vi.mocked(temChaveDeEmbedding).mockResolvedValue(true);
+    const com = await editar(FONTE, { urls: ["https://loja.com.br/outra-pagina"] });
+    expect(((await com.json()) as { data: { indexacao_habilitada: boolean } }).data.indexacao_habilitada).toBe(true);
   });
 
   it("só renomear NÃO dispara leitura de rede", async () => {

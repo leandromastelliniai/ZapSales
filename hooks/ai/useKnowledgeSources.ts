@@ -202,17 +202,21 @@ export function useSalvarPaginasDoSite(sourceId: string) {
   return useMutation({
     mutationKey: ["ai", "knowledge", "sources", sourceId, "paginas", "salvar"],
     mutationFn: async (urls: string[]) => {
-      const res = await apiClient.patch<{ data: { pagina_lista_mudou?: boolean } }>(
+      const res = await apiClient.patch<{ data: { pagina_lista_mudou?: boolean; indexacao_habilitada?: boolean } }>(
         `/api/v1/ai/knowledge/sources/${sourceId}`,
         { urls },
       );
       return res.data;
     },
     onSuccess: (resultado) => {
+      // A mensagem diz o que de fato vai acontecer: lista igual não lê nada; sem chave de
+      // embedding a leitura espera; só nos outros casos "estou lendo" é verdade.
       toast.success(
         resultado?.pagina_lista_mudou === false
           ? t("A lista é a mesma — nada foi lido de novo. Para reler o site, toque em “Ler o site de novo”.")
-          : t("Endereços salvos. Estou lendo as páginas — em instantes o agente já sabe."),
+          : resultado?.indexacao_habilitada === false
+            ? t("Endereços salvos. Falta uma chave de embedding: o site fica esperando e será lido quando você cadastrá-la.")
+            : t("Endereços salvos. Estou lendo as páginas — em instantes o agente já sabe."),
       );
     },
     onError: (err) => showApiError(err),
