@@ -34,7 +34,7 @@ export const REFERENCIAS_DE_AVISO = {
   ai_provider_credential: { tabela: "ai_provider_credentials", papel: "admin", rotulo: "Revisar credencial", href: () => "/app/ai/credentials" },
 } satisfies Record<string, Alvo>;
 
-export type InboxRefKind = keyof typeof REFERENCIAS_DE_AVISO | "organization" | "ai_budget" | "job_queue" | "cron_jobs";
+export type InboxRefKind = keyof typeof REFERENCIAS_DE_AVISO | "organization" | "ai_budget" | "job_queue" | "cron_jobs" | "external_tool_request";
 type ContextoGeral = { papel: Role; href: string; rotulo: string };
 interface Politica { refs: readonly InboxRefKind[]; orientacao: string; geral?: ContextoGeral }
 const EVOLUCAO: ContextoGeral = { papel: "manager", href: "/app/ai/evolution", rotulo: "Abrir evolução do assistente" };
@@ -118,6 +118,23 @@ export const POLITICAS_DE_AVISO = {
   jev_pedido_de_humano: { refs: ["conversation"], orientacao: "Abra a conversa e decida se alguém da equipe assume o atendimento." },
   jev_parar_de_receber: { refs: ["conversation"], orientacao: "Abra a conversa e confira se o cliente quer mesmo parar de receber mensagens." },
   atendimento_gratis_do_numero: { refs: ["channel_session"], orientacao: "Depois das 1.000 grátis do mês, cada mensagem de atendimento deste número é cobrada pela Meta. Acompanhe o contador em Campanhas › Configuração.", geral: CONEXOES },
+  // Nasce SEM referência (o título leva o nome da ferramenta): a tabela das
+  // ferramentas é só do servidor, então o resolvedor não tem como confirmar a
+  // existência por RLS — o destino é a tela, que lista e testa a ferramenta.
+  external_tool_failed: {
+    refs: [],
+    orientacao: "Abra a ferramenta, confira o endereço e use o botão de teste para ver o que o outro sistema responde.",
+    geral: { papel: "manager", href: "/app/ai/external-tools", rotulo: "Abrir ferramentas externas" },
+  },
+  // O pedido de aprovação carrega os próprios botões na Central (aprovar e recusar). O destino
+  // é só a tela das ferramentas, onde se confere o que a ferramenta faz e se desliga a chave.
+  external_tool_approval: {
+    // O aviso nasce com ref_kind `external_tool_request` (o id do pedido): a tabela é só do servidor, então
+    // o resolvedor não a consulta — a rota da Central anexa o pedido ao aviso, e o destino é a tela.
+    refs: ["external_tool_request"],
+    orientacao: "Confira os dados e aprove para executar a ação, ou recuse para cancelá-la. Sem decisão no prazo, o pedido expira e o agente é avisado.",
+    geral: { papel: "manager", href: "/app/ai/external-tools", rotulo: "Abrir ferramentas externas" },
+  },
   // Mesmo par de `message_send_stuck`, para a proposta — o cron devolve a
   // rascunho sozinho, sem reenviar; quem lê decide se envia de novo.
   proposta_travada: { refs: ["proposal"], orientacao: "Confira a proposta antes de decidir se precisa enviar novamente." },
@@ -241,6 +258,10 @@ export async function resolverDestinosDosAvisos<T extends ReferenciaDoAviso>(
             : item.kind === "contact_proposal_expired" ? { estado: "sem_destino", orientacao: p.orientacao }
             : !permite(papel, item.ref_kind === "ai_budget" ? "manager" : "agent") ? semPermissao("manager")
             : { estado: "disponivel", href: item.ref_kind === "ai_budget" ? "/app/ai/usage" : "/app/radar", rotulo: item.ref_kind === "ai_budget" ? "Abrir uso de IA" : "Abrir Radar" };
+        } else if (item.ref_kind === "external_tool_request") {
+          destination = p.geral
+            ? permite(papel, p.geral.papel) ? { estado: "disponivel", href: p.geral.href, rotulo: p.geral.rotulo, orientacao: p.orientacao } : semPermissao(p.geral.papel)
+            : { estado: "sem_destino", orientacao: p.orientacao };
         } else destination = { estado: "sem_destino", orientacao: p.orientacao };
       }
     }

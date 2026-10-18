@@ -35,6 +35,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { testRunSchema } from "@/lib/ai/agents/validation";
 import { avaliarRespostaDeTeste } from "@/lib/ai/agents/avaliar-resposta-de-teste";
 import { testAgentVersion } from "@/lib/agent-engine/agent/sandbox";
+import { LlmBudgetExceededError } from "@/lib/agent-engine/edge/llm/run-model-call";
 import { requestTurnDeps } from "@/lib/agent-engine/agent/request-deps";
 import { getRequestPool } from "@/lib/agent-engine/db/request-pool";
 import { traduzir } from "@/lib/i18n/dicionario";
@@ -155,16 +156,24 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       versionId: vid,
       runId: runRow.id,
       sampleMessage: parsed.data.sample_message,
+      ...(parsed.data.sample_audio === true ? { sampleAudio: true } : {}),
+      history: parsed.data.history,
       sampleContact: parsed.data.sample_contact,
       channelId: version.channel_session_id,
     });
     const finalText = result.candidates.map((c) => c.body).join("\n\n");
+    // As ferramentas que o modelo chamou, na ordem (leituras e propostas de
+    // escrita). Antes o campo trazia só as propostas de escrita.
+    const ferramentas = result.toolCalls ?? result.proposals;
     resultPayload = {
       run_id: runRow.id,
       status: result.candidates.length ? "ok" : "blocked",
       latency_ms: Date.now() - startedAt.getTime(),
       final_text: finalText,
-      tool_calls: result.proposals,
+      tool_calls: ferramentas,
+      tokens_in: result.usage?.tokensIn ?? 0,
+      tokens_out: result.usage?.tokensOut ?? 0,
+      cost_cents: result.usage?.costCents ?? 0,
       ...result,
       stub: process.env.INTERNAL_AGENT_RUN_STUB === "true",
       guardrails: avaliarRespostaDeTeste(finalText),
@@ -180,13 +189,14 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       status: "completed",
       completed_at: new Date().toISOString(),
       latency_ms: Date.now() - startedAt.getTime(),
-      // `steps_count`, `tokens_in`, `tokens_out` e `cost_cents` seguem em zero
-      // de propósito: o turno de prévia não devolve essas contagens à rota, e
-      // gravar `candidates.length` no lugar de passos seria um número errado com
-      // cara de certo. Quem tem o dado é `llm_calls` (`purpose='agent_preview'`),
-      // e ligar as duas é trabalho à parte — não se conserta um zero honesto com
-      // um palpite.
-      tool_calls: JSON.parse(JSON.stringify(result.proposals)),
+      // `steps_count` segue em zero de propósito: gravar `candidates.length` no
+      // lugar de passos seria um número errado com cara de certo. Tokens e custo
+      // vêm da chamada principal ao modelo (`registrarChamadaDaPrevia`); o que o
+      // classificador de etapa e a compactação gastaram está em `llm_calls`.
+      tokens_in: result.usage?.tokensIn ?? 0,
+      tokens_out: result.usage?.tokensOut ?? 0,
+      cost_cents: result.usage?.costCents ?? 0,
+      tool_calls: JSON.parse(JSON.stringify(ferramentas)),
     });
   } catch (err) {
     // ⚠️ Este `catch` era vazio, e engolir o erro aqui é o que tornava o
@@ -202,15 +212,30 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       organization_id: activeOrg.orgId,
       error: mensagem,
     });
+    // O limite de gasto com IA no modo "bloquear" é uma decisão da pessoa, não um
+    // defeito de configuração: o teste gasta como um turno real e é recusado como
+    // um. Dizer "confira modelo e credencial" mandaria quem testa procurar no
+    // lugar errado (issue #90).
+    const orcamento = err instanceof LlmBudgetExceededError;
     await atualizarRun(admin, activeOrg.orgId, runRow.id, requestId, {
       status: "failed",
       completed_at: new Date().toISOString(),
       latency_ms: Date.now() - startedAt.getTime(),
-      error_code: "preview_failed",
+      error_code: orcamento ? "ai_budget_exhausted" : "preview_failed",
       // Guardado na linha para quem for diagnosticar depois; a resposta ao
       // operador segue genérica, porque o texto do erro é técnico.
       error_message: mensagem.slice(0, 2000),
     });
+    if (orcamento) {
+      return fail(
+        "ai_budget_exhausted",
+        t(
+          "O limite de gasto com IA deste mês foi atingido, e você escolheu que a IA parasse ao chegar nele. Ajuste o limite em Uso de IA › Orçamento para continuar testando.",
+        ),
+        422,
+        { requestId },
+      );
+    }
     return fail(
       "preview_failed",
       t("Não foi possível executar o teste. Confira modelo, credencial e materiais do agente."),

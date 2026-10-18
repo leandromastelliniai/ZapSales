@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Resposta em áudio do agente",
+    "subtitle": "O agente responde em nota de voz quando o cliente manda áudio — opcional, desligado, com a chave de voz do próprio cliente (migration 0548; issue #91, parte da #86)",
+    "output": "resposta-em-audio.html",
+    "quality_profile": "standard"
+  },
+  "lanes": [
+    { "id": "ui", "label": "Telas" },
+    { "id": "api", "label": "Rotas" },
+    { "id": "data", "label": "Banco e Storage" },
+    { "id": "agent", "label": "Turno do agente" },
+    { "id": "ext", "label": "Fora do produto" }
+  ],
+  "mainPath": ["cartao", "rota", "settings", "decisao", "cadeia", "voz", "conversao", "bucket", "handler", "canal"],
+  "nodes": [
+    {
+      "id": "cartao",
+      "lane": "ui",
+      "col": 1,
+      "type": "frontend",
+      "label": "Provedores › Resposta em áudio (provedor, chave, aceite, ligar, testar)"
+    },
+    {
+      "id": "editor",
+      "lane": "ui",
+      "col": 1,
+      "type": "frontend",
+      "label": "Editor do agente › Resposta em áudio (opção, voz, modelo, aviso de banimento)"
+    },
+    {
+      "id": "uso",
+      "lane": "ui",
+      "col": 5,
+      "type": "frontend",
+      "label": "Uso de IA › Voz das respostas em áudio (caracteres, custo, limite)"
+    },
+    {
+      "id": "rota",
+      "lane": "api",
+      "col": 2,
+      "type": "api",
+      "label": "/api/v1/ai/audio (GET, PUT, DELETE) · /testar · /vozes"
+    },
+    {
+      "id": "settings",
+      "lane": "data",
+      "col": 2,
+      "type": "database",
+      "label": "organizations.settings.resposta_em_audio (ligado, provedor, aceite, limite)"
+    },
+    {
+      "id": "chave",
+      "lane": "data",
+      "col": 3,
+      "type": "database",
+      "label": "voice_provider_credentials (chave cifrada, só o servidor lê)"
+    },
+    {
+      "id": "versao",
+      "lane": "data",
+      "col": 2,
+      "type": "database",
+      "label": "ai_agent_versions.audio_reply_* (opção, voz, modelo — travada na versão publicada)"
+    },
+    {
+      "id": "auditoria",
+      "lane": "data",
+      "col": 3,
+      "type": "database",
+      "label": "api_audit_log (ai.audio_reply_config_changed / credential_saved / credential_removed)"
+    },
+    {
+      "id": "decisao",
+      "lane": "agent",
+      "col": 3,
+      "type": "service",
+      "label": "decidirRespostaEmAudio (org ligada, agente, cliente mandou áudio, canal com nota de voz, chave, limite)"
+    },
+    {
+      "id": "cadeia",
+      "lane": "agent",
+      "col": 4,
+      "type": "service",
+      "label": "cadeia before_send (opt-out, LGPD, ritmo, janela de 24h, promessa) — aprova o TEXTO"
+    },
+    {
+      "id": "voz",
+      "lane": "agent",
+      "col": 5,
+      "type": "service",
+      "label": "provedor de voz (compatível com a OpenAI | ElevenLabs) — só depois da cadeia"
+    },
+    {
+      "id": "conversao",
+      "lane": "agent",
+      "col": 6,
+      "type": "service",
+      "label": "ffmpeg: mp3 → ogg/opus (nota de voz)"
+    },
+    {
+      "id": "bucket",
+      "lane": "data",
+      "col": 6,
+      "type": "database",
+      "label": "storage whatsapp-media/<org>/<conversa>/ (cai em texto se falhar)"
+    },
+    {
+      "id": "handler",
+      "lane": "api",
+      "col": 7,
+      "type": "api",
+      "label": "handler de mensagens (tipo áudio; o corpo é o texto da resposta)"
+    },
+    {
+      "id": "canal",
+      "lane": "ext",
+      "col": 8,
+      "type": "external",
+      "label": "WhatsApp do cliente (nota de voz)"
+    },
+    {
+      "id": "provedor",
+      "lane": "ext",
+      "col": 5,
+      "type": "external",
+      "label": "API de voz do cliente (OpenAI-compatível | ElevenLabs)"
+    },
+    {
+      "id": "llmcalls",
+      "lane": "data",
+      "col": 5,
+      "type": "database",
+      "label": "llm_calls (purpose voice_reply: caracteres e custo; soma no gasto do mês)"
+    },
+    {
+      "id": "texto",
+      "lane": "agent",
+      "col": 7,
+      "type": "service",
+      "label": "queda para TEXTO (qualquer falha de voz, chave, créditos, ffmpeg ou Storage)"
+    }
+  ],
+  "edges": [
+    { "id": "0", "from": "cartao", "to": "rota", "label": "config, chave, testar" },
+    { "id": "1", "from": "rota", "to": "settings", "label": "grava (mescla, não apaga o resto)" },
+    { "id": "2", "from": "rota", "to": "chave", "label": "cifra e guarda (4 últimos na tela)" },
+    { "id": "3", "from": "rota", "to": "auditoria", "label": "registra quem mudou — sem a chave" },
+    { "id": "4", "from": "editor", "to": "versao", "label": "salva no rascunho; publicar trava" },
+    { "id": "5", "from": "rota", "to": "provedor", "label": "testar e listar vozes (régua de destino de organização)" },
+    { "id": "6", "from": "provedor", "to": "editor", "label": "vozes da conta do cliente" },
+    { "id": "7", "from": "settings", "to": "decisao", "label": "falha DESLIGADA se ilegível" },
+    { "id": "8", "from": "versao", "to": "decisao", "label": "agente pediu áudio?" },
+    { "id": "9", "from": "chave", "to": "decisao", "label": "há chave?" },
+    { "id": "10", "from": "cadeia", "to": "decisao", "label": "texto final aprovado" },
+    { "id": "11", "from": "decisao", "to": "voz", "label": "sim → sintetiza" },
+    { "id": "12", "from": "decisao", "to": "texto", "label": "não → texto, com o motivo no log" },
+    { "id": "13", "from": "voz", "to": "provedor", "label": "POST com a chave do cliente" },
+    { "id": "14", "from": "voz", "to": "conversao", "label": "mp3" },
+    { "id": "15", "from": "conversao", "to": "bucket", "label": "ogg/opus na pasta da conversa" },
+    { "id": "16", "from": "bucket", "to": "handler", "label": "media_storage_path (URL assinada curta)" },
+    { "id": "17", "from": "handler", "to": "canal", "label": "nota de voz" },
+    { "id": "18", "from": "voz", "to": "texto", "label": "falhou → texto" },
+    { "id": "19", "from": "texto", "to": "handler", "label": "envia o texto de sempre" },
+    { "id": "20", "from": "voz", "to": "llmcalls", "label": "caracteres e custo (ou o erro)" },
+    { "id": "21", "from": "llmcalls", "to": "uso", "label": "resumo do mês e última falha" },
+    { "id": "22", "from": "llmcalls", "to": "cartao", "label": "última falha em conversa real" },
+    { "id": "23", "from": "settings", "to": "uso", "label": "limite de caracteres" }
+  ]
+}

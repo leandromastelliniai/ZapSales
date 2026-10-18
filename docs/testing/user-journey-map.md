@@ -135,6 +135,12 @@ fonte só (`lib/onboarding/passos.ts`) — eram três listas que discordavam. Ga
 | J3.13 | A escolha sobrevive ao salvar e recarregar | o servidor aceita a lista (o mesmo teto da tela, `TETO_TOOLS_POR_AGENTE`, fonte única) e o estado volta igual · **PASS** |
 | J3.14 | Ver se o que está ligado está funcionando (aba Capacidades) | usos, falhas, quantos vieram de teste, última vez — e o que fazer com cada número · **PASS** (números escritos pelo emissor real de audit) |
 | J3.15 | O teto recusa a passagem, explicando em português | **PASS** — exercitável desde que o catálogo cresceu (57 capacidades). `capacidades-do-agente.spec.ts` liga "Atender" sobre as 8 do seed e prova a recusa por 1 vaga. A afirmação "não exercitável hoje, com 16 capacidades no catálogo" VENCEU |
+| J3.16 | Criar o agente pelo formulário guiado (persona, tom, objetivo, boas-vindas, idioma), sem escrever prompt (#89) | o formulário vem antes das instruções; agente novo nasce com tom "normal" e o idioma da tela; "Ver como o agente recebe isto" mostra o texto composto · **PASS no componente real** (`tests/unit/perfil-guiado-no-editor.test.tsx` + capturas em `docs/testing/evidencias/89-perfil-guiado/`, página de teste sem login). **Falta**: o caminho criar → salvar → publicar → conversar numa instalação fresca estilo VPS |
+| J3.17 | Agente que existia antes não muda até ser editado; temperatura em branco usa o padrão do modelo (#89) | sem perfil o agente recebe o prompt byte a byte; a temperatura da versão chega ao modelo e vence a da organização · **PASS** (`tests/invariants/perfil-guiado-do-agente-no-turno.test.ts`, versão publicada → turno com modelo falso) |
+| J3.18 | Criar um agente útil a partir de um modelo por ramo (vendas, suporte, agendamento), sem escrever prompt (#92) | a galeria aparece só na criação; escolher preenche perfil e instruções no idioma da tela; tudo editável · **PASS no componente** (`tests/unit/modelos-e-temas-no-editor.test.tsx`) **e PASS pela tela em produção** (17/10/2026, versão `19d85f9`, organização e usuário temporários, já apagados): galeria com os 3 ramos → "Agendamento" preenche nome, persona, objetivo, boas-vindas e assuntos → ligar "Restringir assuntos" → criar → a linha da versão no banco tem `restrict_topics=true`, 3 assuntos e a resposta; ao reabrir o agente a restrição persiste e a galeria some. Capturas em `docs/testing/evidencias/92-modelos-e-temas/`. **Limite:** a instalação não tinha chave de IA, então a credencial da organização de prova era **falsa** (rascunho criado, nada publicado nem enviado); o "par" da doutrina (a tela pelo agente + a ferramenta direto, com modelo real) **não foi medido** — o turno foi provado com modelo falso em J3.19 |
+| J3.19 | Restringir assuntos: pergunta fora do tema recebe a resposta padrão; dentro é respondida; atendente humano e opt-out nunca são "fora do tema" (#92) | a restrição é instrução na composição, não conferência nova; as 11 conferências intactas · **PASS** (`tests/invariants/restringir-temas-no-turno.test.ts`, versão publicada → turno com modelo falso **que obedece à instrução**: prova que a instrução chega ao modelo e que a resposta padrão atravessa as conferências, inclusive a recusa de cada modelo pronto em 3 idiomas — **não** prova que um modelo real obedece). Handoff e opt-out: detectados em código antes do modelo (`lib/ai/agents/restringir-temas-precedencia.test.ts`); o turno vivo com restrição ligada não tem teste próprio | **MEDIDO COM MODELO REAL em produção (18/10/2026, versão `9221605`, `openai/gpt-5.6-terra`, agente "Agendamento" com a restrição ligada, organização temporária já apagada):** o PAR da doutrina — a aba Teste (tela) e a rota `POST /api/v1/ai/agents/{id}/versions/{vid}/test` chamada direto, com o mesmo texto cru — **concordam nos três casos**. (1) "Quem ganhou o jogo de futebol ontem?" → `send_message` com a resposta padrão **exata** ("Eu cuido da agenda: …") nas duas vias; (2) "Oi, quero marcar uma consulta para amanhã de manhã." → resposta normal de agendamento ("Posso te ajudar a marcar um horário. Qual tipo de consulta você procura?"), sem a recusa; (3) "Quero falar com um atendente de verdade." → "Claro! Vou chamar alguém da equipe…" + `request_human_handoff`, **não** tratado como fora do tema. **Controle:** com a chave desligada o mesmo texto do caso (1) recebe resposta livre ("Não consigo confirmar o resultado do jogo, mas posso te ajudar a marcar um horário…"), então a resposta padrão vem da restrição. O envio ficou adiado pela janela de 7h–22h (era madrugada em São Paulo), regra anterior à #92. Captura: `92-06-teste-fora-do-tema.png`. Custo ≈ US$ 0,20. **Limite:** uma amostra por caso (modelo não determinístico: a frase da abertura variou entre as duas vias, o comportamento não), e o aceite de handoff no turno vivo (não-preview, que roda a detecção em código) segue sem teste próprio.
+| J3.20 | Ensinar o agente com um site: lista de páginas https, estado e motivo por página, re-treino manual sem reprocessar o que não mudou (#93) | tipo "Site" no cadastro, sem arquivo nem texto colado; endereço interno recusado na hora; sem chave, o material espera e a tela explica; com chave, cada página aparece "Lida" (com título) ou "Não foi lida" com o motivo; o cartão vira "Entrou pela metade" quando alguma falha e o agente mantém o que leu · **PASS no componente e no indexador** (`tests/unit/fonte-de-site-cadastro.test.tsx`, `tests/unit/rag-indexer-site.test.ts`, `tests/unit/ai-knowledge-site-rotas.test.ts`), **PASS nos casos hostis de rede contra servidores HTTP reais** (`lib/ai/rag/ingest/site.test.ts`) e **PASS no banco** (`tests/invariants/treino-por-site-banco.test.ts`) · **PASS pela tela em produção** (18/10/2026, versão `d67f1a2`, organização e usuário temporários, já apagados): o tipo Site aparece; `https://10.0.0.5/admin` é recusado ("Endereço interno, privado ou local não é aceito"); sem chave de embedding a fonte fica "Esperando a chave" com as páginas "Aguardando leitura"; editar a lista de 3 para 2 páginas funciona; com a chave cadastrada pelo dono, `https://futuristas.ai/imersao/` fica "O agente já sabe" com 3 trechos e a página "Lida" com o título real; "Ler o site de novo" sem mudança não cria versão nova de índice (1 versão, `last_changed_at` intacto, trechos com `{pagina, endereco}`); uma página inexistente aparece "Não foi lida — O site respondeu 404." e o cartão vira "Entrou pela metade" mantendo os 3 trechos; auditoria `ai.knowledge_site_created`, `…_pages_changed` e `…_retrained` só com host e contagem. Capturas em `docs/testing/evidencias/93-treino-por-site/`. **Limites:** o agente não foi ligado a um canal nem consultado numa conversa (a citação foi conferida nos trechos gravados e na busca do banco, não numa resposta de modelo); os casos hostis de rede (rebinding, resposta gigante, lenta, redirecionamento interno) não foram repetidos na VPS; a mensagem ao salvar endereços sem chave ("Estou lendo as páginas") promete leitura que não acontece, e o painel da base conta "1 com erro" para fonte pela metade |
+| J3.21 | Onboarding: escolher o ramo do atendimento e o primeiro agente já nascer com o perfil (#92) | "Nenhum" é o padrão e o passo segue o de sempre; com um ramo, a 1ª versão leva perfil + instruções do modelo no idioma da tela, restrição desligada · **PASS** (`tests/unit/onboarding-agente-nao-publicado.test.ts`, `tests/unit/onboarding-ramo-na-tela.test.tsx`). **PASS pela tela em produção** (18/10/2026, versão `9221605`, organização nova sem onboarding concluído, já apagada): boas-vindas → WhatsApp ("Pular por enquanto") → "Configurar IA" mostra "O ramo do atendimento (opcional)" com Vendas, Suporte, Agendamento e "Nenhum" → "Suporte" marcado esconde o jeito de falar → "Criar e continuar" avança. No banco: o agente nasceu com as instruções do Suporte seguidas de "O negócio: Prova 92b, que é: clínica odontológica", e a auditoria registra `ramo=suporte`, `idioma=pt-BR`. Capturas em `docs/testing/evidencias/92-modelos-e-temas/92-04…` e `92-05…`. **Achado (já existia antes desta mudança, vale para os "jeitos de falar"):** sem canal conectado o agente nasce SEM versão, e o editor abre um agente sem versão a partir dos padrões, não do que o onboarding gravou em `ai_agents.system_prompt`. O perfil do modelo só é gravado quando a 1ª versão nasce (com canal). **Não medido:** o caminho com canal conectado em produção (exigiria criar `channel_sessions` na VPS) — coberto só pelo teste de unidade com banco de mentira |
 
 ## Chaves de acesso à IA `[P0]`
 
@@ -3592,3 +3598,168 @@ app 4,8% · db 0,2%. Detalhe e o que foi descartado em `docs/runbooks/deploy.md`
 **Não coberto ainda:** a medição "antes/depois" de `/user` e do tempo por etapa pela tela, em
 ambiente fresco estilo VPS e em produção (somente leitura) — exige Supabase local e a sessão do dono.
 
+
+## J51 — O agente responde em áudio quando o cliente manda áudio `[P1]` (2026-10-16, issue #91)
+
+Contexto: parte da #86. O agente já entendia o áudio do cliente e nunca respondia em áudio. Agora, **opcional e
+desligado por padrão**, a organização liga o recurso em Agente de IA › Provedores › «Resposta em áudio» (provedor
+compatível com a API de fala da OpenAI, ou ElevenLabs, com a chave de voz da própria empresa) e cada agente decide
+se responde em nota de voz. Tabela `voice_provider_credentials` e colunas `ai_agent_versions.audio_reply_*`
+(migration 0548); regra em `lib/ai/resposta-em-audio/`; mapa em `docs/architecture/resposta-em-audio.architecture.json`.
+
+Spec: `tests/e2e/resposta-em-audio-pela-tela.spec.ts` (**escrita, não executada** — veja «Não coberto»).
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J51.1 | Instalação NOVA, sem chave de voz nenhuma | o cartão abre «Indisponível», diz «Desligada. Os agentes respondem sempre em texto», o interruptor e o «Testar» ficam travados | **PASS (componente)** — `CartaoDeRespostaEmAudio.test.tsx`; pela tela: spec escrita |
+| J51.2 | Colar a chave, aceitar, ligar, salvar | o banco guarda a chave CIFRADA e os 4 últimos; a configuração carimba QUEM aceitou; a tela mostra só «···XXXX» e a chave não aparece no HTML | **PASS (unit + invariante)** — `app/api/v1/ai/audio/route.test.ts`; spec escrita |
+| J51.3 | Ligar sem chave / sem o aceite do administrador / com endereço da rede interna | 422 com a frase do que falta; nada é gravado | **PASS (unit)** — `route.test.ts` |
+| J51.4 | «Testar» com chave recusada / conta sem créditos / ffmpeg ausente | a tela explica cada falha com a frase do que fazer, nunca «Funcionou» | **PASS (unit)** — `route.test.ts`, `CartaoDeRespostaEmAudio.test.tsx` |
+| J51.5 | Cliente manda áudio, agente com a opção ligada, organização ligada | o canal recebe a NOTA DE VOZ (tipo áudio, na pasta da conversa) com o TEXTO da resposta como corpo; o provedor recebeu o texto exato e a chave do cliente | **ESCRITO, não executado** — `tests/invariants/resposta-em-audio-no-turno.test.ts` (turno completo + endpoint de voz de verdade); o módulo de decisão e entrega: **PASS (unit)** com endpoint HTTP real — `lib/ai/resposta-em-audio/turno.test.ts` |
+| J51.6 | Cliente escreve / agente com a opção desligada (padrão) / organização desligada | texto, e o provedor de voz nem é consultado | **PASS (unit)**; turno completo: invariante escrita |
+| J51.7 | Provedor sem créditos / chave inválida / fora do ar / lixo | cai em TEXTO, o cliente não fica sem resposta, a falha fica em `llm_calls` e aparece como «última falha» no cartão | **PASS (unit)**; turno completo: invariante escrita |
+| J51.8 | A conferência veta (janela de 24 h fechada) | NADA é enviado e o provedor de voz NEM é chamado: áudio não contorna a cadeia | invariante escrita (`resposta-em-audio-no-turno.test.ts`) |
+| J51.9 | Editor do agente em número por QR code | aviso de risco de banimento (lido da capacidade `banRisk` do canal, nunca do nome do provedor) | **PASS (componente)** — `RespostaEmAudioDoAgente.test.tsx` |
+| J51.10 | A tabela não é servida pelo PostgREST; duas organizações com a chave do mesmo provedor não colidem; apagar a organização leva a chave | privilégio NENHUM a `anon`/`authenticated`, `permission denied`, RLS sem policy, unique `(org, provedor)`, cascade | **PASS (invariante, PGlite)** — `tests/invariants/credencial-de-voz-e-server-side.test.ts` |
+| J51.11 | Mudar a voz de uma versão JÁ publicada | recusado (`imutável`); rascunho novo publica normalmente; versão sem menção a áudio nasce DESLIGADA | **PASS (invariante, PGlite)** — `tests/invariants/trava-da-versao-publicada-cobre-resposta-em-audio.test.ts` |
+| J51.12 | Baseline: instalação do zero e reaplicação (atualização) | a 0548 aplica nas duas passadas | **PASS (PGlite, install + update)** |
+
+**Não coberto ainda:** (a) a prova pela tela em ambiente fresco estilo VPS, sem as chaves opcionais (exige Supabase
+local; esta sessão rodou sem Docker); (b) um áudio real: nenhuma chave de voz nem `ffmpeg` nesta máquina — a
+conversão mp3 → ogg/opus foi provada pelos argumentos passados ao `ffmpeg`, e a imagem do produto já o traz;
+(c) os invariantes de turno completo (`resposta-em-audio-no-turno`, e também `limite-de-envios-por-turno` e
+irmãos) **não rodam sob PGlite** — travam no claim da fila, por natureza do harness, com o controle da `main`
+igualmente vermelho; o gate é o job `invariants` do CI.
+
+
+## J52 — O agente consulta outro sistema durante a conversa `[P1]` (2026-10-17, issue #94)
+
+Contexto: parte da #86. O agente só usava o catálogo interno de capacidades do CRM. Agora a organização cadastra
+um **webhook de consulta** (estoque, planilha, ERP, Make, n8n) em Agente de IA › Ferramentas externas, escolhe no
+editor de cada agente quais ferramentas ele pode usar e testa de verdade num botão da própria tela. Tabela
+`agent_external_tools` e coluna `ai_agent_versions.external_tool_ids` (migration 0551); regra em
+`lib/ai/ferramentas-externas/`; mapa em `docs/architecture/ferramentas-externas-do-agente.architecture.json`;
+guia de quem recebe em `docs/integracao/ferramentas-externas-do-agente.md`.
+
+Spec: `tests/e2e/ferramentas-externas-pela-tela.spec.ts` (**escrita, não executada** — veja «Não coberto»).
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J52.1 | Instalação NOVA, sem nenhuma ferramenta | a tela diz «O agente ainda não consulta nenhum sistema»; o grupo do editor diz «Você ainda não cadastrou nenhuma ferramenta externa» com o caminho para cadastrar; nenhum agente existente muda | spec escrita |
+| J52.2 | Cadastrar nome, «quando usar», endereço https e campos | a chave de assinatura aparece UMA vez; a lista mostra só os 4 últimos; a chave não aparece no HTML nem na lista | **PASS (unit)** — `lib/ai/ferramentas-externas/*.test.ts`; pela tela: spec escrita |
+| J52.3 | Endereço da rede interna / privada / local, sem https, ou com usuário e senha | recusado antes de gravar, com a frase do porquê | **PASS (unit)** — `esquema.test.ts`, `chamar.test.ts` (política única, sem abrir conexão) |
+| J52.4 | Escolher «Altera dados» | **[SUPERADO pela J53, #95]** na #94 era bloqueado (422 `external_tool_mutating_blocked`, só inativa no banco); a 0552 liberou, com aprovação por padrão — ver J53.1 | era PASS na #94; hoje o comportamento é o da J53 |
+| J52.5 | «Testar de verdade» com dados de exemplo | chamada real assinada; mostra o status, o tempo, o que o outro sistema devolveu e o que foi enviado; falha mostra a frase do que fazer | **PASS (unit, receptor HTTP real)** — `chamar.test.ts`; pela tela: spec escrita |
+| J52.6 | O agente chama a ferramenta numa conversa | o receptor recebe a chamada ASSINADA com só os dados que o agente preencheu; o agente recebe o resultado como dado não confiável; a resposta sai ao cliente; a auditoria registra sem chave, argumentos nem resposta | **PASS (unit, receptor real)** — `turno.test.ts`; turno completo: **ESCRITO, não executado** — `tests/invariants/ferramenta-externa-no-turno.test.ts` |
+| J52.7 | A resposta do outro sistema traz instruções («ignore as regras…») | chega como VALOR do campo `dado`, com o aviso à frente; o conjunto de ferramentas não muda; um identificador interno repetido pelo agente é VETADO antes do envio | **PASS (unit)**; turno completo: invariante escrita |
+| J52.8 | O outro sistema cai (5xx / prazo / rede) | uma nova tentativa e para; o agente recebe «não afirme o que dependia da consulta» (sem endereço nem corpo do erro); a Central ganha UM aviso por ferramenta; a auditoria registra o motivo | **PASS (unit)**; turno completo e Central: invariante escrita + `ferramentas-externas-do-agente.test.ts` (PGlite: um aviso, o segundo não duplica) |
+| J52.9 | Aba Teste do agente | a chamada aparece como «seria feita» com os dados; o receptor NÃO é tocado; o modelo é avisado de que não tem o resultado | **PASS (invariante, PGlite)** — `ferramenta-externa-no-turno.test.ts` (caso da prévia) |
+| J52.10 | Agente cuja versão não lista a ferramenta / ferramenta desativada | nem é oferecida ao modelo; receptor intocado | **PASS (unit)**; turno completo: invariante escrita |
+| J52.11 | Teto de 27 | `tool_ids` + `external_tool_ids` > 27 recusado na tela e no servidor; ferramenta desativada só pode ser desmarcada | **PASS (unit)** — `validation`/`escopo` e o seletor |
+| J52.12 | A tabela não é servida pelo PostgREST; duas organizações com o mesmo identificador não colidem; o motor só carrega o que é da organização do turno, ativo e consulta; versão publicada não troca de ferramentas | privilégio NENHUM a `anon`/`authenticated`, RLS sem policy, unique `(org, slug)`, cascade, trava de imutabilidade | **PASS (invariante, PGlite)** — `ferramentas-externas-do-agente.test.ts` (18 casos) |
+| J52.13 | Baseline: instalação do zero e reaplicação (atualização) | a 0551 aplica nas duas passadas | **PASS (PGlite, install)**; update: CI |
+
+**Não coberto ainda:** (a) a prova pela tela em ambiente fresco estilo VPS, sem as chaves opcionais (exige Supabase
+local; esta máquina não tem Docker) — a spec está escrita e a prova em produção segue a receita de organização
+temporária; (b) os invariantes de turno completo (`ferramenta-externa-no-turno`, como `resposta-em-audio-no-turno`)
+**não rodam sob PGlite** — travam no claim da fila, por natureza do harness; só o caso da prévia roda aqui, e o gate
+é o job `invariants` do CI; (c) um ERP real: o receptor dos testes é um servidor HTTP efêmero.
+
+
+## J53 — O agente executa uma ação em outro sistema, com aprovação `[P1]` (2026-10-18, issue #95)
+
+Contexto: parte da #86. Depois da consulta (J52), o agente pode **alterar** algo no outro sistema (criar pedido,
+cadastrar cliente) — sempre com «nada altera o mundo sem aprovação por padrão». Tabela `agent_external_tool_requests`
+e coluna `agent_external_tools.require_approval` (migration 0552); regra em `lib/ai/ferramentas-externas/`
+(`aprovacao.ts`, `turno.ts`, `repositorio-do-turno.ts`, `pedidos-api.ts`); rota
+`POST /api/v1/ai/external-tool-requests/:id/decide`; cron `external-tool-requests-expiry`; mapa em
+`docs/architecture/aprovacao-de-acoes-externas.architecture.json`; guia de quem recebe em
+`docs/integracao/ferramentas-externas-do-agente.md` §6.
+
+Spec: `tests/e2e/acoes-externas-com-aprovacao.spec.ts` (**verde no CI do PR #120**; a prova em produção está abaixo).
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J53.1 | Cadastrar «Altera dados» | a escolha é livre; «Pedir aprovação» liga sozinho (chave fica NULA no banco = padrão do efeito); desligar avisa que o agente executa sozinho e que a ação não é repetida; a lista mostra «Pede aprovação» | **PASS (unit)** — `ferramentas-externas-tela.test.tsx`; pela tela: **PASS (CI e produção)** |
+| J53.2 | O agente chama a ação que altera (chave padrão) | NADA sai para o outro sistema; o pedido fica pendente com os dados; o aviso nasce na Central; o agente lê «aguardando aprovação» e «depende da equipe» NÃO é vetado pela conferência de promessa | **PASS (unit)** — `turno.test.ts`; turno completo (receptor real): **PASS (CI, PR #120)** — `ferramenta-externa-no-turno.test.ts` |
+| J53.3 | Aprovar na Central | pede confirmação; executa UMA vez com `delivery_id` = id do pedido; o cartão mostra o desfecho; o aviso é resolvido; auditoria `approved` + `executed` | **PASS (unit)** — `decide/route.test.ts`, `aprovacao-do-pedido-na-central.test.tsx`; pela tela: **PASS (CI e produção)** |
+| J53.4 | Clique duplo / duas decisões simultâneas | uma 200 e uma 409; o outro sistema é chamado uma vez | **PASS (unit + invariante, PGlite: reivindicação condicional)**; simultâneo real: **PASS (produção, [200,409,409])** |
+| J53.5 | Recusar | nada é enviado; fica «Recusada»; o agente lê que NÃO foi feita | **PASS (unit)** |
+| J53.6 | Pedido sem decisão por 24 h | expira (cron e também na própria decisão tardia → 409); o agente lê «expirou»; aviso sai da Central | **PASS (unit + invariante, PGlite)** |
+| J53.7 | Falha incerta (5xx / prazo) numa ação que altera | UMA tentativa; pedido «falha incerta»; o agente não afirma nem nega; a Central diz que NÃO foi repetida; a repetição do modelo não chama de novo | **PASS (unit, receptor HTTP real)** — `chamar.test.ts`; turno completo: **PASS (CI)** |
+| J53.8 | Chave desligada numa ação que altera | executa direto, uma vez; a repetição do modelo reencontra o pedido executado | **PASS (unit)**; turno completo: **PASS (CI)** |
+| J53.9 | Agente em modo Assistido | TODA ferramenta externa (inclusive consulta com a chave desligada) abre um pedido; nada sai | **PASS (invariante, PGlite)** — `ferramenta-externa-no-turno.test.ts` (caso Assistido, motor real) |
+| J53.10 | Aba Teste | a ação que altera não executa nem abre pedido: «seria feita» + «altera dados» + «pediria aprovação» | **PASS (invariante, PGlite)** |
+| J53.11 | O agente no turno seguinte | lê o bloco com o estado dos pedidos da conversa (feito / recusado / expirou) | **PASS (unit)** — `pedidos-bloco.test.ts`; turno completo: **PASS (CI)** |
+| J53.12 | A tabela não é servida pelo PostgREST; duas organizações não veem nem reivindicam os pedidos uma da outra | privilégio NENHUM a `anon`/`authenticated`, RLS sem policy, cascade, índice único da chamada viva | **PASS (invariante, PGlite)** — `pedidos-de-acao-externa.test.ts` (19 casos) |
+| J53.13 | Baseline: instalação do zero | a 0552 aplica; o estado de uma ação que altera ATIVA já é aceito | **PASS (PGlite install + update; CI; produção: migration aplicada)** |
+
+**Prova em PRODUÇÃO (2026-10-18, versão `9221605`, organização e usuário temporários, apagados no fim; sem as chaves
+opcionais; receptor real = `httpbin.org`, que ecoa o que recebeu).** Evidências em
+`docs/testing/evidencias/95-acoes-externas-com-aprovacao/` (a captura da chave de assinatura não foi guardada).
+
+| Prova | Medido |
+|---|---|
+| Cadastro pela tela | «Altera dados» liga «Pedir aprovação» sozinho (validade 24); desligar mostra o aviso do risco; a chave fica NULA no banco (padrão do efeito); a lista mostra «Altera dados» + «Pede aprovação»; o seletor do agente deixa marcar a ferramenta (95-01…06) |
+| Central | 4 pedidos com a ferramenta, o efeito e os dados; `senha` aparece como «•••» e **não está** no HTML nem na resposta da API; o pedido vencido aparece «Expirada» e sem botões (95-07) |
+| Aprovar (receptor real) | confirmação → executou → o cartão mostra o que o outro sistema devolveu; o receptor recebeu `delivery_id` **igual ao id do pedido**, a **assinatura HMAC conferiu** com a chave, o corpo tinha só `event, tool, arguments, delivery_id, occurred_at`, nada de organização/contato (95-08, 95-09) |
+| Execução única | 3 decisões simultâneas do mesmo pedido → `[200, 409, 409]`; 1 execução no banco |
+| Recusar | nada enviado, «Recusada» (95-10); vencido → 409 `request_expired`; id inexistente → 404; corpo com `organization_id` → 422 |
+| Auditoria e avisos | `created / approved / rejected / expired / executed` com o resumo sem segredo; todos os avisos de aprovação resolvidos |
+| Cron implantado | a entrada `*/15` existe no scheduler de produção; ao rodar: 1 pendente vencido → expirado, 1 «executando» parado há 40 min → falha **incerta** + aviso «ficou sem desfecho», 1 pedido executado há 100 dias → dados apagados (`data_pruned_at`); auditoria `by=cron` / `pruned` |
+| Teste real de ferramenta que altera | o diálogo avisa «ALTERA dados… de verdade» e o botão diz «Executar de verdade» (95-11) |
+| Celular (390 px) | Central sem rolagem horizontal (95-12); aba Resolvidos explica o desfecho de cada pedido (95-13) |
+
+**Não provado em produção:** o turno do agente chamando a ferramenta (exige canal e credencial de IA reais; a regra do
+turno foi medida no CI com receptor HTTP real: `ferramenta-externa-no-turno`, verde no PR #120) e a aba Teste / modo
+Assistido contra um agente real (idem, no CI).
+
+## J54 — O agente usa ferramentas de um servidor MCP de terceiro `[P1]` (2026-10-18, issue #96)
+
+Contexto: parte da #86. Além do webhook (J52/J53), a organização pode conectar um **servidor MCP** e escolher quais
+ferramentas dele o agente usa — com o recurso **desligado por padrão**, só para administrador, credencial cifrada
+que nunca volta, risco padrão «altera dados» e a mesma aprovação do webhook. Tabela `mcp_servers` e o tipo `mcp` em
+`agent_external_tools` (migration 0553); interruptor em `organizations.settings.mcp_externo`; regra em
+`lib/ai/ferramentas-externas/mcp/` e `executar.ts`; rotas `/api/v1/ai/mcp` e `/api/v1/ai/mcp-servers`; mapa em
+`docs/architecture/servidores-mcp-externos.architecture.json`; guia em `docs/integracao/ferramentas-externas-do-agente.md` §7.
+
+Spec pela tela: `tests/e2e/servidores-mcp-pela-tela.spec.ts` (**escrita; roda no CI do PR** — a organização nunca alcança
+127.0.0.1, então ela usa um IPv4 público que não responde e grava a ferramenta escolhida direto; o servidor de verdade
+é provado nos testes abaixo, com o servidor do SDK oficial).
+
+| # | Caso | Expectativa | Resultado |
+|---|------|-------------|-----------|
+| J54.1 | Instalação NOVA, sem ligar nada | a aba «Servidores MCP» diz o que é, que o sistema funciona sem isto e que ligar exige o aceite; nenhum servidor é cadastrado nem chamado; agentes e webhooks existentes não mudam | **PASS (unit)** — `servidores-mcp-tela.test.tsx`, `mcp/route.test.ts`; pela tela: spec escrita |
+| J54.2 | Ligar | só administrador; sem aceite a rota recusa (422); religar não pede o aceite de novo; desligar NÃO apaga nada; ligado SEM aceite no banco vale desligado | **PASS (unit)** — `mcp/config.test.ts`, `mcp/route.test.ts`; **PASS (invariante, PGlite)** — `servidores-mcp-do-agente.test.ts` |
+| J54.3 | Cadastrar servidor (https + credencial) | grava cifrada; a resposta e a tela só mostram os 4 últimos; auditoria sem credencial; **o teste de conexão acompanha o cadastro** e a causa vem em português | **PASS (unit + servidor MCP real)** — `mcp-servers/route.test.ts`, `mcp/cliente.test.ts` |
+| J54.4 | Endereço interno/privado/local | recusado ANTES de gravar, com a causa certa («não achei o nome» ≠ «rede interna») | **PASS (unit)**; cliente: **PASS (servidor real)** — a política recusa 127.0.0.1 e 10.x sem abrir conexão |
+| J54.5 | Servidor que não responde / credencial errada / não é MCP | o servidor é salvo MESMO ASSIM; «Não conectou» + a frase do que olhar; «Testar conexão» repete | **PASS (unit + servidor real)** — 401, 404, 503, redirecionamento, prazo |
+| J54.6 | Descobrir as ferramentas | lista AO VIVO; para cada uma: suportada ou não (e por quê), dica do servidor, risco, «quando usar», e se o servidor a mudou | **PASS (unit)** — `mcp/selecao.test.ts`, `mcp-servers/route.test.ts`, `servidores-mcp-tela.test.tsx` |
+| J54.7 | Escolher ferramentas | o corpo traz só o NOME e o que o administrador decide; a definição vem do servidor agora; risco padrão «altera dados» com aprovação ligada, mesmo com a dica «só lê»; «Só consulta» é escolha dele | **PASS (unit)** |
+| J54.8 | Ferramenta com campo obrigatório que é lista/objeto, ou mais de 10 campos | aparece DESABILITADA com o porquê; opcional não suportado é ignorado e listado | **PASS (unit)** — `mcp/esquema.test.ts` |
+| J54.9 | O agente chama a consulta MCP numa conversa | o servidor recebe a abertura de sessão e UMA chamada com a credencial no cabeçalho e só os campos preenchidos; o agente recebe o resultado como dado não confiável; a resposta sai; auditoria `kind: mcp` sem segredo | **PASS (unit, servidor MCP real)** — `turno-mcp.test.ts`; turno completo: **ESCRITO, não executado** — `tests/invariants/mcp-externo-no-turno.test.ts` |
+| J54.10 | Resultado com instruções («ignore as regras…», identificador interno) | chega embrulhado como dado; um identificador interno repetido pelo agente é VETADO antes do envio | **PASS (unit)**; turno completo: invariante escrita |
+| J54.11 | Ação MCP que altera | NADA sai; o pedido fica pendente na Central; «depende da equipe» não é vetado; o servidor (que jura «só lê») não é tocado | **PASS (unit, servidor real)**; turno completo: invariante escrita |
+| J54.12 | Aprovar na Central | executa pelo cliente MCP com a credencial do SERVIDOR, o nome da ferramenta NO servidor e o id do pedido em `_meta`; recurso desligado → 409 e o pedido segue pendente; recusar sempre pode | **PASS (unit)** — `decide/route.test.ts` |
+| J54.13 | Falha incerta numa ação (5xx / prazo / `isError`) | UMA tentativa, pedido «falha incerta», o texto do erro NÃO vai ao agente (só ao administrador, ao testar), a Central diz que não foi repetida | **PASS (unit, servidor real)** |
+| J54.14 | Desligar o recurso, desativar o servidor ou tirar da versão | a ferramenta nem é oferecida ao modelo e o servidor não é tocado; nada é apagado; o seletor do agente explica o porquê | **PASS (invariante PGlite — o motor carrega só com os três ligados)**; turno completo: invariante escrita |
+| J54.15 | Isolamento entre organizações | a ferramenta nunca aponta para o servidor de OUTRA organização (FK composta, mesmo por escrita direta); cada organização lê só os seus servidores e a credencial só do seu | **PASS (invariante, PGlite)** — `servidores-mcp-do-agente.test.ts` |
+| J54.16 | Baseline: instalação do zero e atualização | a 0553 aplica nas duas passadas; linhas `webhook` de antes seguem válidas | **PASS (PGlite install + update)**; CI: pendente do PR |
+
+**Medido neste PR (2026-10-18, máquina de desenvolvimento, sem Docker):** `pnpm typecheck` e `pnpm lint` sem erro; os
+testes dos diretórios tocados (cliente MCP contra o servidor do SDK em 4 combinações JSON/SSE × com/sem sessão, esquema,
+seleção, interruptor, rotas, turno, tela, i18n, marca, mapas, navegação) — **55 arquivos, 900 casos, todos verdes**; as
+invariantes de dado em PGlite (servidores MCP, pedidos, ferramentas, vocabulário banco×TypeScript, hardening das funções
+`security definer`) — **5 arquivos, 120 casos, verdes**, mais os 2 casos de prévia/Assistido do turno MCP. `pnpm test:unit`
+completo: as falhas restantes são as MESMAS da `main` nesta máquina (antivírus, git, PDF e prazos de teste sob carga —
+conferidas contra a `main` limpa arquivo por arquivo), nenhuma do PR.
+
+**O que NÃO foi provado ainda (e por quê):**
+- **Prova pela tela em ambiente fresco estilo VPS** (critério comum da #86): esta máquina não tem Docker, então a
+  instalação fresca com Supabase local não sobe aqui. O caminho é o da #95: CI do PR (e2e `servidores-mcp-pela-tela`)
+  e, depois do merge, a prova em produção com organização e usuário temporários e um servidor MCP público — **a
+  fazer**, com as capturas em `docs/testing/evidencias/96-servidores-mcp-externos/`.
+- **Turno completo** (`mcp-externo-no-turno.test.ts`): os casos de prévia/Assistido passam em PGlite; os de turno ao vivo
+  travam no claim da fila sob PGlite (igual ao `ferramenta-externa-no-turno`, com o controle da `main` também vermelho):
+  o gate é o job `invariants` do CI.
+- O caminho HTTPS real contra um servidor MCP de terceiro (SNI/certificado) não é exercitado por nenhum gate.

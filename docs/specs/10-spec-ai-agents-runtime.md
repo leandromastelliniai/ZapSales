@@ -193,6 +193,40 @@ create trigger trg_ai_agent_versions_audit
 - Não pode editar versão `published` (cria nova versão)
 - `archived` apenas via DBA manual (preserva histórico mesmo após delete do agente — soft delete)
 
+### 3.2.1 Perfil guiado e temperatura da versão (migration 0546, issue #89)
+
+Seis colunas **nullable** em `ai_agent_versions`, aditivas e sem backfill — `NULL` é "sem perfil / padrão do modelo":
+
+| Coluna | Vocabulário | Papel |
+|---|---|---|
+| `profile_persona` | texto, até 600 | quem o agente é |
+| `profile_tone` | `formal` \| `normal` \| `descontraido` (CHECK, não enum) | tom de voz |
+| `profile_objective` | texto, até 600 | o que ele persegue na conversa |
+| `profile_welcome` | texto, até 500 | abertura para contato novo |
+| `profile_language` | `pt-BR` \| `es` \| `en` (CHECK; os idiomas do produto) | idioma das respostas |
+| `temperature` | `numeric(3,2)`, 0 a 1 | temperatura enviada ao modelo |
+
+- São **conteúdo da versão**: entram em `VERSION_COLUMNS`, em `versionShapeSchema`, no PATCH de rascunho, no duplicar/reverter/aplicar proposta e na trava de imutabilidade da versão publicada.
+- **O que o agente recebe** é `comporInstrucoes(system_prompt, perfil)` (`lib/ai/agents/perfil.ts`), aplicada **uma vez**, na carga da config publicada (`mapAgentConfigRow`): seção `## Perfil do agente` (só os campos preenchidos) + `## Instruções` com o prompt livre. **Perfil vazio devolve o prompt intacto, byte a byte** — agente existente não muda até ser editado.
+- **Temperatura**: `RunModelCallInput.temperature` vence `organizations.settings.llm.params.temperature`; `NULL` herda a da organização e, sem ela, o padrão do modelo. Chega às chamadas que falam em nome do agente (turno, fechamento do turno, rascunho assistido, abordagem de formulário). `ai_agents.config.temperature` — que nenhum motor lia — saiu: o valor tem um lugar só. Faixa 0–1 (a que todos os provedores aceitam).
+- Prova: `tests/invariants/perfil-guiado-do-agente-no-turno.test.ts` (versão publicada → turno, modelo falso) e `lib/ai/agents/perfil.test.ts`.
+
+### 3.2.2 Restringir temas (migration 0549, issue #92)
+
+Três colunas em `ai_agent_versions`, aditivas e **sem backfill** — a chave nasce `false`, a lista vazia e a resposta `NULL`, que o motor lê como "sem restrição":
+
+| Coluna | Tipo | Papel |
+|---|---|---|
+| `restrict_topics` | `boolean not null default false` | a chave por agente |
+| `allowed_topics` | `text[] not null default '{}'`, CHECK `cardinality <= 20` (cada assunto até 120, no Zod) | assuntos permitidos |
+| `off_topic_reply` | texto, CHECK até 500 | resposta para o que está fora; `NULL` = recusa educada no tom do agente |
+
+- São **conteúdo da versão**: entram em `VERSION_COLUMNS`, em `versionShapeSchema`, no PATCH de rascunho, no duplicar/reverter e na trava de imutabilidade.
+- **Aplicada na composição das instruções**, no mesmo lugar do perfil: `comporInstrucoes` acrescenta a seção `## Assuntos permitidos` entre `## Perfil do agente` e `## Instruções`. **Não é uma 12ª conferência antes do envio** e não altera nenhuma das 11 (lista e ordem iguais, provado em `tests/invariants/restringir-temas-no-turno.test.ts`).
+- **Só vale com chave ligada E ao menos um assunto** (`restricaoDeTemasAtiva`): chave ligada com lista vazia não restringe nada — calar o agente inteiro por um formulário incompleto seria pior. A tela avisa.
+- **Precedência**: pedido de atendente humano (`detectHumanHandoffRequest` e as palavras de passagem da versão) e opt-out (`lib/opt-out`) são detectados **em código, antes do modelo**, e portanto valem com a restrição ligada; a seção os declara exceção também em texto ("nunca é fora do tema"), junto de cumprimentos e conversa social de abertura.
+- **Modelos por ramo** (vendas, suporte, agendamento) são conteúdo versionado em `lib/ai/agents/modelos.ts`, nos três idiomas do produto — não tabela. Preenchem perfil, instruções e a *sugestão* de assuntos, mas **não ligam a restrição** (decisão do dono). `modelos.test.ts` reprova modelo sem um idioma ou com texto que o contrato da API recusaria.
+
 ### 3.3 Nova tabela `ai_provider_credentials`
 
 ```sql
@@ -471,9 +505,19 @@ POST  /api/v1/ai/agents/:id/versions/:vid:test   [admin]   (dry-run)
 ```json
 {
   "sample_message": "Oi, quanto custa o produto X?",
-  "sample_contact": { "name": "Cliente Teste", "phone": "+5511..." }   // opcional
+  "sample_contact": { "name": "Cliente Teste", "phone": "+5511..." },   // opcional
+  "history": [                                                          // opcional (issue #90)
+    { "role": "customer", "text": "Oi" },
+    { "role": "agent",    "text": "Olá! Em que posso ajudar?" }
+  ]
 }
 ```
+
+`history` é a conversa simulada até aqui (no máximo 20 trocas, 4000 caracteres por fala); vazio é o teste de
+uma troca. **O servidor não guarda a conversa**: a tela a mantém e a reenvia a cada troca, e "reiniciar" é
+esvaziá-la. Cada troca passa pelo mesmo core do turno real, sem contato, sem conversa e sem envio. O custo
+cai em `llm_calls` (`purpose='agent_preview'`) e conta na régua do orçamento; no modo `bloquear`, com o teto
+atingido, a rota responde **422 `ai_budget_exhausted`** (e não `preview_failed`).
 
 Resposta:
 ```json
@@ -482,12 +526,28 @@ Resposta:
     "run_id": "uuid",
     "status": "completed",
     "final_text": "...",
-    "tool_calls": [...trace...],
+    "tool_calls": [{ "tool": "crm_search_products", "arguments": {} }],   // todas, na ordem
     "tokens_in": 1234, "tokens_out": 567, "cost_cents": 0.4, "latency_ms": 3200,
     "would_send_to": { "session": "...", "chat_id": "..." }   // mostra mas não envia
   }
 }
 ```
+
+#### Corrigir uma resposta (issue #90)
+
+```
+POST /api/v1/ai/agents/:id/corrections                  [manager+]   Idempotency-Key aceito (uuid, 24h)
+GET  /api/v1/ai/agents/:id/runs/:callId/reply           [manager+]   a resposta real de uma execução
+```
+
+`POST .../corrections` recebe `{ origem: "teste", conversa: [...], texto_corrigido }` (a conversa termina
+numa fala do agente) ou `{ origem: "execucao", chamada_id, texto_corrigido }` (a conversa é **relida no
+servidor**, presa a organização e agente). Cria **uma proposta pendente** em `flywheel_distiller_proposals`
+(`type='response_correction'`, `agent_id` do path, `evidence` = conversa mascarada pelo anonimizador das
+transcrições) e responde `201 { proposal_id, status: "pending" }`. A rota **não altera o agente**: só
+`POST .../proposals/:pid/apply` (admin) publica uma versão nova, com a regra no fim do prompt, e recusa
+proposta de outro agente. Erros: `correction_without_reply` (422), `not_found` (404). Auditoria:
+`ai.response_correction_proposed`, sem o texto da conversa.
 
 #### Follow-up configurado por versão
 

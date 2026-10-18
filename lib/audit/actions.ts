@@ -192,6 +192,9 @@ export const AUDIT_ACTIONS = [
   "ai.credential_revalidated",
   "ai.knowledge_reindex_all",
   "ai.knowledge_provider_changed",
+  "ai.knowledge_site_created",
+  "ai.knowledge_site_pages_changed",
+  "ai.knowledge_site_retrained",
   "ai_agent.created",
   "ai_agent.updated",
   "ai_agent.archived",
@@ -210,6 +213,8 @@ export const AUDIT_ACTIONS = [
   "ai.pacing_knobs_updated",
   "ai.inbox_item_status_changed",
   "ai.flywheel_proposal_applied",
+  /** "Corrigir esta resposta": a correção virou proposta pendente (nada mudou no agente ainda). */
+  "ai.response_correction_proposed",
   "ai.org_memory_published",
   "ai.org_memory_entry_created",
   "ai.org_memory_entry_updated",
@@ -1012,6 +1017,44 @@ export const AUDIT_ACTIONS = [
   // trocada, e removida. O metadata diz O QUE mudou — nunca a chave.
   "ai.maps_credential_saved",
   "ai.maps_credential_removed",
+  // A resposta em áudio (#91, 0548, Agente de IA › Provedores): a configuração da
+  // organização mudou (ligada, provedor, limite…), e a chave de voz foi gravada ou
+  // removida. O metadata diz O QUE mudou — nunca a chave.
+  "ai.audio_reply_config_changed",
+  "ai.audio_reply_credential_saved",
+  "ai.audio_reply_credential_removed",
+  // Ferramentas externas do agente (#94, 0551, Agente de IA › Ferramentas externas):
+  // cadastro, edição (inclui ativar/desativar), nova chave de assinatura, remoção, o
+  // teste real pelo botão da tela e cada chamada feita por um agente. O metadata diz
+  // O QUE aconteceu (ferramenta, campos alterados, motivo, status, duração) — nunca a
+  // chave de assinatura, o corpo enviado nem o que o outro sistema respondeu.
+  "ai.external_tool_created",
+  "ai.external_tool_updated",
+  "ai.external_tool_secret_rotated",
+  "ai.external_tool_deleted",
+  "ai.external_tool_tested",
+  "ai.external_tool_called",
+  // Aprovação das ações externas (#95, 0552): o pedido nasce (agente), é aprovado ou recusado
+  // por uma pessoa, expira por prazo e é executado UMA vez. O metadata diz quem, qual
+  // ferramenta e um resumo dos dados SEM segredos — nunca a chave de assinatura, o corpo
+  // enviado nem o que o outro sistema respondeu.
+  "ai.external_tool_request_created",
+  "ai.external_tool_request_approved",
+  "ai.external_tool_request_rejected",
+  "ai.external_tool_request_expired",
+  "ai.external_tool_request_executed",
+  "ai.external_tool_request_pruned",
+  // Servidores MCP externos (#96, 0553, Ferramentas externas › Servidores MCP): o interruptor da
+  // organização, o cadastro do servidor (criar, editar, apagar), o teste de conexão e a escolha das
+  // ferramentas. O metadata diz O QUE aconteceu (servidor, campos alterados, quantas ferramentas,
+  // motivo) — nunca a credencial, os dados enviados nem o que o servidor respondeu. A execução das
+  // ferramentas reaproveita `ai.external_tool_called` e `ai.external_tool_request_*`, com `kind: "mcp"`.
+  "ai.mcp_switch_changed",
+  "ai.mcp_server_created",
+  "ai.mcp_server_updated",
+  "ai.mcp_server_deleted",
+  "ai.mcp_server_tested",
+  "ai.mcp_tools_selected",
 
   // A assinatura do emissor (#2066, PR #2079): quem ligou ou desligou o nome de
   // quem fala nas mensagens ao cliente, e com que nome a IA passou a assinar.

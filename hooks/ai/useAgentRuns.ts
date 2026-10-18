@@ -45,6 +45,8 @@ export interface AgentRunRow {
   steps_count: number | null;
   tool_calls: unknown;
   is_dry_run: boolean;
+  /** `llm_calls.purpose`: `agent_turn` (atendimento) ou `agent_preview` (aba Teste). */
+  purpose?: string | null;
   started_at: string;
   completed_at: string | null;
   created_at: string;

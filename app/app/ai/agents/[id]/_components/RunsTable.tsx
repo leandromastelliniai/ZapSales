@@ -24,6 +24,7 @@ import { RunDetailDrawer } from "./RunDetailDrawer";
 interface Props {
   agentId: string;
   active: boolean;
+  readOnly?: boolean;
 }
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -46,7 +47,7 @@ function fmtCost(cents: number | null): string {
   return `US$ ${(cents / 100).toFixed(4)}`;
 }
 
-export function RunsTable({ agentId, active }: Props) {
+export function RunsTable({ agentId, active, readOnly }: Props) {
   const t = useT();
   const { data, isLoading, error, refetch, isFetching } = useAgentRuns(agentId, {
     enabled: active,
@@ -154,7 +155,13 @@ export function RunsTable({ agentId, active }: Props) {
         </Table>
       </div>
 
-      <RunDetailDrawer run={selected} open={open} onOpenChange={setOpen} />
+      <RunDetailDrawer
+        agentId={agentId}
+        readOnly={readOnly}
+        run={selected}
+        open={open}
+        onOpenChange={setOpen}
+      />
     </div>
   );
 }

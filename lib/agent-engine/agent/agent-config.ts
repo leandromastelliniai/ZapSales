@@ -15,6 +15,13 @@
  */
 import type pg from 'pg';
 
+import {
+  comporInstrucoes,
+  type IdiomaDoAgente,
+  type PerfilDoAgente,
+  type TomDoAgente,
+} from '@/lib/ai/agents/perfil';
+
 import { lerJanelaDeAtendimento, type JanelaDeAtendimento } from './janela-de-atendimento';
 
 export interface PublishedAgentConfig {
@@ -24,7 +31,19 @@ export interface PublishedAgentConfig {
   agentId: string;
   versionId: string;
   agentName: string;
+  /**
+   * O que o agente RECEBE como instrução: o perfil guiado da versão composto com o
+   * prompt livre (`comporInstrucoes`). Sem perfil, é o prompt exato de sempre.
+   * Composto aqui, uma vez, para todo chamador do turno (WhatsApp, prévia,
+   * rascunho assistido) ler o mesmo texto.
+   */
   systemPrompt: string;
+  /**
+   * Temperatura da versão. `null` = padrão do modelo (ou a da organização, quando
+   * ela configurou uma). É o único lugar do valor: `ai_agents.config.temperature`
+   * era decorativo e saiu.
+   */
+  temperature: number | null;
   provider: string;
   model: string;
   credentialId: string | null;
@@ -51,6 +70,12 @@ export interface PublishedAgentConfig {
    * Vazio = NENHUM: a ferramenta de busca some do turno.
    */
   knowledgeSourceIds: string[];
+  /**
+   * Ferramentas externas (webhook de consulta) que ESTA versão pode chamar
+   * (`ai_agent_versions.external_tool_ids`, migration 0551). Vazio = nenhuma: o
+   * turno não monta nada e não paga nem uma consulta ao banco.
+   */
+  externalToolIds: string[];
   /**
    * LEGADO: a KB ativa do agente (`ai_agents.active_kb_version_id`).
    *
@@ -90,6 +115,19 @@ export interface PublishedAgentConfig {
    * conserta (o campo existia na tela e nenhum leitor vivo o consultava).
    */
   janelaDeAtendimento: JanelaDeAtendimento | null;
+  /**
+   * Resposta em áudio (issue #91): "responder em nota de voz quando o cliente
+   * mandar áudio". DESLIGADA por padrão — e só vale com o interruptor da
+   * organização ligado e uma chave de voz gravada (`lib/ai/resposta-em-audio/`).
+   * Opcional no tipo para os dublês de teste que montam a config à mão; o
+   * leitor do banco sempre a preenche.
+   */
+  audioReply?: {
+    enabled: boolean;
+    /** A voz escolhida na lista do provedor. `null` = a padrão da organização. */
+    voiceId: string | null;
+    modelId: string | null;
+  };
   /** criadores (p/ mint do token efêmero de audit — padrão do runtime nativo). */
   versionCreatedBy: string | null;
   agentCreatedBy: string | null;
@@ -103,6 +141,13 @@ interface Row {
   version_id: string;
   agent_name: string;
   system_prompt: string;
+  profile_persona: string | null;
+  profile_tone: string | null;
+  profile_objective: string | null;
+  profile_welcome: string | null;
+  profile_language: string | null;
+  /** `numeric` chega do driver como texto; o SELECT já converte (`::float8`). */
+  temperature: number | null;
   provider: string;
   model: string;
   credential_id: string | null;
@@ -126,7 +171,15 @@ interface Row {
   operator_tool_ids: string[] | null;
   pipeline_ids: string[] | null;
   knowledge_source_ids: string[] | null;
+  external_tool_ids: string[] | null;
   trigger_config: unknown;
+  audio_reply_enabled: boolean | null;
+  audio_reply_voice_id: string | null;
+  audio_reply_model_id: string | null;
+  /** Restringir temas (0549). Ausente/nulo = sem restrição (clone que ainda não aplicou a 0549). */
+  restrict_topics: boolean | null;
+  allowed_topics: string[] | null;
+  off_topic_reply: string | null;
   version_created_by: string | null;
   agent_created_by: string | null;
 }
@@ -135,6 +188,12 @@ const SELECT_AGENT_CONFIG_COLUMNS = `a.operation_mode,a.paused_at,a.operation_re
             v.id as version_id,
             a.name as agent_name,
             v.system_prompt,
+            v.profile_persona,
+            v.profile_tone,
+            v.profile_objective,
+            v.profile_welcome,
+            v.profile_language,
+            v.temperature::float8 as temperature,
             v.provider,
             v.model,
             v.credential_id,
@@ -158,7 +217,14 @@ const SELECT_AGENT_CONFIG_COLUMNS = `a.operation_mode,a.paused_at,a.operation_re
             v.operator_tool_ids,
             v.pipeline_ids,
             v.knowledge_source_ids,
+            v.external_tool_ids,
             v.trigger_config,
+            v.audio_reply_enabled,
+            v.audio_reply_voice_id,
+            v.audio_reply_model_id,
+            v.restrict_topics,
+            v.allowed_topics,
+            v.off_topic_reply,
             v.created_by as version_created_by,
             a.created_by as agent_created_by`;
 
@@ -183,6 +249,19 @@ function mapAgentConfigRow(r: Row): PublishedAgentConfig {
         // O banco moveu o default; estes tres sitios de codigo ficaram para tras e venciam o banco, porque quem corta pelo limiar e o TypeScript.
         0.4;
 
+  // `?? null` cobre o clone que ainda não aplicou a 0546: coluna ausente vem
+  // undefined, e a direção segura é "sem perfil" — o prompt de sempre.
+  const perfil: PerfilDoAgente = {
+    persona: r.profile_persona ?? null,
+    tom: (r.profile_tone ?? null) as TomDoAgente | null,
+    objetivo: r.profile_objective ?? null,
+    boasVindas: r.profile_welcome ?? null,
+    idioma: (r.profile_language ?? null) as IdiomaDoAgente | null,
+    restringirTemas: r.restrict_topics ?? false,
+    temasPermitidos: r.allowed_topics ?? [],
+    respostaForaDoTema: r.off_topic_reply ?? null,
+  };
+
   return {
     operationMode: r.operation_mode,
     pausedAt: r.paused_at,
@@ -190,7 +269,8 @@ function mapAgentConfigRow(r: Row): PublishedAgentConfig {
     agentId: r.agent_id,
     versionId: r.version_id,
     agentName: r.agent_name,
-    systemPrompt: r.system_prompt,
+    systemPrompt: comporInstrucoes(r.system_prompt, perfil),
+    temperature: r.temperature ?? null,
     provider: r.provider,
     model: r.model,
     credentialId: r.credential_id,
@@ -210,6 +290,9 @@ function mapAgentConfigRow(r: Row): PublishedAgentConfig {
     // `?? []` cobre o clone sem a 0181: sem a coluna, o agente cai no ponteiro
     // legado abaixo em vez de ficar sem material nenhum.
     knowledgeSourceIds: r.knowledge_source_ids ?? [],
+    // `?? []` cobre o clone que ainda não aplicou a 0551: sem a coluna, o agente
+    // segue sem ferramenta externa — a direção segura é agir de menos.
+    externalToolIds: r.external_tool_ids ?? [],
     activeKbVersionId: r.active_kb_version_id,
     ragTopK,
     ragSimilarityThreshold,
@@ -227,6 +310,13 @@ function mapAgentConfigRow(r: Row): PublishedAgentConfig {
     // Leitura DEFENSIVA e que falha ABERTA: jsonb livre com shape estranho vira
     // `null` (sem janela ⇒ atende sempre), nunca uma mordaça acidental.
     janelaDeAtendimento: lerJanelaDeAtendimento(r.trigger_config),
+    // `?? false`/`?? null`: o clone que ainda não aplicou a 0548 vem sem a coluna,
+    // e a direção segura é o áudio DESLIGADO — o agente segue em texto.
+    audioReply: {
+      enabled: r.audio_reply_enabled ?? false,
+      voiceId: r.audio_reply_voice_id ?? null,
+      modelId: r.audio_reply_model_id ?? null,
+    },
     versionCreatedBy: r.version_created_by,
     agentCreatedBy: r.agent_created_by,
   };

@@ -105,6 +105,12 @@ export const ApiErrorCodes = {
 
   // 422 — semântica
   unprocessable_entity: "unprocessable_entity",
+  // POST /ai/agents/:id/versions/:vid/test com o modo "bloquear" do orçamento de IA no teto: o
+  // teste gasta como um turno real e é recusado como um (issue #90). A saída é Uso de IA › Orçamento.
+  ai_budget_exhausted: "ai_budget_exhausted",
+  // POST /ai/agents/:id/corrections cuja origem não tem resposta do agente a corrigir (execução sem
+  // mensagem enviada, ou índice fora da conversa).
+  correction_without_reply: "correction_without_reply",
   channel_without_session: "channel_without_session", // operação de sessão (reiniciar, parear) pedida a canal que não tem sessão no transporte — o oficial
   janela_fechada: "janela_fechada", // POST /messages por token/agente com texto livre fora das 24h em canal com restrição (131047) — a saída é modelo aprovado (#1614)
   media_unavailable: "media_unavailable", // POST /messages com media_storage_path cujo arquivo já saiu do bucket (poda de órfãos, 1 dia) — a saída é subir o arquivo de novo (#40)

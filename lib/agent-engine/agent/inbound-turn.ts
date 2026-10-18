@@ -3,7 +3,12 @@ import { contextoDaCampanhaDaConversa } from "@/lib/campanhas/contexto-do-agente
 import { setExecutionAgentOperation } from '@/lib/atendimento/fronteira-server';
 import { TIPOS_DE_CASO, TIPOS_DE_CASO_PARA_A_IA } from "@/lib/ai/case-copy";
 import { DEFAULT_CHANNEL_PROVIDER } from '@/lib/channels/capabilities';
-import { applyPreviewPolicy, previewGateContext, type TurnPreview } from './preview';
+import {
+  applyPreviewPolicy,
+  previewGateContext,
+  registrarChamadaDaPrevia,
+  type TurnPreview,
+} from './preview';
 import { claimOfJob } from '../queue/claim';
 import { currentExecutionBoundary, guardServiceEffect } from '@/lib/atendimento/fronteira-server';
 /**
@@ -180,6 +185,23 @@ import {
 import { readSkillReference, skillHasReferences } from './skill-references';
 import { READ_ONLY_TOOLS, wrapToolsWithBreaker, type ToolBreakerThresholds } from './tool-breaker';
 import { loadChannelProvider, nomesDasFerramentas, runBeforeSend } from '../guardrails/before-send';
+import { montarFerramentasExternas, type DependenciasDoTurnoExterno } from '@/lib/ai/ferramentas-externas/turno';
+import {
+  dependenciasDoMotor as dependenciasDasFerramentasExternas,
+  pedidosDaConversa,
+  temPedidoPendenteNaConversa,
+} from '@/lib/ai/ferramentas-externas/repositorio-do-turno';
+import { blocoDePedidosDaConversa } from '@/lib/ai/ferramentas-externas/pedidos-bloco';
+import {
+  criarAudioDoTurno,
+  ultimaMensagemDoClienteFoiAudio,
+  type DependenciasDoAudioDoTurno,
+} from '@/lib/ai/resposta-em-audio/turno';
+import {
+  chaveDeVozConfiguradaNoBanco,
+  lerChaveDeVozNoBanco,
+} from '@/lib/ai/resposta-em-audio/credencial';
+import { registrarUsoDaVoz } from '@/lib/ai/resposta-em-audio/uso';
 import { isStatusSendable } from '../../channels/meta/template-binding';
 import { capabilitiesOf } from '@/lib/channels/capabilities';
 import { renderTemplateBody } from '@/lib/channels/meta/render-template';
@@ -1255,6 +1277,23 @@ export interface InboundTurnDeps {
    * organização e o egress com allowlist (`lib/ai/decisao/ponto.ts`).
    */
   jev?: DependenciasDoPonto;
+  /**
+   * A resposta em áudio no turno (issue #91) — injetável só para teste: um
+   * `fetch`/servidor de voz de mentira, o conversor e o Storage. Default = o
+   * provedor real com a chave da organização, o ffmpeg e o Storage do produto.
+   */
+  respostaEmAudio?: Partial<
+    Pick<
+      DependenciasDoAudioDoTurno,
+      'fetch' | 'enderecoDaElevenLabs' | 'converter' | 'guardar' | 'agora' | 'chaveConfigurada' | 'lerChave'
+    >
+  >;
+  /**
+   * As ferramentas externas no turno (issue #94) — injetável só para teste: a política de
+   * rede (o receptor do teste está em 127.0.0.1), a espera entre tentativas e a leitura da
+   * chave de assinatura. Default = a rede segura da organização e a chave gravada.
+   */
+  ferramentasExternas?: Partial<Pick<DependenciasDoTurnoExterno, 'politica' | 'dormir' | 'lerChave'>>;
 }
 
 /** Checkpoint mais recente do lead — a memória que atravessa sessões. */
@@ -2314,6 +2353,71 @@ async function executarTurnoDoAgente(
     if (!channel) throw new Error('preview_transport_forbidden');
     return channel;
   };
+  // RESPOSTA EM ÁUDIO (issue #91). `null` para todo agente que não pediu áudio —
+  // o caso de qualquer agente que já existia: nenhuma leitura, nenhum custo, o
+  // mesmo envio de sempre. Quando pediu, o `AudioDoTurno` só é CONSULTADO dentro
+  // do `send` da cadeia (depois de todas as conferências) e na prévia, que apenas
+  // simula a decisão. Ver `lib/ai/resposta-em-audio/turno.ts`.
+  const audioDoTurno =
+    agentConfig?.audioReply?.enabled === true
+      ? criarAudioDoTurno(
+          {
+            organizationId: tenantId,
+            conversationId: input.conversationId,
+            contactId: leadId === '' ? null : leadId,
+            jobId: job?.id ?? null,
+            agentId: agentConfig.agentId,
+            agente: {
+              ativado: true,
+              voz: agentConfig.audioReply.voiceId,
+              modelo: agentConfig.audioReply.modelId,
+            },
+            // Só a RESPOSTA espelha o formato do cliente: um follow-up proativo (horas ou dias
+            // depois) não responde àquele áudio, e a prévia simula o turno de resposta.
+            clienteMandouAudio:
+              (preview !== undefined || eTurnoDeResposta(liveJob())) &&
+              ultimaMensagemDoClienteFoiAudio(openingContext.context.messages),
+          },
+          {
+            lerSettings: async () =>
+              (
+                await pool.query<{ settings: unknown }>(
+                  'select settings from organizations where id = $1',
+                  [tenantId],
+                )
+              ).rows[0]?.settings ?? {},
+            provedorDoCanal: async () =>
+              preview
+                ? preview.channelId
+                  ? loadChannelProvider(pool, tenantId, preview.channelId)
+                  : null
+                : loadChannelProvider(pool, tenantId, input.channelSessionId),
+            chaveConfigurada:
+              deps.respostaEmAudio?.chaveConfigurada ??
+              ((provedor) => chaveDeVozConfiguradaNoBanco(pool, tenantId, provedor)),
+            lerChave:
+              deps.respostaEmAudio?.lerChave ??
+              ((provedor) => lerChaveDeVozNoBanco(pool, tenantId, provedor)),
+            guardar:
+              deps.respostaEmAudio?.guardar ??
+              (async (caminho, nota) => {
+                const { error } = await createAdminClient()
+                  .storage.from('whatsapp-media')
+                  .upload(caminho, nota.buffer, { contentType: nota.mime, upsert: true });
+                if (error) throw new Error(error.message);
+              }),
+            registrarUso: (uso) => registrarUsoDaVoz(pool, uso),
+            ...(deps.respostaEmAudio?.converter ? { converter: deps.respostaEmAudio.converter } : {}),
+            ...(deps.respostaEmAudio?.fetch ? { fetch: deps.respostaEmAudio.fetch } : {}),
+            ...(deps.respostaEmAudio?.enderecoDaElevenLabs
+              ? { enderecoDaElevenLabs: deps.respostaEmAudio.enderecoDaElevenLabs }
+              : {}),
+            ...(deps.respostaEmAudio?.agora ? { agora: deps.respostaEmAudio.agora } : {}),
+            aoCairEmTexto: (motivo) =>
+              runLog.info('resposta em áudio não usada — a resposta saiu em texto', { motivo }),
+          },
+        )
+      : null;
   // STOP lido no turno (fonte: CRM via get_lead_context) — combinado com o cache
   // durável leads.is_opted_out no gate 1 da cadeia (F2-13).
   const optedOutThisTurn = openingContext.context.contact.is_blocked;
@@ -2559,10 +2663,22 @@ async function executarTurnoDoAgente(
   // de `get-lead-context.ts:193` diz o mesmo). Passar essa variável para um
   // parâmetro chamado `contactId` é correto pelo VALOR; o nome é que mente, e é
   // o que a issue #509 conserta. Não troque por um `lead_id` "mais coerente".
-  const compromissosBlock =
+  const compromissosDoContato =
     preview?.kind === 'sandbox'
       ? ''
       : await buildCompromissosBlock(pool, tenantId, leadId, new Date());
+  // O que aconteceu com as AÇÕES EXTERNAS que o agente pediu nesta conversa (issue #95): a
+  // aprovação é feita por uma pessoa FORA do turno, e é aqui que o agente fica sabendo se a
+  // ação foi feita, recusada, expirou ou falhou sem certeza — para nunca afirmar o que não
+  // aconteceu. Vazio (e sem consulta ao banco) para todo agente sem ferramentas externas.
+  const pedidosExternosBlock =
+    preview?.kind !== 'sandbox' &&
+    agentConfig !== null &&
+    agentConfig.externalToolIds.length > 0 &&
+    input.conversationId
+      ? blocoDePedidosDaConversa(await pedidosDaConversa(pool, tenantId, input.conversationId), new Date())
+      : '';
+  const compromissosBlock = [compromissosDoContato, pedidosExternosBlock].filter((b) => b !== '').join('\n\n');
   // Observabilidade da memória (Fase 2A): SÓ ids/contagens no log — headline/corpo
   // são PII e nunca saem do prompt. Prova auditável de que a memória durável do
   // lead entrou no contexto DESTE turno.
@@ -2804,6 +2920,14 @@ async function executarTurnoDoAgente(
    * a correção depende.
    */
   const mcpToolIdsDoTurno: string[] = [];
+  /** Nomes (`ext_<identificador>`) das ferramentas externas montadas neste turno. */
+  const nomesDasFerramentasExternas: string[] = [];
+  /**
+   * Este turno deixou um pedido de aprovação PENDENTE (issue #95)? Sustenta a frase «depende de
+   * uma confirmação da equipe» diante do `casePromiseGate`: a promessa de que uma pessoa vai
+   * decidir tem estado real por trás (o pedido na Central), então não pede um caso à parte.
+   */
+  let pedidoPendenteNoTurno = false;
 
   const rawTools: ToolSet = {
     get_lead_context: tool({
@@ -3141,8 +3265,36 @@ async function executarTurnoDoAgente(
           // sem query — o casePromiseGate já é no-op nesse caso de qualquer forma.
           const hasOpenCase =
             agentConfig?.casesEnabled === true
-              ? await hasOpenCaseForContact(pool, tenantId, input.conversationId)
+              ? (await hasOpenCaseForContact(pool, tenantId, input.conversationId)) ||
+                // Um pedido de aprovação PENDENTE (deste turno ou de antes) é o estado real por trás
+                // de «depende de uma confirmação da equipe»: não exige um caso à parte.
+                pedidoPendenteNoTurno ||
+                (agentConfig.externalToolIds.length > 0 &&
+                  (await temPedidoPendenteNaConversa(pool, tenantId, input.conversationId)))
               : false;
+          // RESPOSTA EM ÁUDIO (#91): decidida SÓ aqui — chamada de dentro do `send` da cadeia,
+          // isto é, depois de ela aprovar o texto (`lib/ai/resposta-em-audio/turno.ts`). Com
+          // foto, o texto é a legenda; qualquer falha de voz cai em texto (`null`), e o `body`
+          // da nota de voz é o texto da resposta.
+          const enviarEmAudio = async (
+            finalBody: string,
+            enviar: (corpo: string, media: FotoParaEnvio & { kind: 'audio' }) => Promise<ChannelSendResult>,
+          ): Promise<ChannelSendResult | null> => {
+            if (audioDoTurno === null || fotosDoProduto.length > 0) return null;
+            const entrega = await audioDoTurno.entregar(finalBody, seq + 1);
+            if (entrega.formato !== 'audio') return null;
+            const enviado = await enviar(finalBody, {
+              storagePath: entrega.storagePath,
+              mime: entrega.mime,
+              kind: 'audio',
+            });
+            // O canal RECUSOU a nota de voz (falha definitiva, nada saiu): o cliente recebe o
+            // texto. Qualquer outro desfecho (enviada, na fila, indisponível) é final, para nunca
+            // mandar o mesmo recado em áudio e em texto.
+            if (enviado.kind !== 'failed') return enviado;
+            runLog.warn('o canal recusou a nota de voz — a resposta segue em texto');
+            return null;
+          };
           // Args reusados EXATAMENTE (mesmo objeto) no re-run do fail-safe abaixo — só
           // hasOpenCase/openedCaseThisTurn mudam depois do auto-abre-caso.
           const beforeSendArgs = {
@@ -3254,7 +3406,7 @@ async function executarTurnoDoAgente(
             },
             // `finalBody` = corpo após a cadeia (o disclosureGate F4-05 pode prependar o
             // disclosure via inject); é ELE que vai ao canal, não o `body` capturado da tool.
-            send: (finalBody: string) => {
+            send: async (finalBody: string) => {
               corposEnviados.push(finalBody);
               const sleep =
                 deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
@@ -3267,7 +3419,7 @@ async function executarTurnoDoAgente(
                 Math.floor(Math.random() * (pacingDoTurno?.knobs.jitterMaxMs ?? 800));
               const enviar = (
                 corpo: string,
-                media?: FotoParaEnvio,
+                media?: FotoParaEnvio & { kind?: 'image' | 'audio' },
               ): Promise<ChannelSendResult> => {
                 seq += 1;
                 return liveChannel().send({
@@ -3282,6 +3434,8 @@ async function executarTurnoDoAgente(
                   ...(media ? { media } : {}),
                 });
               };
+              const viaAudio = await enviarEmAudio(finalBody, enviar);
+              if (viaAudio !== null) return viaAudio;
               // Cada foto é uma mensagem física: só vão as que cabem no que resta do teto
               // do turno (a checagem de `max_sends_per_turn` acima roda uma vez, antes).
               // O resto é medido ANTES DE CADA FOTO, depois do texto: o texto acima do
@@ -3987,6 +4141,64 @@ async function executarTurnoDoAgente(
       }
     }
 
+    // Ferramentas EXTERNAS (webhook de consulta, issue #94): as que a versão publicada do
+    // agente lista, ativas e de consulta. Sem nenhuma na versão (todo agente que já
+    // existia) não há consulta ao banco. Na prévia nada sai — a chamada é registrada
+    // como "seria feita" (`preview.result.externalCalls`). Falha em montar NÃO derruba o
+    // turno: ferramenta extra é privilégio, não invariante.
+    if (agentConfig !== null && agentConfig.externalToolIds.length > 0) {
+      try {
+        const doMotor = dependenciasDasFerramentasExternas({
+          db: pool,
+          organizationId: tenantId,
+          agentId: agentConfig.agentId,
+          jobId: preview ? null : liveJob().id,
+          // Cenário de teste não tem conversa: vem vazio, e uuid vazio não existe — vira «sem conversa».
+          conversationId: input.conversationId || null,
+          log: runLog,
+        });
+        const externas = await montarFerramentasExternas(
+          {
+            ids: agentConfig.externalToolIds,
+            // Aba Teste (sandbox): nada sai e nada é pedido — a chamada é só mostrada. Rascunho do
+            // modo Assistido: roda como o turno real, e TODA ferramenta espera aprovação.
+            modo: preview?.kind === 'assisted' ? 'assistido' : 'ao_vivo',
+            previa:
+              preview?.kind === 'sandbox'
+                ? {
+                    registrar: (chamada) => {
+                      (preview.result.externalCalls ??= []).push(chamada);
+                    },
+                  }
+                : null,
+          },
+          {
+            ...doMotor,
+            abrirPedido: async (a) => {
+              const aberto = await doMotor.abrirPedido(a);
+              if (aberto.pedido.status === 'pending') pedidoPendenteNoTurno = true;
+              return aberto;
+            },
+            ...deps.ferramentasExternas,
+          },
+        );
+        for (const [name, externa] of Object.entries(externas.tools)) {
+          if (name in rawTools) continue;
+          rawTools[name] = externa;
+          // Só as CONSULTAS entram na lista de leitura do breaker: repetir o mesmo erro de uma
+          // ação que ALTERA algo não é «leitura sem progresso», é uma escrita falhando.
+          if (!externas.alteram.includes(name)) nomesDasFerramentasExternas.push(name);
+        }
+        if (externas.nomes.length > 0) {
+          runLog.info('ferramentas externas montadas no turno', { externas: externas.nomes });
+        }
+      } catch (err) {
+        runLog.warn('ferramentas externas não montadas — turno segue sem elas', {
+          error: (err instanceof Error ? err.message : String(err)).slice(0, 120),
+        });
+      }
+    }
+
     // ── A CURA (spec 16, passo 6) ───────────────────────────────────────────────
     //
     // As ferramentas de escrita saem do Conversador quando o Operador as assumiu.
@@ -4037,12 +4249,17 @@ async function executarTurnoDoAgente(
                 ferramentas: previewContext.agenda?.ferramentas ?? [],
                 toolCalledThisTurn: agendaToolCalledThisTurn,
               },
+              // O rascunho do modo Assistido abriu um pedido pendente: a frase «depende da equipe» tem estado.
+              ...(pedidoPendenteNoTurno ? { hasOpenCase: true } : {}),
             }),
+            audioDoTurno,
           )
         : rawTools;
     const tools = wrapToolsWithBreaker(previewTools, {
       thresholds: deps.knobs.breaker,
-      readOnlyTools: READ_ONLY_TOOLS,
+      // As externas são CONSULTAS (nesta etapa só elas existem): o modo `no_progress`
+      // do breaker as trata como leitura, e o mesmo erro repetido bloqueia a chamada.
+      readOnlyTools: [...READ_ONLY_TOOLS, ...nomesDasFerramentasExternas],
       log: runLog, // os warns dos gates do breaker saem carimbados com o run
     });
 
@@ -4310,11 +4527,13 @@ async function executarTurnoDoAgente(
                 provider: agentConfig.provider,
                 credentialId: agentConfig.credentialId,
               },
+              temperature: agentConfig.temperature,
             }
           : {}),
       },
       { registry: deps.registry, log: runLog },
     );
+    if (preview) registrarChamadaDaPrevia(preview.result, turn);
 
     // F4-04: correlação dos dois sinais do MESMO turno — jailbreak ALTO + tentativa de
     // promessa fora de tabela (F4-01). Ambos estão determinados aqui (o jailbreak rodou na
@@ -4461,6 +4680,7 @@ async function executarTurnoDoAgente(
                     provider: agentConfig.provider,
                     credentialId: agentConfig.credentialId,
                   },
+                  temperature: agentConfig.temperature,
                 }
               : {}),
             system,

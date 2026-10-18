@@ -70,6 +70,31 @@ describe('loadPublishedAgentConfig — campos de RAG', () => {
   });
 });
 
+describe('loadPublishedAgentConfig — resposta em áudio (#91)', () => {
+  it('lê a opção, a voz e o modelo da versão PUBLICADA', async () => {
+    const pool = poolWith({
+      ...baseRow,
+      audio_reply_enabled: true,
+      audio_reply_voice_id: 'voz-da-sofia',
+      audio_reply_model_id: 'eleven_turbo_v2_5',
+    });
+    const cfg = await loadPublishedAgentConfig(pool, 'org1', 'cs1');
+    expect(cfg?.audioReply).toEqual({ enabled: true, voiceId: 'voz-da-sofia', modelId: 'eleven_turbo_v2_5' });
+    const queryMock = pool.query as unknown as ReturnType<typeof vi.fn>;
+    const [sql] = queryMock.mock.calls[0] as [string, unknown[]];
+    expect(sql).toMatch(/v\.audio_reply_enabled/);
+    expect(sql).toMatch(/v\.audio_reply_voice_id/);
+    expect(sql).toMatch(/v\.audio_reply_model_id/);
+  });
+
+  it('DESLIGADA por padrão: linha sem a coluna (clone que ainda não aplicou a 0548) ou com null não liga nada', async () => {
+    for (const extra of [{}, { audio_reply_enabled: null, audio_reply_voice_id: null, audio_reply_model_id: null }]) {
+      const cfg = await loadPublishedAgentConfig(poolWith({ ...baseRow, ...extra }), 'org1', 'cs1');
+      expect(cfg?.audioReply).toEqual({ enabled: false, voiceId: null, modelId: null });
+    }
+  });
+});
+
 describe('loadPublishedAgentConfigById', () => {
   it('filtra por organization_id e agent_id, nessa ordem — risco de vazamento cross-tenant se removido', async () => {
     const pool = poolWith(baseRow);

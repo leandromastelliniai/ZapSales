@@ -74,8 +74,12 @@ export interface Transcodificacao {
   convertido: boolean;
 }
 
-/** Roda ffmpeg; rejeita se sair diferente de zero. Injetável para teste. */
-async function runFfmpeg(args: string[], cwd: string): Promise<void> {
+/**
+ * Roda ffmpeg; rejeita se sair diferente de zero. Injetável para teste.
+ * Exportada para a resposta em áudio do agente (`lib/ai/resposta-em-audio/`),
+ * que converte o mp3 do provedor de voz para a mesma nota de voz.
+ */
+export async function runFfmpeg(args: string[], cwd: string): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const proc = spawn("ffmpeg", ["-nostdin", "-y", ...args], { cwd });
     let erro = "";

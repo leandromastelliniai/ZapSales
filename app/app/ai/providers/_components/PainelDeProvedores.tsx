@@ -45,6 +45,7 @@ import {
 import { useT } from "@/hooks/i18n/useT";
 
 import { CartaoDeMapas } from "./CartaoDeMapas";
+import { CartaoDeRespostaEmAudio } from "./CartaoDeRespostaEmAudio";
 import { CartaoDoJev, jevNoPonto, useDadosDoJev, type DadosDoJev } from "./CartaoDoJev";
 
 interface Ponto {
@@ -256,6 +257,7 @@ export function PainelDeProvedores() {
       </div>
 
       <CartaoDeMapas />
+      <CartaoDeRespostaEmAudio />
     </CorpoDaPagina>
   );
 }

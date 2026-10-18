@@ -20,6 +20,8 @@ export interface ResumoDaBase {
   prontos: number;
   preparando: number;
   comErro: number;
+  /** Site em que alguma página não foi lida: o agente já sabe o resto, então não é "erro". */
+  pelaMetade: number;
 }
 
 /** Puro: a contagem que o cartão mostra, só dos materiais não arquivados. */
@@ -31,7 +33,8 @@ export function resumirBase(materiais: readonly Pick<SourceRow, "status" | "last
     total: ativos.length,
     prontos: contar("success"),
     preparando: contar("indexando"),
-    comErro: contar("failed", "partial"),
+    comErro: contar("failed"),
+    pelaMetade: contar("partial"),
   };
 }
 
@@ -64,6 +67,14 @@ export function StatusDaBase({
                 </span>
               </>
             ) : null}
+            {r.pelaMetade > 0 ? (
+              <>
+                {" · "}
+                <span className="text-warning-fg">
+                  {r.pelaMetade} {t("pela metade")}
+                </span>
+              </>
+            ) : null}
             {r.comErro > 0 ? (
               <>
                 {" · "}
@@ -79,7 +90,7 @@ export function StatusDaBase({
             <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
             {t("preparando o material…")}
           </span>
-        ) : podeIndexar && r.comErro === 0 && r.prontos === r.total ? (
+        ) : podeIndexar && r.comErro === 0 && r.pelaMetade === 0 && r.prontos === r.total ? (
           <span className="flex items-center gap-1 text-xs text-success-fg">
             <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
             {t("tudo pronto")}
@@ -92,6 +103,15 @@ export function StatusDaBase({
           <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
           {t(
             "Alguns materiais falharam ao preparar. O motivo está no cartão de cada um; depois de corrigir, clique em “Preparar tudo de novo”.",
+          )}
+        </p>
+      ) : null}
+
+      {r.pelaMetade > 0 ? (
+        <p className="flex items-start gap-1.5 text-xs text-warning-fg" data-testid="status-da-base-pela-metade">
+          <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          {t(
+            "Em alguns materiais nem tudo foi lido, mas o agente já sabe o resto. O que faltou está em “Ver as páginas” no cartão de cada um.",
           )}
         </p>
       ) : null}

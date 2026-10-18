@@ -9,8 +9,10 @@
  *     pequeno) com marcadores `+`/`-`/` `.
  */
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { Badge } from "@/components/ui/badge";
+import { apiClient } from "@/lib/api/client";
 import { useT } from "@/hooks/i18n/useT";
 import type { AgentVersionRow } from "@/hooks/ai/useAgentVersions";
 import { callbacksHabilitados } from "@/lib/followup/callback-policy";
@@ -70,6 +72,25 @@ function diffArr(prev: string[], next: string[]) {
   return { added, removed };
 }
 
+/**
+ * O valor de um campo do perfil como TEXTO comparável e mostrável: lista vira uma
+ * linha por assunto, chave ligada vira o texto `ligado` (já traduzido por quem chama), ausente vira `null`. Uma lista vazia e
+ * uma chave desligada são "sem restrição" — igual a uma versão antiga que nem
+ * tinha a coluna.
+ */
+function valorDoPerfil(
+  v: AgentVersionRow,
+  k: keyof AgentVersionRow,
+  ligado: string,
+): string | null {
+  const bruto = v[k];
+  if (bruto === null || bruto === undefined) return null;
+  if (Array.isArray(bruto)) return bruto.length === 0 ? null : bruto.join("\n");
+  // A única chave booleana do perfil é a restrição de temas: desligada = "sem restrição" = nada.
+  if (typeof bruto === "boolean") return bruto ? ligado : null;
+  return String(bruto);
+}
+
 interface FieldChange {
   key: string;
   label: string;
@@ -92,15 +113,39 @@ function buildFieldChanges(a: AgentVersionRow, b: AgentVersionRow): FieldChange[
     ["split_messages", "split_messages"],
     ["split_max_chars", "split_max_chars"],
     ["inbound_debounce_ms", "inbound_debounce_ms"],
+    ["audio_reply_enabled", "audio_reply_enabled"],
+    ["audio_reply_voice_id", "audio_reply_voice_id"],
+    ["audio_reply_model_id", "audio_reply_model_id"],
+    ["temperature", "Temperatura"],
   ];
   return fields
     .filter(([k]) => a[k] !== b[k])
     .map(([k, label]) => ({ key: k as string, label, a: a[k], b: b[k] }));
 }
 
+/**
+ * O perfil guiado (#89) é dado da versão e tem diff próprio: texto livre não cabe
+ * na tabela de configuração, e o dono precisa ver "o tom mudou de formal para
+ * descontraído" antes de publicar. Só entram os campos que mudaram.
+ */
 export function VersionDiff({ versionA, versionB }: Props) {
   const t = useT();
   const tools = diffArr(versionA.tool_ids ?? [], versionB.tool_ids ?? []);
+  const externas = diffArr(versionA.external_tool_ids ?? [], versionB.external_tool_ids ?? []);
+  const mudouExternas = externas.added.length > 0 || externas.removed.length > 0;
+  // Os ids são uuid; a pessoa lê o NOME. A consulta só roda quando algo mudou, e usa a
+  // mesma chave do seletor (cache compartilhado).
+  const nomesDasExternas = useQuery({
+    queryKey: ["ai", "external-tools"],
+    queryFn: async () => {
+      const res = await apiClient.get<{ data: Array<{ id: string; name: string }> }>("/api/v1/ai/external-tools");
+      return new Map(res.data.map((f) => [f.id, f.name]));
+    },
+    enabled: mudouExternas,
+    staleTime: 30_000,
+  });
+  const nomeDaExterna = (id: string) =>
+    nomesDasExternas.data ? (nomesDasExternas.data.get(id) ?? t("Ferramenta externa removida")) : "…";
   const handoffKw = diffArr(versionA.handoff_keywords ?? [], versionB.handoff_keywords ?? []);
   const followupFlows = diffArr(
     versionA.followup?.flow_pointer_ids ?? [],
@@ -112,6 +157,21 @@ export function VersionDiff({ versionA, versionB }: Props) {
   const callbackEnabledB = callbacksHabilitados(versionB.followup);
   const callbackEnabledChanged = callbackEnabledA !== callbackEnabledB;
   const fields = buildFieldChanges(versionA, versionB);
+  const camposDoPerfil: Array<[keyof AgentVersionRow, string]> = [
+    ["profile_persona", t("Quem ele é")],
+    ["profile_tone", t("Tom de voz")],
+    ["profile_objective", t("O que ele persegue na conversa")],
+    ["profile_welcome", t("Mensagem de boas-vindas")],
+    ["profile_language", t("Idioma das respostas")],
+    // Restringir temas (#92) é dado da versão e mora no mesmo bloco: é parte de
+    // "como o agente se comporta", e o dono precisa ver a lista mudar.
+    ["restrict_topics", t("Restringir assuntos")],
+    ["allowed_topics", t("Assuntos permitidos")],
+    ["off_topic_reply", t("Resposta para o que está fora")],
+  ];
+  const perfil = camposDoPerfil.filter(
+    ([k]) => valorDoPerfil(versionA, k, t("Ligado")) !== valorDoPerfil(versionB, k, t("Ligado")),
+  );
   const lines = diffLines(versionA.system_prompt ?? "", versionB.system_prompt ?? "");
 
   return (
@@ -152,12 +212,38 @@ export function VersionDiff({ versionA, versionB }: Props) {
         )}
       </Section>
 
+      <Section title={t("Perfil do agente")}>
+        {perfil.length === 0 ? (
+          <p className="text-xs text-muted-foreground">{t("Sem mudanças.")}</p>
+        ) : (
+          <div className="space-y-2" data-testid="diff-do-perfil">
+            {perfil.map(([k, rotulo]) => (
+              <div key={k} className="space-y-0.5 text-xs">
+                <p className="font-medium">{rotulo}</p>
+                <p className="whitespace-pre-wrap break-words font-mono text-destructive">
+                  - {valorDoPerfil(versionA, k, t("Ligado")) ?? "—"}
+                </p>
+                <p className="whitespace-pre-wrap break-words font-mono text-success-fg">
+                  + {valorDoPerfil(versionB, k, t("Ligado")) ?? "—"}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
       <Section title={t("Tools")}>
         <Pills label={t("Adicionadas")} tone="add" items={tools.added} />
         <Pills label={t("Removidas")} tone="del" items={tools.removed} />
         {tools.added.length === 0 && tools.removed.length === 0 ? (
           <p className="text-xs text-muted-foreground">{t("Sem mudanças.")}</p>
         ) : null}
+      </Section>
+
+      <Section title={t("Ferramentas externas")}>
+        <Pills label={t("Adicionadas")} tone="add" items={externas.added.map(nomeDaExterna)} />
+        <Pills label={t("Removidas")} tone="del" items={externas.removed.map(nomeDaExterna)} />
+        {!mudouExternas ? <p className="text-xs text-muted-foreground">{t("Sem mudanças.")}</p> : null}
       </Section>
 
       <Section title={t("Handoff keywords")}>

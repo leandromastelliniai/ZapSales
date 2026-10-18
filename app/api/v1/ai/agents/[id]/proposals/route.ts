@@ -59,9 +59,13 @@ export async function GET(req: NextRequest, ctx: Ctx): Promise<Response> {
   let query = admin
     .from("flywheel_distiller_proposals")
     .select(
-      "id, run_id, dataset, type, target, content, evidence, proposed_at, applied_at, applied_version_id, applied_by",
+      "id, run_id, agent_id, dataset, type, target, content, evidence, proposed_at, applied_at, applied_version_id, applied_by",
     )
     .eq("organization_id", org.orgId)
+    // As do flywheel são da organização (`agent_id` nulo) e aparecem em todo agente;
+    // uma correção de resposta é de UM agente e só aparece nele — com o botão de
+    // aplicar ao lado, mostrá-la em outro mudaria o prompt errado.
+    .or(`agent_id.is.null,agent_id.eq.${id}`)
     .order("proposed_at", { ascending: false })
     .limit(limit);
   if (status === "pending") query = query.is("applied_at", null);

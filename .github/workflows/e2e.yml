@@ -1186,6 +1186,9 @@ jobs:
         agenda-presenca-recuperacao.spec.ts
         conexao-oficial-assistente.spec.ts
         disparo-em-massa-csv.spec.ts
+        ferramentas-externas-pela-tela.spec.ts
+        acoes-externas-com-aprovacao.spec.ts
+        servidores-mcp-pela-tela.spec.ts
         filtro-por-marcador-pela-tela.spec.ts
         fonte-de-captacao-assina-os-envios.spec.ts
         inbox-busca-e-filtros-dizem-a-verdade.spec.ts
@@ -1196,6 +1199,7 @@ jobs:
         prova-painel-provedores.spec.ts
         qa-l12-inbox.spec.ts
         recursos-opcionais.spec.ts
+        resposta-em-audio-pela-tela.spec.ts
         sons-dos-avisos.spec.ts
         suspensao-administrativa.spec.ts
 

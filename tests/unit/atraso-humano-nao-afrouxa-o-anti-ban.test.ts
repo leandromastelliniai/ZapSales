@@ -160,7 +160,7 @@ describe("fiação — a espera humana é paga UMA vez por turno", () => {
     // O do `send_message` — o `send_template`, antes dele, tem um callback homônimo.
     const doSendMessage = FONTE_INBOUND.indexOf("send_message: tool({");
     expect(doSendMessage).toBeGreaterThan(-1);
-    const i = FONTE_INBOUND.indexOf("send: (finalBody: string) =>", doSendMessage);
+    const i = FONTE_INBOUND.indexOf("send: async (finalBody: string) =>", doSendMessage);
     expect(i).toBeGreaterThan(-1);
     const janela = FONTE_INBOUND.slice(i, i + 2400);
     // Os dois convivem: o jitter é throttle anti-ban entre mensagens físicas, o

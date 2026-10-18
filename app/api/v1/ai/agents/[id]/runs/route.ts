@@ -118,7 +118,12 @@ export function paraLinhaDeExecucao(c: LlmCallRow): Record<string, unknown> {
     // zero seria uma afirmação falsa sobre o turno.
     steps_count: null,
     tool_calls: null,
-    is_dry_run: false,
+    // O teste da aba Teste grava `agent_preview` na mesma tabela: é dry-run. Sem
+    // isto a coluna "Tipo" chamava de produção o que a pessoa acabara de testar.
+    is_dry_run: c.purpose === "agent_preview",
+    // O motivo da chamada, para a tela decidir o que oferece (corrigir resposta só
+    // existe em turno de atendimento).
+    purpose: c.purpose,
     started_at: c.created_at,
     completed_at: c.created_at,
     created_at: c.created_at,

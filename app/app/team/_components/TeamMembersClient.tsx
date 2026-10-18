@@ -45,6 +45,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ROLES, type Role } from "@/lib/schemas/team";
+import { rotuloDoPapel } from "@/lib/schemas/rotulo-do-papel";
 import { DotsThree } from "@/lib/ui/icons";
 
 interface Props {
@@ -122,13 +123,13 @@ export function TeamMembersClient({ currentUserId, canManage }: Props) {
                       <SelectContent>
                         {ROLES.map((r) => (
                           <SelectItem key={r} value={r}>
-                            {r}
+                            {t(rotuloDoPapel(r))}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   ) : (
-                    <Badge variant="secondary">{m.role}</Badge>
+                    <Badge variant="secondary">{t(rotuloDoPapel(m.role))}</Badge>
                   )}
                 </TableCell>
                 <TableCell>

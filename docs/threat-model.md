@@ -169,8 +169,12 @@ o mesmo valor em todos.
 
 ### T6 — SSRF em webhook de saída 🟢 MITIGADO — CONFIRMADO
 
-`lib/automation/outbound-url.ts` + `outbound-url.test.ts` + `lib/automation/actions/call-webhook.ts`
-implementam guard de URL de saída, e existe E2E dedicado
+Desde a issue #88 toda saída para endereço informado por usuário passa por **uma** política,
+`lib/net/rede-segura/` (contrato em `docs/specs/rede-segura-unica.md`): HTTPS, DNS resolvido uma vez
+e **preso ao socket** (a janela de rebinding que este item declarava não existe mais), redirect
+revalidado salto a salto, prazo total e teto de bytes. `lib/automation/outbound-url.ts` e
+`outbound-ip.ts` ficaram como fachadas que só julgam. O webhook (`call-webhook.ts`) usa
+`buscarSeguro`; prova em `lib/net/rede-segura/cliente.test.ts`, contra servidores HTTP reais. Existe E2E dedicado
 (`tests/e2e/vps-webhook-outbound-ssrf.spec.ts`). É a defesa mais bem feita do repo.
 
 **Ressalva:** esse E2E **não roda no CI** — e é a única prova automatizada do guard.
@@ -178,14 +182,30 @@ implementam guard de URL de saída, e existe E2E dedicado
 prova de que o egress real está barrado ponta a ponta. Uma regressão na integração passa.
 
 **Segundo egress do servidor (branch das extensões declarativas):** `lib/extensions/download.ts`
-baixa o pacote de uma origem de catálogo que o dono da instalação admitiu. Guarda própria, não a
-de webhook: só HTTPS, sem redirect, sem cookie nem credencial, DNS resolvido uma vez e o endereço
-amarrado à conexão (sem janela de rebinding), endereços especiais IPv4/IPv6 recusados, teto de
-bytes contado no corpo lido e prazo total de 15 s. A exceção HTTP em loopback
+baixa o pacote de uma origem de catálogo que o dono da instalação admitiu, hoje pela MESMA
+política (`buscarSeguro`, perfil do catálogo): só HTTPS, sem redirect, sem cookie nem credencial,
+DNS resolvido uma vez e o endereço amarrado à conexão, endereços especiais IPv4/IPv6 recusados,
+teto de bytes contado no corpo lido e prazo total de 15 s. A exceção HTTP em loopback
 (`EXTENSIONS_LOCAL_CATALOG_ORIGIN`) só vale com o app também em loopback. Para ver o que roda:
 `pnpm exec vitest run lib/extensions/download.test.ts lib/extensions/download-rebinding.test.ts`.
 **Ressalva do mesmo tipo:** o caminho HTTPS real (SNI, certificado, lookup amarrado) não é
 exercitado por nenhum gate — os testes usam HTTP local e um dublê do lookup.
+
+**Terceiro egress do servidor (servidores MCP, issue #96):** `lib/ai/ferramentas-externas/mcp/cliente.ts` fala
+com o servidor MCP que um **administrador** cadastrou, e o faz **só** por `buscarSeguro` (o cliente do SDK foi
+descartado de propósito: o `fetch` global resolve o nome de novo ao conectar, segue redirecionamento e lê sem teto).
+Mesma política: HTTPS, endereço da organização nunca da rede interna, DNS preso ao socket, **3xx não é seguido** (a
+credencial não vai atrás de um endereço que ninguém cadastrou), prazo total de 15 s e teto de bytes por resposta. Três
+superfícies novas, e a defesa de cada uma: (1) **a credencial** — cifrada em `mcp_servers`, nunca devolvida por rota,
+fora de log e auditoria, e credencial gravada e ilegível **não** vira «chamar sem autenticação»; (2) **texto de
+terceiro** — o resultado de uma ferramenta chega ao agente como dado não confiável (teto de 4.000 caracteres, aviso
+à frente, conferência de vocabulário interno antes de qualquer mensagem sair), e nome/descrição/esquema são
+sanitizados e fixados na definição que o administrador viu (o «rug pull» do servidor aparece como «Mudou no
+servidor»); (3) **a ferramenta que altera** — risco padrão «altera dados», a anotação `readOnlyHint` do servidor é
+só uma dica, a aprovação e a execução única são as do webhook e uma falha incerta nunca é repetida. O recurso é
+**desligado por padrão** e falha desligado. Prova: `lib/ai/ferramentas-externas/mcp/cliente.test.ts`,
+`turno-mcp.test.ts` e `tests/invariants/mcp-externo-no-turno.test.ts`, contra um servidor MCP de verdade.
+**Ressalva do mesmo tipo da anterior:** o caminho HTTPS real (SNI, certificado) não é exercitado por nenhum gate.
 
 ### T7 — Sem varredura de secret no histórico git 🟡 CONFIRMADO
 

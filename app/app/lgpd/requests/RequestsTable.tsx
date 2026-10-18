@@ -269,7 +269,8 @@ export function RequestsTable({
               </TableRow>
             ) : (
               rows.map((r) => {
-                const due = distanciaDoPrazo(r.due_at, t);
+                const encerrada = r.status === "completed";
+                const due = encerrada ? { label: "—", urgent: false } : distanciaDoPrazo(r.due_at, t);
                 const subject = r.external_customer_id
                   ? r.external_customer_id.slice(0, 16)
                   : r.contact_id
@@ -298,9 +299,13 @@ export function RequestsTable({
                       {due.label}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={SLA_VARIANT[r.sla_bucket]} className="text-xs">
-                        {t(SLA_LABELS[r.sla_bucket])}
-                      </Badge>
+                      {r.sla_bucket ? (
+                        <Badge variant={SLA_VARIANT[r.sla_bucket]} className="text-xs">
+                          {t(SLA_LABELS[r.sla_bucket])}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge

@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { apiClient } from "@/lib/api/client";
 import { useT } from "@/hooks/i18n/useT";
+import { FerramentasExternasDoSeletor } from "./FerramentasExternasDoSeletor";
 import {
   PACOTES,
   riscoMeta,
@@ -70,6 +71,12 @@ interface Props {
    * da versão na próxima vez que a lista for alterada.
    */
   ocultar?: readonly string[];
+  /**
+   * As ferramentas EXTERNAS do agente (webhook de consulta, #94). Presente só para o
+   * Conversador — o papel Operador não as recebe. Elas ocupam as MESMAS 27 vagas:
+   * o consumo mostrado e a recusa por teto somam as duas listas.
+   */
+  externas?: { value: string[]; onChange: (ids: string[]) => void };
 }
 
 interface ApiResponse {
@@ -181,7 +188,7 @@ function AvisoTeto({ texto }: { texto: string }) {
   );
 }
 
-export function ToolPicker({ value: valorSalvo, onChange, disabled, ocultar }: Props) {
+export function ToolPicker({ value: valorSalvo, onChange, disabled, ocultar, externas }: Props) {
   const t = useT();
   const value = React.useMemo(
     () => (ocultar === undefined ? valorSalvo : valorSalvo.filter((id) => !ocultar.includes(id))),
@@ -222,7 +229,8 @@ export function ToolPicker({ value: valorSalvo, onChange, disabled, ocultar }: P
     [catalogo],
   );
 
-  const vagas = vagasRestantes(value);
+  const qtdExternas = externas?.value.length ?? 0;
+  const vagas = vagasRestantes(value, qtdExternas);
   const cheio = vagas <= 0;
 
   /** Ids salvos que o servidor não oferece mais — some da tela seria mentir. */
@@ -247,7 +255,7 @@ export function ToolPicker({ value: valorSalvo, onChange, disabled, ocultar }: P
     vagasExigidas = proximo.length,
     pacote: ToolBundle | null = null,
   ) {
-    if (vagasExigidas > TETO_TOOLS_POR_AGENTE) {
+    if (vagasExigidas + qtdExternas > TETO_TOOLS_POR_AGENTE) {
       setRecusa({ texto: motivoSeRecusar, pacote });
       return;
     }
@@ -264,7 +272,7 @@ export function ToolPicker({ value: valorSalvo, onChange, disabled, ocultar }: P
       // por quê. Ou cabe inteiro, com a vaga da crítica guardada, ou não liga
       // e a tela diz quantas faltam.
       const exigidas = vagasExigidasPeloPacote(value, catalogo, pacote);
-      const excedente = exigidas - TETO_TOOLS_POR_AGENTE;
+      const excedente = exigidas + qtdExternas - TETO_TOOLS_POR_AGENTE;
       aplicar(
         proximo,
         `${t("Ligar este pacote passaria de")} ${TETO_TOOLS_POR_AGENTE} ${t("capacidades (faltam")} ${excedente} ${
@@ -310,7 +318,7 @@ export function ToolPicker({ value: valorSalvo, onChange, disabled, ocultar }: P
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/30 p-3">
         <p className="text-sm">
           <strong data-testid="consumo-teto">
-            {value.length} {t("de")} {TETO_TOOLS_POR_AGENTE}
+            {value.length + qtdExternas} {t("de")} {TETO_TOOLS_POR_AGENTE}
           </strong>{" "}
           {t("capacidades ligadas")}
         </p>
@@ -404,6 +412,27 @@ export function ToolPicker({ value: valorSalvo, onChange, disabled, ocultar }: P
           );
         })}
       </div>
+
+      {/* Ferramentas externas: grupo próprio, no mesmo teto. */}
+      {externas ? (
+        <FerramentasExternasDoSeletor
+          value={externas.value}
+          onChange={(ids) => {
+            // Marcar mais uma só passa se ainda há vaga; desmarcar sempre passa.
+            if (ids.length > externas.value.length && value.length + ids.length > TETO_TOOLS_POR_AGENTE) {
+              setRecusa({
+                texto: `${t("Você já ligou")} ${TETO_TOOLS_POR_AGENTE} ${t("capacidades. Desligue uma antes de ligar outra.")}`,
+                pacote: null,
+              });
+              return;
+            }
+            setRecusa(null);
+            externas.onChange(ids);
+          }}
+          semVagas={cheio}
+          disabled={disabled}
+        />
+      ) : null}
 
       {/* Modo avançado: a lista inteira, capacidade por capacidade. */}
       <div className="space-y-2">

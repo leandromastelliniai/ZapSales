@@ -30,9 +30,26 @@ export interface AgentVersionRow {
   operator_tool_ids: string[];
   pipeline_ids: string[];
   knowledge_source_ids: string[];
+  external_tool_ids: string[];
   split_messages: boolean;
   split_max_chars: number;
   inbound_debounce_ms: number | null;
+  /** Resposta em áudio (issue #91): desligada por padrão; voz/modelo do provedor do cliente. */
+  audio_reply_enabled: boolean;
+  audio_reply_voice_id: string | null;
+  audio_reply_model_id: string | null;
+  /** Perfil guiado (0546). Todos nulos = agente sem perfil (só o prompt livre). */
+  profile_persona: string | null;
+  profile_tone: "formal" | "normal" | "descontraido" | null;
+  profile_objective: string | null;
+  profile_welcome: string | null;
+  profile_language: "pt-BR" | "es" | "en" | null;
+  /** 0 a 1; `null` = padrão do modelo. */
+  temperature: number | null;
+  /** Restringir temas (0549). Chave desligada = sem restrição. */
+  restrict_topics: boolean;
+  allowed_topics: string[];
+  off_topic_reply: string | null;
   followup: {
     enabled: boolean;
     flow_pointer_ids: string[];

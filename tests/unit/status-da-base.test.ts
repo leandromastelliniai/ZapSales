@@ -18,6 +18,16 @@ describe("resumirBase", () => {
         { status: "ready", last_index_status: null },
         { status: "archived", last_index_status: "failed" },
       ]),
-    ).toEqual({ total: 5, prontos: 1, preparando: 1, comErro: 2 });
+    ).toEqual({ total: 5, prontos: 1, preparando: 1, comErro: 1, pelaMetade: 1 });
+  });
+
+  it("'pela metade' (site em que alguma página não foi lida) NÃO é erro: o agente já sabe o resto", () => {
+    const r = resumirBase([
+      { status: "ready", last_index_status: "success" },
+      { status: "ready", last_index_status: "partial" },
+    ]);
+    expect(r.comErro).toBe(0);
+    expect(r.pelaMetade).toBe(1);
+    expect(r.prontos).toBe(1);
   });
 });

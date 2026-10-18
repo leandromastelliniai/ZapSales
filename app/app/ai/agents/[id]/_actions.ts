@@ -38,7 +38,7 @@ import { VALID_TOOL_IDS } from "@/lib/mcp/tools";
 const UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const VERSION_COLUMNS =
-  "id, organization_id, agent_id, version_number, system_prompt, provider, model, credential_id, tool_ids, trigger_config, channel_session_id, max_steps, token_budget, cost_budget_cents, history_message_window, history_token_window, handoff_keywords, handoff_tool_enabled, proposal_ai_draft_enabled, cases_enabled, split_messages, split_max_chars, followup, operator_enabled, operator_model, operator_tool_ids, status, published_at, superseded_at, created_at, created_by,pipeline_ids,knowledge_source_ids,provisioning_origin,inbound_debounce_ms";
+  "id, organization_id, agent_id, version_number, system_prompt, provider, model, credential_id, tool_ids, trigger_config, channel_session_id, max_steps, token_budget, cost_budget_cents, history_message_window, history_token_window, handoff_keywords, handoff_tool_enabled, proposal_ai_draft_enabled, cases_enabled, split_messages, split_max_chars, followup, operator_enabled, operator_model, operator_tool_ids, status, published_at, superseded_at, created_at, created_by,pipeline_ids,knowledge_source_ids,external_tool_ids,provisioning_origin,inbound_debounce_ms,profile_persona,profile_tone,profile_objective,profile_welcome,profile_language,temperature,audio_reply_enabled,audio_reply_voice_id,audio_reply_model_id,restrict_topics,allowed_topics,off_topic_reply";
 
 type ActionResult<T = void> =
   | { ok: true; data?: T }
@@ -169,6 +169,8 @@ export async function saveAgentDraftAction(
   const escopo = await validarEscopoDaVersao(admin, activeOrg.orgId, {
     pipeline_ids: v.pipeline_ids,
     knowledge_source_ids: v.knowledge_source_ids,
+    external_tool_ids: v.external_tool_ids,
+    tool_ids: v.tool_ids,
   });
   if (!escopo.ok) {
     return { ok: false, error: "validation_failed", message: mensagemDoEscopo(escopo) };
@@ -318,9 +320,22 @@ export async function saveAgentDraftAction(
         operator_tool_ids: v.operator_tool_ids,
         pipeline_ids: v.pipeline_ids,
         knowledge_source_ids: v.knowledge_source_ids,
+        external_tool_ids: v.external_tool_ids,
         split_messages: v.split_messages,
         split_max_chars: v.split_max_chars,
         inbound_debounce_ms: v.inbound_debounce_ms ?? null,
+        audio_reply_enabled: v.audio_reply_enabled,
+        audio_reply_voice_id: v.audio_reply_voice_id ?? null,
+        audio_reply_model_id: v.audio_reply_model_id ?? null,
+        profile_persona: v.profile_persona ?? null,
+        profile_tone: v.profile_tone ?? null,
+        profile_objective: v.profile_objective ?? null,
+        profile_welcome: v.profile_welcome ?? null,
+        profile_language: v.profile_language ?? null,
+        temperature: v.temperature ?? null,
+        restrict_topics: v.restrict_topics ?? false,
+        allowed_topics: v.allowed_topics ?? [],
+        off_topic_reply: v.off_topic_reply ?? null,
         followup: v.followup,
         status: "draft",
         created_by: authUser.id,
@@ -536,9 +551,22 @@ export async function revertToVersionAction(
     operator_tool_ids: string[];
     pipeline_ids: string[];
     knowledge_source_ids: string[];
+    external_tool_ids: string[];
     split_messages: boolean;
     split_max_chars: number;
     inbound_debounce_ms: number | null;
+    audio_reply_enabled: boolean;
+    audio_reply_voice_id: string | null;
+    audio_reply_model_id: string | null;
+    profile_persona: string | null;
+    profile_tone: string | null;
+    profile_objective: string | null;
+    profile_welcome: string | null;
+    profile_language: string | null;
+    temperature: number | null;
+    restrict_topics: boolean;
+    allowed_topics: string[];
+    off_topic_reply: string | null;
     followup: unknown;
   };
   const src = source as unknown as SourceRow;
@@ -587,9 +615,26 @@ export async function revertToVersionAction(
         // que aquela versão consultava é publicar uma configuração inventada.
         pipeline_ids: src.pipeline_ids,
         knowledge_source_ids: src.knowledge_source_ids ?? [],
+        // As ferramentas externas voltam com a versão: reverter e o agente perder a
+        // consulta que aquela versão fazia é publicar uma configuração inventada.
+        external_tool_ids: src.external_tool_ids ?? [],
         split_messages: src.split_messages,
         split_max_chars: src.split_max_chars,
         inbound_debounce_ms: src.inbound_debounce_ms ?? null,
+        // O revert leva a resposta em áudio junto: voltar para uma versão e NÃO voltar a
+        // voz dela seria publicar uma configuração que nunca existiu.
+        audio_reply_enabled: src.audio_reply_enabled ?? false,
+        audio_reply_voice_id: src.audio_reply_voice_id ?? null,
+        audio_reply_model_id: src.audio_reply_model_id ?? null,
+        profile_persona: src.profile_persona ?? null,
+        profile_tone: src.profile_tone ?? null,
+        profile_objective: src.profile_objective ?? null,
+        profile_welcome: src.profile_welcome ?? null,
+        profile_language: src.profile_language ?? null,
+        temperature: src.temperature ?? null,
+        restrict_topics: src.restrict_topics ?? false,
+        allowed_topics: src.allowed_topics ?? [],
+        off_topic_reply: src.off_topic_reply ?? null,
         followup: src.followup,
         status: "draft",
         created_by: authUser.id,
@@ -745,6 +790,18 @@ export async function createMcpAgentAction(
     split_messages: v.split_messages,
     split_max_chars: v.split_max_chars,
     inbound_debounce_ms: v.inbound_debounce_ms ?? null,
+    audio_reply_enabled: v.audio_reply_enabled,
+    audio_reply_voice_id: v.audio_reply_voice_id ?? null,
+    audio_reply_model_id: v.audio_reply_model_id ?? null,
+    profile_persona: v.profile_persona ?? null,
+    profile_tone: v.profile_tone ?? null,
+    profile_objective: v.profile_objective ?? null,
+    profile_welcome: v.profile_welcome ?? null,
+    profile_language: v.profile_language ?? null,
+    temperature: v.temperature ?? null,
+    restrict_topics: v.restrict_topics ?? false,
+    allowed_topics: v.allowed_topics ?? [],
+    off_topic_reply: v.off_topic_reply ?? null,
     followup: v.followup,
     // O corpo ACEITAVA estes cinco e o INSERT os descartava: criar o assistente
     // pela tela com papel Operador, escopo de funil ou material marcado produzia
@@ -754,6 +811,7 @@ export async function createMcpAgentAction(
     operator_tool_ids: v.operator_tool_ids,
     pipeline_ids: v.pipeline_ids,
     knowledge_source_ids: v.knowledge_source_ids,
+    external_tool_ids: v.external_tool_ids,
     status: "draft",
     created_by: authUser.id,
   });

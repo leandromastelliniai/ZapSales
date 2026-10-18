@@ -1818,7 +1818,20 @@ export type Database = {
           history_token_window: number
           id: string
           inbound_debounce_ms: number | null
+          audio_reply_enabled: boolean
+          audio_reply_model_id: string | null
+          audio_reply_voice_id: string | null
+          profile_persona: string | null
+          profile_tone: string | null
+          profile_objective: string | null
+          profile_welcome: string | null
+          profile_language: string | null
+          temperature: number | null
+          restrict_topics: boolean
+          allowed_topics: string[]
+          off_topic_reply: string | null
           knowledge_source_ids: string[]
+          external_tool_ids: string[]
           max_steps: number
           model: string
           multimodal_input: boolean
@@ -1857,7 +1870,20 @@ export type Database = {
           history_token_window?: number
           id?: string
           inbound_debounce_ms?: number | null
+          audio_reply_enabled?: boolean
+          audio_reply_model_id?: string | null
+          audio_reply_voice_id?: string | null
+          profile_persona?: string | null
+          profile_tone?: string | null
+          profile_objective?: string | null
+          profile_welcome?: string | null
+          profile_language?: string | null
+          temperature?: number | null
+          restrict_topics?: boolean
+          allowed_topics?: string[]
+          off_topic_reply?: string | null
           knowledge_source_ids?: string[]
+          external_tool_ids?: string[]
           max_steps?: number
           model: string
           multimodal_input?: boolean
@@ -1896,7 +1922,20 @@ export type Database = {
           history_token_window?: number
           id?: string
           inbound_debounce_ms?: number | null
+          audio_reply_enabled?: boolean
+          audio_reply_model_id?: string | null
+          audio_reply_voice_id?: string | null
+          profile_persona?: string | null
+          profile_tone?: string | null
+          profile_objective?: string | null
+          profile_welcome?: string | null
+          profile_language?: string | null
+          temperature?: number | null
+          restrict_topics?: boolean
+          allowed_topics?: string[]
+          off_topic_reply?: string | null
           knowledge_source_ids?: string[]
+          external_tool_ids?: string[]
           max_steps?: number
           model?: string
           multimodal_input?: boolean
@@ -6255,6 +6294,7 @@ export type Database = {
       }
       flywheel_distiller_proposals: {
         Row: {
+          agent_id: string | null
           applied_at: string | null
           applied_by: string | null
           applied_version_id: string | null
@@ -6269,6 +6309,7 @@ export type Database = {
           type: string
         }
         Insert: {
+          agent_id?: string | null
           applied_at?: string | null
           applied_by?: string | null
           applied_version_id?: string | null
@@ -6283,6 +6324,7 @@ export type Database = {
           type: string
         }
         Update: {
+          agent_id?: string | null
           applied_at?: string | null
           applied_by?: string | null
           applied_version_id?: string | null
@@ -6297,6 +6339,13 @@ export type Database = {
           type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "flywheel_distiller_proposals_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "flywheel_distiller_proposals_applied_version_id_fkey"
             columns: ["applied_version_id"]

@@ -8,9 +8,32 @@
  * Postgres function (defense in depth).
  */
 import { z } from "zod";
+import {
+  MENSAGEM_DO_TESTE_MAX,
+  historicoDoTesteSchema,
+} from "@/lib/ai/agents/teste-em-varias-trocas";
 import { VALID_TOOL_IDS } from "@/lib/mcp/tools/catalog";
 import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
+
 import { IDS_DE_PROVEDOR } from "@/lib/ai/pontos/provedores";
+import {
+  IDIOMAS_DO_AGENTE,
+  LIMITES_DO_PERFIL,
+  LIMITES_DOS_TEMAS,
+  TONS_DO_AGENTE,
+} from "@/lib/ai/agents/perfil";
+
+/**
+ * O teto de capacidades por agente vale para a SOMA: as do catálogo (`tool_ids`) e as
+ * ferramentas externas. Uma regra, em UM lugar — a tela mostra o mesmo número que o
+ * servidor recusa.
+ */
+export function passaDoTetoDeCapacidades(
+  toolIds: readonly string[],
+  externalToolIds: readonly string[] | undefined,
+): boolean {
+  return toolIds.length + (externalToolIds?.length ?? 0) > TETO_TOOLS_POR_AGENTE;
+}
 
 /**
  * Derivado de `lib/ai/pontos/provedores.ts` (a lista única desde a 0127). Como
@@ -103,6 +126,17 @@ const followupPatchSchema = followupConfigObjectSchema
 
 export type FollowupConfig = z.infer<typeof followupConfigSchema>;
 
+/** Campo de texto do perfil: apara, e vazio vira `null`. */
+function perfilTexto(max: number) {
+  return z
+    .string()
+    .trim()
+    .max(max)
+    .nullable()
+    .transform((v) => (v === null || v === "" ? null : v))
+    .default(null);
+}
+
 const versionShapeSchema = z
   .object({
     system_prompt: z.string().trim().min(10).max(20000),
@@ -178,6 +212,16 @@ const versionShapeSchema = z
      * ninguém travar o atendimento sem querer (#1856).
      */
     inbound_debounce_ms: z.number().int().min(0).max(60000).nullable().optional(),
+    /**
+     * Resposta em áudio (issue #91): responder em nota de voz quando o cliente
+     * mandar áudio. DESLIGADA por padrão, e só vale com o interruptor da
+     * organização ligado e uma chave de voz gravada (`lib/ai/resposta-em-audio/`).
+     * Voz e modelo são os que o provedor oferece para a chave do cliente; `null` =
+     * a voz/modelo padrão da organização. Dado da VERSÃO: rascunho, diff, histórico.
+     */
+    audio_reply_enabled: z.boolean().default(false),
+    audio_reply_voice_id: z.string().trim().min(1).max(120).nullable().default(null),
+    audio_reply_model_id: z.string().trim().min(1).max(120).nullable().default(null),
     followup: followupConfigSchema,
     // ── Papel OPERADOR (spec 16 §3.2) ───────────────────────────────────────
     // Todos com `.default(...)`, e é o que mantém retrocompatível: agent e
@@ -226,6 +270,44 @@ const versionShapeSchema = z
      * organização é o servidor.
      */
     knowledge_source_ids: z.array(z.string().uuid()).default([]),
+    /**
+     * Ferramentas externas (webhook de consulta, #94) que este agente pode chamar.
+     * Vazio = NENHUMA. Soma com `tool_ids` no teto de capacidades por agente — a soma
+     * é conferida por `passaDoTetoDeCapacidades` (a tela e o servidor), porque um
+     * `.refine()` aqui impediria o `.extend()` do schema de edição.
+     *
+     * Sem `.refine()` de existência pelo mesmo motivo de `knowledge_source_ids`: a
+     * ferramenta é linha de tabela, e quem confere que existe, é desta organização e é
+     * uma CONSULTA é o servidor (`validarEscopoDaVersao`).
+     */
+    external_tool_ids: z.array(z.string().uuid()).max(TETO_TOOLS_POR_AGENTE).default([]),
+    // ── Perfil guiado (#89) ──────────────────────────────────────────────────
+    // `null` = campo não preenchido; perfil todo nulo = agente sem perfil, que
+    // recebe só o prompt livre, exatamente como antes. Texto vazio vira `null`
+    // (formulário em branco não pode "preencher" o perfil). Tom e idioma são
+    // vocabulário fechado, o mesmo do CHECK do banco.
+    profile_persona: perfilTexto(LIMITES_DO_PERFIL.persona),
+    profile_tone: z.enum(TONS_DO_AGENTE).nullable().default(null),
+    profile_objective: perfilTexto(LIMITES_DO_PERFIL.objetivo),
+    profile_welcome: perfilTexto(LIMITES_DO_PERFIL.boasVindas),
+    profile_language: z.enum(IDIOMAS_DO_AGENTE).nullable().default(null),
+    /**
+     * Temperatura do agente, de 0 a 1. `null` = padrão do modelo (a chamada sai
+     * sem temperatura, ou com a da organização). É o único lugar do valor.
+     */
+    temperature: z.number().min(0).max(1).nullable().default(null),
+    // ── Restringir temas (#92) ───────────────────────────────────────────────
+    // Chave por agente + lista de assuntos + a resposta para o que está fora.
+    // DESLIGADA por padrão: corpo que não conhece o recurso lê "sem restrição".
+    // Chave ligada com lista vazia é aceita e NÃO restringe nada
+    // (`restricaoDeTemasAtiva`) — a tela avisa; calar o agente inteiro por um
+    // formulário incompleto seria pior do que não restringir.
+    restrict_topics: z.boolean().default(false),
+    allowed_topics: z
+      .array(z.string().trim().min(1).max(LIMITES_DOS_TEMAS.assunto))
+      .max(LIMITES_DOS_TEMAS.assuntos)
+      .default([]),
+    off_topic_reply: perfilTexto(LIMITES_DOS_TEMAS.respostaFora),
   })
   .strict();
 
@@ -248,12 +330,25 @@ export const versionPatchSchema = versionShapeSchema
     cases_enabled: versionShapeSchema.shape.cases_enabled.removeDefault(),
     split_messages: versionShapeSchema.shape.split_messages.removeDefault(),
     split_max_chars: versionShapeSchema.shape.split_max_chars.removeDefault(),
+    audio_reply_enabled: versionShapeSchema.shape.audio_reply_enabled.removeDefault(),
+    audio_reply_voice_id: versionShapeSchema.shape.audio_reply_voice_id.removeDefault(),
+    audio_reply_model_id: versionShapeSchema.shape.audio_reply_model_id.removeDefault(),
     followup: followupPatchSchema,
     operator_enabled: versionShapeSchema.shape.operator_enabled.removeDefault(),
     operator_model: versionShapeSchema.shape.operator_model.removeDefault(),
     operator_tool_ids: versionShapeSchema.shape.operator_tool_ids.removeDefault(),
     pipeline_ids: versionShapeSchema.shape.pipeline_ids.removeDefault(),
     knowledge_source_ids: versionShapeSchema.shape.knowledge_source_ids.removeDefault(),
+    external_tool_ids: versionShapeSchema.shape.external_tool_ids.removeDefault(),
+    profile_persona: versionShapeSchema.shape.profile_persona.removeDefault(),
+    profile_tone: versionShapeSchema.shape.profile_tone.removeDefault(),
+    profile_objective: versionShapeSchema.shape.profile_objective.removeDefault(),
+    profile_welcome: versionShapeSchema.shape.profile_welcome.removeDefault(),
+    profile_language: versionShapeSchema.shape.profile_language.removeDefault(),
+    temperature: versionShapeSchema.shape.temperature.removeDefault(),
+    restrict_topics: versionShapeSchema.shape.restrict_topics.removeDefault(),
+    allowed_topics: versionShapeSchema.shape.allowed_topics.removeDefault(),
+    off_topic_reply: versionShapeSchema.shape.off_topic_reply.removeDefault(),
   })
   .partial();
 
@@ -278,7 +373,11 @@ export const publishSchema = z.object({ version_id: UUID }).strict();
 
 export const testRunSchema = z
   .object({
-    sample_message: z.string().trim().min(1).max(4000),
+    sample_message: z.string().trim().min(1).max(MENSAGEM_DO_TESTE_MAX),
+    /** Simula que o cliente mandou a mensagem como ÁUDIO — para ver a resposta em áudio (#91). */
+    sample_audio: z.boolean().optional(),
+    /** Conversa simulada até aqui (issue #90) — vazio é o teste de uma troca, como sempre foi. */
+    history: historicoDoTesteSchema.optional(),
     sample_contact: z
       .object({
         name: z.string().trim().min(1).max(120).optional(),

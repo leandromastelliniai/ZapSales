@@ -28,6 +28,7 @@ import { useState } from "react";
 import {
   BookOpen,
   FileText,
+  Globe,
   HelpCircle,
   MessageSquare,
   Package,
@@ -40,8 +41,10 @@ import { Button } from "@/components/ui/button";
 import { SourceStatusBadge, deriveBadgeStatus } from "@/components/ai/SourceStatusBadge";
 import { TrechosDoMaterialDialog } from "@/components/ai/TrechosDoMaterialDialog";
 import { EditarFaqDialog } from "@/components/ai/EditarFaqDialog";
+import { PaginasDoSiteDialog } from "@/components/ai/PaginasDoSiteDialog";
 import {
   TIPO_DE_FONTE_POR_ID,
+  aceitaEnderecos,
   canonizarTipoDeFonte,
   ePerguntaEResposta,
 } from "@/lib/ai/rag/tipos-de-fonte";
@@ -52,6 +55,7 @@ const ICONE_POR_TIPO: Record<string, typeof HelpCircle> = {
   documento: FileText,
   conversas: MessageSquare,
   catalogo: Package,
+  site: Globe,
 };
 
 interface Props {
@@ -94,6 +98,7 @@ export function KnowledgeSourceCard({
   const tagDoIdioma = useTagDeIdioma();
   const [vendoTrechos, setVendoTrechos] = useState(false);
   const [editando, setEditando] = useState(false);
+  const [vendoPaginas, setVendoPaginas] = useState(false);
 
   const tipo = canonizarTipoDeFonte(source.source_type) ?? "faq";
   const meta = TIPO_DE_FONTE_POR_ID.get(tipo);
@@ -101,8 +106,10 @@ export function KnowledgeSourceCard({
 
   const derived = deriveBadgeStatus(source);
   const arquivado = derived === "archived";
+  const ehSite = aceitaEnderecos(tipo);
   const mostraErro =
-    (derived === "failed" || derived === "sem_credencial") && source.last_index_error;
+    (derived === "failed" || derived === "sem_credencial" || (ehSite && derived === "partial")) &&
+    source.last_index_error;
   const temTrechos = (source.chunks_count ?? 0) > 0;
 
   return (
@@ -165,8 +172,38 @@ export function KnowledgeSourceCard({
             className={`mr-2 h-3.5 w-3.5 ${isReindexing ? "animate-spin" : ""}`}
             aria-hidden
           />
-          {isReindexing ? t("Preparando…") : t("Preparar de novo")}
+          {ehSite
+            ? isReindexing
+              ? t("Lendo…")
+              : t("Ler o site de novo")
+            : isReindexing
+              ? t("Preparando…")
+              : t("Preparar de novo")}
         </Button>
+
+        {ehSite && !arquivado ? (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setVendoPaginas(true)}
+              data-testid={`material-paginas-${source.id}`}
+            >
+              {t("Ver as páginas")}
+            </Button>
+            {/* Montado só quando aberto, pelo mesmo motivo do diálogo de trechos. */}
+            {vendoPaginas ? (
+              <PaginasDoSiteDialog
+                sourceId={source.id}
+                nome={source.name}
+                aberto
+                onFechar={() => setVendoPaginas(false)}
+                onReler={onReindex}
+                relendo={isReindexing}
+              />
+            ) : null}
+          </>
+        ) : null}
 
         {temTrechos ? (
           <>

@@ -33,6 +33,16 @@ import {
 import { TokenCounter } from "@/lib/ui/TokenCounter";
 import { Info } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
+import { useIdioma } from "@/lib/i18n/IdiomaProvider";
+import type { Idioma } from "@/lib/i18n/idiomas";
+import {
+  IDIOMAS_DO_AGENTE,
+  LIMITES_DO_PERFIL,
+  LIMITES_DOS_TEMAS,
+  perfilPreenchido,
+  type IdiomaDoAgente,
+} from "@/lib/ai/agents/perfil";
+import { aplicarModelo, type IdDoModelo } from "@/lib/ai/agents/modelos";
 import Link from "next/link";
 
 import { TETO_TOOLS_POR_AGENTE } from "@/lib/mcp/tools/selecao-por-pacote";
@@ -52,11 +62,19 @@ import {
   type FollowupWindowValue,
 } from "./FollowupWindowEditor";
 import { PainelDoOperador } from "./PainelDoOperador";
+import { RespostaEmAudioDoAgente } from "./RespostaEmAudioDoAgente";
 import { PainelDeSeguranca } from "./PainelDeSeguranca";
 import { BasesDoAgente, type MaterialDoAcervo } from "./BasesDoAgente";
 import { FunisDoAgente, type CoberturaPorFunil } from "./FunisDoAgente";
 import { PublishConfirmDialog } from "./PublishConfirmDialog";
 import { ComandosDoCelular } from "./ComandosDoCelular";
+import {
+  PerfilGuiado,
+  assuntosDoTexto,
+  perfilDoContrato,
+  type PerfilDoFormulario,
+} from "./PerfilGuiado";
+import { ModelosDoAgente } from "./ModelosDoAgente";
 import {
   saveAgentDraftAction,
   publishAgentAction,
@@ -67,6 +85,7 @@ import {
   versionCreateSchema,
   agentMcpCreateSchema,
   agentMcpPatchSchema,
+  passaDoTetoDeCapacidades,
 } from "@/lib/ai/agents/validation";
 import type { SelectableChannel as ChannelSessionLite } from "@/lib/channels/selectable";
 import type { AgentRow } from "@/hooks/ai/useAgent";
@@ -171,6 +190,26 @@ interface FormState {
   credential_id: string;
   channel_session_id: string;
   system_prompt: string;
+  /**
+   * Perfil guiado (#89). Tudo vazio = agente sem perfil: só o prompt livre.
+   * Chaves PLANAS e com o nome da coluna, de propósito: a cerca "todo campo do
+   * formulário viaja em algum payload" casa FormState com o envio pelo nome.
+   */
+  profile_persona: string;
+  profile_tone: PerfilDoFormulario["tom"];
+  profile_objective: string;
+  profile_welcome: string;
+  profile_language: PerfilDoFormulario["idioma"];
+  /**
+   * Restringir temas (#92). `allowed_topics` é o TEXTO do campo (um assunto por
+   * linha) e vira lista só em `toVersionPayload`; a chave plana com o nome da
+   * coluna é o que a cerca de payload exige.
+   */
+  restrict_topics: boolean;
+  allowed_topics: string;
+  off_topic_reply: string;
+  /** Temperatura (0 a 1). `null` = padrão do modelo. Campo avançado. */
+  temperature: number | null;
   tool_ids: string[];
   trigger_config: TriggerValue;
   max_steps: number;
@@ -186,6 +225,10 @@ interface FormState {
   split_max_chars: number;
   /** Janela de rajada (ms) do agente. `null` = usa a env da instalação. */
   inbound_debounce_ms: number | null;
+  /** Resposta em áudio (issue #91): desligada por padrão. Voz/modelo `null` = os da organização. */
+  audio_reply_enabled: boolean;
+  audio_reply_voice_id: string | null;
+  audio_reply_model_id: string | null;
   followup: FollowupValue;
   // Papel OPERADOR (spec 16 §3.2) — o que mexe no sistema depois da conversa.
   operator_enabled: boolean;
@@ -194,6 +237,8 @@ interface FormState {
   operator_tool_ids: string[];
   pipeline_ids: string[];
   knowledge_source_ids: string[];
+  /** Ferramentas externas (webhook de consulta, #94) que o agente pode chamar. */
+  external_tool_ids: string[];
 }
 
 interface FollowupValue {
@@ -251,8 +296,17 @@ export function buildState(args: {
    * continua sendo o último degrau, para instalação que ainda não escolheu nada.
    */
   provedorPadrao?: string;
+  /**
+   * O idioma da tela de quem está CRIANDO o agente: o perfil de um agente novo
+   * nasce com ele (e tom "normal"), para o dono só ajustar. Agente que já existe
+   * mostra o que a versão tem — vazio, se nunca teve perfil.
+   */
+  idiomaDaTela?: Idioma;
 }): FormState {
-  const { agent, version, t, provedorPadrao } = args;
+  const { agent, version, t, provedorPadrao, idiomaDaTela } = args;
+  const idiomaInicial = (IDIOMAS_DO_AGENTE as readonly string[]).includes(idiomaDaTela ?? "")
+    ? (idiomaDaTela as PerfilDoFormulario["idioma"])
+    : "";
   return {
     name: agent?.name ?? "",
     description: agent?.description ?? "",
@@ -269,6 +323,17 @@ export function buildState(args: {
     system_prompt:
       version?.system_prompt ??
       t("Você é um atendente. Responda de forma educada e clara, em pt-BR."),
+    // Agente novo nasce com tom "normal" e o idioma da tela; o que já existe
+    // mostra o que a versão tem (vazio, se nunca teve perfil).
+    profile_persona: version?.profile_persona ?? "",
+    profile_tone: version ? (version.profile_tone ?? "") : agent ? "" : "normal",
+    profile_objective: version?.profile_objective ?? "",
+    profile_welcome: version?.profile_welcome ?? "",
+    profile_language: version ? (version.profile_language ?? "") : agent ? "" : idiomaInicial,
+    restrict_topics: version?.restrict_topics ?? false,
+    allowed_topics: (version?.allowed_topics ?? []).join("\n"),
+    off_topic_reply: version?.off_topic_reply ?? "",
+    temperature: version?.temperature ?? null,
     tool_ids: version?.tool_ids ?? [],
     trigger_config: (version?.trigger_config as unknown as TriggerValue) ?? DEFAULT_TRIGGER,
     max_steps: version?.max_steps ?? 10,
@@ -287,6 +352,9 @@ export function buildState(args: {
     split_messages: version?.split_messages ?? false,
     split_max_chars: version?.split_max_chars ?? 600,
     inbound_debounce_ms: version?.inbound_debounce_ms ?? null,
+    audio_reply_enabled: version?.audio_reply_enabled ?? false,
+    audio_reply_voice_id: version?.audio_reply_voice_id ?? null,
+    audio_reply_model_id: version?.audio_reply_model_id ?? null,
     followup: version?.followup
       ? {
           ...DEFAULT_FOLLOWUP,
@@ -303,6 +371,7 @@ export function buildState(args: {
     pipeline_ids: version?.pipeline_ids ?? [],
     // `?? []` = nenhum material. Mesma direção segura: agir de menos.
     knowledge_source_ids: version?.knowledge_source_ids ?? [],
+    external_tool_ids: version?.external_tool_ids ?? [],
   };
 }
 
@@ -326,9 +395,34 @@ function toCadastroPayload(s: FormState) {
   };
 }
 
+/** As chaves planas do estado, no formato que o `PerfilGuiado` segura. */
+function perfilDoFormulario(s: FormState): PerfilDoFormulario {
+  return {
+    persona: s.profile_persona,
+    tom: s.profile_tone,
+    objetivo: s.profile_objective,
+    boasVindas: s.profile_welcome,
+    idioma: s.profile_language,
+    restringirTemas: s.restrict_topics,
+    temasPermitidos: s.allowed_topics,
+    respostaForaDoTema: s.off_topic_reply,
+  };
+}
+
 function toVersionPayload(s: FormState) {
+  const perfil = perfilDoContrato(perfilDoFormulario(s));
   return {
     system_prompt: s.system_prompt,
+    // "" na tela é "não preenchido", e no contrato é `null` (`perfilDoContrato`).
+    profile_persona: perfil.persona,
+    profile_tone: perfil.tom,
+    profile_objective: perfil.objetivo,
+    profile_welcome: perfil.boasVindas,
+    profile_language: perfil.idioma,
+    restrict_topics: perfil.restringirTemas,
+    allowed_topics: perfil.temasPermitidos,
+    off_topic_reply: perfil.respostaForaDoTema,
+    temperature: s.temperature,
     provider: s.provider,
     model: s.model,
     // O token é da TELA; o contrato da versão é `null` = chave da instalação.
@@ -351,6 +445,9 @@ function toVersionPayload(s: FormState) {
     split_messages: s.split_messages,
     split_max_chars: s.split_max_chars,
     inbound_debounce_ms: s.inbound_debounce_ms,
+    audio_reply_enabled: s.audio_reply_enabled,
+    audio_reply_voice_id: s.audio_reply_voice_id,
+    audio_reply_model_id: s.audio_reply_model_id,
     followup: s.followup,
     operator_enabled: s.operator_enabled,
     // "" (não escolheu) → null (herda o do Conversador). São o mesmo conceito em
@@ -359,11 +456,13 @@ function toVersionPayload(s: FormState) {
     operator_tool_ids: s.operator_tool_ids,
     pipeline_ids: s.pipeline_ids,
     knowledge_source_ids: s.knowledge_source_ids,
+    external_tool_ids: s.external_tool_ids,
   };
 }
 
 export function AgentForm(props: Props) {
   const t = useT();
+  const idiomaDaTela = useIdioma();
   const funis = props.funis ?? [];
   const materiais = props.materiais ?? [];
   const router = useRouter();
@@ -378,8 +477,13 @@ export function AgentForm(props: Props) {
       const ref = props.base ?? props.draft ?? props.published;
       return buildState({ agent: props.agent, version: ref, t });
     }
-    return buildState({ version: null, t, provedorPadrao: props.provedorPadrao });
-  }, [isEdit, props, t]);
+    return buildState({
+      version: null,
+      t,
+      provedorPadrao: props.provedorPadrao,
+      idiomaDaTela,
+    });
+  }, [isEdit, props, t, idiomaDaTela]);
 
   const [form, setForm] = React.useState<FormState>(baseline);
   const [saving, setSaving] = React.useState(false);
@@ -391,6 +495,21 @@ export function AgentForm(props: Props) {
    * que salvou um e não o outro.
    */
   const [papel, setPapel] = React.useState<"conversa" | "operacao" | "seguranca">("conversa");
+  /** O ramo escolhido na galeria (#92), só para marcar o card. */
+  const [modeloEscolhido, setModeloEscolhido] = React.useState<IdDoModelo | null>(null);
+  /** O modelo vem no idioma da tela de quem cria; idioma sem modelo cai em português. */
+  const idiomaDoModelo: IdiomaDoAgente = (IDIOMAS_DO_AGENTE as readonly string[]).includes(idiomaDaTela)
+    ? (idiomaDaTela as IdiomaDoAgente)
+    : "pt-BR";
+  /**
+   * O modo avançado (instruções livres + temperatura). Abre sozinho para quem NÃO
+   * tem perfil — o agente que já existia vive nas instruções livres, e escondê-las
+   * seria sumir com o que ele faz —, e fecha para quem tem, porque aí o formulário
+   * guiado é a porta. Erro dentro dele força abrir (ver `avancadoVisivel`).
+   */
+  const [avancadoAberto, setAvancadoAberto] = React.useState(
+    () => !perfilPreenchido(perfilDoContrato(perfilDoFormulario(baseline))),
+  );
 
   /**
    * A pergunta é "salvar mudaria alguma coisa?", e não "os dois objetos são
@@ -446,6 +565,26 @@ export function AgentForm(props: Props) {
       errors.system_prompt =
         `${t("As instruções têm")} ${tamanhoDoPrompt.toLocaleString("pt-BR")} ${t("caracteres, e o máximo é 20.000. Corte")} ` +
         `${(tamanhoDoPrompt - 20000).toLocaleString("pt-BR")} ${t("para conseguir salvar.")}`;
+    // Perfil guiado: a mesma régua de tamanho do servidor (`perfilTexto`, que apara
+    // antes de medir). Mensagem na tela, e não o "Too big" cru do Zod.
+    for (const [campo, chave, limite] of [
+      ["persona", "profile_persona", LIMITES_DO_PERFIL.persona],
+      ["objetivo", "profile_objective", LIMITES_DO_PERFIL.objetivo],
+      ["boasVindas", "profile_welcome", LIMITES_DO_PERFIL.boasVindas],
+    ] as const) {
+      if (perfilDoFormulario(form)[campo].trim().length > limite)
+        errors[chave] = `${t("Pode ter até")} ${limite} ${t("caracteres.")}`;
+    }
+    // Restringir temas: as mesmas réguas do servidor (`LIMITES_DOS_TEMAS`).
+    const assuntos = assuntosDoTexto(form.allowed_topics);
+    if (assuntos.length > LIMITES_DOS_TEMAS.assuntos)
+      errors.allowed_topics = `${t("No máximo")} ${LIMITES_DOS_TEMAS.assuntos} ${t("assuntos.")}`;
+    else if (assuntos.some((a) => a.length > LIMITES_DOS_TEMAS.assunto))
+      errors.allowed_topics = `${t("Cada assunto pode ter até")} ${LIMITES_DOS_TEMAS.assunto} ${t("caracteres.")}`;
+    if (form.off_topic_reply.trim().length > LIMITES_DOS_TEMAS.respostaFora)
+      errors.off_topic_reply = `${t("Pode ter até")} ${LIMITES_DOS_TEMAS.respostaFora} ${t("caracteres.")}`;
+    if (form.temperature !== null && (form.temperature < 0 || form.temperature > 1))
+      errors.temperature = t("A temperatura vai de 0 a 1.");
     if (!form.model) errors.model = t("Escolha o modelo de inteligência artificial.");
     if (!form.credential_id)
       errors.credential_id = t("Escolha a chave de acesso da empresa de inteligência artificial.");
@@ -468,7 +607,7 @@ export function AgentForm(props: Props) {
     //
     // Quem cobra o número é `bloqueioDePublicacao` (logo abaixo): sem ele o
     // agente não vai ao ar, e o botão "Publicar" explica o que falta.
-    if (form.tool_ids.length > TETO_TOOLS_POR_AGENTE)
+    if (passaDoTetoDeCapacidades(form.tool_ids, form.external_tool_ids))
       errors.tool_ids = `${t("Máximo de")} ${TETO_TOOLS_POR_AGENTE} ${t("capacidades por agente.")}`;
 
     // Tenta o schema completo:
@@ -484,6 +623,9 @@ export function AgentForm(props: Props) {
   }, [form, t]);
 
   const isValid = Object.keys(validation).length === 0;
+  // Erro dentro do modo avançado nunca fica escondido atrás do <details> fechado.
+  const avancadoVisivel =
+    avancadoAberto || !!validation.system_prompt || !!validation.temperature;
 
   /**
    * A dica do botão "Publicar" — uma frase, vinda de UM motivo.
@@ -799,6 +941,33 @@ export function AgentForm(props: Props) {
         />
       ) : null}
 
+      {/* Galeria de modelos por ramo (#92): só na criação — num agente que já existe,
+          trocar de modelo apagaria o que o dono configurou. */}
+      {!isEdit && papel === "conversa" ? (
+        <ModelosDoAgente
+          idioma={idiomaDoModelo}
+          escolhido={modeloEscolhido}
+          onEscolher={(id) => {
+            const campos = aplicarModelo(id, idiomaDoModelo);
+            setModeloEscolhido(id);
+            patch({
+              // O nome só é sugerido se o dono ainda não digitou o dele.
+              ...(form.name.trim() === "" ? { name: campos.name } : {}),
+              system_prompt: campos.system_prompt,
+              profile_persona: campos.profile_persona,
+              profile_tone: campos.profile_tone,
+              profile_objective: campos.profile_objective,
+              profile_welcome: campos.profile_welcome,
+              profile_language: campos.profile_language,
+              restrict_topics: campos.restrict_topics,
+              allowed_topics: campos.allowed_topics.join("\n"),
+              off_topic_reply: campos.off_topic_reply,
+            });
+          }}
+          disabled={disabled}
+        />
+      ) : null}
+
       {/* Two-column grid */}
       <div className={papel === "conversa" ? "grid grid-cols-1 gap-4 lg:grid-cols-2" : "hidden"}>
         {/* COLUMN 1 */}
@@ -1106,8 +1275,53 @@ export function AgentForm(props: Props) {
 
         {/* COLUMN 2 */}
         <div className="space-y-4">
-          {/* Prompt */}
-          <Card className="space-y-2 p-4">
+          {/* Perfil guiado (#89) — a porta de entrada; o prompt livre é o modo avançado. */}
+          <PerfilGuiado
+            value={perfilDoFormulario(form)}
+            onChange={(parte) =>
+              patch({
+                ...(parte.persona !== undefined ? { profile_persona: parte.persona } : {}),
+                ...(parte.tom !== undefined ? { profile_tone: parte.tom } : {}),
+                ...(parte.objetivo !== undefined ? { profile_objective: parte.objetivo } : {}),
+                ...(parte.boasVindas !== undefined ? { profile_welcome: parte.boasVindas } : {}),
+                ...(parte.idioma !== undefined ? { profile_language: parte.idioma } : {}),
+                ...(parte.restringirTemas !== undefined ? { restrict_topics: parte.restringirTemas } : {}),
+                ...(parte.temasPermitidos !== undefined ? { allowed_topics: parte.temasPermitidos } : {}),
+                ...(parte.respostaForaDoTema !== undefined
+                  ? { off_topic_reply: parte.respostaForaDoTema }
+                  : {}),
+              })
+            }
+            instrucoesLivres={form.system_prompt}
+            disabled={disabled}
+            erros={{
+              persona: validation.profile_persona,
+              objetivo: validation.profile_objective,
+              boasVindas: validation.profile_welcome,
+              temasPermitidos: validation.allowed_topics,
+              respostaForaDoTema: validation.off_topic_reply,
+            }}
+          />
+
+          {/* Modo avançado: instruções livres + temperatura */}
+          <Card className="p-4">
+          <details
+            open={avancadoVisivel}
+            onToggle={(e) => {
+              const aberto = (e.currentTarget as HTMLDetailsElement).open;
+              if (aberto !== avancadoAberto) setAvancadoAberto(aberto);
+            }}
+            data-testid="modo-avancado"
+            className="space-y-2"
+          >
+            <summary className="cursor-pointer text-sm font-medium">
+              {t("Avançado: instruções livres e temperatura")}
+            </summary>
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "As instruções livres continuam valendo por inteiro: o perfil acima entra antes delas, e nada do que você escrever aqui é trocado.",
+              )}
+            </p>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium">{t("As instruções dele")}</h3>
               <div className="flex items-center gap-2">
@@ -1157,6 +1371,34 @@ export function AgentForm(props: Props) {
             {validation.system_prompt ? (
               <p className="text-xs text-destructive">{validation.system_prompt}</p>
             ) : null}
+
+            <div className="space-y-1 pt-2">
+              <Label htmlFor="temperature">{t("Temperatura (0 a 1)")}</Label>
+              <Input
+                id="temperature"
+                type="number"
+                min={0}
+                max={1}
+                step={0.1}
+                placeholder={t("Vazio = padrão do modelo")}
+                value={form.temperature === null ? "" : String(form.temperature)}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  patch({ temperature: raw === "" ? null : Number(raw) });
+                }}
+                disabled={disabled}
+                aria-invalid={!!validation.temperature}
+              />
+              {validation.temperature ? (
+                <p className="text-xs text-destructive">{validation.temperature}</p>
+              ) : null}
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  "Perto de 0, as respostas ficam mais previsíveis; perto de 1, mais variadas. Se você não entende o parâmetro, deixe em branco.",
+                )}
+              </p>
+            </div>
+          </details>
           </Card>
 
           {/* Estilo de resposta (split de mensagens — Onda 4) */}
@@ -1199,6 +1441,24 @@ export function AgentForm(props: Props) {
             ) : null}
           </Card>
 
+          {/* Resposta em áudio (issue #91) */}
+          <RespostaEmAudioDoAgente
+            value={{
+              enabled: form.audio_reply_enabled,
+              voiceId: form.audio_reply_voice_id,
+              modelId: form.audio_reply_model_id,
+            }}
+            onChange={(v) =>
+              patch({
+                audio_reply_enabled: v.enabled,
+                audio_reply_voice_id: v.voiceId,
+                audio_reply_model_id: v.modelId,
+              })
+            }
+            disabled={disabled}
+            riscoDeBanimento={channelSession?.riscoDeBanimento === true}
+          />
+
           {/* Capacidades */}
           <Card className="space-y-2 p-4">
             <h3 className="text-sm font-medium">{t("O que o agente pode fazer")}</h3>
@@ -1210,6 +1470,10 @@ export function AgentForm(props: Props) {
             <ToolPicker
               value={form.tool_ids}
               onChange={(ids) => patch({ tool_ids: ids })}
+              externas={{
+                value: form.external_tool_ids,
+                onChange: (ids) => patch({ external_tool_ids: ids }),
+              }}
               disabled={disabled}
             />
             {validation.tool_ids ? (

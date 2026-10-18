@@ -13,13 +13,14 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { mensagemDoEscopo, validarEscopoDaVersao } from "@/lib/ai/agents/escopo";
 import { versionPatchSchema } from "@/lib/ai/agents/validation";
 import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
 const VERSION_COLUMNS =
-  "id, organization_id, agent_id, version_number, system_prompt, provider, model, credential_id, tool_ids, trigger_config, channel_session_id, max_steps, token_budget, cost_budget_cents, history_message_window, history_token_window, handoff_keywords, handoff_tool_enabled, proposal_ai_draft_enabled, cases_enabled, split_messages, split_max_chars, followup, operator_enabled, operator_model, operator_tool_ids, status, published_at, superseded_at, created_at, created_by,pipeline_ids,knowledge_source_ids,provisioning_origin,inbound_debounce_ms";
+  "id, organization_id, agent_id, version_number, system_prompt, provider, model, credential_id, tool_ids, trigger_config, channel_session_id, max_steps, token_budget, cost_budget_cents, history_message_window, history_token_window, handoff_keywords, handoff_tool_enabled, proposal_ai_draft_enabled, cases_enabled, split_messages, split_max_chars, followup, operator_enabled, operator_model, operator_tool_ids, status, published_at, superseded_at, created_at, created_by,pipeline_ids,knowledge_source_ids,external_tool_ids,provisioning_origin,inbound_debounce_ms,profile_persona,profile_tone,profile_objective,profile_welcome,profile_language,temperature,audio_reply_enabled,audio_reply_voice_id,audio_reply_model_id,restrict_topics,allowed_topics,off_topic_reply";
 
 const UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -87,7 +88,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
   const admin = createAdminClient();
   const { data: existing } = await admin
     .from("ai_agent_versions")
-    .select("id, status, agent_id, organization_id, followup")
+    .select("id, status, agent_id, organization_id, followup, tool_ids, external_tool_ids")
     .eq("id", vid)
     .eq("organization_id", activeOrg.orgId)
     .eq("agent_id", id)
@@ -101,12 +102,25 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
     });
   }
 
+  // Ferramentas externas (#94): cada id existe NESTA organização e é uma consulta, e o
+  // teto de capacidades vale para a SOMA com as do catálogo — mexer em qualquer das duas
+  // listas reconfere o total.
+  if (patch.external_tool_ids !== undefined || patch.tool_ids !== undefined) {
+    const escopo = await validarEscopoDaVersao(admin, activeOrg.orgId, {
+      tool_ids: patch.tool_ids ?? ((existing as { tool_ids?: string[] | null }).tool_ids ?? []),
+      external_tool_ids:
+        patch.external_tool_ids ?? ((existing as { external_tool_ids?: string[] | null }).external_tool_ids ?? []),
+    });
+    if (!escopo.ok) return fail("validation_failed", t(mensagemDoEscopo(escopo)), 422, { requestId });
+  }
+
   const update: Record<string, unknown> = {};
   if (patch.system_prompt !== undefined) update.system_prompt = patch.system_prompt;
   if (patch.provider !== undefined) update.provider = patch.provider;
   if (patch.model !== undefined) update.model = patch.model;
   if (patch.credential_id !== undefined) update.credential_id = patch.credential_id;
   if (patch.tool_ids !== undefined) update.tool_ids = patch.tool_ids;
+  if (patch.external_tool_ids !== undefined) update.external_tool_ids = patch.external_tool_ids;
   if (patch.trigger_config !== undefined) update.trigger_config = patch.trigger_config;
   if (patch.channel_session_id !== undefined) update.channel_session_id = patch.channel_session_id;
   if (patch.max_steps !== undefined) update.max_steps = patch.max_steps;
@@ -125,6 +139,18 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<Response> {
   if (patch.split_messages !== undefined) update.split_messages = patch.split_messages;
   if (patch.split_max_chars !== undefined) update.split_max_chars = patch.split_max_chars;
   if (patch.inbound_debounce_ms !== undefined) update.inbound_debounce_ms = patch.inbound_debounce_ms;
+  if (patch.audio_reply_enabled !== undefined) update.audio_reply_enabled = patch.audio_reply_enabled;
+  if (patch.audio_reply_voice_id !== undefined) update.audio_reply_voice_id = patch.audio_reply_voice_id;
+  if (patch.audio_reply_model_id !== undefined) update.audio_reply_model_id = patch.audio_reply_model_id;
+  if (patch.profile_persona !== undefined) update.profile_persona = patch.profile_persona;
+  if (patch.profile_tone !== undefined) update.profile_tone = patch.profile_tone;
+  if (patch.profile_objective !== undefined) update.profile_objective = patch.profile_objective;
+  if (patch.profile_welcome !== undefined) update.profile_welcome = patch.profile_welcome;
+  if (patch.profile_language !== undefined) update.profile_language = patch.profile_language;
+  if (patch.temperature !== undefined) update.temperature = patch.temperature;
+  if (patch.restrict_topics !== undefined) update.restrict_topics = patch.restrict_topics;
+  if (patch.allowed_topics !== undefined) update.allowed_topics = patch.allowed_topics;
+  if (patch.off_topic_reply !== undefined) update.off_topic_reply = patch.off_topic_reply;
   if (patch.followup !== undefined) {
     const existingFollowup =
       existing.followup !== null &&

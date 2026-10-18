@@ -48,6 +48,13 @@ export const KIND_LABEL = {
   // chegou. O motivo técnico fica no corpo do aviso.
   message_send_stuck: "Uma resposta ficou presa e não chegou ao cliente",
   midia_nao_lida: "O agente não conseguiu ler uma foto ou áudio que o cliente enviou",
+  // Diz o que o AGENTE não conseguiu fazer por causa do outro sistema, e não que uma
+  // chamada HTTP deu erro: quem lê é o dono do negócio, e o que ele precisa saber é
+  // que o agente respondeu sem poder consultar. O motivo vai no corpo.
+  external_tool_failed: "O agente não conseguiu usar um sistema externo",
+  // Diz o que a PESSOA tem de fazer, não o estado da fila: do lado de lá existe um cliente
+  // esperando que uma ação seja aprovada. O que o agente quer fazer e os dados vão no corpo.
+  external_tool_approval: "O agente quer executar uma ação num sistema externo e espera a sua aprovação",
   // Diz o que o CLIENTE vive, não a configuração: do lado de lá as mensagens
   // chegam e ninguém responde. "Modo de teste sem número autorizado" descreve
   // o campo; "a IA não responde ninguém" é o que faz o operador agir.

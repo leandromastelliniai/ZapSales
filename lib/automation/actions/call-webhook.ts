@@ -2,8 +2,9 @@
  * Ação `call_webhook` — POST outbound com envelope
  * {event, occurred_at, happened_at, delivery_id, data}, assinatura HMAC-sha256 opcional
  * (config.secret) e retry 3x (1s/5s) em falha de rede ou status não-2xx.
- * Anti-SSRF via assertSafeOutboundUrl antes de qualquer fetch (pulável só via
- * opts.skipUrlCheck, usado nos testes).
+ * Toda saída passa pela rede segura única (`lib/net/rede-segura`, issue #88):
+ * https, DNS resolvido e preso à conexão, endereço especial recusado, redirect
+ * não seguido, prazo de 10 s. Pulável só via opts.skipUrlCheck, usado nos testes.
  *
  * Cabeçalhos de toda entrega (#1529) — o guia de quem recebe é
  * docs/integracao/webhooks-de-saida.md:
@@ -24,8 +25,8 @@ import { createHash, createHmac } from "node:crypto";
 import { z } from "zod";
 import { registerAction } from "@/lib/automation/actions";
 import type { ActionCtx, ActionResultDetail } from "@/lib/automation/types";
-import { assertDestinoResolvidoSeguro } from "@/lib/automation/outbound-ip";
-import { assertSafeOutboundUrl } from "@/lib/automation/outbound-url";
+import { buscarSeguro, ErroDeRedeSegura, type PoliticaDeDestino } from "@/lib/net/rede-segura";
+import { assinaturaComCarimbo } from "@/lib/webhooks/assinatura-de-saida";
 import { decryptWebhookSecret } from "@/lib/webhooks/secrets";
 
 const TIMEOUT_MS = 10_000;
@@ -118,11 +119,12 @@ export function idDaEntrega(
   return uuidV5(`${eventId}:${ruleId}:${indiceDaAcao}:${impressaoDasAcoes(acoesDaRegra)}`, NAMESPACE_DA_ENTREGA);
 }
 
-/** `t=<ts>,v1=<hex HMAC-SHA256(segredo, "<ts>.<entrega>.<corpo>")>`. */
-export function assinaturaComCarimbo(segredo: string, carimbo: number, entrega: string, corpo: string): string {
-  const v1 = createHmac("sha256", segredo).update(`${carimbo}.${entrega}.${corpo}`).digest("hex");
-  return `t=${carimbo},v1=${v1}`;
-}
+/**
+ * `t=<ts>,v1=<hex HMAC-SHA256(segredo, "<ts>.<entrega>.<corpo>")>`. Mora em
+ * `lib/webhooks/assinatura-de-saida.ts` (a ferramenta externa do agente assina
+ * do mesmo jeito) e continua exportada daqui, onde os testes e o guia a leem.
+ */
+export { assinaturaComCarimbo };
 
 /**
  * A forma que este arquivo grava em `actions_result[]` — o schema central da
@@ -309,17 +311,13 @@ export async function executeCallWebhook(
 ): Promise<ActionResultDetail> {
   const url = typeof config.url === "string" ? config.url : null;
   if (!url) return { type: "call_webhook", status: "failed", error: "missing_url" };
-  if (!opts.skipUrlCheck) {
-    try {
-      assertSafeOutboundUrl(url);
-      // Guard textual não resolve nome: um hostname público apontando para
-      // 169.254.169.254 (metadata da nuvem) ou para os serviços internos da rede do
-      // compose passava por ele. Este segundo resolve e julga o IP.
-      await assertDestinoResolvidoSeguro(new URL(url).hostname);
-    } catch (err) {
-      return { type: "call_webhook", status: "failed", error: (err as Error).message };
-    }
-  }
+  // O endereço é escolhido por uma ORGANIZAÇÃO (manager+), então nenhuma lista de
+  // destinos internos da instalação vale aqui. `http` só fora de produção (o
+  // contrato de sempre deste guard); `skipUrlCheck` é dos testes, que falam com
+  // um servidor em 127.0.0.1.
+  const politica: PoliticaDeDestino = opts.skipUrlCheck
+    ? { permitirHttp: true, ipPermitido: () => true }
+    : { permitirHttp: process.env.NODE_ENV !== "production" };
 
   const leadPublic = projectPublicFields(ctx.context.lead, LEAD_PUBLIC_FIELDS);
   const contactPublic = projectPublicFields(ctx.context.contact, CONTACT_PUBLIC_FIELDS);
@@ -379,19 +377,20 @@ export async function executeCallWebhook(
       headersDaTentativa[CABECALHOS.assinaturaComCarimbo] = assinaturaComCarimbo(secret, carimbo, entrega, body);
     }
     try {
-      // redirect: "manual" — nunca seguir 3xx automaticamente. fetch por padrão
-      // segue redirect, e uma URL de tenant que passou no guard anti-SSRF pode
-      // 302 pra um endpoint interno (ex.: http://169.254.169.254/...). Um 3xx
-      // vira falha comum (conta pro retry), nunca é seguido.
-      const res = await fetch(url, {
-        method: "POST",
+      // Sem `maxRedirecionamentos`: um 3xx volta como resposta e vira falha comum
+      // (conta pro retry), nunca é seguido. O corpo da resposta não interessa —
+      // só o status —, então ele é derrubado sem ser lido, e um receptor que
+      // responde 2xx com um corpo enorme não derruba a entrega.
+      const res = await buscarSeguro(url, {
+        ...politica,
+        metodo: "POST",
         headers: headersDaTentativa,
-        body,
-        redirect: "manual",
-        signal: AbortSignal.timeout(TIMEOUT_MS),
+        corpo: body,
+        timeoutMs: TIMEOUT_MS,
+        lerResposta: false,
       });
       lastStatus = res.status;
-      if (res.ok) {
+      if (res.status >= 200 && res.status < 300) {
         return {
           type: "call_webhook",
           status: "success",
@@ -400,6 +399,11 @@ export async function executeCallWebhook(
       }
       lastError = res.status >= 300 && res.status < 400 ? "redirect_not_followed" : `http_${res.status}`;
     } catch (err) {
+      // Recusa da política é definitiva: tentar de novo o mesmo endereço custa
+      // 6 s de espera para ouvir a mesma resposta.
+      if (err instanceof ErroDeRedeSegura && err.ehRecusa) {
+        return { type: "call_webhook", status: "failed", error: err.codigo };
+      }
       lastError = err instanceof Error ? err.message : String(err);
     }
     const delay = retryDelaysMs[i];

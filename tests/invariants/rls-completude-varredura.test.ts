@@ -75,6 +75,7 @@ interface Excecao {
  * linhas da OUTRA organização, não uma leitura como superusuário.
  */
 const PROVA_PROPRIA: readonly Excecao[] = [
+  { tabela: "ai_knowledge_source_pages", razao: "tests/invariants/treino-por-site-banco.test.ts — dois tenants reais por JWT: A lê as 2 páginas dela e ZERO do vizinho, B lê a 1 dela; authenticated sem insert/update/delete/truncate (só o servidor grava) e anon sem select; migration 0550." },
   { tabela: "meta_message_costs", razao: "tests/invariants/custo-da-campanha-oficial.test.ts — dois tenants reais por JWT (authenticated, row_security ligada): o vizinho lê ZERO, a própria organização lê as suas (controle positivo), e insert/update diretos de authenticated recebem permission denied (só o servidor grava custo; migration 0540)." },
   { tabela: "golden_candidates", razao: "tests/invariants/golden-candidates.test.ts — dois tenants reais por JWT (agent): leitura positiva local e ZERO do vizinho nos dois sentidos, a tabela inteira sem filtro igual à própria, anon recusado, e insert/update/delete de authenticated sem efeito (só o servidor grava)." },
   { tabela: "jev_observacoes", razao: "tests/invariants/jev-observacoes.test.ts — dois tenants reais por JWT (agent): leitura positiva local e ZERO do vizinho nos dois sentidos, a tabela inteira sem filtro igual à própria, anon recusado, e insert/update/delete de authenticated sem efeito (só o servidor grava)." },
@@ -251,6 +252,48 @@ const PROVA_PROPRIA: readonly Excecao[] = [
       "NENHUM para anon e authenticated, `permission denied` sob `set role`, RLS " +
       "ligada, zero policies, `organization_id` NOT NULL com FK em cascata. Guarda " +
       "a chave do Google da organização (0504), que só o servidor lê.",
+  },
+  {
+    tabela: "voice_provider_credentials",
+    razao:
+      "tests/invariants/credencial-de-voz-e-server-side.test.ts — mesmo desenho da " +
+      "linha de `map_provider_credentials`: privilégio NENHUM para anon e " +
+      "authenticated, `permission denied` sob `set role`, RLS ligada, zero policies, " +
+      "`organization_id` NOT NULL com FK em cascata, e o isolamento entre duas " +
+      "organizações medido. Guarda a chave do provedor de voz da organização (0548, " +
+      "resposta em áudio), que só o servidor lê.",
+  },
+  {
+    tabela: "agent_external_tools",
+    razao:
+      "tests/invariants/ferramentas-externas-do-agente.test.ts — mesmo desenho da " +
+      "linha de `voice_provider_credentials`: privilégio NENHUM para anon e " +
+      "authenticated, RLS ligada, zero policies, `organization_id` NOT NULL com FK em " +
+      "cascata, e o isolamento entre duas organizações medido (o filtro da organização " +
+      "é a cerca do service role; o motor só carrega o que é da organização do turno). " +
+      "Guarda a chave de assinatura (cifrada) e o endereço do webhook de consulta do " +
+      "agente (0551, #94), que só o servidor lê.",
+  },
+  {
+    tabela: "mcp_servers",
+    razao:
+      "tests/invariants/servidores-mcp-do-agente.test.ts — mesmo desenho da linha de " +
+      "`agent_external_tools`: privilégio NENHUM para anon e authenticated, RLS ligada, " +
+      "zero policies, `organization_id` NOT NULL com FK em cascata, e o isolamento entre " +
+      "duas organizações medido (a ferramenta nunca aponta para o servidor de outra " +
+      "organização — FK composta —, e o motor só lê o que é da organização do turno; o " +
+      "filtro da organização é a cerca do service role). Guarda o endereço do servidor MCP " +
+      "de terceiro e a credencial dele, cifrada (0553, #96), que só o servidor lê.",
+  },
+  {
+    tabela: "agent_external_tool_requests",
+    razao:
+      "tests/invariants/pedidos-de-acao-externa.test.ts — mesmo desenho da linha de " +
+      "`agent_external_tools`: privilégio NENHUM para anon e authenticated, RLS ligada, " +
+      "zero policies, `organization_id` NOT NULL com FK em cascata, e o isolamento entre " +
+      "duas organizações medido (cada uma lê e reivindica só os seus pedidos; o filtro da " +
+      "organização é a cerca do service role). Guarda o que o agente quer executar num " +
+      "sistema externo e os dados que preencheu (0552, #95), que só o servidor lê.",
   },
   {
     tabela: "ad_conversion_dispatches",

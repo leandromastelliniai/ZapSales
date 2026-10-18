@@ -33,6 +33,8 @@ import type { Role } from "@/lib/auth/types";
 import { MODULOS_OPCIONAIS, MODULOS_OPCIONAIS_POR_FLAG, type ModuloOpcional } from "@/lib/instalacao/modulos";
 import { NAV_CATALOG, type NavMetadata } from "@/lib/navigation/catalogo";
 import { lerConfigDoJev } from "@/lib/ai/decisao/config";
+import { lerConfigDeMcp } from "@/lib/ai/ferramentas-externas/mcp/config";
+import { lerConfigDeAudio } from "@/lib/ai/resposta-em-audio/config";
 import { capacidadesLigadas, type CapacidadeDaOrganizacao } from "@/lib/organizacao/capacidades";
 import { conversaFicaComQuemAtendeu } from "@/lib/schemas/routing";
 import { configAssinatura } from "@/lib/messaging/assinatura";
@@ -479,6 +481,30 @@ const DA_EMPRESA: RecursoOpcional[] = [
     quemDecide: "manager",
     href: "/app/ai/providers",
     ler: peloSettings((s) => lerConfigDoJev(s).ligado),
+  },
+  {
+    id: "resposta_em_audio",
+    nome: "Resposta em áudio",
+    oQueFaz: "Quando o cliente manda áudio, o agente pode responder em nota de voz, com a chave de voz da própria empresa.",
+    nivel: "organizacao",
+    padrao: "desligado",
+    quemDecide: "admin",
+    // A chave mora em `voice_provider_credentials` e esta lista não lê chave: o
+    // estado do interruptor sai das settings, e a chave se vê na tela do recurso.
+    href: "/app/ai/providers",
+    ler: peloSettings((s) => lerConfigDeAudio(s).ligado),
+  },
+  {
+    id: "mcp_externo",
+    nome: "Servidores MCP externos",
+    oQueFaz: "O agente passa a poder usar ferramentas de servidores MCP de terceiros que um administrador cadastra; cada uma que altera algo espera aprovação.",
+    nivel: "organizacao",
+    padrao: "desligado",
+    quemDecide: "admin",
+    // A credencial de cada servidor mora cifrada em `mcp_servers` e esta lista não lê credencial: o estado do
+    // interruptor sai das settings, e o cadastro se vê na aba «Servidores MCP» da tela de Ferramentas externas.
+    href: "/app/ai/external-tools",
+    ler: peloSettings((s) => lerConfigDeMcp(s).ligado),
   },
   {
     id: "base_com_google",

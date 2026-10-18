@@ -49,10 +49,69 @@ const PARES: Array<{
   simbolo: string;
 }> = [
   {
+    tabela: "lgpd_requests",
+    coluna: "source",
+    arquivo: "lib/lgpd/types.ts",
+    simbolo: "LgpdRequestSource",
+  },
+  {
+    tabela: "lgpd_requests",
+    coluna: "request_type",
+    arquivo: "lib/lgpd/types.ts",
+    simbolo: "LgpdRequestType",
+  },
+  {
     tabela: "ad_platform_connections",
     coluna: "google_api",
     arquivo: "lib/plataformas-de-anuncio/types.ts",
     simbolo: "ApiDeConversaoGoogle",
+  },
+  {
+    tabela: "voice_provider_credentials",
+    coluna: "provider",
+    // lib/ai/resposta-em-audio/tipos.ts → PROVEDORES_DE_VOZ (0548, resposta em áudio).
+    // Nasce com o par no mesmo commit da migration: um provedor que entrasse só no
+    // TypeScript faria o `upsert` da chave bater no CHECK (23514) numa tela que o
+    // dono vê como "não consegui gravar a chave"; um que entrasse só no banco seria
+    // uma chave que nenhum adaptador sabe usar.
+    arquivo: "lib/ai/resposta-em-audio/tipos.ts",
+    simbolo: "PROVEDORES_DE_VOZ",
+  },
+  {
+    tabela: "agent_external_tools",
+    coluna: "effect",
+    // lib/ai/ferramentas-externas/tipos.ts → EFEITOS_DA_FERRAMENTA (0551, ferramentas
+    // externas do agente, #94). Nasce com o par no mesmo commit da migration: um efeito
+    // que entrasse só no banco seria uma linha que o Zod da leitura não reconhece (a
+    // ferramenta cairia em "altera" por falha fechada e sumiria do seletor).
+    arquivo: "lib/ai/ferramentas-externas/tipos.ts",
+    simbolo: "EFEITOS_DA_FERRAMENTA",
+  },
+  {
+    tabela: "agent_external_tools",
+    coluna: "kind",
+    // lib/ai/ferramentas-externas/tipos.ts → TIPOS_DA_FERRAMENTA (0553, servidores MCP
+    // externos, #96). Um tipo que entrasse só no banco seria uma linha que o Zod da leitura não
+    // reconhece (a ferramenta cairia em «webhook» e sumiria do seletor com o endereço nulo); um
+    // só no TypeScript, um INSERT que bate no CHECK (23514) na hora de escolher a ferramenta.
+    arquivo: "lib/ai/ferramentas-externas/tipos.ts",
+    simbolo: "TIPOS_DA_FERRAMENTA",
+  },
+  {
+    tabela: "agent_external_tool_requests",
+    coluna: "status",
+    // lib/ai/ferramentas-externas/tipos.ts → ESTADOS_DO_PEDIDO (0552, aprovação das ações
+    // externas, #95). Um estado que entrasse só no banco seria um pedido que a Central e o
+    // agente não sabem ler; um só no TypeScript, um UPDATE que bate no CHECK (23514) na hora
+    // de aprovar.
+    arquivo: "lib/ai/ferramentas-externas/tipos.ts",
+    simbolo: "ESTADOS_DO_PEDIDO",
+  },
+  {
+    tabela: "agent_external_tool_requests",
+    coluna: "origin",
+    arquivo: "lib/ai/ferramentas-externas/tipos.ts",
+    simbolo: "ORIGENS_DO_PEDIDO",
   },
   {
     tabela: "extension_operations",
@@ -137,6 +196,24 @@ const PARES: Array<{
     // banco de dev conta o que aconteceu com ele, não o que o sistema promete.
     arquivo: "lib/agent-engine/db/repository.ts",
     simbolo: "InboxKind",
+  },
+  {
+    tabela: "ai_agent_versions",
+    coluna: "profile_tone",
+    // lib/ai/agents/perfil.ts → TONS_DO_AGENTE (tupla `as const`). Nasce no MESMO
+    // commit da migration 0546 (perfil guiado, #89), que é a lição desta lista.
+    // Tom fora do CHECK viraria `23514` ao salvar o rascunho; fora do TypeScript,
+    // um tom que a tela não sabe rotular e o compositor não sabe descrever.
+    arquivo: "lib/ai/agents/perfil.ts",
+    simbolo: "TONS_DO_AGENTE",
+  },
+  {
+    tabela: "ai_agent_versions",
+    coluna: "profile_language",
+    // lib/ai/agents/perfil.ts → IDIOMAS_DO_AGENTE: os idiomas do produto
+    // (`perfil.test.ts` cobra a igualdade com o registro de idiomas).
+    arquivo: "lib/ai/agents/perfil.ts",
+    simbolo: "IDIOMAS_DO_AGENTE",
   },
   {
     tabela: "agent_case_events",
@@ -318,6 +395,24 @@ const PARES: Array<{
     // lib/voip/call-vocabulary.ts -> AiAgentChannel
     arquivo: "lib/voip/call-vocabulary.ts",
     simbolo: "AiAgentChannel",
+  },
+  {
+    tabela: "ai_knowledge_sources",
+    coluna: "source_type",
+    // lib/ai/rag/tipos-de-fonte.ts → IDS_DE_TIPO_DE_FONTE (tupla literal `as const`).
+    // A 0181 tinha tirado o CHECK ("vocabulário aberto") e este par ficava de fora de
+    // propósito; a 0550 (#93, treino por site) o devolveu — o vocabulário é fechado de novo,
+    // e nasce com o par no MESMO commit: tipo só no banco seria material que nenhuma tela
+    // oferece nem o indexador sabe ler; só no TypeScript, um 23514 no cadastro.
+    arquivo: "lib/ai/rag/tipos-de-fonte.ts",
+    simbolo: "IDS_DE_TIPO_DE_FONTE",
+  },
+  {
+    tabela: "ai_knowledge_source_pages",
+    coluna: "status",
+    // lib/ai/rag/ingest/site-paginas.ts → ESTADOS_DA_PAGINA. Nasce com a 0550.
+    arquivo: "lib/ai/rag/ingest/site-paginas.ts",
+    simbolo: "ESTADOS_DA_PAGINA",
   },
   {
     tabela: "agent_case_chat_messages",

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useT } from "@/hooks/i18n/useT";
 
+import { restricaoAtiva } from "@/lib/ai/agents/perfil";
 import { PROVEDORES } from "@/lib/ai/pontos/provedores";
 import type { AgentVersionRow } from "@/hooks/ai/useAgentVersions";
 
@@ -58,6 +59,26 @@ export function PublishConfirmDialog({
     draft.system_prompt.length - (published?.system_prompt.length ?? 0);
   const modelChanged = !published || draft.model !== published.model;
   const providerChanged = !published || draft.provider !== published.provider;
+  // Perfil guiado (#89): conta os campos que mudaram em relação à publicada. Numa
+  // primeira publicação, conta os preenchidos.
+  const camposDoPerfil = [
+    "profile_persona",
+    "profile_tone",
+    "profile_objective",
+    "profile_welcome",
+    "profile_language",
+  ] as const;
+  const perfilMudou = camposDoPerfil.filter(
+    (k) => (draft[k] ?? null) !== (published?.[k] ?? null),
+  ).length;
+  // Restringir temas (#92): o que muda o que o agente PODE responder merece linha
+  // própria na confirmação — publicar uma restrição sem perceber cala o agente.
+  const restricaoDe = (v: typeof draft | null | undefined) =>
+    v && restricaoAtiva(v.restrict_topics ?? false, v.allowed_topics ?? [])
+      ? (v.allowed_topics ?? []).join("|")
+      : null;
+  const restricaoMudou = restricaoDe(draft) !== restricaoDe(published);
+  const temperaturaMudou = (draft.temperature ?? null) !== (published?.temperature ?? null);
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -103,6 +124,26 @@ export function PublishConfirmDialog({
           {toolsDiff.removed.length > 0 ? (
             <p>
               <strong>{t("Tools removidas:")}</strong> {toolsDiff.removed.join(", ")}
+            </p>
+          ) : null}
+          {perfilMudou > 0 ? (
+            <p data-testid="publicar-perfil">
+              <strong>{t("Perfil:")}</strong> {perfilMudou}{" "}
+              {perfilMudou === 1 ? t("campo alterado") : t("campos alterados")}
+            </p>
+          ) : null}
+          {restricaoMudou ? (
+            <p data-testid="publicar-restricao">
+              <strong>{t("Assuntos:")}</strong>{" "}
+              {restricaoDe(draft) === null
+                ? t("sem restrição")
+                : `${draft.allowed_topics.length} ${t("assuntos permitidos")}`}
+            </p>
+          ) : null}
+          {temperaturaMudou ? (
+            <p>
+              <strong>{t("Temperatura:")}</strong>{" "}
+              {`${published?.temperature ?? t("padrão do modelo")} → ${draft.temperature ?? t("padrão do modelo")}`}
             </p>
           ) : null}
           <p>

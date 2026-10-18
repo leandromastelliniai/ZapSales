@@ -390,6 +390,15 @@ const schema = z.object({
   JOB_QUEUE_RETENTION_DAYS: z.string().optional().default(""),
   AUDIT_LOG_RETENTION_DAYS: z.string().optional().default(""),
   /**
+   * Treino do agente por site (issue #93). Limites da leitura de páginas: quantas por
+   * fonte, bytes por página e prazo por página. `z.string()` pela mesma razão das
+   * variáveis acima: valor ausente, zero ou ilegível NUNCA derruba o app — a leitura
+   * (`limitesDoSite`, `lib/ai/rag/ingest/site.ts`) volta ao padrão (20 / 2 MB / 15 s).
+   */
+  KB_SITE_MAX_PAGES: z.string().optional().default(""),
+  KB_SITE_MAX_BYTES: z.string().optional().default(""),
+  KB_SITE_TIMEOUT_MS: z.string().optional().default(""),
+  /**
    * Conversa da equipe com a IA sobre um caso (migration 0281). `z.string()`
    * pela MESMA razão das duas acima: `lib/env.ts` lança na primeira requisição
    * e o healthcheck é TCP — um `z.coerce.number()` aqui transformaria

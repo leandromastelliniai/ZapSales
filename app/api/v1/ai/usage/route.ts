@@ -115,15 +115,22 @@ export async function GET(req: NextRequest): Promise<Response> {
   const invRows = ((invRowsRaw ?? []) as unknown as Array<{
     created_at: string; purpose: string | null; cost_cents: number | null;
     input_tokens: number | null; output_tokens: number | null; latency_ms: number | null;
-  }>).map((r) => ({
-    created_at: r.created_at,
-    invocation_kind: r.purpose ?? "turno",
-    cost_cents: r.cost_cents,
-    prompt_tokens: r.input_tokens,
-    completion_tokens: r.output_tokens,
-    total_tokens: (r.input_tokens ?? 0) + (r.output_tokens ?? 0),
-    latency_ms: r.latency_ms,
-  }));
+  }>).map((r) => {
+    // A voz (`voice_reply`, resposta em áudio — #91) cobra por CARACTERE: a coluna de
+    // tokens guarda os caracteres convertidos, e somá-los aos tokens dos modelos
+    // inflaria o total. O CUSTO e a contagem por tipo entram normalmente; os
+    // caracteres ficam no cartão de Provedores › Resposta em áudio.
+    const ehVoz = r.purpose === "voice_reply";
+    return {
+      created_at: r.created_at,
+      invocation_kind: r.purpose ?? "turno",
+      cost_cents: r.cost_cents,
+      prompt_tokens: ehVoz ? 0 : r.input_tokens,
+      completion_tokens: ehVoz ? 0 : r.output_tokens,
+      total_tokens: ehVoz ? 0 : (r.input_tokens ?? 0) + (r.output_tokens ?? 0),
+      latency_ms: r.latency_ms,
+    };
+  });
 
   // ---- 2. inbound messages per day ----------------------------------------
   const dailyInbounds = new Map<string, number>();

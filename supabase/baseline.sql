@@ -7637,10 +7637,9 @@ create table if not exists org_memory_entries (
 create index if not exists idx_org_memory_entries_org_status
   on org_memory_entries (organization_id, status, created_at);
 
--- Flywheel: novo destino de proposta (entry de memória da org).
-alter table flywheel_distiller_proposals drop constraint if exists flywheel_distiller_proposals_type_check;
-alter table flywheel_distiller_proposals add constraint flywheel_distiller_proposals_type_check
-  check (type in ('playbook_bullet', 'golden_case', 'reentry_trigger', 'org_memory_entry'));
+-- Flywheel: novo destino de proposta (entry de memória da org). O valor 'org_memory_entry'
+-- do CHECK de `type` já está no bloco único da migration 0547 (fim do arquivo), que traz o
+-- vocabulário final — a constraint não é reconstruída aqui.
 
 -- RLS (mesmo shape do loop tenant_isolation_* do baseline).
 -- A rotina da migration 0325 no lugar do laço enumerado: ela varre o catálogo
@@ -10011,6 +10010,13 @@ alter table public.agent_inbox_items
     -- atendimento grátis do mês, no fuso da conta. Um aviso por número, mês e
     -- limiar (o título leva os três), aberto pelo webhook de status da Meta.
     'atendimento_gratis_do_numero',
+    -- (migration 0551, issue #94) A chamada de uma ferramenta externa do agente falhou
+    -- (o outro sistema caiu, recusou, demorou). O agente ja foi avisado de que nao deve
+    -- afirmar o que dependia da consulta; este aviso e o que o DONO vê.
+    'external_tool_failed',
+    -- (migration 0552, issue #95) Uma ferramenta externa do agente quer EXECUTAR algo e espera
+    -- um humano aprovar ou recusar. O item carrega o que o agente quer fazer e os dados.
+    'external_tool_approval',
     'other'
   ));
 
@@ -45588,6 +45594,590 @@ create trigger trg_messages_midia_citada
   when (new.media_storage_path is not null)
   execute function public.fn_midia_citada_sai_da_fila();
 
+-- ---- resposta em áudio: a chave de voz e a opção por agente (migration 0548) ----
+-- Tabela server-side only (RLS sem policies, grants só ao service_role, chave cifrada),
+-- três colunas em ai_agent_versions e a trava de imutabilidade cobrindo-as. Fica ANTES
+-- da VARREDURA anon porque redefine uma função (create or replace); não cria função nova.
+create table if not exists public.voice_provider_credentials (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  provider text not null,
+  api_key_encrypted bytea not null,
+  -- Para a tela reconhecer QUAL chave está gravada sem ver a chave.
+  api_key_last4 text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  updated_by uuid,
+  constraint voice_provider_credentials_provider_conhecido
+    check (provider in ('openai_compativel', 'elevenlabs'))
+);
+
+-- Uma chave por provedor por organização: trocar é gravar de novo (upsert).
+create unique index if not exists voice_provider_credentials_org_provider_uk
+  on public.voice_provider_credentials (organization_id, provider);
+
+comment on table public.voice_provider_credentials is
+  'Chave de voz da organização (resposta em áudio do agente): provedor compatível com a API de fala da OpenAI, ou ElevenLabs. Opcional. Server-side only: RLS ligada sem policies e grants revogados de anon/authenticated. A chave nunca volta ao browser.';
+comment on column public.voice_provider_credentials.api_key_encrypted is
+  'Cifrado por fn_encrypt_oauth (pgp_sym/aes256), a mesma cifra de channel_sessions, ad_platform_connections e map_provider_credentials.';
+
+alter table public.voice_provider_credentials enable row level security;
+revoke all on public.voice_provider_credentials from anon, authenticated;
+grant select, insert, update, delete on public.voice_provider_credentials to service_role;
+
+drop trigger if exists trg_voice_provider_credentials_updated_at on public.voice_provider_credentials;
+create trigger trg_voice_provider_credentials_updated_at
+  before update on public.voice_provider_credentials
+  for each row execute function public.fn_set_updated_at();
+
+-- ─── Por agente ─────────────────────────────────────────────────────────────
+
+alter table public.ai_agent_versions
+  add column if not exists audio_reply_enabled boolean not null default false,
+  add column if not exists audio_reply_voice_id text,
+  add column if not exists audio_reply_model_id text;
+
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_audio_reply_voice_len;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_audio_reply_voice_len
+  check (audio_reply_voice_id is null or char_length(audio_reply_voice_id) between 1 and 120);
+
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_audio_reply_model_len;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_audio_reply_model_len
+  check (audio_reply_model_id is null or char_length(audio_reply_model_id) between 1 and 120);
+
+comment on column public.ai_agent_versions.audio_reply_enabled is
+  'Responder em áudio (nota de voz) quando o cliente mandar áudio. Padrão desligado. Só vale com o interruptor da organização ligado (organizations.settings.resposta_em_audio) e uma chave de voz gravada. O texto da resposta é sempre gravado na conversa; falha de voz cai em texto.';
+comment on column public.ai_agent_versions.audio_reply_voice_id is
+  'A voz do agente, escolhida na lista que o provedor devolve para a chave da organização (ElevenLabs). Nulo = a voz padrão da organização.';
+comment on column public.ai_agent_versions.audio_reply_model_id is
+  'O modelo de voz do agente (ex.: o modelo multilíngue da ElevenLabs). Nulo = o modelo padrão da organização.';
+
+-- ─── A trava de imutabilidade passa a cobrir as colunas novas ───────────────
+-- Corpo idêntico ao da 0503, mais as três colunas de áudio. O invariante
+-- `tests/unit/trigger-imutavel-cobre-todas-as-colunas-de-conteudo.test.ts`
+-- compara a ÚLTIMA definição que vale contra o conjunto de conteúdo.
+
+-- ---- perfil guiado do agente e temperatura funcional (migration 0546) ----
+-- Colunas da versão (NULL = sem perfil / padrão do modelo) + a trava de
+-- imutabilidade cobrindo-as. Fica ANTES da varredura de anon porque redefine uma
+-- função. Idempotente: add column if not exists e drop constraint if exists
+-- antes de cada add constraint.
+alter table public.ai_agent_versions
+  add column if not exists profile_persona   text,
+  add column if not exists profile_tone      text,
+  add column if not exists profile_objective text,
+  add column if not exists profile_welcome   text,
+  add column if not exists profile_language  text,
+  add column if not exists temperature       numeric(3,2);
+
+-- Vocabulário FECHADO em text + CHECK (não enum): tom em três níveis e os três
+-- idiomas do produto. Os mesmos valores vivem em lib/ai/agents/perfil.ts
+-- (TONS_DO_AGENTE, IDIOMAS_DO_AGENTE), e o invariante
+-- tests/invariants/vocabulario-banco-x-typescript.test.ts cobra as duas listas.
+-- Cada `add constraint` vem logo depois do seu `drop ... if exists`: é o que torna
+-- a migration reaplicável (o update.sh de quem já aplicou a 0546 roda o apêndice
+-- do baseline de novo).
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_profile_tone_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_profile_tone_check
+  check (profile_tone is null or profile_tone = any (array['formal','normal','descontraido']));
+
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_profile_language_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_profile_language_check
+  check (profile_language is null or profile_language = any (array['pt-BR','es','en']));
+
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_profile_persona_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_profile_persona_check
+  check (profile_persona is null or char_length(profile_persona) <= 600);
+
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_profile_objective_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_profile_objective_check
+  check (profile_objective is null or char_length(profile_objective) <= 600);
+
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_profile_welcome_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_profile_welcome_check
+  check (profile_welcome is null or char_length(profile_welcome) <= 500);
+
+-- 0..1: a faixa que TODOS os provedores aceitam (a Anthropic recusa/trunca acima de 1).
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_temperature_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_temperature_check
+  check (temperature is null or (temperature >= 0 and temperature <= 1));
+
+comment on column public.ai_agent_versions.profile_persona is
+  'Perfil guiado (migration 0546): quem o agente é. NULL = sem perfil — o agente recebe só o prompt livre, exatamente como antes.';
+comment on column public.ai_agent_versions.profile_tone is
+  'Perfil guiado: tom de voz em três níveis fechados (formal, normal, descontraido). NULL = não definido.';
+comment on column public.ai_agent_versions.profile_objective is
+  'Perfil guiado: o que o agente persegue na conversa, em uma ou duas frases.';
+comment on column public.ai_agent_versions.profile_welcome is
+  'Perfil guiado: mensagem de boas-vindas para contato novo.';
+comment on column public.ai_agent_versions.profile_language is
+  'Perfil guiado: idioma em que o agente responde (pt-BR, es, en). NULL = não definido.';
+comment on column public.ai_agent_versions.temperature is
+  'Temperatura enviada ao modelo nas respostas deste agente (0 a 1). NULL = padrão do modelo (ou a da organização, se ela configurou uma). É o ÚNICO lugar do valor: o campo ai_agents.config.temperature era decorativo e saiu.';
+
+-- A trava de imutabilidade da versão publicada cobre as seis colunas novas
+-- (o invariante tests/unit/trigger-imutavel-cobre-todas-as-colunas-de-conteudo.test.ts
+-- reprova coluna de conteúdo que ficar de fora).
+create or replace function fn_ai_agent_version_content_immutable() returns trigger
+-- search_path fixo na PRÓPRIA definição: um create or replace sem a cláusula
+-- apaga o alter function ... set search_path da 0521 (invariante
+-- tests/invariants/avisos-do-security-advisor.test.ts).
+language plpgsql set search_path = '' as $fn$
+begin
+  if old.status <> 'draft' and (
+       new.system_prompt          is distinct from old.system_prompt
+    or new.provider               is distinct from old.provider
+    or new.model                  is distinct from old.model
+    or new.credential_id          is distinct from old.credential_id
+    or new.tool_ids               is distinct from old.tool_ids
+    or new.trigger_config         is distinct from old.trigger_config
+    or new.channel_session_id     is distinct from old.channel_session_id
+    or new.max_steps              is distinct from old.max_steps
+    or new.token_budget           is distinct from old.token_budget
+    or new.cost_budget_cents      is distinct from old.cost_budget_cents
+    or new.history_message_window is distinct from old.history_message_window
+    or new.history_token_window   is distinct from old.history_token_window
+    or new.handoff_keywords       is distinct from old.handoff_keywords
+    or new.handoff_tool_enabled   is distinct from old.handoff_tool_enabled
+    or new.followup               is distinct from old.followup
+    or new.multimodal_input       is distinct from old.multimodal_input
+    or new.video_frames_enabled   is distinct from old.video_frames_enabled
+    or new.split_messages         is distinct from old.split_messages
+    or new.split_max_chars        is distinct from old.split_max_chars
+    or new.cases_enabled          is distinct from old.cases_enabled
+    or new.operator_enabled       is distinct from old.operator_enabled
+    or new.operator_model         is distinct from old.operator_model
+    or new.operator_tool_ids      is distinct from old.operator_tool_ids
+    or new.pipeline_ids           is distinct from old.pipeline_ids
+    or new.knowledge_source_ids   is distinct from old.knowledge_source_ids
+    or new.proposal_ai_draft_enabled is distinct from old.proposal_ai_draft_enabled
+    or new.inbound_debounce_ms    is distinct from old.inbound_debounce_ms
+    or new.audio_reply_enabled    is distinct from old.audio_reply_enabled
+    or new.audio_reply_voice_id   is distinct from old.audio_reply_voice_id
+    or new.audio_reply_model_id   is distinct from old.audio_reply_model_id
+    or new.profile_persona        is distinct from old.profile_persona
+    or new.profile_tone           is distinct from old.profile_tone
+    or new.profile_objective      is distinct from old.profile_objective
+    or new.profile_welcome        is distinct from old.profile_welcome
+    or new.profile_language       is distinct from old.profile_language
+    or new.temperature            is distinct from old.temperature
+    or new.version_number         is distinct from old.version_number
+    or new.agent_id               is distinct from old.agent_id
+    or new.organization_id        is distinct from old.organization_id
+  ) then
+    raise exception 'ai_agent_versions % é imutável (status=%): mudança de conteúdo = versão draft nova; rollback = revert (clona + publica)',
+      old.id, old.status;
+  end if;
+  return new;
+end;
+$fn$;
+
+drop trigger if exists trg_ai_agent_versions_content_immutable on public.ai_agent_versions;
+create trigger trg_ai_agent_versions_content_immutable
+  before update on public.ai_agent_versions
+  for each row execute function fn_ai_agent_version_content_immutable();
+
+notify pgrst, 'reload schema';
+
+-- ---- restringir temas do agente (migration 0549) ----
+-- ═══ Restringir temas do agente (0549, issue #92) ═══
+--
+-- Uma chave por agente com a lista de assuntos permitidos e a resposta padrão para
+-- o que está fora. É dado da VERSÃO — rascunho, diff, histórico e desfazer valem
+-- para ela como valem para o prompt e para o perfil guiado (0546) — e o que o
+-- modelo recebe é a composição (lib/ai/agents/perfil.ts, `comporInstrucoes`).
+--
+-- Não cria uma 12ª conferência antes do envio e não altera nenhuma das 11: a
+-- restrição é instrução ao modelo, aplicada na composição. O pedido de atendente
+-- humano e o opt-out são declarados exceção ali, e seguem tendo os seus caminhos.
+--
+-- ADITIVA E SEM BACKFILL, de propósito: a chave nasce `false`, a lista nasce
+-- vazia e a resposta nasce NULL. Agente existente recebe exatamente o que
+-- recebia até alguém editá-lo — nenhuma linha antiga é tocada, então não há dado
+-- a corrigir antes das constraints.
+--
+-- Colunas e não um jsonb: a UI e o diff leriam path de jsonb direto sem schema
+-- central (anti-pattern 6), e os vizinhos da versão já são colunas tipadas.
+-- Nenhuma função NOVA em `public` (só o `create or replace` de uma que já
+-- existia), então o item 9 da doutrina de migrations não é acionado.
+
+alter table public.ai_agent_versions
+  add column if not exists restrict_topics boolean not null default false,
+  add column if not exists allowed_topics  text[]  not null default '{}',
+  add column if not exists off_topic_reply text;
+
+-- Os tetos vivem em lib/ai/agents/perfil.ts (LIMITES_DOS_TEMAS) e no Zod; o
+-- tamanho de CADA assunto (120) é checado só no Zod, porque CHECK não olha dentro
+-- de array sem função auxiliar e o banco não precisa ser mais estrito que a API.
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_allowed_topics_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_allowed_topics_check
+  check (cardinality(allowed_topics) <= 20);
+
+alter table public.ai_agent_versions drop constraint if exists ai_agent_versions_off_topic_reply_check;
+alter table public.ai_agent_versions
+  add constraint ai_agent_versions_off_topic_reply_check
+  check (off_topic_reply is null or char_length(off_topic_reply) <= 500);
+
+comment on column public.ai_agent_versions.restrict_topics is
+  'Restringir temas (migration 0549): quando true E allowed_topics não está vazia, o agente só conversa sobre esses assuntos. Padrão false. Não é uma conferência antes do envio: entra na composição das instruções.';
+comment on column public.ai_agent_versions.allowed_topics is
+  'Assuntos permitidos (até 20, até 120 caracteres cada, validado no Zod). Só vale com restrict_topics ligada.';
+comment on column public.ai_agent_versions.off_topic_reply is
+  'Resposta padrão para o que está fora dos assuntos permitidos. NULL = o agente recusa com educação, no próprio tom.';
+
+-- A trava de imutabilidade da versão publicada cobre as três colunas novas
+-- (o invariante tests/unit/trigger-imutavel-cobre-todas-as-colunas-de-conteudo.test.ts
+-- reprova coluna de conteúdo que ficar de fora). Corpo idêntico ao da 0548.
+create or replace function fn_ai_agent_version_content_immutable() returns trigger
+-- search_path fixo na PRÓPRIA definição: um create or replace sem a cláusula
+-- apaga o alter function ... set search_path da 0521 (invariante
+-- tests/invariants/avisos-do-security-advisor.test.ts).
+language plpgsql set search_path = '' as $fn$
+begin
+  if old.status <> 'draft' and (
+       new.system_prompt          is distinct from old.system_prompt
+    or new.provider               is distinct from old.provider
+    or new.model                  is distinct from old.model
+    or new.credential_id          is distinct from old.credential_id
+    or new.tool_ids               is distinct from old.tool_ids
+    or new.trigger_config         is distinct from old.trigger_config
+    or new.channel_session_id     is distinct from old.channel_session_id
+    or new.max_steps              is distinct from old.max_steps
+    or new.token_budget           is distinct from old.token_budget
+    or new.cost_budget_cents      is distinct from old.cost_budget_cents
+    or new.history_message_window is distinct from old.history_message_window
+    or new.history_token_window   is distinct from old.history_token_window
+    or new.handoff_keywords       is distinct from old.handoff_keywords
+    or new.handoff_tool_enabled   is distinct from old.handoff_tool_enabled
+    or new.followup               is distinct from old.followup
+    or new.multimodal_input       is distinct from old.multimodal_input
+    or new.video_frames_enabled   is distinct from old.video_frames_enabled
+    or new.split_messages         is distinct from old.split_messages
+    or new.split_max_chars        is distinct from old.split_max_chars
+    or new.cases_enabled          is distinct from old.cases_enabled
+    or new.operator_enabled       is distinct from old.operator_enabled
+    or new.operator_model         is distinct from old.operator_model
+    or new.operator_tool_ids      is distinct from old.operator_tool_ids
+    or new.pipeline_ids           is distinct from old.pipeline_ids
+    or new.knowledge_source_ids   is distinct from old.knowledge_source_ids
+    or new.proposal_ai_draft_enabled is distinct from old.proposal_ai_draft_enabled
+    or new.inbound_debounce_ms    is distinct from old.inbound_debounce_ms
+    or new.audio_reply_enabled    is distinct from old.audio_reply_enabled
+    or new.audio_reply_voice_id   is distinct from old.audio_reply_voice_id
+    or new.audio_reply_model_id   is distinct from old.audio_reply_model_id
+    or new.profile_persona        is distinct from old.profile_persona
+    or new.profile_tone           is distinct from old.profile_tone
+    or new.profile_objective      is distinct from old.profile_objective
+    or new.profile_welcome        is distinct from old.profile_welcome
+    or new.profile_language       is distinct from old.profile_language
+    or new.temperature            is distinct from old.temperature
+    or new.restrict_topics        is distinct from old.restrict_topics
+    or new.allowed_topics         is distinct from old.allowed_topics
+    or new.off_topic_reply        is distinct from old.off_topic_reply
+    or new.version_number         is distinct from old.version_number
+    or new.agent_id               is distinct from old.agent_id
+    or new.organization_id        is distinct from old.organization_id
+  ) then
+    raise exception 'ai_agent_versions % é imutável (status=%): mudança de conteúdo = versão draft nova; rollback = revert (clona + publica)',
+      old.id, old.status;
+  end if;
+  return new;
+end;
+$fn$;
+
+drop trigger if exists trg_ai_agent_versions_content_immutable on public.ai_agent_versions;
+create trigger trg_ai_agent_versions_content_immutable
+  before update on public.ai_agent_versions
+  for each row execute function fn_ai_agent_version_content_immutable();
+
+notify pgrst, 'reload schema';
+
+-- ---- ferramentas externas do agente: o webhook de consulta (migration 0551) ----
+-- Aditiva e idempotente. Tabela server-side only (a chave de assinatura é cifrada), a coluna
+-- por versao do agente e a trava de imutabilidade que passa a cobri-la. O aviso
+-- `external_tool_failed` entra na lista UNICA de `agent_inbox_items_kind_check` (acima).
+create table if not exists public.agent_external_tools (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  -- O que a pessoa lê e escreve.
+  name text not null,
+  -- O identificador que o MODELO usa (`ext_<slug>`); derivado do nome, único por
+  -- organização, e nunca digitado pela pessoa.
+  slug text not null,
+  when_to_use text not null,
+  url text not null,
+  -- [{ nome, tipo, descricao, obrigatorio }] — o esquema dos dados que o agente
+  -- preenche. Lido por um Zod central (`lib/ai/ferramentas-externas/esquema.ts`).
+  parameters jsonb not null default '[]'::jsonb,
+  effect text not null default 'consulta',
+  active boolean not null default true,
+  signing_secret_encrypted bytea not null,
+  -- Para a tela reconhecer QUAL chave está gravada sem ver a chave.
+  signing_secret_last4 text not null,
+  created_by uuid,
+  updated_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint agent_external_tools_effect_check check (effect in ('consulta', 'altera')),
+  constraint agent_external_tools_altera_so_inativa check (effect = 'consulta' or active = false),
+  constraint agent_external_tools_slug_check check (slug ~ '^[a-z][a-z0-9_]{0,35}$'),
+  constraint agent_external_tools_name_len check (char_length(name) between 3 and 60),
+  constraint agent_external_tools_when_len check (char_length(when_to_use) between 10 and 600),
+  constraint agent_external_tools_url_len check (char_length(url) between 8 and 2000),
+  constraint agent_external_tools_parameters_check
+    check (jsonb_typeof(parameters) = 'array' and jsonb_array_length(parameters) <= 10)
+);
+
+-- Um identificador por organização: o modelo chama pelo nome, e dois iguais
+-- tornariam a chamada ambígua.
+create unique index if not exists agent_external_tools_org_slug_uk
+  on public.agent_external_tools (organization_id, slug);
+
+comment on table public.agent_external_tools is
+  'Ferramenta externa do agente (issue #94): um webhook de CONSULTA que o agente chama no meio da conversa. Por organização. Server-side only: RLS ligada sem policies e grants revogados de anon/authenticated; a chave de assinatura nunca volta ao browser.';
+comment on column public.agent_external_tools.slug is
+  'O identificador que o modelo vê (ext_<slug>). Derivado do nome, único por organização.';
+comment on column public.agent_external_tools.signing_secret_encrypted is
+  'Cifrado por fn_encrypt_oauth (pgp_sym/aes256), a mesma cifra de channel_sessions, ad_platform_connections, map_provider_credentials e voice_provider_credentials. Assina cada chamada (HMAC-SHA256) para o sistema receptor verificar.';
+comment on column public.agent_external_tools.effect is
+  'consulta = só lê (roda sem aprovação, pode ter nova tentativa). altera = muda algo no outro sistema: só pode existir inativa nesta etapa (check agent_external_tools_altera_so_inativa).';
+
+alter table public.agent_external_tools enable row level security;
+revoke all on public.agent_external_tools from anon, authenticated;
+grant select, insert, update, delete on public.agent_external_tools to service_role;
+
+drop trigger if exists trg_agent_external_tools_updated_at on public.agent_external_tools;
+create trigger trg_agent_external_tools_updated_at
+  before update on public.agent_external_tools
+  for each row execute function public.fn_set_updated_at();
+
+-- ─── Por agente (dado da versão) ────────────────────────────────────────────
+
+alter table public.ai_agent_versions
+  add column if not exists external_tool_ids uuid[] not null default '{}';
+
+comment on column public.ai_agent_versions.external_tool_ids is
+  'Ferramentas externas (agent_external_tools) que esta versão do agente pode chamar. Vazio = nenhuma. Soma com tool_ids no teto de 27 capacidades por agente. Quem confere que a ferramenta existe e é desta organização é o servidor (sem FK: array).';
+
+-- ─── A trava de imutabilidade passa a cobrir a coluna nova ──────────────────
+-- Corpo idêntico ao da 0548 (resposta em áudio), mais `external_tool_ids`. O
+-- invariante `tests/unit/trigger-imutavel-cobre-todas-as-colunas-de-conteudo.test.ts`
+-- compara a ÚLTIMA definição que vale contra o conjunto de conteúdo.
+
+create or replace function fn_ai_agent_version_content_immutable() returns trigger
+-- search_path fixo na PRÓPRIA definição: um create or replace sem a cláusula
+-- apaga o alter function ... set search_path da 0521 (invariante
+-- tests/invariants/avisos-do-security-advisor.test.ts).
+language plpgsql set search_path = '' as $fn$
+begin
+  if old.status <> 'draft' and (
+       new.system_prompt          is distinct from old.system_prompt
+    or new.provider               is distinct from old.provider
+    or new.model                  is distinct from old.model
+    or new.credential_id          is distinct from old.credential_id
+    or new.tool_ids               is distinct from old.tool_ids
+    or new.trigger_config         is distinct from old.trigger_config
+    or new.channel_session_id     is distinct from old.channel_session_id
+    or new.max_steps              is distinct from old.max_steps
+    or new.token_budget           is distinct from old.token_budget
+    or new.cost_budget_cents      is distinct from old.cost_budget_cents
+    or new.history_message_window is distinct from old.history_message_window
+    or new.history_token_window   is distinct from old.history_token_window
+    or new.handoff_keywords       is distinct from old.handoff_keywords
+    or new.handoff_tool_enabled   is distinct from old.handoff_tool_enabled
+    or new.followup               is distinct from old.followup
+    or new.multimodal_input       is distinct from old.multimodal_input
+    or new.video_frames_enabled   is distinct from old.video_frames_enabled
+    or new.split_messages         is distinct from old.split_messages
+    or new.split_max_chars        is distinct from old.split_max_chars
+    or new.cases_enabled          is distinct from old.cases_enabled
+    or new.operator_enabled       is distinct from old.operator_enabled
+    or new.operator_model         is distinct from old.operator_model
+    or new.operator_tool_ids      is distinct from old.operator_tool_ids
+    or new.pipeline_ids           is distinct from old.pipeline_ids
+    or new.knowledge_source_ids   is distinct from old.knowledge_source_ids
+    or new.external_tool_ids      is distinct from old.external_tool_ids
+    or new.proposal_ai_draft_enabled is distinct from old.proposal_ai_draft_enabled
+    or new.inbound_debounce_ms    is distinct from old.inbound_debounce_ms
+    or new.audio_reply_enabled    is distinct from old.audio_reply_enabled
+    or new.audio_reply_voice_id   is distinct from old.audio_reply_voice_id
+    or new.audio_reply_model_id   is distinct from old.audio_reply_model_id
+    or new.profile_persona        is distinct from old.profile_persona
+    or new.profile_tone           is distinct from old.profile_tone
+    or new.profile_objective      is distinct from old.profile_objective
+    or new.profile_welcome        is distinct from old.profile_welcome
+    or new.profile_language       is distinct from old.profile_language
+    or new.temperature            is distinct from old.temperature
+    or new.restrict_topics        is distinct from old.restrict_topics
+    or new.allowed_topics         is distinct from old.allowed_topics
+    or new.off_topic_reply        is distinct from old.off_topic_reply
+    or new.version_number         is distinct from old.version_number
+    or new.agent_id               is distinct from old.agent_id
+    or new.organization_id        is distinct from old.organization_id
+  ) then
+    raise exception 'ai_agent_versions % é imutável (status=%): mudança de conteúdo = versão draft nova; rollback = revert (clona + publica)',
+      old.id, old.status;
+  end if;
+  return new;
+end;
+$fn$;
+
+drop trigger if exists trg_ai_agent_versions_content_immutable on public.ai_agent_versions;
+create trigger trg_ai_agent_versions_content_immutable
+  before update on public.ai_agent_versions
+  for each row execute function fn_ai_agent_version_content_immutable();
+
+notify pgrst, 'reload schema';
+
+
+-- ---- aprovação das ações externas do agente (migration 0552) ----
+-- Aditiva e idempotente. O aviso `external_tool_approval` entra na lista UNICA de
+-- `agent_inbox_items_kind_check` (acima), e não aqui.
+-- 0552 — Aprovação das ações externas do agente.
+--
+-- A #94 deixou o agente CONSULTAR um sistema externo. Esta etapa deixa-o AGIR (criar
+-- pedido, cadastrar em outro sistema) com a proteção de que NADA altera o mundo sem
+-- aprovação por padrão.
+--
+--   * `agent_external_tools.require_approval` — a chave «pedir aprovação». NULA = a
+--     pessoa nunca mexeu: vale o padrão do efeito (altera pede, consulta não). O padrão
+--     seguro mora no NULL e não num `default`: uma linha escrita por fora da tela, sem a
+--     chave, continua pedindo aprovação quando altera. `true`/`false` é decisão explícita
+--     de quem cadastra.
+--   * `agent_external_tools.approval_ttl_hours` — quanto o pedido espera por um humano
+--     (padrão 24 h, de 1 a 168).
+--   * A trava `agent_external_tools_altera_so_inativa` (0551) SAI: era o chão provisório
+--     «altera só existe inativa» que esta etapa existe para retirar. Linhas existentes
+--     não mudam (nenhuma altera ativa pôde existir).
+--   * `agent_external_tool_requests` — o PEDIDO de execução. É o que a Central mostra
+--     («o que o agente quer executar e os dados»), o que um humano aprova ou recusa, e o
+--     que impede o segundo efeito:
+--       - `pending → executing` é um UPDATE condicional (`where status = 'pending'`): só
+--         UM clique, UMA repetição do modelo ou UMA rodada vence; os outros leem 0 linhas.
+--         É a «execução única por pedido».
+--       - o índice único parcial reconhece a MESMA chamada (organização, ferramenta,
+--         conversa, impressão digital dos dados) enquanto ela está viva: o modelo que
+--         repete a chamada reencontra o pedido em vez de abrir outro.
+--       - `uncertain` registra que a chamada falhou e o outro sistema PODE ter feito:
+--         uma ação que altera não é repetida sozinha nesse caso.
+--     Server-side only como `agent_external_tools`: RLS ligada, zero policies, grants
+--     revogados de anon/authenticated. Quem lê e escreve é o servidor, com o filtro de
+--     organização à mão. Os dados que o agente preencheu ficam em `arguments` (a execução
+--     precisa deles); a Central e a auditoria mostram só um RESUMO sem segredos.
+--   * `agent_inbox_items.kind = 'external_tool_approval'` — o item na Central com os
+--     botões de aprovar e recusar.
+--
+-- Função NOVA em `public`: nenhuma ⇒ o item 9 da doutrina de migrations não é acionado.
+-- Sem FK para `contacts` (só para a conversa, `on delete set null`): a tabela não entra
+-- na varredura de LGPD de «quem guarda pessoa», e as colunas não carregam nome de
+-- conteúdo pessoal.
+
+alter table public.agent_external_tools
+  add column if not exists require_approval boolean,
+  add column if not exists approval_ttl_hours integer not null default 24;
+
+alter table public.agent_external_tools
+  drop constraint if exists agent_external_tools_altera_so_inativa;
+
+alter table public.agent_external_tools
+  drop constraint if exists agent_external_tools_ttl_check;
+alter table public.agent_external_tools
+  add constraint agent_external_tools_ttl_check check (approval_ttl_hours between 1 and 168);
+
+comment on column public.agent_external_tools.effect is
+  'consulta = só lê. altera = muda algo no outro sistema; nunca é repetida sozinha e, por padrão, espera aprovação (require_approval).';
+comment on column public.agent_external_tools.require_approval is
+  'A chave «pedir aprovação». NULL = padrão do efeito (altera pede, consulta não). true/false = decisão explícita de quem cadastra. No modo Assistido toda ferramenta espera, qualquer que seja o valor.';
+comment on column public.agent_external_tools.approval_ttl_hours is
+  'Horas que um pedido desta ferramenta espera por um humano antes de expirar (1 a 168; padrão 24).';
+
+create table if not exists public.agent_external_tool_requests (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  tool_id uuid not null references public.agent_external_tools(id) on delete cascade,
+  agent_id uuid,
+  conversation_id uuid references public.conversations(id) on delete set null,
+  -- Onde o pedido nasceu: um turno de atendimento ao vivo ou um rascunho do modo Assistido.
+  origin text not null default 'live',
+  status text not null default 'pending',
+  -- Os dados que o agente preencheu, JÁ validados contra o esquema da ferramenta.
+  arguments jsonb not null default '{}'::jsonb,
+  -- Impressão digital canônica dos dados (sha256): reconhece a mesma chamada repetida.
+  arguments_hash text not null,
+  -- A chamada falhou e o outro sistema pode ter feito a alteração (prazo, rede, 5xx).
+  uncertain boolean not null default false,
+  inbox_item_id uuid references public.agent_inbox_items(id) on delete set null,
+  expires_at timestamptz not null,
+  decided_by uuid,
+  decided_at timestamptz,
+  executed_at timestamptz,
+  outcome_http_status integer,
+  outcome_reason text,
+  -- O que o outro sistema devolveu numa execução bem-sucedida (até 4.000 caracteres): é com isto
+  -- que o agente lê o resultado de uma ação aprovada, quando repete a chamada — como DADO NÃO
+  -- CONFIÁVEL, no canal de resultado de ferramenta, nunca no prompt.
+  outcome_content text,
+  -- Quando os DADOS (arguments, outcome_content) foram apagados pela poda de 90 dias (LGPD). A linha,
+  -- o estado e o desfecho ficam.
+  data_pruned_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint agent_external_tool_requests_content_len check (outcome_content is null or char_length(outcome_content) <= 4000),
+  constraint agent_external_tool_requests_origin_check check (origin in ('live', 'assisted')),
+  constraint agent_external_tool_requests_status_check
+    check (status in ('pending', 'executing', 'executed', 'failed', 'rejected', 'expired')),
+  constraint agent_external_tool_requests_arguments_check check (jsonb_typeof(arguments) = 'object'),
+  constraint agent_external_tool_requests_hash_check check (char_length(arguments_hash) = 64)
+);
+
+-- A MESMA chamada, viva, uma vez só: enquanto está pendente ou executando, o modelo que a
+-- repete (ou dois turnos concorrentes) reencontra o pedido. A conversa nula conta como um
+-- valor só (turno sem conversa).
+create unique index if not exists agent_external_tool_requests_viva_uk
+  on public.agent_external_tool_requests (
+    organization_id, tool_id, coalesce(conversation_id, '00000000-0000-0000-0000-000000000000'::uuid), arguments_hash
+  )
+  where status in ('pending', 'executing');
+
+-- O cron de expiração e a Central leem os pendentes por prazo.
+create index if not exists agent_external_tool_requests_pendentes_idx
+  on public.agent_external_tool_requests (expires_at)
+  where status = 'pending';
+
+-- O bloco «pedidos desta conversa» que o agente lê no turno.
+create index if not exists agent_external_tool_requests_conversa_idx
+  on public.agent_external_tool_requests (organization_id, conversation_id, created_at desc);
+
+comment on table public.agent_external_tool_requests is
+  'Pedido de execução de uma ferramenta externa do agente (issue #95): o que o agente quer executar, com os dados, e o desfecho. pending → executing (UPDATE condicional = execução única) → executed/failed; ou rejected/expired. Server-side only: RLS ligada sem policies e grants revogados de anon/authenticated.';
+comment on column public.agent_external_tool_requests.uncertain is
+  'A chamada falhou e o outro sistema PODE ter feito a alteração (prazo, rede, 5xx). Ação que altera não é repetida sozinha nesse caso.';
+comment on column public.agent_external_tool_requests.outcome_content is
+  'O que o outro sistema devolveu numa execução bem-sucedida (até 4.000 caracteres). Volta ao agente como dado não confiável quando ele repete a chamada.';
+comment on column public.agent_external_tool_requests.arguments is
+  'Os dados que o agente preencheu (a execução precisa deles). A Central e a auditoria mostram só um resumo sem segredos.';
+
+alter table public.agent_external_tool_requests enable row level security;
+revoke all on public.agent_external_tool_requests from anon, authenticated;
+grant select, insert, update, delete on public.agent_external_tool_requests to service_role;
+
+drop trigger if exists trg_agent_external_tool_requests_updated_at on public.agent_external_tool_requests;
+create trigger trg_agent_external_tool_requests_updated_at
+  before update on public.agent_external_tool_requests
+  for each row execute function public.fn_set_updated_at();
+
+notify pgrst, 'reload schema';
+
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ DE PROPÓSITO, NENHUMA FUNÇÃO É CRIADA DEPOIS DESTE BLOCO. Apêndice que cria
@@ -47753,5 +48343,271 @@ create index if not exists idx_passagens_de_atendimento_agente
 
 comment on column public.passagens_de_atendimento.agente_id is
   'O agente de IA que passou a conversa para uma pessoa (migration 0545). Nulo em passagens antigas ou sem agente resolvido; a Inbox então diz só "IA".';
+
+notify pgrst, 'reload schema';
+
+-- ---- correção de resposta vira proposta (migration 0547) ----
+-- Aditiva: a correção escrita na aba Teste ou em Execuções nasce como proposta
+-- pendente, presa ao agente de que fala. Nulo em `agent_id` = proposta da
+-- organização (as do flywheel). O tipo novo entra no CHECK; nenhum dado existente
+-- viola a lista mais larga.
+alter table public.flywheel_distiller_proposals
+  add column if not exists agent_id uuid references public.ai_agents(id) on delete cascade;
+
+create index if not exists idx_flywheel_distiller_proposals_agent
+  on public.flywheel_distiller_proposals (organization_id, agent_id)
+  where agent_id is not null;
+
+alter table public.flywheel_distiller_proposals
+  drop constraint if exists flywheel_distiller_proposals_type_check;
+alter table public.flywheel_distiller_proposals
+  add constraint flywheel_distiller_proposals_type_check
+  check (type in ('playbook_bullet', 'golden_case', 'reentry_trigger', 'org_memory_entry', 'response_correction'));
+
+comment on column public.flywheel_distiller_proposals.agent_id is
+  'O agente de que a proposta fala (migration 0547). Nulo = proposta da organização (as do flywheel). Uma correção de resposta é sempre de um agente: a tela e o aplicar só a alcançam por ele.';
+
+notify pgrst, 'reload schema';
+
+-- ---- treino do agente por site (migration 0550) ----
+-- Uma linha por página de uma fonte `site` (estado, motivo, hash) e o CHECK de
+-- `ai_knowledge_sources.source_type` de volta com o vocabulário fechado. Nenhuma função
+-- nova. Idempotente: a constraint é recriada e validada de forma auto-curativa.
+create table if not exists public.ai_knowledge_source_pages (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  knowledge_source_id uuid not null references public.ai_knowledge_sources(id) on delete cascade,
+  url text not null,
+  position integer not null default 0,
+  status text not null default 'pendente',
+  error_code text,
+  error_message text,
+  title text,
+  content_hash text,
+  chunks_count integer not null default 0,
+  last_read_at timestamptz,
+  last_changed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint ai_knowledge_source_pages_status_check
+    check (status in ('pendente', 'lida', 'falhou')),
+  constraint ai_knowledge_source_pages_url_len
+    check (char_length(url) between 9 and 2048),
+  constraint ai_knowledge_source_pages_chunks_nonneg
+    check (chunks_count >= 0)
+);
+
+comment on table public.ai_knowledge_source_pages is
+  'Uma página de uma fonte de conhecimento do tipo site (issue #93): endereço, estado (pendente/lida/falhou), motivo da falha, título, hash do texto lido e trechos gerados. O texto em si vive em ai_chunks.';
+comment on column public.ai_knowledge_source_pages.status is
+  'pendente = ainda não lida; lida = o texto foi lido na última leitura; falhou = a última leitura falhou (error_code/error_message dizem por quê). Vocabulário em TypeScript: lib/ai/rag/ingest/site-paginas.ts (ESTADOS_DA_PAGINA).';
+comment on column public.ai_knowledge_source_pages.content_hash is
+  'SHA-256 do texto principal da última leitura bem-sucedida. Igual ao anterior = página inalterada: nenhum trecho é reembedado.';
+
+create unique index if not exists ai_knowledge_source_pages_source_url_uk
+  on public.ai_knowledge_source_pages (knowledge_source_id, url);
+create index if not exists ai_knowledge_source_pages_org_idx
+  on public.ai_knowledge_source_pages (organization_id);
+
+drop trigger if exists trg_ai_knowledge_source_pages_updated_at on public.ai_knowledge_source_pages;
+create trigger trg_ai_knowledge_source_pages_updated_at
+  before update on public.ai_knowledge_source_pages
+  for each row execute function public.fn_set_updated_at();
+
+alter table public.ai_knowledge_source_pages enable row level security;
+drop policy if exists tenant_isolation_ai_knowledge_source_pages_all on public.ai_knowledge_source_pages;
+create policy tenant_isolation_ai_knowledge_source_pages_all on public.ai_knowledge_source_pages
+  for select using (
+    (organization_id in (select public.fn_user_org_ids())) or public.fn_is_platform_admin()
+  );
+revoke all on public.ai_knowledge_source_pages from anon, authenticated;
+grant select on public.ai_knowledge_source_pages to authenticated;
+grant all on public.ai_knowledge_source_pages to service_role;
+
+-- ─── O vocabulário de `source_type` volta a ser FECHADO ─────────────────────
+
+update public.ai_knowledge_sources
+   set source_type = case source_type
+         when 'policy'            then 'documento'
+         when 'conversation'      then 'conversas'
+         when 'conversations'     then 'conversas'
+         when 'nuvemshop_catalog' then 'catalogo'
+         when 'catalog'           then 'catalogo'
+         else source_type
+       end
+ where source_type in ('policy', 'conversation', 'conversations', 'nuvemshop_catalog', 'catalog');
+
+alter table public.ai_knowledge_sources
+  drop constraint if exists ai_knowledge_sources_source_type_check;
+alter table public.ai_knowledge_sources
+  add constraint ai_knowledge_sources_source_type_check
+  check (source_type in ('faq', 'documento', 'conversas', 'catalogo', 'site')) not valid;
+
+do $$
+begin
+  alter table public.ai_knowledge_sources validate constraint ai_knowledge_sources_source_type_check;
+exception when others then
+  -- Um valor desconhecido num clone antigo: a restrição segue valendo para as linhas novas
+  -- e para as que forem alteradas; o dado velho não derruba a atualização.
+  raise notice 'ai_knowledge_sources_source_type_check ficou NOT VALID: %', sqlerrm;
+end $$;
+
+comment on column public.ai_knowledge_sources.source_type is
+  'Vocabulário FECHADO (CHECK da 0550): faq | documento | conversas | catalogo | site. A lista que a tela oferece vive em lib/ai/rag/tipos-de-fonte.ts, vigiada por tests/invariants/vocabulario-banco-x-typescript.test.ts.';
+
+notify pgrst, 'reload schema';
+
+-- ---- servidores MCP externos para o agente (migration 0553) ----
+-- Aditiva e idempotente. Tabela server-side only (a credencial é cifrada) e o segundo tipo de
+-- ferramenta externa (`kind = 'mcp'`) no mesmo registro da 0551.
+-- 0553 — Servidores MCP externos para o agente.
+--
+-- O agente passa a poder usar as ferramentas de um servidor MCP de terceiros. A #94 deu
+-- o registro de ferramentas externas (webhook) e a #95 a aprovação das que alteram algo;
+-- esta etapa acrescenta o SEGUNDO tipo de ferramenta externa, que entra no mesmo registro
+-- e herda tudo: o seletor do agente, o teto de 27 capacidades, a chave «pedir aprovação»,
+-- o pedido na Central, a execução única e a expiração.
+--
+--   * `mcp_servers` — o servidor, por organização. Server-side only (RLS ligada, zero
+--     policies, grants revogados de anon/authenticated): a linha carrega a credencial
+--     (cifrada por `fn_encrypt_oauth`; não é hash porque precisa ser USADA a cada
+--     chamada) e quem lê é o servidor, com o filtro de organização à mão. A tela vê só
+--     os 4 últimos caracteres. `auth_header` diz em que cabeçalho a credencial viaja
+--     (`authorization` = `Bearer <credencial>`; outro nome = o valor cru).
+--   * `agent_external_tools.kind` — `webhook` (as linhas de sempre) ou `mcp`: uma ferramenta
+--     que o servidor oferece e o administrador escolheu. As linhas `mcp` NÃO têm endereço
+--     nem chave de assinatura (o endereço é o do servidor; DIRC: uma fonte só), e têm
+--     `mcp_server_id` + `mcp_tool_name` (o nome NO servidor, o que `tools/call` envia). Um
+--     CHECK de forma amarra cada tipo às suas colunas: uma linha `mcp` sem servidor, ou
+--     `webhook` sem endereço, não existe.
+--   * FK composta `(organization_id, mcp_server_id)`: a ferramenta nunca aponta para o
+--     servidor de OUTRA organização, nem por escrita direta com a service key.
+--   * `mcp_definition_hash` — a impressão do que o servidor declarou (descrição + esquema)
+--     quando o administrador escolheu a ferramenta. O agente usa a definição que o
+--     administrador viu; se o servidor muda a ferramenta depois, a tela avisa.
+--   * `mcp_hint_read_only` — o que o servidor DECLAROU (`readOnlyHint`). É só uma dica para
+--     a tela: o risco que vale é `effect`, que nasce `altera` e só o administrador muda.
+--
+-- Função NOVA em `public`: nenhuma ⇒ o item 9 da doutrina de migrations não é acionado.
+-- O vocabulário `kind` é `text` + CHECK (não enum) e vive no TypeScript em
+-- `lib/ai/ferramentas-externas/tipos.ts` (TIPOS_DA_FERRAMENTA), vigiado por
+-- `tests/invariants/vocabulario-banco-x-typescript.test.ts`.
+
+create table if not exists public.mcp_servers (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  name text not null,
+  url text not null,
+  -- Em que cabeçalho a credencial viaja. `authorization` manda `Bearer <credencial>`.
+  auth_header text not null default 'authorization',
+  credential_encrypted bytea,
+  -- Para a tela reconhecer QUAL credencial está gravada sem ver a credencial.
+  credential_last4 text,
+  active boolean not null default true,
+  -- O que o servidor disse de si na última conexão que deu certo.
+  server_name text,
+  server_version text,
+  last_check_at timestamptz,
+  last_check_ok boolean,
+  -- Vocabulário fechado em TypeScript (MOTIVOS_DE_FALHA); null quando deu certo.
+  last_check_reason text,
+  created_by uuid,
+  updated_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint mcp_servers_name_len check (char_length(name) between 3 and 60),
+  constraint mcp_servers_url_len check (char_length(url) between 8 and 2000),
+  constraint mcp_servers_auth_header_check check (auth_header ~ '^[A-Za-z][A-Za-z0-9-]{0,39}$'),
+  constraint mcp_servers_credential_pair check ((credential_encrypted is null) = (credential_last4 is null)),
+  -- O alvo da FK composta de `agent_external_tools`.
+  constraint mcp_servers_org_id_uk unique (organization_id, id)
+);
+
+create unique index if not exists mcp_servers_org_name_uk
+  on public.mcp_servers (organization_id, lower(name));
+
+comment on table public.mcp_servers is
+  'Servidor MCP de terceiro que o agente pode usar (issue #96). Por organização. Server-side only: RLS ligada sem policies e grants revogados de anon/authenticated; a credencial nunca volta ao browser.';
+comment on column public.mcp_servers.credential_encrypted is
+  'Cifrada por fn_encrypt_oauth (pgp_sym/aes256), a mesma cifra de agent_external_tools, channel_sessions e voice_provider_credentials. Enviada a cada chamada no cabeçalho auth_header. Nula = servidor sem credencial.';
+comment on column public.mcp_servers.auth_header is
+  'Nome do cabeçalho que leva a credencial. authorization = "Bearer <credencial>"; outro nome = o valor cru.';
+
+alter table public.mcp_servers enable row level security;
+revoke all on public.mcp_servers from anon, authenticated;
+grant select, insert, update, delete on public.mcp_servers to service_role;
+
+drop trigger if exists trg_mcp_servers_updated_at on public.mcp_servers;
+create trigger trg_mcp_servers_updated_at
+  before update on public.mcp_servers
+  for each row execute function public.fn_set_updated_at();
+
+-- ─── A ferramenta que vem de um servidor MCP entra no mesmo registro ───────
+
+alter table public.agent_external_tools
+  add column if not exists kind text not null default 'webhook',
+  add column if not exists mcp_server_id uuid,
+  add column if not exists mcp_tool_name text,
+  add column if not exists mcp_definition_hash text,
+  add column if not exists mcp_hint_read_only boolean;
+
+alter table public.agent_external_tools alter column url drop not null;
+alter table public.agent_external_tools alter column signing_secret_encrypted drop not null;
+alter table public.agent_external_tools alter column signing_secret_last4 drop not null;
+
+alter table public.agent_external_tools drop constraint if exists agent_external_tools_kind_check;
+alter table public.agent_external_tools
+  add constraint agent_external_tools_kind_check check (kind in ('webhook', 'mcp'));
+
+-- Cada tipo tem exatamente as suas colunas. As linhas de antes são todas `webhook` (o default) e já
+-- têm endereço e chave: o CHECK vale sem tocar em nenhuma.
+alter table public.agent_external_tools drop constraint if exists agent_external_tools_kind_shape;
+alter table public.agent_external_tools
+  add constraint agent_external_tools_kind_shape check (
+    (kind = 'webhook'
+      and url is not null
+      and signing_secret_encrypted is not null
+      and signing_secret_last4 is not null
+      and mcp_server_id is null
+      and mcp_tool_name is null)
+    or
+    (kind = 'mcp'
+      and url is null
+      and signing_secret_encrypted is null
+      and signing_secret_last4 is null
+      and mcp_server_id is not null
+      and mcp_tool_name is not null)
+  );
+
+alter table public.agent_external_tools drop constraint if exists agent_external_tools_mcp_tool_name_len;
+alter table public.agent_external_tools
+  add constraint agent_external_tools_mcp_tool_name_len
+  check (mcp_tool_name is null or char_length(mcp_tool_name) between 1 and 128);
+
+-- A ferramenta nunca aponta para o servidor de OUTRA organização. MATCH SIMPLE: a linha `webhook`
+-- (servidor nulo) não é conferida.
+alter table public.agent_external_tools drop constraint if exists agent_external_tools_mcp_server_fk;
+alter table public.agent_external_tools
+  add constraint agent_external_tools_mcp_server_fk
+  foreign key (organization_id, mcp_server_id)
+  references public.mcp_servers (organization_id, id) on delete cascade;
+
+-- Uma ferramenta do servidor entra no registro uma vez só.
+create unique index if not exists agent_external_tools_mcp_uk
+  on public.agent_external_tools (organization_id, mcp_server_id, mcp_tool_name)
+  where kind = 'mcp';
+
+create index if not exists agent_external_tools_mcp_server_idx
+  on public.agent_external_tools (mcp_server_id)
+  where mcp_server_id is not null;
+
+comment on column public.agent_external_tools.kind is
+  'webhook = o endereço que a pessoa cadastrou e o ZapSales assina (#94). mcp = uma ferramenta que um servidor MCP de terceiro oferece e o administrador escolheu (#96): sem endereço nem chave de assinatura, com mcp_server_id e mcp_tool_name.';
+comment on column public.agent_external_tools.mcp_tool_name is
+  'O nome da ferramenta NO servidor MCP (o que tools/call envia). O nome que o modelo vê é ext_<slug>.';
+comment on column public.agent_external_tools.mcp_definition_hash is
+  'SHA-256 da descrição + esquema que o servidor declarou quando o administrador escolheu a ferramenta. Mudou na descoberta seguinte = a tela avisa; o agente segue com a definição que o administrador viu.';
+comment on column public.agent_external_tools.mcp_hint_read_only is
+  'O que o servidor DECLAROU (annotations.readOnlyHint). Só uma dica para a tela: o risco que vale é effect.';
 
 notify pgrst, 'reload schema';

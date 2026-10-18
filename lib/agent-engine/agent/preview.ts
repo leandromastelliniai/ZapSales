@@ -22,6 +22,9 @@ import { DEFAULT_CHANNEL_PROVIDER } from '@/lib/channels/capabilities';
 import { getToolByName } from '@/lib/mcp/tools';
 import type { Logger } from '../obs/logger';
 import type { Citation } from '@/lib/ai/citations/types';
+import type { AudioDoTurno } from '@/lib/ai/resposta-em-audio/turno';
+import type { ChamadaSimulada } from '@/lib/ai/ferramentas-externas/turno';
+import { PREFIXO_DO_NOME_NO_AGENTE } from '@/lib/ai/ferramentas-externas/tipos';
 
 export interface TurnPreview {
   kind: 'sandbox' | 'assisted';
@@ -40,10 +43,56 @@ export interface TurnPreview {
 }
 export interface PreviewResult {
   checkpoint?: unknown;
-  candidates: Array<{ body: string; citations: Citation[]; trace: GateTraceEntry[] }>;
+  candidates: Array<{
+    body: string;
+    citations: Citation[];
+    trace: GateTraceEntry[];
+    /**
+     * Em que formato esta resposta SAIRIA para o cliente (resposta em áudio, issue
+     * #91). Só aparece quando o agente pediu áudio. Simulado: a prévia nunca chama
+     * o provedor de voz nem grava arquivo — decide pela mesma regra do envio real
+     * e diz o motivo quando a resposta cairia em texto.
+     */
+    delivery?: { format: 'audio' } | { format: 'text'; reason: string };
+  }>;
   proposals: Array<{ tool: string; arguments: unknown }>;
   impediments: Array<{ code: string; message: string }>;
   restrictions: string[];
+  /** O que TODAS as chamadas ao modelo do turno gastaram — ver `medirUsoDoTurno`. */
+  usage?: PreviewUsage;
+  /** Toda ferramenta que o modelo chamou, na ordem — leituras e propostas de escrita. */
+  toolCalls?: Array<{ tool: string; arguments: unknown }>;
+  /**
+   * As chamadas a ferramentas EXTERNAS (webhook de consulta, #94) que o agente faria.
+   * Na prévia nenhuma é executada: cada uma aparece aqui como "seria feita", com os
+   * dados que o modelo preencheu. `executed` é sempre `false`.
+   */
+  externalCalls?: ChamadaSimulada[];
+}
+export interface PreviewUsage {
+  tokensIn: number;
+  tokensOut: number;
+  costCents: number;
+}
+/**
+ * Acrescenta ao resultado da prévia as ferramentas que uma chamada ao modelo fez, na
+ * ordem. A tela de teste as mostra por resposta.
+ *
+ * O GASTO não é somado aqui: só a chamada principal passa por este ponto, e o turno
+ * tem outras (checkpoint, classificador de etapa, conferências por modelo). Quem o
+ * mede é `medirUsoDoTurno`, que enxerga todas — a prova na produção mostrou a
+ * diferença (a tela dizia ~38% do gasto real).
+ */
+export function registrarChamadaDaPrevia(
+  result: PreviewResult,
+  call: {
+    result: { steps?: ReadonlyArray<{ toolCalls?: ReadonlyArray<{ toolName: string; input?: unknown }> }> };
+  },
+): void {
+  const chamadas = (call.result.steps ?? []).flatMap((s) =>
+    (s.toolCalls ?? []).map((c) => ({ tool: c.toolName, arguments: c.input })),
+  );
+  result.toolCalls = [...(result.toolCalls ?? []), ...chamadas];
 }
 export function newPreviewResult(): PreviewResult {
   return {
@@ -56,6 +105,17 @@ export function newPreviewResult(): PreviewResult {
       'send_revalidates_live_state',
     ],
   };
+}
+
+/**
+ * Num cenário (sem contato) não há contagem de envios no banco: o que diz se
+ * esta é a primeira resposta é a própria conversa simulada. Numa conversa de
+ * teste de várias trocas, a segunda resposta NÃO é "primeira" — tratá-la assim
+ * reinjetaria o aviso de primeiro contato (LGPD) a cada troca, e quem testa
+ * veria um agente que não existe em produção.
+ */
+export function ePrimeiroEnvioDoCenario(messages: LeadContext['messages']): boolean {
+  return !messages.some((m) => m.direction === 'outbound');
 }
 
 export async function previewGateContext(
@@ -73,7 +133,9 @@ export async function previewGateContext(
   const spinning = channel ? await loadSpinningKnobs(db, org, channel, log) : SPINNING_DEFAULTS;
   const promise = await loadPromiseTable(db, org),
     disclosure = await loadDisclosureTemplate(db, org);
-  const first = p.contactId ? (await countPriorAcceptedSends(db, org, p.contactId)) === 0 : true;
+  const first = p.contactId
+    ? (await countPriorAcceptedSends(db, org, p.contactId)) === 0
+    : ePrimeiroEnvioDoCenario(p.context.context.messages);
   let lastInbound: Date | null = null;
   if (p.contactId && channel) {
     const { rows } = await db.query<{ last_inbound_at: Date | null }>(
@@ -150,6 +212,7 @@ export function applyPreviewPolicy(
   citations: () => Citation[],
   semanticClassifier?: (body: string) => Promise<NonNullable<GateContext['semanticPromise']>>,
   liveContext?: () => Partial<GateContext>,
+  audio?: AudioDoTurno | null,
 ): ToolSet {
   return Object.fromEntries(
     Object.entries(tools).map(([name, definition]) => {
@@ -160,6 +223,9 @@ export function applyPreviewPolicy(
         'read_skill_reference',
       ].includes(name);
       const catalog = getToolByName(name);
+      // A ferramenta externa já trata a prévia por conta própria (registra a chamada como
+      // "seria feita" e não sai da máquina) — o `execute` dela é a política.
+      if (name.startsWith(PREFIXO_DO_NOME_NO_AGENTE)) return [name, definition];
       if (
         nativeRead ||
         (catalog?.category === 'read' && (p.contactId !== null || SCENARIO_READS.has(name)))
@@ -188,10 +254,19 @@ export function applyPreviewPolicy(
                   error: { code: result.veto.code, message: result.veto.message },
                 };
               }
+              const simulada = audio ? await audio.simular(result.body) : null;
               p.result.candidates.push({
                 body: result.body,
                 citations: citations(),
                 trace: result.trace,
+                ...(simulada
+                  ? {
+                      delivery:
+                        simulada.formato === 'audio'
+                          ? ({ format: 'audio' } as const)
+                          : ({ format: 'text', reason: simulada.motivo } as const),
+                    }
+                  : {}),
               });
               return {
                 ok: true,
