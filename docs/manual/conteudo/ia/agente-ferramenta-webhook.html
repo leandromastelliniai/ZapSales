@@ -1,0 +1,113 @@
+<!--meta {"id":"agente-ferramenta-webhook","grupo":"ia","titulo":"Ferramentas externas: o agente consulta outro sistema (webhook)","ordem":2.5,"resumo":"Cadastre um endereço na internet (um webhook) para o agente consultar estoque, preço, pedido ou agenda de outro sistema durante a conversa, e use a resposta para atender melhor.","palavras":["webhook","ferramentas externas","ferramenta externa","consulta","estoque","erp","make","n8n","integração","assinatura","chave de assinatura","whsec","testar de verdade","endereço https","sistema externo"],"onde":"Agente de IA › Ver tudo em IA › Ferramentas externas (também pela busca ⌘K); depois, na tela de cada agente, o grupo Ferramentas externas","quem":"Gerente ou acima, para ver, cadastrar, editar, testar, gerar nova chave e apagar.","rotas":["/app/ai/external-tools"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Muitas respostas que o cliente espera estão em <strong>outro sistema</strong> que a sua empresa já usa: “tem a camiseta azul no estoque?”, “em que fase está o meu pedido?”, “qual o preço atualizado?”. Uma <strong>ferramenta externa</strong> deixa o agente de IA ir buscar essa informação <strong>durante a conversa</strong> e responder com ela, em vez de adivinhar ou dizer “vou verificar”.</p>
+<aside class="nota info"><strong>O que é um webhook, em linguagem simples.</strong><p>Webhook é um <strong>endereço na internet que recebe um aviso</strong>. É como a caixa de correio de um sistema: o ZapSales entrega ali um bilhete (“quero consultar o estoque da camiseta azul”) e o outro sistema devolve uma resposta. Quem monta esse endereço do outro lado é a pessoa ou a ferramenta que cuida do seu sistema (um programador, ou um automatizador como o Make e o n8n, que oferecem um endereço pronto para isso).</p></aside>
+<p>Esta página trata das <strong>consultas</strong> (ferramentas que só leem). Para ferramentas que <em>alteram</em> algo no outro sistema — criar um pedido, cadastrar um cliente —, veja <a href="#agente-aprovacao-de-acoes">Ações que alteram dados, com aprovação</a>. A tela de cadastro é a mesma.</p>
+<aside class="nota atencao"><strong>Não confunda com “Webhooks” em Canais.</strong><p>O menu <a href="#webhooks">Webhooks</a> em Canais é outra coisa: serve para o ZapSales <em>avisar</em> seus sistemas de que algo aconteceu. Aqui é o contrário: o <em>agente</em> pergunta ao seu sistema.</p></aside>
+
+<h2 id="onde">Onde fica</h2>
+<p>Abra <span class="ui">Agente de IA › Ver tudo em IA</span>, na seção <em>Montar o agente</em>, e clique em <span class="ui">Ferramentas externas</span> (ou digite “webhook” na busca <kbd>⌘K</kbd>). A tela tem duas abas: <strong>Webhooks</strong> (esta página) e <strong>Servidores MCP</strong> (veja <a href="#agente-servidores-mcp">Servidores MCP</a>).</p>
+<figure class="print">
+  <img src="img/ia-ferramentas-externas-lista.png" alt="Tela Ferramentas externas com a aba Webhooks e uma ferramenta cadastrada, mostrando selos, interruptor e botões" loading="lazy">
+  <figcaption>A lista de ferramentas externas, com uma consulta cadastrada.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Abas.</strong> <em>Webhooks</em> e <em>Servidores MCP</em>.</li>
+  <li><strong>Nova ferramenta.</strong></li>
+  <li><strong>Selos.</strong> O efeito (<em>Só consulta</em> ou <em>Altera dados</em>), se <em>Pede aprovação</em> ou <em>Executa direto</em>, e <em>Desativada</em> quando estiver desligada.</li>
+  <li><strong>Interruptor Ativa.</strong> Desligado, nenhum agente usa a ferramenta.</li>
+  <li><strong>Testar de verdade, Editar, Gerar nova chave e Apagar.</strong></li>
+</ol>
+<p>Sem nenhuma ferramenta, a tela mostra “Nenhuma ferramenta cadastrada ainda.”.</p>
+
+<h2 id="cadastrar">Cadastrar uma consulta</h2>
+<figure class="print">
+  <img src="img/ia-ferramentas-externas-nova.png" alt="Janela Nova ferramenta externa com nome, quando usar, endereço https, dados que o agente preenche e o efeito Só consulta" loading="lazy">
+  <figcaption>A janela “Nova ferramenta externa”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome.</strong> Por exemplo <em>Consultar estoque</em> (3 a 60 caracteres).</li>
+  <li><strong>Quando o agente deve usar.</strong> Escreva como se instruísse uma pessoa. <strong>É assim que o agente decide</strong> se chama a ferramenta (10 a 600 caracteres).</li>
+  <li><strong>Endereço (https).</strong> O endereço do webhook. Só <code>https://</code>, sem usuário e senha.</li>
+  <li><strong>Dados que o agente preenche.</strong> Os campos que ele manda ao outro sistema.</li>
+  <li><strong>O que a ferramenta faz no outro sistema.</strong> <em>Só consulta</em>.</li>
+</ol>
+<ol class="passos">
+  <li>Clique em <span class="ui">Nova ferramenta</span>.</li>
+  <li>Preencha <strong>Nome</strong> e <strong>Quando o agente deve usar</strong>. Exemplo: <em>“Use quando o cliente perguntar se um produto tem em estoque. Preencha o código do produto.”</em></li>
+  <li>Cole o <strong>Endereço (https)</strong>.</li>
+  <li>Em <strong>Dados que o agente preenche</strong>, clique em <span class="ui">Adicionar campo</span> para cada informação que o agente deve enviar. Cada campo tem:
+    <ul>
+      <li><strong>Nome do campo:</strong> só letras minúsculas sem acento, números e <code>_</code> (por exemplo <code>codigo_produto</code>; até 40 caracteres);</li>
+      <li><strong>Tipo:</strong> <em>Texto</em> (até 500 caracteres), <em>Número</em>, <em>Número inteiro</em> ou <em>Sim ou não</em>;</li>
+      <li><strong>O que o agente coloca aqui:</strong> uma explicação de 3 a 200 caracteres, para ele saber o que preencher;</li>
+      <li><strong>Obrigatório:</strong> se marcado, o agente só chama a ferramenta com o campo preenchido. Até 10 campos por ferramenta.</li>
+    </ul>
+  </li>
+  <li>Deixe <strong>Só consulta</strong> em “O que a ferramenta faz no outro sistema”.</li>
+  <li>Clique em <span class="ui">Cadastrar</span>.</li>
+</ol>
+
+<h3 id="chave">A chave de assinatura (aparece uma vez)</h3>
+<p>Ao cadastrar, abre a janela <strong>Guarde a chave de assinatura</strong>. É uma chave que começa com <code>whsec_</code>, mostrada <strong>uma única vez</strong>, com os botões <span class="ui">Copiar</span> e <span class="ui">Já guardei</span>. Depois disso, o cartão só mostra os quatro últimos caracteres (por exemplo, “chave …62af”).</p>
+<p>Para que serve: cada chamada do ZapSales ao seu endereço leva uma <strong>assinatura</strong> calculada com essa chave. Quem cuida do outro sistema usa a chave para conferir que a chamada veio mesmo do ZapSales e não de um impostor. Entregue-a a essa pessoa por um canal seguro. Se perder, use <span class="ui">Gerar nova chave</span>: <strong>a antiga deixa de valer na hora</strong>.</p>
+<aside class="nota info"><strong>Para quem vai montar o outro lado.</strong><p>O ZapSales sempre faz um <code>POST</code> com corpo JSON no endereço cadastrado. O corpo traz <code>event</code> (“agent.tool_call”), <code>occurred_at</code>, <code>delivery_id</code>, <code>tool</code> e <code>arguments</code> (os campos que o agente preencheu). A assinatura vai nos cabeçalhos <code>X-Webhook-Signature</code> (<code>t=…,v1=…</code>, HMAC-SHA256), <code>X-Webhook-Timestamp</code>, <code>X-Webhook-Delivery</code> e <code>X-Webhook-Attempt</code>. <strong>Dados do contato, da conversa e da empresa não vão</strong>: só o que o agente preencheu nos campos declarados. O guia técnico está em <code>docs/integracao/ferramentas-externas-do-agente.md</code>.</p></aside>
+<aside class="nota atencao"><strong>O que o formulário não oferece.</strong><p>Não há escolha de método (é sempre <code>POST</code>), nem campo para cabeçalhos ou senha: a “autenticação” é a assinatura. Redirecionamentos não são seguidos — cadastre o endereço final.</p></aside>
+
+<h2 id="endereco-interno">Endereços internos são recusados</h2>
+<p>Por segurança, endereços da rede interna, privada ou local (por exemplo <code>https://10.0.0.5/…</code>) são recusados no cadastro, na edição e a cada chamada: “Este endereço não pode ser usado: endereços da rede interna, privada ou local são recusados por segurança.”. Outras mensagens possíveis: “Não consegui encontrar este endereço: o nome não existe ou não responde.” e “Este endereço não é válido: informe o endereço completo, começando com https://.”. O motivo é o mesmo da <a href="#agente-treino-por-site--enderecos">página sobre o site</a>.</p>
+
+<h2 id="testar">Testar a ferramenta de verdade</h2>
+<figure class="print media">
+  <img src="img/ia-ferramentas-externas-testar.png" alt="Janela Testar de verdade com o resultado Funcionou, o tempo de resposta e o que o outro sistema devolveu" loading="lazy">
+  <figcaption>“Testar de verdade” com a resposta do outro sistema.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O dado de exemplo.</strong> Um campo para cada dado que o agente preenche (aqui, <em>codigo_produto</em>).</li>
+  <li><strong>Chamar agora.</strong> Faz a chamada real.</li>
+  <li><strong>O resultado.</strong> “Funcionou. O outro sistema respondeu 200 em 537 ms.”</li>
+  <li><strong>O que o outro sistema devolveu.</strong> No exemplo, o receptor de teste devolve o que recebeu: o evento, o número da entrega e os cabeçalhos de assinatura.</li>
+</ol>
+<ol class="passos">
+  <li>No cartão da ferramenta, clique em <span class="ui">Testar de verdade</span>.</li>
+  <li>Escreva um valor de exemplo para cada campo.</li>
+  <li>Clique em <span class="ui">Chamar agora</span>.</li>
+</ol>
+<p>Isto faz uma <strong>chamada real</strong> ao endereço, com a mesma assinatura, o mesmo prazo e os mesmos limites de uma chamada de verdade. <strong>Nada é enviado a nenhum cliente.</strong> O resultado diz <em>“Funcionou. O outro sistema respondeu 200 em N ms.”</em> com “O que o outro sistema devolveu”, ou <em>“Não funcionou.”</em> com o motivo e o código (HTTP). Em “O que foi enviado” (recolhido) você vê o pedido exato.</p>
+
+<h2 id="ligar">Ligar a ferramenta a um agente</h2>
+<p>Cadastrar não basta: cada agente escolhe quais ferramentas usa.</p>
+<ol class="passos">
+  <li>Abra <span class="ui">Agente de IA › Agentes</span> e o agente que vai usar a ferramenta.</li>
+  <li>No seletor de capacidades, marque a ferramenta no grupo <strong>Ferramentas externas</strong>.</li>
+  <li>Salve e <a href="#agentes--publicar">publique</a> a versão. A escolha faz parte da versão, então só vale depois de publicar.</li>
+</ol>
+<p>Se a ferramenta estiver desativada, o seletor diz “Desativada: o agente não a usa até alguém reativar em Ferramentas externas.”. Cada agente aceita no máximo <strong>27 capacidades</strong>, somando as do sistema e as externas. Agentes no papel de <em>operador</em> não recebem ferramentas externas.</p>
+
+<h2 id="como-funciona">O que acontece durante a conversa</h2>
+<ol>
+  <li>O agente lê o “Quando o agente deve usar” e decide se aquela consulta ajuda a responder.</li>
+  <li>Ele só chama com <strong>dados válidos</strong>. Se esquecer um campo obrigatório ou usar o tipo errado, a chamada nem sai; ele recebe uma orientação do que preencher.</li>
+  <li>O ZapSales faz o <code>POST</code> assinado, com prazo de <strong>8 segundos</strong>. Se o outro sistema falhar de forma passageira (erro 5xx, 408 ou 429), a consulta é tentada <strong>uma segunda vez</strong>.</li>
+  <li>A resposta (até 64 KB lida; até <strong>4.000 caracteres</strong> entregues ao agente, o resto é cortado) volta ao agente como <strong>informação, nunca como ordem</strong>: se o outro sistema devolver um texto como “ignore suas regras”, o agente é avisado de que qualquer ordem dentro da resposta é ignorada.</li>
+  <li>Se a consulta falhar, o agente é orientado a <strong>não afirmar</strong> o que dependia dela.</li>
+</ol>
+<p>Quando uma consulta falha, abre-se um aviso na <a href="#alertas">Central de avisos</a>: <em>“A consulta ‘X’ falhou”</em>, com o motivo, um por ferramenta. Os motivos possíveis: “O outro sistema não respondeu a tempo.”, “A resposta do outro sistema era grande demais e foi descartada.”, “O endereço respondeu com um redirecionamento, que não é seguido. Use o endereço final.”, “O outro sistema respondeu com erro.”, “O outro sistema recusou o pedido (erro de endereço, acesso ou dados).” e “Não foi possível alcançar o outro sistema.”.</p>
+<p>Na aba <a href="#agente-teste-e-correcao">Teste</a> do agente, a consulta <strong>não é feita</strong>: aparece marcada como “seria feita”.</p>
+
+<h2 id="editar-apagar">Editar e apagar</h2>
+<ul>
+  <li><strong>Editar</strong> muda nome, instrução, endereço e campos. Renomear não muda a identificação interna da ferramenta.</li>
+  <li><strong>Apagar</strong> pede confirmação (“Apagar esta ferramenta?”). Se alguma versão de agente (publicada ou rascunho) já usa a ferramenta, o sistema não deixa apagar, porque o histórico precisa dela: “Desative em vez de apagar.”.</li>
+</ul>
+
+<aside class="nota atencao"><strong>Apagar e gerar nova chave não têm volta.</strong><p><span class="ui">Apagar</span> remove a ferramenta (e o agente deixa de consultar aquele sistema). <span class="ui">Gerar nova chave</span> invalida a anterior <strong>na hora</strong>: se o outro sistema confere a assinatura, ele passa a recusar as chamadas até receber a chave nova. Avise quem cuida do outro lado antes de gerar.</p></aside>
+
+<h2 id="cuidados">Cuidados</h2>
+<ul>
+  <li>Cadastre só endereços de sistemas <strong>seus</strong> ou de fornecedores em que você confia. Tudo o que o endereço devolver pode ser repetido pelo agente ao cliente.</li>
+  <li>Se o endereço contiver um código secreto na própria URL, trate-o como senha: ele aparece para quem tem acesso a esta tela.</li>
+  <li>Ensine o agente a <strong>não prometer</strong> o que a consulta não confirmou. O texto de “Quando o agente deve usar” é a melhor hora para isso.</li>
+  <li>Criação, edição, teste e chamadas ficam registradas na <a href="#auditoria">Auditoria</a>, sem chave, sem corpo e sem a resposta (só o servidor de destino). Na tela da Auditoria, esses registros aparecem hoje com o nome técnico da ação (<code>ai.external_tool_…</code>).</li>
+</ul>

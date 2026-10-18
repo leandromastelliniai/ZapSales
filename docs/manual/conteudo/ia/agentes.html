@@ -42,6 +42,7 @@
   <img src="img/ia-agente-novo.png" alt="Tela Novo agente, o formulário de configuração com o botão Criar agente" loading="lazy">
   <figcaption>A tela “Novo agente”.</figcaption>
 </figure>
+<aside class="nota dica"><strong>Atalhos para criar mais rápido.</strong><p>No alto da tela há o cartão <em>Comece por um modelo</em> (Vendas, Suporte ou Agendamento) e, na coluna da direita, o cartão <em>Como ele se apresenta</em> (perfil guiado). Veja <a href="#agente-perfil-e-modelos">Criar um agente pelo perfil e pelos modelos</a>. Para o agente conversar só sobre certos assuntos, veja <a href="#agente-restringir-assuntos">Restringir os assuntos do agente</a>.</p></aside>
 <ol class="passos">
   <li>Dê um <strong>nome</strong> e escreva as <strong>instruções</strong> (pelo menos uma frase).</li>
   <li>Escolha a <strong>empresa de inteligência artificial</strong>, o <strong>modelo</strong> e a <strong>chave de acesso</strong>.</li>
@@ -173,20 +174,7 @@
 
 <h2 id="abas">As outras abas</h2>
 <h3>Teste</h3>
-<figure class="print media">
-  <img src="img/ia-agente-teste.png" alt="Aba Teste do agente, com a versão alvo, o aviso de consumo de crédito e os campos de mensagem" loading="lazy">
-  <figcaption>A aba Teste.</figcaption>
-</figure>
-<ol class="legenda">
-  <li><strong>Versão alvo.</strong> A que será testada: o rascunho vigente, ou, se não houver, a publicada.</li>
-  <li><strong>Aviso.</strong> <em>“Modo teste consome créditos do provider. Nenhuma mensagem é enviada via WhatsApp.”</em></li>
-  <li><strong>Mensagem do cliente.</strong> Escreva o que um cliente diria. Obrigatória.</li>
-  <li><strong>Nome</strong> do cliente fictício (opcional).</li>
-  <li><strong>Telefone</strong> (opcional).</li>
-  <li><strong>Executar teste.</strong> Roda o agente de verdade, em modo de ensaio. Só Administrador.</li>
-  <li><strong>Resultado.</strong> Estado, latência, tokens, custo, cada ferramenta que o agente chamou e a <em>mensagem que seria enviada</em>. A tela avisa se a resposta usa palavras internas do sistema que o cliente não deveria ver.</li>
-</ol>
-<aside class="nota atencao"><strong>O teste gasta crédito de IA de verdade.</strong><p>Ele não manda nada ao WhatsApp nem mexe em contatos, mas chama o provedor de IA com a sua chave. Algumas verificações do envio real não são feitas no teste.</p></aside>
+<p>Converse com o agente como um cliente faria, com <strong>várias mensagens seguidas</strong>, sem enviar nada pelo WhatsApp. O teste usa o rascunho mais recente (ou a versão publicada, se não houver rascunho), mostra custo, tokens e latência de cada resposta e deixa <strong>corrigir uma resposta</strong> que saiu errada. Só Administrador envia mensagens de teste, e o teste <strong>gasta crédito de IA de verdade</strong>. O passo a passo está em <a href="#agente-teste-e-correcao">Testar o agente em várias trocas e corrigir respostas</a>.</p>
 
 <h3>Capacidades</h3>
 <figure class="print">
@@ -215,7 +203,7 @@
   <li><strong>Estado vazio.</strong> “Nenhuma execução ainda.”</li>
 </ol>
 <p>Clicar numa linha abre o painel <em>Execução</em>, com início, fim, tokens, custo, o erro (se houve) e o <strong>trace</strong> passo a passo: cada ferramenta chamada, com argumentos, resultado e erro, e os botões <em>Ver conversa</em> e <em>Ver inbound</em>.</p>
-<aside class="nota atencao"><strong>Esta aba mostra principalmente os seus testes.</strong><p>Hoje ela só recebe as execuções de <em>teste</em> do agente. O registro do atendimento real, com falhas e custos, está em <a href="#execucoes">Execuções</a>, na área de IA.</p></aside>
+<aside class="nota info"><strong>Teste e produção na mesma lista.</strong><p>A coluna <em>Tipo</em> separa as execuções de <em>teste</em> das de <em>produção</em> (atendimento real). Numa execução de atendimento real, a seção “Resposta enviada” traz o botão <span class="ui">Corrigir esta resposta</span> (veja <a href="#agente-teste-e-correcao--corrigir">Corrigir uma resposta</a>). O registro geral de todos os agentes, com falhas e custos, está em <a href="#execucoes">Execuções</a>, na área de IA.</p></aside>
 
 <h3>Histórico</h3>
 <figure class="print media">
@@ -241,7 +229,7 @@
 <ol class="legenda">
   <li><strong>Selo “aplicada”.</strong> Já foi usada.</li>
   <li><strong>Selo “pendente”.</strong> Espera a sua decisão. <strong>Nada se aplica sozinho.</strong></li>
-  <li><strong>Tipo e idade.</strong> <em>Regra de playbook, Caso exemplar, Gatilho de reengajamento</em> ou <em>Memória da organização</em>, e “proposta há…”.</li>
+  <li><strong>Tipo e idade.</strong> <em>Regra de playbook, Caso exemplar, Gatilho de reengajamento, Memória da organização</em> ou <em>Correção de resposta</em> (a que você cria com “Corrigir esta resposta”, veja <a href="#agente-teste-e-correcao--corrigir">aqui</a>), e “proposta há…”.</li>
   <li><strong>O texto da proposta.</strong></li>
   <li><strong>Aplicar como memória da org.</strong> Cria um <a href="#memoria">aprendizado</a> na Memória, que todos os agentes passam a usar.</li>
   <li><strong>Aplicar como versão nova.</strong> Cria uma versão nova do agente (a publicada <em>mais</em> o texto da proposta no fim das instruções) e <strong>publica na hora</strong>.</li>
