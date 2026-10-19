@@ -60,6 +60,7 @@ destinos internos que o dono da **instalação** autoriza
 | Download de extensões | `buscarSeguro` | Origem de catálogo: `julgarLiteralIpv6`; exceção HTTP só no loopback de ensaio. |
 | Ferramentas externas do agente — webhook (#94) e servidor MCP (#96) | `buscarSeguro` | Endereço de **organização**: sem a lista de destinos internos, `permitirHttp` só fora de produção, 3xx não seguido (a credencial/assinatura não vai atrás de um endereço que ninguém cadastrou), prazo total por tentativa e teto de bytes. O cliente MCP é próprio (`lib/ai/ferramentas-externas/mcp/cliente.ts`) **de propósito**: o cliente do SDK usa o `fetch` global, que resolve o nome de novo, segue redirecionamento e lê sem teto. |
 | Banco externo | `lookupJulgado` no socket do `pg` + `validarHostDeBanco` | `politicaDoBanco`: a mesma régua **mais a LAN RFC 1918** (Postgres na rede do dono é caso real). |
+| Imagem de produto e logo do PDF da proposta (#109) | `buscarSeguro`, via `lib/propostas/imagem-para-pdf.ts` | Os **bytes** são buscados aqui e o `@react-pdf` recebe um data URI — ele nunca busca nada. Produto: endereço de **organização** (sem a lista de destinos internos). Logo: o host é o Storage do operador, então vale a lista da **instalação**. `https` (`http` só fora de produção), até 3 saltos revalidados, **5 s** e **2 MiB** no total, só **PNG/JPEG farejados pelos bytes** (o `Content-Type` é de quem escolheu a URL). Qualquer falha vira `null` = "sem imagem"; a proposta sai. |
 | `media_url` | `buscarSeguro` (`lib/messaging/media/baixar-midia-externa.ts`) | O servidor baixa, sobe ao Storage e o gateway recebe a URL assinada nossa; ver "A `media_url` foi migrada (#110)". `permitirHttp` só fora de produção, **sem** lista de destinos internos, até 3 saltos (cada um julgado), teto de bytes por tipo. |
 | SDK de modelos — provedor de IA personalizado (#108) | `fetchParaDestinoDaOrganizacao` → `fetchSeguro` → `buscarSeguroEmFluxo` | Endereço de **organização**: sem a lista de destinos internos, `permitirHttp` só fora de produção, 3xx vira recusa. Cada chamada resolve, julga e conecta no endereço julgado, e o corpo (SSE) chega em **fluxo**. A allowlist do motor de borda (`contain`) fica na frente, e o transporte seguro vai por baixo dela. Ver "O corpo em fluxo". |
 | Teste de conectividade do provedor personalizado (#133) | `fetchParaDestinoDaOrganizacao` (a mesma chamada do SDK) | `validateCustomKey`: `GET {base}/models` com a chave, **prazo de 10 s** (`AbortSignal`). O julgamento e a conexão são do transporte: não há mais `motivoDaRecusaDeDestino` antes e `fetch` global depois. O 3xx e a recusa saem com o código que a tela já traduz (`unsafe_url:*`). |
@@ -163,9 +164,7 @@ endereço do usuário).
 
 1. ~~**Teste de conectividade do provedor personalizado**~~ — migrado na #133: `validateCustomKey` usa
    `fetchParaDestinoDaOrganizacao()`, ver a tabela "Quem usa o quê".
-2. **Imagem de produto e logo no PDF da proposta**: quem busca é o `@react-pdf` (biblioteca), com
-   só o guarda textual na frente. Fechar exige buscar os bytes com `buscarSeguro` e entregar o
-   `Buffer` ao renderizador.
+2. ~~**Imagem de produto e logo no PDF da proposta**~~ — migrada na #109, ver a tabela "Quem usa o quê".
 3. ~~**`media_url`**~~ — migrada na #110, ver "A `media_url` foi migrada" acima.
 
 As funções novas da #86 (treino por site, webhook como ferramenta do agente, MCP externo) **devem**

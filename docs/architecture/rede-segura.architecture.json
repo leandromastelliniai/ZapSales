@@ -64,6 +64,14 @@
       "dot": "amber"
     },
     {
+      "id": "pdf",
+      "lane": "consumidores",
+      "label": "Imagem de produto e logo do PDF da proposta",
+      "sublabel": "lib/propostas/imagem-para-pdf.ts · os bytes vêm de buscarSeguro (5 s, 2 MiB, PNG/JPEG farejado) e o @react-pdf recebe data URI · falha = sem imagem, a proposta sai",
+      "type": "lib",
+      "dot": "amber"
+    },
+    {
       "id": "destinos",
       "lane": "consumidores",
       "label": "Destinos internos da instalação",
@@ -144,14 +152,6 @@
       "dot": "amber"
     },
     {
-      "id": "pdf",
-      "lane": "fora",
-      "label": "Imagem de produto e logo no PDF",
-      "sublabel": "quem busca é o @react-pdf; só o guarda textual na frente",
-      "type": "lib",
-      "dot": "red"
-    },
-    {
       "id": "futuros",
       "lane": "fora",
       "label": "Funções novas da #86",
@@ -196,6 +196,14 @@
       "lane": "prova",
       "label": "baixar-midia-externa.test.ts + messages-handler-desfechos.test.ts",
       "sublabel": "servidores reais: IP interno, nome com endereço misto, resolução única, redirect para metadata, teto por tipo, mime errado; no handler o gateway só vê a URL assinada nossa",
+      "type": "tool",
+      "dot": "sky"
+    },
+    {
+      "id": "testePdf",
+      "lane": "prova",
+      "label": "imagem-para-pdf.test.ts + pdf-da-proposta.test.ts",
+      "sublabel": "servidores HTTP reais: nome que resolve para IP interno, redirect para metadata, imagem grande e lenta, HTML com 200 · e a proposta sai sem a imagem",
       "type": "tool",
       "dot": "sky"
     }
@@ -294,8 +302,8 @@
     {
       "id": "e16",
       "from": "pdf",
-      "to": "fachadaUrl",
-      "label": "só o guarda textual"
+      "to": "buscar",
+      "label": "GET dos bytes da imagem"
     },
     {
       "id": "e17",
@@ -362,6 +370,18 @@
       "from": "testeMidia",
       "to": "midia",
       "label": "prova"
+    },
+    {
+      "id": "e28",
+      "from": "pdf",
+      "to": "destinos",
+      "label": "só o logo: lista da instalação"
+    },
+    {
+      "id": "e29",
+      "from": "testePdf",
+      "to": "pdf",
+      "label": "prova"
     }
   ],
   "cards": [
@@ -391,9 +411,9 @@
     },
     {
       "id": "card-fora",
-      "tone": "red",
-      "title": "Não-ligações declaradas",
-      "body": "A imagem do PDF (busca o @react-pdf) julga pela política mas não tem a conexão presa. A media_url deixou de estar aqui na #110 (o servidor baixa o arquivo e o gateway só recebe a URL assinada do Storage) e o teste de conectividade do provedor personalizado, na #133 (validateCustomKey passou a sair por fetchParaDestinoDaOrganizacao). Detalhe e plano em docs/specs/rede-segura-unica.md."
+      "tone": "green",
+      "title": "Sem consumidor fora da conexão presa",
+      "body": "A lista de diferenças declaradas está vazia: o SDK de modelos (#108), a media_url (#110), o teste de conectividade do provedor personalizado (#133) e a imagem do PDF da proposta (#109, os bytes passam por buscarSeguro) saíram por esta política. Detalhe em docs/specs/rede-segura-unica.md."
     }
   ]
 }
