@@ -62,6 +62,7 @@ destinos internos que o dono da **instalação** autoriza
 | Banco externo | `lookupJulgado` no socket do `pg` + `validarHostDeBanco` | `politicaDoBanco`: a mesma régua **mais a LAN RFC 1918** (Postgres na rede do dono é caso real). |
 | `media_url` | `buscarSeguro` (`lib/messaging/media/baixar-midia-externa.ts`) | O servidor baixa, sobe ao Storage e o gateway recebe a URL assinada nossa; ver "A `media_url` foi migrada (#110)". `permitirHttp` só fora de produção, **sem** lista de destinos internos, até 3 saltos (cada um julgado), teto de bytes por tipo. |
 | SDK de modelos — provedor de IA personalizado (#108) | `fetchParaDestinoDaOrganizacao` → `fetchSeguro` → `buscarSeguroEmFluxo` | Endereço de **organização**: sem a lista de destinos internos, `permitirHttp` só fora de produção, 3xx vira recusa. Cada chamada resolve, julga e conecta no endereço julgado, e o corpo (SSE) chega em **fluxo**. A allowlist do motor de borda (`contain`) fica na frente, e o transporte seguro vai por baixo dela. Ver "O corpo em fluxo". |
+| Teste de conectividade do provedor personalizado (#133) | `fetchParaDestinoDaOrganizacao` (a mesma chamada do SDK) | `validateCustomKey`: `GET {base}/models` com a chave, **prazo de 10 s** (`AbortSignal`). O julgamento e a conexão são do transporte: não há mais `motivoDaRecusaDeDestino` antes e `fetch` global depois. O 3xx e a recusa saem com o código que a tela já traduz (`unsafe_url:*`). |
 
 ## O corpo em fluxo (SDK de modelos)
 
@@ -160,10 +161,8 @@ endereço do usuário).
 
 ## O que continua de fora (diferença registrada, não esquecida)
 
-1. **Teste de conectividade do provedor personalizado** (`validateCustomKey`, a chamada
-   `GET {base}/models` ao cadastrar a chave): julga com `motivoDaRecusaDeDestino` e depois chama o
-   `fetch` global — a mesma janela de rebinding que a #108 fechou para o SDK, aberta aqui por
-   esquecimento de escopo. Fechar é trocar a chamada por `fetchParaDestinoDaOrganizacao()`.
+1. ~~**Teste de conectividade do provedor personalizado**~~ — migrado na #133: `validateCustomKey` usa
+   `fetchParaDestinoDaOrganizacao()`, ver a tabela "Quem usa o quê".
 2. **Imagem de produto e logo no PDF da proposta**: quem busca é o `@react-pdf` (biblioteca), com
    só o guarda textual na frente. Fechar exige buscar os bytes com `buscarSeguro` e entregar o
    `Buffer` ao renderizador.

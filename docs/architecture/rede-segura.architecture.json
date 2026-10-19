@@ -138,8 +138,8 @@
     {
       "id": "sdk",
       "lane": "consumidores",
-      "label": "fetch do SDK de modelos (provedor personalizado)",
-      "sublabel": "fetchParaDestinoDaOrganizacao · lib/automation/destinos-internos-autorizados.ts · transporte é o fetchSeguro: resolve e julga a cada chamada, conecta só no endereço julgado, 3xx vira recusa · a allowlist do motor de borda (contain) fica na frente",
+      "label": "fetch do SDK de modelos e teste de conectividade (provedor personalizado)",
+      "sublabel": "fetchParaDestinoDaOrganizacao · lib/automation/destinos-internos-autorizados.ts · transporte é o fetchSeguro: resolve e julga a cada chamada, conecta só no endereço julgado, 3xx vira recusa · o SDK (#108) e validateCustomKey (#133) saem por ele · a allowlist do motor de borda (contain) fica na frente",
       "type": "lib",
       "dot": "amber"
     },
@@ -171,7 +171,7 @@
       "id": "testeFluxo",
       "lane": "prova",
       "label": "fluxo.test.ts + fetch.test.ts + provedor-personalizado.test.ts",
-      "sublabel": "servidor real: rebinding, 1º trecho SSE antes de o servidor terminar (inclusive pelo SDK da Vercel) · teto de bytes, silêncio, cancelamento, gzip, 3xx",
+      "sublabel": "servidor real: rebinding (no SDK e em validateCustomKey), 1º trecho SSE antes de o servidor terminar (inclusive pelo SDK da Vercel) · teto de bytes, silêncio, cancelamento, gzip, 3xx",
       "type": "tool",
       "dot": "sky"
     },
@@ -393,7 +393,7 @@
       "id": "card-fora",
       "tone": "red",
       "title": "Não-ligações declaradas",
-      "body": "A imagem do PDF (busca o @react-pdf) e o teste de conectividade do provedor personalizado (validateCustomKey) julgam pela política mas não têm a conexão presa. A media_url deixou de estar aqui na #110: o servidor baixa o arquivo e o gateway só recebe a URL assinada do Storage. Detalhe e plano em docs/specs/rede-segura-unica.md."
+      "body": "A imagem do PDF (busca o @react-pdf) julga pela política mas não tem a conexão presa. A media_url deixou de estar aqui na #110 (o servidor baixa o arquivo e o gateway só recebe a URL assinada do Storage) e o teste de conectividade do provedor personalizado, na #133 (validateCustomKey passou a sair por fetchParaDestinoDaOrganizacao). Detalhe e plano em docs/specs/rede-segura-unica.md."
     }
   ]
 }

@@ -43,6 +43,28 @@ vi.mock("node:dns/promises", () => {
 const registry = createDefaultRegistry();
 const ENDERECO = "https://gateway.exemplo/v1";
 
+// O loopback é exatamente o que a régua da organização recusa; os testes de
+// conexão real o liberam pelo gancho `ipPermitido` de teste, e tudo o mais
+// segue valendo. O nome (`gw.exemplo`) é o que a URL carrega: o transporte o
+// resolve UMA vez, e aqui essa resolução aponta para o servidor do teste.
+const LOOPBACK = {
+  ipPermitido: (ip: string) => ip === "127.0.0.1",
+  resolver: async () => [{ address: "127.0.0.1", family: 4 }],
+};
+const abertos: http.Server[] = [];
+afterEach(() => {
+  for (const srv of abertos.splice(0)) {
+    srv.closeAllConnections();
+    srv.close();
+  }
+});
+async function subir(tratar: http.RequestListener): Promise<string> {
+  const srv = http.createServer(tratar);
+  abertos.push(srv);
+  await new Promise<void>((ok) => srv.listen(0, "127.0.0.1", ok));
+  return `http://gw.exemplo:${(srv.address() as AddressInfo).port}/v1`;
+}
+
 describe("a opção existe e é executável", () => {
   it("está na lista de quem tem chave, com o rótulo da issue", () => {
     expect(IDS_COM_CHAVE).toContain("custom");
@@ -100,31 +122,40 @@ describe("o teste de conectividade antes de salvar", () => {
   });
 
   it("URL certa: barra final sai e a chamada é GET {base}/models com a chave", async () => {
-    const espiao = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ data: [{ id: "gpt-x" }, { id: "" }] }), { status: 200 }),
-    );
-    vi.stubGlobal("fetch", espiao);
+    const vistos: { metodo?: string; url?: string; auth?: string }[] = [];
+    const base = await subir((req, res) => {
+      vistos.push({ metodo: req.method, url: req.url, auth: req.headers.authorization });
+      res.end(JSON.stringify({ data: [{ id: "gpt-x" }, { id: "" }] }));
+    });
 
-    const r = await validateCustomKey("sk-certa", "https://gw.exemplo/v1/");
+    const r = await validateCustomKey("sk-certa", `${base}/`, LOOPBACK);
     expect(r).toEqual({ ok: true, models: ["gpt-x"] });
 
-    const [url, init] = espiao.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("https://gw.exemplo/v1/models");
-    expect(init.method).toBe("GET");
-    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer sk-certa");
+    expect(vistos).toEqual([{ metodo: "GET", url: "/v1/models", auth: "Bearer sk-certa" }]);
+  });
+
+  it("catálogo no formato { models: [{ id }] } também serve", async () => {
+    const base = await subir((_req, res) => res.end(JSON.stringify({ models: [{ id: "m1" }] })));
+    expect(await validateCustomKey("sk-x", base, LOOPBACK)).toEqual({ ok: true, models: ["m1"] });
   });
 
   it("chave recusada pelo endpoint → auth_failed_401 (a frase já existe)", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 401 })));
-    expect(await validateCustomKey("sk-errada", ENDERECO)).toEqual({
+    const base = await subir((_req, res) => {
+      res.writeHead(401);
+      res.end();
+    });
+    expect(await validateCustomKey("sk-errada", base, LOOPBACK)).toEqual({
       ok: false,
       error: "auth_failed_401",
     });
   });
 
   it("sem /models → o erro aponta a BASE URL, e não a chave", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 404 })));
-    const r = await validateCustomKey("sk-x", ENDERECO);
+    const base = await subir((_req, res) => {
+      res.writeHead(404);
+      res.end();
+    });
+    const r = await validateCustomKey("sk-x", base, LOOPBACK);
     expect(r).toEqual({ ok: false, error: "provider_status_404" });
     if (r.ok) throw new Error("esperava a falha do /models para descrever o erro");
 
@@ -188,18 +219,97 @@ describe("o endereço da empresa não alcança a rede interna do servidor", () =
     expect(espiao).not.toHaveBeenCalled();
   });
 
-  it("redirect não é seguido: o fetch sai com redirect manual, e um 302 vira recusa", async () => {
-    const espiao = vi
-      .fn()
-      .mockResolvedValue(new Response(null, { status: 302, headers: { location: "http://127.0.0.1/" } }));
-    vi.stubGlobal("fetch", espiao);
+  it("rebinding no teste de conexão: a chave só sai para o endereço julgado, numa resolução só", async () => {
+    let recebeu = 0;
+    const base = await subir((_req, res) => {
+      recebeu += 1;
+      res.end(JSON.stringify({ data: [{ id: "gpt-x" }] }));
+    });
+    let resolucoes = 0;
 
-    expect(await validateCustomKey("sk-x", ENDERECO)).toEqual({
+    const r = await validateCustomKey("sk-x", base, {
+      ipPermitido: LOOPBACK.ipPermitido,
+      // 1ª resposta: o endereço julgado (o servidor do teste). Uma 2ª resolução,
+      // se existisse, diria metadados de nuvem — e a chave iria para lá.
+      resolver: async () => {
+        resolucoes += 1;
+        return [{ address: resolucoes === 1 ? "127.0.0.1" : "169.254.169.254", family: 4 }];
+      },
+    });
+
+    expect(r).toEqual({ ok: true, models: ["gpt-x"] });
+    expect(resolucoes, "uma resolução só: não há segunda janela").toBe(1);
+    expect(recebeu).toBe(1);
+  });
+
+  it("redirect não é seguido: um 302 vira recusa, e o destino do redirect não é tocado", async () => {
+    let alcancado = false;
+    const alvo = await subir((_req, res) => {
+      alcancado = true;
+      res.end("{}");
+    });
+    const base = await subir((_req, res) => {
+      res.writeHead(302, { location: `${alvo}/models` });
+      res.end();
+    });
+
+    expect(await validateCustomKey("sk-x", base, LOOPBACK)).toEqual({
       ok: false,
       error: "unsafe_url:redirect_not_followed",
     });
-    const [, init] = espiao.mock.calls[0] as [string, RequestInit];
-    expect(init.redirect).toBe("manual");
+    expect(alcancado, "a chave foi atrás do redirect").toBe(false);
+  });
+
+  it("endereço de rede interna: nem o servidor que lá estiver é tocado", async () => {
+    // Sem o gancho de teste: o loopback é recusado pela régua da organização.
+    let tocado = false;
+    const base = await subir((_req, res) => {
+      tocado = true;
+      res.end("{}");
+    });
+
+    const r = await validateCustomKey("sk-x", base.replace("gw.exemplo", "127.0.0.1"));
+
+    expect(r).toEqual({ ok: false, error: expect.stringMatching(/^unsafe_url:/) });
+    expect(tocado, "a chave saiu para a rede interna").toBe(false);
+  });
+
+  it("nome que não resolve vira a recusa que a tela já traduz", async () => {
+    const r = await validateCustomKey("sk-x", "http://gw.exemplo:1/v1", {
+      resolver: async () => {
+        throw new Error("ENOTFOUND");
+      },
+    });
+    expect(r).toEqual({ ok: false, error: "unsafe_url:dns_failed" });
+  });
+
+  it("provedor fora do ar: o código segue sendo o do erro de rede, como antes", async () => {
+    const srv = http.createServer();
+    await new Promise<void>((ok) => srv.listen(0, "127.0.0.1", ok));
+    const porta = (srv.address() as AddressInfo).port;
+    await new Promise<void>((ok) => srv.close(() => ok()));
+
+    expect(await validateCustomKey("sk-x", `http://gw.exemplo:${porta}/v1`, LOOPBACK)).toEqual({
+      ok: false,
+      error: "TypeError",
+    });
+  });
+
+  it("prazo de 10 s: um provedor que não responde é cortado e a conexão é derrubada", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      let chegou!: () => void;
+      const chegada = new Promise<void>((ok) => (chegou = ok));
+      const base = await subir(() => chegou()); // aceita e nunca responde
+      const pendente = validateCustomKey("sk-x", base, LOOPBACK);
+      await chegada;
+
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      expect(await pendente).toEqual({ ok: false, error: "AbortError" });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("no turno do agente, cada chamada passa pela régua: nome que resolve para dentro é recusado", async () => {
@@ -217,26 +327,6 @@ describe("o endereço da empresa não alcança a rede interna do servidor", () =
   });
 
   describe("a conexão é do transporte seguro (#108), provada contra servidor real", () => {
-    // O loopback é exatamente o que a régua da organização recusa; o teste o
-    // libera pelo gancho `ipPermitido` de teste, e tudo o mais segue valendo.
-    const LOOPBACK = {
-      ipPermitido: (ip: string) => ip === "127.0.0.1",
-      resolver: async () => [{ address: "127.0.0.1", family: 4 }],
-    };
-    const abertos: http.Server[] = [];
-    afterEach(() => {
-      for (const srv of abertos.splice(0)) {
-        srv.closeAllConnections();
-        srv.close();
-      }
-    });
-    async function subir(tratar: http.RequestListener): Promise<string> {
-      const srv = http.createServer(tratar);
-      abertos.push(srv);
-      await new Promise<void>((ok) => srv.listen(0, "127.0.0.1", ok));
-      return `http://gw.exemplo:${(srv.address() as AddressInfo).port}/v1`;
-    }
-
     it("o 3xx não é seguido: vira recusa, e o destino do redirect não é tocado", async () => {
       let alcancado = false;
       const alvo = await subir((_req, res) => {
