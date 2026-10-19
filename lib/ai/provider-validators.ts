@@ -371,9 +371,11 @@ export async function validateCustomKey(
     const models = modelos.map((m) => m.id ?? "").filter(Boolean);
     return { ok: true, models };
   } catch (err) {
-    // A recusa da política (`unsafe_url:*`) e o teto de bytes (`net:*`) saem com
-    // o código próprio: é nele que a tela se apoia, e o `name` seria o mesmo
-    // para todos.
+    // A recusa da política (`unsafe_url:*`) sai com o código próprio: é nele que
+    // a tela se apoia, e o `name` seria o mesmo para todas. Queda de conexão e
+    // prazo já chegam do transporte como `TypeError`, como no `fetch`; o teto de
+    // bytes (`net:response_too_large`) não tem frase na tela e aparece como
+    // falha genérica com o código à mostra.
     if (err instanceof ErroDeRedeSegura) return { ok: false, error: err.codigo };
     return { ok: false, error: err instanceof Error ? err.name : "network_error" };
   }
