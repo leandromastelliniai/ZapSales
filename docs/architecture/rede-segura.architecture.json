@@ -146,8 +146,8 @@
     {
       "id": "sdk",
       "lane": "consumidores",
-      "label": "fetch do SDK de modelos (provedor personalizado)",
-      "sublabel": "fetchParaDestinoDaOrganizacao · lib/automation/destinos-internos-autorizados.ts · transporte é o fetchSeguro: resolve e julga a cada chamada, conecta só no endereço julgado, 3xx vira recusa · a allowlist do motor de borda (contain) fica na frente",
+      "label": "fetch do SDK de modelos e teste de conectividade (provedor personalizado)",
+      "sublabel": "fetchParaDestinoDaOrganizacao · lib/automation/destinos-internos-autorizados.ts · transporte é o fetchSeguro: resolve e julga a cada chamada, conecta só no endereço julgado, 3xx vira recusa · o SDK (#108) e validateCustomKey (#133) saem por ele · a allowlist do motor de borda (contain) fica na frente",
       "type": "lib",
       "dot": "amber"
     },
@@ -171,7 +171,7 @@
       "id": "testeFluxo",
       "lane": "prova",
       "label": "fluxo.test.ts + fetch.test.ts + provedor-personalizado.test.ts",
-      "sublabel": "servidor real: rebinding, 1º trecho SSE antes de o servidor terminar (inclusive pelo SDK da Vercel) · teto de bytes, silêncio, cancelamento, gzip, 3xx",
+      "sublabel": "servidor real: rebinding (no SDK e em validateCustomKey), 1º trecho SSE antes de o servidor terminar (inclusive pelo SDK da Vercel) · teto de bytes, silêncio, cancelamento, gzip, 3xx",
       "type": "tool",
       "dot": "sky"
     },
@@ -411,9 +411,9 @@
     },
     {
       "id": "card-fora",
-      "tone": "red",
-      "title": "Não-ligações declaradas",
-      "body": "O teste de conectividade do provedor personalizado (validateCustomKey) julga pela política mas não tem a conexão presa. A imagem do PDF saiu desta lista na #109 (os bytes passam por buscarSeguro) e a media_url na #110 (o servidor baixa o arquivo e o gateway só recebe a URL assinada do Storage). Detalhe e plano em docs/specs/rede-segura-unica.md."
+      "tone": "green",
+      "title": "Sem consumidor fora da conexão presa",
+      "body": "A lista de diferenças declaradas está vazia: o SDK de modelos (#108), a media_url (#110), o teste de conectividade do provedor personalizado (#133) e a imagem do PDF da proposta (#109, os bytes passam por buscarSeguro) saíram por esta política. Detalhe em docs/specs/rede-segura-unica.md."
     }
   ]
 }
