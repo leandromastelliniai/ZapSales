@@ -10,8 +10,9 @@
  */
 import { baseDaApiDoJev } from "@/lib/ai/decisao/cliente";
 import type { ProvedorComChave } from "@/lib/ai/pontos/provedores";
-import { motivoDaRecusaDeDestino } from "@/lib/automation/destinos-internos-autorizados";
+import { fetchParaDestinoDaOrganizacao } from "@/lib/automation/destinos-internos-autorizados";
 import { env } from "@/lib/env";
+import { ErroDeRedeSegura, type OpcoesDoFetchSeguro } from "@/lib/net/rede-segura";
 
 export interface ValidationOk {
   ok: true;
@@ -29,11 +30,16 @@ const TIMEOUT_MS = 5000;
 /** Só do provedor personalizado — ver `validateCustomKey`. */
 const TIMEOUT_MS_CUSTOM = 10000;
 
-async function timedFetch(url: string, init: RequestInit, timeoutMs: number = TIMEOUT_MS): Promise<Response> {
+async function timedFetch(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number = TIMEOUT_MS,
+  transporte: typeof fetch = fetch,
+): Promise<Response> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    return await fetch(url, { ...init, signal: ctrl.signal });
+    return await transporte(url, { ...init, signal: ctrl.signal });
   } finally {
     clearTimeout(t);
   }
@@ -317,35 +323,44 @@ export async function validateTypeSafeKey(apiKey: string): Promise<ValidationRes
  * não tem, e o teste roda ANTES de salvar — derrubar a tela com 5s num
  * primeiro carregamento lento seria confundir lentidão do operador com chave
  * ruim. A chave nunca é logada aqui: só o código do desfecho sai.
+ *
+ * O endereço é escolha de uma ORGANIZAÇÃO e quem chama é o servidor: sem a
+ * régua de destino, o admin de uma empresa sondaria a rede interna da
+ * instalação (loopback, metadados de nuvem, serviços do compose) e mandaria a
+ * chave para lá. A régua é a da rede segura única (decisão 22-d), e quem a
+ * aplica é o PRÓPRIO transporte (`fetchParaDestinoDaOrganizacao`, #133): ele
+ * resolve o nome uma vez, julga o conjunto e conecta só no endereço julgado.
+ * Julgar antes e deixar o `fetch` global conectar resolvia o nome de novo — a
+ * janela de rebinding (TTL zero) que levaria a CHAVE ao endereço errado. A
+ * recusa chega como `ErroDeRedeSegura` e o código é o mesmo que a tela já traduz.
+ *
+ * `politicaDeTeste` só existe para os testes apontarem o loopback e o DNS (é o
+ * gancho de `fetchParaDestinoDaOrganizacao`; em produção é ignorado).
  */
 export async function validateCustomKey(
   apiKey: string,
   baseUrl?: string,
+  politicaDeTeste?: OpcoesDoFetchSeguro,
 ): Promise<ValidationResult> {
   const base = (baseUrl ?? "").trim().replace(/\/+$/, "");
   if (base === "") return { ok: false, error: "base_url_ausente" };
   if (!/^https?:\/\//i.test(base)) return { ok: false, error: "base_url_invalida" };
-  // O endereço é escolha de uma ORGANIZAÇÃO e quem chama é o servidor: sem esta
-  // régua, o admin de uma empresa sondaria a rede interna da instalação
-  // (loopback, metadados de nuvem, serviços do compose) e mandaria a chave para
-  // lá. Mesma régua da visão em `workers/media-derive-worker.ts` (decisão 22-d).
-  const recusa = await motivoDaRecusaDeDestino(base, "organizacao");
-  if (recusa) return { ok: false, error: recusa };
   try {
-    const res = await timedFetch(`${base}/models`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${apiKey}` },
-      // Redirect não é seguido: um endpoint público que responde 3xx para a
-      // rede interna furaria a régua acima.
-      redirect: "manual",
-    }, TIMEOUT_MS_CUSTOM);
-    if (res.status >= 300 && res.status < 400) {
-      return { ok: false, error: "unsafe_url:redirect_not_followed" };
-    }
+    const res = await timedFetch(
+      `${base}/models`,
+      { method: "GET", headers: { Authorization: `Bearer ${apiKey}` } },
+      TIMEOUT_MS_CUSTOM,
+      fetchParaDestinoDaOrganizacao(undefined, politicaDeTeste),
+    );
+    // O 3xx já chega como recusa (`unsafe_url:redirect_not_followed`, lançada
+    // pelo transporte): um endpoint público que redireciona para a rede interna
+    // levaria a chave junto. Os desfechos abaixo são do provedor.
     if (res.status === 401 || res.status === 403) {
+      await res.body?.cancel().catch(() => undefined);
       return { ok: false, error: "auth_failed_401" };
     }
     if (!res.ok) {
+      await res.body?.cancel().catch(() => undefined);
       return { ok: false, error: `provider_status_${res.status}` };
     }
     const json = (await res.json()) as { data?: { id?: string }[]; models?: { id?: string }[] };
@@ -356,6 +371,10 @@ export async function validateCustomKey(
     const models = modelos.map((m) => m.id ?? "").filter(Boolean);
     return { ok: true, models };
   } catch (err) {
+    // A recusa da política (`unsafe_url:*`) e o teto de bytes (`net:*`) saem com
+    // o código próprio: é nele que a tela se apoia, e o `name` seria o mesmo
+    // para todos.
+    if (err instanceof ErroDeRedeSegura) return { ok: false, error: err.codigo };
     return { ok: false, error: err instanceof Error ? err.name : "network_error" };
   }
 }
