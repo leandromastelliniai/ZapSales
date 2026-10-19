@@ -1,0 +1,88 @@
+<!--meta {"id":"onboarding","grupo":"entrada","titulo":"Primeiros passos (onboarding)","ordem":2,"resumo":"O passo a passo que aparece quando uma empresa nova entra pela primeira vez: o negócio, o telefone, o treino do funcionário de IA, o funil, o teste e a equipe.","palavras":["onboarding","primeiros passos","boas-vindas","seu negócio","whatsapp","treinar","funil","testar","equipe","convidar","tudo pronto","começar a usar"],"onde":"Aparece sozinho no primeiro acesso de uma empresa nova (/onboarding)","quem":"Qualquer membro entra; o passo da chave de IA só aceita o Administrador","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O onboarding é o <strong>assistente de primeiro acesso</strong>: em seis passos, monta quem vai atender os clientes (o “funcionário” de IA) e onde ele trabalha. Toda empresa nova nasce com ele pendente: enquanto não termina, <em>qualquer tela do sistema leva de volta a ele</em>. Quem entra em suporte (acompanhamento) ou numa empresa já concluída vai direto ao Inbox.</p>
+<ul>
+  <li>No topo: o símbolo da marca, o nome do sistema e o nome da empresa, mais o botão <span class="ui">Ir para outra organização</span> (se você tem outra) e a barra com os 6 passos numerados (no celular, sem os rótulos).</li>
+  <li>Só o primeiro passo <strong>não pode ser pulado</strong>. Os demais têm <span class="ui">Pular por enquanto</span>.</li>
+  <li>Cada passo grava o que fez no estado da empresa e na auditoria (<code>onboarding.*</code>).</li>
+</ul>
+<aside class="nota atencao"><strong>Para fotografar, o onboarding foi reaberto na empresa de demonstração.</strong><p>Nenhum passo foi concluído nem enviado nas capturas.</p></aside>
+
+<h2 id="passo1">Passo 1 — Seu negócio</h2>
+<figure class="print">
+  <img src="img/onb-1-negocio.png" alt="Passo 1 do onboarding com a lista do que já está de pé e os campos do negócio, numerado de 1 a 7" loading="lazy">
+  <figcaption>Passo 1: “Boas-vindas ao ZapSales”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>A barra de passos.</strong> Seis etapas: Seu negócio, O telefone dele, Treinar, Onde ele organiza, Ver ele atender, Quem trabalha com ele.</li>
+  <li><strong>Isto aqui já está de pé.</strong> Uma lista com bolinha verde (pronto) ou amarela (falta): servidor no ar e banco instalado; inteligência contratada (ou “Falta a chave da inteligência artificial”); WhatsApp pronto para conectar; funil de vendas criado.</li>
+  <li><strong>Como se chama o seu negócio?</strong> Obrigatório, 2 a 120 caracteres. Vem vazio quando a empresa ainda tem o nome padrão (“Minha Empresa”).</li>
+  <li><strong>O que vocês fazem?</strong> Opcional, até 280 caracteres (“clínica odontológica, ou venda de roupa fitness pelo WhatsApp”). É com isso que o funcionário aprende com quem está falando.</li>
+  <li><strong>Onde você atende.</strong> O fuso horário: “São Paulo, Rio, Brasília, Sul e Sudeste” (padrão), Nordeste, Belém e Pará, Manaus e Amazonas, Cuiabá e Mato Grosso, Rio Branco e Acre, Buenos Aires, Lisboa, Madri, Roma, Nova York, Los Angeles ou “Outro (horário universal)”. Decide o horário em que o funcionário pode falar com clientes.</li>
+  <li><strong>Li e aceito os Termos de Uso e a Política de Privacidade.</strong> Obrigatório (abrem em nova aba). Sem aceitar: “Aceite os termos para continuar.”</li>
+  <li><strong>Continuar.</strong> Atualiza o nome e o fuso da empresa (<code>onboarding.welcome_completed</code>).</li>
+</ol>
+
+<h2 id="passo2">Passo 2 — O telefone dele</h2>
+<figure class="print">
+  <img src="img/onb-2-telefone.png" alt="Passo 2 com as duas formas de conectar o número e os botões Pular e Conectei em outro lugar, numerado de 1 a 5" loading="lazy">
+  <figcaption>Passo 2: “Dê um telefone a ele”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Dê um telefone a ele.</strong> “Novos canais começam em modo de teste.” Depois abra Conexões para autorizar números de teste ou liberar o público.</li>
+  <li><strong>Uso o WhatsApp no celular.</strong> Conecta por QR Code ou código de pareamento.</li>
+  <li><strong>Tenho conta oficial na Meta.</strong> Para quem cadastrou o número na Meta e tem as credenciais.</li>
+  <li><strong>Pular por enquanto.</strong> Grava “pulou” (<code>onboarding.whatsapp_skipped</code>).</li>
+  <li><strong>Conectei em outro lugar.</strong> Para quem já conectou pela tela <a href="#conexoes">Conexões</a>.</li>
+</ol>
+<ul>
+  <li><strong>Pelo celular:</strong> o sistema cria a sessão e mostra “Preparando o código…” → “Pronto para conectar” (QR Code, ou a aba “Conectar por código” com o telefone com código do país e DDD) → “Conectado!” (avança sozinho). Se o QR expira: “O código expirou” e <span class="ui">Gerar novo QR Code</span>. Se o serviço de WhatsApp não subiu: “O WhatsApp desta instalação ainda não subiu.” (dá para seguir e conectar depois).</li>
+  <li><strong>Conta oficial:</strong> embute o formulário de canal oficial de Conexões, com aviso se o dono ainda não cadastrou o app da Meta (<a href="#admin-google--meta">API Oficial</a>).</li>
+  <li>Conectar de verdade cria um canal real, com efeito externo.</li>
+</ul>
+
+<h2 id="passo3">Passo 3 — Treinar</h2>
+<figure class="print media">
+  <img src="img/onb-3-treinar.png" alt="Passo 3 com o cérebro do funcionário, o nome, o jeito de falar, as regras da casa e as listas Ele já vem sabendo e E nunca vai fazer" loading="lazy">
+  <figcaption>Passo 3: “Treine seu funcionário”.</figcaption>
+</figure>
+<ul>
+  <li><strong>O cérebro dele.</strong> Sem chave de IA, aparece o cartão amarelo “Ele ainda não tem cérebro”: escolha <em>Qual você contratou</em> (Anthropic (Claude), OpenAI (GPT), Google (Gemini), OpenRouter, DeepSeek, Requesty ou provedor personalizado compatível com OpenAI) e cole <em>A chave</em> (mínimo 8 caracteres) em <span class="ui">Guardar a chave</span> — “guardada cifrada, nem nós conseguimos lê-la depois”. Só o Administrador pode. Com chave: “O cérebro dele: &lt;provedor&gt; (final XXXX)” e um teste automático de crédito (<strong>uma chamada real ao provedor</strong>, que gasta centavos; na captura: “Não consegui testar o crédito agora. Dá para seguir…”).</li>
+  <li><strong>Como ele vai se chamar</strong> (padrão “Atendente IA”, 2 a 80), <strong>O jeito dele falar</strong> (“Próximo e caloroso”, “Objetivo e cordial” ou “Curto e prático”) e <strong>As regras da casa</strong> (opcional, até 20.000 caracteres; “Nunca prometa desconto sem confirmar com uma pessoa.”).</li>
+  <li><strong>Ele já vem sabendo</strong> lista as ferramentas do pacote de vendas (ver o que a empresa atende, horários livres, marcar consulta, procurar cliente, criar e mover oportunidade, rascunhar proposta…). <strong>E nunca vai fazer</strong> traz as 11 conferências de saída (respeitar quem pediu para parar, segurar o ritmo, respeitar a janela do WhatsApp, não prometer preço ou prazo, dizer que é um assistente quando perguntam…) — “acontecem antes de cada mensagem sair, e não têm interruptor”.</li>
+  <li><span class="ui">Criar e continuar</span> cria (ou reaproveita) o agente padrão com o prompt montado e tenta publicar a primeira versão; se não publicar, avisa que ficou como rascunho e oferece <span class="ui">Continuar sem publicar</span>. <span class="ui">Pular</span> grava “pulou”.</li>
+</ul>
+
+<h2 id="passo4">Passo 4 — Onde ele organiza</h2>
+<figure class="print media">
+  <img src="img/onb-4-funil.png" alt="Passo 4 com o quadro de clientes sugerido, as colunas numeradas e os botões Pular por enquanto e Usar este quadro" loading="lazy">
+  <figcaption>Passo 4: o quadro (funil) de clientes.</figcaption>
+</figure>
+<ul>
+  <li>Ao abrir, a tela <strong>pede uma sugestão de colunas à IA</strong> do funcionário (uma chamada real, até 900 tokens). Se ele não está no ar, usa um modelo pronto escolhido pelo texto do negócio e avisa o porquê (na captura: “Não consegui pedir uma sugestão para o seu funcionário agora… Comecei por um quadro pronto de Loja — online ou de rua.”).</li>
+  <li>Campos: <em>Nome do quadro</em> (até 80), lista de colunas (nome de até 60 caracteres, com a frase “Ele move o cliente para cá quando…”), <span class="ui">Remover</span> (mínimo 4 colunas), <span class="ui">Adicionar coluna</span> (máximo 8 — “mais que isso não cabe na tela do celular”). As colunas de ganho e perda são “obrigatória” e não saem; a coluna “que só vocês movem” é marcada.</li>
+  <li><strong>Prefiro começar de um modelo pronto</strong> abre seis modelos: Clínica, consultório ou salão (Agendamentos); Imobiliária ou corretor (Interessados); Serviços, agência ou obra (Orçamentos); Curso, mentoria ou infoproduto (Matrículas); Loja — online ou de rua (Vendas); Outro tipo de negócio (Clientes). Um bloco recolhível mostra o quadro que veio na instalação e que será <em>substituído</em>.</li>
+  <li><span class="ui">Usar este quadro</span> <strong>substitui</strong> o funil padrão da empresa. É recusado se já há clientes no quadro (“trocar as colunas agora deixaria eles sem lugar”) ou se uma coluna está ligada a uma integração de webhook.</li>
+</ul>
+
+<h2 id="passo5">Passo 5 — Ver ele atender</h2>
+<figure class="print media">
+  <img src="img/onb-5-testar.png" alt="Passo 5 com o campo Escreva como se fosse um cliente e o botão Mandar mensagem" loading="lazy">
+  <figcaption>Passo 5: “Veja ele atender”.</figcaption>
+</figure>
+<p>“Escreva como se fosse um cliente. Nada é enviado pelo WhatsApp — é só um ensaio, entre você e ele.” Digite uma mensagem (até 4.000 caracteres; o texto inicial é “Oi! Vocês atendem hoje? Queria saber o preço.”) e clique em <span class="ui">Mandar mensagem</span> (“Ele está pensando…”); a resposta vem como “&lt;nome&gt; respondeu”, com o aviso “Esta conversa não foi enviada a ninguém e não aparece no seu inbox.”. <strong>Usa a IA de verdade (gasta centavos).</strong> Sem agente ou com agente em rascunho não há o que testar. Se falhar: “Ele não conseguiu responder — e é melhor descobrir isso agora do que com um cliente de verdade.”, com o motivo.</p>
+
+<h2 id="passo6">Passo 6 — Quem trabalha com ele</h2>
+<figure class="print media">
+  <img src="img/onb-6-equipe.png" alt="Passo 6 com o aviso de que a instalação não envia e-mail, o campo de e-mails, o papel e os botões Pular e Enviar convites" loading="lazy">
+  <figcaption>Passo 6: convidar a equipe.</figcaption>
+</figure>
+<p>Cole os e-mails (um por linha, vírgula ou ponto e vírgula; até 20) e escolha “O que essas pessoas podem fazer” (Somente leitura, <strong>Atendente</strong> (padrão), Gerente ou Administrador). Sem servidor de e-mail, aparece “Esta instalação ainda não envia e-mail” e, depois de <span class="ui">Enviar convites</span>, um <span class="ui">Copiar link</span> para cada pessoa (“O link é o convite: quem abrir entra na sua empresa”). O convite vale 24 horas, não é cancelado depois por esta tela e não há lista de pendentes — o acompanhamento fica na <a href="#equipe">Equipe</a>.</p>
+
+<h2 id="final">Tudo pronto!</h2>
+<figure class="print media">
+  <img src="img/onb-7-pronto.png" alt="Tela final Tudo pronto com a lista dos seis passos e os sete cartões O que mais tem aqui" loading="lazy">
+  <figcaption>A tela final.</figcaption>
+</figure>
+<p>O título é “Tudo pronto!” (se há agente publicado) ou “Quase lá!”, com uma frase sobre o que ficou pendente. Lista os 6 passos com bolinha verde (feito) ou cinza e a marca “(você pulou)” ou “(ainda não)”. A seção <strong>“O que mais tem aqui”</strong> traz sete cartões, cada um com “Como funciona”: <a href="#inbox">As conversas</a> (Inbox), <a href="#funis">O quadro de clientes</a> (Funis), <a href="#followups">Voltar a falar com quem sumiu</a> (Follow-ups), <a href="#radar">O que está esfriando</a> (Radar), <a href="#alertas">Quando ele pede ajuda</a> (Alertas), <a href="#aviso-whatsapp">Ser avisado no seu WhatsApp</a> e <a href="#sugestoes-ia">As ideias dele</a> (Sugestões da IA). O botão <span class="ui">Começar a usar</span> grava que a empresa concluiu os primeiros passos (<code>tenant.onboarded</code>) e leva ao Inbox. Dá para abrir esta tela direto e concluir sem passar pelos outros passos.</p>

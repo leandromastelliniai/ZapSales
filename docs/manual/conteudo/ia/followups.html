@@ -1,0 +1,123 @@
+<!--meta {"id":"followups","grupo":"ia","titulo":"Follow-ups","ordem":3,"resumo":"Fluxos automáticos para retomar quem esfriou: silêncio, mudança de etapa ou resposta do contato, sem alguém lembrar de mandar cada mensagem.","palavras":["follow-up","followup","retomar","reengajamento","fluxo","fila","gatilho","silêncio","espera","carrinho abandonado","modelo","dossiê","pausar","adiar","pular","handoff"],"onde":"Agente de IA › Follow-ups (também no menu lateral)","quem":"A tela abre para quem tem acesso à área; criar, editar, publicar, excluir e intervir na fila: Gerente ou acima.","rotas":["/app/ai/followups","/app/ai/followups/[id]","/app/ai/followups/enrollments/[id]"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Um <strong>follow-up</strong> é uma sequência automática de retomadas: o cliente sumiu, e o sistema, depois de um tempo, manda uma mensagem para saber se ainda dá para ajudar. Você desenha a sequência uma vez (esperar, mandar, entender a resposta, encerrar) e ela roda sozinha para cada cliente que se encaixar no <strong>gatilho</strong>.</p>
+<p>A tela tem duas abas: <strong>Fluxos</strong> (os roteiros que você montou) e <strong>Fila</strong> (as pessoas que estão sendo acompanhadas agora).</p>
+<aside class="nota atencao"><strong>Publicar não basta: o agente precisa “armar” o fluxo.</strong><p>As mensagens só saem quando o fluxo está <em>Ativo</em> <strong>e</strong> um agente publicado, com follow-up habilitado, o tem marcado na lista de fluxos (no editor do <a href="#agentes">Agente</a>, cartão “Follow-up”). Sem isso, o gatilho não dispara.</p></aside>
+
+<h2 id="fluxos">A aba Fluxos</h2>
+<figure class="print">
+  <img src="img/ia-followups-fluxos.png" alt="Aba Fluxos com três cartões de fluxos nos estados Desativado, Rascunho e Ativo, numerada de 1 a 10" loading="lazy">
+  <figcaption>Três fluxos: um desativado, um rascunho e um ativo.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>As abas Fluxos e Fila.</strong></li>
+  <li><strong>Começar de um modelo.</strong> Instala um dos modelos prontos (veja abaixo). Gerente ou acima.</li>
+  <li><strong>Novo fluxo.</strong> Cria um fluxo em branco.</li>
+  <li><strong>O cartão do fluxo.</strong> Clique para abrir o editor. Mostra a <em>Versão</em> (“publicada”, ou “—” se nunca foi publicado), a <em>política de handoff</em> e a data de atualização.</li>
+  <li><strong>Ativo.</strong> Tem uma versão publicada e ligada.</li>
+  <li><strong>Rascunho.</strong> Ainda não foi publicado.</li>
+  <li><strong>Desativado.</strong> Foi desligado.</li>
+  <li><strong>Renomear.</strong> Muda só o nome interno; as inscrições e a versão publicada continuam.</li>
+  <li><strong>Duplicar.</strong> Cria uma cópia “<em>nome</em> (cópia)”, sempre como <strong>rascunho</strong>, sem vínculo com nenhum agente (é preciso armar de novo).</li>
+  <li><strong>Excluir.</strong> Apaga o fluxo <strong>e as inscrições e versões dele</strong>. Não dá para desfazer; os clientes em andamento deixam de ser acompanhados.</li>
+</ol>
+<h3>Criar um fluxo</h3>
+<ol class="passos">
+  <li>Clique em <span class="ui">Novo fluxo</span> e dê um nome (até 80 caracteres), como <em>“Recuperação de carrinho abandonado”</em>.</li>
+  <li>Clique em <span class="ui">Criar fluxo</span>. O fluxo nasce como <strong>rascunho</strong> e aparece na lista.</li>
+  <li>Abra-o e monte o desenho no <a href="#followups--editor">editor</a>. Quando estiver pronto, <strong>Publique</strong> e depois arme o fluxo no seu agente.</li>
+</ol>
+<h3>Modelos prontos</h3>
+<figure class="print media">
+  <img src="img/ia-followups-modelos.png" alt="Janela Modelos prontos, com quatro fluxos de exemplo para clínica" loading="lazy">
+  <figcaption>A janela “Modelos prontos”.</figcaption>
+</figure>
+<p>Os modelos já vêm com os textos escritos, para as quatro situações em que um paciente some no meio do caminho (os modelos são de <strong>clínica</strong>, mas servem de exemplo para outros negócios). <strong>Instalar não manda mensagem a ninguém</strong>: o fluxo nasce como rascunho, para você revisar.</p>
+<table class="tabela">
+  <thead><tr><th>Modelo</th><th>Para quê</th><th>Quando dispara</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Consulta · retomar quem sumiu na marcação</strong></td><td>O paciente perguntou sobre consulta e a conversa parou antes de marcar. 3 mensagens, acompanha por 12 dias.</td><td>Um dia inteiro sem o paciente responder, com a marcação em aberto.</td></tr>
+    <tr><td><strong>Exame · marcar o exame que foi pedido</strong></td><td>Saiu o pedido de exame e o paciente não marcou. Cobra por duas semanas e sai de cena. 3 mensagens.</td><td>O negócio entrar na etapa do funil que você escolher.</td></tr>
+    <tr><td><strong>Cirurgia · acompanhar a decisão</strong></td><td>Quem foi avaliado e não marcou está decidindo: acompanha por quase três meses, sem pressionar. 4 mensagens.</td><td>O negócio entrar na etapa que você escolher.</td></tr>
+    <tr><td><strong>Falta · remarcar quem não veio</strong></td><td>A falta foi confirmada na agenda e o horário ficou vago: oferece outra data.</td><td>Alguém confirmar na agenda que o paciente não compareceu.</td></tr>
+  </tbody>
+</table>
+<p>Nos modelos que dependem de uma etapa, escolha a <strong>etapa do funil que dispara</strong> antes de clicar em <span class="ui">Instalar</span>. Depois de instalar, o sistema leva direto ao editor. Os textos dos modelos evitam citar doença, exame, preço ou horário, por causa da LGPD.</p>
+
+<h2 id="fila">A aba Fila</h2>
+<figure class="print">
+  <img src="img/ia-followups-fila.png" alt="Aba Fila com os filtros, a tabela de inscrições e o botão Cancelar, numerada de 1 a 7" loading="lazy">
+  <figcaption>A fila de follow-ups: quem está sendo acompanhado agora.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Busca de contato.</strong> Por nome, apelido ou telefone.</li>
+  <li><strong>Filtro de status.</strong> <em>Ativo, Aguardando resposta, Aguardando a data do retorno, Pausado por uma pessoa, Pausado (atendimento humano), Concluído, Cancelado, Parou de tentar</em>.</li>
+  <li><strong>Filtro de fluxo.</strong></li>
+  <li><strong>Colunas:</strong> Contato, <em>Fluxo / Promessa</em>, <em>Nó atual / Motivo</em>, <em>Próximo disparo</em> e Status.</li>
+  <li><strong>O contato.</strong> Clique para abrir o <a href="#followups--dossie">dossiê</a>.</li>
+  <li><strong>“Promessa”.</strong> É um <em>retorno que a IA combinou</em> com o cliente (por exemplo, “retorno na quinta às 9h”), diferente de uma inscrição em fluxo. Promessas não têm dossiê.</li>
+  <li><strong>Cancelar.</strong> Encerra a inscrição (ou desmarca a promessa): o cliente <strong>não recebe mais</strong> as mensagens do fluxo. Para inscrição, não pode ser desfeito.</li>
+</ol>
+<p>A fila mostra 20 por vez, ordenada por <em>próximo disparo</em> (o mais próximo primeiro), com o botão <span class="ui">Carregar mais</span>. Promessas só aparecem quando não há filtro de status nem de fluxo. Na coluna “Nó atual”, o sistema mostra o <em>identificador</em> do passo (como <code>espera-1</code>) em vez do nome.</p>
+
+<h2 id="editor">O editor do fluxo</h2>
+<p>Clique no cartão de um fluxo. O editor ocupa a tela inteira: uma <strong>barra de comandos</strong> no alto, a <strong>paleta de caixas</strong> à esquerda e a <strong>área de desenho</strong>, onde cada passo é uma caixa ligada às outras por setas.</p>
+<figure class="print">
+  <img src="img/ia-followups-editor.png" alt="Editor do fluxo com a barra de comandos, a paleta de caixas e o desenho de quatro caixas ligadas, numerado de 1 a 11" loading="lazy">
+  <figcaption>O editor de um fluxo simples: Início → Espera 1 dia → Retoma a conversa → Fim.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome do fluxo.</strong> O lápis ao lado renomeia.</li>
+  <li><strong>Situação:</strong> Rascunho, Ativo ou Desativado. Um selo <em>“Alterações não salvas”</em> aparece quando o desenho difere do salvo.</li>
+  <li><strong>Gatilho.</strong> O botão-resumo (“Gatilho: Silêncio (1440 min)”) abre o painel que define <em>o que faz o fluxo começar</em>.</li>
+  <li><strong>Política de handoff.</strong> O que fazer quando uma pessoa assume a conversa: <em>Pausar durante handoff</em> (padrão), <em>Cancelar durante handoff</em> ou <em>Permitir durante handoff</em>. Grava na hora.</li>
+  <li><strong>Salvar.</strong> Grava só o <em>rascunho</em>: nada muda para os clientes.</li>
+  <li><strong>Publicar.</strong> Salva, <em>valida</em> e cria a versão nova, tornando o fluxo ativo.</li>
+  <li><strong>Desativar.</strong> Muda a situação para Desativado.</li>
+  <li><strong>Rollback.</strong> Volta para a versão publicada anterior (só se houver mais de uma). Não reativa um fluxo desativado.</li>
+  <li><strong>Organizar.</strong> Arruma as caixas automaticamente.</li>
+  <li><strong>Adicionar nó.</strong> A paleta. Clique, ou arraste a caixa para a área de desenho.</li>
+  <li><strong>Uma caixa.</strong> Tem ícone, título e uma linha de resumo. Clique para abrir o painel de configuração dela, à direita.</li>
+</ol>
+<h3>As caixas disponíveis</h3>
+<table class="tabela">
+  <thead><tr><th>Caixa</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Gatilho (Início)</strong></td><td>O começo do fluxo. Só pode haver um. Tem a opção <em>Somente interno</em>: o fluxo inteiro não fala com o cliente.</td></tr>
+    <tr><td><strong>Aguardar</strong></td><td>Espera um <em>tempo fixo</em> (mínimo 5 minutos, máximo 90 dias) ou deixa <em>a IA escolher a hora</em>, dentro de um mínimo e um máximo.</td></tr>
+    <tr><td><strong>Condição</strong></td><td>Decide o caminho conforme regras: etapa do funil, etiqueta do contato, passos já dados, desfecho do passo anterior. Até 10 regras.</td></tr>
+    <tr><td><strong>Classificar (IA)</strong></td><td>A IA lê a resposta do cliente e escolhe entre classes que você define (1 a 8, como “Interessado, Sem interesse”). Espera a resposta por pelo menos 15 minutos; sem resposta, o fluxo segue pelo caminho “Sem resposta”. <em>Gasta IA.</em></td></tr>
+    <tr><td><strong>Resposta (texto)</strong></td><td>Casa a resposta do cliente com regras de texto (“contém” ou “é igual a”) e, se quiser, grava a resposta num campo do contato.</td></tr>
+    <tr><td><strong>Repetir</strong></td><td>Repete um trecho do fluxo por até 20 voltas.</td></tr>
+    <tr><td><strong>Ação</strong></td><td>A <strong>única caixa que manda mensagem ao cliente</strong>: <em>texto fixo</em> (sai exatamente como escrito), <em>mensagem escrita pela IA</em> ou <em>modelo de mensagem pronto</em>. Depois de 24 horas sem resposta do cliente, só um <em>modelo aprovado do WhatsApp</em> chega até ele.</td></tr>
+    <tr><td><strong>Lembrete interno</strong></td><td>Cria uma <a href="#tarefas">tarefa</a> para a equipe. Nada é enviado ao cliente.</td></tr>
+    <tr><td><strong>Mover lead no funil</strong></td><td>Leva o cartão para outra etapa do mesmo funil.</td></tr>
+    <tr><td><strong>Editar tag do lead</strong></td><td>Adiciona etiquetas ao negócio (não apaga as que já tem).</td></tr>
+    <tr><td><strong>Fim</strong></td><td>Encerra o fluxo com um resultado: Convertido, Esgotado ou Personalizado.</td></tr>
+  </tbody>
+</table>
+<h3>Os gatilhos</h3>
+<p>O botão do gatilho abre o painel “Tipo de gatilho”. As opções são: <strong>Manual</strong>, <strong>Silêncio</strong> (minutos sem o cliente falar), <strong>Etapa do funil</strong> (quando o negócio entra numa etapa), <strong>Falta confirmada pela equipe</strong>, <strong>Agente pediu ajuda</strong>, <strong>Cliente voltou</strong> (depois de um tempo sem falar), <strong>Lead criado</strong> e <strong>Automação (Webhooks)</strong>. Em quase todas há o interruptor <em>“Cancelar se o lead responder”</em>. A entrada na fila de um gatilho de silêncio ou etapa leva alguns minutos; não é instantânea.</p>
+<h3>Ao publicar, o sistema valida o desenho</h3>
+<p>Se algo estiver errado, a publicação é recusada com a mensagem <em>“Fluxo reprovado na validação — corrija os nós destacados”</em>, e as caixas com problema ficam com a <strong>borda vermelha</strong>. As regras principais: exatamente um gatilho; toda caixa precisa ser alcançável a partir do início e ter caminho até um Fim; as saídas de Condição, Resposta e Classificar precisam estar todas ligadas; esperas de 24 horas ou mais antes de uma mensagem exigem um modelo aprovado de reserva quando a empresa usa a API Oficial; e o desenho tem de 2 a 60 caixas.</p>
+<aside class="nota atencao"><strong>Publicar pode mandar mensagens a clientes reais.</strong><p>Publicado e armado num agente, o fluxo passa a enviar mensagens automáticas a quem se encaixar no gatilho. Revise cada texto das caixas de <em>Ação</em> antes de publicar. Fluxos com <em>Classificar (IA)</em>, <em>Mensagem escrita pela IA</em> ou espera <em>“A IA escolhe a hora”</em> gastam IA.</p></aside>
+
+<h2 id="dossie">O dossiê de uma inscrição</h2>
+<p>Na fila, clique no nome do contato para ver, de uma pessoa específica, <strong>onde o follow-up está</strong>, o que já aconteceu e intervir.</p>
+<figure class="print">
+  <img src="img/ia-followups-dossie.png" alt="Dossiê de uma inscrição de follow-up, numerado de 1 a 9" loading="lazy">
+  <figcaption>O dossiê de Ana Paula Ferreira no fluxo “Recuperação de carrinho abandonado”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Voltar para a fila.</strong></li>
+  <li><strong>Situação</strong> da inscrição.</li>
+  <li><strong>Dados:</strong> o fluxo, o agente, quando começou e quantas etapas já executou.</li>
+  <li><strong>Onde está agora.</strong> O passo atual e “Volta a andar em 3 dias (data)”, ou “Parado até alguém retomar”, ou o desfecho se já terminou. Mostra também falhas de processamento e tentativas.</li>
+  <li><strong>Pausar.</strong> Congela a inscrição. Para continuar, use <em>Retomar</em>.</li>
+  <li><strong>Adiar.</strong> Escolha um novo horário; o follow-up continua no mesmo passo e volta a andar nele.</li>
+  <li><strong>Pular este passo.</strong> Avança para o passo seguinte. Se o passo tem mais de um caminho, a tela pergunta <em>por onde seguir</em>, em vez de decidir por você.</li>
+  <li><strong>Cancelar follow-up.</strong> Encerra de vez; o cliente não recebe mais mensagens do fluxo. Diferente de pausar, não pode ser desfeito.</li>
+  <li><strong>O que já aconteceu.</strong> A linha do tempo: cada evento com título, detalhe, onde, quem e quando. Os pontos mostram quem agiu (cheio = uma pessoa, vazado = o sistema, tracejado = o cliente).</li>
+</ol>
+<aside class="nota atencao"><strong>Estes botões agem sobre uma pessoa real.</strong><p><em>Pular</em> pode fazer o fluxo enviar a próxima mensagem ao cliente na hora, e <em>Retomar</em> volta a mandar mensagens. Só Gerente ou acima vê esses botões.</p></aside>

@@ -1,0 +1,63 @@
+<!--meta {"id":"chamadas","grupo":"crm","titulo":"Chamadas","ordem":9,"resumo":"O histórico das ligações de voz feitas e recebidas pela IA, com a transcrição de cada conversa, e o botão para mandar a IA ligar para um número. Depende da telefonia (SIP) instalada à parte.","palavras":["chamadas","ligação","telefone","voz","voip","sip","transcrição","ligar com IA","asterisk","tronco"],"onde":"CRM › Ver tudo em CRM › Chamadas (também pela busca ⌘K)","quem":"Gerente ou acima.","rotas":["/app/calls"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>A tela de <strong>Chamadas</strong> mostra o histórico das <strong>ligações de voz</strong> que a IA fez e recebeu pela linha telefônica da empresa (SIP), com a <strong>transcrição</strong> do que foi dito. Ela também permite <strong>mandar a IA ligar</strong> para um número.</p>
+<p>São apenas as chamadas por linha telefônica comum (SIP). Ligações pelo próprio WhatsApp têm outra tela.</p>
+<aside class="nota atencao"><strong>Telefonia é um recurso à parte e vem desligada.</strong><p>Para a IA ligar e atender é preciso subir os serviços de telefonia no servidor (<em>asterisk</em> e <em>voice-agent</em>), cadastrar a sua linha em <em>Linha telefônica (SIP)</em> e ter a chave da OpenAI configurada. <strong>A tela não avisa quando a telefonia está desligada</strong>: ela abre normalmente, com a tabela vazia (“Nenhuma chamada ainda.”) e o botão <em>Nova ligação</em> funcionando. Quem instalou o sistema precisa ligar a telefonia.</p></aside>
+
+<figure class="print">
+  <img src="img/chamadas-lista.png" alt="Tela Chamadas com a tabela de ligações, colunas data, direção, quem é, status, atendido por e duração, numerada de 1 a 11" loading="lazy">
+  <figcaption>O histórico de chamadas (dados fictícios).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Painel de ajuda.</li>
+  <li><strong>Nova ligação.</strong> Abre a janela para a IA ligar. Veja <a href="#chamadas--nova">abaixo</a>.</li>
+  <li><strong>Data.</strong> Quando a chamada começou, com hora e segundos.</li>
+  <li><strong>Direção.</strong> <em>Chamada feita</em> (saída) ou <em>Chamada recebida</em> (entrada).</li>
+  <li><strong>Quem é.</strong> O número do outro lado. Na prática aparece <strong>sempre o número</strong>, nunca o nome do contato.</li>
+  <li><strong>Status.</strong> Veja a tabela abaixo.</li>
+  <li><strong>Atendido por.</strong> “IA” quando a IA conduziu; “Humano” para qualquer outro caso.</li>
+  <li><strong>Duração.</strong> Em minutos e segundos (<code>2:05</code>).</li>
+  <li><strong>Uma chamada.</strong> Clique na linha para abrir a transcrição.</li>
+  <li><strong>Falhou.</strong> A ligação não completou por erro.</li>
+  <li><strong>Não atendida.</strong> Tocou e ninguém atendeu.</li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Status</th><th>Quando aparece</th></tr></thead>
+  <tbody>
+    <tr><td>Chamando</td><td>A ligação está tocando ou iniciando.</td></tr>
+    <tr><td>Em andamento</td><td>Conectada, em conversa agora.</td></tr>
+    <tr><td>Concluída</td><td>Terminou normalmente — e também <strong>qualquer fim sem motivo registrado</strong>. Uma ligação recebida que ninguém atendeu, sem motivo gravado, aparece como “Concluída”.</td></tr>
+    <tr><td>Não atendida</td><td>Terminou por tempo esgotado.</td></tr>
+    <tr><td>Ocupado</td><td>A linha do outro lado estava ocupada.</td></tr>
+    <tr><td>Falhou</td><td>Erro na ligação.</td></tr>
+    <tr><td>Cancelada</td><td>Foi cancelada antes de completar.</td></tr>
+  </tbody>
+</table>
+<p>A lista mostra as <strong>50 chamadas mais recentes</strong>, sem paginação nem filtro, e <strong>não se atualiza sozinha</strong>: recarregue a página.</p>
+
+<h2 id="transcricao">A transcrição</h2>
+<figure class="print media">
+  <img src="img/chamadas-transcricao.png" alt="Janela de uma chamada com a transcrição em balões, a IA à esquerda e o cliente à direita, numerada de 1 e 2" loading="lazy">
+  <figcaption>A transcrição de uma chamada.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Título e resumo.</strong> “Chamada com [número]”, e abaixo a data, a direção e o status.</li>
+  <li><strong>Os balões.</strong> A fala da IA fica à esquerda, em cinza, sempre com o nome fixo <em>“Iara”</em> (não é o nome do agente da sua empresa). A do cliente fica à direita, em cor, com o número dele. Uma fala sem texto aparece como “(sem áudio detectado)”. Sem transcrição: “Sem transcrição pra esta chamada.”.</li>
+</ol>
+
+<h2 id="nova">Mandar a IA ligar</h2>
+<figure class="print media">
+  <img src="img/chamadas-nova.png" alt="Janela Nova ligação com o campo Número e o botão Ligar com IA, numerada de 1 e 2" loading="lazy">
+  <figcaption>A janela “Nova ligação”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Número.</strong> Obrigatório, com no mínimo 8 caracteres. Escreva <strong>só os dígitos, com o código do país</strong> (<code>5532984793302</code>). A tela não corrige o número: espaços e hífens vão junto.</li>
+  <li><strong>Ligar com IA.</strong> Liga de verdade. Fica apagado com menos de 8 caracteres.</li>
+</ol>
+<p>A janela explica: <em>“A IA liga pra esse número e conduz a chamada — falar você mesmo ainda não está disponível.”</em> Só existe o modo IA.</p>
+<aside class="nota perigo"><strong>“Ligar com IA” faz uma ligação real, com custo, e não tem volta.</strong><p>A IA liga para o número digitado e conduz a conversa. O sistema <strong>não confere</strong> consentimento, pedido de não ser contatado, janela de horário nem se o número é um contato cadastrado antes de ligar. Gasta minutos da sua operadora SIP e o modelo de voz da OpenAI (contas suas, fora do ZapSales). Ligue só para quem você pode ligar.</p></aside>
+<p>Se a empresa ainda não tem linha cadastrada, o aviso é “Nenhum trunk SIP configurado para esta organização (Configurações &gt; Trunk SIP)” — o menu chama essa tela de <em>Linha telefônica (SIP)</em>. Se há linha mas a central telefônica está fora do ar, aparece um erro técnico e uma linha “Falhou” entra na lista.</p>
+
+<h2 id="papeis">Quem pode o quê</h2>
+<p>Abrir a tela e ligar exigem <strong>Gerente</strong> ou acima. Um Atendente que digitar o endereço vê a tabela vazia (a consulta é recusada sem aviso) e, ao tentar ligar, “Você não tem permissão para esta ação.”. Cada ligação registra a ação <code>call.created</code> na auditoria. O cadastro da linha telefônica fica em <em>Configurações › Linha telefônica (SIP)</em> e é papel de Administrador no menu.</p>

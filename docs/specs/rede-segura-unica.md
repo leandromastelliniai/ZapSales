@@ -61,8 +61,38 @@ destinos internos que o dono da **instalação** autoriza
 | Ferramentas externas do agente — webhook (#94) e servidor MCP (#96) | `buscarSeguro` | Endereço de **organização**: sem a lista de destinos internos, `permitirHttp` só fora de produção, 3xx não seguido (a credencial/assinatura não vai atrás de um endereço que ninguém cadastrou), prazo total por tentativa e teto de bytes. O cliente MCP é próprio (`lib/ai/ferramentas-externas/mcp/cliente.ts`) **de propósito**: o cliente do SDK usa o `fetch` global, que resolve o nome de novo, segue redirecionamento e lê sem teto. |
 | Banco externo | `lookupJulgado` no socket do `pg` + `validarHostDeBanco` | `politicaDoBanco`: a mesma régua **mais a LAN RFC 1918** (Postgres na rede do dono é caso real). |
 | Imagem de produto e logo do PDF da proposta (#109) | `buscarSeguro`, via `lib/propostas/imagem-para-pdf.ts` | Os **bytes** são buscados aqui e o `@react-pdf` recebe um data URI — ele nunca busca nada. Produto: endereço de **organização** (sem a lista de destinos internos). Logo: o host é o Storage do operador, então vale a lista da **instalação**. `https` (`http` só fora de produção), até 3 saltos revalidados, **5 s** e **2 MiB** no total, só **PNG/JPEG farejados pelos bytes** (o `Content-Type` é de quem escolheu a URL). Qualquer falha vira `null` = "sem imagem"; a proposta sai. |
-| `media_url` (o gateway é quem baixa) | `assertUrlDeMidiaSegura` → `validarUrl` + `resolverEJulgar` | Só **julga**; ver "O que continua de fora". |
-| Provedor de IA personalizado | `motivoDaRecusaDeDestino` (+ lista da instalação) | Só **julga**; ver abaixo. |
+| `media_url` | `buscarSeguro` (`lib/messaging/media/baixar-midia-externa.ts`) | O servidor baixa, sobe ao Storage e o gateway recebe a URL assinada nossa; ver "A `media_url` foi migrada (#110)". `permitirHttp` só fora de produção, **sem** lista de destinos internos, até 3 saltos (cada um julgado), teto de bytes por tipo. |
+| SDK de modelos — provedor de IA personalizado (#108) | `fetchParaDestinoDaOrganizacao` → `fetchSeguro` → `buscarSeguroEmFluxo` | Endereço de **organização**: sem a lista de destinos internos, `permitirHttp` só fora de produção, 3xx vira recusa. Cada chamada resolve, julga e conecta no endereço julgado, e o corpo (SSE) chega em **fluxo**. A allowlist do motor de borda (`contain`) fica na frente, e o transporte seguro vai por baixo dela. Ver "O corpo em fluxo". |
+
+## O corpo em fluxo (SDK de modelos)
+
+Issue #108. A resposta de um modelo é SSE e dura o tempo da geração, então `buscarSeguro` (corpo
+inteiro, prazo total de 10 s) não serve. `buscarSeguroEmFluxo` abre a conexão pelo **mesmo
+caminho** (`abrirConexao`: URL, DNS uma vez, julgamento do conjunto, `lookup` fixado, redirecionamento
+recomeçando do zero), devolve o `ReadableStream` assim que os cabeçalhos chegam e lê o socket só
+quando o consumidor pede. Os limites trocam de natureza, e os três derrubam o socket:
+
+| Limite | Padrão | O que mede |
+|---|---|---|
+| `timeoutMs` | 10 s (`fetchSeguro`: 300 s) | só os **cabeçalhos** (DNS, conexão, todos os saltos) |
+| `timeoutEntreTrechosMs` | 60 s (`fetchSeguro`: 300 s) | silêncio do servidor entre dois trechos; sem leitor (contrapressão) ele não corre |
+| `maxBytes` | 64 MiB | o corpo **inteiro**, contado trecho a trecho sobre o que sai **decodificado** |
+
+`gzip`/`deflate`/`br` são decodificados aqui (o `fetch` fazia, o `http` cru não) e os cabeçalhos
+`content-encoding`/`content-length` saem da resposta; o teto vale depois da descompressão, o que
+cobre a bomba de descompressão. 204/205/304 e `HEAD` voltam com `corpo: null`.
+
+`fetchSeguro(politica)` é o adaptador para quem só aceita um `fetch`: entra string, `URL` ou
+`Request` (corpo em string, bytes ou `FormData` — `new Request(...)` normaliza, inclusive a fronteira
+do multipart) e sai um `Response` padrão. Não segue redirecionamento, e o cancelamento do SDK sai
+como o motivo do próprio `AbortSignal`. Os prazos padrão de 300 s são os do `fetch` global (undici):
+uma completação **sem** streaming só devolve cabeçalhos quando termina, e a duração máxima de uma
+chamada é o `AbortSignal` de quem chama.
+
+`fetchParaDestinoDaOrganizacao(envolver?)` monta o transporte com a política da organização e o
+entrega a `envolver`, que devolve o `fetch` final — é por onde o motor de borda põe a allowlist de
+egress antes dele. Julgar a cada chamada continua pegando o nome que passou a resolver para dentro
+depois do cadastro, e agora não há segunda resolução entre o julgamento e a conexão.
 
 ## O acesso a banco externo foi avaliado — e migrado
 
@@ -77,16 +107,65 @@ perfil, não de mecanismo**: o banco enxerga a LAN privada e o webhook não. Pro
 IPv4-mapped é recusado sem abrir conexão) e `lib/net/rede-segura/cliente.test.ts`
 ("lookupJulgado").
 
+## A `media_url` foi migrada (#110) — decisão: baixar aqui
+
+Quem baixava o arquivo era o gateway de mensageria, fora deste processo: o servidor só conseguia
+julgar o endereço (texto + DNS) antes de entregá-lo, e o gateway resolvia o nome de novo — a janela
+de rebinding. A WAHA não oferece como prender o IP do lado dela, então **julgar e registrar o risco
+(opção 2) deixaria a janela aberta para sempre**. Decisão do dono do produto, 18/10/2026: **opção 1**.
+
+O caminho do envio com `media_url` (`guardarMidiaDaUrl`, em `app/api/v1/messages/_handler.ts`):
+
+1. A única `media_url` que **não** é baixada é a URL assinada do **próprio Storage** desta instalação
+   (o PDF da proposta): assinar exige a service role, e o gateway já baixa exatamente esse endereço
+   no caminho de `media_storage_path`. Qualquer outra passa pelos passos abaixo.
+2. `baixarMidiaExterna` busca com `buscarSeguro`: HTTPS (o `http` só fora de produção), DNS resolvido
+   uma vez e preso ao socket, **até 3 redirecionamentos**, cada um refeito pela política inteira
+   (link encurtado e URL pré-assinada de CDN funcionam; redirect para endereço interno é recusado),
+   prazo total de 30 s e **teto de bytes por tipo**, contado no que chega.
+3. O mime que o servidor **declara** manda; o `media_mime` informado só desempata quando o servidor
+   não diz nada útil (vazio ou `application/octet-stream`) — senão uma página de login declarada
+   `text/html` seria enviada como PNG só porque o chamador escreveu `image/png`. Ele tem de ser da
+   **classe** do `type` pedido: vídeo enviado como imagem, página HTML no lugar do arquivo, SVG
+   (carrega script; a Meta só aceita JPEG/PNG) e corpo vazio são recusados. `sticker` é imagem
+   **webp**. Um `type` que não carrega arquivo (`text`, `location`, `contact`, `template`) com
+   `media_url` é recusado sem abrir conexão.
+4. Os bytes sobem para `whatsapp-media` em `{org}/{conversa}/out-{uuid}.{ext}` e o `input` passa a
+   apontar para esse caminho: o envio segue pelo ramo de `media_storage_path` (URL assinada de 10
+   minutos ao gateway). A linha da mensagem guarda `media_storage_path`, o mime e o tamanho **do que
+   foi guardado**; a `media_url` original fica como procedência. Tudo isso acontece **antes** de a
+   mensagem existir: qualquer recusa é um `ApiError` e nada é gravado nem enviado.
+
+| Situação | Resposta |
+|---|---|
+| Endereço recusado pela política (`unsafe_url:*`) | 422 `unsafe_media_url` (como antes) |
+| Origem não responde, 3xx em excesso, prazo, não é 2xx | 422 `media_url_unreachable` (`details.motivo`) |
+| Acima do teto do tipo | 413 `payload_too_large` |
+| Tipo não suportado, ou diferente do `type` | 415 `unsupported_media_type` |
+| Falha ao guardar no bucket | 500 `storage_upload_failed` |
+
+**Tetos** (`TETO_DE_MIDIA_EXTERNA`) — os da Meta por tipo, válidos para qualquer canal: imagem 5 MB,
+figurinha 500 KB (a animada; a estática é 100 KB), vídeo 16 MB, áudio 16 MB, documento 50 MB (a Meta aceita 100 MB; o bucket
+`whatsapp-media` limita em 50). Um arquivo que o canal oficial recusaria depois de aceitar não deve
+sair só porque o canal da vez é o QR.
+
+**Custo, dito às claras:** o envio por `media_url` externa agora gasta banda do servidor e fica mais
+lento (o download entra na requisição, com prazo de 30 s), e o arquivo ocupa a cota do Storage — a
+mesma de `whatsapp-media` — até a poda de órfãos/retenção levá-lo, como qualquer upload de saída.
+
+Prova: `lib/messaging/media/baixar-midia-externa.test.ts` (servidores reais em 127.0.0.1: IP interno,
+nome com endereço público e privado, resolução única, redirect para metadata, laço de redirects,
+resposta lenta, teto por tipo, mime errado) e os casos `4d` de
+`tests/unit/messages-handler-desfechos.test.ts` (o gateway recebe a URL assinada nossa e nunca o
+endereço do usuário).
+
 ## O que continua de fora (diferença registrada, não esquecida)
 
-1. **SDK de modelos com endereço da organização** (`fetchParaDestinoDaOrganizacao`, provedor
-   personalizado): o **julgamento** é o desta política, a cada chamada e sem seguir redirect, mas a
-   **conexão** é o `fetch` do SDK, que resolve o nome de novo. Fechar exige trocar o transporte por
-   `buscarSeguro` com corpo **em fluxo** (a resposta de um modelo é SSE; `buscarSeguro` entrega o
-   corpo inteiro) e aceitar `Request`/`FormData` como entrada. É a próxima peça natural deste
-   módulo, não uma decisão de deixar aberto.
-2. **`media_url`**: quem baixa é o gateway de mensageria, fora deste processo. Aqui só dá para
-   julgar antes de entregar o endereço.
+1. **Teste de conectividade do provedor personalizado** (`validateCustomKey`, a chamada
+   `GET {base}/models` ao cadastrar a chave): julga com `motivoDaRecusaDeDestino` e depois chama o
+   `fetch` global — a mesma janela de rebinding que a #108 fechou para o SDK, aberta aqui por
+   esquecimento de escopo. Fechar é trocar a chamada por `fetchParaDestinoDaOrganizacao()`.
+2. ~~**`media_url`**~~ — migrada na #110, ver "A `media_url` foi migrada" acima.
 
 As funções novas da #86 (treino por site, webhook como ferramenta do agente, MCP externo) **devem**
 sair por `buscarSeguro` — é a razão deste ticket vir antes.
@@ -94,7 +173,7 @@ sair por `buscarSeguro` — é a razão deste ticket vir antes.
 ## Como verificar
 
 ```bash
-pnpm vitest run lib/net lib/external-db lib/extensions/download-rebinding.test.ts lib/automation lib/ai/ferramentas-externas
+pnpm vitest run lib/net lib/external-db lib/extensions/download-rebinding.test.ts lib/automation lib/ai/ferramentas-externas lib/ai/resposta-em-audio tests/unit/provedor-personalizado.test.ts
 ```
 
 Os casos hostis (IP privado, IPv6 especial, rebinding entre resolução e conexão, redirecionamento

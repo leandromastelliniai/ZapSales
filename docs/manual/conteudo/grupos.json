@@ -1,0 +1,47 @@
+[
+  {
+    "id": "comecando",
+    "titulo": "Começando",
+    "descricao": "Como usar este manual e as ideias que valem para o sistema inteiro."
+  },
+  {
+    "id": "atendimento",
+    "titulo": "Atendimento",
+    "descricao": "Conversar com clientes pelo WhatsApp."
+  },
+  {
+    "id": "crm",
+    "titulo": "CRM",
+    "descricao": "Contatos, funis, vendas e tarefas."
+  },
+  {
+    "id": "ia",
+    "titulo": "Agente de IA",
+    "descricao": "Montar, ensinar e acompanhar os agentes."
+  },
+  {
+    "id": "canais",
+    "titulo": "Canais",
+    "descricao": "Números de WhatsApp e integrações."
+  },
+  {
+    "id": "analise",
+    "titulo": "Análise",
+    "descricao": "Números, histórico e auditoria."
+  },
+  {
+    "id": "organizacao",
+    "titulo": "Organização e configurações",
+    "descricao": "Sua conta, sua equipe e as regras da empresa."
+  },
+  {
+    "id": "entrada",
+    "titulo": "Entrar e começar",
+    "descricao": "Login, cadastro, convite, os primeiros passos (onboarding), páginas legais e telas de aviso."
+  },
+  {
+    "id": "admin",
+    "titulo": "Painel do dono do servidor",
+    "descricao": "O modo administrador (/admin): a visão de todas as empresas e as configurações que valem para a instalação inteira."
+  }
+]

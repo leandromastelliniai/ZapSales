@@ -1,0 +1,98 @@
+<!--meta {"id":"agente-teste-e-correcao","grupo":"ia","titulo":"Testar o agente em várias trocas e corrigir respostas","ordem":2.4,"resumo":"Converse com o agente como um cliente faria, com várias mensagens seguidas, sem enviar nada a ninguém. Se uma resposta saiu errada, escreva o que ele deveria ter dito: vira uma proposta que só muda o agente quando você aprovar.","palavras":["teste","testar agente","várias trocas","conversa de teste","reiniciar conversa","corrigir resposta","correção","proposta","aprovar","custo do teste","tokens","latência","aba teste","simulação"],"onde":"Agente de IA › Agentes › (abrir o agente) › aba Teste; propostas na aba Propostas","quem":"Testar e aplicar a correção: Administrador. Gerente abre a aba, mas não envia teste nem vê o botão de corrigir.","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Antes de colocar um agente para falar com clientes, você precisa ver como ele reage. A aba <strong>Teste</strong> deixa você <strong>conversar com o agente como um cliente faria</strong>, com várias mensagens seguidas — cada troca lembra das anteriores. E, quando uma resposta não agrada, você pode <strong>corrigi-la</strong> ali mesmo.</p>
+<aside class="nota info"><strong>O teste é seguro para os seus clientes.</strong><p>Nenhuma mensagem é enviada pelo WhatsApp e nenhum contato, negócio ou funil é criado ou alterado. O cliente é simulado. Mas o teste <strong>usa a inteligência artificial de verdade</strong> e <strong>consome crédito</strong> da sua conta no provedor — a própria tela avisa (“Modo teste consome créditos do provider”) e o gasto entra no orçamento de IA da organização.</p></aside>
+
+<h2 id="testar">Conversar com o agente</h2>
+<figure class="print">
+  <img src="img/ia-agente-teste-conversa.png" alt="Aba Teste com uma conversa de três trocas, mostrando custo, tokens e latência de cada resposta, e o botão Reiniciar conversa" loading="lazy">
+  <figcaption>A aba Teste com uma conversa de várias trocas.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>A versão testada.</strong> Um selo mostra “v(número) (rascunho)” ou “(publicada)”. O teste usa o <em>rascunho</em> mais recente; se não houver, a versão publicada. Assim você testa antes de publicar.</li>
+  <li><strong>Reiniciar conversa.</strong> Esvazia a conversa na tela e recomeça do zero.</li>
+  <li><strong>A conversa.</strong> Suas mensagens e as respostas do agente, em ordem.</li>
+  <li><strong>Custo, tokens e latência</strong> de cada resposta.</li>
+  <li><strong>Ferramentas que o agente chamou.</strong></li>
+  <li><strong>Corrigir esta resposta.</strong> Veja <a href="#agente-teste-e-correcao--corrigir">abaixo</a>.</li>
+  <li><strong>Mensagem do cliente.</strong> Onde você escreve. <kbd>Enter</kbd> envia; <kbd>Shift</kbd>+<kbd>Enter</kbd> quebra a linha.</li>
+</ol>
+<ol class="passos">
+  <li>Abra <span class="ui">Agente de IA › Agentes</span> e entre no agente. A aba <strong>Teste</strong> só liga depois que existe ao menos uma versão salva.</li>
+  <li>Escreva a primeira mensagem, por exemplo <em>“Oi, quanto custa a consulta?”</em>, e clique em <span class="ui">Enviar</span> (ou aperte <kbd>Enter</kbd>). Enquanto ele pensa, aparece “O agente está respondendo…”.</li>
+  <li>Leia a resposta e escreva a próxima mensagem, como o cliente escreveria. O agente lembra das trocas anteriores.</li>
+  <li>Se quiser testar o cliente com outro nome ou telefone, preencha <span class="ui">Nome (opcional)</span> e <span class="ui">Telefone (opcional)</span> antes da primeira troca; depois dela ficam travados.</li>
+  <li>Para começar outra conversa do zero, clique em <span class="ui">Reiniciar conversa</span>.</li>
+</ol>
+<h3 id="o-que-aparece">O que aparece sob cada resposta</h3>
+<ul>
+  <li><strong>Tokens in/out:</strong> quanto texto entrou e saiu. <em>Token</em> é a unidade em que a IA conta texto: grosso modo, pedaços de palavra. A cobrança do provedor é por token.</li>
+  <li><strong>Custo:</strong> em dólar (<em>US$</em>), com quatro casas. Soma <strong>todas</strong> as chamadas que aquele turno fez à IA (a resposta principal e também as conferências), e é o mesmo valor que entra no seu orçamento de IA. A tela mostra o custo <em>de cada resposta</em>, não um total da conversa; como cada troca reenvia a conversa inteira à IA, o custo tende a crescer conforme a conversa fica longa.</li>
+  <li><strong>Latência:</strong> quanto tempo a resposta levou, em milissegundos.</li>
+  <li><strong>Ferramentas que o agente chamou:</strong> o que ele quis fazer além de responder. <strong>No teste, ações que alteram algo não são executadas</strong>, só mostradas; consultas a sistemas externos aparecem como “seria feita”, com os selos <em>altera dados</em> e <em>pediria aprovação</em> quando for o caso. Veja <a href="#agente-ferramenta-webhook">Ferramentas externas</a>.</li>
+  <li><strong>Verificações da resposta</strong> e um resumo “O teste não consegue verificar tudo (N verificações ficam de fora)”. Algumas conferências só acontecem no envio real; elas estão descritas na aba “Confere antes de enviar” do agente.</li>
+</ul>
+<p>Se o agente decidir não responder naquela troca, a tela diz “O agente não gerou uma resposta para enviar nesta troca.”.</p>
+<aside class="nota atencao"><strong>Limites do teste.</strong><ul><li>Cerca de <strong>20 trocas</strong> por conversa; a tela não avisa antes de chegar ao limite — se precisar de mais, use <span class="ui">Reiniciar conversa</span>.</li><li>Cada mensagem tem até <strong>4.000 caracteres</strong>.</li><li>A conversa de teste <strong>não é guardada</strong>: se você recarregar a página ou trocar de versão, ela some.</li><li>Se uma troca falhar (por exemplo, por erro de chave), ela não entra na conversa e o texto continua na caixa para você tentar de novo. A mensagem típica é “Não foi possível executar o teste. Confira modelo, credencial e materiais do agente.”.</li><li>Se o orçamento de IA do mês estiver no modo <em>parar ao chegar no limite</em> e já tiver estourado, o teste é recusado. Ajuste em <a href="#uso-ia">Uso de IA</a>.</li></ul></aside>
+
+<h2 id="corrigir">Corrigir uma resposta</h2>
+<p>Quando o agente respondeu de um jeito que você não quer, escreva o que ele deveria ter dito. O sistema não muda o agente na hora: ele cria uma <strong>proposta</strong> para você aprovar.</p>
+<figure class="print media">
+  <img src="img/ia-agente-corrigir.png" alt="Caixa Corrigir esta resposta aberta sob uma resposta do agente, com a pergunta O que o agente deveria ter dito?" loading="lazy">
+  <figcaption>“Corrigir esta resposta”, aberto sob a resposta do agente.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>O que o agente deveria ter dito?</strong> A pergunta da caixa.</li>
+  <li><strong>A resposta que você esperava.</strong> Até 1.500 caracteres.</li>
+  <li><strong>O aviso.</strong> “Isto cria uma proposta na aba Propostas. O agente só muda depois que você aprovar — nada é alterado agora.”</li>
+  <li><strong>Enviar como proposta.</strong> Ao lado fica o botão <em>Cancelar</em>.</li>
+</ol>
+<ol class="passos">
+  <li>Sob a resposta errada, clique em <span class="ui">Corrigir esta resposta</span>.</li>
+  <li>Em <strong>O que o agente deveria ter dito?</strong>, escreva a resposta que você esperava (até 1.500 caracteres).</li>
+  <li>Clique em <span class="ui">Enviar como proposta</span>. A tela confirma: “Proposta criada. Ela aparece na aba Propostas e só muda o agente depois que você aprovar.”</li>
+  <li>Abra a aba <strong>Propostas</strong>. O item é do tipo <em>Correção de resposta</em>, com o selo <em>pendente</em>.</li>
+  <li>Expanda <span class="ui">Ver a conversa de origem</span> se quiser rever o que foi dito, e clique em <span class="ui">Aplicar como versão nova</span> para aprovar.</li>
+</ol>
+<figure class="print">
+  <img src="img/ia-agente-proposta-correcao.png" alt="Aba Propostas com uma proposta pendente do tipo Correção de resposta, a frase que entrará nas instruções e o botão Aplicar como versão nova" loading="lazy">
+  <figcaption>A proposta criada, esperando a sua decisão na aba Propostas.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Selo “pendente”.</strong> Espera a sua decisão.</li>
+  <li><strong>Tipo e idade.</strong> “Correção de resposta · proposta em 33 segundos”.</li>
+  <li><strong>A frase que o sistema montou</strong> a partir da fala do cliente, da resposta do agente e da sua correção.</li>
+  <li><strong>O aviso.</strong> “Se você aplicar, esta frase entra no fim das instruções do agente, numa versão nova. Enquanto não aplicar, o agente continua como está.”</li>
+  <li><strong>Ver a conversa de origem.</strong> Abre a conversa do teste que gerou a proposta.</li>
+  <li><strong>Aplicar como versão nova.</strong> Só Administrador. Publica na hora.</li>
+</ol>
+<p>Também dá para corrigir uma resposta de <strong>atendimento real</strong>: na aba <strong>Execuções</strong>, abra a execução e, na seção “Resposta enviada”, use o mesmo botão. Nesse caso a conversa de origem aparece com os dados pessoais mascarados. Execuções que não terminaram numa mensagem enviada dizem “Esta execução não terminou numa mensagem enviada pelo agente, então não há resposta para corrigir.”.</p>
+<h3 id="o-que-acontece">O que a correção faz de verdade</h3>
+<ul>
+  <li>Ao <strong>aplicar</strong>, o sistema copia a versão <em>publicada</em> do agente, acrescenta no fim das instruções uma seção <strong>“Correções aprovadas pela equipe”</strong> com uma frase do tipo <em>“Se o cliente disser algo como … , não responda … ; responda no sentido de: …”</em>, cria uma <strong>versão nova</strong> e a <strong>publica na hora</strong>.</li>
+  <li>Enquanto você não aplicar, <strong>nada muda</strong>: “o agente continua como está”.</li>
+  <li>A correção é <strong>uma linha nas instruções</strong>. Ela não vira conhecimento (não entra em <a href="#conhecimento">Conhecimento</a>) nem “caso exemplar”.</li>
+  <li>Cada proposta pertence a um agente. Para aplicar, o agente precisa ter uma versão publicada (“O agente precisa de uma versão publicada para receber a proposta.”). Um clique duplo cria uma proposta só.</li>
+  <li>A aplicação aparece em <a href="#auditoria">Auditoria</a>, e a aba <strong>Execuções</strong> marca cada execução como <em>teste</em> ou <em>produção</em>.</li>
+</ul>
+<aside class="nota perigo"><strong>Aplicar publica na hora.</strong><p>“Aplicar como versão nova” coloca a nova versão <strong>no ar</strong>, e ela passa a responder clientes de verdade. Confira a frase antes de aprovar e teste de novo depois. Para desfazer, reverta para a versão anterior (veja <a href="#agentes--publicar">Salvar e publicar</a>).</p></aside>
+<aside class="nota atencao"><strong>Escreva a resposta pensando em qualquer cliente.</strong><p>A frase entra nas instruções de todas as conversas do agente. Se você escrever “diga que o preço do João é R$ 80”, o agente passará a aplicar isso a todos. O que você escreve na correção <strong>não é mascarado</strong>; só a conversa de origem das execuções reais é.</p></aside>
+
+<h2 id="quem">Quem pode o quê</h2>
+<table class="tabela">
+  <thead><tr><th>Ação</th><th>Papel mínimo</th></tr></thead>
+  <tbody>
+    <tr><td>Ver a aba Teste</td><td>Gerente (somente leitura)</td></tr>
+    <tr><td>Enviar mensagens de teste</td><td>Administrador</td></tr>
+    <tr><td>Corrigir uma resposta (botão na tela)</td><td>Administrador</td></tr>
+    <tr><td>Aplicar a proposta como versão nova</td><td>Administrador</td></tr>
+  </tbody>
+</table>
+
+<h2 id="cuidados">Cuidados</h2>
+<ul>
+  <li>Teste as situações difíceis: cliente bravo, pergunta fora do assunto, pedido de desconto, pedido para falar com uma pessoa.</li>
+  <li>Teste <strong>antes</strong> de publicar e <strong>de novo</strong> depois de qualquer mudança (perfil, assuntos, conhecimento, correção).</li>
+  <li>O teste não prova tudo: algumas conferências do envio real ficam de fora, e a IA pode responder diferente da próxima vez. Releia conversas reais nos primeiros dias, em <a href="#execucoes">Execuções</a>.</li>
+</ul>

@@ -1,0 +1,38 @@
+<!--meta {"id":"config-notificacoes","grupo":"organizacao","titulo":"Notificações","ordem":4,"resumo":"Escolha, para você, quais acontecimentos avisam na tela e na bandeja do computador; o Gerente também escolhe os sons dos avisos da Central.","palavras":["notificações","avisos","push","in-app","e-mail","som","bandeja","navegador","vapid","central de avisos"],"onde":"Configurações › Sua conta › Notificações","quem":"Todos ligam e desligam os próprios avisos. Trocar o som: Gerente ou acima.","rotas":["/app/settings/notifications"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Define <strong>como e sobre o quê</strong> o sistema avisa você, e (para o Gerente) quais sons tocam quando um aviso chega na Central.</p>
+<figure class="print">
+  <img src="img/notificacoes.png" alt="Tela de Notificações com o aviso sobre a instalação, a tabela de categorias por Email, In-app e Push e o cartão de sons, numerada de 1 a 8" loading="lazy">
+  <figcaption>A tela de Notificações de uma instalação sem as chaves de aviso com a aba fechada.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Faixa de status.</strong> Nesta instalação: “os avisos só aparecem com o site aberto”. Veja abaixo por quê.</li>
+  <li><strong>Categoria.</strong> Seis tipos de acontecimento.</li>
+  <li><strong>Email.</strong> A coluna está <em>sempre desligada e travada</em>: não existe aviso por e-mail.</li>
+  <li><strong>In-app.</strong> O aviso (um balão) na própria tela do sistema.</li>
+  <li><strong>Push.</strong> O aviso na bandeja do sistema do computador ou do celular.</li>
+  <li><strong>Sons dos avisos.</strong> Tocam com o site aberto quando o aviso chega na Central. MP3, OGG ou WAV de até 1 MB.</li>
+  <li><strong>Etapa que avisa.</strong> Quando um negócio entra numa etapa marcada para avisar na Central (por exemplo, o pedido confirmado).</li>
+  <li><strong>Precisa de uma pessoa.</strong> Quando o assistente passa a conversa para alguém da equipe ou fica sem saldo no provedor de IA.</li>
+</ol>
+
+<h2 id="categorias">As seis categorias</h2>
+<p>“Nova mensagem”, “Lead atribuído a você”, “Lead ganho”, “Lead perdido”, “Você foi mencionado” e “Ligação recebida”. Cada uma tem um interruptor em <em>In-app</em> e outro em <em>Push</em>; de fábrica os dois estão <strong>ligados</strong> em todas.</p>
+<ul>
+  <li><strong>Ligar o Push pela primeira vez</strong> faz o navegador pedir permissão. Se você negar, o interruptor Push fica travado e a linha “Nova mensagem” mostra “O navegador bloqueou as notificações. Libere-as nas configurações do site e recarregue.”. Navegadores sem suporte também travam.</li>
+  <li>O texto da tela diz “cinco categorias”, mas a tabela tem <strong>seis</strong>.</li>
+</ul>
+<aside class="nota atencao"><strong>Suas escolhas valem só para este navegador.</strong><p>Os interruptores ficam salvos no próprio navegador (não no servidor). Quem usa dois computadores precisa configurar nos dois, e a escolha não acompanha você a outro lugar.</p></aside>
+
+<h2 id="push">Por que “só com o site aberto”</h2>
+<p>Para o aviso chegar também com a aba <em>fechada</em>, o servidor precisa de um par de chaves de aviso (“VAPID”). Numa instalação nova elas ainda não existem, então o sistema avisa: ligar o Push já mostra o aviso na bandeja enquanto o site está aberto numa aba. Quem administra o servidor gera as chaves uma única vez (<code>npx web-push generate-vapid-keys</code>), coloca-as no arquivo <code>.env</code> em <code>VAPID_PUBLIC_KEY</code> e <code>VAPID_PRIVATE_KEY</code> e reinicia. Com as chaves, a faixa muda para “Email ainda não está disponível. In-app (toast) e Push (Chrome) já funcionam…”.</p>
+
+<h2 id="sons">Sons dos avisos</h2>
+<p>Duas linhas — <em>Etapa que avisa</em> e <em>Precisa de uma pessoa</em> — mostram “Som do sistema” ou “Som personalizado”. Os botões:</p>
+<ul>
+  <li><span class="ui">Ouvir</span> — todos tocam o som para testar.</li>
+  <li><span class="ui">Trocar som</span> — só o Gerente ou acima. Envia um arquivo MP3, OGG ou WAV de até 1 MB (o tipo é conferido pelo conteúdo, não só pela extensão). “Som salvo.”</li>
+  <li><span class="ui">Usar o do sistema</span> — volta ao bipe do produto (aparece só quando há som personalizado). “Voltou ao som do sistema.”</li>
+</ul>
+<p>O som vale para a <strong>empresa inteira</strong> e fica na <a href="#auditoria">Auditoria</a> (<code>settings.notification_sound_updated</code> e <code>…_removed</code>).</p>

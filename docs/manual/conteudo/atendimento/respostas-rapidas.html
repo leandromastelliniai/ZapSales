@@ -1,0 +1,59 @@
+<!--meta {"id":"respostas-rapidas","grupo":"atendimento","titulo":"Respostas rápidas","ordem":4,"resumo":"Textos prontos (saudação, horário, formas de pagamento…) para puxar no Inbox sem digitar de novo. Podem ser só seus ou da equipe toda.","palavras":["respostas rápidas","template","script","modelo de mensagem","atalho","mensagem pronta","compartilhado","pessoal","primeiro_nome"],"onde":"Atendimento › Respostas rápidas","quem":"Atendente ou acima usa. Compartilhar com a equipe e editar os compartilhados: Gerente ou acima.","rotas":["/app/templates"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>É a sua biblioteca de <strong>textos prontos</strong>: a saudação, o horário de funcionamento, o endereço, a chave Pix. Em vez de digitar de novo a cada conversa, você guarda uma vez e puxa no <a href="#inbox">Inbox</a> em dois toques. Cada resposta pode ser <strong>pessoal</strong> (só você vê) ou <strong>compartilhada</strong> (toda a equipe usa).</p>
+<aside class="nota info"><strong>Não confunda com os “templates” da Meta.</strong><p>O nome técnico aqui é “template”, mas estas são mensagens livres da sua equipe. Os <em>modelos aprovados pela Meta</em> (necessários para falar com um cliente depois de 24 horas na API Oficial) ficam em <em>Conexões</em>, não aqui. Nada nesta tela envia mensagem nem chama serviço externo.</p></aside>
+
+<figure class="print">
+  <img src="img/respostas-rapidas.png" alt="Tela Respostas rápidas com seis cartões, três compartilhados e três pessoais, numerada de 1 a 7" loading="lazy">
+  <figcaption>A lista de respostas rápidas: três compartilhadas e três pessoais.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Abre o painel de ajuda.</li>
+  <li><strong>Novo template.</strong> Cria uma resposta nova.</li>
+  <li><strong>Um cartão.</strong> Mostra o título, o selo e a mensagem (até duas linhas). A lista fica em ordem de <em>última alteração</em>, a mais recente primeiro.</li>
+  <li><strong>Selo “Compartilhado”.</strong> Toda a equipe vê e usa essa resposta.</li>
+  <li><strong>Selo “Pessoal”.</strong> Só você vê.</li>
+  <li><strong>Lápis (editar).</strong> Só aparece se você pode alterar aquela resposta.</li>
+  <li><strong>Lixeira (excluir).</strong> Idem. Pede confirmação e <strong>não tem volta</strong>.</li>
+</ol>
+<p>Quando a lista está vazia, a tela diz “Nenhum template ainda.”.</p>
+
+<h2 id="criar">Criar ou editar uma resposta</h2>
+<figure class="print media">
+  <img src="img/respostas-rapidas-novo.png" alt="Janela Novo template com os campos título, mensagem, atalho e o interruptor de compartilhar, numerada de 1 a 5" loading="lazy">
+  <figcaption>A janela “Novo template”.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Título.</strong> Obrigatório, de 1 a 80 caracteres (exemplo: “Saudação inicial”). É o que você procura depois.</li>
+  <li><strong>Mensagem.</strong> O texto que será colocado no campo de resposta, de 1 a 4.096 caracteres. Use <code>{{primeiro_nome}}</code> e <code>{{nome}}</code> para personalizar: o Inbox troca pelo nome do contato.</li>
+  <li><strong>Atalho (opcional).</strong> Uma palavra curta, até 40 caracteres (por exemplo “oi” ou “pix”). Dá para chamar a resposta digitando <kbd>/</kbd> e o atalho.</li>
+  <li><strong>Compartilhar com a equipe.</strong> Só aparece para Gerente ou acima. Depois de criada, a resposta <strong>não pode</strong> passar de pessoal para compartilhada nem o contrário.</li>
+  <li><strong>Criar template</strong> (na edição, <strong>Salvar</strong>). Grava e mostra “Template criado.”.</li>
+</ol>
+<ul>
+  <li>Os marcadores <code>{{nome}}</code> e <code>{{primeiro_nome}}</code> são os <strong>únicos</strong> trocados. Se o contato não tem nome, o texto sai como está escrito.</li>
+  <li>O atalho não precisa ser único.</li>
+  <li>Excluir mostra “Excluir este template?” — “Essa ação não pode ser desfeita.”.</li>
+</ul>
+
+<h2 id="usar">Usar no Inbox</h2>
+<ol class="passos">
+  <li>Abra uma conversa no <a href="#inbox">Inbox</a>.</li>
+  <li>No campo de resposta, digite <kbd>/</kbd>. Abre o menu “Templates de script”.</li>
+  <li>Continue digitando para filtrar pelo título ou pelo atalho (não importa se maiúscula ou minúscula) e escolha uma.</li>
+  <li>O texto entra no campo, já com o nome do cliente no lugar dos marcadores. <strong>Ele não é enviado sozinho</strong>: revise e envie quando quiser.</li>
+</ol>
+<aside class="nota dica"><strong>O menu só abre no começo.</strong><p>O “/” precisa ser o primeiro caractere do campo e não pode ter espaço depois dele.</p></aside>
+
+<h2 id="papeis">Quem pode o quê</h2>
+<table class="tabela">
+  <thead><tr><th>Papel</th><th>O que pode</th></tr></thead>
+  <tbody>
+    <tr><td>Somente leitura</td><td>Abre a página, mas não consulta a lista: vê “Nenhum template ainda.”.</td></tr>
+    <tr><td>Atendente</td><td>Cria respostas pessoais e edita ou exclui as <em>suas</em>. Usa as compartilhadas.</td></tr>
+    <tr><td>Gerente e Administrador</td><td>Tudo isso, mais criar respostas <strong>compartilhadas</strong> e editar ou excluir as compartilhadas.</td></tr>
+  </tbody>
+</table>
+<p>As respostas pessoais só são vistas por quem as criou; as compartilhadas, por toda a organização. As ações ficam registradas na auditoria (<code>template.created</code>, <code>template.updated</code>, <code>template.deleted</code>).</p>
+<aside class="nota dica"><strong>Comece pelas perguntas que você mais responde.</strong><p>Horário, endereço, formas de pagamento, prazo de entrega. Deixe-as compartilhadas e peça à equipe para usar sempre a mesma.</p></aside>

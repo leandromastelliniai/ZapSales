@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "titulo": "Rede segura única",
-  "descricao": "Toda saída do servidor para um endereço que um usuário informou passa por UMA política: HTTPS, DNS resolvido uma vez e preso ao socket (sem janela de rebinding), endereço especial IPv4/IPv6 recusado, redirect revalidado salto a salto, prazo total e teto de bytes. Issue #88; contrato em docs/specs/rede-segura-unica.md.",
+  "descricao": "Toda saída do servidor para um endereço que um usuário informou passa por UMA política: HTTPS, DNS resolvido uma vez e preso ao socket (sem janela de rebinding), endereço especial IPv4/IPv6 recusado, redirect revalidado salto a salto, prazo e teto de bytes (total, ou por trecho quando o corpo é em fluxo). Issue #88; contrato em docs/specs/rede-segura-unica.md.",
   "lanes": [
     {
       "id": "consumidores",
@@ -88,6 +88,14 @@
       "dot": "green"
     },
     {
+      "id": "fluxo",
+      "lane": "nucleo",
+      "label": "buscarSeguroEmFluxo + fetchSeguro",
+      "sublabel": "mesma conexão presa de buscarSeguro, corpo em fluxo (SSE) · prazo de cabeçalhos + silêncio entre trechos + teto de bytes do corpo todo · fetchSeguro aceita string/URL/Request/FormData e devolve Response padrão",
+      "type": "lib",
+      "dot": "green"
+    },
+    {
       "id": "lookup",
       "lane": "nucleo",
       "label": "lookupJulgado",
@@ -129,19 +137,19 @@
     },
     {
       "id": "midia",
-      "lane": "fachadas",
-      "label": "assertUrlDeMidiaSegura",
-      "sublabel": "media_url: o gateway é quem baixa, fora deste processo — só dá para julgar antes",
+      "lane": "consumidores",
+      "label": "Envio por media_url (#110)",
+      "sublabel": "lib/messaging/media/baixar-midia-externa.ts · baixa aqui com teto por tipo (Meta), sobe ao Storage e entrega ao gateway a URL assinada nossa · só a URL assinada do próprio Storage segue direto",
       "type": "lib",
-      "dot": "violet"
+      "dot": "amber"
     },
     {
       "id": "sdk",
-      "lane": "fora",
+      "lane": "consumidores",
       "label": "fetch do SDK de modelos (provedor personalizado)",
-      "sublabel": "fetchParaDestinoDaOrganizacao · julgamento é o da política; a conexão ainda resolve de novo",
+      "sublabel": "fetchParaDestinoDaOrganizacao · lib/automation/destinos-internos-autorizados.ts · transporte é o fetchSeguro: resolve e julga a cada chamada, conecta só no endereço julgado, 3xx vira recusa · a allowlist do motor de borda (contain) fica na frente",
       "type": "lib",
-      "dot": "red"
+      "dot": "amber"
     },
     {
       "id": "futuros",
@@ -160,6 +168,14 @@
       "dot": "sky"
     },
     {
+      "id": "testeFluxo",
+      "lane": "prova",
+      "label": "fluxo.test.ts + fetch.test.ts + provedor-personalizado.test.ts",
+      "sublabel": "servidor real: rebinding, 1º trecho SSE antes de o servidor terminar (inclusive pelo SDK da Vercel) · teto de bytes, silêncio, cancelamento, gzip, 3xx",
+      "type": "tool",
+      "dot": "sky"
+    },
+    {
       "id": "testeBanco",
       "lane": "prova",
       "label": "conexao-rede.test.ts",
@@ -172,6 +188,14 @@
       "lane": "prova",
       "label": "download-rebinding.test.ts",
       "sublabel": "o teste de rebinding das extensões segue verde sobre a política única",
+      "type": "tool",
+      "dot": "sky"
+    },
+    {
+      "id": "testeMidia",
+      "lane": "prova",
+      "label": "baixar-midia-externa.test.ts + messages-handler-desfechos.test.ts",
+      "sublabel": "servidores reais: IP interno, nome com endereço misto, resolução única, redirect para metadata, teto por tipo, mime errado; no handler o gateway só vê a URL assinada nossa",
       "type": "tool",
       "dot": "sky"
     },
@@ -266,14 +290,14 @@
     {
       "id": "e14",
       "from": "midia",
-      "to": "fachadaUrl",
-      "label": "julga antes de entregar"
+      "to": "buscar",
+      "label": "baixa o arquivo (redirect revalidado, teto de bytes por tipo)"
     },
     {
       "id": "e15",
       "from": "sdk",
-      "to": "destinos",
-      "label": "motivoDaRecusaDeDestino a cada chamada"
+      "to": "fluxo",
+      "label": "transporte, a cada chamada"
     },
     {
       "id": "e16",
@@ -313,12 +337,48 @@
     },
     {
       "id": "e22",
+      "from": "fluxo",
+      "to": "url",
+      "label": "cada salto"
+    },
+    {
+      "id": "e23",
+      "from": "fluxo",
+      "to": "resolver",
+      "label": "cada salto"
+    },
+    {
+      "id": "e24",
+      "from": "fluxo",
+      "to": "buscar",
+      "label": "compartilha a abertura da conexão"
+    },
+    {
+      "id": "e25",
+      "from": "testeFluxo",
+      "to": "fluxo",
+      "label": "prova"
+    },
+    {
+      "id": "e26",
+      "from": "testeFluxo",
+      "to": "sdk",
+      "label": "prova"
+    },
+    {
+      "id": "e27",
+      "from": "testeMidia",
+      "to": "midia",
+      "label": "prova"
+    },
+    {
+      "id": "e28",
       "from": "pdf",
       "to": "destinos",
       "label": "só o logo: lista da instalação"
     },
     {
-      "id": "e23",
+      "id": "e29",
       "from": "testePdf",
       "to": "pdf",
       "label": "prova"
@@ -344,10 +404,16 @@
       "body": "Por endereço, nunca por nome. É o gancho da lista de destinos internos que o dono da INSTALAÇÃO autoriza e da LAN do banco externo. Uma organização nunca a recebe."
     },
     {
+      "id": "card-fluxo",
+      "tone": "green",
+      "title": "O SDK de modelos tem a conexão presa (#108)",
+      "body": "A resposta de um modelo é SSE: o transporte devolve o Response assim que os cabeçalhos chegam e lê o corpo sob demanda. O prazo total vira prazo de cabeçalhos mais silêncio máximo entre trechos, e o teto de bytes vale para o corpo inteiro, já decodificado."
+    },
+    {
       "id": "card-fora",
       "tone": "red",
       "title": "Não-ligações declaradas",
-      "body": "O SDK de modelos (SSE precisa de corpo em fluxo) e a media_url (baixa o gateway) julgam pela política mas não têm a conexão presa. A imagem do PDF saiu desta lista na #109: os bytes passam por buscarSeguro. Detalhe e plano em docs/specs/rede-segura-unica.md."
+      "body": "O teste de conectividade do provedor personalizado (validateCustomKey) julga pela política mas não tem a conexão presa. A imagem do PDF saiu desta lista na #109 (os bytes passam por buscarSeguro) e a media_url na #110 (o servidor baixa o arquivo e o gateway só recebe a URL assinada do Storage). Detalhe e plano em docs/specs/rede-segura-unica.md."
     }
   ]
 }

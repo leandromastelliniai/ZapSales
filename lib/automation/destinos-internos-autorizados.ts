@@ -1,6 +1,13 @@
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
-import { ErroDeRedeSegura, resolverEJulgar, validarUrl, type PoliticaDeDestino } from "@/lib/net/rede-segura";
+import {
+  ErroDeRedeSegura,
+  fetchSeguro,
+  resolverEJulgar,
+  validarUrl,
+  type OpcoesDoFetchSeguro,
+  type PoliticaDeDestino,
+} from "@/lib/net/rede-segura";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -304,25 +311,42 @@ export async function motivoDaRecusaDeDestino(
 
 /**
  * `fetch` para um endereço escolhido por uma ORGANIZAÇÃO e chamado por um SDK
- * (o provedor personalizado, #1642). Cada requisição passa pela régua da
- * organização ANTES de a chave sair, e redirect não é seguido: um 3xx vira
- * recusa, porque um endpoint público que redireciona levaria a chamada, e a
- * chave, para a rede interna. Julgar a cada chamada, e não só no cadastro, é o
- * que pega o nome que passou a resolver para IP interno depois de validado.
+ * (o provedor personalizado, #1642). O transporte é o da rede segura única
+ * (`fetchSeguro`, #108): cada requisição resolve o nome UMA vez, julga o
+ * conjunto inteiro pela régua da organização e conecta só no endereço julgado —
+ * não existe segunda resolução, então o nome que passou a apontar para dentro
+ * (rebinding com TTL zero) não alcança a rede interna, e julgar a cada chamada
+ * continua pegando o que mudou depois do cadastro. A chave só sai depois disso.
+ * Redirect não é seguido: um 3xx vira recusa, porque um endpoint público que
+ * redireciona levaria a chamada, e a chave, para a rede interna.
  *
- * ponytail: aqui o JULGAMENTO é o da rede segura única, mas a CONEXÃO não é: o
- * `fetch` do SDK resolve o nome de novo, e entre o lookup daqui e o connect
- * sobra a janela de um segundo lookup (rebinding com TTL zero). Fechá-la pede
- * trocar o transporte por `buscarSeguro` com corpo em fluxo (a resposta de um
- * modelo é SSE) — a diferença está registrada em `docs/specs/rede-segura-unica.md`.
+ * A resposta chega em fluxo (a de um modelo é SSE) e é limitada em silêncio e em
+ * bytes pelo próprio transporte. A lista de destinos internos da instalação NÃO
+ * vale aqui: ela é de quem paga a máquina, nunca de uma organização (regra 2).
+ *
+ * `envolver` recebe o transporte seguro e devolve o `fetch` final: é por onde o
+ * motor de borda põe a allowlist de egress ANTES dele (`contain`, em
+ * `lib/agent-engine/edge/llm/providers.ts`). O padrão é o próprio transporte.
+ * `politicaDeTeste` só existe para os testes apontarem o loopback e o DNS: em
+ * produção ela é IGNORADA (a válvula de IP nunca é passada em nome de uma
+ * organização, e isto não depende de comentário), e nunca altera `permitirHttp`.
  */
-export function fetchParaDestinoDaOrganizacao(interno: typeof fetch = fetch): typeof fetch {
+export function fetchParaDestinoDaOrganizacao(
+  envolver: (transporte: typeof fetch) => typeof fetch = (transporte) => transporte,
+  politicaDeTeste: OpcoesDoFetchSeguro = {},
+): typeof fetch {
+  // `NODE_ENV` é lido a cada chamada, como a régua sempre fez.
+  const transporte: typeof fetch = (input, init) => {
+    const emProducao = process.env.NODE_ENV === "production";
+    return fetchSeguro({ ...(emProducao ? {} : politicaDeTeste), permitirHttp: !emProducao })(input, init);
+  };
+  const final = envolver(transporte);
   return async (input, init) => {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    const recusa = await motivoDaRecusaDeDestino(url, "organizacao");
-    if (recusa) throw new Error(recusa);
-    const res = await interno(input, { ...init, redirect: "manual" });
-    if (res.status >= 300 && res.status < 400) throw new Error("unsafe_url:redirect_not_followed");
+    const res = await final(input, init);
+    if (res.status >= 300 && res.status < 400) {
+      await res.body?.cancel().catch(() => undefined);
+      throw new ErroDeRedeSegura("unsafe_url:redirect_not_followed");
+    }
     return res;
   };
 }

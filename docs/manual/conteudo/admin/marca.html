@@ -1,0 +1,22 @@
+<!--meta {"id":"admin-marca","grupo":"admin","titulo":"Marca da instalação","ordem":6,"resumo":"O nome, a cor, o logo e o ícone que o sistema mostra para todo mundo que usa a instalação (white-label do servidor).","palavras":["marca","white label","nome do sistema","cor","logo","ícone","favicon","instalação","admin"],"onde":"Modo administrador › Marca (/admin/marca)","quem":"Administrador da plataforma; salvar exige escopo full e a verificação em dia","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Troca o <strong>nome</strong>, a <strong>cor</strong> e o <strong>logo</strong> do sistema para <em>todos</em> que usam esta instalação. A marca <em>de cada empresa</em> é outra tela (<a href="#marca">Configurações › Marca</a>) e tem prioridade sobre esta.</p>
+<figure class="print">
+  <img src="img/admin-marca.png" alt="Tela Marca do painel com nome do sistema, cor, logo, ícone e o bloco Como está agora, numerada de 1 a 6" loading="lazy">
+  <figcaption>A tela Marca do painel, sem nenhuma marca definida.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome do sistema.</strong> Até 120 caracteres; vazio volta ao padrão. Aparece no título da aba, nos menus laterais, nos e-mails (para empresas sem nome próprio), no aplicativo de verificação em duas etapas e no arquivo de códigos de recuperação. <em>Ainda não chega</em> às telas de entrada e cadastro nem às da configuração inicial: elas continuam com o nome do arquivo de instalação do servidor até a próxima atualização.</li>
+  <li><strong>Cor da marca.</strong> Seletor visual mais o código hexadecimal (<code>#rrggbb</code>; “Use um código de cor como #7a5cd6.”). Com cor válida o sistema mostra a escala de tons e qual vai nos botões no modo claro e no escuro.</li>
+  <li><strong>Logo.</strong> PNG ou JPG até 512 KB (sem SVG), com versão opcional para o tema escuro e prévias claro/escuro. <strong>Sobe na hora</strong>, sem passar por Salvar.</li>
+  <li><strong>Ícone do aplicativo e do navegador.</strong> Imagem quadrada (de preferência 512×512), PNG ou JPG até 512 KB; botão <span class="ui">Remover ícone</span>.</li>
+  <li><strong>Como está agora.</strong> “De onde vem cada coisa” (Nome, Logo e Cor: “definido nesta tela”, “veio do arquivo de instalação do servidor” ou “padrão do sistema”), o contraste do texto sobre os botões (“passa em AA”/“abaixo do mínimo AA”) e o que o sistema ajustou sozinho. Um alarme vermelho “A sua marca não está sendo aplicada.” aparece quando a cor gravada foi recusada.</li>
+  <li><strong>Salvar.</strong> “Marca salva.”</li>
+</ol>
+<ul>
+  <li>Vale para toda a instalação e fica na auditoria como <code>platform_branding.updated</code>. É reversível: deixe os campos vazios e salve.</li>
+  <li>O PDF de LGPD <strong>nunca</strong> leva marca: ele nomeia o controlador (a razão social da empresa).</li>
+  <li>O logo ainda é trocado também pelo arquivo de instalação do servidor; a tela mostra de onde ele vem “para que o valor não pareça ter sumido”.</li>
+  <li>Erros: “Confira os campos: algum valor não está no formato esperado.”, “Sua sessão expirou. Entre de novo para salvar.”, “Só quem administra a instalação pode mudar a marca.”.</li>
+</ul>

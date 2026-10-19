@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { assertProspectingDelivery } from "@/lib/prospecting/guard";
 import { assertAgentOperationSupabase } from "@/lib/ai/agents/operation";
 import {
@@ -27,6 +28,7 @@ import { decidirPreGoLiveDoCanalViaSupabase } from "@/lib/ai/elegibilidade/consu
 import type { Actor, HandlerCtx } from "@/lib/api/handlers/types";
 import { audit } from "@/lib/audit";
 import { traduzir } from "@/lib/i18n/dicionario";
+import type { Idioma } from "@/lib/i18n/idiomas";
 import { assertOrgOperante } from "@/lib/organizacao/operante";
 import {
   CHANNEL_SESSION_REF_COLUMNS,
@@ -40,7 +42,10 @@ import { ARCHIVED_AT, queryTolerantToMissingArchived } from "@/lib/channels/arch
 import { conferirDefinicao } from "@/lib/channels/conferir-definicao";
 import { estadoDaJanela } from "@/lib/channels/janela";
 import { isMediaPathOwnedBy } from "@/lib/messaging/media/upload-validation";
-import { assertUrlDeMidiaSegura } from "@/lib/messaging/media/url-de-midia-externa";
+import { baixarMidiaExterna, MidiaExternaRecusada } from "@/lib/messaging/media/baixar-midia-externa";
+import { extFromMime } from "@/lib/messaging/media/types";
+import { ehUrlAssinadaDoProprioStorage } from "@/lib/messaging/media/url-de-midia-externa";
+import { ErroDeRedeSegura } from "@/lib/net/rede-segura";
 import {
   buildVcard,
   normalizePhoneForDisplay,
@@ -369,6 +374,89 @@ function extendBotSilence(current: string | null, now: string): string | undefin
   return candidate.toISOString();
 }
 
+/**
+ * Baixa a `media_url` pela rede segura, guarda os bytes no bucket e devolve o
+ * `input` apontando para o arquivo guardado (`media_storage_path`, mime e
+ * tamanho do que foi de fato guardado). A `media_url` original fica na linha
+ * como procedência. Toda recusa vira `ApiError` ANTES de a mensagem existir.
+ */
+async function guardarMidiaDaUrl(
+  input: SendMessageInput,
+  mediaUrl: string,
+  organizationId: string,
+  conversationId: string,
+  requestId: string,
+  idioma: Idioma,
+): Promise<SendMessageInput> {
+  let midia;
+  try {
+    midia = await baixarMidiaExterna(mediaUrl, { type: input.type, mimeInformado: input.media_mime });
+  } catch (erro) {
+    if (erro instanceof ErroDeRedeSegura && erro.ehRecusa) {
+      throw new ApiError(
+        422,
+        "unsafe_media_url",
+        { motivo: erro.codigo },
+        requestId,
+        traduzir("media_url recusada: o endereço não pode ser baixado pelo servidor.", idioma),
+      );
+    }
+    if (erro instanceof MidiaExternaRecusada && erro.codigo === "payload_too_large") {
+      throw new ApiError(
+        413,
+        "payload_too_large",
+        undefined,
+        requestId,
+        traduzir("O arquivo da media_url é maior que o limite aceito para este tipo de mídia.", idioma),
+      );
+    }
+    if (erro instanceof MidiaExternaRecusada && erro.codigo === "unsupported_media_type") {
+      throw new ApiError(
+        415,
+        "unsupported_media_type",
+        undefined,
+        requestId,
+        traduzir("A media_url não devolveu um arquivo do tipo informado (ou o tipo não é suportado).", idioma),
+      );
+    }
+    if (erro instanceof MidiaExternaRecusada || erro instanceof ErroDeRedeSegura) {
+      throw new ApiError(
+        422,
+        "media_url_unreachable",
+        { motivo: erro.codigo },
+        requestId,
+        traduzir("Não foi possível baixar o arquivo da media_url.", idioma),
+      );
+    }
+    throw erro;
+  }
+
+  const caminho = `${organizationId}/${conversationId}/out-${randomUUID()}.${extFromMime(midia.mime)}`;
+  const { error } = await createAdminClient()
+    .storage.from("whatsapp-media")
+    .upload(caminho, midia.buffer, { contentType: midia.mime, upsert: false });
+  if (error) {
+    logger.warn("[messages] media_url upload failed", {
+      organization_id: organizationId,
+      request_id: requestId,
+      error_message: error.message,
+    });
+    throw new ApiError(
+      500,
+      "storage_upload_failed",
+      undefined,
+      requestId,
+      traduzir("Erro ao guardar o arquivo da media_url.", idioma),
+    );
+  }
+  return {
+    ...input,
+    media_storage_path: caminho,
+    media_mime: midia.mime,
+    media_size_bytes: midia.buffer.length,
+  };
+}
+
 export async function sendMessageHandler(
   supabase: SB,
   ctx: HandlerCtx,
@@ -585,20 +673,14 @@ export async function sendMessageHandler(
     }
   }
 
-  // Só `media_url` (sem `media_storage_path`) é baixada pelo gateway: é esse o
-  // envio que precisa da guarda anti-SSRF, e antes de a linha existir.
-  if (input.media_url && !input.media_storage_path) {
-    try {
-      await assertUrlDeMidiaSegura(input.media_url);
-    } catch (erro) {
-      throw new ApiError(
-        422,
-        "unsafe_media_url",
-        { motivo: erro instanceof Error ? erro.message : "unsafe_url" },
-        ctx.requestId,
-        "media_url recusada: o endereço não pode ser baixado pelo servidor.",
-      );
-    }
+  // `media_url` externa (sem `media_storage_path`): quem baixa o arquivo é ESTE
+  // processo, pela rede segura (issue #110), e antes de a linha existir. O gateway
+  // só recebe a URL assinada do nosso Storage — ele resolvia o nome de novo, fora
+  // daqui, e a janela de DNS rebinding da #88 ficava aberta nesse ponto. O envio
+  // segue pelo mesmo caminho de `media_storage_path`. A única `media_url` que vai
+  // direto ao gateway é a assinada pelo próprio Storage (o PDF da proposta).
+  if (input.media_url && !input.media_storage_path && !ehUrlAssinadaDoProprioStorage(input.media_url)) {
+    input = await guardarMidiaDaUrl(input, input.media_url, c.organization_id, c.id, ctx.requestId, ctx.idioma ?? "pt-BR");
   }
 
   let outboundBody = input.body ?? null;
@@ -1038,10 +1120,10 @@ export async function sendMessageHandler(
         // media_url") e nunca chegou a ser ligado: um envio só com `media_url`
         // (sem `media_storage_path` — que é só para arquivo já dentro da
         // PRÓPRIA conversa, ver `isMediaPathOwnedBy` acima) caía no `else` de
-        // texto puro, com corpo vazio — nenhum arquivo saía. A URL já passou
-        // pela guarda anti-SSRF antes de a linha existir
-        // (`assertUrlDeMidiaSegura`): ela chega também pela API pública e
-        // pelo MCP, e quem a baixa é o gateway, de dentro da rede do servidor.
+        // texto puro, com corpo vazio — nenhum arquivo saía. Aqui só chega a URL
+        // assinada do PRÓPRIO Storage (o PDF da proposta): qualquer outra
+        // `media_url` foi baixada pela rede segura e virou `media_storage_path`
+        // antes de a linha existir (`guardarMidiaDaUrl`, issue #110).
         await checkBoundary();
         ({ externalId } = await adapter.send({
           beforeSend: checkBoundary,

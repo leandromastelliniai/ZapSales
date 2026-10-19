@@ -20,6 +20,9 @@
  *     com teto de saltos. Cabeçalho de credencial não atravessa origens.
  *  5. **Limites:** prazo TOTAL (DNS + conexão + cabeçalhos + corpo, o que pega a
  *     resposta lenta) e teto de bytes contado no corpo lido (o que pega a gigante).
+ *     `buscarSeguroEmFluxo` (corpo em fluxo, para SSE) troca o prazo total por
+ *     prazo de cabeçalhos + silêncio máximo entre trechos; o teto de bytes vale
+ *     para o corpo inteiro, contado trecho a trecho.
  *
  * `ipPermitido` é a única válvula: o IP especial que o dono da INSTALAÇÃO
  * autorizou (`destinos-internos-autorizados.ts`). Vale por endereço, nunca por
@@ -30,6 +33,8 @@ import type { LookupAddress, LookupOptions } from "node:dns";
 import * as http from "node:http";
 import * as https from "node:https";
 import { isIPv4, isIPv6, type LookupFunction } from "node:net";
+import { pipeline, type Readable, type Transform } from "node:stream";
+import { createBrotliDecompress, createGunzip, createInflate } from "node:zlib";
 
 import { ipEhDeRedeLocal, ipEhEspecial, semColchetes } from "./ip";
 
@@ -173,7 +178,7 @@ export interface OpcoesDeBusca extends PoliticaDeDestino {
    * ao `fetch` com `redirect: "manual"`. Cada salto passa pela política inteira.
    */
   maxRedirecionamentos?: number;
-  /** Prazo TOTAL (DNS, conexão, cabeçalhos e corpo, todos os saltos). Padrão 10 s. */
+  /** Prazo TOTAL (DNS, conexão, cabeçalhos e corpo, todos os saltos). Padrão 10 s. Em fluxo, ver `OpcoesDeFluxo`. */
   timeoutMs?: number;
   /** Teto do corpo lido, em bytes, contado sobre o que chega. Padrão 1 MiB. */
   maxBytes?: number;
@@ -252,19 +257,94 @@ function semCredenciais(headers: Record<string, string>): Record<string, string>
   return Object.fromEntries(Object.entries(headers).filter(([nome]) => !CABECALHO_DE_CREDENCIAL.test(nome)));
 }
 
-export async function buscarSeguro(bruta: string, opcoes: OpcoesDeBusca = {}): Promise<RespostaSegura> {
-  const controle = new AbortController();
-  const prazo = setTimeout(() => controle.abort(new ErroDeRedeSegura("net:timeout")), opcoes.timeoutMs ?? TIMEOUT_PADRAO_MS);
-  const aoCancelar = () => controle.abort(new ErroDeRedeSegura("net:aborted"));
-  if (opcoes.signal?.aborted) aoCancelar();
-  else opcoes.signal?.addEventListener("abort", aoCancelar, { once: true });
+/** O salto final da cadeia: a resposta aberta, ainda sem corpo lido. */
+interface Conexao {
+  status: number;
+  resposta: http.IncomingMessage;
+  /** A URL que respondeu — difere da pedida quando houve redirecionamento. */
+  urlFinal: string;
+}
 
-  // O que estiver em voo quando o prazo vence é derrubado: socket aberto depois
-  // do estouro seria exatamente o vazamento que o teto de tempo existe para evitar.
+type OpcoesDaConexao = PoliticaDeDestino &
+  Pick<OpcoesDeBusca, "metodo" | "headers" | "corpo" | "maxRedirecionamentos">;
+
+/**
+ * Resolve, julga, conecta e segue os redirecionamentos permitidos, até a
+ * resposta final com o corpo ainda por ler. Quem chama decide como o corpo é
+ * consumido (inteiro em `buscarSeguro`, em fluxo em `buscarSeguroEmFluxo`);
+ * a política é a mesma nos dois, porque ela mora aqui.
+ */
+async function abrirConexao(
+  bruta: string,
+  opcoes: OpcoesDaConexao,
+  sinal: AbortSignal,
+  aoReceber: (resposta: http.IncomingMessage) => void,
+): Promise<Conexao> {
+  const maxSaltos = opcoes.maxRedirecionamentos ?? 0;
+  let url = validarUrl(bruta, opcoes);
+  let metodo = (opcoes.metodo ?? "GET").toUpperCase();
+  let headers = opcoes.headers ?? {};
+  let corpo = opcoes.corpo;
+
+  for (let salto = 0; ; salto++) {
+    const enderecos = await resolverEJulgar(url.hostname, opcoes);
+    const resposta = await pedir(url, enderecos, metodo, headers, corpo, sinal);
+    aoReceber(resposta);
+    const status = resposta.statusCode ?? 0;
+    const destino = resposta.headers.location;
+
+    if (maxSaltos > 0 && STATUS_DE_REDIRECIONAMENTO.has(status) && destino) {
+      resposta.destroy();
+      if (salto >= maxSaltos) throw new ErroDeRedeSegura("net:too_many_redirects");
+      let proxima: URL;
+      try {
+        proxima = new URL(destino, url);
+      } catch {
+        throw new ErroDeRedeSegura("unsafe_url:invalid");
+      }
+      proxima = validarUrl(proxima.toString(), opcoes);
+      if (proxima.origin !== url.origin) headers = semCredenciais(headers);
+      if (status === 303 || ((status === 301 || status === 302) && metodo === "POST")) {
+        metodo = "GET";
+        corpo = undefined;
+        headers = Object.fromEntries(Object.entries(headers).filter(([nome]) => !/^content-/i.test(nome)));
+      }
+      url = proxima;
+      continue;
+    }
+    return { status, resposta, urlFinal: url.toString() };
+  }
+}
+
+/** O erro de transporte com código estável; o detalhe do socket fica na causa. */
+function comoErroDeRede(erro: unknown): ErroDeRedeSegura {
+  // `fetch failed`/ECONNREFUSED/ENOTFOUND chegam com o detalhe do socket; o
+  // código estável é o que a tela e o log mostram, e a causa fica encadeada
+  // para `lib/net/alcance.ts` distinguir "não existe" de "caiu".
+  return erro instanceof ErroDeRedeSegura ? erro : new ErroDeRedeSegura("net:connection_failed", { cause: erro });
+}
+
+/**
+ * O prazo e o cancelamento de uma busca, iguais para o corpo inteiro e para o
+ * corpo em fluxo: um `AbortController` que o prazo e o sinal de quem chamou
+ * disparam, e uma promessa (`estouro`) que rejeita quando ele dispara — para a
+ * corrida contra o trabalho em curso. O que estiver em voo nesse instante é
+ * derrubado: socket aberto depois do estouro seria exatamente o vazamento que o
+ * teto de tempo existe para evitar.
+ */
+function iniciarPrazo(timeoutMs: number, sinalDeFora: AbortSignal | undefined) {
+  const controle = new AbortController();
+  const prazo = setTimeout(() => controle.abort(new ErroDeRedeSegura("net:timeout")), timeoutMs);
+  const aoCancelar = () => controle.abort(new ErroDeRedeSegura("net:aborted"));
+  if (sinalDeFora?.aborted) aoCancelar();
+  else sinalDeFora?.addEventListener("abort", aoCancelar, { once: true });
+
   let emVoo: http.IncomingMessage | null = null;
   const estouro = new Promise<never>((_, rejeitar) => {
     const falhar = () => {
-      emVoo?.destroy();
+      // Com o motivo: quem ainda lê o corpo (o fluxo) erra com `net:timeout`/`net:aborted`,
+      // e não com um "fechou antes da hora" que não diz por quê.
+      emVoo?.destroy(controle.signal.reason);
       rejeitar(controle.signal.reason);
     };
     if (controle.signal.aborted) falhar();
@@ -272,59 +352,200 @@ export async function buscarSeguro(bruta: string, opcoes: OpcoesDeBusca = {}): P
   });
   estouro.catch(() => undefined);
 
-  const executar = async (): Promise<RespostaSegura> => {
-    const maxSaltos = opcoes.maxRedirecionamentos ?? 0;
-    let url = validarUrl(bruta, opcoes);
-    let metodo = (opcoes.metodo ?? "GET").toUpperCase();
-    let headers = opcoes.headers ?? {};
-    let corpo = opcoes.corpo;
-
-    for (let salto = 0; ; salto++) {
-      const enderecos = await resolverEJulgar(url.hostname, opcoes);
-      const resposta = await pedir(url, enderecos, metodo, headers, corpo, controle.signal);
+  return {
+    controle,
+    estouro,
+    /** Registra a resposta aberta, para o estouro poder derrubá-la. */
+    aoReceber: (resposta: http.IncomingMessage) => {
       emVoo = resposta;
-      const status = resposta.statusCode ?? 0;
-      const destino = resposta.headers.location;
+    },
+    /** O prazo acabou de ser cumprido (ou a busca terminou). */
+    encerrarPrazo: () => clearTimeout(prazo),
+    /** Larga o sinal de quem chamou. */
+    soltarSinal: () => sinalDeFora?.removeEventListener("abort", aoCancelar),
+  };
+}
 
-      if (maxSaltos > 0 && STATUS_DE_REDIRECIONAMENTO.has(status) && destino) {
-        resposta.destroy();
-        if (salto >= maxSaltos) throw new ErroDeRedeSegura("net:too_many_redirects");
-        let proxima: URL;
-        try {
-          proxima = new URL(destino, url);
-        } catch {
-          throw new ErroDeRedeSegura("unsafe_url:invalid");
-        }
-        proxima = validarUrl(proxima.toString(), opcoes);
-        if (proxima.origin !== url.origin) headers = semCredenciais(headers);
-        if (status === 303 || ((status === 301 || status === 302) && metodo === "POST")) {
-          metodo = "GET";
-          corpo = undefined;
-          headers = Object.fromEntries(Object.entries(headers).filter(([nome]) => !/^content-/i.test(nome)));
-        }
-        url = proxima;
-        continue;
-      }
+export async function buscarSeguro(bruta: string, opcoes: OpcoesDeBusca = {}): Promise<RespostaSegura> {
+  const { controle, estouro, aoReceber, encerrarPrazo, soltarSinal } = iniciarPrazo(
+    opcoes.timeoutMs ?? TIMEOUT_PADRAO_MS,
+    opcoes.signal,
+  );
 
-      if (opcoes.lerResposta === false) {
-        resposta.destroy();
-        return { status, headers: resposta.headers, corpo: Buffer.alloc(0), urlFinal: url.toString() };
-      }
-      const lido = await lerCorpo(resposta, opcoes.maxBytes ?? MAX_BYTES_PADRAO);
-      return { status, headers: resposta.headers, corpo: lido, urlFinal: url.toString() };
+  const executar = async (): Promise<RespostaSegura> => {
+    const { status, resposta, urlFinal } = await abrirConexao(bruta, opcoes, controle.signal, aoReceber);
+    if (opcoes.lerResposta === false) {
+      resposta.destroy();
+      return { status, headers: resposta.headers, corpo: Buffer.alloc(0), urlFinal };
     }
+    const lido = await lerCorpo(resposta, opcoes.maxBytes ?? MAX_BYTES_PADRAO);
+    return { status, headers: resposta.headers, corpo: lido, urlFinal };
   };
 
   try {
     return await Promise.race([executar(), estouro]);
   } catch (erro) {
-    if (erro instanceof ErroDeRedeSegura) throw erro;
-    // `fetch failed`/ECONNREFUSED/ENOTFOUND chegam com o detalhe do socket; o
-    // código estável é o que a tela e o log mostram, e a causa fica encadeada
-    // para `lib/net/alcance.ts` distinguir "não existe" de "caiu".
-    throw new ErroDeRedeSegura("net:connection_failed", { cause: erro });
+    throw comoErroDeRede(erro);
   } finally {
-    clearTimeout(prazo);
-    opcoes.signal?.removeEventListener("abort", aoCancelar);
+    encerrarPrazo();
+    soltarSinal();
   }
+}
+
+// ─── O corpo em fluxo ───────────────────────────────────────────────────────
+
+export interface OpcoesDeFluxo extends Omit<OpcoesDeBusca, "timeoutMs" | "maxBytes" | "lerResposta"> {
+  /** Prazo para os CABEÇALHOS chegarem (DNS, conexão, todos os saltos). Padrão 10 s. */
+  timeoutMs?: number;
+  /**
+   * Silêncio máximo entre dois trechos do corpo. O corpo de um modelo dura o que
+   * a geração durar, então o prazo não é total: é o servidor ficar calado. Cada
+   * trecho renova o prazo; sem leitor (contrapressão) ele não corre. Padrão 60 s.
+   */
+  timeoutEntreTrechosMs?: number;
+  /** Teto do corpo INTEIRO, em bytes, contado sobre o que sai decodificado. Padrão 64 MiB. */
+  maxBytes?: number;
+}
+
+const SILENCIO_PADRAO_MS = 60_000;
+const MAX_BYTES_DO_FLUXO_PADRAO = 64 * 1024 * 1024;
+const SEM_CORPO = new Set([204, 205, 304]);
+
+export interface RespostaEmFluxo {
+  status: number;
+  /** Sem `content-encoding` nem `content-length` quando o corpo foi decodificado aqui. */
+  headers: http.IncomingHttpHeaders;
+  /** `null` quando a resposta não tem corpo (204/205/304, HEAD). */
+  corpo: ReadableStream<Uint8Array> | null;
+  urlFinal: string;
+}
+
+/** O decodificador do `content-encoding`, que o `fetch` aplicava e o `http` cru não. */
+function decodificadorDe(codificacao: string | undefined): Transform | null {
+  switch ((codificacao ?? "").trim().toLowerCase()) {
+    case "gzip":
+    case "x-gzip":
+      return createGunzip();
+    case "deflate":
+      return createInflate();
+    case "br":
+      return createBrotliDecompress();
+    default:
+      return null;
+  }
+}
+
+function paraFluxoWeb(
+  resposta: http.IncomingMessage,
+  fonte: Readable,
+  limites: { maxBytes: number; silencioMs: number },
+  aoEncerrar: () => void,
+): ReadableStream<Uint8Array> {
+  const iterador = fonte[Symbol.asyncIterator]() as AsyncIterator<Buffer>;
+  let total = 0;
+  let relogio: NodeJS.Timeout | undefined;
+  const encerrar = () => {
+    clearTimeout(relogio);
+    aoEncerrar();
+  };
+  return new ReadableStream<Uint8Array>(
+    {
+      async pull(controle) {
+        relogio = setTimeout(() => resposta.destroy(new ErroDeRedeSegura("net:timeout")), limites.silencioMs);
+        try {
+          const { value, done } = await iterador.next();
+          clearTimeout(relogio);
+          if (done) {
+            encerrar();
+            controle.close();
+            return;
+          }
+          total += value.length;
+          if (total > limites.maxBytes) throw new ErroDeRedeSegura("net:response_too_large");
+          controle.enqueue(new Uint8Array(value));
+        } catch (erro) {
+          encerrar();
+          resposta.destroy();
+          fonte.destroy();
+          throw comoErroDeRede(erro);
+        }
+      },
+      cancel() {
+        encerrar();
+        resposta.destroy();
+        fonte.destroy();
+      },
+    },
+    // Sem fila adiantada: ler do socket só quando o consumidor pede.
+    { highWaterMark: 0 },
+  );
+}
+
+/**
+ * `buscarSeguro` com o corpo EM FLUXO (issue #108): a mesma política de destino,
+ * a mesma conexão presa ao endereço julgado, mas a resposta é devolvida assim que
+ * os cabeçalhos chegam e o corpo é lido sob demanda. É o que um SDK de modelo
+ * precisa — a resposta é SSE e dura o tempo da geração.
+ *
+ * Os limites mudam de natureza para caber nisso: o prazo total vira prazo de
+ * cabeçalhos (`timeoutMs`) mais silêncio máximo entre trechos
+ * (`timeoutEntreTrechosMs`), e o teto de bytes vale para o corpo inteiro, contado
+ * trecho a trecho. Estourar qualquer um derruba o socket e o fluxo termina com o
+ * `ErroDeRedeSegura` correspondente.
+ */
+export async function buscarSeguroEmFluxo(bruta: string, opcoes: OpcoesDeFluxo = {}): Promise<RespostaEmFluxo> {
+  const { controle, estouro, aoReceber, encerrarPrazo, soltarSinal } = iniciarPrazo(
+    opcoes.timeoutMs ?? TIMEOUT_PADRAO_MS,
+    opcoes.signal,
+  );
+
+  let conexao: Conexao;
+  try {
+    conexao = await Promise.race([abrirConexao(bruta, opcoes, controle.signal, aoReceber), estouro]);
+  } catch (erro) {
+    soltarSinal();
+    throw comoErroDeRede(erro);
+  } finally {
+    // Os cabeçalhos chegaram (ou falhou): o prazo de cabeçalhos acabou. Daqui em
+    // diante só o silêncio entre trechos e o cancelamento de quem chamou valem.
+    encerrarPrazo();
+  }
+
+  const { status, resposta, urlFinal } = conexao;
+  const metodo = (opcoes.metodo ?? "GET").toUpperCase();
+  const maxBytes = opcoes.maxBytes ?? MAX_BYTES_DO_FLUXO_PADRAO;
+  const decodificador = decodificadorDe(resposta.headers["content-encoding"]);
+  const headers: http.IncomingHttpHeaders = { ...resposta.headers };
+  if (decodificador) {
+    delete headers["content-encoding"];
+    delete headers["content-length"];
+  }
+
+  if (metodo === "HEAD" || SEM_CORPO.has(status)) {
+    resposta.destroy();
+    soltarSinal();
+    return { status, headers, corpo: null, urlFinal };
+  }
+
+  const anunciado = Number(resposta.headers["content-length"]);
+  if (!decodificador && Number.isFinite(anunciado) && anunciado > maxBytes) {
+    resposta.destroy();
+    soltarSinal();
+    throw new ErroDeRedeSegura("net:response_too_large");
+  }
+
+  // Cancelar durante a leitura já é coberto por `iniciarPrazo`: o sinal derruba a
+  // resposta em voo com o motivo, e o fluxo erra com ele.
+  let fonte: Readable = resposta;
+  if (decodificador) {
+    pipeline(resposta, decodificador, () => undefined);
+    fonte = decodificador;
+  }
+  const corpo = paraFluxoWeb(
+    resposta,
+    fonte,
+    { maxBytes, silencioMs: opcoes.timeoutEntreTrechosMs ?? SILENCIO_PADRAO_MS },
+    soltarSinal,
+  );
+  return { status, headers, corpo, urlFinal };
 }

@@ -1,0 +1,53 @@
+<!--meta {"id":"aviso-whatsapp","grupo":"ia","titulo":"Aviso no WhatsApp","ordem":14,"resumo":"Escolha um número da equipe para receber uma mensagem toda vez que o assistente travar e precisar de uma pessoa.","palavras":["aviso","notificação","plantão","whatsapp da equipe","caso aberto","alerta","teste","número interno"],"onde":"Agente de IA › Aviso no WhatsApp (Ver tudo em IA › Acompanhar o agente)","quem":"Administrador.","rotas":["/app/ai/cases/avisos"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Quando um agente de IA abre um <a href="#casos">caso</a>, alguém da equipe precisa saber logo. Esta tela liga um <strong>aviso por WhatsApp</strong>: toda vez que um caso novo nasce, uma mensagem chega ao número da equipe que você escolher (por exemplo, o celular de quem está de plantão), com o assunto e um link para abrir o caso.</p>
+<aside class="nota perigo"><strong>Ligar o aviso faz mensagens reais saírem, e muda o número que recebe.</strong><p>Depois de salvo e ligado, cada caso novo dispara uma mensagem de WhatsApp na hora, <strong>mesmo fora do horário comercial</strong>. E o número que recebe os avisos passa a ser “interno”: <strong>tudo o que ele mandar de volta é ignorado</strong> (não vira contato, atendimento nem aparece no CRM). Responder ao aviso pelo WhatsApp <strong>não chega ao cliente</strong>: para responder, abra o link.</p></aside>
+<figure class="print">
+  <img src="img/ia-aviso-whatsapp.png" alt="Tela Aviso no WhatsApp com um recado de estado, o formulário de configuração e a lista de últimos avisos, numerados de 1 a 8" loading="lazy">
+  <figcaption>A tela como aparece numa instalação que ainda não tem número conectado nem agente autorizado a abrir casos.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Recados do estado.</strong> Faixas que dizem o que falta para o aviso funcionar. Veja a tabela abaixo.</li>
+  <li><strong>Conexão que envia os avisos.</strong> O número de WhatsApp <em>da empresa</em> que manda a mensagem. Só aparecem os que conseguem mandar mensagem a qualquer hora, ou seja, <strong>não</strong> os conectados pela API Oficial da Meta.</li>
+  <li><strong>Número que recebe os avisos.</strong> O celular da equipe, com código do país. Exemplo: <code>+5531999998888</code>.</li>
+  <li><strong>Como chamar esse número.</strong> Um apelido opcional, como <em>“Plantão da Ana”</em>.</li>
+  <li><strong>Receber avisos no WhatsApp.</strong> O interruptor. Fica travado até haver uma conexão válida, um número completo e um endereço público do sistema.</li>
+  <li><strong>Salvar.</strong></li>
+  <li><strong>Enviar aviso de teste.</strong> Manda uma mensagem de verdade para conferir. Só acende depois de salvar. Limite de três testes por hora.</li>
+  <li><strong>Últimos avisos enviados.</strong> O registro do que saiu, o que não saiu e por quê (até 20 avisos), com o endereço do destino parcialmente escondido.</li>
+</ol>
+
+<h2 id="recados">Os recados do estado</h2>
+<p>A tela só mostra os que se aplicam. Os quatro primeiros <strong>impedem ligar</strong> o interruptor.</p>
+<table class="tabela">
+  <thead><tr><th>Recado</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Você ainda não conectou nenhum número</strong></td><td>Conecte um WhatsApp em <a href="#conexoes">Conexões</a>.</td></tr>
+    <tr><td><strong>Seus números atuais não servem para avisar a equipe</strong></td><td>Os números da API Oficial só falam com quem escreveu nas últimas 24 horas. Conecte um número por QR code.</td></tr>
+    <tr><td><strong>Este sistema ainda não tem um endereço na internet</strong></td><td>O endereço público não foi configurado, então o link do aviso não abriria nada. Peça a quem instalou para definir o domínio.</td></tr>
+    <tr><td><strong>A conexão que enviava os avisos foi removida</strong></td><td>O aviso se desligou sozinho. Escolha outra conexão e ligue de novo.</td></tr>
+    <tr><td>A conexão escolhida está fora do ar</td><td>Os avisos esperam até 24 horas; depois viram alerta na Central.</td></tr>
+    <tr><td>Este é o mesmo número que fala com seus clientes</td><td>Funciona, mas os avisos contam no limite diário dele. Um número só para avisos é mais seguro.</td></tr>
+    <tr><td>Nenhum assistente está autorizado a abrir casos</td><td>Ligue a opção de abrir casos na configuração do agente; sem isso nenhum aviso sai.</td></tr>
+    <tr><td>Seus assistentes só sugerem respostas</td><td>Um agente em modo “assistido” não abre caso sozinho.</td></tr>
+    <tr><td>Este número ainda está em aquecimento</td><td>Um número novo começa com poucas mensagens por dia e cresce por cerca de um mês, para não ser bloqueado pelo WhatsApp.</td></tr>
+    <tr><td>As respostas para este número são ignoradas de propósito</td><td>É o funcionamento normal do recurso (veja o alerta acima).</td></tr>
+  </tbody>
+</table>
+
+<h2 id="configurar">Como configurar</h2>
+<ol class="passos">
+  <li>Em <strong>Conexão que envia os avisos</strong>, escolha o número de WhatsApp da empresa.</li>
+  <li>Em <strong>Número que recebe os avisos</strong>, digite o celular da equipe com o código do país. O <code>+</code> é inserido sozinho.</li>
+  <li>Se quiser, dê um apelido.</li>
+  <li>Clique em <span class="ui">Salvar</span> e ligue <strong>Receber avisos no WhatsApp</strong>.</li>
+  <li>Clique em <span class="ui">Enviar aviso de teste</span> e confira o WhatsApp do destino.</li>
+</ol>
+<p>Se o número que você digitou já é de um cliente, aparece uma confirmação: <em>“Esse número já é de um cliente seu. Se você continuar, as mensagens dele param de chegar ao CRM.”</em> Escolha <span class="ui">Escolher outro número</span> ou, sabendo o que faz, <span class="ui">Usar mesmo assim</span>. O sistema também recusa um número que seja de uma das conexões da própria conta, para um número não ficar respondendo ao outro sem parar.</p>
+
+<h2 id="mensagem">O que a equipe recebe</h2>
+<p>A mensagem traz o nome da marca, o <em>tipo</em> e o <em>assunto</em> do caso, o <strong>primeiro nome</strong> do cliente, <em>o que o cliente precisa</em>, <em>por que a IA travou</em> e o link para abrir o caso. Links, CPF e telefone do cliente são removidos do texto. O aviso sai <strong>só na abertura</strong> do caso e não se repete quando o cliente responde.</p>
+<h3>O aviso está adiantando o atendimento?</h3>
+<p>No fim da tela, depois de alguns casos, o sistema compara os últimos 30 dias: o tempo típico entre a IA travar e alguém da equipe agir, nos casos <em>com</em> aviso e <em>sem</em> aviso. Enquanto há poucos casos, a tela diz que ainda não há dados para comparar.</p>
+<aside class="nota info"><strong>Não confunda com “Alertas”.</strong><p>O <em>Aviso no WhatsApp</em> é a mensagem para o celular da equipe. Os <a href="#alertas">Alertas</a> são a lista dentro do sistema (o sino do cabeçalho).</p></aside>

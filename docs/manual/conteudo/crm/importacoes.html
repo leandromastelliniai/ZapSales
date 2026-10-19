@@ -1,0 +1,66 @@
+<!--meta {"id":"importacoes","grupo":"crm","titulo":"Importações","ordem":13,"resumo":"Módulo opcional: suba uma planilha CSV ou Excel com empresas, pessoas e telefones e confira depois, linha a linha, o que entrou, o que deu conflito e o que falhou.","palavras":["importações","importar","csv","xlsx","excel","planilha","lote","conflito","empresas","pessoas","telefones"],"onde":"CRM › Ver tudo em CRM › Importações (só com o módulo “Empresas e pessoas” ligado na instalação)","quem":"Gerente ou acima no menu e para importar. Quem digitar o endereço vê os lotes, mas só Gerente importa.","modulo":"Empresas e pessoas (crm_b2b)","rotas":["/app/imports","/app/imports/[id]"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>As <strong>Importações</strong> trazem de uma vez uma planilha com <strong>empresas, pessoas e telefones</strong> e deixam você conferir, linha por linha, o que entrou, o que deu conflito e o que falhou. Esta é a importação do módulo B2B. A importação de contatos puros fica em <a href="#contatos">Contatos</a>, e a de negócios no <a href="#funis">Funis</a>.</p>
+<aside class="nota atencao"><strong>Também depende do módulo opcional “Empresas e pessoas”.</strong><p>Desligado, a tela e o menu somem (veja o aviso em <a href="#empresas">Empresas</a>).</p></aside>
+<aside class="nota perigo"><strong>Não existe pré-visualização nem mapeamento de colunas.</strong><p>Ao clicar em <span class="ui">Importar</span>, o arquivo é lido, as colunas são reconhecidas <em>automaticamente pelo título</em> e <strong>tudo é gravado na hora</strong>. Não dá para desfazer nem excluir um lote. Confira os títulos da planilha <em>antes</em> de importar.</p></aside>
+
+<figure class="print">
+  <img src="img/importacoes-lista.png" alt="Tela Importações com o envio de arquivo e a tabela de lotes, numerada de 1 a 6" loading="lazy">
+  <figcaption>A lista de importações e o envio de um arquivo.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong></li>
+  <li><strong>Arquivo.</strong> Escolha um <code>.csv</code> ou <code>.xlsx</code>. O formato <code>.xls</code> antigo é recusado.</li>
+  <li><strong>Importar.</strong> Fica apagado sem arquivo. Durante, mostra “Importando…”. Não há barra de progresso: a tela só responde quando tudo terminou.</li>
+  <li><strong>Arquivo</strong> (coluna). O nome do arquivo de cada lote, com link para o detalhe. Mostra os 50 últimos.</li>
+  <li><strong>Conflitos.</strong> Quantas linhas deram conflito.</li>
+  <li><strong>Falhas.</strong> Quantas linhas falharam.</li>
+</ol>
+<p>As outras colunas são Status (<code>pending</code>, <code>processing</code> ou <code>completed</code>, em inglês), Linhas, Sucesso e Data. Depois de processar, a tela diz “Lote processado: N ok, N conflitos, N falhas.”.</p>
+
+<h2 id="arquivo">Como deve ser a planilha</h2>
+<ul>
+  <li><strong>Limites:</strong> até <strong>2 MB</strong> e <strong>2.000 linhas de dados</strong>, com cabeçalho e pelo menos uma linha. Em XLSX, só a <strong>primeira aba</strong> é lida.</li>
+  <li><strong>CSV:</strong> o separador (vírgula, ponto e vírgula ou tab) e a codificação (UTF-8 ou Windows-1252) são detectados sozinhos.</li>
+  <li><strong>Telefone:</strong> com “+”, de 8 a 15 dígitos; sem “+”, 10 ou 11 dígitos viram <code>+55</code>, e 12–13 dígitos precisam começar com 55. Celular brasileiro recebe o 9º dígito. Telefone inválido: a <strong>linha toda falha</strong> e nada é criado.</li>
+</ul>
+<table class="tabela">
+  <thead><tr><th>Dado</th><th>Títulos de coluna reconhecidos (exatamente, com acento)</th></tr></thead>
+  <tbody>
+    <tr><td>Empresa</td><td><code>empresa</code>, <code>company</code>, <code>company_name</code>, <code>nome da empresa</code>, <code>razao</code>, <code>razão social</code></td></tr>
+    <tr><td>Razão social</td><td><code>razao social</code>, <code>razão social</code>, <code>legal_name</code>, <code>razao_social</code></td></tr>
+    <tr><td>Nome fantasia</td><td><code>nome fantasia</code>, <code>fantasia</code>, <code>trade_name</code>, <code>nome_fantasia</code></td></tr>
+    <tr><td>CNPJ</td><td><code>cnpj</code></td></tr>
+    <tr><td>Pessoa</td><td><code>pessoa</code>, <code>decisor</code>, <code>contato</code>, <code>nome</code>, <code>person</code>, <code>person_name</code>, <code>nome do contato</code></td></tr>
+    <tr><td>Cargo</td><td><code>cargo</code>, <code>job_title</code>, <code>função</code>, <code>funcao</code>, <code>titulo</code></td></tr>
+    <tr><td>Telefone</td><td><code>telefone</code>, <code>phone</code>, <code>celular</code>, <code>whatsapp</code>, <code>fone</code></td></tr>
+    <tr><td>E-mail</td><td><code>email</code>, <code>e-mail</code>, <code>mail</code></td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>“Nome” vira o nome da PESSOA, não o da empresa.</strong><p>Uma coluna com título desconhecido é ignorada <em>em silêncio</em>. Se <strong>nenhum</strong> título bater, todas as linhas falham com “Linha vazia — sem empresa, pessoa ou telefone.” e o lote termina “completed” com tudo em falhas.</p></aside>
+
+<h2 id="o-que-faz">O que a importação faz com cada linha</h2>
+<ol class="passos">
+  <li><strong>Empresa.</strong> Com CNPJ válido (14 dígitos), procura no banco; se já existe, <strong>reaproveita sem atualizar</strong> os dados; se não, cria. Sem CNPJ, cria uma empresa nova (entre importações <em>duplica</em>). CNPJ preenchido mas inválido é ignorado em silêncio.</li>
+  <li><strong>Pessoa.</strong> Cria sempre uma pessoa nova (só evita repetir dentro do mesmo arquivo), ligada à empresa com o cargo, e a marca como <em>decisor</em> — <strong>todo mundo importado vira decisor</strong>. Não procura pessoa existente: reimportar duplica pessoas.</li>
+  <li><strong>Telefone.</strong> Procura um contato com esse número. Se já está ligado a <em>outra pessoa</em>, a linha vira <strong>conflito</strong> (“Telefone já vinculado a outra pessoa.”); se existe sem pessoa, liga à pessoa; se não existe, <strong>cria o contato</strong> (origem “import_csv”).</li>
+  <li>Sucesso parcial conta: só empresa, só pessoa ou só telefone já é “success”.</li>
+</ol>
+<p>A importação <strong>não cria negócio no funil, não manda mensagem, não dispara campanha e não mexe em consentimento</strong>. Os contatos criados passam a existir em <a href="#contatos">Contatos</a>. Em segundo plano, as empresas novas com CNPJ são enriquecidas uma por vez na BrasilAPI (pode demorar; ficam <em>pending</em> até lá). O lote fica registrado na auditoria (<code>imports.companies_people</code>).</p>
+
+<h2 id="detalhe">O detalhe de um lote</h2>
+<figure class="print">
+  <img src="img/importacoes-detalhe.png" alt="Detalhe do lote clientes-b2b.xlsx com as linhas, o status e o erro de cada uma, numerado de 1 a 6" loading="lazy">
+  <figcaption>As linhas de um lote: três certas, um conflito e uma falha.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>← Importações.</strong></li>
+  <li><strong>Só conflitos.</strong> Filtra as linhas com conflito. Não há filtro só de falhas.</li>
+  <li><strong>#.</strong> O número da linha. Linhas em branco no meio da planilha são descartadas antes, então pode não bater com o número que o Excel mostra (o cabeçalho conta como 1).</li>
+  <li><strong>Erro.</strong> O motivo, ou “—”.</li>
+  <li><strong>conflict.</strong> A pessoa e o vínculo com a empresa <em>já foram criados</em> nessa linha; só o telefone não foi mexido.</li>
+  <li><strong>failed.</strong> Nada foi criado nessa linha.</li>
+</ol>
+<p>O título mostra o nome do arquivo e o resumo (“completed · 3 certas · 1 conflitos · 1 falhas”). A tabela traz até 500 linhas por lote. Os estados aparecem em inglês (<code>success</code>, <code>conflict</code>, <code>failed</code>), e as colunas <em>Company</em>, <em>Person</em> e <em>Contact</em> mostram só os 8 primeiros caracteres do identificador, sem link.</p>
+<aside class="nota info"><strong>Reimportar a mesma planilha.</strong><p>Empresas com CNPJ são reaproveitadas, mas <strong>pessoas duplicam</strong> e telefones já ligados à primeira pessoa viram conflitos.</p></aside>

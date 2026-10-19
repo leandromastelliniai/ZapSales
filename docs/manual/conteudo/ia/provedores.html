@@ -1,0 +1,60 @@
+<!--meta {"id":"provedores","grupo":"ia","titulo":"Provedores","ordem":7,"resumo":"Escolha qual inteligência artificial atende cada parte do sistema, defina o modelo padrão, ligue o Jev para decisões rápidas e cadastre a chave de mapas.","palavras":["provedor","provedores","modelo padrão","jev","typesafe","pontos","32 pontos","mapas","geocoding","google","claude","gpt","configuração avançada"],"onde":"Agente de IA › Provedores (Ver tudo em IA › Montar o agente)","quem":"Ver: Gerente ou acima. Alterar: Administrador.","rotas":["/app/ai/providers"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O ZapSales usa inteligência artificial em <strong>muitos lugares diferentes</strong> — hoje, 32 “pontos”: responder o cliente, medir o clima da conversa, escolher qual agente atende, resumir conversas longas, ouvir áudios e assim por diante. Em <span class="ui">Provedores</span> você vê <strong>qual modelo está atendendo cada ponto</strong> e pode trocar, de uma vez só ou ponto a ponto.</p>
+<figure class="print">
+  <img src="img/ia-provedores.png" alt="Tela Provedores de IA com o modelo padrão, o cartão do Jev e a primeira seção de pontos, numerada de 1 a 9" loading="lazy">
+  <figcaption>Provedores de IA: modelo padrão, Jev e os pontos agrupados por papel.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Modelo padrão.</strong> Vale em todo ponto que você não configurou individualmente (“hoje, 17 de 32”). Trocar aqui muda todos de uma vez.</li>
+  <li><strong>Provedor e modelo</strong> do padrão. Se o catálogo do provedor ainda não foi baixado, o modelo vira um campo de texto.</li>
+  <li><strong>Salvar padrão.</strong> Só Administrador.</li>
+  <li><strong>Jev — decisões rápidas.</strong> Veja <a href="#provedores--jev">abaixo</a>.</li>
+  <li><strong>Situação do Jev.</strong> <em>Desligado, Observando, Decidindo, Decidindo sozinho, Parado</em> ou <em>Em pausa</em>.</li>
+  <li><strong>Aviso de saúde e LGPD.</strong> Sempre visível. Se a sua empresa é da área da saúde, as mensagens que o Jev lê podem conter dado sensível: confira o contrato da TypeSafe antes de ligar.</li>
+  <li><strong>Colar a chave.</strong> Abre a janela de Credenciais já no provedor do Jev. Ao lado, <em>Pegar a chave na TypeSafe</em> leva ao site.</li>
+  <li><strong>Seção de pontos.</strong> Os 32 pontos são agrupados por papel (veja abaixo). Cada seção mostra “Usando: …” com os modelos em uso.</li>
+  <li><strong>Configuração avançada.</strong> Abre os cartões de cada ponto da seção, para trocar o modelo individualmente.</li>
+</ol>
+
+<h2 id="padrao">O modelo padrão</h2>
+<p>Escolha o <strong>provedor</strong> e o <strong>modelo</strong> e clique em <span class="ui">Salvar padrão</span>. O sistema avisa quando o provedor não tem chave utilizável. Três pontos precisam de um modelo <em>especialista</em> (preparar material, buscar no material, ouvir áudio) e <strong>não seguem</strong> o padrão: eles são configurados um a um.</p>
+<aside class="nota atencao"><strong>Trocar o padrão muda o modelo que responde clientes reais.</strong><p>A partir da próxima mensagem, e com o custo do novo modelo. Nada é enviado na hora.</p></aside>
+
+<h2 id="pontos">Os pontos de IA, por papel</h2>
+<table class="tabela">
+  <thead><tr><th>Seção</th><th>O que reúne</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Atender o cliente</strong></td><td>Escrever o que o cliente lê e agir no funil durante a conversa (responder o cliente, trabalhar o funil, sugerir resposta ao atendente, propostas).</td></tr>
+    <tr><td><strong>Entender a conversa</strong></td><td>Ler o que chegou e decidir o que significa para o negócio (escolher qual agente atende, identificar a etapa do lead, medir o clima, ler a resposta ao follow-up).</td></tr>
+    <tr><td><strong>Proteger a operação</strong></td><td>Barrar manipulação e promessas que a empresa não pode cumprir.</td></tr>
+    <tr><td><strong>Lembrar e buscar</strong></td><td>Guardar o essencial da conversa e achar o material certo (resumir conversa longa, indexar e buscar no seu material).</td></tr>
+    <tr><td><strong>Ver e ouvir</strong></td><td>Transformar áudio, imagem e vídeo do cliente em texto que o agente entende.</td></tr>
+    <tr><td><strong>Melhorar e testar</strong></td><td>Avaliar o próprio desempenho e conferir se a configuração está de pé.</td></tr>
+  </tbody>
+</table>
+<p>Cada <strong>cartão de ponto</strong> mostra: o nome, o que ele faz, o <em>modelo em uso</em>, <strong>de onde veio</strong> essa escolha (“Definido na versão publicada do agente”, “Escolhido por você no painel de provedores”, “Usando o padrão da organização”, “O Jev decidiu”…) e, numa caixa cinza, <strong>“Se falhar: …”</strong>, o que o cliente percebe se esse ponto parar (por exemplo, em <em>Responder o cliente</em>: “o cliente manda mensagem e ninguém responde”). O Administrador pode trocar <em>Provedor, Modelo, Chave</em> e, para provedores compatíveis com OpenAI, um <em>endereço próprio</em>.</p>
+<ul>
+  <li>Alguns pontos são <strong>“fixos”</strong>: o produto os resolve sozinho (por exemplo, preparar material e ouvir áudio). A tela explica por quê e não oferece seletor.</li>
+  <li>Em <em>Responder o cliente</em>, <em>Testar ou revisar resposta</em> e <em>Trabalhar o funil</em>, <strong>quem manda é o agente publicado</strong>: o cartão mostra “Configurar no agente”, com um link para o <a href="#agentes">editor do agente</a>.</li>
+</ul>
+
+<h2 id="jev">O Jev — decisões rápidas</h2>
+<p>O <strong>Jev</strong> é uma segunda IA, da empresa TypeSafe AI, que <strong>não conversa com o cliente</strong>. Ele toma decisões pequenas, baratas e muito rápidas (geralmente em menos de um segundo), ao lado da IA principal. São seis <strong>tarefas</strong>: <em>medir o clima da conversa, perceber tentativa de manipulação, escolher qual agente atende, perceber pedido para falar com uma pessoa, perceber pedido para parar de receber mensagens</em> e <em>ler a resposta ao follow-up</em>.</p>
+<ol class="passos">
+  <li>Crie uma conta na TypeSafe AI e coloque crédito (cada mensagem medida custa uma fração de centavo de dólar, cobrada lá). Pegue a chave, que começa com <code>apikey_</code>.</li>
+  <li>Clique em <span class="ui">Colar a chave</span> e salve (Administrador). Quando o sistema confere a chave, aparece “✓ Chave conferida com a TypeSafe”.</li>
+  <li>O cartão passa a “Pronto para ligar”, com a lista do que o Jev vai fazer. Marque a caixa de <strong>concordância</strong> e clique em <span class="ui">Ligar o Jev</span>.</li>
+</ol>
+<p>Ligado, para cada tarefa você escolhe o quanto o Jev manda: <strong>Só observa</strong> (registra para comparar, não decide), <strong>Decide</strong> ou <strong>Avisa a equipe</strong>, e pode pausar uma tarefa. O cartão mostra, para os últimos 30 dias, as respostas do Jev, clientes irritados percebidos, custo, tempo médio e quantas vezes a IA de sempre precisou cobri-lo. Há o link <em>Ver as decisões do Jev</em> (em <a href="#execucoes">Execuções</a>) e o botão <span class="ui">Desligar</span>.</p>
+<aside class="nota perigo"><strong>Ligar o Jev envia mensagens reais de clientes para uma empresa nos Estados Unidos.</strong><p>Cada mensagem que o cliente manda vai, uma de cada vez e sem o resto da conversa, para a TypeSafe AI avaliar. O sistema apaga CPF, telefone e e-mail do texto antes de enviar. Com o Jev desligado, nada é enviado. É preciso concordar expressamente na primeira vez, e só o Administrador liga.</p></aside>
+
+<h2 id="mapas">Mapas (Google)</h2>
+<p>No fim da tela há o cartão <strong>“Mapas (Google)”</strong>. Quando o cliente manda a <em>localização</em> pelo WhatsApp, o sistema pode consultar o Google para o agente ler a rua e a cidade aproximadas, em vez de só as coordenadas. Sem chave, nada muda.</p>
+<ul>
+  <li>Cole a <strong>chave da Geocoding API</strong> e clique em <span class="ui">Salvar chave</span>. Crie a chave no Google Cloud com a Geocoding API habilitada e restrinja-a a essa API e ao endereço IP do servidor.</li>
+  <li><span class="ui">Testar</span> usa a chave digitada ou a gravada e <strong>chama o Google de verdade</strong>; o resultado diz se funcionou (e o endereço devolvido) ou explica o problema (API desativada, chave recusada, cota, sem resultado, rede).</li>
+  <li><span class="ui">Remover chave</span> apaga a chave gravada.</li>
+</ul>
+<aside class="nota atencao"><strong>No cartão de Mapas, os botões aparecem para o Gerente, mas só o Administrador consegue usá-los.</strong><p>Gravar, testar e remover a chave exigem o papel de Administrador; para o Gerente, a ação é recusada.</p></aside>

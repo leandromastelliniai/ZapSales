@@ -1,0 +1,23 @@
+<!--meta {"id":"propostas-config","grupo":"organizacao","titulo":"Propostas (configuração)","ordem":12,"resumo":"Liga as propostas comerciais para a empresa e define a validade padrão, as condições padrão e se a equipe é avisada no WhatsApp quando a IA rascunhar uma proposta.","palavras":["propostas","configuração","validade padrão","condições padrão","ligar propostas","aviso no whatsapp","retorno automático"],"onde":"Configurações › Sua empresa › Propostas (só com o módulo Propostas ligado na instalação)","quem":"Todos abrem e leem. Salvar: Gerente ou acima.","modulo":"Propostas","rotas":["/app/settings/tenant/proposals"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Aqui a empresa <strong>liga</strong> as <a href="#propostas">propostas comerciais</a> e define os padrões de validade e de condições. É a segunda das duas chaves: a primeira é o módulo “Propostas”, que o administrador da <em>instalação</em> liga em <em>Admin › Sistema</em>. Sem o módulo, esta tela também some (“página não encontrada”).</p>
+
+<figure class="print">
+  <img src="img/propostas-config.png" alt="Configuração de propostas com o interruptor de ligar, a validade padrão, as condições padrão e o aviso no WhatsApp, numerada de 1 a 6" loading="lazy">
+  <figcaption>Configurações › Propostas.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Modelos de proposta.</strong> Leva à <a href="#modelos-de-proposta">lista de modelos</a>.</li>
+  <li><strong>Ligar propostas comerciais para esta organização.</strong> Desligado por padrão. Ligado, a entrada “Propostas” aparece no CRM e as telas se abrem. Desligado, somem (os dados ficam).</li>
+  <li><strong>Validade padrão (dias).</strong> De 1 a 365 (padrão 15). Vale para propostas <em>novas</em>. Apagar o campo gera o erro “Campos inválidos.”.</li>
+  <li><strong>Condições padrão.</strong> Texto (até 4.000 caracteres) que entra nas propostas novas quando você não escreve outro.</li>
+  <li><strong>Avisar no WhatsApp da equipe quando a IA rascunhar uma proposta.</strong> Ligado por padrão. Usa o número configurado em <a href="#aviso-whatsapp">Aviso no WhatsApp</a>; sem ele configurado e ligado, nada é enviado.</li>
+  <li><strong>Salvar.</strong> Grava e recarrega a página (para o menu mostrar ou esconder “Propostas”). Não aparece mensagem de sucesso.</li>
+</ol>
+<ul>
+  <li>Salvar mescla as opções sem apagar as que a tela não mostra (como o prazo do retorno automático e os modelos desligados) e registra <code>proposals.config_changed</code> na auditoria.</li>
+  <li>O prazo do <strong>retorno automático</strong> depois de enviar (padrão 3 dias) existe, mas <strong>não tem campo na tela</strong>.</li>
+  <li>Com a capacidade desligada, a tela “Modelos de proposta” abre, mas a lista não carrega.</li>
+  <li>Quem não é Gerente abre e lê, mas ao salvar recebe o aviso de falta de permissão.</li>
+</ul>

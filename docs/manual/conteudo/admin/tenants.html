@@ -1,0 +1,108 @@
+<!--meta {"id":"admin-tenants","grupo":"admin","titulo":"Tenants (empresas)","ordem":3,"resumo":"A lista de todas as empresas hospedadas na instalação, o cadastro de uma empresa nova e a ficha de cada uma (visão geral, saúde, agente), com suspender, reativar e acompanhar.","palavras":["tenants","empresas","organizações","novo tenant","ficha","saúde","agente","suspender","reativar","acompanhar","suporte","impersonate","cnpj","slug"],"onde":"Modo administrador › Tenants (/admin/tenants)","quem":"Ver: administrador da plataforma. Criar, suspender, reativar e acompanhar: escopo full com a verificação em dia.","rotas":[]} -->
+
+<h2 id="lista">A lista de empresas</h2>
+<p>“Tenant” é o jargão do painel para <strong>empresa cliente</strong> (organização). A lista mostra todas as hospedadas nesta instalação, das mais recentes para as mais antigas.</p>
+<figure class="print">
+  <img src="img/admin-tenants.png" alt="Lista de tenants com o botão Novo tenant, filtros e colunas Slug, Nome, CNPJ, Status, Users, Conversas, numerada de 1 a 8" loading="lazy">
+  <figcaption>A lista de tenants (nomes trocados por exemplos).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Novo tenant.</strong> Abre o cadastro de uma empresa.</li>
+  <li><strong>Busca.</strong> “Buscar por nome, slug ou CNPJ…”, parcial e sem diferenciar maiúsculas (aplica após 0,3 s).</li>
+  <li><strong>Status.</strong> “Todos os status”, “Ativo”, “Onboarding”, “Suspenso” e “Redigido”. <em>Onboarding</em> é calculado: empresa ativa que ainda não concluiu os <a href="#onboarding">primeiros passos</a>. <em>Redigido</em> quer dizer que os dados foram anonimizados por LGPD.</li>
+  <li><strong>Slug.</strong> O apelido curto da empresa, em letra de máquina.</li>
+  <li><strong>CNPJ.</strong> Aparece <em>truncado</em> na lista; completo só na ficha.</li>
+  <li><strong>Status.</strong> O selo: Ativo (verde), Onboarding (azul), Suspenso (amarelo), Redigido (vermelho).</li>
+  <li><strong>Users.</strong> Pessoas vinculadas (e, ao lado, o número de conversas).</li>
+  <li><strong>Ver.</strong> Abre a ficha.</li>
+</ol>
+<p>30 por página; <span class="ui">Carregar mais</span> traz o resto. Sem resultado: “Nenhum tenant encontrado — Ajuste os filtros ou crie um novo tenant.”. A consulta é auditada (<code>platform_admin.tenants_listed</code>).</p>
+
+<h2 id="novo">Novo tenant</h2>
+<figure class="print">
+  <img src="img/admin-novo-tenant.png" alt="Formulário Nova organização com nome, slug, razão social, CNPJ, plano, e-mail do responsável e interface, numerado de 1 a 8" loading="lazy">
+  <figcaption>O formulário “Nova organização” (com um nome de exemplo digitado e nada enviado).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome de exibição.</strong> Obrigatório, 2 a 120 caracteres (“Loja da Maria”). Ao digitar, o slug é gerado sozinho.</li>
+  <li><strong>Slug.</strong> 2 a 40 caracteres: só letras minúsculas, números e hífens. Repetido dá “Este slug já está em uso”. Se você editar à mão, ele para de seguir o nome.</li>
+  <li><strong>Razão social.</strong> Opcional (até 255). Vazia, o sistema usa o nome de exibição.</li>
+  <li><strong>CNPJ.</strong> Opcional, com máscara; só confere o tamanho, não os dígitos.</li>
+  <li><strong>Plano.</strong> Standard (padrão), Pro ou Enterprise — hoje só um rótulo informativo (não confirmado se libera ou limita algo).</li>
+  <li><strong>E-mail do responsável.</strong> Obrigatório. A pessoa que vai administrar a empresa.</li>
+  <li><strong>Interface.</strong> O mesmo editor de áreas visíveis do responsável (padrão: completa; deve restar ao menos uma área).</li>
+  <li><strong>Criar organização.</strong> “Criando…”.</li>
+</ol>
+<ul>
+  <li><strong>Você entra como Administrador da empresa nova.</strong> Quando o responsável é outra pessoa, o seu vínculo é “provisório” até a passagem de bastão.</li>
+  <li>Se o e-mail do responsável é <em>outro</em>, o sistema gera um <strong>convite de administrador</strong> (válido por tempo limitado) e tenta enviar por e-mail; sem e-mail configurado, a tela mostra o <em>Link do convite</em> com o botão <span class="ui">Copiar convite</span> (“O envio por e-mail não foi confirmado. Copie o link e compartilhe com o responsável.”). Se o e-mail é o seu, não há convite.</li>
+  <li>Termina em “Organização criada — Você já é administrador de &lt;nome&gt;.” com os botões <span class="ui">Voltar ao aplicativo</span> e <span class="ui">Ver organização</span>.</li>
+  <li>É idempotente (repetir o mesmo envio não duplica) e fica na auditoria como <code>tenant.created_by_platform_admin</code>. <strong>Não existe botão de apagar empresa</strong> no painel: só suspender (ou redigir por LGPD). A empresa nova nasce <em>ativa</em> mas aparece como “Onboarding” até o responsável concluir os primeiros passos.</li>
+  <li>Esta tela <em>não foi enviada</em> nas capturas.</li>
+</ul>
+
+<h2 id="ficha">A ficha da empresa</h2>
+<p>Clicar em <span class="ui">Ver</span> abre a ficha, com o nome, o slug, o selo de status (aqui sempre o status “cru”: nunca mostra “Onboarding”) e quatro abas: <strong>Visão Geral</strong>, <strong>Saúde</strong>, <strong>Agente</strong> e duas desativadas, <em>Equipe</em> e <em>Uso</em> (“em breve”).</p>
+<figure class="print">
+  <img src="img/admin-tenant-geral.png" alt="Ficha de uma empresa com informações, volumes, integrações, compliance e os botões de ação, numerada de 1 a 7" loading="lazy">
+  <figcaption>A aba Visão Geral da ficha.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Tenants.</strong> Link de volta à lista.</li>
+  <li><strong>Abas.</strong> Visão Geral, Saúde (marcada) e Agente.</li>
+  <li><strong>Informações.</strong> Plano, razão social, CNPJ (completo), “Onboarding concluído” (data e hora), “Criado em” e, se houver, “Suspenso em”.</li>
+  <li><strong>Volumes.</strong> Totais da empresa: Usuários, Conversas, Mensagens, Leads e Pedidos. Em “Integrações”: quantas sessões de WhatsApp existem (de qualquer status).</li>
+  <li><strong>Compliance &amp; IA.</strong> “Solicitações LGPD pendentes” (destaque se &gt; 0) e “Invocações IA (30d)”.</li>
+  <li><strong>Acompanhar organização.</strong> Veja abaixo.</li>
+  <li><strong>Suspender tenant.</strong> Vermelho; só se a empresa está ativa. Se está suspensa aparece <span class="ui">Reativar tenant</span>; se redigida, só “Tenant redigido — ações de gestão não disponíveis.”.</li>
+</ol>
+<h3 id="saude">Aba Saúde</h3>
+<figure class="print">
+  <img src="img/admin-tenant-saude.png" alt="Aba Saúde com os três cartões WAHA, Orçamento IA e Audit Lag, numerada de 1 a 4" loading="lazy">
+  <figcaption>A aba Saúde (atualiza sozinha; mostra “Atualizado às HH:MM:SS”).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Status de Saúde.</strong></li>
+  <li><strong>WAHA.</strong> “N/M conectada(s)” e a lista (até 4) de sessões com o status. <em>Atenção</em> se não há sessões ou nenhuma está conectada; <em>Crítico</em> se há sessão FAILED/STOPPED e nenhuma conectada (foi o caso da sessão de teste da captura).</li>
+  <li><strong>Orçamento IA.</strong> “N% usado”, consumido, orçamento (ou “Ilimitado”) e o limite (“Não aplicado”, “Só avisa” ou “Para a IA no limite”). Aqui o gasto é o <em>do mês</em>. A partir de 80% é Atenção; 100% só é Crítico quando a empresa escolheu parar a IA.</li>
+  <li><strong>Audit Lag.</strong> Tempo desde o último evento de auditoria da empresa. Acima de 2 minutos é Atenção e acima de 10 minutos, Crítico.</li>
+</ol>
+<p><strong>Armadilha:</strong> uma empresa parada, sem nenhuma atividade, aparece com “Audit Lag” <em>Crítico</em> só por não ter evento recente — não é falha real.</p>
+<h3 id="agente">Aba Agente</h3>
+<figure class="print media">
+  <img src="img/admin-tenant-agente.png" alt="Aba Agente com a lista dos agentes de IA da empresa, a versão publicada e a data" loading="lazy">
+  <figcaption>A aba Agente: dois agentes da empresa de demonstração.</figcaption>
+</figure>
+<p>Lista os agentes de IA da empresa, só para leitura: nome, “Ativo/Inativo”, <em>Tipo</em>, <em>Versão publicada</em> (<code>vN · provedor · modelo</code> ou “Nenhum agente publicado”) e <em>Publicado em</em>. Vazio: “Nenhum agente publicado”.</p>
+
+<h2 id="suspender">Suspender e reativar</h2>
+<figure class="print media">
+  <img src="img/admin-suspender.png" alt="Janela Suspender tenant com o campo do motivo e o botão Confirmar suspensão" loading="lazy">
+  <figcaption>A janela “Suspender tenant” (cancelada nesta captura).</figcaption>
+</figure>
+<ul>
+  <li><strong>Suspender:</strong> “A empresa perde o acesso, e a IA, os envios e as automações dela param. Mensagens na fila e tarefas agendadas são descartadas e não saem ao reativar; os follow-ups em andamento retomam de onde pararam. As mensagens que chegarem continuam gravadas.” Exige o <strong>Motivo da suspensão</strong> (10 a 500 caracteres). Quem está dentro da empresa cai na tela <a href="#entrada-avisos">“Conta suspensa”</a>. Registra <code>tenant.suspended</code> com o motivo.</li>
+  <li><strong>Reativar:</strong> restabelece o acesso (“Motivo da reativação”, 10 a 500). Só reativa a suspensão <em>administrativa</em>; se foi por falta de pagamento, a resposta é “Esta suspensão é por falta de pagamento. Use Dar prazo ou Tornar isenta.”. Abre um item “org_reativada” na Central da empresa. As mensagens e tarefas descartadas <strong>não voltam</strong>.</li>
+  <li>Exigem escopo <code>full</code> e verificação em dia. Se outra operação está em andamento: “Outra operação está em andamento para esta empresa. Tente de novo em instantes.”.</li>
+</ul>
+
+<h2 id="acompanhar">Acompanhar organização (suporte temporário)</h2>
+<figure class="print media">
+  <img src="img/admin-acompanhar.png" alt="Janela Iniciar acompanhamento com a caixa Somente leitura e o botão Confirmar e entrar" loading="lazy">
+  <figcaption>A janela “Iniciar acompanhamento?”.</figcaption>
+</figure>
+<p>Permite entrar na empresa de um cliente <strong>por até 1 hora</strong>, com a sua identidade, para ajudar ou diagnosticar — com tudo registrado. A janela diz: “Acompanhe &lt;nome&gt; com sua identidade de administrador. As ações pelo aplicativo serão registradas em seu nome. O acesso dura até uma hora.” A caixa <strong>Somente leitura</strong> escolhe o modo: marcada, você vira <code>viewer</code> da empresa e qualquer gravação é barrada (“Este acompanhamento permite somente leitura.”); desmarcada, vira <code>admin</code> ( “Edição permitida”). Quem tem o escopo <code>support_readonly</code> entra <em>sempre</em> somente leitura.</p>
+<figure class="print">
+  <img src="img/admin-acompanhamento.png" alt="Faixa amarela no topo do aplicativo dizendo Suporte à organização, Somente leitura, com o botão Sair do acompanhamento, numerada de 1 a 2" loading="lazy">
+  <figcaption>O que o dono vê durante o acompanhamento.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Suporte à organização &lt;nome&gt; — Somente leitura</strong> (ou “Edição permitida”). A faixa fica fixa no topo.</li>
+  <li><strong>Sair do acompanhamento.</strong> Encerra e volta ao Inbox, restaurando a empresa que estava ativa antes.</li>
+</ol>
+<ul>
+  <li>Só empresas <em>ativas</em> podem ser acompanhadas (suspensa ou redigida, não). Não passa pelo onboarding e não pode aceitar convites durante a sessão.</li>
+  <li><strong>Como termina:</strong> pelo botão; pelo tempo (1 hora — o navegador vai sozinho a <a href="#entrada-avisos">“Encerre o acompanhamento para continuar”</a>); ou se você perder a autoridade (administrador revogado, sessão encerrada, verificação perdida, empresa deixou de estar ativa).</li>
+  <li>Fica na auditoria (<code>platform_admin.impersonate_started</code> e <code>…_ended</code>) e toda ação feita é gravada como feita “pelo administrador da plataforma”. Não manda e-mail nem avisa a empresa (<em>não confirmado fora do código lido</em>). É o <strong>único caminho do painel para responder como atendente</strong> (o <a href="#admin-usage--inbox">Inbox do painel</a> é só leitura).</li>
+  <li>Erros comuns: “Administração da plataforma necessária.”, “Confirme a verificação em duas etapas.”, “Encerre o acompanhamento atual primeiro.”, “Acompanhamento não configurado nesta instalação.” (falta o segredo de acompanhamento no servidor).</li>
+</ul>

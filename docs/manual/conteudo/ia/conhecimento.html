@@ -1,0 +1,86 @@
+<!--meta {"id":"conhecimento","grupo":"ia","titulo":"Conhecimento","ordem":10,"resumo":"A biblioteca de materiais do seu negócio (perguntas e respostas, documentos) que os agentes de IA consultam antes de responder. Aqui você adiciona, confere e atualiza o que o agente sabe.","palavras":["rag","base de conhecimento","acervo","faq","perguntas frequentes","documento","pdf","material","embedding","chave","openai","google","o que o agente sabe","treinar","ensinar"],"onde":"Agente de IA › Conhecimento (menu: Ver tudo em IA › Ensinar o agente)","quem":"Gerente ou acima. Salvar a chave e trocar o provedor de busca: Administrador.","rotas":["/app/ai/knowledge/sources"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>O agente de IA não conhece o seu negócio: ele só sabe o que você ensinou. Esta tela é a <strong>biblioteca</strong> onde você guarda as respostas que se repetem (prazo de entrega, política de troca, formas de pagamento). Antes de responder um cliente, o agente <strong>procura nesses materiais</strong> e usa o que encontrou, em vez de improvisar.</p>
+<p>O título da tela é <em>“O que o agente sabe”</em>. Cada agente escolhe, na tela dele, quais materiais pode ler; a biblioteca em si é <strong>da organização</strong>.</p>
+<figure class="print">
+  <img src="img/ia-conhecimento.png" alt="Tela O que o agente sabe, com o aviso de chave, o estado da base e três cartões de material, numerados de 1 a 14" loading="lazy">
+  <figcaption>A biblioteca de conhecimento, com três materiais: um que o agente já sabe, um que não entrou e um de perguntas e respostas.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Como funciona.</strong> Painel de ajuda da tela.</li>
+  <li><strong>Faixa da chave.</strong> Diz se o sistema consegue “preparar” os materiais. Veja <a href="#conhecimento--chave">A chave de preparação</a>.</li>
+  <li><strong>Cadastrar a chave aqui.</strong> Abre o formulário para colar a chave.</li>
+  <li><strong>Estado da base de conhecimento.</strong> Um resumo em uma linha: quantos materiais, quantos prontos, quantos preparando e quantos com erro. Quando todos estão prontos aparece <em>“tudo pronto”</em>; se algum falhou, o aviso manda corrigir e usar <span class="ui">Preparar tudo de novo</span>.</li>
+  <li><strong>Preparar tudo de novo.</strong> Pede para refazer o que mudou ou o que falta. Só aparece com pelo menos um material e fica apagado enquanto não há chave.</li>
+  <li><strong>Adicionar material.</strong> Abre a janela para ensinar algo novo. Veja <a href="#conhecimento--adicionar">Adicionar um material</a>.</li>
+  <li><strong>Selo de situação</strong> do material. Veja a tabela de <a href="#conhecimento--selos">situações</a>.</li>
+  <li><strong>Dados do material.</strong> <em>Preparado</em> (há quanto tempo foi lido), <em>Trechos que o agente encontra</em> (em quantos pedaços o material foi dividido) e <em>Consultado por</em> (quais agentes usam o material; aparece <em>“nenhum assistente ainda”</em> em laranja quando ninguém usa).</li>
+  <li><strong>Por que não entrou.</strong> Aparece quando o material falhou ou está esperando a chave. Abre o texto do erro, tal como o sistema o registrou.</li>
+  <li><strong>Preparar de novo.</strong> Refaz a leitura só deste material.</li>
+  <li><strong>Ver o que ele aprendeu.</strong> Mostra os trechos que o agente consegue encontrar (só aparece quando já há trechos).</li>
+  <li><strong>Editar conteúdo.</strong> Só nos materiais de <em>Perguntas e respostas</em>.</li>
+  <li><strong>Arquivar.</strong> Tira o material de circulação.</li>
+  <li><strong>Arquivados.</strong> A seção recolhível com o que foi arquivado.</li>
+</ol>
+
+<h2 id="chave">A chave de preparação</h2>
+<p>Para o agente conseguir <em>procurar</em> num material, o sistema precisa antes “prepará-lo”: dividir o texto em pedaços e transformá-los em números que permitem a busca por significado (isso se chama <em>embedding</em>). Esse trabalho é feito por um provedor de IA externo — <strong>OpenAI</strong> (ou OpenRouter) ou <strong>Google</strong> — e exige uma <strong>chave de acesso</strong> à conta dele. A faixa no alto da tela tem quatro estados:</p>
+<table class="tabela">
+  <thead><tr><th>O que você vê</th><th>Significa</th></tr></thead>
+  <tbody>
+    <tr><td><em>“Conferindo a chave de embedding — leva alguns segundos.”</em></td><td>Você acabou de cadastrar a chave e o sistema está testando-a.</td></tr>
+    <tr><td><em>“Pronto para preparar material.”</em> (verde)</td><td>Tudo certo. A faixa diz qual chave está em uso (a da organização, a do gateway de IA da instalação ou a que veio na instalação) e <strong>quem prepara a base</strong>: OpenAI ou Google. Se você tem chave dos dois, aparece o botão de <em>Trocar para o Google</em> ou <em>Trocar para a OpenAI</em>.</td></tr>
+    <tr><td><em>“Falta uma chave de embedding para o agente aprender o seu material”</em> (amarelo)</td><td>Você ainda pode cadastrar documentos, mas eles ficam esperando para serem preparados. Use <span class="ui">Cadastrar a chave aqui</span>, ou cadastre em <span class="ui">IA › Credenciais</span>.</td></tr>
+    <tr><td><em>“A base é preparada pelo Google (ou OpenAI), e a chave não está mais utilizável”</em></td><td>A base já foi preparada por um provedor e a chave dele deixou de valer. O agente não consegue consultar o material até isso ser resolvido. Cadastre a chave de novo ou troque o provedor, o que refaz tudo.</td></tr>
+  </tbody>
+</table>
+<p>Para cadastrar a chave, escolha o provedor (<strong>OpenAI</strong>, <strong>OpenRouter</strong> ou <strong>Google</strong>), dê um nome opcional à chave, cole a chave (o campo mostra, por exemplo, que ela começa com <code>sk-</code> e em que site pegá-la) e clique em <span class="ui">Salvar chave</span>. A chave fica guardada cifrada e nunca volta a aparecer na tela.</p>
+<aside class="nota atencao"><strong>Atenção: o texto dos seus materiais é enviado ao provedor escolhido.</strong><p>É assim que a preparação funciona. Escolha um provedor com o qual você concorde em compartilhar esse conteúdo. Cada preparação tem um custo pequeno, cobrado pelo provedor na <em>sua</em> conta.</p></aside>
+<aside class="nota info"><strong>Gerente vê botões que só o Administrador pode usar.</strong><p>Salvar a chave e trocar o provedor exigem o papel de Administrador. Um Gerente enxerga os botões, mas o sistema recusa a ação.</p></aside>
+
+<h2 id="selos">As situações de um material</h2>
+<table class="tabela">
+  <thead><tr><th>Selo</th><th>Significa</th></tr></thead>
+  <tbody>
+    <tr><td><span class="selo ok">O agente já sabe</span></td><td>O material foi lido e tem trechos. Está valendo.</td></tr>
+    <tr><td><span class="selo">Preparando…</span></td><td>O sistema está lendo o material neste momento.</td></tr>
+    <tr><td><span class="selo">Não entrou</span></td><td>A leitura falhou. O motivo está em <em>Por que não entrou</em> (por exemplo, um PDF só de imagem, sem texto selecionável).</td></tr>
+    <tr><td><span class="selo">Esperando a chave</span></td><td>Não há chave de preparação. O material fica guardado e entra quando a chave for cadastrada; o sistema tenta de novo sozinho a cada hora.</td></tr>
+    <tr><td><span class="selo">Entrou pela metade</span></td><td>Só parte do material foi lida.</td></tr>
+    <tr><td><span class="selo">Ainda não preparado</span></td><td>Nenhuma tentativa de leitura foi feita ainda, ou não resultaram trechos.</td></tr>
+    <tr><td><span class="selo">Arquivado</span></td><td>O material saiu de circulação.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="adicionar">Adicionar um material</h2>
+<p>Clique em <span class="ui">Adicionar material</span>. A janela <em>“Ensinar algo novo ao agente”</em> pede, primeiro, <strong>que tipo de material é</strong>:</p>
+<table class="tabela">
+  <thead><tr><th>Tipo</th><th>Para quê</th><th>Disponível?</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Perguntas e respostas</strong></td><td>As dúvidas que se repetem, com a resposta pronta. É o formato que o agente cita melhor, porque cada resposta chega inteira.</td><td>Sim</td></tr>
+    <tr><td><strong>Documento</strong></td><td>Um texto do negócio: política de troca, tabela de preços, manual, contrato. Você envia o arquivo ou cola o texto.</td><td>Sim</td></tr>
+    <tr><td><strong>Site</strong></td><td>Até 20 páginas do seu site, que o agente lê e aprende. Você cola os endereços (<code>https://</code>) e pede para ler de novo quando o site mudar.</td><td>Sim — veja <a href="#agente-treino-por-site">Treinar o agente com o seu site</a></td></tr>
+    <tr><td><strong>Conversas anteriores</strong></td><td>Atendimentos resolvidos que alguém marcou como aproveitáveis, com os dados pessoais removidos.</td><td>Não se preenche por aqui: entra sozinho</td></tr>
+    <tr><td><strong>Catálogo de produtos</strong></td><td>Os produtos sincronizados com a sua loja, com preço, descrição e disponibilidade.</td><td>Não se preenche por aqui: vem da sincronização com a loja</td></tr>
+  </tbody>
+</table>
+<ol class="passos">
+  <li>Escolha <strong>Perguntas e respostas</strong>, <strong>Documento</strong> ou <strong>Site</strong> (este último tem página própria: <a href="#agente-treino-por-site">Treinar o agente com o seu site</a>).</li>
+  <li>Em <strong>Nome do material</strong>, dê um nome (de 2 a 120 caracteres), como <em>“Perguntas frequentes da loja”</em>. O nome é a forma de você achá-lo depois e <strong>não pode repetir</strong> o de outro material ativo.</li>
+  <li><strong>Perguntas e respostas:</strong> no campo <em>Conteúdo</em>, escreva uma linha <code>## Pergunta:</code> e uma linha <code>## Resposta:</code> para cada item, separando os itens por uma linha em branco. Esses dois marcadores precisam estar escritos exatamente assim.</li>
+  <li><strong>Documento:</strong> escolha um arquivo (PDF, Markdown, CSV ou texto, até <strong>20 MB</strong>) ou cole o texto no campo. Um PDF só de imagens escaneadas não tem letra para ler; envie uma versão com texto selecionável. Planilha Excel: salve como CSV antes.</li>
+  <li>Clique em <span class="ui">Adicionar ao acervo</span>. Se há chave, o sistema começa a preparar e em instantes o agente já sabe; se não há, o material fica esperando.</li>
+</ol>
+<h3>Editar, ver o que foi aprendido e arquivar</h3>
+<ul>
+  <li><strong>Editar conteúdo</strong> (só perguntas e respostas): o texto que você salvar <strong>substitui</strong> o atual e o material é preparado de novo. Não há histórico de versões do texto.</li>
+  <li><strong>Ver o que ele aprendeu:</strong> lista os trechos que o agente procura antes de responder, cada um com o número de <em>tokens</em> (pedaços de texto). Mostra até 200 trechos por material. É a ferramenta para entender por que o agente errou sobre um assunto: se o assunto não está nos trechos, ele não tem como saber.</li>
+  <li><strong>Preparar de novo:</strong> refaz a leitura. Se o conteúdo não mudou desde a última vez, o sistema pula e não gasta de novo.</li>
+  <li><strong>Arquivar:</strong> o agente para de consultar o material. <strong>Sem confirmação</strong> e <strong>sem botão para desarquivar</strong> nesta tela; nada é apagado e o nome fica livre para reutilizar.</li>
+</ul>
+
+<h2 id="cuidados">Cuidados e dicas</h2>
+<aside class="nota dica"><strong>Comece pelo que mais se repete.</strong><p>As cinco perguntas que a sua equipe mais responde e a política que você mais explica valem mais do que um manual de 40 páginas. Prefira o formato <em>Perguntas e respostas</em>: cada resposta é encontrada inteira.</p></aside>
+<aside class="nota atencao"><strong>Trocar de provedor refaz a base inteira.</strong><p>Ao clicar em <span class="ui">Trocar para o Google</span> (ou OpenAI) todo o material é preparado de novo. Enquanto isso, o agente pode não encontrar o que ainda não foi refeito, e o texto passa a ser enviado ao novo provedor. O sistema pede confirmação.</p></aside>
+<aside class="nota info"><strong>O custo de preparar não aparece em Uso nem em Execuções.</strong><p>Esse gasto é cobrado direto pelo provedor da chave. Acompanhe-o no painel dele.</p></aside>

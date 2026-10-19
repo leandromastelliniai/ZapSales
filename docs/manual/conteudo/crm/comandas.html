@@ -1,0 +1,68 @@
+<!--meta {"id":"comandas","grupo":"crm","titulo":"Comandas","ordem":7,"resumo":"O balcão: registre o que foi feito ou vendido ao cliente, quanto ele paga e como pagou, e feche a conta. A entrada cai na conta financeira da forma de pagamento.","palavras":["comanda","comandas","balcão","caixa","pagamento","forma de pagamento","finalizar","estorno","fidelidade","pontos","comissão","faturar","atendimentos sem comanda"],"onde":"CRM › Ver tudo em CRM › Comandas (também pela busca ⌘K)","quem":"Todos veem. Abrir, incluir itens, finalizar e cancelar: Atendente ou acima. Estornar: Gerente ou acima.","rotas":["/app/comandas"]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>A <strong>comanda</strong> é a conta do cliente no balcão: você lista <em>o que foi feito</em> (serviços e produtos avulsos) e <em>quanto custa</em>, escolhe <strong>como o cliente pagou</strong> e <strong>fecha</strong>. Ao finalizar, o dinheiro entra, já como pago, na conta financeira ligada àquela forma de pagamento — e aparece em <a href="#faturamento">Faturamento</a>.</p>
+<aside class="nota atencao"><strong>Antes de usar, cadastre as formas de pagamento.</strong><p>Uma forma de pagamento <strong>sem conta de destino</strong> não fecha comanda (“Esta forma de pagamento ainda não tem conta de destino. Defina em Configurações › Financeiro.”). Veja <a href="#financeiro">Financeiro</a>. Numa instalação nova não existe nenhuma conta nem forma de pagamento: você cadastra as suas.</p></aside>
+<aside class="nota info"><strong>Onde fica a porta.</strong><p>Comandas não está no menu lateral diário. Abra por <span class="ui">Ver tudo em CRM</span> ou pela busca <kbd>⌘K</kbd> / <kbd>Ctrl K</kbd>.</p></aside>
+
+<figure class="print">
+  <img src="img/comandas.png" alt="Tela Comandas com a lista de comandas à esquerda, o bloco Atendimentos sem comanda e, à direita, a comanda aberta número 5 com itens, formulário e fechamento, numerada de 1 a 17" loading="lazy">
+  <figcaption>A tela de Comandas, com a comanda #5 aberta.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nova comanda.</strong> Cria uma comanda vazia, aberta, com número sequencial. Quem a abriu fica como atendente.</li>
+  <li><strong>A lista de comandas.</strong> As 50 mais novas, da maior para a menor. Cada linha mostra o número, a situação (<em>Aberta, Finalizada, Cancelada</em>) e o total.</li>
+  <li><strong>Atendimentos sem comanda.</strong> Compromissos da <a href="#agenda">Agenda</a> que já aconteceram e ninguém cobrou. “Marque o que quer cobrar.” Só aparece com pelo menos um, para Atendente ou acima (últimos 30 dias, confirmados ou realizados).</li>
+  <li><strong>“sem preço no serviço”.</strong> O tipo de agendamento não tem preço padrão; esse atendimento <strong>não pode ser faturado</strong> em lote (a caixinha fica apagada).</li>
+  <li><strong>Forma de pagamento</strong> (em lote). Escolha como esses atendimentos foram pagos.</li>
+  <li><strong>Faturar.</strong> Mostra o total marcado, por moeda (“Faturar (R$ 150,00)”). Para cada atendimento marcado cria uma comanda com um item (o preço do serviço) e já a finaliza.</li>
+  <li><strong>Cabeçalho da comanda.</strong> “Comanda #5”, com os pontos de fidelidade do cliente (se houver cliente) e a situação.</li>
+  <li><strong>Um item.</strong> A descrição (com “×N” quando a quantidade passa de 1 e “comissão X%” quando há) e o valor.</li>
+  <li><strong>× (remover).</strong> Tira o item. Só em comanda aberta.</li>
+  <li><strong>Total.</strong> A soma dos itens menos o desconto da comanda.</li>
+  <li><strong>Serviço.</strong> “Avulso” ou um tipo de agendamento ativo. Escolher um preenche a descrição e, se o valor estiver vazio, o preço padrão.</li>
+  <li><strong>Descrição.</strong> Obrigatória (até 200 caracteres).</li>
+  <li><strong>Valor.</strong> Aceita <code>10</code>, <code>10,50</code> e <code>1.234,56</code>. A quantidade é sempre 1.</li>
+  <li><strong>Incluir.</strong> Adiciona o item. Fica apagado sem descrição e valor válidos.</li>
+  <li><strong>Forma de pagamento</strong> (fechamento). Obrigatória para finalizar.</li>
+  <li><strong>Finalizar.</strong> Fecha a comanda, <strong>sem janela de confirmação</strong>.</li>
+  <li><strong>Cancelar comanda.</strong> Marca como cancelada, sem confirmação e sem registrar motivo.</li>
+</ol>
+<p>Ao lado da forma de pagamento aparece <em>Pontos de fidelidade</em>, mas só quando a comanda tem cliente. <strong>Uma comanda aberta por “Nova comanda” nasce sem cliente</strong>; por isso, na prática, o campo de pontos só aparece em comandas feitas pelo faturamento em lote, pela API ou por integrações.</p>
+
+<h2 id="finalizar">O que acontece ao finalizar</h2>
+<p>É uma operação única e protegida: ou tudo acontece, ou nada.</p>
+<ul>
+  <li>A comanda vira <strong>Finalizada</strong>, com o total fechado (soma dos itens menos o desconto).</li>
+  <li>Cria-se um <strong>lançamento de entrada já pago</strong> na conta da forma de pagamento, descrito “Comanda #N”, classificado no primeiro plano de contas de entrada ativo (sem plano de entrada, fica sem classificação).</li>
+  <li>Cada item com <strong>atendente</strong> gera uma <strong>comissão</strong>, com o percentual da regra mais específica vigente na hora da inclusão (“pessoa e serviço” vence “pessoa”, que vence “serviço”).</li>
+  <li>Se há cliente e pontos informados, o cliente <strong>ganha os pontos de fidelidade</strong>.</li>
+  <li>O agendamento ligado é marcado como realizado (se não estava cancelado ou como falta).</li>
+</ul>
+<p>Não manda mensagem ao cliente e não usa IA. Clicar duas vezes devolve o mesmo resultado. Recusas possíveis: forma sem conta, forma inativa (“Forma de pagamento inválida.”) e comanda cancelada (“Comanda cancelada não pode ser finalizada.”).</p>
+<aside class="nota atencao"><strong>Comissão pela tela só vale por serviço.</strong><p>A tela de Comandas <em>não envia o atendente</em> no item, então a comissão por <em>pessoa</em> não é aplicada e a tabela de comissões a pagar só recebe linhas de itens criados por API. Pela tela, só uma regra por <strong>serviço</strong> faz aparecer “comissão X%”.</p></aside>
+<aside class="nota atencao"><strong>Uma comanda zerada ou sem itens também fecha.</strong><p>Não há bloqueio de comanda vazia: ela gera um lançamento de 1 centavo (o banco exige valor maior que zero). Confira os itens antes de finalizar. O desconto da comanda existe no sistema, mas não tem campo na tela.</p></aside>
+
+<h2 id="estorno">Estornar uma comanda finalizada</h2>
+<figure class="print media">
+  <img src="img/comandas-estorno.png" alt="Comanda finalizada com o campo Motivo do estorno e o botão Estornar, numerada de 1 a 4" loading="lazy">
+  <figcaption>Uma comanda finalizada: só Gerente ou acima vê o estorno.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Cabeçalho.</strong> “Comanda #4”.</li>
+  <li><strong>Situação.</strong> Finalizada (ou “· estornada”, depois do estorno).</li>
+  <li><strong>Motivo do estorno.</strong> Obrigatório: de 3 a 500 caracteres.</li>
+  <li><strong>Estornar.</strong> Botão vermelho. Não tem confirmação.</li>
+</ol>
+<p>Estornar cria um <strong>contra-lançamento de saída</strong> (“Estorno da comanda #N”) na mesma conta, reverte as comissões e devolve os pontos. A entrada original <strong>não é alterada</strong>. O compromisso na Agenda <strong>não</strong> volta para “não realizado”. Estornar uma comanda já estornada devolve “já estornada”.</p>
+
+<h2 id="papeis">Quem pode o quê</h2>
+<table class="tabela">
+  <thead><tr><th>Papel</th><th>Em Comandas</th></tr></thead>
+  <tbody>
+    <tr><td>Somente leitura</td><td>Vê todas as comandas, sem nenhum botão.</td></tr>
+    <tr><td>Atendente</td><td>Abre, inclui e remove itens, finaliza, cancela e fatura em lote. Não vê o estorno.</td></tr>
+    <tr><td>Gerente e Administrador</td><td>Tudo isso, mais estornar.</td></tr>
+  </tbody>
+</table>
+<p>Cada passo fica na auditoria (<code>comanda.aberta</code>, <code>comanda.item_incluido</code>, <code>comanda.finalizada</code>, <code>comanda.estornada</code>…). A tela mostra no máximo 50 comandas, sem filtro nem busca; o resultado do faturamento em lote <strong>não é mostrado</strong> na tela (a lista só se atualiza).</p>

@@ -1,0 +1,45 @@
+<!--meta {"id":"conceitos","grupo":"comecando","titulo":"Conceitos básicos","ordem":2,"resumo":"As palavras que o ZapSales usa em todas as telas: organização, papéis, contato, lead, funil, etapa, conversa, canal e atendimento automático.","palavras":["glossário","dicionário","termos","significa","o que é","lead","negócio","pipeline","tenant","papel","permissão","admin","gerente","atendente","tag","etiqueta"],"rotas":[]} -->
+
+<h2 id="organizacao">Organização</h2>
+<p>A <strong>organização</strong> é a sua empresa dentro do ZapSales. Tudo o que você cadastra — contatos, funis, conversas, agentes — pertence a ela, e <strong>nunca se mistura</strong> com os dados de outra organização, mesmo quando as duas usam o mesmo servidor.</p>
+<p>Uma pessoa pode participar de mais de uma organização. Nesse caso aparece, no topo da tela, um seletor para trocar de uma para outra.</p>
+
+<h2 id="papeis">Papéis: quem pode fazer o quê</h2>
+<p>Cada pessoa da equipe tem um <strong>papel</strong> dentro da organização. Os papéis são <strong>em escada</strong>: quem tem um papel pode tudo o que os papéis abaixo dele podem.</p>
+<table class="tabela">
+  <thead><tr><th>Papel</th><th>Em resumo</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Somente leitura</strong></td><td>Vê as telas, mas não muda nada.</td></tr>
+    <tr><td><strong>Atendente</strong></td><td>Atende: assume e responde conversas, cria e edita contatos e cartões do funil, move cartões, importa planilhas de cartões para um funil.</td></tr>
+    <tr><td><strong>Gerente</strong></td><td>Organiza o trabalho da equipe: cria e arquiva funis, faz disparo em massa, monta agentes de IA, organiza as etiquetas e a distribuição de atendimento.</td></tr>
+    <tr><td><strong>Administrador</strong></td><td>Cuida da empresa no sistema: conecta números de WhatsApp, convida a equipe, anonimiza contatos (LGPD), mexe em plano, marca e chaves de integração.</td></tr>
+  </tbody>
+</table>
+<p>Cada página deste manual diz, na ficha do topo, <strong>a partir de qual papel</strong> a tela pode ser usada. Se você não vê um item do menu, quase sempre é porque o seu papel não chega até ele.</p>
+<aside class="nota info"><strong>Por que um botão some ou fica cinza?</strong><p>O sistema esconde (ou desativa) o que o seu papel não pode fazer, para você não clicar à toa. Se precisar de uma permissão maior, peça a quem administra a organização.</p></aside>
+
+<h2 id="contato">Contato</h2>
+<p>O <strong>contato</strong> é uma pessoa: nome, telefone, e-mail, etiquetas e todo o histórico dela com você. Um contato é cadastrado <strong>uma vez só</strong> e aparece em todos os lugares: na conversa, no funil, nas listas. O cadastro fica em <a href="#contatos">Contatos</a>.</p>
+
+<h2 id="lead">Lead (o cartão do funil)</h2>
+<p>O <strong>lead</strong> — também chamado de <em>negócio</em> — é uma oportunidade de venda ligada a um contato: “Kit skincare completo, R$ 329”. Ele aparece como um <strong>cartão</strong> no quadro do funil. O mesmo contato pode ter vários leads, em momentos diferentes.</p>
+<p>Em alguns funis, a palavra “lead” aparece com outro nome que combina melhor com o seu negócio, como <em>Cliente</em> ou <em>Pedido</em>.</p>
+
+<h2 id="funil">Funil e etapas</h2>
+<p>O <strong>funil</strong> é o caminho que um cliente percorre, da primeira conversa até fechar negócio. Cada degrau desse caminho é uma <strong>etapa</strong> — por exemplo: <em>Carrinho abandonado → Aguardando pagamento → Pago → Em separação → Enviado → Entregue → Pós-venda</em>. Mover um cartão de uma etapa para a outra é registrar que o cliente avançou.</p>
+<p>Você pode ter mais de um funil (um para vendas, outro para pós-venda, por exemplo). O <strong>funil padrão</strong> é o que recebe todo contato novo enquanto nenhuma outra regra mandar para outro. Veja <a href="#funis">Funis</a>.</p>
+<p>Uma etapa pode ser de <strong>ganho</strong> (venda fechada) ou de <strong>perda</strong> (venda perdida). Um cartão também pode ser marcado como ganho ou perdido pelo menu dele.</p>
+
+<h2 id="conversa">Conversa e canal</h2>
+<p>A <strong>conversa</strong> é a troca de mensagens com um contato. O <strong>canal</strong> é o número de WhatsApp pelo qual ela acontece. Você pode conectar mais de um número, e cada conversa lembra por qual deles o cliente entrou.</p>
+<p>Todas as conversas ficam no <a href="#inbox">Inbox</a>. Cada conversa tem um <strong>dono</strong>: a pessoa da equipe que está atendendo. Enquanto ninguém assumiu, ela espera na <strong>fila</strong>.</p>
+
+<h2 id="automatico">Atendimento automático (agente de IA)</h2>
+<p>O <strong>agente de IA</strong> é um atendente automático: ele lê as mensagens, responde, qualifica o cliente e pode mover o cartão no funil. A equipe e o agente trabalham juntos: quando uma pessoa <strong>assume</strong> a conversa, o atendimento automático para nela. Quando a pessoa termina, pode <strong>devolver</strong> a conversa ao automático.</p>
+<p>Na tela, o que é automático aparece com o nome <em>Automático</em>. Veja a seção do grupo Agente de IA para montar e acompanhar os agentes.</p>
+
+<h2 id="tag">Tag (etiqueta)</h2>
+<p>A <strong>tag</strong> é uma etiqueta livre que você cola em contatos, cartões e conversas para agrupar e achar depois — “vip”, “recorrente”, “novo”. Você escolhe o texto. Os filtros de várias telas permitem buscar por tag, e escolher se o resultado precisa ter <strong>todas</strong> as tags marcadas (<em>E</em>) ou <strong>qualquer uma</strong> delas (<em>OU</em>).</p>
+
+<h2 id="lgpd">LGPD e anonimização</h2>
+<p>A LGPD é a lei brasileira de proteção de dados. O titular dos dados — a pessoa — pode pedir que você apague o que guarda sobre ela. No ZapSales isso se faz <strong>anonimizando</strong> o contato: o nome vira “Cliente Anonimizado #número” e os dados pessoais são removidos, mas o histórico de atendimento é preservado sem identificar ninguém. <strong>Não tem volta.</strong> Os detalhes estão em <a href="#contatos--lgpd">Contatos › LGPD</a>.</p>

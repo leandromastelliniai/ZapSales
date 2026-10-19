@@ -1,0 +1,117 @@
+<!--meta {"id":"dados-externos","grupo":"organizacao","titulo":"Dados externos","ordem":16,"resumo":"Conecte o banco de dados (PostgreSQL) de outro sistema — um ERP, um segundo CRM — para o agente de IA consultar pedidos, assinaturas ou saldos em tempo real. Somente leitura; nada é copiado para o CRM.","palavras":["dados externos","banco de dados","postgresql","erp","integração","conexão","somente leitura","tls","consulta em tempo real","agente","explorar","testar","módulo opcional","banco externo"],"onde":"Configurações › Dados e acesso › Dados externos (não está no menu lateral; também pela busca ⌘K)","quem":"Todos os papéis abrem e veem a lista e o explorador. Criar, editar, testar e remover exigem Administrador. Só aparece quando o módulo opcional “Banco de dados externo” está ligado na instalação.","rotas":["/app/integracao-dados"],"modulo":"banco_externo"} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Muitas empresas guardam pedidos, assinaturas, matrículas ou saldos num <em>outro sistema</em> (um ERP, um segundo CRM). A tela <strong>Dados externos</strong> cadastra a “ponte” com o banco de dados desse sistema para que o <strong>agente de IA o consulte na hora de responder o cliente</strong> — “qual o status do meu pedido?”, “minha matrícula está ativa?”.</p>
+<aside class="nota info"><strong>O que ela é — e o que não é.</strong><p>É só uma <em>consulta ao vivo, somente leitura</em>. <strong>Não</strong> existe sincronização, importação para o CRM, mapeamento de colunas, agendamento, frequência nem histórico de execuções. Nada que o agente faz altera o banco de origem, e nenhuma tabela do ZapSales (contatos, funis, leads) é lida ou escrita por esta tela. O banco precisa ser <strong>PostgreSQL</strong>.</p></aside>
+<aside class="nota atencao"><strong>Recurso opcional da instalação.</strong><p>Por padrão ele vem <strong>desligado</strong>. Desligado, a tela, o item no hub Configurações, a busca e as ferramentas do agente <em>somem</em> (a tela dá página “não encontrada” até para o Administrador). Quem liga é o <strong>dono da instalação</strong> (administrador da plataforma), em <em>/admin › Recursos opcionais › Módulos opcionais › Banco de dados externo</em>, e vale para todas as empresas do servidor. Na empresa, em <a href="#recursos-opcionais">Configurações › Recursos opcionais</a> (Gerente ou acima), a linha “Banco de dados externo” mostra “Desligado por quem administra o servidor” ou “Disponível nesta instalação”, com o botão <span class="ui">Ajustar</span> que leva a esta tela.</p></aside>
+
+<h2 id="lista">A lista de conexões</h2>
+<p>Sem nenhuma conexão, a tela convida a criar a primeira:</p>
+<figure class="print media">
+  <img src="img/dados-externos-vazio.png" alt="Tela Dados externos vazia com o convite para conectar o primeiro banco, numerada de 1 a 3" loading="lazy">
+  <figcaption>O estado inicial, sem nenhum banco conectado.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Dados externos.</strong> O título, com a explicação: a conexão é sempre somente leitura.</li>
+  <li><strong>Nenhum banco externo conectado ainda.</strong> “Quando o seu outro sistema escreve num PostgreSQL, conecte-o aqui e o agente passa a responder com esses dados — pedido, assinatura, matrícula, saldo.”</li>
+  <li><strong>Conectar banco de dados.</strong> Só o Administrador vê o botão; os demais veem o cartão sem ele.</li>
+</ol>
+
+<p>Com conexões cadastradas (aqui, quatro exemplos fictícios, um de cada situação):</p>
+<figure class="print">
+  <img src="img/dados-externos-lista.png" alt="Lista com quatro conexões de exemplo e os selos Desativada, Falha no último teste, Conectada e Não testada2" loading="lazy">
+  <figcaption>A lista de conexões, em ordem alfabética pelo nome.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Contador.</strong> “1 conexão” ou “N conexões”.</li>
+  <li><strong>Nova conexão.</strong> Só Administrador.</li>
+  <li><strong>Nome da conexão.</strong> É um link para o explorador; embaixo, o endereço no formato <code>host:porta/banco · usuário</code>.</li>
+  <li><strong>Conectada.</strong> O último teste deu certo.</li>
+  <li><strong>Falha no último teste.</strong></li>
+  <li><strong>Não testada.</strong> Ninguém clicou em Testar ainda.</li>
+  <li><strong>Desativada.</strong> Vale mais que os outros selos.</li>
+  <li><strong>Mensagem do erro.</strong> Texto cru do banco, geralmente em inglês (“password authentication failed…”, “connect ECONNREFUSED…”), sem tradução.</li>
+  <li><strong>Explorar.</strong> Abre o <a href="#dados-externos--explorador">explorador</a>.</li>
+  <li><strong>Testar.</strong> Veja abaixo.</li>
+  <li><strong>Editar</strong> (lápis). Só Administrador.</li>
+  <li><strong>Remover</strong> (lixeira). Só Administrador.</li>
+</ol>
+<aside class="nota info"><strong>“Conectada” é a foto do último teste.</strong><p>A tela não testa sozinha nem de tempos em tempos. Editar a conexão (inclusive trocar host ou senha) <em>não</em> zera o resultado do último teste: o selo “Conectada” fica até o próximo clique em <span class="ui">Testar</span>.</p></aside>
+<aside class="nota atencao"><strong>O botão “Testar” aparece para todos, mas só o Administrador consegue usar.</strong><p>Quem não é Administrador clica e recebe “Você não tem permissão para esta ação.”.</p></aside>
+
+<h2 id="conectar">Conectar um banco</h2>
+<figure class="print">
+  <img src="img/dados-externos-nova.png" alt="Janela Conectar banco de dados com os campos de endereço, usuário, senha, TLS e limites de leitura2" loading="lazy">
+  <figcaption>A janela “Conectar banco de dados” (a mesma serve para editar).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Nome da conexão.</strong> De 1 a 80 caracteres e único na organização (“Ex: CRM de assinaturas”). Repetir dá “Já existe uma conexão com este nome.”.</li>
+  <li><strong>Host.</strong> O endereço do servidor (<code>meusistema.com</code>), de 1 a 255 caracteres, sem espaço nem barra. Pode ser nome ou IP.</li>
+  <li><strong>Porta.</strong> Inteiro de 1 a 65535; padrão 5432.</li>
+  <li><strong>Banco de dados.</strong> O nome do banco (<code>outro_crm</code>), até 128 caracteres.</li>
+  <li><strong>Usuário.</strong> O usuário do banco. Recomenda-se um com <em>acesso mínimo, só de leitura</em>.</li>
+  <li><strong>Senha.</strong> Obrigatória ao criar. Na edição, em branco = manter a guardada (“Guardada — preencha só para trocar”). É cifrada antes de gravar e <strong>nunca é mostrada de volta</strong>.</li>
+  <li><strong>Segurança da conexão (TLS).</strong> Veja a tabela abaixo.</li>
+  <li><strong>Conexão ativa.</strong> “Desative para o agente parar de usar esta fonte sem apagar o cadastro.”</li>
+  <li><strong>Linhas por consulta.</strong> De 1 a 5000, padrão 200. Teto de linhas, para a grade da tela e para o agente.</li>
+  <li><strong>Filtros por consulta.</strong> De 0 a 100, padrão 20. Quantas condições de filtro o agente pode usar numa consulta.</li>
+  <li><strong>Resposta para a IA (KB).</strong> De 4 a 1024 KB, padrão 29 KB (30.000 bytes). Teto de dados devolvidos ao modelo; a grade da tela não passa por ele.</li>
+  <li><strong>Salvar.</strong> (“Salvando…”)</li>
+</ol>
+<table class="tabela">
+  <thead><tr><th>Opção de TLS</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Obrigatório (padrão)</strong></td><td>Cifra a conexão, sem verificar o certificado.</td></tr>
+    <tr><td>Verificar certificado e host</td><td>Cifra e verifica o certificado e o nome do servidor. O mais seguro.</td></tr>
+    <tr><td>Verificar certificado</td><td>Cifra e verifica o certificado, com as autoridades do sistema (não há como subir um certificado próprio).</td></tr>
+    <tr><td>Preferir TLS</td><td>Cifra sem verificar certificado.</td></tr>
+    <tr><td>Sem TLS (rede local confiável)</td><td>Sem cifra. Só em rede interna confiável.</td></tr>
+  </tbody>
+</table>
+<h3>O que acontece ao salvar</h3>
+<ul>
+  <li>O sistema <strong>só consulta o DNS do host</strong> e grava o cadastro. <strong>Não conecta ao banco ao salvar</strong>: o aviso é “Conexão criada. Use Testar para conferir o acesso.”.</li>
+  <li>O endereço passa por uma <strong>guarda de rede</strong>: aceita IP público e redes privadas (10.x, 172.16–31.x, 192.168.x), mas <strong>recusa</strong> <code>localhost</code>/127.0.0.1, a faixa de metadados da nuvem (169.254.x), CGNAT, multicast e similares. Nome que não resolve dá “Não foi possível resolver o endereço informado. Confira o host.”; endereço proibido dá “O endereço informado não é um destino permitido pela política de rede.”. Um Postgres no <em>mesmo servidor</em> precisa ser alcançado pelo IP da rede privada (do contêiner), não por loopback.</li>
+  <li>A senha é cifrada (AES-256-GCM) com a chave da instalação e fica no banco do próprio ZapSales; se a chave do servidor faltar, a leitura falha com “A chave de criptografia da instalação não está disponível…”.</li>
+  <li>Fica na <a href="#auditoria">Auditoria</a> (<code>external_db_connection.created</code>, sem a senha). Há um limite de 30 alterações por minuto por organização.</li>
+</ul>
+
+<h2 id="testar">Testar</h2>
+<p><span class="ui">Testar</span> é <strong>o ponto em que o sistema fala com um banco de verdade</strong>: abre uma conexão real (com limite de 5 segundos) e executa um simples <code>select 1</code>. O resultado grava a data, o sucesso ou a falha e a mensagem do erro. Toasts: “Conexão bem-sucedida.” ou a mensagem do banco (“Não foi possível conectar.” quando vem vazia). Em conexão desativada: “Esta conexão está desativada. Ative-a para consultar os dados.”. Limite de 10 testes por minuto por organização. <em>Não foi executado nas capturas deste manual</em>, que usam conexões de exemplo sem destino real.</p>
+
+<h2 id="remover">Remover</h2>
+<figure class="print media">
+  <img src="img/dados-externos-remover.png" alt="Alerta Remover esta conexão? com os botões Cancelar e Remover" loading="lazy">
+  <figcaption>A confirmação ao remover (cancelada nesta captura).</figcaption>
+</figure>
+<p><strong>Remover</strong> apaga o cadastro e a senha guardada, e o agente deixa de enxergar aquele banco. <strong>O banco de origem não é tocado.</strong> É irreversível; para só parar o uso por um tempo, prefira desligar “Conexão ativa” em <span class="ui">Editar</span>.</p>
+
+<h2 id="explorador">Explorar</h2>
+<p>O botão <span class="ui">Explorar</span> abre uma tela só para <em>olhar</em> o que existe no outro banco, para você saber o que o agente consegue consultar. Qualquer papel pode abrir. <em>Esta tela não foi fotografada</em>, porque exige um PostgreSQL real alcançável; a descrição abaixo vem do código.</p>
+<ul>
+  <li><strong>Cabeçalho:</strong> o nome da conexão e “host:porta/banco · usuário · somente leitura”. Se a conexão está desativada, uma faixa avisa e o catálogo não carrega.</li>
+  <li><strong>Painel “Tabelas” (esquerda):</strong> as tabelas e views de todos os schemas (agrupados, em MAIÚSCULAS), exceto os de sistema do Postgres. Views têm o selo <strong>view</strong>. Mostra só o que o usuário da conexão pode ver. Não há busca. Mensagens: “Lendo o catálogo…”, “Não foi possível ler o catálogo.”, “Este banco não tem tabelas visíveis.”.</li>
+  <li><strong>Grade de dados (direita):</strong> ao escolher uma tabela, mostra “schema.tabela” e “~N linhas (estimativa)” (uma estimativa, não uma contagem exata), o seletor de <em>25 / 50 / 100 / 200 por página</em> e as setas de página. Clicar no cabeçalho de uma coluna ordena (crescente/decrescente); colunas de chave primária têm o selo <strong>PK</strong>. Valores vazios aparecem como “—”. Arrastar a borda do cabeçalho ajusta a largura da coluna e a borda da linha ajusta a altura; esses ajustes ficam <em>no seu navegador</em>.</li>
+  <li><strong>O que não tem:</strong> filtro por valor, busca, edição, exportação, botão de sincronizar. (Filtros existem só para o agente.)</li>
+  <li>Cada abertura, troca de tabela, página ou ordenação faz uma leitura ao vivo e gera <strong>uma linha de auditoria</strong> (<code>external_db_connection.read</code>, com tabela, limite e ordem, nunca o conteúdo).</li>
+  <li>O tamanho de página nunca passa do limite “Linhas por consulta” da conexão. Se o teto for menor que a página escolhida, a grade mostra só o teto e o botão “Próxima página” pode ficar desabilitado (<em>deduzido do código, não conferido em tela</em>).</li>
+  <li>Limite de 120 leituras por minuto por organização (“Muitas consultas em pouco tempo…”).</li>
+</ul>
+
+<h2 id="agente">Como o agente usa</h2>
+<p>O agente ganha duas ferramentas de leitura: <strong>“Ver as tabelas do banco conectado”</strong> (tabelas, campos, chave e tamanho aproximado) e <strong>“Buscar dados no banco conectado”</strong> (linhas, com filtros e ordem). Elas exigem que o agente tenha papel de atendente ou acima, só enxergam conexões <strong>ativas</strong>, e também funcionam no modo de teste do agente.</p>
+<ul>
+  <li>Com uma só conexão ativa, o agente a escolhe sozinho; com várias, precisa dizer qual. Sem nenhuma ativa, ele responde que não há banco conectado e manda pedir a um administrador.</li>
+  <li>Os filtros são um vocabulário fechado: igual, diferente, maior, maior ou igual, menor, menor ou igual, contém, começa com, está em lista, é nulo, não é nulo. Um filtro que não casa nada devolve <em>vazio</em>, nunca a tabela inteira — para não vazar dados de outros clientes.</li>
+  <li>Respeita os três limites da conexão (linhas, filtros e tamanho da resposta; ao cortar, avisa “truncado”).</li>
+  <li>O que volta do banco é tratado como <strong>dado, nunca como instrução</strong> (proteção contra textos maliciosos). Os valores dos filtros não vão para o log.</li>
+</ul>
+<aside class="nota atencao"><strong>Cuidado com o que o usuário da conexão enxerga.</strong><p>O agente pode ler tudo o que o usuário do banco puder ler, inclusive dados pessoais de clientes. Crie no outro banco um usuário <em>só de leitura</em> e dê acesso <em>apenas às tabelas</em> que o agente precisa (pedidos, status), nunca ao banco inteiro.</p></aside>
+
+<h2 id="garantias">Regras e garantias</h2>
+<ul>
+  <li><strong>Somente leitura imposta pelo próprio PostgreSQL</strong> (cada consulta roda numa transação de leitura), com tempo máximo de 10 segundos por consulta.</li>
+  <li>Pool pequeno: no máximo 2 conexões simultâneas por banco cadastrado.</li>
+  <li>Isolamento por empresa: uma organização nunca vê as conexões de outra.</li>
+  <li>Se faltar acesso ou o banco estiver fora do ar, as telas devolvem mensagens como “Não foi possível consultar o banco externo agora.” (erro 502) ou “O endereço desta conexão não é um destino permitido pela política de rede.” (422).</li>
+</ul>

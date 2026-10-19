@@ -235,11 +235,13 @@ export function createDefaultRegistry(opts?: {
   const extra = opts?.allowedHosts ?? [];
   const esforcoOpenAI =
     opts?.openaiReasoningEffort !== undefined ? opts.openaiReasoningEffort : esforcoDeRaciocinioOpenAI();
-  const contain = (endpoint: string): typeof fetch => {
+  // `transporte` troca o `fetch` nativo por trás da allowlist: o provedor personalizado
+  // passa o transporte da rede segura, que prende a conexão ao endereço julgado (#108).
+  const contain = (endpoint: string, transporte?: typeof fetch): typeof fetch => {
     const allow = buildAllowlist([endpoint, ...extra]);
     return (input, init) => {
       const url = typeof input === 'string' || input instanceof URL ? input : input.url;
-      return allowlistedFetch(url, init, { allowlist: allow });
+      return allowlistedFetch(url, init, { allowlist: allow, ...(transporte ? { fetchImpl: transporte } : {}) });
     };
   };
   return {
@@ -325,7 +327,7 @@ export function createDefaultRegistry(opts?: {
       return createOpenAI({
         apiKey,
         baseURL: baseUrl,
-        fetch: fetchParaDestinoDaOrganizacao(contain(baseUrl)),
+        fetch: fetchParaDestinoDaOrganizacao((transporte) => contain(baseUrl, transporte)),
       }).chat(modelId);
     },
   };

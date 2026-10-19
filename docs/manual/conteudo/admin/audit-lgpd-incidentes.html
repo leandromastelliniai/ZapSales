@@ -1,0 +1,60 @@
+<!--meta {"id":"admin-audit","grupo":"admin","titulo":"Audit, LGPD e Incidentes (todas as empresas)","ordem":4,"resumo":"As três telas de rastro e conformidade do painel: o diário de auditoria de todas as empresas, os pedidos de LGPD de todas as empresas e o registro de incidentes operacionais.","palavras":["audit","auditoria","log","lgpd","incidentes","incidents","cross-tenant","prazo","sla","resolver incidente","request id"],"onde":"Modo administrador › Audit, LGPD e Incidents (/admin/audit, /admin/lgpd, /admin/incidents)","quem":"Administrador da plataforma. Resolver incidente: escopo full com a verificação em dia.","rotas":[]} -->
+
+<h2 id="audit">Audit Log (todas as empresas)</h2>
+<p>É o mesmo diário da tela <a href="#auditoria">Auditoria</a> de cada empresa, mas <strong>de todas as empresas juntas</strong>, para quem opera o servidor. Só leitura; a tabela não aceita edição nem exclusão (retenção padrão de 5 anos, piso de 90 dias, limpa por rotina diária).</p>
+<figure class="print">
+  <img src="img/admin-audit.png" alt="Audit Log do painel com os filtros e a tabela de eventos, numerada de 1 a 7" loading="lazy">
+  <figcaption>O Audit Log do painel (mostra só as linhas da empresa de demonstração).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Audit Log.</strong> Subtítulo “N evento(s)” (com “+” se há mais).</li>
+  <li><strong>Tenants.</strong> Botão com multisseleção das empresas (busca, “Limpar seleção”).</li>
+  <li><strong>Actions.</strong> Multisseleção do vocabulário de códigos de ação (o rótulo é o próprio código; digitar <code>lgpd.</code> recorta a família).</li>
+  <li><strong>Actor (user ID).</strong> Campo de texto: só aceita o UUID do usuário (aplica após 0,4 s). Ao lado, as datas “De” e “Até” e o botão <span class="ui">Limpar</span>.</li>
+  <li><strong>Action.</strong> O código da ação, em letra de máquina.</li>
+  <li><strong>Actor.</strong> Veja a armadilha abaixo.</li>
+  <li><strong>Ver.</strong> Abre o detalhe.</li>
+</ol>
+<p>As colunas são <em>Quando</em> (relativo, “há 3 horas”), <em>Action</em>, <em>Tenant</em> (selo com o slug), <em>Actor</em>, <em>Recurso</em> (tipo + 8 caracteres do id) e <em>Ver</em>. 50 por página, mais novos primeiro. Vazio: “Nenhum evento encontrado”. <strong>Armadilha:</strong> a coluna Actor mostra o UUID inteiro, não o e-mail mascarado; só o detalhe mostra o e-mail mascarado.</p>
+<figure class="print">
+  <img src="img/admin-audit-detalhe.png" alt="Detalhe de uma entrada de auditoria com metadata, request ID, ator, tenant e recurso, numerado de 1 a 4" loading="lazy">
+  <figcaption>O detalhe de uma entrada.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Metadata.</strong> O JSON bruto do que mudou (nunca contém segredos).</li>
+  <li><strong>Request ID.</strong> Com Resource Type, Resource ID, “Bypassed RLS” (Sim/Não), Actor IP e User Agent.</li>
+  <li><strong>Actor.</strong> User ID e e-mail <em>mascarado</em> (<code>m****@dominio</code>).</li>
+  <li><strong>Tenant.</strong> Nome, slug, status e o botão <span class="ui">Ver tenant</span>. O selo amarelo <strong>Platform Admin</strong> no alto indica ação feita como administrador da plataforma. Há ainda o cartão <em>Recurso</em> com <span class="ui">Abrir recurso</span> (só para conversas e organizações).</li>
+</ol>
+<p>A própria consulta deste painel é auditada (por isso, na captura, as últimas linhas são as aberturas de ficha e de saúde).</p>
+
+<h2 id="lgpd">LGPD — Cross-tenant</h2>
+<p>Acompanha os pedidos de titulares de <em>todas</em> as empresas e mostra quais estão perto de estourar o prazo legal. <strong>Somente leitura</strong>: a aprovação é feita pelo Administrador <em>dentro</em> da empresa, na tela <a href="#lgpd">LGPD</a>.</p>
+<figure class="print">
+  <img src="img/admin-lgpd.png" alt="Tela LGPD Cross-tenant com os três filtros e a tabela de pedidos, numerada de 2 a 8" loading="lazy">
+  <figcaption>A tela LGPD do painel (dados fictícios da empresa de demonstração).</figcaption>
+</figure>
+<ol class="legenda">
+  <li style="counter-set:leg 1"><strong>Status.</strong> Todos, Recebido, Processando, Revisão, Concluído ou Falhou.</li>
+  <li><strong>Tipo.</strong> Anonimização cliente, Solicitação de dados ou Anonimização tenant.</li>
+  <li><strong>Risco.</strong> Vencido, Crítico (&lt;24h), Alerta (&gt;50%) ou OK.</li>
+  <li><strong>Tenant.</strong> A empresa do pedido.</li>
+  <li><strong>Vence em.</strong> “3d restantes”, “vence hoje” ou “Nd em atraso”.</li>
+  <li><strong>Risco.</strong> O selo.</li>
+  <li><strong>Ver.</strong> Abre o detalhe.</li>
+</ol>
+<p>Quando há pedido ativo vencido ou crítico, uma faixa vermelha avisa “N solicitação(ões) vencendo em menos de 24h ou já vencida(s) — ação imediata requerida.” com o link “Ver detalhes” (o filtro por esse link não é aplicado pela página). O filtro de risco age depois de buscar a página (50 itens), então pode mostrar menos itens que o esperado. O detalhe repete a linha do tempo do SLA, os “Detalhes” e a “Trilha de auditoria”, com a nota “Somente leitura — aprovação é feita pelo operador no contexto do tenant.”.</p>
+
+<h2 id="incidentes">Incidentes</h2>
+<figure class="print media">
+  <img src="img/admin-incidentes.png" alt="Tela Incidentes vazia com os filtros Status e Severidade, numerada de 1 a 4" loading="lazy">
+  <figcaption>A tela de Incidentes, vazia (o estado normal).</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Incidentes.</strong> Subtítulo “N incidente(s)”.</li>
+  <li><strong>Status.</strong> Abertos (padrão), Reconhecidos ou Resolvidos.</li>
+  <li><strong>Severidade.</strong> Todas, Crítico, Atenção ou Info.</li>
+  <li><strong>Nenhum incidente encontrado.</strong></li>
+</ol>
+<p>Colunas: <em>Quando</em>, <em>Tipo</em>, <em>Tenant</em>, <em>Severidade</em>, <em>Status</em> (Aberto, Reconhecido, Resolvido) e <em>Ver</em>. O detalhe mostra o payload (JSON), a trilha de auditoria e, se resolvido, a nota de resolução. O botão <span class="ui">Resolver incidente</span> abre uma janela que pede a <strong>Nota de resolução</strong> (10 a 1000 caracteres: “Descreva a causa raiz e as ações tomadas…”) e avisa que “Esta ação é registrada no audit log e não pode ser desfeita.”. Marca o incidente como resolvido (<code>incident.resolved</code>); <strong>não há como reabrir</strong>.</p>
+<aside class="nota atencao"><strong>Estado real desta tela.</strong><p>Não existe a ação “Reconhecer” (o status “Reconhecido” só aparece no filtro e no selo) e, no código lido, nada <em>cria</em> incidentes — só leitura e resolução. Numa instalação nova a lista tende a ficar vazia; não confirmado se algum processo externo insere linhas.</p></aside>
