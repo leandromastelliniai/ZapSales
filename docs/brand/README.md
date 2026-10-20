@@ -4,12 +4,14 @@
 
 | Arquivo | O que é |
 |---|---|
-| `zapsales-icon.svg` | O símbolo: balão de conversa com um raio dentro. Quadrado de 216. |
-| `zapsales-logo.svg` | Logotipo para fundo claro — símbolo em sálvia `#506d48`, nome em `#1c1a16`, "CRM" em `#5d594f`. |
-| `zapsales-logo-dark.svg` | Logotipo para fundo escuro — sálvia `#82a077`, nome em `#f5f4ef`, "CRM" em `#8e8b7f`. |
+| `zapsales-icon.svg` | O símbolo: balão de conversa com um raio dentro, em violeta `#773df9`. Quadrado de 216. |
+| `zapsales-logo.svg` | Logotipo para fundo claro — símbolo em violeta `#773df9`, nome em `#151a2e`, "by" em `#4b5373`, seguido do logo da Futuristas. |
+| `zapsales-logo-dark.svg` | Logotipo para fundo escuro — violeta `#9e8aff`, nome em `#eef0f7`, "by" em `#a3abc6`, seguido do logo da Futuristas. |
 
-O texto do logotipo já está convertido em caminhos (Liberation Sans, licença SIL OFL): nenhum
-arquivo depende de fonte.
+O texto do logotipo já está convertido em caminhos — "ZapSales" em Liberation Sans e "by" em
+Atkinson Hyperlegible, as duas SIL OFL; o logo da Futuristas já vem em traços: nenhum arquivo
+depende de fonte. A arte é a que o produto desenha desde 07/10/2026 (`lib/branding/desenho.ts` e
+`components/branding/AssinaturaFuturistas.tsx`) e a que a tela de entrada serve em produção.
 
 **Estes SVGs são a fonte; o app NÃO os lê.** A geometria está copiada em
 `lib/branding/desenho.ts` e é desenhada inline por `components/branding/MarcaDoProduto.tsx`
@@ -43,6 +45,6 @@ consegue atualizar quando o posicionamento muda.
 
 ## Regras da arte
 
-- Paleta lida de `app/globals.css` (creme `#faf9f6`, sálvia `#506d48`, texto `#1c1a16`).
+- Paleta da Futuristas (fundo branco, violeta `#773df9`, texto `#151a2e`) — a mesma do logotipo.
 - Card de compartilhamento **sempre** carrega o logotipo. Sem ele, quem vê a imagem não
   sabe de quem ela é.
