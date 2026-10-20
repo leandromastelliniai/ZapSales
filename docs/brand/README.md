@@ -45,6 +45,6 @@ consegue atualizar quando o posicionamento muda.
 
 ## Regras da arte
 
-- Paleta lida de `app/globals.css` (creme `#faf9f6`, sálvia `#506d48`, texto `#1c1a16`).
+- Paleta da Futuristas (fundo branco, violeta `#773df9`, texto `#151a2e`) — a mesma do logotipo.
 - Card de compartilhamento **sempre** carrega o logotipo. Sem ele, quem vê a imagem não
   sabe de quem ela é.
