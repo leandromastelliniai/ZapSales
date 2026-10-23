@@ -11,7 +11,7 @@ export type ResolvedTheme = "light" | "dark";
 export const STORAGE_KEY = "zapsales-theme";
 
 /** O tema de quem nunca escolheu. O `THEME_INIT_SCRIPT` tem a mesma regra em string. */
-export const TEMA_PADRAO: Theme = "dark";
+export const TEMA_PADRAO: Theme = "light";
 
 type ThemeContextValue = {
   /** User preference: light, dark, or system. */
@@ -32,9 +32,9 @@ function readStoredTheme(): Theme {
   } catch {
     // localStorage indisponível (modo privado, sandbox) — segue com default.
   }
-  // Quem nunca escolheu vê o ESCURO: é o padrão da marca (decisão do dono,
-  // 07/10/2026). "system" continua sendo uma escolha possível, só deixou de
-  // ser o padrão. Espelha o `THEME_INIT_SCRIPT` de `app/layout.tsx`.
+  // Quem nunca escolheu vê o CLARO (decisão do dono, 23/10/2026; de 07/10 até
+  // ali o padrão foi o escuro). O escuro e "system" continuam sendo escolhas
+  // possíveis, guardadas por pessoa. Espelha o `THEME_INIT_SCRIPT` de `app/layout.tsx`.
   return TEMA_PADRAO;
 }
 

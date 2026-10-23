@@ -145,9 +145,10 @@ test.describe("kit visual da Agenda", () => {
     // seguinte: ele mediria "as cores do tema claro" num tema escuro e passaria,
     // porque a régua de contraste vale para os dois.
     //
-    // CLARO explícito, e não "remover a escolha": desde 07/10/2026 o padrão de
-    // quem nunca escolheu é o ESCURO (`TEMA_PADRAO`). Os casos medem o claro
-    // primeiro e alternam para o escuro; depender do padrão invertia a ordem.
+    // CLARO explícito, e não "remover a escolha": o padrão de quem nunca
+    // escolheu (`TEMA_PADRAO`) já mudou uma vez (escuro de 07/10 a 23/10/2026).
+    // Os casos medem o claro primeiro e alternam para o escuro; fixar a escolha
+    // os protege da próxima mudança de padrão.
     await page.goto(VITRINE);
     await page.evaluate(() => {
       try {

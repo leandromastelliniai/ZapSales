@@ -17,6 +17,7 @@ import {
   abreQuadro,
   login,
   registra,
+  temaEscuro,
   transbordoDaPagina,
   type Creds,
 } from "./qa-l12-comum";
@@ -463,7 +464,7 @@ test.describe("Lote 12 — #911 no TOQUE (sem hover)", () => {
   });
 
   test("no tema ESCURO, em 400 px, o quadro não rola na horizontal", async ({ page }) => {
-    await page.emulateMedia({ colorScheme: "dark" });
+    await temaEscuro(page);
     await page.setViewportSize({ width: 400, height: 860 });
     await login(page, cc.users.manager!.email, cc.password);
     await abreQuadro(page, pid, `Toque ${ST}`);

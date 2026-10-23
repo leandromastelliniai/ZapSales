@@ -30,7 +30,7 @@ Regra: **cor nova precisa de significado novo, e isso é decisão de produto, n�
 (`components/ui/selo.tsx`) escreve essa regra; use-o onde a cor diz estado. Cor de destaque do revendedor
 (`cssDaMarca`) substitui o violeta, então nenhum valor de marca pode ficar fixo no código (`tests/unit/branding.test.ts`).
 
-Tema escuro é o padrão (azul-noite `#151a2e`, painel `#1b2240`, elevado `#242c4b`, texto `#eef0f7`); o claro redesenha os
+Tema claro é o padrão (decisão de 23/10/2026; quem quiser escolhe o escuro, que fica guardado por pessoa). O escuro é azul-noite ( `#151a2e`, painel `#1b2240`, elevado `#242c4b`, texto `#eef0f7`); o claro redesenha os
 mesmos tokens (`#f5f6fa` / `#ffffff` / `#eceef5`), não os inverte. Todo token existe nos dois temas em `app/globals.css`.
 
 ## Tipografia

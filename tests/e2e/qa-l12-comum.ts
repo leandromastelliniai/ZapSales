@@ -159,7 +159,20 @@ export async function transbordoDaPagina(page: Page) {
   }));
 }
 
+/**
+ * Põe a página no tema ESCURO de verdade. Emular a preferência do sistema não
+ * basta: o produto só segue o sistema para quem escolheu "system", e o padrão de
+ * quem nunca escolheu é o claro (`TEMA_PADRAO`). Chame ANTES de navegar — a
+ * escolha entra pelo `localStorage` que o `THEME_INIT_SCRIPT` lê no `<head>`.
+ */
 export async function temaEscuro(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem("zapsales-theme", "dark");
+    } catch {
+      // sem localStorage o tema fica no padrão; a medida registra o que viu
+    }
+  });
   await page.emulateMedia({ colorScheme: "dark" });
 }
 
