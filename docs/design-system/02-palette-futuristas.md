@@ -12,11 +12,13 @@ valores em vigor sem confiar nesta página:
 grep -nE "^\s+--color-(bg|surface|accent|ia|humano|funil|acao)[a-z-]*:" app/globals.css
 ```
 
-## O escuro é o padrão
+## O claro é o padrão
 
-Quem nunca escolheu tema vê o **escuro** (`TEMA_PADRAO` em `lib/theme.tsx` e o
-`THEME_INIT_SCRIPT` de `app/layout.tsx`). O claro é a mesma família, redesenhada, não invertida.
-"Seguir o sistema" continua sendo uma escolha possível.
+Quem nunca escolheu tema vê o **claro** (`TEMA_PADRAO` em `lib/theme.tsx` e o
+`THEME_INIT_SCRIPT` de `app/layout.tsx`, cercados por `tests/unit/tema-padrao-claro.test.ts`).
+Decisão do dono em 23/10/2026; de 07/10 até ali o padrão foi o escuro. O escuro é a mesma família,
+redesenhada, não invertida, e continua a um clique, guardado por pessoa. "Seguir o sistema" também
+continua sendo uma escolha possível.
 
 O escuro é azul-noite, não preto e não roxo: a marca Futuristas é escura, mas a Inbox fica aberta
 o dia inteiro, e preto com neon cansa a vista. O contraste é moderado e sem brilho.

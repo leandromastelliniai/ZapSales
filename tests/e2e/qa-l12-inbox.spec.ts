@@ -26,6 +26,7 @@ import {
   login,
   medeTransbordo,
   registra,
+  temaEscuro,
   transbordoDaPagina,
   type Creds,
 } from "./qa-l12-comum";
@@ -386,6 +387,10 @@ test.describe("Lote 12 — painel do contato no Inbox", () => {
 test.describe("Lote 12 — o painel em 400 px e no tema escuro", () => {
   test.describe.configure({ timeout: 420_000 });
   test.use({ viewport: { width: 400, height: 860 }, colorScheme: "dark" });
+  // O padrão é o claro: sem escolher o escuro, este bloco mediria o claro achando que é o escuro.
+  test.beforeEach(async ({ page }) => {
+    await temaEscuro(page);
+  });
 
   test("L12.G2.2/G2.3 — a fileira de botões e a linha Funil · Etapa cabem", async ({ page }) => {
     const cc = creds();

@@ -47,4 +47,4 @@ O que não se literaliza do comp: o texto e as fotos de exemplo (são dados ilus
 - **Ficha CRM sem coluna própria.** O comp tira a coluna da ficha. O conteúdo do `CRMSidePanel` (demandas, memória, leads, pedidos, atividade, acervo) precisa continuar a um clique, numa gaveta lateral aberta pela faixa de jornada.
 - **Trilho só de ícones é do shell, não da Inbox.** Ele vale para todas as telas. Fica decidir se o trilho recolhido entra nesta rodada ou se a Inbox herda o shell atual só com o novo tema.
 - **Contato sem funil.** Conversas sem lead não têm linha; a faixa mostra "Sem funil · Criar lead" no lugar.
-- **Modo claro.** O escuro é o padrão; a versão clara dos mesmos tokens também precisa existir.
+- **Modo claro.** O claro é o padrão desde 23/10/2026; a versão escura dos mesmos tokens também precisa existir.
