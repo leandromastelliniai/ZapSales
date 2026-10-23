@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MagnifyingGlass } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
 import type { AgentStatus } from "./AgentStatusBadge";
 
@@ -32,13 +33,20 @@ export function AgentsListFilters({
   const t = useT();
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Input
-        placeholder={t("Buscar por nome…")}
-        value={query}
-        onChange={(e) => onQueryChange(e.target.value)}
-        className="w-full sm:w-64"
-        aria-label={t("Buscar agents")}
-      />
+      <div className="relative w-full sm:w-64">
+        <MagnifyingGlass
+          size={16}
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+        />
+        <Input
+          placeholder={t("Buscar por nome…")}
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          className="pl-9"
+          aria-label={t("Buscar agents")}
+        />
+      </div>
       <Select value={status} onValueChange={(v) => onStatusChange(v as StatusFilter)}>
         <SelectTrigger className="w-44" aria-label={t("Filtrar por status")}>
           <SelectValue placeholder={t("Status")} />
@@ -46,16 +54,17 @@ export function AgentsListFilters({
         <SelectContent>
           <SelectItem value="all">{t("Todos")}</SelectItem>
           <SelectItem value="published">{t("Publicado")}</SelectItem>
+          <SelectItem value="paused">{t("Pausado")}</SelectItem>
           <SelectItem value="draft">{t("Rascunho")}</SelectItem>
           <SelectItem value="archived">{t("Arquivado")}</SelectItem>
         </SelectContent>
       </Select>
-      <label className="flex items-center gap-2 text-xs text-muted-foreground">
+      <label className="flex items-center gap-2 text-sm text-muted-foreground">
         <input
           type="checkbox"
           checked={showArchived}
           onChange={(e) => onShowArchivedChange(e.target.checked)}
-          className="size-4"
+          className="size-4 accent-primary"
         />
         {t("Incluir arquivados")}
       </label>

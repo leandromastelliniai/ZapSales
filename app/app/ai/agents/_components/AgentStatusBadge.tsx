@@ -1,5 +1,5 @@
 "use client";
-import { Badge } from "@/components/ui/badge";
+import { Selo, type SignificadoDoSelo } from "@/components/ui/selo";
 import { estadoDoAgente } from "@/lib/ai/agents/no-ar";
 import type { AgentRow } from "@/hooks/ai/useAgent";
 import { useT } from "@/hooks/i18n/useT";
@@ -28,8 +28,10 @@ export type AgentStatus = "published" | "draft" | "paused" | "archived" | "inval
  *      (`loadPublishedAgentConfig`) nem o dispatcher leem `is_active`. Com
  *      versão publicada o agente responde, e o rótulo honesto é "Publicado".
  *
- * `paused` continua no vocabulário do componente porque `AgentRowMenu` e os
- * filtros da lista o consomem; ele deixou de ter emissor aqui.
+ * `paused` voltou a ter emissor: o agente PUBLICADO que alguém pausou ("Pausar
+ * automático") não é rascunho — tem versão no ar e volta com um clique. Chamá-lo
+ * de "Rascunho" mandava o dono procurar um trabalho por terminar que não existe.
+ * Pausado SEM versão publicada continua "Rascunho": não há o que retomar.
  */
 export function deriveAgentStatus(agent: AgentRow): AgentStatus {
   // `AgentRow` traz `paused_at` como opcional (o tipo vem da linha do banco),
@@ -42,7 +44,7 @@ export function deriveAgentStatus(agent: AgentRow): AgentStatus {
     case "no_ar_legado":
       return "published";
     case "parado":
-      return "draft";
+      return agent.paused_at != null && agent.published_version_id != null ? "paused" : "draft";
   }
 }
 
@@ -54,19 +56,34 @@ const LABEL: Record<AgentStatus, string> = {
   invalid: "Inválido",
 };
 
-const VARIANT: Record<AgentStatus, "default" | "secondary" | "outline" | "destructive"> = {
-  published: "default",
-  draft: "secondary",
-  paused: "outline",
-  archived: "outline",
-  invalid: "destructive",
+/** A cor diz o estado, pela regra do `Selo`: verde = no ar, âmbar = esperando alguém. */
+const SIGNIFICADO: Record<AgentStatus, SignificadoDoSelo> = {
+  published: "concluido",
+  draft: "neutro",
+  paused: "funil",
+  archived: "neutro",
+  invalid: "falha",
+};
+
+/** O que o estado quer dizer para quem opera, numa frase. */
+export const EXPLICACAO_DO_ESTADO: Record<AgentStatus, string> = {
+  published: "Está no ar: responde os clientes pelo número escolhido.",
+  draft: "Ainda não atende ninguém. Publique para colocá-lo no ar.",
+  paused: "Pausado: não responde sozinho até alguém retomar.",
+  archived: "Arquivado: não atende mais ninguém.",
+  invalid: "A configuração tem um problema que impede o atendimento.",
 };
 
 export function AgentStatusBadge({ status }: { status: AgentStatus }) {
   const t = useT();
   return (
-    <Badge variant={VARIANT[status]} aria-label={`status: ${t(LABEL[status])}`}>
+    <Selo
+      significado={SIGNIFICADO[status]}
+      aria-label={`status: ${t(LABEL[status])}`}
+      title={t(EXPLICACAO_DO_ESTADO[status])}
+    >
+      {status === "published" ? <span aria-hidden className="size-1.5 rounded-full bg-current" /> : null}
       {t(LABEL[status])}
-    </Badge>
+    </Selo>
   );
 }

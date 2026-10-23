@@ -173,4 +173,21 @@ export {
   ArrowsOutSimple,
   // /admin/modulos: módulo opcional com tabela própria (ADR-0002)
   Stack,
+  // o ícone que identifica cada agente de IA (lib/ai/agents/icone-do-agente.ts)
+  Headset,
+  ShoppingCart,
+  Lifebuoy,
+  FirstAidKit,
+  GraduationCap,
+  Truck,
+  ForkKnife,
+  Scissors,
+  PawPrint,
+  Car,
+  Barbell,
+  // as partes do editor do agente
+  ArrowLeft,
+  UserCheck,
+  SlidersHorizontal,
+  Waveform,
 } from "@phosphor-icons/react/dist/ssr";

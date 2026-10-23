@@ -10,7 +10,6 @@
  * motor aplica ao carregar a versão publicada — a prévia não pode divergir do
  * turno.
  */
-import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -82,11 +81,20 @@ interface Props {
   /** O prompt livre atual, para a visão de como as duas partes se combinam. */
   instrucoesLivres: string;
   disabled?: boolean;
+  /** A seção do editor já dá título e introdução; aqui eles sairiam repetidos. */
+  semTitulo?: boolean;
   /** Mensagem de erro por campo do perfil (já traduzida). */
   erros?: Partial<Record<keyof PerfilDoFormulario, string>>;
 }
 
-export function PerfilGuiado({ value, onChange, instrucoesLivres, disabled, erros }: Props) {
+export function PerfilGuiado({
+  value,
+  onChange,
+  instrucoesLivres,
+  disabled,
+  erros,
+  semTitulo = false,
+}: Props) {
   const t = useT();
 
   const rotuloDoTom: Record<TomDoAgente, { nome: string; ajuda: string }> = {
@@ -102,15 +110,23 @@ export function PerfilGuiado({ value, onChange, instrucoesLivres, disabled, erro
   const compoe = perfilPreenchido(perfilDoContrato(value));
 
   return (
-    <Card className="space-y-3 p-4" data-testid="perfil-guiado">
-      <div>
-        <h3 className="text-sm font-medium">{t("Como ele se apresenta")}</h3>
-        <p className="text-xs text-muted-foreground">
+    <div className="space-y-4" data-testid="perfil-guiado">
+      {semTitulo ? (
+        <p className="text-sm text-muted-foreground">
           {t(
             "Preencha o que quiser — tudo é opcional. O que você escrever aqui é combinado com as instruções livres, e você pode ver o resultado no fim.",
           )}
         </p>
-      </div>
+      ) : (
+        <div>
+          <h3 className="text-sm font-semibold">{t("Como ele se apresenta")}</h3>
+          <p className="text-xs text-muted-foreground">
+            {t(
+              "Preencha o que quiser — tudo é opcional. O que você escrever aqui é combinado com as instruções livres, e você pode ver o resultado no fim.",
+            )}
+          </p>
+        </div>
+      )}
 
       <div className="space-y-1">
         <Label htmlFor="perfil_persona">{t("Quem ele é")}</Label>
@@ -309,7 +325,7 @@ export function PerfilGuiado({ value, onChange, instrucoesLivres, disabled, erro
           {composicao}
         </pre>
       </details>
-    </Card>
+    </div>
   );
 }
 

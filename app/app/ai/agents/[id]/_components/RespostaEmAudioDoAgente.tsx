@@ -24,7 +24,6 @@
 import * as React from "react";
 import Link from "next/link";
 
-import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -132,8 +131,8 @@ export function RespostaEmAudioDoAgente({ value, onChange, disabled, riscoDeBani
   };
 
   return (
-    <Card className="space-y-3 p-4" data-testid="resposta-em-audio-do-agente">
-      <h3 className="text-sm font-medium">{t("Resposta em áudio")}</h3>
+    <div className="space-y-3" data-testid="resposta-em-audio-do-agente">
+      <h3 className="text-sm font-semibold">{t("Resposta em áudio")}</h3>
       <div className="flex items-center gap-2">
         <Switch
           id="audio_reply_enabled"
@@ -250,6 +249,6 @@ export function RespostaEmAudioDoAgente({ value, onChange, disabled, riscoDeBani
           )}
         </div>
       ) : null}
-    </Card>
+    </div>
   );
 }

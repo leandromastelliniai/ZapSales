@@ -58,6 +58,18 @@ describe("deriveAgentStatus", () => {
     ).toBe("published");
   });
 
+  it("publicado e PAUSADO é PAUSADO — tem versão no ar e volta com um clique, não é rascunho", () => {
+    expect(
+      deriveAgentStatus({ ...base, published_version_id: "v1", paused_at: "2026-10-01T00:00:00Z" } as AgentRow),
+    ).toBe("paused");
+  });
+
+  it("pausado SEM versão publicada segue RASCUNHO — não há o que retomar", () => {
+    expect(
+      deriveAgentStatus({ ...base, published_version_id: null, paused_at: "2026-10-01T00:00:00Z" } as AgentRow),
+    ).toBe("draft");
+  });
+
   it("arquivado vence tudo", () => {
     expect(deriveAgentStatus({ ...base, archived_at: "2026-01-01", published_version_id: "v1" } as AgentRow)).toBe("archived");
   });
