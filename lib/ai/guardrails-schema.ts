@@ -4,6 +4,8 @@
  */
 import { z } from "zod";
 
+import { iconeDoAgenteSchema } from "@/lib/ai/agents/icone-do-agente";
+
 // ---------------------------------------------------------------------------
 // Models permitidos (Vercel AI Gateway)
 // ---------------------------------------------------------------------------
@@ -146,6 +148,12 @@ export const agentConfigSchema = z.object({
    * então não se liga por migration — se liga na tela do agente.
    */
   aceita_comandos_celular: z.boolean().default(false),
+  /**
+   * O ícone que identifica o agente nas telas da equipe (`lib/ai/agents/icone-do-agente.ts`).
+   * Sem default: ausente, a tela sugere um pelo nome. Precisa estar no schema mesmo assim —
+   * o PATCH valida o config por `agentConfigPatchSchema`, e o Zod descartaria a chave desconhecida.
+   */
+  icone: iconeDoAgenteSchema.optional(),
 });
 export type AgentConfig = z.infer<typeof agentConfigSchema>;
 

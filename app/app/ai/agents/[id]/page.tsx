@@ -8,8 +8,10 @@ import type { AgentRow } from "@/hooks/ai/useAgent";
 import type { AgentVersionRow } from "@/hooks/ai/useAgentVersions";
 import type { CredentialRow } from "@/hooks/ai/useCredentials";
 
+import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { LegacyRecovery } from "./_components/LegacyRecovery";
 import { AgentOperation } from "./_components/AgentOperation";
+import { CabecalhoDoAgente } from "./_components/CabecalhoDoAgente";
 import type { MaterialDoAcervo } from "./_components/BasesDoAgente";
 import { AgentTabs } from "./_components/AgentTabs";
 import { AgentEditorClient } from "./_client";
@@ -208,8 +210,17 @@ export default async function AgentEditorPage({ params }: { params: Promise<{ id
     []) as unknown as MaterialDoAcervo[];
   const materiais = [...materiaisVivos, ...materiaisArquivadosMarcados];
 
+  // O número da versão PUBLICADA — o que de fato atende. O do rascunho ainda não vale.
+  const canalNoAr = channelSessions.find((c) => c.id === published?.channel_session_id) ?? null;
+  const numeroNoAr = canalNoAr
+    ? canalNoAr.phone_number
+      ? `${canalNoAr.display_name} · ${canalNoAr.phone_number}`
+      : canalNoAr.display_name
+    : null;
+
   return (
-    <div className="flex h-full flex-col gap-6 p-6">
+    <CorpoDaPagina>
+      <CabecalhoDoAgente agent={agent} numero={numeroNoAr} readOnly={readOnly} />
       <AgentOperation agent={agent} readOnly={readOnly} />
       {(agent.kind ?? "rag_bot") !== "mcp_agent" && !agent.published_version_id && (
         <LegacyRecovery
@@ -237,6 +248,6 @@ export default async function AgentEditorPage({ params }: { params: Promise<{ id
         readOnly={readOnly}
         organizationTimezone={fusoUtilizavel(activeOrg.timezone)}
       />
-    </div>
+    </CorpoDaPagina>
   );
 }

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { showApiError } from "@/components/feedback/ApiErrorToast";
-import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useT } from "@/hooks/i18n/useT";
@@ -54,9 +53,9 @@ export function ComandosDoCelular({ agentId, inicial, disabled, aoSalvar }: Prop
   }
 
   return (
-    <Card className="space-y-3 p-4">
+    <div className="space-y-3">
       <div>
-        <h3 className="text-sm font-medium">{t("Comandos pelo celular")}</h3>
+        <h3 className="text-sm font-semibold">{t("Comandos pelo celular")}</h3>
         <p className="text-xs text-muted-foreground">
           {t(
             "Ligado, QUALQUER mensagem enviada pelo WhatsApp do celular pausa a IA nesta conversa até alguém mandar #on — a pausa não vence sozinha. #off pausa sem precisar responder o cliente. Desligado, #on e #off são texto comum, e responder pelo celular pausa a IA só por um tempo.",
@@ -79,6 +78,6 @@ export function ComandosDoCelular({ agentId, inicial, disabled, aoSalvar }: Prop
           "Atenção: o comando é digitado no chat do cliente e pode aparecer para ele. Vale por conversa, e a pausa só termina com #on ou pelo botão “devolver ao automático”.",
         )}
       </p>
-    </Card>
+    </div>
   );
 }

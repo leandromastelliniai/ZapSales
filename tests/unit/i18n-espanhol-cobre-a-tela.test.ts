@@ -962,12 +962,6 @@ const DADO_DO_OPERADOR_CONGELADO: { arquivo: string; expressao: string; motivo: 
       "então a regra de passa-adireto não o alcança; é repasse da própria função e app/api não renderiza tela",
   },
   {
-    arquivo: "app/app/ai/agents/[id]/_components/AgentForm.tsx",
-    expressao: "rotulo",
-    motivo:
-      "rótulo de papel do array as const iterado na linha 746: conjunto fechado declarado no próprio arquivo",
-  },
-  {
     arquivo: "app/app/ai/agents/[id]/_components/RunTrace.tsx",
     expressao: "emptyMessage",
     motivo:

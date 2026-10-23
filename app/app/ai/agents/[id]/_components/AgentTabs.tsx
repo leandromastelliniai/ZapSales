@@ -5,6 +5,14 @@
 import * as React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useT } from "@/hooks/i18n/useT";
+import {
+  ChatsCircle,
+  ClockCounterClockwise,
+  ListMagnifyingGlass,
+  Lightbulb,
+  PuzzlePiece,
+  SlidersHorizontal,
+} from "@/lib/ui/icons";
 import { AgentForm, type ChannelSessionLite } from "./AgentForm";
 import type { CoberturaPorFunil } from "./FunisDoAgente";
 import type { MaterialDoAcervo } from "./BasesDoAgente";
@@ -41,29 +49,78 @@ interface Props {
   organizationTimezone?: string;
 }
 
+type Aba = "configuration" | "test" | "capacidades" | "runs" | "history" | "proposals";
+
+/** Cada aba diz o que se faz nela, numa frase — o nome sozinho ("Execuções") não diz. */
+const ABAS: ReadonlyArray<{ id: Aba; nome: string; Icone: typeof ChatsCircle; frase: string }> = [
+  {
+    id: "configuration",
+    nome: "Configuração",
+    Icone: SlidersHorizontal,
+    frase: "Como ele fala, o que sabe e o que pode fazer. Mudanças ficam num rascunho até você publicar.",
+  },
+  {
+    id: "test",
+    nome: "Teste",
+    Icone: ChatsCircle,
+    frase: "Converse com ele como se fosse um cliente. Nada é enviado no WhatsApp.",
+  },
+  {
+    id: "capacidades",
+    nome: "Capacidades",
+    Icone: PuzzlePiece,
+    frase: "Se as ações que você ligou estão funcionando: o que ele usa, o que falha e o que nunca foi usado.",
+  },
+  {
+    id: "runs",
+    nome: "Execuções",
+    Icone: ListMagnifyingGlass,
+    frase: "Cada resposta que ele deu, passo a passo — para entender por que respondeu o que respondeu.",
+  },
+  {
+    id: "history",
+    nome: "Histórico",
+    Icone: ClockCounterClockwise,
+    frase: "Todas as versões, o que mudou de uma para outra e como voltar a uma anterior.",
+  },
+  {
+    id: "proposals",
+    nome: "Propostas",
+    Icone: Lightbulb,
+    frase: "Melhorias que o sistema sugere a partir das conversas reais. Nada muda sem você aprovar.",
+  },
+];
+
 export function AgentTabs(props: Props) {
   const t = useT();
-  const [tab, setTab] = React.useState<
-    "configuration" | "test" | "capacidades" | "runs" | "history" | "proposals"
-  >("configuration");
+  const [tab, setTab] = React.useState<Aba>("configuration");
   const hasVersion = !!(props.draft || props.published);
+  const atual = ABAS.find((a) => a.id === tab) ?? ABAS[0]!;
 
   return (
     <Tabs
       value={tab}
-      onValueChange={(v) => setTab(v as typeof tab)}
-      className="flex flex-col gap-4"
+      onValueChange={(v) => setTab(v as Aba)}
+      className="flex flex-col gap-3"
     >
-      <TabsList>
-        <TabsTrigger value="configuration">{t("Configuração")}</TabsTrigger>
-        <TabsTrigger value="test" disabled={!hasVersion}>
-          {t("Teste")}
-        </TabsTrigger>
-        <TabsTrigger value="capacidades">{t("Capacidades")}</TabsTrigger>
-        <TabsTrigger value="runs">{t("Execuções")}</TabsTrigger>
-        <TabsTrigger value="history">{t("Histórico")}</TabsTrigger>
-        <TabsTrigger value="proposals">{t("Propostas")}</TabsTrigger>
-      </TabsList>
+      <div className="space-y-2">
+        <TabsList className="h-auto justify-start self-start">
+          {ABAS.map((aba) => (
+            <TabsTrigger
+              key={aba.id}
+              value={aba.id}
+              disabled={aba.id === "test" && !hasVersion}
+              className="gap-1.5 px-3 py-1.5"
+            >
+              <aba.Icone size={16} aria-hidden />
+              {t(aba.nome)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <p className="text-sm text-muted-foreground" data-testid="frase-da-aba">
+          {t(atual.frase)}
+        </p>
+      </div>
 
       <TabsContent value="configuration" className="m-0">
         <AgentForm

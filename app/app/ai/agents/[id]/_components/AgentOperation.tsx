@@ -2,10 +2,20 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Pause, Play, SlidersHorizontal } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
 import { apiClient } from "@/lib/api/client";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import type { AgentRow } from "@/hooks/ai/useAgent";
+
+/**
+ * O comando de "como ele atende AGORA": vale na hora, sem rascunho nem
+ * publicação — por isso fica fora do formulário, logo abaixo do nome.
+ *
+ * O `<select>` nativo é de propósito (rótulo "Modo de operação"): o teste de
+ * autonomia o dirige por `selectOption`, e o nativo é o mais previsível no
+ * celular. O que ganha aqui é a frase que diz o que cada escolha FAZ.
+ */
 export function AgentOperation({ agent, readOnly }: { agent: AgentRow; readOnly?: boolean }) {
   const t = useT(),
     router = useRouter(),
@@ -21,40 +31,58 @@ export function AgentOperation({ agent, readOnly }: { agent: AgentRow; readOnly?
       setBusy(false);
     }
   }
+  const modo = agent.operation_mode ?? "automatic";
+  const pausado = agent.paused_at != null;
+  const semVersao = !agent.published_version_id;
+
   return (
     <section
-      className="flex flex-wrap items-center gap-3 rounded-md border p-3"
+      className="grid items-center gap-4 rounded-xl border border-border bg-surface p-4 shadow-xs sm:px-5 md:grid-cols-[minmax(0,1fr)_auto]"
       aria-label={t("Operação do agente")}
     >
-      <label className="text-sm">
-        {t("Operação do agente")}{" "}
+      <div className="flex min-w-0 items-start gap-3">
+        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface-elevated text-foreground">
+          <SlidersHorizontal size={18} aria-hidden />
+        </span>
+        <div className="min-w-0 space-y-0.5">
+          <p className="text-sm font-semibold">{t("Como ele atende agora")}</p>
+          <p className="max-w-[65ch] text-sm text-muted-foreground" data-testid="explicacao-do-modo">
+            {pausado
+              ? t(
+                  "Automático pausado. A versão publicada foi preservada e a assistência continua disponível.",
+                )
+              : modo === "assisted"
+                ? t(
+                    "Ele escreve a resposta dentro da conversa e espera: só vai para o cliente depois que alguém da equipe aprovar.",
+                  )
+                : t(
+                    "Ele responde o cliente sozinho, seguindo o que está configurado nesta página. Vale na hora, sem publicar.",
+                  )}
+          </p>
+        </div>
+      </div>
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         <select
-          className="ml-2 rounded-md border bg-background p-2"
+          className="h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 sm:w-auto"
           aria-label={t("Modo de operação")}
-          value={agent.operation_mode ?? "automatic"}
+          value={modo}
           disabled={readOnly || busy}
           onChange={(e) => change({ operation_mode: e.target.value })}
         >
           <option value="assisted">{t("Assistido: revisar antes de enviar")}</option>
           <option value="automatic">{t("Automático: responder com as regras do agente")}</option>
         </select>
-      </label>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={readOnly || busy || !agent.published_version_id}
-        onClick={() => change({ paused_at: agent.paused_at ? null : new Date().toISOString() })}
-      >
-        {t(agent.paused_at ? "Retomar automático" : "Pausar automático")}
-      </Button>
-      <p className="w-full text-xs text-muted-foreground">
-        {t(
-          agent.paused_at
-            ? "Automático pausado. A versão publicada foi preservada e a assistência continua disponível."
-            : "O modo assistido prepara sugestões na conversa. Só a aprovação humana autoriza o envio.",
-        )}
-      </p>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={readOnly || busy || semVersao}
+          title={semVersao ? t("Publique uma versão para poder pausar.") : undefined}
+          onClick={() => change({ paused_at: agent.paused_at ? null : new Date().toISOString() })}
+        >
+          {pausado ? <Play size={14} aria-hidden /> : <Pause size={14} aria-hidden />}
+          {t(pausado ? "Retomar automático" : "Pausar automático")}
+        </Button>
+      </div>
     </section>
   );
 }

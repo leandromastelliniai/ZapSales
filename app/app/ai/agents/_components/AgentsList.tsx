@@ -2,9 +2,10 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
+import { AvatarDoAgente } from "@/components/ai/AvatarDoAgente";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Robot, Plus } from "@/lib/ui/icons";
+import { Painel } from "@/components/ui/painel";
+import { Plus } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
 import { useAgentsList } from "@/hooks/ai/useAgents";
 import type { AgentRow } from "@/hooks/ai/useAgent";
@@ -15,9 +16,11 @@ import { deriveAgentStatus } from "./AgentStatusBadge";
 interface Props {
   initialData: AgentRow[];
   canWrite: boolean;
+  /** id do número conectado → como a tela o chama ("Loja · +55 11 …"). */
+  nomesDosNumeros?: Record<string, string>;
 }
 
-export function AgentsList({ initialData, canWrite }: Props) {
+export function AgentsList({ initialData, canWrite, nomesDosNumeros = {} }: Props) {
   const t = useT();
   const { data, isLoading } = useAgentsList({ initialData });
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -37,30 +40,37 @@ export function AgentsList({ initialData, canWrite }: Props) {
     });
   }, [agents, status, query, showArchived]);
 
+  const noAr = agents.filter((a) => deriveAgentStatus(a) === "published").length;
+  const ativos = agents.filter((a) => deriveAgentStatus(a) !== "archived").length;
+
   if (!isLoading && agents.length === 0) {
     return (
-      <Card className="flex flex-col items-center gap-3 p-10 text-center">
-        <Robot size={36} aria-hidden className="text-muted-foreground" />
-        <h2 className="font-medium">{t("Nenhum agent configurado")}</h2>
-        <p className="max-w-sm text-sm text-muted-foreground">
-          {t(
-            "Crie um agent para responder a conversas no WhatsApp com IA. Você configura prompt, tools, gatilhos e janela de contexto.",
-          )}
-        </p>
-        {canWrite && (
-          <Link href="/app/ai/agents/new">
-            <Button className="mt-1">
-              <Plus size={14} aria-hidden className="mr-2" /> {t("Novo agente")}
+      <Painel>
+        <div className="flex flex-col items-center gap-4 px-4 py-10 text-center">
+          <AvatarDoAgente icone="assistente" tamanho="lg" />
+          <div className="space-y-1.5">
+            <h2 className="text-lg font-semibold tracking-tight">{t("Nenhum agente ainda")}</h2>
+            <p className="max-w-md text-sm text-muted-foreground">
+              {t(
+                "Um agente responde às conversas do WhatsApp por você. Você define como ele fala, o que ele sabe e o que pode fazer — e decide se ele responde sozinho ou só sugere.",
+              )}
+            </p>
+          </div>
+          {canWrite && (
+            <Button asChild>
+              <Link href="/app/ai/agents/new">
+                <Plus size={16} aria-hidden /> {t("Novo agente")}
+              </Link>
             </Button>
-          </Link>
-        )}
-      </Card>
+          )}
+        </div>
+      </Painel>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <Painel semRecuo>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3">
         <AgentsListFilters
           status={status}
           onStatusChange={setStatus}
@@ -69,28 +79,25 @@ export function AgentsList({ initialData, canWrite }: Props) {
           showArchived={showArchived}
           onShowArchivedChange={setShowArchived}
         />
-        {canWrite && (
-          <Link href="/app/ai/agents/new">
-            <Button>
-              <Plus size={14} aria-hidden className="mr-2" /> {t("Novo agente")}
-            </Button>
-          </Link>
-        )}
+        <p className="text-sm text-muted-foreground" data-testid="agentes-no-ar">
+          <span className="font-medium text-foreground tabular-nums">{noAr}</span> {t("de")}{" "}
+          <span className="tabular-nums">{ativos}</span> {t("no ar")}
+        </p>
       </div>
 
       {filtered.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-muted-foreground">
-          {t("Nenhum agent corresponde aos filtros atuais.")}
-        </Card>
+        <p className="px-5 py-10 text-center text-sm text-muted-foreground">
+          {t("Nenhum agente corresponde aos filtros atuais.")}
+        </p>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul className="divide-y divide-border" aria-label={t("Agentes de IA")}>
           {filtered.map((agent) => (
             <li key={agent.id}>
-              <AgentCard agent={agent} canWrite={canWrite} />
+              <AgentCard agent={agent} canWrite={canWrite} nomesDosNumeros={nomesDosNumeros} />
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </Painel>
   );
 }
