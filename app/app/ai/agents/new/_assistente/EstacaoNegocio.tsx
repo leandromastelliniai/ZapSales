@@ -10,12 +10,7 @@ import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/hooks/i18n/useT";
-import {
-  AVISO_DE_RAMO_REGULADO,
-  GRUPOS_DE_RAMO,
-  buscarRamos,
-  ramoPorId,
-} from "@/lib/ai/agents/assistente/ramos";
+import { GRUPOS_DE_RAMO, buscarRamos } from "@/lib/ai/agents/assistente/ramos";
 import { NEGOCIO_MAX } from "@/lib/ai/agents/assistente/compor";
 import { escolherRamo, type EstadoDoAssistente } from "@/lib/ai/agents/assistente/estado";
 import type { IdiomaDoAgente } from "@/lib/ai/agents/perfil";
@@ -34,7 +29,6 @@ export function EstacaoNegocio({ estado, idioma, mudar }: Props) {
   const [consulta, setConsulta] = React.useState("");
   const achados = buscarRamos(consulta, idioma);
   const escolhido = estado.respostas.ramoId;
-  const ramo = escolhido ? ramoPorId(escolhido) : undefined;
 
   return (
     <div className="space-y-5">
@@ -136,16 +130,6 @@ export function EstacaoNegocio({ estado, idioma, mudar }: Props) {
           </span>
         </button>
       </div>
-
-      {ramo?.regulado ? (
-        <p
-          role="note"
-          data-testid="aviso-de-ramo-regulado"
-          className="rounded-lg bg-funil-fundo px-3 py-2 text-sm text-funil"
-        >
-          {AVISO_DE_RAMO_REGULADO[idioma]}
-        </p>
-      ) : null}
     </div>
   );
 }

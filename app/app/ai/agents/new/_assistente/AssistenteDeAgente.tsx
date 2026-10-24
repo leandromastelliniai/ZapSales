@@ -24,6 +24,7 @@ import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/hooks/i18n/useT";
 import { comporAgente } from "@/lib/ai/agents/assistente/compor";
+import { AVISO_DE_RAMO_REGULADO, ramoPorId } from "@/lib/ai/agents/assistente/ramos";
 import {
   escolherRamo,
   estadoInicial,
@@ -90,6 +91,7 @@ export function AssistenteDeAgente({ padroes, funilPadraoId, capacidades, idioma
   }, [estado, lido]);
 
   const agente = React.useMemo(() => comporAgente(estado.respostas), [estado.respostas]);
+  const ramo = estado.respostas.ramoId ? ramoPorId(estado.respostas.ramoId) : undefined;
 
   const irPara = (estacao: Estacao) => setEstado((e) => ({ ...e, estacao }));
   const proxima = () => irPara(Math.min(5, estado.estacao + 1) as Estacao);
@@ -169,15 +171,16 @@ export function AssistenteDeAgente({ padroes, funilPadraoId, capacidades, idioma
             />
           ) : null}
 
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={estado.estacao === 1 || criando}
-              onClick={anterior}
-            >
-              {t("Voltar")}
-            </Button>
+          {/* Grudado no pé: na estação 1 a lista de negócios é longa, e o "Continuar" não pode ficar
+              no fim dela, fora de vista. */}
+          <div className="sticky bottom-0 z-10 -mx-5 -mb-5 flex flex-wrap items-center justify-between gap-2 rounded-b-xl border-t border-border bg-surface px-5 py-4">
+            {estado.estacao > 1 ? (
+              <Button type="button" variant="ghost" disabled={criando} onClick={anterior}>
+                {t("Voltar")}
+              </Button>
+            ) : (
+              <span />
+            )}
             {estado.estacao < 5 ? (
               <span className="flex flex-wrap items-center gap-2">
                 {estado.estacao === 1 ? (
@@ -198,8 +201,17 @@ export function AssistenteDeAgente({ padroes, funilPadraoId, capacidades, idioma
           </div>
         </section>
 
-        <div className="lg:sticky lg:top-4 lg:self-start">
+        <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
           <PreviaFixa agente={agente} nome={estado.nome} />
+          {ramo?.regulado ? (
+            <p
+              role="note"
+              data-testid="aviso-de-ramo-regulado"
+              className="rounded-lg bg-funil-fundo px-3 py-2 text-sm text-funil"
+            >
+              {AVISO_DE_RAMO_REGULADO[idioma]}
+            </p>
+          ) : null}
         </div>
       </div>
     </CorpoDaPagina>

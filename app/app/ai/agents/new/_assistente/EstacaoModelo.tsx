@@ -57,7 +57,7 @@ export function EstacaoModelo({ estado, idioma, mudar }: Props) {
                 marcado ? "border-2 border-foreground" : "border-border hover:border-foreground/50",
               )}
             >
-              <span className="flex flex-wrap items-center gap-2">
+              <span className="flex min-h-6 flex-wrap items-center gap-2">
                 <span className="text-sm font-medium">{c.titulo}</span>
                 {m.id === recomendado ? <Selo significado="ia">{t("Recomendado")}</Selo> : null}
               </span>
