@@ -9,7 +9,12 @@ import type { CredentialRow } from "@/hooks/ai/useCredentials";
 import { lerAmbiente } from "@/lib/instalacao/ambiente";
 import { fusoUtilizavel } from "@/lib/tempo/fusos";
 
-import { AgentForm } from "../[id]/_components/AgentForm";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { capacidadesPorModelo } from "@/lib/ai/agents/capacidades-do-modelo";
+import { funilPadraoDaOrg, resolverPadroesDeIa } from "@/lib/ai/agents/padroes-de-ia";
+
+import { AssistenteDeAgente } from "./_assistente/AssistenteDeAgente";
+import { EditorComEstadoDoAssistente } from "./_assistente/EditorComEstadoDoAssistente";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +36,11 @@ function provedoresDaInstalacao(): string[] {
     .map(([id]) => id);
 }
 
-export default async function NewAgentPage() {
+export default async function NewAgentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ modo?: string }>;
+}) {
   const user = await requireAuth();
   const activeOrg = await resolveActiveOrg(user);
   if (!activeOrg) redirect("/app");
@@ -39,8 +48,26 @@ export default async function NewAgentPage() {
     redirect("/403");
   }
 
+  // `?modo=assistente` abre o assistente guiado; qualquer outra coisa, o editor completo
+  // de sempre (que continua sendo o que as specs e os links antigos esperam nesta rota).
+  const { modo } = await searchParams;
+  if (modo === "assistente") {
+    // Service role: o `organization_id` vem da sessão (`resolveActiveOrg`), nunca da URL.
+    const admin = createAdminClient();
+    const [padroes, funilPadraoId] = await Promise.all([
+      resolverPadroesDeIa(admin, activeOrg.orgId),
+      funilPadraoDaOrg(admin, activeOrg.orgId),
+    ]);
+    return <AssistenteDeAgente
+        padroes={padroes}
+        funilPadraoId={funilPadraoId}
+        capacidades={capacidadesPorModelo()}
+        idiomaDaTela={user.idioma}
+      />;
+  }
+
   const supabase = await createClient();
-  const [orgRes, credentialsRes, channelSessions] = await Promise.all([
+  const [orgRes, credentialsRes, channelSessions, funilPadraoId] = await Promise.all([
     // O provedor que a organização JÁ usa: sem ele, o agente novo nascia
     // `anthropic` e o formulário pedia "Cadastrar credencial anthropic" para
     // quem só tem chave da OpenAI.
@@ -50,6 +77,8 @@ export default async function NewAgentPage() {
       .select(CREDENTIAL_COLUMNS)
       .eq("organization_id", activeOrg.orgId),
     listSelectableChannels(supabase, activeOrg.orgId),
+    // O funil de entrada, para o modelo da galeria que mexe no funil já nascer com escopo.
+    funilPadraoDaOrg(createAdminClient(), activeOrg.orgId),
   ]);
 
   const credentials = (credentialsRes.data ?? []) as CredentialRow[];
@@ -59,8 +88,9 @@ export default async function NewAgentPage() {
 
   return (
     <div className="flex h-full flex-col gap-6 p-6">
-      <AgentForm
-        mode="create"
+      <EditorComEstadoDoAssistente
+        capacidadesPorModelo={capacidadesPorModelo()}
+        funilPadraoId={funilPadraoId}
         credentials={credentials}
         provedoresDaInstalacao={provedoresDaInstalacao()}
         provedorPadrao={llmDaOrg?.provider}

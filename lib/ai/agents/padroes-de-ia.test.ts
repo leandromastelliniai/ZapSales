@@ -96,7 +96,10 @@ describe("resolverPadroesDeIa", () => {
       organizations: [ok({ settings: {} })],
       ai_models: [ok([])],
     });
-    expect(await resolverPadroesDeIa(admin, "org")).toMatchObject({ ok: false, motivo: "sem_modelo" });
+    expect(await resolverPadroesDeIa(admin, "org")).toMatchObject({
+      ok: false,
+      motivo: "sem_modelo",
+    });
   });
 
   it("provedor desconhecido nas configurações cai em anthropic", async () => {
@@ -106,7 +109,10 @@ describe("resolverPadroesDeIa", () => {
       ai_provider_credentials: [ok(null)],
       ai_models: [ok([MODELO])],
     });
-    expect(await resolverPadroesDeIa(admin, "org")).toMatchObject({ ok: true, provider: "anthropic" });
+    expect(await resolverPadroesDeIa(admin, "org")).toMatchObject({
+      ok: true,
+      provider: "anthropic",
+    });
   });
 
   it("erro de banco não lança: devolve ok:false", async () => {
@@ -118,10 +124,15 @@ describe("resolverPadroesDeIa", () => {
 
 describe("funilPadraoDaOrg", () => {
   it("devolve o id do funil padrão não arquivado, ou null", async () => {
-    expect(await funilPadraoDaOrg(adminFalso({ crm_pipelines: [ok({ id: "f1" })] }), "org")).toBe("f1");
+    expect(await funilPadraoDaOrg(adminFalso({ crm_pipelines: [ok({ id: "f1" })] }), "org")).toBe(
+      "f1",
+    );
     expect(await funilPadraoDaOrg(adminFalso({ crm_pipelines: [ok(null)] }), "org")).toBeNull();
     expect(
-      await funilPadraoDaOrg(adminFalso({ crm_pipelines: [{ data: null, error: { message: "x" } }] }), "org"),
+      await funilPadraoDaOrg(
+        adminFalso({ crm_pipelines: [{ data: null, error: { message: "x" } }] }),
+        "org",
+      ),
     ).toBeNull();
   });
 });

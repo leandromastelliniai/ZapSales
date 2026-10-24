@@ -1018,3 +1018,41 @@
     transform: none;
   }
 }
+
+/* ---- Assistente de criação de agente: o "vivo" da IA, sem agitação -----
+   Duas peças e só: um BRILHO ESTÁTICO ao redor do que é a IA falando (a prévia) e
+   UM pulso, uma vez, quando uma estação passa a ser a atual. A regra é a do pulso do
+   Kanban acima: vivo é o que responde, não o que se agita; nada repete.
+
+   A cor é `--color-ia` (o papel "automático"), não a de destaque do revendedor:
+   quem muda de marca continua vendo a IA com a cor da IA.
+
+   `prefers-reduced-motion: reduce` mostra o MESMO estado, parado: o brilho nunca foi
+   animação, e a estação atual segue maior e com anel. */
+.aura-ia {
+  border-color: color-mix(in srgb, var(--color-ia) 38%, var(--color-border));
+  box-shadow:
+    0 0 0 3px var(--color-ia-fundo),
+    0 0 28px color-mix(in srgb, var(--color-ia) 20%, transparent);
+}
+
+@keyframes zapsales-estacao-pulse {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-ia) 45%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+/* O elemento é REMONTADO a cada estação (key = a estação): é a remontagem que faz a
+   animação recomeçar, como no `card-pulse`. */
+.pulso-de-estacao {
+  animation: zapsales-estacao-pulse var(--duration-slow) var(--ease-out) 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulso-de-estacao {
+    animation: none;
+  }
+}

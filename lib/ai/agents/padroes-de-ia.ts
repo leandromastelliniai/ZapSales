@@ -39,7 +39,10 @@ function provedorDaOrganizacao(settings: unknown): Provider {
     : "anthropic";
 }
 
-export async function resolverPadroesDeIa(admin: SupabaseClient, orgId: string): Promise<PadroesDeIa> {
+export async function resolverPadroesDeIa(
+  admin: SupabaseClient,
+  orgId: string,
+): Promise<PadroesDeIa> {
   try {
     const { data: org, error: orgErr } = await admin
       .from("organizations")
@@ -77,7 +80,12 @@ export async function resolverPadroesDeIa(admin: SupabaseClient, orgId: string):
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      return { ok: false, motivo: "sem_chave", provider, chaveEmVerificacao: Boolean(pendente?.provider) };
+      return {
+        ok: false,
+        motivo: "sem_chave",
+        provider,
+        chaveEmVerificacao: Boolean(pendente?.provider),
+      };
     }
 
     return { ok: true, provider, model: escolha.modelId, credentialId };
@@ -91,7 +99,10 @@ export async function resolverPadroesDeIa(admin: SupabaseClient, orgId: string):
  * trabalhar. Falha ou ausência = `null` (escopo vazio): mexer no funil errado é pior
  * que não mexer em nenhum. Mesma consulta do onboarding.
  */
-export async function funilPadraoDaOrg(admin: SupabaseClient, orgId: string): Promise<string | null> {
+export async function funilPadraoDaOrg(
+  admin: SupabaseClient,
+  orgId: string,
+): Promise<string | null> {
   try {
     const { data, error } = await admin
       .from("crm_pipelines")

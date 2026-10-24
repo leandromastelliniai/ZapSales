@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { capacidadesDoModelo, modeloMexeNoFunil } from "../capacidades-do-modelo";
 import { IDS_DE_MODELO, aplicarModelo, instrucoesComNegocio } from "../modelos";
 import { IDIOMAS_DO_AGENTE, LIMITES_DO_PERFIL } from "../perfil";
 import { versionCreateSchema } from "../validation";
@@ -9,6 +8,7 @@ import {
   comporAgente,
   respostasIniciais,
   sugestaoDe,
+  tomSugerido,
   type RespostasDoAssistente,
 } from "./compor";
 import { RAMOS, RAMOS_COM_TEXTO_NO_PRIMEIRO_CORTE, ramoPorId } from "./ramos";
@@ -19,15 +19,13 @@ function base(sobre: Partial<RespostasDoAssistente> = {}): RespostasDoAssistente
 
 describe("composição do agente do assistente", () => {
   it.each(IDS_DE_MODELO.flatMap((m) => IDIOMAS_DO_AGENTE.map((i) => [m, i] as const)))(
-    "sem ramo, %s em %s compõe exatamente o modelo da galeria mais as capacidades do modelo",
+    "sem ramo, %s em %s compõe exatamente o modelo da galeria",
     (modeloId, idioma) => {
       const modelo = aplicarModelo(modeloId, idioma);
-      const composto = comporAgente(base({ idioma, modeloId, ramoId: null, tom: modelo.profile_tone }));
-      expect(composto).toEqual({
-        ...modelo,
-        tool_ids: capacidadesDoModelo(modeloId),
-        usa_funil: modeloMexeNoFunil(modeloId),
-      });
+      const composto = comporAgente(
+        base({ idioma, modeloId, ramoId: null, tom: modelo.profile_tone }),
+      );
+      expect(composto).toEqual(modelo);
     },
   );
 
@@ -39,7 +37,9 @@ describe("composição do agente do assistente", () => {
   });
 
   it("ramo com texto acrescenta o bloco 'Neste negócio' e usa a abertura do ramo", () => {
-    const composto = comporAgente(base({ ramoId: "clinica-odontologica", modeloId: "agendamento" }));
+    const composto = comporAgente(
+      base({ ramoId: "clinica-odontologica", modeloId: "agendamento" }),
+    );
     const texto = ramoPorId("clinica-odontologica")!.texto!["pt-BR"];
     expect(composto.system_prompt).toContain("Neste negócio");
     expect(composto.system_prompt).toContain(texto.pessoa);
@@ -73,10 +73,12 @@ describe("composição do agente do assistente", () => {
     );
     const nova = comporAgente({ ...r, chamarPessoaQuando: "o cliente estiver nervoso" });
     expect(nova.system_prompt).toContain("o cliente estiver nervoso");
-    expect(nova.system_prompt).not.toContain(ramoPorId("advocacia")!.texto!["pt-BR"].chamarPessoaQuando);
-    expect(comporAgente({ ...r, chamarPessoaQuando: sugestaoDe(r, "chamarPessoaQuando") }).system_prompt).toBe(
-      comporAgente(r).system_prompt,
+    expect(nova.system_prompt).not.toContain(
+      ramoPorId("advocacia")!.texto!["pt-BR"].chamarPessoaQuando,
     );
+    expect(
+      comporAgente({ ...r, chamarPessoaQuando: sugestaoDe(r, "chamarPessoaQuando") }).system_prompt,
+    ).toBe(comporAgente(r).system_prompt);
   });
 
   it("os atalhos acrescentam uma frase no idioma certo", () => {
@@ -93,7 +95,9 @@ describe("composição do agente do assistente", () => {
 
   it("restrict_topics nasce sempre desligado", () => {
     for (const r of RAMOS) {
-      expect(comporAgente(base({ ramoId: r.id, modeloId: r.modeloRecomendado })).restrict_topics).toBe(false);
+      expect(
+        comporAgente(base({ ramoId: r.id, modeloId: r.modeloRecomendado })).restrict_topics,
+      ).toBe(false);
     }
   });
 
@@ -105,7 +109,9 @@ describe("composição do agente do assistente", () => {
         const c = comporAgente(
           base({ idioma, ramoId: id, modeloId: ramo.modeloRecomendado, negocio, tom: "formal" }),
         );
-        expect(c.profile_welcome.length, `${id}/${idioma}`).toBeLessThanOrEqual(LIMITES_DO_PERFIL.boasVindas);
+        expect(c.profile_welcome.length, `${id}/${idioma}`).toBeLessThanOrEqual(
+          LIMITES_DO_PERFIL.boasVindas,
+        );
         expect(c.system_prompt.trim().length).toBeLessThanOrEqual(20000);
         const r = versionCreateSchema.safeParse({
           system_prompt: c.system_prompt,
@@ -121,11 +127,19 @@ describe("composição do agente do assistente", () => {
           restrict_topics: c.restrict_topics,
           allowed_topics: c.allowed_topics,
           off_topic_reply: c.off_topic_reply,
-          tool_ids: c.tool_ids,
         });
         expect(r.success, JSON.stringify(r.success ? "" : r.error.issues)).toBe(true);
       }
     }
+  });
+
+  it("o tom sugerido é o do ramo, quando ele tem opinião, senão o do modelo", () => {
+    expect(tomSugerido("advocacia", "atendimento", "pt-BR")).toBe("formal");
+    expect(tomSugerido("salao", "agendamento", "pt-BR")).toBe("descontraido");
+    expect(tomSugerido("fisioterapia", "agendamento", "pt-BR")).toBe(
+      aplicarModelo("agendamento", "pt-BR").profile_tone,
+    );
+    expect(tomSugerido(null, "vendas", "es")).toBe(aplicarModelo("vendas", "es").profile_tone);
   });
 
   it("o tom escolhido substitui o tom do modelo", () => {

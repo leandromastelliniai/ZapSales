@@ -7,6 +7,9 @@
  *
  * Nasce como RASCUNHO e sem número de WhatsApp (`channel_session_id: null`): quem cobra
  * o número é a publicação, nunca o salvar.
+ *
+ * Roda no navegador: as capacidades de cada modelo chegam PRONTAS do servidor
+ * (`capacidadesPorModelo`), nunca calculadas aqui.
  */
 import type { z } from "zod";
 
@@ -16,8 +19,15 @@ import type { AgenteComposto } from "./compor";
 
 export type PayloadDeCriacao = z.input<typeof agentMcpCreateSchema>;
 
+/** As capacidades do modelo escolhido, como a página as entrega. */
+export interface CapacidadesDoModeloEscolhido {
+  tool_ids: string[];
+  usa_funil: boolean;
+}
+
 export function payloadDeCriacao(
   agente: AgenteComposto,
+  capacidades: CapacidadesDoModeloEscolhido,
   padroes: Extract<PadroesDeIa, { ok: true }>,
   opcoes: { nome: string; funilPadraoId: string | null },
 ): PayloadDeCriacao & { version: NonNullable<PayloadDeCriacao["version"]> } {
@@ -30,8 +40,8 @@ export function payloadDeCriacao(
       model: padroes.model,
       credential_id: padroes.credentialId,
       channel_session_id: null,
-      tool_ids: agente.tool_ids,
-      pipeline_ids: agente.usa_funil && opcoes.funilPadraoId ? [opcoes.funilPadraoId] : [],
+      tool_ids: capacidades.tool_ids,
+      pipeline_ids: capacidades.usa_funil && opcoes.funilPadraoId ? [opcoes.funilPadraoId] : [],
       profile_persona: agente.profile_persona,
       profile_tone: agente.profile_tone,
       profile_objective: agente.profile_objective,

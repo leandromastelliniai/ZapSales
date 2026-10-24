@@ -26,14 +26,19 @@ describe("catálogo de ramos do assistente", () => {
 
   it("todo grupo tem ao menos um ramo e nome nos três idiomas", () => {
     for (const g of GRUPOS_DE_RAMO) {
-      expect(RAMOS.some((r) => r.grupo === g.id), g.id).toBe(true);
-      for (const idioma of IDIOMAS_DO_AGENTE) expect(g.nome[idioma].trim(), `${g.id}/${idioma}`).not.toBe("");
+      expect(
+        RAMOS.some((r) => r.grupo === g.id),
+        g.id,
+      ).toBe(true);
+      for (const idioma of IDIOMAS_DO_AGENTE)
+        expect(g.nome[idioma].trim(), `${g.id}/${idioma}`).not.toBe("");
     }
   });
 
   it("todo ramo tem nome nos três idiomas e um modelo recomendado que existe", () => {
     for (const r of RAMOS) {
-      for (const idioma of IDIOMAS_DO_AGENTE) expect(r.nome[idioma].trim(), `${r.id}/${idioma}`).not.toBe("");
+      for (const idioma of IDIOMAS_DO_AGENTE)
+        expect(r.nome[idioma].trim(), `${r.id}/${idioma}`).not.toBe("");
       expect(IDS_DE_MODELO as readonly string[]).toContain(r.modeloRecomendado);
     }
   });
@@ -57,7 +62,8 @@ describe("catálogo de ramos do assistente", () => {
       expect(ramoPorId(id)?.regulado, id).toBe(true);
     }
     expect(ramoPorId("ecommerce")?.regulado).toBe(false);
-    for (const idioma of IDIOMAS_DO_AGENTE) expect(AVISO_DE_RAMO_REGULADO[idioma].trim()).not.toBe("");
+    for (const idioma of IDIOMAS_DO_AGENTE)
+      expect(AVISO_DE_RAMO_REGULADO[idioma].trim()).not.toBe("");
   });
 
   it("só os ramos do primeiro corte carregam texto próprio, e o texto está nos três idiomas", () => {
@@ -82,7 +88,9 @@ describe("catálogo de ramos do assistente", () => {
   it("o texto de cada idioma é diferente (tradução de verdade, não cópia)", () => {
     for (const id of RAMOS_COM_TEXTO_NO_PRIMEIRO_CORTE) {
       const t = ramoPorId(id)!.texto!;
-      expect(new Set(IDIOMAS_DO_AGENTE.map((i) => t[i].abertura)).size, id).toBe(IDIOMAS_DO_AGENTE.length);
+      expect(new Set(IDIOMAS_DO_AGENTE.map((i) => t[i].abertura)).size, id).toBe(
+        IDIOMAS_DO_AGENTE.length,
+      );
     }
   });
 
@@ -96,20 +104,33 @@ describe("catálogo de ramos do assistente", () => {
           t[idioma].chamarPessoaQuando,
           ...t[idioma].perguntasDeTeste,
         ].join(" ");
-        expect(tudo, `${id}/${idioma}`).not.toMatch(/R\$|\$\s?\d|\d{2}[ -]?\d{4,5}-?\d{4}|\b\d{1,2}h\b/);
+        expect(tudo, `${id}/${idioma}`).not.toMatch(
+          /R\$|\$\s?\d|\d{2}[ -]?\d{4,5}-?\d{4}|\b\d{1,2}h\b/,
+        );
       }
     }
   });
 
   it("ramo regulado com texto nomeia o que nunca prometer", () => {
-    for (const id of ["clinica-medica", "clinica-odontologica", "estetica", "psicologia", "advocacia", "contabilidade"]) {
+    for (const id of [
+      "clinica-medica",
+      "clinica-odontologica",
+      "estetica",
+      "psicologia",
+      "advocacia",
+      "contabilidade",
+    ]) {
       const t = ramoPorId(id)!.texto!["pt-BR"];
-      expect(t.nuncaPrometer.join(" ").toLowerCase(), id).toMatch(/resultado|diagnóstico|prazo|valor/);
+      expect(t.nuncaPrometer.join(" ").toLowerCase(), id).toMatch(
+        /resultado|diagnóstico|prazo|valor/,
+      );
     }
   });
 
   it("o motivo da recomendação existe para todo ramo, com ou sem texto próprio", () => {
-    for (const r of RAMOS) for (const idioma of IDIOMAS_DO_AGENTE) expect(motivoDoModelo(r, idioma).trim(), r.id).not.toBe("");
+    for (const r of RAMOS)
+      for (const idioma of IDIOMAS_DO_AGENTE)
+        expect(motivoDoModelo(r, idioma).trim(), r.id).not.toBe("");
   });
 });
 

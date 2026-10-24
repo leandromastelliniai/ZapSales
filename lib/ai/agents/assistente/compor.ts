@@ -12,7 +12,6 @@
  * "Voltar à sugestão" é recompor: `sugestaoDe` devolve o texto que a composição usaria
  * se a pessoa não tivesse editado nada, então restaurar não guarda cópia de nada.
  */
-import { capacidadesDoModelo, modeloMexeNoFunil } from "../capacidades-do-modelo";
 import {
   aplicarModelo,
   instrucoesComNegocio,
@@ -38,14 +37,27 @@ export interface RespostasDoAssistente {
   usarNomeDoCliente: boolean;
 }
 
-export type AgenteComposto = CamposDoModelo & {
-  tool_ids: string[];
-  /** O agente pode mexer no funil? Se sim, o funil padrão entra no escopo dele. */
-  usa_funil: boolean;
-};
+/**
+ * Os campos do formulário que a composição produz. As capacidades NÃO entram aqui: elas
+ * vêm do servidor (`capacidadesPorModelo`) e este módulo roda no navegador.
+ */
+export type AgenteComposto = CamposDoModelo;
 
 /** O tamanho máximo do nome do negócio que entra no texto do agente. */
 export const NEGOCIO_MAX = 80;
+
+/**
+ * O tom que o assistente sugere: o do ramo, quando o ramo tem opinião, senão o do
+ * próprio modelo. É a sugestão — a pessoa escolhe outro na estação do tom.
+ */
+export function tomSugerido(
+  ramoId: string | null,
+  modeloId: IdDoModelo,
+  idioma: IdiomaDoAgente,
+): TomDoAgente {
+  const doRamo = ramoId ? ramoPorId(ramoId)?.tomRecomendado : undefined;
+  return doRamo ?? aplicarModelo(modeloId, idioma).profile_tone;
+}
 
 /** Respostas de quem acabou de abrir o assistente: tudo neutro, Atendimento. */
 export function respostasIniciais(idioma: IdiomaDoAgente): RespostasDoAssistente {
@@ -54,7 +66,7 @@ export function respostasIniciais(idioma: IdiomaDoAgente): RespostasDoAssistente
     ramoId: null,
     modeloId: "atendimento",
     negocio: "",
-    tom: aplicarModelo("atendimento", idioma).profile_tone,
+    tom: tomSugerido(null, "atendimento", idioma),
     abertura: null,
     chamarPessoaQuando: null,
     usarNomeDoCliente: false,
@@ -66,7 +78,10 @@ function negocioLimpo(r: RespostasDoAssistente): string {
 }
 
 /** O texto que a composição usaria no campo, sem nenhuma edição da pessoa. */
-export function sugestaoDe(r: RespostasDoAssistente, campo: "abertura" | "chamarPessoaQuando"): string {
+export function sugestaoDe(
+  r: RespostasDoAssistente,
+  campo: "abertura" | "chamarPessoaQuando",
+): string {
   const texto = r.ramoId ? ramoPorId(r.ramoId)?.texto?.[r.idioma] : undefined;
   if (campo === "chamarPessoaQuando") return texto?.chamarPessoaQuando ?? "";
   if (!texto) return aplicarModelo(r.modeloId, r.idioma).profile_welcome;
@@ -88,25 +103,34 @@ export function acrescentarAvisoDeIa(abertura: string, idioma: IdiomaDoAgente): 
 
 const ROTULOS: Record<
   IdiomaDoAgente,
-  { titulo: string; vocabulario: (pessoa: string, compromisso: string) => string; nunca: string; chamar: string; nome: string }
+  {
+    titulo: string;
+    vocabulario: (pessoa: string, compromisso: string) => string;
+    nunca: string;
+    chamar: string;
+    nome: string;
+  }
 > = {
   "pt-BR": {
     titulo: "Neste negócio:",
-    vocabulario: (pessoa, compromisso) => `Como chamar quem fala com você: ${pessoa}. O que você conduz: ${compromisso}.`,
+    vocabulario: (pessoa, compromisso) =>
+      `Como chamar quem fala com você: ${pessoa}. O que você conduz: ${compromisso}.`,
     nunca: "Nunca prometa",
     chamar: "Chame uma pessoa da equipe quando",
     nome: "Quando souber o nome da pessoa, chame-a pelo nome.",
   },
   es: {
     titulo: "En este negocio:",
-    vocabulario: (pessoa, compromisso) => `Cómo llamar a quien te escribe: ${pessoa}. Lo que conduces: ${compromisso}.`,
+    vocabulario: (pessoa, compromisso) =>
+      `Cómo llamar a quien te escribe: ${pessoa}. Lo que conduces: ${compromisso}.`,
     nunca: "Nunca prometas",
     chamar: "Llama a una persona del equipo cuando",
     nome: "Cuando sepas el nombre de la persona, llámala por su nombre.",
   },
   en: {
     titulo: "In this business:",
-    vocabulario: (pessoa, compromisso) => `How to call the person writing to you: ${pessoa}. What you lead them to: ${compromisso}.`,
+    vocabulario: (pessoa, compromisso) =>
+      `How to call the person writing to you: ${pessoa}. What you lead them to: ${compromisso}.`,
     nunca: "Never promise",
     chamar: "Bring in a person from the team when",
     nome: "When you know the person's name, use it.",
@@ -119,7 +143,9 @@ export function comporAgente(r: RespostasDoAssistente): AgenteComposto {
   const negocio = negocioLimpo(r);
   const rotulos = ROTULOS[r.idioma];
 
-  let instrucoes = negocio ? instrucoesComNegocio(modelo.system_prompt, r.idioma, negocio) : modelo.system_prompt;
+  let instrucoes = negocio
+    ? instrucoesComNegocio(modelo.system_prompt, r.idioma, negocio)
+    : modelo.system_prompt;
 
   const chamar = (r.chamarPessoaQuando ?? sugestaoDe(r, "chamarPessoaQuando")).trim();
   const linhas: string[] = [];
@@ -138,7 +164,5 @@ export function comporAgente(r: RespostasDoAssistente): AgenteComposto {
     system_prompt: instrucoes,
     profile_tone: r.tom,
     profile_welcome: abertura,
-    tool_ids: capacidadesDoModelo(r.modeloId),
-    usa_funil: modeloMexeNoFunil(r.modeloId),
   };
 }
