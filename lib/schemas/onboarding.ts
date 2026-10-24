@@ -4,7 +4,7 @@
  */
 import { z } from "zod";
 
-import { IDS_DE_MODELO } from "@/lib/ai/agents/modelos";
+import { IDS_DE_MODELO_DO_ONBOARDING } from "@/lib/ai/agents/modelos";
 import { IDIOMAS_DO_AGENTE } from "@/lib/ai/agents/perfil";
 
 export const welcomeSchema = z.object({
@@ -43,7 +43,7 @@ export const aiAgentDefaultSchema = z.object({
    * sempre foi. Quando vem, o perfil e as instruções do modelo substituem o
    * jeito, no `idioma` pedido (o da tela de quem está instalando).
    */
-  ramo: z.enum(IDS_DE_MODELO).optional(),
+  ramo: z.enum(IDS_DE_MODELO_DO_ONBOARDING).optional(),
   idioma: z.enum(IDIOMAS_DO_AGENTE).default("pt-BR"),
   /**
    * As regras da casa — o que vale para QUALQUER agente desta organização

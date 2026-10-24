@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configurar agente — 3 caminhos</title>
+<style>
+:root{
+  --bg:#f5f6fa; --surface:#fff; --elev:#eceef5; --text:#151a2e; --muted:#4b5373; --subtle:#5d6583;
+  --border:#dde1ec; --border-strong:#c5cbdc;
+  --ia:#6236e8; --ia-bg:rgba(119,61,249,.12); --ia-glow:rgba(119,61,249,.35);
+  --humano:#0d7480; --humano-bg:rgba(13,116,128,.12);
+  --funil:#b86e00; --funil-bg:rgba(194,122,0,.14);
+  --ok:#0f7a55; --ok-bg:rgba(15,122,85,.12); --err:#c8372a; --err-bg:rgba(200,55,42,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;background:#e9ebf3;color:var(--text);font:14px/1.45 "Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;padding:28px 24px 80px}
+.wrap{max-width:1180px;margin:0 auto}
+h1{font-size:24px;margin:0 0 6px} .lead{color:var(--muted);margin:0 0 6px;max-width:760px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0 28px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+
+/* cartão de opção */
+.opt{margin:0 0 44px;cursor:pointer;border-radius:22px;padding:14px;background:transparent;border:2px solid transparent;transition:.2s}
+.opt:hover{border-color:var(--border-strong)}
+.opt.selected{border-color:var(--ia);background:rgba(98,54,232,.05);box-shadow:0 0 0 6px rgba(98,54,232,.08)}
+.opt-head{display:flex;align-items:flex-start;gap:14px;margin:0 6px 12px}
+.letter{flex:none;width:38px;height:38px;border-radius:12px;background:var(--text);color:#fff;display:grid;place-items:center;font-weight:700;font-size:18px}
+.opt.selected .letter{background:var(--ia)}
+.opt-head h2{margin:0;font-size:19px}
+.opt-head p{margin:2px 0 0;color:var(--muted);max-width:820px}
+.verdict{display:flex;gap:22px;flex-wrap:wrap;margin:14px 6px 0;font-size:13px}
+.verdict div{flex:1;min-width:240px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+.verdict b{display:block;margin-bottom:2px}
+.verdict .g b{color:var(--ok)} .verdict .r b{color:var(--err)}
+
+/* moldura de navegador */
+.win{background:var(--bg);border:1px solid var(--border-strong);border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(21,26,46,.10)}
+.bar{display:flex;align-items:center;gap:6px;padding:9px 12px;background:#e4e7f1;border-bottom:1px solid var(--border)}
+.bar span{width:10px;height:10px;border-radius:50%;background:#c3c8d8}
+.bar em{margin-left:10px;font-style:normal;font-size:11.5px;color:var(--subtle);background:#fff;border-radius:8px;padding:2px 12px}
+.app{display:flex;min-height:560px}
+.rail{width:54px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;display:flex;flex-direction:column;align-items:center;gap:14px}
+.rail b{width:26px;height:26px;border-radius:8px;background:var(--elev)} .rail b.on{background:var(--ia-bg);outline:2px solid var(--ia)}
+.rail .logo{background:var(--ia);border-radius:9px}
+.main{flex:1;padding:22px 26px;min-width:0}
+.crumb{font-size:12px;color:var(--subtle);margin-bottom:4px}
+.title{font-size:20px;font-weight:700;margin:0 0 14px}
+
+/* peças */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}
+.btn{display:inline-block;border-radius:10px;padding:8px 14px;font-weight:600;font-size:13px;border:1px solid var(--border-strong);background:#fff;color:var(--text)}
+.btn.pri{background:var(--ia);border-color:var(--ia);color:#fff;box-shadow:0 4px 14px var(--ia-glow)}
+.btn.ghost{border-color:transparent;color:var(--muted)}
+.selo{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:600}
+.selo.ia{background:var(--ia-bg);color:var(--ia)} .selo.ok{background:var(--ok-bg);color:var(--ok)}
+.selo.fu{background:var(--funil-bg);color:var(--funil)} .selo.hu{background:var(--humano-bg);color:var(--humano)}
+.hint{font-size:12.5px;color:var(--muted)}
+.hint b{color:var(--ia)}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+
+/* Linha do funil (passos) */
+.stations{display:flex;align-items:center;margin:0 0 20px}
+.st{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--subtle);white-space:nowrap}
+.st i{width:16px;height:16px;border-radius:50%;border:2px solid var(--border-strong);background:#fff;flex:none}
+.st.done i{background:var(--ia);border-color:var(--ia)} .st.done{color:var(--text)}
+.st.now i{width:22px;height:22px;border-color:var(--ia);box-shadow:0 0 0 5px var(--ia-bg),0 0 16px var(--ia-glow)} .st.now{color:var(--ia);font-weight:700}
+.ln{flex:1;height:2px;background:var(--border-strong);margin:0 10px;min-width:14px} .ln.done{background:var(--ia)}
+
+/* tom de voz */
+.tones{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0 14px}
+.tone{border:1px solid var(--border);border-radius:12px;padding:11px;background:#fff;position:relative}
+.tone.sel{border:2px solid var(--ia);background:#faf8ff;box-shadow:0 0 0 4px var(--ia-bg)}
+.tone b{display:block;margin-bottom:6px}
+.tone .ex{font-size:12px;color:var(--muted);background:var(--elev);border-radius:10px;padding:6px 8px}
+.tone .rec{position:absolute;top:-10px;right:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{border:1px dashed var(--ia);color:var(--ia);border-radius:999px;padding:2px 10px;font-size:12px;background:#fff}
+.field{border:1px solid var(--border-strong);border-radius:10px;padding:9px 11px;background:#fff;font-size:13px;color:var(--text);min-height:40px}
+.label{font-weight:700;font-size:13px;margin:12px 0 4px;display:block}
+
+/* prévia ao vivo: aura de IA */
+.live{position:relative;border-radius:16px;padding:14px;background:#fff;border:1px solid #c9bbff;
+  box-shadow:0 0 0 4px rgba(119,61,249,.07),0 0 34px var(--ia-glow);overflow:hidden}
+.live::before{content:"";position:absolute;inset:-60% -30% auto auto;width:240px;height:240px;border-radius:50%;
+  background:radial-gradient(circle,rgba(119,61,249,.20),transparent 65%);pointer-events:none;animation:drift 9s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate(-40px,30px) scale(1.15)}}
+.live h4{margin:0 0 8px;display:flex;align-items:center;gap:8px;font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ia);box-shadow:0 0 0 0 var(--ia-glow);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 8px rgba(119,61,249,0)}100%{box-shadow:0 0 0 0 rgba(119,61,249,0)}}
+.msg{max-width:86%;border-radius:14px;padding:7px 10px;font-size:12.5px;margin:6px 0;position:relative}
+.msg.c{background:var(--elev);border-bottom-left-radius:4px}
+.msg.a{background:var(--ia-bg);color:#2d1a78;margin-left:auto;border-bottom-right-radius:4px}
+.typing{display:inline-flex;gap:4px;padding:9px 12px;background:var(--ia-bg);border-radius:14px;margin-left:auto;display:flex;width:52px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--ia);animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{40%{opacity:.25}}
+.tests{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.tests span{font-size:11.5px;border:1px solid var(--border-strong);border-radius:999px;padding:2px 9px;background:#fff;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.live::before,.dot,.typing i,.bar-fill{animation:none!important}}
+
+/* B: editor */
+.cols{display:grid;grid-template-columns:200px 1fr 270px;gap:16px}
+.idx{font-size:13px}
+.idx div{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:9px;color:var(--muted)}
+.idx .on{background:var(--ia-bg);color:var(--ia);font-weight:700}
+.idx .ck{width:16px;height:16px;border-radius:50%;background:var(--ok);color:#fff;font-size:10px;display:grid;place-items:center;flex:none}
+.idx .pn{width:16px;height:16px;border-radius:50%;border:2px solid var(--border-strong);flex:none}
+.idx .on .pn{border-color:var(--ia)}
+.pk{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+.pk span{border:1px solid var(--border-strong);border-radius:12px;padding:7px 11px;font-size:12.5px;background:#fff}
+.pk span.sel{border:2px solid var(--ia);background:#faf8ff;font-weight:700;box-shadow:0 0 14px var(--ia-bg)}
+.cap{display:flex;align-items:flex-start;gap:10px;padding:10px 2px;border-top:1px solid var(--border)}
+.cap:first-of-type{border-top:0}
+.tg{flex:none;width:34px;height:20px;border-radius:999px;background:var(--border-strong);position:relative;margin-top:2px}
+.tg::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
+.tg.on{background:var(--ia)} .tg.on::after{left:16px}
+.cap b{font-size:13.5px} .cap p{margin:1px 0 0;font-size:12.5px;color:var(--muted)}
+.cap .why{font-size:12px;color:var(--ia);margin-top:3px}
+.meter{height:8px;border-radius:6px;background:var(--elev);overflow:hidden;margin:8px 0 4px}
+.bar-fill{height:100%;width:72%;border-radius:6px;background:linear-gradient(90deg,#6236e8,#9b72ff);box-shadow:0 0 12px var(--ia-glow);transform-origin:left;animation:grow 1.6s ease-out}
+@keyframes grow{from{transform:scaleX(.1)}}
+.sug{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--border);font-size:12.5px}
+.sug .btn{padding:3px 9px;font-size:11.5px;flex:none}
+
+/* C */
+.done-card{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+.rows{font-size:13px}
+.rows div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--border)}
+.rows div:first-child{border-top:0} .rows span{color:var(--muted)}
+.tcase{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12.5px;border-top:1px solid var(--border)}
+.tcase:first-of-type{border-top:0}
+.tl{display:flex;gap:14px;margin-top:14px}
+.tl>div{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.tl h5{margin:0 0 4px;font-size:13px;display:flex;gap:8px;align-items:center}
+.note{font-size:12px;color:var(--funil);background:var(--funil-bg);border-radius:8px;padding:5px 9px;margin-top:8px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Configurar um agente de IA: 3 caminhos</h1>
+<p class="lead">Mesmo agente nos três (a Marina, da Clínica Sorriso), para você comparar o jeito e não o conteúdo. Clique no que parecer mais certo. Os textos são exemplos; o visual final usa o tema real do ZapSales.</p>
+<div class="legend">
+  <span><i style="background:var(--ia)"></i>violeta = IA / o que está sendo configurado</span>
+  <span><i style="background:var(--funil)"></i>âmbar = atenção, pede confirmação</span>
+  <span><i style="background:var(--ok)"></i>verde = pronto</span>
+  <span>✦ O brilho e a pulsação só aparecem onde a IA está "viva" (prévia, medidor) e param com "reduzir movimento".</span>
+</div>
+
+<!-- ============================ A ============================ -->
+<div class="opt" data-choice="a" onclick="toggleSelect(this)">
+  <div class="opt-head">
+    <div class="letter">A</div>
+    <div>
+      <h2>Assistente passo a passo</h2>
+      <p>Uma pergunta por tela, na "Linha do Funil" de cinco estações. Cada escolha vem com exemplo, recomendação e o motivo, e o agente responde ao vivo ao lado enquanto você decide.</p>
+    </div>
+  </div>
+  <div class="win">
+    <div class="bar"><span></span><span></span><span></span><em>/app/ai/agents/new</em></div>
+    <div class="app">
+      <div class="rail"><b class="logo"></b><b></b><b></b><b class="on"></b><b></b><b></b></div>
+      <div class="main">
+        <div class="crumb">Agentes de IA › Novo agente</div>
+        <div class="stations">
+          <div class="st done"><i></i>Negócio</div><div class="ln done"></div>
+          <div class="st now"><i></i>Como fala</div><div class="ln"></div>
+          <div class="st"><i></i>O que faz</div><div class="ln"></div>
+          <div class="st"><i></i>Quando chamar uma pessoa</div><div class="ln"></div>
+          <div class="st"><i></i>Teste</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:18px">
+          <div class="panel">
+            <div class="title" style="font-size:18px;margin-bottom:2px">Como a Marina deve falar com o cliente?</div>
+            <div class="hint">Você pode mudar isso depois. Escolha o que combina com o seu cliente.</div>
+            <div class="tones">
+              <div class="tone"><b>Informal</b><div class="ex">"Oi! Tudo bem? Posso te ajudar?"</div></div>
+              <div class="tone sel"><span class="selo ia rec">★ Recomendado: clínicas</span><b>Formal</b><div class="ex">"Olá! Sou a Marina, da Clínica Sorriso. Como posso ajudar?"</div></div>
+              <div class="tone"><b>Descontraído</b><div class="ex">"E aí! Bora marcar sua avaliação?"</div></div>
+            </div>
+            <div class="hint" style="margin-top:-4px"><b>Por que formal?</b> Em saúde, as pessoas procuram confiança antes de preço. Tom muito solto reduz agendamentos.</div>
+            <span class="label">Primeira frase da conversa</span>
+            <div class="field">Olá! Sou a Marina, assistente virtual da Clínica Sorriso. Em que posso ajudar?</div>
+            <div class="chips"><span class="chip">+ citar o nome do cliente</span><span class="chip">+ avisar que é uma IA</span><span class="chip">+ horário de atendimento</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px">
+              <span class="btn ghost">‹ Voltar</span>
+              <span><span class="btn ghost">Pular, usar o padrão</span> <span class="btn pri">Continuar ›</span></span>
+            </div>
+          </div>
+          <div class="live">
+            <h4><span class="dot"></span>Prévia ao vivo <span class="selo ia">Marina · formal</span></h4>
+            <div class="msg c">Quanto custa uma limpeza?</div>
+            <div class="msg a">Olá! A limpeza dentária parte de R$ 180. Posso verificar um horário para a sua avaliação?</div>
+            <div class="msg c">Tem sábado?</div>
+            <div class="typing"><i></i><i></i><i></i></div>
+            <div class="tests"><span>Testar: "Aceitam convênio?"</span><span>Testar: "Dói?"</span><span>✎ Escrever outra</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="verdict">
+    <div class="g"><b>Bom para</b>Quem nunca configurou nada. Cada decisão é pequena, explicada e testada na hora.</div>
+    <div class="r"><b>Fraco para</b>Quem quer mudar só uma coisa depois: precisa de um atalho para o editor completo.</div>
+  </div>
+</div>
+
+<!-- ============================ B ============================ -->
+<div class="opt" data-choice="b" onclick="toggleSelect(this)">
+  <div class="opt-head">
+    <div class="letter">B</div>
+    <div>
+      <h2>Editor de página única, com guia e medidor</h2>
+      <p>A tela de hoje, só que mais curta de ler: índice com o que está pronto, pacotes de capacidades, "Recomendado" com motivo em cada opção, e um medidor de "força do agente" com sugestões que se aplicam com um clique.</p>
+    </div>
+  </div>
+  <div class="win">
+    <div class="bar"><span></span><span></span><span></span><em>/app/ai/agents/marina</em></div>
+    <div class="app">
+      <div class="rail"><b class="logo"></b><b></b><b></b><b class="on"></b><b></b><b></b></div>
+      <div class="main">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="crumb">Agentes de IA › Marina</div><div class="title">Marina <span class="selo ok" style="vertical-align:3px">Publicado</span></div></div>
+          <div><span class="btn">Testar</span> <span class="btn pri">Publicar mudanças</span></div>
+        </div>
+        <div class="cols">
+          <div class="idx panel" style="padding:10px;align-self:start">
+            <div><span class="ck">✓</span>Quem é</div>
+            <div><span class="ck">✓</span>Como fala</div>
+            <div class="on"><span class="pn"></span>O que pode fazer</div>
+            <div><span class="pn"></span>Quando responde</div>
+            <div><span class="ck">✓</span>Passar para uma pessoa</div>
+            <div><span class="pn"></span>Limites de segurança</div>
+          </div>
+          <div class="panel">
+            <b style="font-size:16px">O que o agente pode fazer</b>
+            <div class="hint">Comece por um pacote. Você ajusta item a item depois.</div>
+            <div class="pk"><span>Só atender</span><span class="sel">Vendas ★ para o seu funil</span><span>Agendamento</span><span>Completo (27)</span></div>
+            <div class="cap"><span class="tg on"></span><div><b>Atender e responder <span class="selo ok">Essencial</span></b><p>Lê o histórico e responde pelo WhatsApp.</p></div></div>
+            <div class="cap"><span class="tg on"></span><div><b>Mover o lead no funil <span class="selo ia">★ Recomendado</span></b><p>Passa o cliente de "Novo" para "Avaliação marcada" sozinho.</p><div class="why">Por quê: funis que se atualizam sozinhos perdem menos clientes na fila.</div></div></div>
+            <div class="cap"><span class="tg"></span><div><b>Enviar orçamento <span class="selo fu">Pede confirmação de uma pessoa</span></b><p>Monta e envia valores. Recomendamos deixar desligado até testar 20 conversas.</p></div></div>
+            <div class="cap"><span class="tg"></span><div><b>Passar para uma pessoa</b><p>Quando o cliente pedir, ou quando a IA não souber.</p><div class="why">Ligue sempre: é a rede de proteção.</div></div></div>
+          </div>
+          <div style="align-self:start;display:flex;flex-direction:column;gap:12px">
+            <div class="live" style="padding:12px">
+              <h4><span class="dot"></span>Força do agente <span class="mono" style="margin-left:auto">72%</span></h4>
+              <div class="meter"><div class="bar-fill"></div></div>
+              <div class="hint">Bom para publicar. 3 sugestões deixam melhor:</div>
+              <div class="sug"><div>Falta o horário de atendimento</div><span class="btn">Definir</span></div>
+              <div class="sug"><div>Sem base de conhecimento: ele pode inventar preços</div><span class="btn">Adicionar</span></div>
+              <div class="sug"><div>Sem regra de "quando chamar uma pessoa"</div><span class="btn">Usar sugerida</span></div>
+            </div>
+            <div class="panel" style="padding:12px">
+              <b style="font-size:13px">Teste rápido</b>
+              <div class="field" style="margin-top:6px;color:var(--subtle)">Pergunte algo à Marina…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="verdict">
+    <div class="g"><b>Bom para</b>Quem volta para ajustar. Um clique chega ao ponto, e o medidor mostra o que falta sem cobrar.</div>
+    <div class="r"><b>Fraco para</b>A primeira vez: ainda há muita coisa na tela e o usuário decide sozinho por onde começar.</div>
+  </div>
+</div>
+
+<!-- ============================ C ============================ -->
+<div class="opt" data-choice="c" onclick="toggleSelect(this)">
+  <div class="opt-head">
+    <div class="letter">C</div>
+    <div>
+      <h2>Os dois, na ordem certa</h2>
+      <p>Primeira vez: cinco perguntas e o agente sai montado e já testado. Depois: o editor B para ajustes finos. O produto também passa a sugerir melhorias a partir das conversas reais.</p>
+    </div>
+  </div>
+  <div class="win">
+    <div class="bar"><span></span><span></span><span></span><em>/app/ai/agents/marina</em></div>
+    <div class="app">
+      <div class="rail"><b class="logo"></b><b></b><b></b><b class="on"></b><b></b><b></b></div>
+      <div class="main">
+        <div class="crumb">Dia 1 · fim do assistente</div>
+        <div class="title">A Marina está pronta <span class="selo ok" style="vertical-align:3px">5 de 5 testes passaram</span></div>
+        <div class="done-card">
+          <div class="panel">
+            <b>O que montamos com as suas respostas</b>
+            <div class="rows" style="margin-top:6px">
+              <div><span>Negócio</span><b>Clínica odontológica</b></div>
+              <div><span>Tom</span><b>Formal</b></div>
+              <div><span>Funil</span><b>Novo → Avaliação marcada → Paciente</b></div>
+              <div><span>Capacidades</span><b>Pacote Agendamento (8)</b></div>
+              <div><span>Chama uma pessoa se</span><b>pedir, ou falar de dor forte</b></div>
+              <div><span>Horário</span><b>Seg–sáb · 8h–19h</b></div>
+            </div>
+            <div style="margin-top:12px"><span class="btn pri">Publicar a Marina</span> <span class="btn">Ajustar no editor</span></div>
+          </div>
+          <div class="live">
+            <h4><span class="dot"></span>Testes automáticos</h4>
+            <div class="tcase"><span class="selo ok">✓</span>"Quanto custa?" → responde com a faixa de preço</div>
+            <div class="tcase"><span class="selo ok">✓</span>"Quero marcar" → oferece horários</div>
+            <div class="tcase"><span class="selo ok">✓</span>"Estou com muita dor" → chama uma pessoa</div>
+            <div class="tcase"><span class="selo ok">✓</span>"Quero cancelar tudo" → respeita o pedido</div>
+            <div class="tcase"><span class="selo ok">✓</span>Pergunta fora do assunto → recusa com educação</div>
+          </div>
+        </div>
+        <div class="tl">
+          <div>
+            <h5><span class="selo ia">Dia 7</span>Sugestão baseada nas conversas</h5>
+            <div class="hint">23 clientes perguntaram "aceitam convênio?" e a Marina chamou uma pessoa em todas.</div>
+            <div style="margin-top:8px"><span class="btn pri">Adicionar resposta sobre convênios</span></div>
+            <div class="note">Ideia a validar: depende de dados que o produto já guarda em "Evolução da IA"</div>
+          </div>
+          <div>
+            <h5><span class="selo ia">Sempre</span>Editor completo</h5>
+            <div class="hint">Índice, pacotes, medidor de força e teste rápido, como na opção B. Nada fica escondido.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="verdict">
+    <div class="g"><b>Bom para</b>Primeira impressão e uso contínuo: o iniciante termina com algo funcionando, o avançado não perde controle.</div>
+    <div class="r"><b>Fraco para</b>É o que mais dá trabalho: o assistente e o editor precisam gerar a mesma configuração por caminhos diferentes.</div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

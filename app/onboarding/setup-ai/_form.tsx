@@ -12,7 +12,11 @@ import { createDefaultAgent, skipAi } from "@/app/actions/onboarding/createDefau
 import type { PromptTemplate } from "@/lib/schemas/onboarding";
 import { cn } from "@/lib/utils";
 import { PROVEDOR_POR_ID } from "@/lib/ai/pontos/provedores";
-import { MODELOS_DE_AGENTE, type IdDoModelo } from "@/lib/ai/agents/modelos";
+import {
+  IDS_DE_MODELO_DO_ONBOARDING,
+  MODELOS_DE_AGENTE,
+  type IdDoModelo,
+} from "@/lib/ai/agents/modelos";
 import { IDIOMAS_DO_AGENTE, type IdiomaDoAgente } from "@/lib/ai/agents/perfil";
 import { useIdioma } from "@/lib/i18n/IdiomaProvider";
 
@@ -147,7 +151,9 @@ export function SetupAiForm({ capacidades, conferencias }: Props) {
           </p>
           <input type="hidden" name="idioma" value={idiomaDoModelo} />
           <div className="grid gap-2">
-            {MODELOS_DE_AGENTE.map((m) => {
+            {MODELOS_DE_AGENTE.filter((m) =>
+              (IDS_DE_MODELO_DO_ONBOARDING as readonly string[]).includes(m.id),
+            ).map((m) => {
               const c = m.conteudo[idiomaDoModelo];
               return (
                 <label

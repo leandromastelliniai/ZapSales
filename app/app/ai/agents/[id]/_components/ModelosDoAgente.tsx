@@ -35,7 +35,7 @@ export function ModelosDoAgente({ idioma, escolhido, onEscolher, disabled }: Pro
           )}
         </p>
       </div>
-      <div role="radiogroup" aria-label={t("Modelos de agente")} className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div role="radiogroup" aria-label={t("Modelos de agente")} className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {MODELOS_DE_AGENTE.map((m) => {
           const c = m.conteudo[idioma];
           const marcado = escolhido === m.id;
