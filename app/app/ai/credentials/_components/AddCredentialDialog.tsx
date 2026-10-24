@@ -294,7 +294,7 @@ export function AddCredentialDialog({ open, onOpenChange, providerInicial = "ant
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder={provedor.prefixoDaChave}
-              autoComplete="off"
+              autoComplete="new-password"
               required
             />
             {errors.api_key && (

@@ -167,6 +167,7 @@ retry_interval=60`
             <Label htmlFor="username">{t("Usuário")}</Label>
             <Input
               id="username"
+              autoComplete="off"
               value={form.username}
               disabled={!canWrite}
               onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
@@ -184,6 +185,7 @@ retry_interval=60`
             <Input
               id="password"
               type="password"
+              autoComplete="new-password"
               placeholder={trunk ? t("Deixe em branco para manter a atual") : ""}
               value={form.password}
               disabled={!canWrite}

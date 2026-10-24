@@ -8,6 +8,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Painel } from "@/components/ui/painel";
 import { FlowArrow, Plus, Sparkle } from "@/lib/ui/icons";
 import { useFollowupFlows, type FollowupFlowPointerRow } from "@/hooks/followup/useFollowupFlows";
 import type { FollowupFlowSurface } from "@/lib/followup/api-schemas";
@@ -24,6 +25,16 @@ interface Props {
   /** Recorte por superfície. Ausente = todos (comportamento atual). */
   surface?: FollowupFlowSurface;
 }
+
+/**
+ * O que acontece com o follow-up quando uma pessoa assume a conversa, em palavras de quem opera.
+ * Antes a lista imprimia o valor cru do banco ("pause", "cancel") sob o rótulo "Handoff".
+ */
+const QUANDO_UMA_PESSOA_ASSUME: Record<string, string> = {
+  pause: "Pausa quando uma pessoa assume",
+  cancel: "Cancela quando uma pessoa assume",
+  allow: "Segue mesmo quando uma pessoa assume",
+};
 
 function formatUpdatedAt(iso: string, idioma: string): string {
   return new Date(iso).toLocaleDateString(idioma, {
@@ -119,42 +130,53 @@ export function FlowsList({ initialData, canWrite, surface }: Props) {
         </div>
       )}
 
-      <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {flows.map((flow) => (
-          <li key={flow.id}>
-            <Card className="flex h-full flex-col gap-3 p-4 transition-colors hover:border-accent-400">
-              <Link href={`${baseHref}/${flow.id}`} className="flex flex-1 flex-col gap-3">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="min-w-0 flex-1 truncate font-medium" title={flow.name}>
+      <Painel semRecuo>
+        <ul className="divide-y divide-border">
+          {flows.map((flow) => (
+            <li
+              key={flow.id}
+              className="group relative grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 px-5 py-4 transition-colors hover:bg-surface-elevated/60 md:grid-cols-[auto_minmax(0,1fr)_auto]"
+            >
+              <span
+                aria-hidden
+                className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-text-muted"
+              >
+                <FlowArrow size={24} />
+              </span>
+
+              <div className="min-w-0 space-y-1">
+                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                  <Link
+                    href={`${baseHref}/${flow.id}`}
+                    title={flow.name}
+                    className="min-w-0 font-semibold tracking-tight break-words outline-hidden after:absolute after:inset-0 after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset md:truncate"
+                  >
                     {flow.name}
-                  </h3>
+                  </Link>
                   <FlowStatusBadge status={flow.status} />
                 </div>
-                <dl className="grid grid-cols-2 gap-2 pt-1 text-xs">
-                  <div>
-                    <dt className="text-text-muted">{t("Versão")}</dt>
-                    <dd className="font-mono">{flow.active_version_id ? "publicada" : "—"}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-text-muted">Handoff</dt>
-                    <dd className="font-mono">{flow.handoff_policy}</dd>
-                  </div>
-                </dl>
-                <p className="mt-auto pt-2 text-xs text-text-muted">
-                  Atualizado em {formatUpdatedAt(flow.updated_at, tagDoIdioma)}
+                <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
+                  <span>{flow.active_version_id ? t("Versão publicada") : t("Sem versão publicada")}</span>
+                  {QUANDO_UMA_PESSOA_ASSUME[flow.handoff_policy] ? (
+                    <span>{t(QUANDO_UMA_PESSOA_ASSUME[flow.handoff_policy] as string)}</span>
+                  ) : null}
+                  <span>
+                    {t("Atualizado em")} {formatUpdatedAt(flow.updated_at, tagDoIdioma)}
+                  </span>
                 </p>
-              </Link>
+              </div>
+
               {canWrite && (
-                <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-2">
+                <div className="relative z-10 col-start-2 flex flex-wrap items-center gap-2 md:col-start-auto md:justify-end">
                   <RenameFollowupFlowButton flowId={flow.id} flowName={flow.name} />
                   <DuplicateFollowupFlowButton flowId={flow.id} />
                   <DeleteFollowupFlowButton flowId={flow.id} flowName={flow.name} listHref={baseHref} />
                 </div>
               )}
-            </Card>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      </Painel>
 
       {dialogos}
     </div>

@@ -463,6 +463,7 @@ function CallWebhookForm({
         <Label>Segredo (opcional)</Label>
         <Input
           type="password"
+          autoComplete="new-password"
           value={config.secret ?? ""}
           onChange={(e) => {
             const next = e.target.value;

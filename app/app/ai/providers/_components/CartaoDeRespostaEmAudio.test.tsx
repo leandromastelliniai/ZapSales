@@ -127,7 +127,8 @@ describe("instalação nova, sem nenhuma chave de voz", () => {
     montar();
     const campo = await screen.findByTestId("audio-chave");
     expect(campo).toHaveAttribute("type", "password");
-    expect(campo).toHaveAttribute("autocomplete", "off");
+    // `new-password`, não `off`: o Chrome ignora `off` em campo de senha e preenche a senha de login aqui.
+    expect(campo).toHaveAttribute("autocomplete", "new-password");
     expect(screen.getByTestId("cartao-de-resposta-em-audio")).toHaveTextContent(/usa a chave de voz da sua própria empresa/);
   });
 });

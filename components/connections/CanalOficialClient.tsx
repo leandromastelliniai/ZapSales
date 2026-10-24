@@ -347,6 +347,7 @@ export function CanalOficialClient() {
             <Input
               id="tok"
               type="password"
+              autoComplete="new-password"
               value={form.token}
               onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))}
               placeholder={

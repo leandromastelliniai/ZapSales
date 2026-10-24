@@ -96,7 +96,7 @@ export function FormularioDeMetaAds({
           <Input
             id="access_token"
             type="password"
-            autoComplete="off"
+            autoComplete="new-password"
             value={token}
             onChange={(e) => setToken(e.target.value)}
             placeholder={conectada ? t("Guardado — preencha só para trocar") : "EAA…"}

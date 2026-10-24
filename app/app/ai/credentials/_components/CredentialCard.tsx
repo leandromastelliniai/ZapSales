@@ -6,9 +6,8 @@ import { toast } from "sonner";
 
 import { refreshCredentialsView } from "../_actions";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Selo, type SignificadoDoSelo } from "@/components/ui/selo";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,12 +59,14 @@ const STATUS_LABEL: Record<CredentialStatus, string> = {
   inactive: "Inativa",
 };
 
-const STATUS_VARIANT: Record<CredentialStatus, "default" | "secondary" | "destructive" | "outline"> = {
-  validated: "default",
-  validating: "secondary",
-  unvalidated: "outline",
-  invalid: "destructive",
-  inactive: "outline",
+// A cor segue o significado do `Selo`: verde = deu certo, coral = recusada, âmbar = esperando
+// (a validação não terminou). Antes a chave validada saía em violeta, que no produto é a cor da IA.
+const STATUS_SELO: Record<CredentialStatus, SignificadoDoSelo> = {
+  validated: "concluido",
+  validating: "neutro",
+  unvalidated: "funil",
+  invalid: "falha",
+  inactive: "neutro",
 };
 
 export function CredentialCard({ credential, canWrite, usageCount, usadaEm = [], avisoAoExcluir }: Props) {
@@ -128,75 +129,69 @@ export function CredentialCard({ credential, canWrite, usageCount, usadaEm = [],
   );
 
   return (
-    <Card className="flex flex-col gap-3 p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate font-medium" title={credential.label}>
+    <div className="grid grid-cols-1 items-center gap-x-6 gap-y-3 px-5 py-4 md:grid-cols-[minmax(0,1fr)_auto_auto]">
+      <div className="min-w-0 space-y-1">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <h3 className="min-w-0 truncate font-semibold tracking-tight" title={credential.label}>
             {credential.label}
           </h3>
-          <p className="font-mono text-xs text-muted-foreground">
-            …{last4}
+          <Selo significado={STATUS_SELO[status]}>{t(STATUS_LABEL[status])}</Selo>
+        </div>
+        <p className="font-mono text-xs text-muted-foreground">…{last4}</p>
+
+        {credential.validation_error && (
+          <p className="text-sm text-error-fg" title={credential.validation_error}>
+            {erro.generico
+              ? `${t("Falha na validação")} (${credential.validation_error}).`
+              : t(erro.frase)}
+            {erro.chaveErrada && provedor && (
+              <>
+                {" "}
+                <a
+                  className="underline underline-offset-4"
+                  href={provedor.ondePegarAChave}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t("Onde pegar a chave")}
+                </a>
+              </>
+            )}
           </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <Badge variant={STATUS_VARIANT[status]} className="text-xs">
-            {t(STATUS_LABEL[status])}
-          </Badge>
-        </div>
+        )}
+
+        {status === "unvalidated" && (
+          <p className="text-sm text-muted-foreground">
+            {t("A validação não terminou. Clique em revalidar para testar a chave agora.")}
+          </p>
+        )}
+
+        {usadaEm.length > 0 && (
+          <p className="text-sm" data-testid="credencial-usada-em">
+            <span className="text-muted-foreground">{t("Usada em")}:</span>{" "}
+            {usadaEm.map((tarefa) => t(tarefa)).join(", ")}
+          </p>
+        )}
       </div>
 
-      {credential.validation_error && (
-        <p className="text-xs text-destructive" title={credential.validation_error}>
-          {erro.generico
-            ? `${t("Falha na validação")} (${credential.validation_error}).`
-            : t(erro.frase)}
-          {erro.chaveErrada && provedor && (
-            <>
-              {" "}
-              <a
-                className="underline underline-offset-4"
-                href={provedor.ondePegarAChave}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t("Onde pegar a chave")}
-              </a>
-            </>
-          )}
-        </p>
-      )}
-
-      {status === "unvalidated" && (
-        <p className="text-xs text-muted-foreground">
-          {t("A validação não terminou. Clique em revalidar para testar a chave agora.")}
-        </p>
-      )}
-
       {/* "Em uso por" conta versões de agente, e nenhuma aponta para a chave do
-          Jev: o "0" dela, colado no "Usada em" logo abaixo, dizia que dava para
+          Jev: o "0" dela, colado no "Usada em" logo acima, dizia que dava para
           excluí-la sem efeito. */}
       {!ehProvedorDeDecisao(credential.provider) && (
-        <dl className="grid grid-cols-2 gap-2 text-xs">
+        <dl className="flex gap-8 text-sm whitespace-nowrap">
           <div>
-            <dt className="text-muted-foreground">{t("Modelos")}</dt>
+            <dt className="text-xs text-muted-foreground">{t("Modelos")}</dt>
             <dd className="font-mono">{credential.models_available?.length ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">{t("Em uso por")}</dt>
+            <dt className="text-xs text-muted-foreground">{t("Em uso por")}</dt>
             <dd className="font-mono">{usageCount}</dd>
           </div>
         </dl>
       )}
 
-      {usadaEm.length > 0 && (
-        <p className="text-xs" data-testid="credencial-usada-em">
-          <span className="text-muted-foreground">{t("Usada em")}:</span>{" "}
-          {usadaEm.map((tarefa) => t(tarefa)).join(", ")}
-        </p>
-      )}
-
       {canWrite && (
-        <div className="flex items-center justify-end gap-1 pt-1">
+        <div className="-ml-2 flex items-center gap-1 md:ml-0 md:justify-end">
           {/* Rotacionar é o caminho que NÃO passa pela exclusão — e por isso
               fica habilitado mesmo com a chave em uso. É por aqui que o
               operador de um agente publicado troca a chave. */}
@@ -268,6 +263,6 @@ export function CredentialCard({ credential, canWrite, usageCount, usadaEm = [],
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </div>
   );
 }

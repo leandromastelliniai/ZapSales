@@ -145,7 +145,7 @@ export function FormularioDaMeta({
             id="meta-app-secret"
             data-testid="meta-app-secret"
             type="password"
-            autoComplete="off"
+            autoComplete="new-password"
             value={chave}
             onChange={(e) => setChave(e.target.value)}
             placeholder={temSegredoSalvo ? t("••••••••  (já cadastrada)") : t("32 letras e números")}

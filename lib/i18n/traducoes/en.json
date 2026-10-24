@@ -10076,5 +10076,9 @@
   "Arquivado: não atende mais ninguém.": "Archived: it no longer answers anyone.",
   "A configuração tem um problema que impede o atendimento.": "The configuration has a problem that prevents it from answering.",
   "Sugere a resposta; uma pessoa aprova": "Suggests the reply; a person approves",
-  "Responde sozinho": "Replies on its own"
+  "Responde sozinho": "Replies on its own",
+  "Sem versão publicada": "No published version",
+  "Pausa quando uma pessoa assume": "Pauses when a person takes over",
+  "Cancela quando uma pessoa assume": "Cancels when a person takes over",
+  "Segue mesmo quando uma pessoa assume": "Keeps going even when a person takes over"
 }

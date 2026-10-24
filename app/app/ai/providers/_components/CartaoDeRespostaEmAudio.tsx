@@ -287,7 +287,7 @@ export function CartaoDeRespostaEmAudio() {
               <Input
                 id="audio-chave"
                 type="password"
-                autoComplete="off"
+                autoComplete="new-password"
                 value={chave}
                 onChange={(e) => setChave(e.target.value)}
                 placeholder={compat ? "sk-…" : "sk_…"}

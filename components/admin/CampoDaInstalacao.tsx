@@ -147,7 +147,7 @@ export function CampoEditavel({ linha, idioma }: { linha: LinhaDaInstalacao; idi
           id={idCampo}
           aria-describedby={idAjuda}
           type={definicao.natureza === "segredo" ? "password" : "text"}
-          autoComplete="off"
+          autoComplete={definicao.natureza === "segredo" ? "new-password" : "off"}
           value={valor}
           onChange={(e) => setValor(e.target.value)}
           placeholder={

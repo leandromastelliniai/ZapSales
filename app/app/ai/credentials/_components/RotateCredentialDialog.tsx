@@ -209,7 +209,7 @@ export function RotateCredentialDialog({ open, onOpenChange, credential }: Props
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder={provedor.prefixoDaChave}
-              autoComplete="off"
+              autoComplete="new-password"
             />
             <p className="text-xs text-muted-foreground">
               {t("Em branco mantém a chave atual")} (…{credential.api_key_last4 ?? "????"}).

@@ -90,6 +90,7 @@ export function FormularioDoGoogle({
             id="client-secret"
             data-testid="google-client-secret"
             type="password"
+            autoComplete="new-password"
             value={clientSecret}
             onChange={(e) => setClientSecret(e.target.value)}
             placeholder={temSegredoSalvo ? "••••••••  (já cadastrada)" : "GOCSPX-…"}

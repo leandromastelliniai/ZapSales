@@ -172,7 +172,7 @@ export function CartaoDeMapas() {
         <Input
           id="chave-de-mapas"
           type="password"
-          autoComplete="off"
+          autoComplete="new-password"
           value={chave}
           onChange={(e) => setChave(e.target.value)}
           placeholder="AIza…"
