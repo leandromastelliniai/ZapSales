@@ -2,15 +2,25 @@ import { describe, expect, it } from "vitest";
 
 import { IDIOMAS } from "@/lib/i18n/idiomas";
 
-import { MODELOS_DE_AGENTE, aplicarModelo, modeloPorId } from "./modelos";
+import {
+  IDS_DE_MODELO_DO_ONBOARDING,
+  MODELOS_DE_AGENTE,
+  aplicarModelo,
+  modeloPorId,
+} from "./modelos";
 import { LIMITES_DO_PERFIL, LIMITES_DOS_TEMAS, comporInstrucoes } from "./perfil";
 import { versionCreateSchema } from "./validation";
 
-/** Os três ramos que o dono do produto pediu (#86, 15/10/2026). */
-const RAMOS = ["vendas", "suporte", "agendamento"] as const;
+/** Os três pedidos em 15/10/2026 (#86) mais o Atendimento, pedido em 24/10/2026. */
+const RAMOS = ["vendas", "suporte", "agendamento", "atendimento"] as const;
 
 describe("galeria de modelos por ramo (#92)", () => {
-  it("tem os três modelos iniciais, nessa ordem", () => {
+  it("o onboarding não oferece o Atendimento: ele sempre nasce com o pacote vender", () => {
+    expect(IDS_DE_MODELO_DO_ONBOARDING).toEqual(["vendas", "suporte", "agendamento"]);
+    for (const id of IDS_DE_MODELO_DO_ONBOARDING) expect(modeloPorId(id)).toBeDefined();
+  });
+
+  it("tem os quatro modelos, nessa ordem", () => {
     expect(MODELOS_DE_AGENTE.map((m) => m.id)).toEqual(RAMOS);
   });
 

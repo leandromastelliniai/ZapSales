@@ -1,0 +1,812 @@
+{
+  "desktop-claro": {
+    "rodape": {
+      "continuar_na_primeira_tela": true,
+      "bottom": 884,
+      "altura_da_janela": 900
+    },
+    "toques_menores_que_44": [
+      {
+        "estacao": 2,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 3,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "+ avisar que é uma IA",
+            "w": 143,
+            "h": 32,
+            "visivel": true
+          },
+          {
+            "rotulo": "+ citar o nome do cliente",
+            "w": 158,
+            "h": 32,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 4,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 5,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "INPUT",
+            "w": 663,
+            "h": 40,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      }
+    ],
+    "overflow_horizontal": false,
+    "animacoes_infinitas": [],
+    "aura": "rgba(119, 61, 249, 0.12) 0px 0px 0px 3px, color(srgb 0.384314 0.211765 0.909804 / 0.2) 0px 0px 28px 0px",
+    "pulso": {
+      "animationName": "zapsales-estacao-pulse",
+      "iteracoes": "1"
+    }
+  },
+  "desktop-escuro": {
+    "rodape": {
+      "continuar_na_primeira_tela": true,
+      "bottom": 884,
+      "altura_da_janela": 900
+    },
+    "toques_menores_que_44": [
+      {
+        "estacao": 2,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 3,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "+ avisar que é uma IA",
+            "w": 143,
+            "h": 32,
+            "visivel": true
+          },
+          {
+            "rotulo": "+ citar o nome do cliente",
+            "w": 158,
+            "h": 32,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 4,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 5,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "INPUT",
+            "w": 663,
+            "h": 40,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      }
+    ],
+    "overflow_horizontal": false,
+    "animacoes_infinitas": [],
+    "aura": "rgba(119, 61, 249, 0.22) 0px 0px 0px 3px, color(srgb 0.619608 0.541176 1 / 0.2) 0px 0px 28px 0px",
+    "pulso": {
+      "animationName": "zapsales-estacao-pulse",
+      "iteracoes": "1"
+    }
+  },
+  "celular-claro": {
+    "rodape": {
+      "continuar_na_primeira_tela": true,
+      "bottom": 828,
+      "altura_da_janela": 844
+    },
+    "toques_menores_que_44": [
+      {
+        "estacao": 2,
+        "alvos": [
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 3,
+        "alvos": [
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 4,
+        "alvos": [
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 5,
+        "alvos": [
+          {
+            "rotulo": "INPUT",
+            "w": 300,
+            "h": 40,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      }
+    ],
+    "overflow_horizontal": false,
+    "animacoes_infinitas": [],
+    "aura": "rgba(119, 61, 249, 0.12) 0px 0px 0px 3px, color(srgb 0.384314 0.211765 0.909804 / 0.2) 0px 0px 28px 0px",
+    "pulso": {
+      "animationName": "zapsales-estacao-pulse",
+      "iteracoes": "1"
+    }
+  },
+  "celular-escuro": {
+    "rodape": {
+      "continuar_na_primeira_tela": true,
+      "bottom": 828,
+      "altura_da_janela": 844
+    },
+    "toques_menores_que_44": [
+      {
+        "estacao": 2,
+        "alvos": [
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 3,
+        "alvos": [
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 4,
+        "alvos": [
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 5,
+        "alvos": [
+          {
+            "rotulo": "INPUT",
+            "w": 300,
+            "h": 40,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      }
+    ],
+    "overflow_horizontal": false,
+    "animacoes_infinitas": [],
+    "aura": "rgba(119, 61, 249, 0.22) 0px 0px 0px 3px, color(srgb 0.619608 0.541176 1 / 0.2) 0px 0px 28px 0px",
+    "pulso": {
+      "animationName": "zapsales-estacao-pulse",
+      "iteracoes": "1"
+    }
+  },
+  "desktop-claro-movimento-reduzido": {
+    "rodape": {
+      "continuar_na_primeira_tela": true,
+      "bottom": 884,
+      "altura_da_janela": 900
+    },
+    "toques_menores_que_44": [
+      {
+        "estacao": 2,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 3,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "+ avisar que é uma IA",
+            "w": 143,
+            "h": 32,
+            "visivel": true
+          },
+          {
+            "rotulo": "+ citar o nome do cliente",
+            "w": 158,
+            "h": 32,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 4,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 5,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "INPUT",
+            "w": 663,
+            "h": 40,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      }
+    ],
+    "overflow_horizontal": false,
+    "animacoes_infinitas": [],
+    "aura": "rgba(119, 61, 249, 0.12) 0px 0px 0px 3px, color(srgb 0.384314 0.211765 0.909804 / 0.2) 0px 0px 28px 0px",
+    "pulso": {
+      "animationName": "none",
+      "iteracoes": "1"
+    }
+  },
+  "desktop-claro-sem-chave": {
+    "rodape": {
+      "continuar_na_primeira_tela": true,
+      "bottom": 884,
+      "altura_da_janela": 900
+    },
+    "toques_menores_que_44": [
+      {
+        "estacao": 2,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 3,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "+ avisar que é uma IA",
+            "w": 143,
+            "h": 32,
+            "visivel": true
+          },
+          {
+            "rotulo": "+ citar o nome do cliente",
+            "w": 158,
+            "h": 32,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 4,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "continuar",
+            "w": 92,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      },
+      {
+        "estacao": 5,
+        "alvos": [
+          {
+            "rotulo": "Começar de novo",
+            "w": 140,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "ir-para-o-editor",
+            "w": 189,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "INPUT",
+            "w": 663,
+            "h": 40,
+            "visivel": true
+          },
+          {
+            "rotulo": "Abrir Chaves de acesso à IA",
+            "w": 208,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Voltar",
+            "w": 67,
+            "h": 36,
+            "visivel": true
+          },
+          {
+            "rotulo": "Open Tanstack query devtools",
+            "w": 40,
+            "h": 40,
+            "visivel": true
+          }
+        ]
+      }
+    ],
+    "overflow_horizontal": false,
+    "animacoes_infinitas": [],
+    "aura": "rgba(119, 61, 249, 0.12) 0px 0px 0px 3px, color(srgb 0.384314 0.211765 0.909804 / 0.2) 0px 0px 28px 0px",
+    "pulso": {
+      "animationName": "zapsales-estacao-pulse",
+      "iteracoes": "1"
+    }
+  }
+}

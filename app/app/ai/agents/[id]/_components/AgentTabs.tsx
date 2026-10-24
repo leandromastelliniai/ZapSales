@@ -47,6 +47,8 @@ interface Props {
   routerMembership?: { routerId: string; routerName: string } | null;
   readOnly?: boolean;
   organizationTimezone?: string;
+  /** A aba que abre primeiro (`?aba=test`, de onde o assistente de criação leva a pessoa). */
+  abaInicial?: string;
 }
 
 type Aba = "configuration" | "test" | "capacidades" | "runs" | "history" | "proposals";
@@ -93,7 +95,9 @@ const ABAS: ReadonlyArray<{ id: Aba; nome: string; Icone: typeof ChatsCircle; fr
 
 export function AgentTabs(props: Props) {
   const t = useT();
-  const [tab, setTab] = React.useState<Aba>("configuration");
+  const [tab, setTab] = React.useState<Aba>(
+    ABAS.some((a) => a.id === props.abaInicial) ? (props.abaInicial as Aba) : "configuration",
+  );
   const hasVersion = !!(props.draft || props.published);
   const atual = ABAS.find((a) => a.id === tab) ?? ABAS[0]!;
 

@@ -60,6 +60,7 @@ import {
   LIMITES_DOS_TEMAS,
   perfilPreenchido,
   type IdiomaDoAgente,
+  type TomDoAgente,
 } from "@/lib/ai/agents/perfil";
 import { aplicarModelo, type IdDoModelo } from "@/lib/ai/agents/modelos";
 import Link from "next/link";
@@ -173,8 +174,38 @@ interface EditProps extends BaseProps {
   draftObsoleto?: AgentVersionRow | null;
 }
 
+/**
+ * O que o editor completo recebe do assistente quando a pessoa clica em "Prefiro o editor
+ * completo": os mesmos campos que o assistente compõe (`comporAgente`), mais as capacidades e
+ * o escopo de funil do modelo. Só vale na criação.
+ */
+export interface InicialDoEditor {
+  name: string;
+  system_prompt: string;
+  profile_persona: string;
+  profile_tone: TomDoAgente;
+  profile_objective: string;
+  profile_welcome: string;
+  profile_language: IdiomaDoAgente;
+  restrict_topics: boolean;
+  allowed_topics: string[];
+  off_topic_reply: string;
+  tool_ids: string[];
+  pipeline_ids: string[];
+}
+
 interface CreateProps extends BaseProps {
   mode: "create";
+  /**
+   * O que cada modelo da galeria liga (capacidades e uso de funil), calculado no SERVIDOR:
+   * os handlers das ferramentas não vão para o navegador. Ausente = a galeria só preenche o
+   * perfil e as instruções, como antes.
+   */
+  capacidadesPorModelo?: Record<IdDoModelo, { tool_ids: string[]; usa_funil: boolean }>;
+  /** O funil de entrada da organização, para o modelo que mexe no funil já nascer com escopo. */
+  funilPadraoId?: string | null;
+  /** O estado que o assistente entrega ao editor. */
+  inicial?: InicialDoEditor;
 }
 
 type Props = (EditProps | CreateProps) & {
@@ -628,12 +659,15 @@ export function AgentForm(props: Props) {
       const ref = props.base ?? props.draft ?? props.published;
       return buildState({ agent: props.agent, version: ref, t });
     }
-    return buildState({
+    const novo = buildState({
       version: null,
       t,
       provedorPadrao: props.provedorPadrao,
       idiomaDaTela,
     });
+    return props.mode === "create" && props.inicial
+      ? { ...novo, ...props.inicial, allowed_topics: props.inicial.allowed_topics.join("\n") }
+      : novo;
   }, [isEdit, props, t, idiomaDaTela]);
 
   const [form, setForm] = React.useState<FormState>(baseline);
@@ -681,6 +715,8 @@ export function AgentForm(props: Props) {
   }
   /** O ramo escolhido na galeria (#92), só para marcar o card. */
   const [modeloEscolhido, setModeloEscolhido] = React.useState<IdDoModelo | null>(null);
+  const capacidadesPorModelo = props.mode === "create" ? props.capacidadesPorModelo : undefined;
+  const funilPadraoId = props.mode === "create" ? (props.funilPadraoId ?? null) : null;
   /** O modelo vem no idioma da tela de quem cria; idioma sem modelo cai em português. */
   const idiomaDoModelo: IdiomaDoAgente = (IDIOMAS_DO_AGENTE as readonly string[]).includes(idiomaDaTela)
     ? (idiomaDaTela as IdiomaDoAgente)
@@ -1052,7 +1088,16 @@ export function AgentForm(props: Props) {
       >
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {isEdit ? null : (
-            <h1 className="mr-1 text-xl font-semibold tracking-tight">{t("Novo agente")}</h1>
+            <>
+              <h1 className="mr-1 text-xl font-semibold tracking-tight">{t("Novo agente")}</h1>
+              <Link
+                href="/app/ai/agents/new?modo=assistente"
+                className="text-sm text-ia underline-offset-2 hover:underline"
+                data-testid="abrir-assistente"
+              >
+                {t("Prefere ser guiado? Abrir o assistente")}
+              </Link>
+            </>
           )}
           {statusBadge}
           {isEdit ? (
@@ -1258,6 +1303,15 @@ export function AgentForm(props: Props) {
                   restrict_topics: campos.restrict_topics,
                   allowed_topics: campos.allowed_topics.join("\n"),
                   off_topic_reply: campos.off_topic_reply,
+                  // O modelo também liga o que o agente pode fazer (decisão do dono: um
+                  // conjunto por modelo), e o que mexe no funil já nasce com o funil de entrada.
+                  ...(capacidadesPorModelo
+                    ? {
+                        tool_ids: capacidadesPorModelo[id].tool_ids,
+                        pipeline_ids:
+                          capacidadesPorModelo[id].usa_funil && funilPadraoId ? [funilPadraoId] : [],
+                      }
+                    : {}),
                 });
               }}
               disabled={disabled}

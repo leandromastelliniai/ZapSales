@@ -58,7 +58,7 @@ export function AgentsList({ initialData, canWrite, nomesDosNumeros = {} }: Prop
           </div>
           {canWrite && (
             <Button asChild>
-              <Link href="/app/ai/agents/new">
+              <Link href="/app/ai/agents/new?modo=assistente">
                 <Plus size={16} aria-hidden /> {t("Novo agente")}
               </Link>
             </Button>

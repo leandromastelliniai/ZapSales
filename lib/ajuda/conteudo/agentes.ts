@@ -11,7 +11,7 @@ const ajuda: AjudaDaPagina = {
     passos: [
       "Use a busca por nome, o filtro Status e a caixa Incluir arquivados para achar um agente.",
       "Clique em Editar (ou em Visualizar, para quem não pode alterar) para abrir o agente e ajustar o jeito de atender.",
-      "Novo agente cria outro agente. Esse botão e o menu dos três pontinhos de cada cartão só aparecem para administradores.",
+      "Novo agente abre um assistente que guia a criação em cinco perguntas (quem você é, o que o agente faz, como fala, quando chamar uma pessoa e o teste); quem prefere pode ir ao editor completo a qualquer momento. Esse botão e o menu dos três pontinhos de cada cartão só aparecem para administradores.",
       "No menu estão Duplicar, Renomear, Pausar (ou Despausar) e Arquivar. Arquivar não se desfaz pela tela, e o agente padrão não pode ser arquivado.",
     ],
     termos: [
@@ -26,7 +26,7 @@ const ajuda: AjudaDaPagina = {
     passos: [
       "Usa la búsqueda por nombre, el filtro Estado y la casilla Incluir archivados para encontrar un agente.",
       "Haz clic en Editar (o en Ver, si no puedes modificar) para abrir el agente y ajustar su forma de atender.",
-      "Nuevo agente crea otro agente. Ese botón y el menú de los tres puntitos de cada tarjeta solo aparecen para los administradores.",
+      "Nuevo agente abre un asistente que guía la creación en cinco preguntas (tu negocio, qué hace el agente, cómo habla, cuándo llamar a una persona y la prueba); quien prefiera puede ir al editor completo en cualquier momento. Ese botón y el menú de los tres puntitos de cada tarjeta solo aparecen para los administradores.",
       "En el menú están Duplicar, Renombrar, Pausar (o Reanudar) y Archivar. Archivar no se deshace desde la pantalla, y el agente predeterminado no se puede archivar.",
     ],
     termos: [
@@ -41,7 +41,7 @@ const ajuda: AjudaDaPagina = {
     passos: [
       "Use the search by name, the Status filter and the Include archived box to find an agent.",
       "Click Edit (or View, if you cannot make changes) to open the agent and adjust how it handles customers.",
-      "New agent creates another agent. That button and the three-dot menu on each card only appear for administrators.",
+      "New agent opens an assistant that guides the creation in five questions (your business, what the agent does, how it speaks, when to bring in a person and the test); if you prefer, you can go to the full editor at any time. That button and the three-dot menu on each card only appear for administrators.",
       "The menu has Duplicate, Rename, Pause (or Resume) and Archive. Archiving cannot be undone from the screen, and the default agent cannot be archived.",
     ],
     termos: [

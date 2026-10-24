@@ -77,7 +77,7 @@ export default async function AgentsListPage() {
         acoes={
           canWrite && agents.length > 0 ? (
             <Button asChild>
-              <Link href="/app/ai/agents/new">
+              <Link href="/app/ai/agents/new?modo=assistente">
                 <Plus size={16} aria-hidden /> {traduzir("Novo agente", idioma)}
               </Link>
             </Button>

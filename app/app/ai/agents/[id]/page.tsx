@@ -48,8 +48,15 @@ function provedoresDaInstalacao(): string[] {
     .map(([id]) => id);
 }
 
-export default async function AgentEditorPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AgentEditorPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ aba?: string }>;
+}) {
   const { id } = await params;
+  const { aba } = await searchParams;
 
   const user = await requireAuth();
   const activeOrg = await resolveActiveOrg(user);
@@ -232,6 +239,7 @@ export default async function AgentEditorPage({ params }: { params: Promise<{ id
         />
       )}
       <AgentTabs
+        abaInicial={aba}
         agent={agent}
         draft={draft}
         published={published}
