@@ -180,3 +180,16 @@
 - [ ] **Step 1:** `git fetch origin && git merge origin/main` na branch; empurrar; abrir o PR com `mattpocock-skills:pr` (árvore de arquivos, evidência antes/depois, "merge danger", fragmento).
 - [ ] **Step 2:** aguardar o CI; se um e2e falhar nas listas, `gh run rerun <id> --failed` antes de suspeitar (memória do projeto).
 - [ ] **Step 3:** mesclar quando verde; o deploy é automático pela `main` (implantar.yml); confirmar o domínio respondendo 307 e a prova pela tela em produção com org temporária (o dono digita a senha; ssh/scp só com o prefixo exato da memória), apagando a org e o usuário temporários depois.
+
+---
+
+## Desvios da execução (o que o código fez diferente do plano, e por quê)
+
+- **Task 1, passo 4 (onboarding):** não foi feito. A tela do onboarding promete o pacote `vender` para o agente que ele cria, então o Atendimento ficou **fora** do onboarding (`IDS_DE_MODELO_DO_ONBOARDING`) em vez de mudar o onboarding.
+- **Capacidades no servidor:** `capacidadesDoModelo` lê os handlers das ferramentas e não pode ir ao navegador. A página calcula `capacidadesPorModelo()` e entrega pronto à tela e ao editor; a frase e o mapa de pacotes moram em `o-que-o-modelo-faz.ts`. Cerca: `tests/unit/assistente-de-agente-sem-servidor-no-cliente.test.ts`. `comporAgente` e `payloadDeCriacao` mudaram de assinatura por isso.
+- **Task 3:** `RespostasDoAssistente` ganhou `abertura`, `chamarPessoaQuando` e `usarNomeDoCliente`; o atalho "horário" saiu (não dá para inventar horário), ficaram "avisar que é uma IA" e "citar o nome do cliente". O bloco do ramo é **anexado** às instruções (não há espaços de substituição no modelo). `Ramo` ganhou `tomRecomendado`.
+- **Task 4:** sem `PADROES_DE_CRIACAO`: o contrato (`agentMcpCreateSchema`) já aplica os mesmos defaults que o editor.
+- **Task 5:** o teste real acontece na tela do agente (`?aba=test`), não dentro da estação 5; `AgentTabs` ganhou `abaInicial`. A chave do `sessionStorage` é `assistente-de-agente.v1` (a catraca de marca reprova "zapsales" no código).
+- **Task 6:** a ponte para o editor usa `?de=assistente` (sem o parâmetro, o editor abre vazio, mesmo que haja estado guardado) e só leva o estado se a pessoa respondeu alguma coisa.
+- **Brilho:** usa `--color-ia` (a cor do papel IA, fixa), não a de destaque do revendedor.
+

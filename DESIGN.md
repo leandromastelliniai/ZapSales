@@ -61,6 +61,7 @@ migrar (plano, pacote X1).
 | `ComoFunciona` | `components/shell/ComoFunciona.tsx` | painel de ajuda; texto por tela em `lib/ajuda/conteudo/`, carregado só ao abrir, em pt-BR/es/en |
 | `Painel` | `components/ui/painel.tsx` | contêiner de tabela, lista e bloco de formulário |
 | `Selo` | `components/ui/selo.tsx` | etiqueta de estado, com a cor do significado |
+| `AssistenteDeAgente` | `app/app/ai/agents/new/_assistente/` | criação guiada do agente em cinco estações (a Linha do Funil aplicada a um passo a passo), com prévia fixa que usa `.aura-ia` |
 | `AvatarDoContato` | `components/inbox/visual/AvatarDoContato.tsx` | foto ou iniciais, com selo de canal e de quem atende |
 | `LinhaDoFunil` | `components/inbox/visual/LinhaDoFunil.tsx` | etapas passadas cheias, a atual maior, as futuras vazadas |
 | `NavHub` | `components/shell/NavHub.tsx` | páginas de área (CRM, IA, Análise, Configurações) como lista em painel |
@@ -75,6 +76,10 @@ Estados de erro e de carregamento (`SegmentError`) também ficam como estão. Te
 **Nunca `<main>` dentro das telas.** O `AppShell` já é o `<main>`; um segundo é um erro de leitor de tela.
 
 Vitrine para ver tudo com dados de exemplo: `/vitrine-sistema` (pública só em desenvolvimento).
+
+### O "vivo" da IA, sem agitação
+
+Onde a IA aparece (a prévia do assistente, o ponto da estação atual) ela ganha um **brilho estático** (`.aura-ia`, na cor `--color-ia`) e, quando uma estação passa a ser a atual, **um** pulso que não repete (`.pulso-de-estacao`). Nada anima em laço: a regra é a do pulso do Kanban, "vivo é o que responde, não o que se agita". `prefers-reduced-motion: reduce` mostra o mesmo estado, parado. A cor é a do papel (IA), não a de destaque do revendedor. Medido na vitrine: nenhum elemento com animação infinita.
 
 ## Ícones
 

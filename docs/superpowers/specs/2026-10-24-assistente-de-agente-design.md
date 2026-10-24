@@ -172,8 +172,8 @@ review". O mockup mostrava brilho e pulsação em laço contínuo; isso **não v
 
 - **Obedece o `DESIGN.md`**: nada de texto em gradiente, vidro/desfoque decorativo, borda lateral colorida ou
   sombra dura; painel não vai dentro de painel; cada cor com um significado (violeta = IA).
-- **Cor de marca**: o brilho usa o token `--color-ia`, nunca hex fixo, para o revendedor poder trocar o violeta
-  (`cssDaMarca`). `tests/unit/branding.test.ts` e `tests/unit/tailwind-tokens.test.ts` precisam continuar verdes.
+- **Cor**: o brilho usa o token `--color-ia` (o papel "automático", fixo de propósito: a cor de destaque do revendedor
+  não o troca), nunca hex. `tests/unit/branding.test.ts` e `tests/unit/tailwind-tokens.test.ts` precisam continuar verdes.
 - **`prefers-reduced-motion: reduce`** desliga animação (o `globals.css` já tem o padrão) e o efeito não pode
   carregar informação que só ele diz.
 - **Peso**: sem biblioteca nova, sem fonte nova; só CSS. No celular, versão mais leve.
