@@ -20,9 +20,10 @@ import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Painel } from "@/components/ui/painel";
+import { Selo } from "@/components/ui/selo";
 import { useT } from "@/hooks/i18n/useT";
 import { PROVEDOR_DO_JEV } from "@/lib/ai/decisao/credencial";
 
@@ -146,7 +147,7 @@ export function ExecucoesDeIa() {
       </div>
 
       {/* O resumo responde "está tudo bem?" antes da lista. */}
-      <Card className="mb-6 p-4" data-testid="resumo">
+      <Painel className="mb-6" data-testid="resumo">
         {resumo.erros === 0 ? (
           <p className="text-sm">
             <span className="font-medium text-success-fg">
@@ -156,22 +157,20 @@ export function ExecucoesDeIa() {
           </p>
         ) : (
           <div>
-            <p className="text-sm font-medium text-destructive" data-testid="tem-falhas">
+            <p className="text-sm font-medium text-error-fg" data-testid="tem-falhas">
               {resumo.erros} {t("de")} {resumo.total} {t("execuções falharam.")}
             </p>
             <ul className="mt-3 space-y-2">
               {resumo.porCodigo.map((c) => (
                 <li key={c.codigo} className="text-sm">
-                  <Badge variant="outline" className="mr-2 font-mono text-xs">
-                    {c.quantas}×
-                  </Badge>
+                  <Selo className="mr-2 font-mono">{c.quantas}×</Selo>
                   {c.oQueFazer ? t(c.oQueFazer) : c.codigo}
                 </li>
               ))}
             </ul>
           </div>
         )}
-      </Card>
+      </Painel>
 
       <div className="mb-3 flex flex-wrap gap-2">
         <Button
@@ -207,72 +206,72 @@ export function ExecucoesDeIa() {
               : t("Nenhuma execução ainda. Assim que o agente atender alguém, aparece aqui.")}
         </Card>
       ) : (
-        <div className="space-y-2">
-          {execucoes.map((e) => (
-            <Card
-              key={e.id}
-              className={e.status === "erro" ? "border-destructive/40 p-4" : "p-4"}
-              data-testid={`execucao-${e.id}`}
-            >
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{t(e.pontoRotulo)}</span>
-                  {e.status === "erro" && (
-                    <Badge variant="destructive" className="text-xs">
-                      {t("falhou")}
-                    </Badge>
-                  )}
+        <Painel semRecuo>
+          <ul className="divide-y divide-border">
+            {execucoes.map((e) => (
+              <li
+                key={e.id}
+                className={e.status === "erro" ? "bg-error-bg/25 px-5 py-4" : "px-5 py-3.5"}
+                data-testid={`execucao-${e.id}`}
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold tracking-tight">{t(e.pontoRotulo)}</span>
+                    {e.status === "erro" && <Selo significado="falha">{t("falhou")}</Selo>}
+                  </div>
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {e.provedorRotulo} · {e.model}
+                  </span>
                 </div>
-                <span className="font-mono text-xs text-muted-foreground">
-                  {e.provedorRotulo} · {e.model}
-                </span>
-              </div>
 
-              {e.status === "erro" ? (
-                <div className="mt-2 space-y-2 text-sm">
-                  {/* 1º: o que o CLIENTE viu. */}
-                  {e.consequencia && (
-                    <p data-testid="consequencia">
-                      <span className="font-medium">{t("O que aconteceu:")}</span> {t(e.consequencia)}
-                    </p>
-                  )}
-                  {/* 2º: o que fazer. */}
-                  {e.oQueFazer && (
-                    <p className="text-muted-foreground" data-testid="o-que-fazer">
-                      <span className="font-medium">{t("O que fazer:")}</span> {t(e.oQueFazer)}
-                    </p>
-                  )}
-                  {/* 3º: só então, o texto cru — para quem for investigar. */}
-                  {e.error_message && (
-                    <details className="text-xs text-muted-foreground">
-                      <summary className="cursor-pointer">{t("Mensagem técnica do provedor")}</summary>
-                      <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded-md bg-muted p-2">
-                        {e.error_message}
-                        {e.http_status ? `\n(${t("código")} ${e.http_status})` : ""}
-                      </pre>
-                    </details>
-                  )}
-                </div>
-              ) : (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {e.input_tokens + e.output_tokens} {t("tokens")}
-                  {e.latency_ms !== null ? ` · ${e.latency_ms} ms` : ""}
-                  {/* `cost_cents` está em CENTAVOS: dividir por 100 dá REAIS, e o
-                      rótulo dizia "centavos" — uma execução de 25 centavos
-                      aparecia como "0.2500 centavos", 100× menor que o mesmo
-                      evento na tela de Uso, sem nenhuma das duas dizer qual
-                      estava certa. Aqui vale o mesmo formato de lá: reais. */}
-                  {e.cost_cents !== null ? ` · ${usd.format(e.cost_cents / 100)}` : ""}
+                {e.status === "erro" ? (
+                  <div className="mt-2 space-y-2 text-sm">
+                    {/* 1º: o que o CLIENTE viu. */}
+                    {e.consequencia && (
+                      <p data-testid="consequencia">
+                        <span className="font-medium">{t("O que aconteceu:")}</span> {t(e.consequencia)}
+                      </p>
+                    )}
+                    {/* 2º: o que fazer. */}
+                    {e.oQueFazer && (
+                      <p className="text-muted-foreground" data-testid="o-que-fazer">
+                        <span className="font-medium">{t("O que fazer:")}</span> {t(e.oQueFazer)}
+                      </p>
+                    )}
+                    {/* 3º: só então, o texto cru — para quem for investigar. */}
+                    {e.error_message && (
+                      <details className="text-xs text-muted-foreground">
+                        <summary className="cursor-pointer">{t("Mensagem técnica do provedor")}</summary>
+                        <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded-md bg-muted p-2">
+                          {e.error_message}
+                          {e.http_status ? `\n(${t("código")} ${e.http_status})` : ""}
+                        </pre>
+                      </details>
+                    )}
+                  </div>
+                ) : null}
+
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {e.status !== "erro" ? (
+                    <>
+                      {e.input_tokens + e.output_tokens} {t("tokens")}
+                      {e.latency_ms !== null ? ` · ${e.latency_ms} ms` : ""}
+                      {/* `cost_cents` está em CENTAVOS: dividir por 100 dá REAIS, e o
+                          rótulo dizia "centavos" — uma execução de 25 centavos
+                          aparecia como "0.2500 centavos", 100× menor que o mesmo
+                          evento na tela de Uso, sem nenhuma das duas dizer qual
+                          estava certa. Aqui vale o mesmo formato de lá: reais. */}
+                      {e.cost_cents !== null ? ` · ${usd.format(e.cost_cents / 100)}` : ""}
+                      {" · "}
+                    </>
+                  ) : null}
+                  {new Date(e.created_at).toLocaleString(tagDoIdioma)}
+                  {e.porQueEsteModelo ? ` · ${t(e.porQueEsteModelo)}` : ""}
                 </p>
-              )}
-
-              <p className="mt-2 text-xs text-muted-foreground">
-                {new Date(e.created_at).toLocaleString(tagDoIdioma)}
-                {e.porQueEsteModelo ? ` · ${t(e.porQueEsteModelo)}` : ""}
-              </p>
-            </Card>
-          ))}
-        </div>
+              </li>
+            ))}
+          </ul>
+        </Painel>
       )}
     </CorpoDaPagina>
   );

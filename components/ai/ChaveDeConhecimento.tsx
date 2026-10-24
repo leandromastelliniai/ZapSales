@@ -276,7 +276,7 @@ export function ChaveDeConhecimento({ estado, onChaveCadastrada }: Props) {
               value={chave}
               onChange={(e) => setChave(e.target.value)}
               disabled={enviando}
-              autoComplete="off"
+              autoComplete="new-password"
             />
             <p className="text-xs text-text-muted">
               {t("Você pega em")}{" "}

@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter as useNextRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Painel } from "@/components/ui/painel";
+import { Selo } from "@/components/ui/selo";
 import {
   Dialog,
   DialogContent,
@@ -79,32 +80,45 @@ export function RoutersClient({ initialState, channelSessions }: Props) {
           )}
         </Card>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {routers.map((r) => (
-            <li key={r.id}>
-              <Link href={`/app/ai/routers/${r.id}`}>
-                <Card className="flex h-full flex-col gap-2 p-4 transition-colors hover:border-accent">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="truncate font-medium" title={r.name}>
+        <Painel semRecuo>
+          <ul className="divide-y divide-border">
+            {routers.map((r) => (
+              <li
+                key={r.id}
+                className="group relative grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 px-5 py-4 transition-colors hover:bg-surface-elevated/60"
+              >
+                <span
+                  aria-hidden
+                  className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-text-muted"
+                >
+                  <Signpost size={24} />
+                </span>
+                <div className="min-w-0 space-y-1">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <Link
+                      href={`/app/ai/routers/${r.id}`}
+                      title={r.name}
+                      className="min-w-0 truncate font-semibold tracking-tight outline-hidden after:absolute after:inset-0 after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+                    >
                       {r.name}
-                    </h3>
-                    <Badge variant={r.is_active ? "success" : "neutral"} className="shrink-0 text-xs">
+                    </Link>
+                    <Selo significado={r.is_active ? "concluido" : "neutro"}>
                       {r.is_active ? t("ativo") : t("inativo")}
-                    </Badge>
+                    </Selo>
                   </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {channelLabel(channelSessions, r.channel_session_id, t)}
+                  <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
+                    <span className="truncate">{channelLabel(channelSessions, r.channel_session_id, t)}</span>
+                    <span>
+                      {r.member_count === 0
+                        ? t("Sem intenções configuradas")
+                        : `${r.member_count} ${r.member_count === 1 ? t("intenção") : t("intenções")}`}
+                    </span>
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {r.member_count === 0
-                      ? t("Sem intenções configuradas")
-                      : `${r.member_count} ${r.member_count === 1 ? t("intenção") : t("intenções")}`}
-                  </p>
-                </Card>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Painel>
       )}
 
       <CreateRouterDialog

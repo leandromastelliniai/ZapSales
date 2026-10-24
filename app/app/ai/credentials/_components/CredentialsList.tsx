@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Painel } from "@/components/ui/painel";
 import { Plus } from "@/lib/ui/icons";
 import {
   ehProvedorDeDecisao,
@@ -135,11 +136,8 @@ export function CredentialsList({
         const rows = grouped[p] ?? [];
         if (rows.length === 0) return null;
         return (
-          <section key={p} className="space-y-2">
-            <h2 className="text-sm font-medium text-muted-foreground">
-              {PROVIDER_LABELS[p]}
-            </h2>
-            <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Painel key={p} titulo={PROVIDER_LABELS[p]} semRecuo>
+            <ul className="divide-y divide-border">
               {rows.map((row) => (
                 <li key={row.id}>
                   <CredentialCard
@@ -152,7 +150,7 @@ export function CredentialsList({
                 </li>
               ))}
             </ul>
-          </section>
+          </Painel>
         );
       })}
 

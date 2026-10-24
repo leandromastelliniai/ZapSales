@@ -136,7 +136,7 @@ export function InteligenciaDele({ inicial }: { inicial: EstadoDaChave }) {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder={t("Cole aqui a chave que a empresa de IA te deu")}
-              autoComplete="off"
+              autoComplete="new-password"
             />
           </div>
         </div>

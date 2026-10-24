@@ -327,7 +327,7 @@ export function ProspectingClient() {
               <Input
                 id="prospecting-key"
                 type="password"
-                autoComplete="off"
+                autoComplete="new-password"
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
                 required

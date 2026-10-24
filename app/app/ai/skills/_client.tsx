@@ -4,9 +4,9 @@ import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Painel } from "@/components/ui/painel";
+import { Selo } from "@/components/ui/selo";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { PuzzlePiece, UploadSimple, DownloadSimple, Trash, Info, PencilSimple, ArrowsClockwise } from "@/lib/ui/icons";
 import { EditorDeSkill } from "./_components/EditorDeSkill";
@@ -109,63 +109,54 @@ export function SkillsClient({ initialState }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <CardTitle>{t("Skills instaladas")}</CardTitle>
-              <CardDescription>
-                {t(
-                  "O que seus agentes já sabem fazer além da conversa comum — cada skill só entra em ação quando o assunto pede.",
-                )}
-              </CardDescription>
-            </div>
-            {canManage && (
-              <>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".zip"
-                  className="hidden"
-                  onChange={handleFileChosen}
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={importSkill.isPending}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <UploadSimple /> {importSkill.isPending ? t("Enviando…") : t("Enviar skill (.zip)")}
-                </Button>
-              </>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+      <Painel
+        titulo={t("Skills instaladas")}
+        descricao={t(
+          "O que seus agentes já sabem fazer além da conversa comum — cada skill só entra em ação quando o assunto pede.",
+        )}
+        semRecuo
+        acoes={
+          canManage ? (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".zip"
+                className="hidden"
+                onChange={handleFileChosen}
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={importSkill.isPending}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <UploadSimple /> {importSkill.isPending ? t("Enviando…") : t("Enviar skill (.zip)")}
+              </Button>
+            </>
+          ) : undefined
+        }
+      >
+        <div className="flex flex-col">
           {installed.length === 0 ? (
-            <p className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+            <p className="px-5 py-4 text-sm text-muted-foreground">
               {t('Nenhuma skill instalada ainda. Instale uma pronta do catálogo abaixo ou envie a sua em "Enviar skill (.zip)".')}
             </p>
           ) : (
-            <ul className="flex flex-col gap-2">
+            <ul className="divide-y divide-border">
               {installed.map((skill) => (
-                <li
-                  key={skill.name}
-                  className="flex flex-col gap-1.5 rounded-md border border-border/60 p-3 text-sm"
-                >
+                <li key={skill.name} className="flex flex-col gap-1.5 px-5 py-4 text-sm">
                   <div className="flex flex-wrap items-center gap-2">
-                    <PuzzlePiece className="text-accent" aria-hidden />
-                    <span className="font-medium">{skill.name}</span>
-                    <Badge variant={skill.source === "catalog" ? "info" : "neutral"} className="text-[10px]">
-                      {skill.source === "catalog" ? t("do catálogo") : t("manual")}
-                    </Badge>
+                    <PuzzlePiece className="text-text-muted" aria-hidden />
+                    <span className="font-semibold tracking-tight">{skill.name}</span>
+                    <Selo>{skill.source === "catalog" ? t("do catálogo") : t("manual")}</Selo>
                     <span className="ml-auto text-xs text-muted-foreground">
                       {t("atualizada em")} {formatDate(skill.updated_at, tagDoIdioma)}
                     </span>
                   </div>
                   {skill.description && <p className="text-text-muted">{skill.description}</p>}
                   {skill.versao_nova_catalogo && (
-                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-accent bg-accent-soft p-2.5 text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-accent-soft p-2.5 text-xs">
                       <span className="flex flex-col gap-1.5 text-text">
                         <span className="flex items-center gap-1.5">
                           <Info className="shrink-0" aria-hidden />
@@ -246,7 +237,7 @@ export function SkillsClient({ initialState }: Props) {
             </ul>
           )}
 
-          <div className="flex items-start gap-2 rounded-md bg-accent-soft p-3 text-xs text-text-muted">
+          <div className="mx-5 mb-5 mt-1 flex items-start gap-2 rounded-md bg-accent-soft p-3 text-xs text-text-muted">
             <Info className="mt-0.5 shrink-0" aria-hidden />
             <p>
               {t(
@@ -254,31 +245,25 @@ export function SkillsClient({ initialState }: Props) {
               )}
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Painel>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("Catálogo")}</CardTitle>
-          <CardDescription>
-            {t("Skills prontas, mantidas pela plataforma, disponíveis para instalar com um clique.")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Painel
+        titulo={t("Catálogo")}
+        descricao={t("Skills prontas, mantidas pela plataforma, disponíveis para instalar com um clique.")}
+        semRecuo
+      >
           {catalog.length === 0 ? (
-            <p className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+            <p className="px-5 py-4 text-sm text-muted-foreground">
               {t("Nenhuma skill nova no catálogo — você já instalou tudo que a plataforma oferece hoje.")}
             </p>
           ) : (
-            <ul className="flex flex-col gap-2">
+            <ul className="divide-y divide-border">
               {catalog.map((skill) => (
-                <li
-                  key={skill.name}
-                  className="flex flex-col gap-1.5 rounded-md border border-border/60 p-3 text-sm"
-                >
+                <li key={skill.name} className="flex flex-col gap-1.5 px-5 py-4 text-sm">
                   <div className="flex flex-wrap items-center gap-2">
-                    <PuzzlePiece aria-hidden />
-                    <span className="font-medium">{skill.name}</span>
+                    <PuzzlePiece className="text-text-muted" aria-hidden />
+                    <span className="font-semibold tracking-tight">{skill.name}</span>
                   </div>
                   {skill.description && <p className="text-text-muted">{skill.description}</p>}
                   {canManage && (
@@ -298,8 +283,7 @@ export function SkillsClient({ initialState }: Props) {
               ))}
             </ul>
           )}
-        </CardContent>
-      </Card>
+      </Painel>
 
       {editando !== null && (
         <EditorDeSkill

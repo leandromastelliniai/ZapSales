@@ -36,7 +36,6 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SourceStatusBadge, deriveBadgeStatus } from "@/components/ai/SourceStatusBadge";
 import { TrechosDoMaterialDialog } from "@/components/ai/TrechosDoMaterialDialog";
@@ -113,44 +112,52 @@ export function KnowledgeSourceCard({
   const temTrechos = (source.chunks_count ?? 0) > 0;
 
   return (
-    <Card className="flex h-full flex-col" data-testid={`material-${source.id}`}>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Icon className="h-5 w-5 shrink-0 text-accent" aria-hidden />
-            <CardTitle className="text-base">{source.name}</CardTitle>
+    <div
+      className="grid grid-cols-1 items-start gap-x-4 gap-y-3 px-5 py-4 sm:grid-cols-[auto_minmax(0,1fr)] lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,22rem)]"
+      data-testid={`material-${source.id}`}
+    >
+      <span
+        aria-hidden
+        className="hidden size-11 shrink-0 items-center justify-center rounded-xl bg-surface-elevated text-text-muted sm:flex"
+      >
+        <Icon className="h-6 w-6" />
+      </span>
+
+      <div className="min-w-0 space-y-2">
+        <div className="space-y-0.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <h3 className="min-w-0 font-semibold tracking-tight break-words">{source.name}</h3>
+            <SourceStatusBadge source={source} />
           </div>
-          <SourceStatusBadge source={source} />
-        </div>
-        <p className="text-sm text-text-muted">
-          {meta?.rotulo ? t(meta.rotulo) : source.source_type}
-        </p>
-      </CardHeader>
-
-      <CardContent className="flex-1 space-y-2 text-sm">
-        <div className="flex items-baseline justify-between">
-          <span className="text-text-muted">{t("Preparado")}</span>
-          <span>{formatRelative(source.last_indexed_at, tagDoIdioma, t)}</span>
-        </div>
-        <div className="flex items-baseline justify-between">
-          <span className="text-text-muted">{t("Trechos que o agente encontra")}</span>
-          <span data-testid={`material-trechos-${source.id}`}>{source.chunks_count ?? 0}</span>
+          <p className="text-sm text-text-muted">
+            {meta?.rotulo ? t(meta.rotulo) : source.source_type}
+          </p>
         </div>
 
-        {/* Quem usa este material. Sem isto, arquivar é um tiro no escuro: não dá
-            para saber quantos assistentes param de saber daquilo. */}
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-text-muted">{t("Consultado por")}</span>
-          <span className="text-right">
-            {usadoPor.length === 0 ? (
-              <span className="text-warning-fg" data-testid={`material-orfao-${source.id}`}>
-                {t("nenhum assistente ainda")}
-              </span>
-            ) : (
-              usadoPor.join(", ")
-            )}
-          </span>
-        </div>
+        <dl className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-[repeat(3,auto)] sm:justify-start">
+          <div className="flex items-baseline gap-2 sm:block">
+            <dt className="text-xs text-text-muted">{t("Preparado")}</dt>
+            <dd>{formatRelative(source.last_indexed_at, tagDoIdioma, t)}</dd>
+          </div>
+          <div className="flex items-baseline gap-2 sm:block">
+            <dt className="text-xs text-text-muted">{t("Trechos que o agente encontra")}</dt>
+            <dd data-testid={`material-trechos-${source.id}`}>{source.chunks_count ?? 0}</dd>
+          </div>
+          {/* Quem usa este material. Sem isto, arquivar é um tiro no escuro: não dá
+              para saber quantos assistentes param de saber daquilo. */}
+          <div className="flex items-baseline gap-2 sm:block">
+            <dt className="text-xs text-text-muted">{t("Consultado por")}</dt>
+            <dd>
+              {usadoPor.length === 0 ? (
+                <span className="text-warning-fg" data-testid={`material-orfao-${source.id}`}>
+                  {t("nenhum assistente ainda")}
+                </span>
+              ) : (
+                usadoPor.join(", ")
+              )}
+            </dd>
+          </div>
+        </dl>
 
         {mostraErro ? (
           <details className="rounded-md border border-error-bg bg-error-bg/30 p-2 text-xs text-error-fg">
@@ -158,9 +165,9 @@ export function KnowledgeSourceCard({
             <p className="mt-1 whitespace-pre-wrap break-words">{source.last_index_error}</p>
           </details>
         ) : null}
-      </CardContent>
+      </div>
 
-      <CardFooter className="flex flex-wrap gap-2">
+      <div className="-ml-2 flex flex-wrap items-center gap-2 sm:col-span-2 sm:ml-0 lg:col-span-1 lg:col-start-3 lg:justify-end">
         <Button
           variant="secondary"
           size="sm"
@@ -264,7 +271,7 @@ export function KnowledgeSourceCard({
             {t("Arquivar")}
           </Button>
         ) : null}
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }

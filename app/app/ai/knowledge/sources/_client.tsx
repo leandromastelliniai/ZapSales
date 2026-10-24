@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Plus, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Painel } from "@/components/ui/painel";
 import { useRealtimeChannel } from "@/hooks/realtime/useRealtimeChannel";
 import {
   chaveQueryKey,
@@ -124,19 +125,22 @@ export function AcervoClient({ initialSources, initialChave, agentes }: Props) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {lista.map((s) => (
-            <KnowledgeSourceCard
-              key={s.id}
-              source={s}
-              usadoPor={usadoPor(s.id)}
-              isReindexing={reindex.isPending && reindex.variables === s.id}
-              onReindex={() => reindex.mutate(s.id)}
-              onArquivar={() => arquivar.mutate(s.id)}
-              onMudou={recarregar}
-            />
-          ))}
-        </div>
+        <Painel semRecuo>
+          <ul className="divide-y divide-border">
+            {lista.map((s) => (
+              <li key={s.id}>
+                <KnowledgeSourceCard
+                  source={s}
+                  usadoPor={usadoPor(s.id)}
+                  isReindexing={reindex.isPending && reindex.variables === s.id}
+                  onReindex={() => reindex.mutate(s.id)}
+                  onArquivar={() => arquivar.mutate(s.id)}
+                  onMudou={recarregar}
+                />
+              </li>
+            ))}
+          </ul>
+        </Painel>
       )}
 
       {arquivados.length > 0 ? (

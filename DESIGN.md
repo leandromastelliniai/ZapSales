@@ -46,6 +46,8 @@ Cantos: `rounded-xl` nos painéis e cartões, `rounded-lg` em tiles de ícone e 
 Filete de 1 px (`border-border`), sombra mínima (`shadow-xs`). Espaçamento de base 4 px; entre blocos de página `gap-6`.
 **Painel não vai dentro de painel**: o que está dentro separa-se por filete ou espaço.
 
+**Lista de coisas do mesmo tipo é uma linha por item, dentro de um `Painel` sem recuo** (`divide-y`), com o nome como único link da linha (esticado por `after:absolute`), o estado em `Selo` e as ações à direita — o molde da lista de Agentes, seguido por Follow-ups, Chaves de acesso, Conhecimento, Roteadores e Execuções. Grade de cartões iguais só quando o item tem imagem própria para comparar. O valor técnico do banco (`pause`, `cancel`) nunca vai à tela: vai em palavras, ou fica no "Como funciona".
+
 Duas larguras de página (`CorpoDaPagina`): `lista` (até 1280 px) e `formulario` (até 880 px); `total` só para o que
 precisa de tudo (quadro do funil, agenda). O respiro legado `p-6` do corpo é temporário: sai quando a última tela
 migrar (plano, pacote X1).

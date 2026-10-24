@@ -15214,6 +15214,10 @@ export const DICIONARIO: Traducoes = {
   "A configuração tem um problema que impede o atendimento.": { es: "La configuración tiene un problema que impide la atención." },
   "Sugere a resposta; uma pessoa aprova": { es: "Sugiere la respuesta; una persona aprueba" },
   "Responde sozinho": { es: "Responde solo" },
+  "Sem versão publicada": { es: "Sin versión publicada" },
+  "Pausa quando uma pessoa assume": { es: "Se pausa cuando una persona asume" },
+  "Cancela quando uma pessoa assume": { es: "Se cancela cuando una persona asume" },
+  "Segue mesmo quando uma pessoa assume": { es: "Continúa aunque una persona asuma" },
 };
 
 /**

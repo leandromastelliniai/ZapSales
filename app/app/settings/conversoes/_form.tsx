@@ -105,6 +105,7 @@ export function FormularioDeConversoes({
           <Input
             id="dataset_id"
             inputMode="numeric"
+            autoComplete="off"
             value={datasetId}
             onChange={(e) => setDatasetId(e.target.value)}
             placeholder="123456789012345"
@@ -119,7 +120,7 @@ export function FormularioDeConversoes({
           <Input
             id="access_token"
             type="password"
-            autoComplete="off"
+            autoComplete="new-password"
             value={token}
             onChange={(e) => setToken(e.target.value)}
             placeholder={

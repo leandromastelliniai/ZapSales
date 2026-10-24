@@ -255,7 +255,7 @@ describe("tela de Credenciais — o que excluir a chave do Jev faz", () => {
 
   /** Abre o diálogo de exclusão do cartão que diz "Usada em" — o da chave em uso. */
   function excluirAChaveEmUso(): HTMLElement {
-    const cartao = screen.getByTestId("credencial-usada-em").parentElement as HTMLElement;
+    const cartao = screen.getByTestId("credencial-usada-em").closest("li") as HTMLElement;
     fireEvent.click(within(cartao).getByRole("button", { name: "Excluir credencial" }));
     return screen.getByRole("alertdialog");
   }

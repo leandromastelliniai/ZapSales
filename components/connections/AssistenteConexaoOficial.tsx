@@ -130,7 +130,7 @@ export function AssistenteConexaoOficial({ jaConectado }: { jaConectado: boolean
           <Input
             id="assistente-token"
             type="password"
-            autoComplete="off"
+            autoComplete="new-password"
             value={credencial.token}
             onChange={(e) => setCredencial((c) => ({ ...c, token: e.target.value }))}
             placeholder="EAAG…"
@@ -145,7 +145,7 @@ export function AssistenteConexaoOficial({ jaConectado }: { jaConectado: boolean
           <Input
             id="assistente-app-secret"
             type="password"
-            autoComplete="off"
+            autoComplete="new-password"
             value={credencial.app_secret}
             onChange={(e) => setCredencial((c) => ({ ...c, app_secret: e.target.value }))}
             placeholder={t("32 letras e números")}
@@ -164,7 +164,7 @@ export function AssistenteConexaoOficial({ jaConectado }: { jaConectado: boolean
           <Input
             id="assistente-verify-token"
             type="password"
-            autoComplete="off"
+            autoComplete="new-password"
             value={credencial.verify_token}
             onChange={(e) => setCredencial((c) => ({ ...c, verify_token: e.target.value }))}
           />
@@ -287,7 +287,7 @@ export function AssistenteConexaoOficial({ jaConectado }: { jaConectado: boolean
               id="assistente-pin"
               type="password"
               inputMode="numeric"
-              autoComplete="off"
+              autoComplete="new-password"
               maxLength={6}
               pattern="\d{6}"
               value={pin}

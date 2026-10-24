@@ -179,7 +179,7 @@ export function EmbeddedSignupOficial({ appId, configId }: { appId: string; conf
           id="es-pin"
           type="password"
           inputMode="numeric"
-          autoComplete="off"
+          autoComplete="new-password"
           maxLength={6}
           value={pin}
           onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}

@@ -189,6 +189,7 @@ export function FormularioDeSmtp({
             id="smtp-password"
             data-testid="smtp-password"
             type="password"
+            autoComplete="new-password"
             value={form.password}
             onChange={(e) => set("password", e.target.value)}
             placeholder={temSenhaSalva ? "••••••••" : t("Senha do e-mail")}
