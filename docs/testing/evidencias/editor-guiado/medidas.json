@@ -1,0 +1,78 @@
+{
+  "desktop-claro": {
+    "sobraHorizontal": 0,
+    "percentualInicial": "75%",
+    "proximo": "materiais",
+    "alturaDoBotaoIr": 36,
+    "bolhasTextoUnico": 1,
+    "bolhasCurtas": 3,
+    "usarTomVisivel": 1,
+    "alturaDoChipDeTom": 36,
+    "larguraDaPrevia": 320,
+    "tomDoFormularioDepois": "true",
+    "pacotesRecomendados": 3,
+    "percentualDepoisDoMaterial": "95%",
+    "proximoDepois": "boas_vindas",
+    "sobraHorizontalNoFim": 0,
+    "errosDeConsole": [
+      "Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: [\"ai\",\"providers\",\"anthropic\",\"models\"]"
+    ]
+  },
+  "desktop-escuro": {
+    "sobraHorizontal": 0,
+    "percentualInicial": "75%",
+    "proximo": "materiais",
+    "alturaDoBotaoIr": 36,
+    "bolhasTextoUnico": 1,
+    "bolhasCurtas": 3,
+    "usarTomVisivel": 1,
+    "alturaDoChipDeTom": 36,
+    "larguraDaPrevia": 320,
+    "tomDoFormularioDepois": "true",
+    "pacotesRecomendados": 3,
+    "percentualDepoisDoMaterial": "95%",
+    "proximoDepois": "boas_vindas",
+    "sobraHorizontalNoFim": 0,
+    "errosDeConsole": [
+      "Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: [\"ai\",\"providers\",\"anthropic\",\"models\"]"
+    ]
+  },
+  "celular-claro": {
+    "sobraHorizontal": 0,
+    "percentualInicial": "75%",
+    "proximo": "materiais",
+    "alturaDoBotaoIr": 36,
+    "bolhasTextoUnico": 1,
+    "bolhasCurtas": 3,
+    "usarTomVisivel": 1,
+    "alturaDoChipDeTom": 36,
+    "larguraDaPrevia": 300,
+    "tomDoFormularioDepois": "true",
+    "pacotesRecomendados": 3,
+    "percentualDepoisDoMaterial": "95%",
+    "proximoDepois": "boas_vindas",
+    "sobraHorizontalNoFim": 0,
+    "errosDeConsole": [
+      "Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: [\"ai\",\"providers\",\"anthropic\",\"models\"]"
+    ]
+  },
+  "celular-escuro": {
+    "sobraHorizontal": 0,
+    "percentualInicial": "75%",
+    "proximo": "materiais",
+    "alturaDoBotaoIr": 36,
+    "bolhasTextoUnico": 1,
+    "bolhasCurtas": 3,
+    "usarTomVisivel": 1,
+    "alturaDoChipDeTom": 36,
+    "larguraDaPrevia": 300,
+    "tomDoFormularioDepois": "true",
+    "pacotesRecomendados": 3,
+    "percentualDepoisDoMaterial": "95%",
+    "proximoDepois": "boas_vindas",
+    "sobraHorizontalNoFim": 0,
+    "errosDeConsole": [
+      "Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: [\"ai\",\"providers\",\"anthropic\",\"models\"]"
+    ]
+  }
+}

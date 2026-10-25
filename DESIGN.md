@@ -62,6 +62,10 @@ migrar (plano, pacote X1).
 | `Painel` | `components/ui/painel.tsx` | contêiner de tabela, lista e bloco de formulário |
 | `Selo` | `components/ui/selo.tsx` | etiqueta de estado, com a cor do significado |
 | `AssistenteDeAgente` | `app/app/ai/agents/new/_assistente/` | criação guiada do agente em cinco estações (a Linha do Funil aplicada a um passo a passo), com prévia fixa que usa `.aura-ia` |
+| `ForcaDoAgenteFaixa` | `app/app/ai/agents/[id]/_components/guia/` | no topo do editor completo: porcentagem de prontidão (régua em `lib/ai/agents/guia-do-editor.ts`), o próximo passo que mais ajuda e o botão que leva à parte certa |
+| `SeloDaSecao` / `MarcaDaSecao` | `app/app/ai/agents/[id]/_components/guia/` | estado de cada parte do editor (Pronto, Revisar, Opcional) em palavra e ícone, nunca só em cor |
+| `FaixaRecomendada` | `app/app/ai/agents/[id]/_components/guia/` | a recomendação da casa com o motivo escrito, em violeta (a cor da IA) |
+| `PreviaDaResposta` | `app/app/ai/agents/[id]/_components/guia/` | conversa de exemplo ao lado de "Jeito de responder" que muda com o formato e o tom; simulação, não chama a IA |
 | `AvatarDoContato` | `components/inbox/visual/AvatarDoContato.tsx` | foto ou iniciais, com selo de canal e de quem atende |
 | `LinhaDoFunil` | `components/inbox/visual/LinhaDoFunil.tsx` | etapas passadas cheias, a atual maior, as futuras vazadas |
 | `NavHub` | `components/shell/NavHub.tsx` | páginas de área (CRM, IA, Análise, Configurações) como lista em painel |
@@ -80,6 +84,8 @@ Vitrine para ver tudo com dados de exemplo: `/vitrine-sistema` (pública só em 
 ### O "vivo" da IA, sem agitação
 
 Onde a IA aparece (a prévia do assistente, o ponto da estação atual) ela ganha um **brilho estático** (`.aura-ia`, na cor `--color-ia`) e, quando uma estação passa a ser a atual, **um** pulso que não repete (`.pulso-de-estacao`). Nada anima em laço: a regra é a do pulso do Kanban, "vivo é o que responde, não o que se agita". `prefers-reduced-motion: reduce` mostra o mesmo estado, parado. A cor é a do papel (IA), não a de destaque do revendedor. Medido na vitrine: nenhum elemento com animação infinita.
+
+No editor completo do agente, o violeta marca o que o sistema **recomenda**, sempre com o motivo em uma frase (`FaixaRecomendada`, o selo "Recomendado" nos pacotes). A prévia de "Jeito de responder" faz a bolha que mudou brilhar **uma vez** (`.realce-da-previa`, remontada por `key`); sem movimento, nada brilha. O estado de cada parte (Pronto, Revisar, Opcional) usa verde, âmbar e neutro com **palavra e forma** (check, alerta, traço): cor sozinha não informa.
 
 ## Ícones
 
