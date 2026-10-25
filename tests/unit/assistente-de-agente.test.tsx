@@ -59,26 +59,46 @@ beforeEach(() => {
 });
 afterEach(() => cleanup());
 
+/** Abre o menu do tipo de negócio e clica no tipo pedido. */
+async function escolher(usuario: ReturnType<typeof userEvent.setup>, ramoId: string) {
+  await usuario.click(screen.getByTestId("seletor-de-ramo"));
+  await usuario.click(await screen.findByTestId(`ramo-${ramoId}`));
+}
+
 async function ate(estacao: number, usuario: ReturnType<typeof userEvent.setup>) {
   for (let i = 1; i < estacao; i++) await usuario.click(screen.getByTestId("continuar"));
 }
 
 describe("assistente de criação de agente", () => {
-  it("a estação 1 lista os grupos e filtra por digitação", async () => {
+  it("a estação 1 mostra um menu fechado; ao abrir, lista os grupos com busca por digitação", async () => {
     const u = userEvent.setup();
     montar();
-    expect(screen.getByText("Saúde e bem-estar")).toBeInTheDocument();
+    // Fechado: uma linha, sem a lista de 36 tipos na tela.
+    expect(screen.getByTestId("seletor-de-ramo")).toHaveTextContent("Escolha o tipo de negócio");
+    expect(screen.queryByTestId("lista-de-ramos")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ramo-advocacia")).not.toBeInTheDocument();
+
+    await u.click(screen.getByTestId("seletor-de-ramo"));
+    expect(await screen.findByText("Saúde e bem-estar")).toBeInTheDocument();
     expect(screen.getByTestId("ramo-advocacia")).toBeInTheDocument();
-    await u.type(screen.getByLabelText("Tipo de negócio", { selector: "input" }), "odonto");
+    await u.type(screen.getByLabelText("Buscar o tipo de negócio"), "odonto");
     expect(screen.getByTestId("ramo-clinica-odontologica")).toBeInTheDocument();
     expect(screen.queryByTestId("ramo-advocacia")).not.toBeInTheDocument();
     expect(screen.getByTestId("ramo-outro")).toBeInTheDocument();
   });
 
+  it("escolher um tipo fecha o menu e o botão passa a mostrar o escolhido", async () => {
+    const u = userEvent.setup();
+    montar();
+    await escolher(u, "advocacia");
+    expect(screen.queryByTestId("lista-de-ramos")).not.toBeInTheDocument();
+    expect(screen.getByTestId("seletor-de-ramo")).toHaveTextContent("Advocacia");
+  });
+
   it("escolher um ramo e continuar leva à estação 2 com o modelo recomendado e o motivo", async () => {
     const u = userEvent.setup();
     montar();
-    await u.click(screen.getByTestId("ramo-clinica-odontologica"));
+    await escolher(u, "clinica-odontologica");
     await u.click(screen.getByTestId("continuar"));
     expect(screen.getByTestId("passo-atual")).toHaveTextContent("2");
     expect(screen.getByTestId("modelo-agendamento")).toHaveAttribute("aria-checked", "true");
@@ -94,10 +114,10 @@ describe("assistente de criação de agente", () => {
   it("ramo regulado mostra o aviso, sem bloquear", async () => {
     const u = userEvent.setup();
     montar();
-    await u.click(screen.getByTestId("ramo-advocacia"));
+    await escolher(u, "advocacia");
     expect(screen.getByTestId("aviso-de-ramo-regulado")).toBeInTheDocument();
     expect(screen.getByTestId("continuar")).toBeEnabled();
-    await u.click(screen.getByTestId("ramo-ecommerce"));
+    await escolher(u, "ecommerce");
     expect(screen.queryByTestId("aviso-de-ramo-regulado")).not.toBeInTheDocument();
   });
 
@@ -112,7 +132,7 @@ describe("assistente de criação de agente", () => {
   it("na estação 3, editar a abertura e clicar em 'Voltar à sugestão' restaura o texto sugerido", async () => {
     const u = userEvent.setup();
     montar();
-    await u.click(screen.getByTestId("ramo-salao"));
+    await escolher(u, "salao");
     await ate(3, u);
     const campo = screen.getByLabelText("Primeira frase da conversa");
     const sugestao = sugestaoDe(
@@ -131,7 +151,7 @@ describe("assistente de criação de agente", () => {
   it("a prévia das estações 1 a 4 nunca chama a IA", async () => {
     const u = userEvent.setup();
     montar();
-    await u.click(screen.getByTestId("ramo-salao"));
+    await escolher(u, "salao");
     await ate(4, u);
     expect(criarAgente).not.toHaveBeenCalled();
     expect(screen.getByTestId("previa-do-agente")).toHaveTextContent(
@@ -142,7 +162,7 @@ describe("assistente de criação de agente", () => {
   it("'Prefiro o editor completo' leva ao editor e guarda o que já foi respondido", async () => {
     const u = userEvent.setup();
     montar();
-    await u.click(screen.getByTestId("ramo-salao"));
+    await escolher(u, "salao");
     const link = screen.getByTestId("ir-para-o-editor");
     expect(link).toHaveAttribute("href", "/app/ai/agents/new?de=assistente");
     await waitFor(() => {
@@ -154,7 +174,7 @@ describe("assistente de criação de agente", () => {
   it("sem chave de IA a estação 5 explica, linka as chaves e não cria nada; as respostas sobrevivem", async () => {
     const u = userEvent.setup();
     const { unmount } = montar(SEM_CHAVE);
-    await u.click(screen.getByTestId("ramo-salao"));
+    await escolher(u, "salao");
     await ate(5, u);
     expect(screen.getByTestId("falta-de-ia")).toHaveTextContent(/Falta a chave de acesso/);
     expect(screen.getByRole("link", { name: "Abrir Chaves de acesso à IA" })).toHaveAttribute(
@@ -175,7 +195,7 @@ describe("assistente de criação de agente", () => {
     let resolver: (v: unknown) => void = () => undefined;
     criarAgente.mockReturnValue(new Promise((r) => (resolver = r)));
     montar();
-    await u.click(screen.getByTestId("ramo-salao"));
+    await escolher(u, "salao");
     await ate(5, u);
     const botao = screen.getByTestId("criar-agente");
     await u.dblClick(botao);
@@ -193,7 +213,7 @@ describe("assistente de criação de agente", () => {
   it("recarregar volta à estação salva; 'Começar de novo' limpa", async () => {
     const u = userEvent.setup();
     const { unmount } = montar();
-    await u.click(screen.getByTestId("ramo-psicologia"));
+    await escolher(u, "psicologia");
     await ate(3, u);
     unmount();
     montar();
@@ -205,7 +225,7 @@ describe("assistente de criação de agente", () => {
   it("no idioma espanhol, o texto do ramo sai em espanhol", async () => {
     const u = userEvent.setup();
     montar(PADROES_OK, "es");
-    await u.click(screen.getByTestId("ramo-clinica-medica"));
+    await escolher(u, "clinica-medica");
     await ate(3, u);
     const campo = screen.getByLabelText(
       /Primera frase de la conversación|Primeira frase da conversa/,

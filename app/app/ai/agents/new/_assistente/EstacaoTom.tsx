@@ -4,6 +4,7 @@
  * recomendado marcado com o motivo) e a frase de abertura, que a pessoa pode reescrever
  * e restaurar com "Voltar à sugestão". Os atalhos acrescentam uma frase, não travam nada.
  */
+import { ICONE_DO_TOM } from "@/components/ai/icones-do-assistente";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Selo } from "@/components/ui/selo";
@@ -82,6 +83,7 @@ export function EstacaoTom({ estado, idioma, mudar }: Props) {
       >
         {TONS_DO_AGENTE.map((tom) => {
           const marcado = r.tom === tom;
+          const Icone = ICONE_DO_TOM[tom]!;
           return (
             <button
               key={tom}
@@ -96,6 +98,11 @@ export function EstacaoTom({ estado, idioma, mudar }: Props) {
               )}
             >
               <span className="flex min-h-6 flex-wrap items-center gap-2">
+                <Icone
+                  size={20}
+                  aria-hidden
+                  className={cn("shrink-0", marcado ? "text-ia" : "text-muted-foreground")}
+                />
                 <span className="text-sm font-medium">{t(NOME_DO_TOM[tom])}</span>
                 {tom === sugerido ? <Selo significado="ia">{t("Recomendado")}</Selo> : null}
               </span>

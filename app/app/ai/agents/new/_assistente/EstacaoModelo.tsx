@@ -4,6 +4,7 @@
  * ramo marcado e o motivo escrito. A pessoa não escolhe "capacidades": o modelo já liga o
  * que precisa, e a tela só diz, em uma frase, o que o agente vai fazer.
  */
+import { ICONE_DO_MODELO } from "@/components/ai/icones-do-assistente";
 import { Selo } from "@/components/ui/selo";
 import { useT } from "@/hooks/i18n/useT";
 import { fraseDoQueFaz } from "@/lib/ai/agents/o-que-o-modelo-faz";
@@ -44,6 +45,7 @@ export function EstacaoModelo({ estado, idioma, mudar }: Props) {
         {MODELOS_DE_AGENTE.map((m) => {
           const c = m.conteudo[idioma];
           const marcado = escolhido === m.id;
+          const Icone = ICONE_DO_MODELO[m.id]!;
           return (
             <button
               key={m.id}
@@ -58,6 +60,11 @@ export function EstacaoModelo({ estado, idioma, mudar }: Props) {
               )}
             >
               <span className="flex min-h-6 flex-wrap items-center gap-2">
+                <Icone
+                  size={20}
+                  aria-hidden
+                  className={cn("shrink-0", marcado ? "text-ia" : "text-muted-foreground")}
+                />
                 <span className="text-sm font-medium">{c.titulo}</span>
                 {m.id === recomendado ? <Selo significado="ia">{t("Recomendado")}</Selo> : null}
               </span>
