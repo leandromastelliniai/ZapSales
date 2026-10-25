@@ -1,0 +1,38 @@
+{
+  "desktop-claro": {
+    "categorias": 10,
+    "tipos_a_vista": 8,
+    "altura_do_documento": 900,
+    "altura_da_janela": 900,
+    "continuar_na_primeira_tela": true,
+    "overflow_horizontal_da_pagina": false,
+    "marcado": "true",
+    "tipos_de_servicos": 5,
+    "busca_clin": 4,
+    "animacoes_infinitas": 0
+  },
+  "desktop-escuro": {
+    "categorias": 10,
+    "tipos_a_vista": 8,
+    "altura_do_documento": 900,
+    "altura_da_janela": 900,
+    "continuar_na_primeira_tela": true,
+    "overflow_horizontal_da_pagina": false,
+    "marcado": "true",
+    "tipos_de_servicos": 5,
+    "busca_clin": 4,
+    "animacoes_infinitas": 0
+  },
+  "celular-claro": {
+    "categorias": 10,
+    "tipos_a_vista": 8,
+    "altura_do_documento": 1269,
+    "altura_da_janela": 844,
+    "continuar_na_primeira_tela": true,
+    "overflow_horizontal_da_pagina": false,
+    "marcado": "true",
+    "tipos_de_servicos": 5,
+    "busca_clin": 4,
+    "animacoes_infinitas": 0
+  }
+}

@@ -51,12 +51,14 @@ test("a lista de agentes leva ao assistente, que guia, devolve ao editor e cria"
 
   // Estação 1: ramo regulado recomenda Agendamento e mostra o aviso, sem bloquear.
   await page.getByLabel("Nome do negócio (opcional)").fill("Clínica Sorriso E2E");
-  // O tipo de negócio é um menu: fechado ocupa uma linha, e a lista só aparece ao abrir.
-  await expect(page.getByTestId("lista-de-ramos")).toHaveCount(0);
-  await page.getByTestId("seletor-de-ramo").click();
-  await expect(page.getByTestId("lista-de-ramos")).toBeVisible();
+  // O tipo de negócio fica sempre à vista: categorias em cima e, embaixo, os tipos da aberta.
+  await expect(page.getByRole("tab")).toHaveCount(10);
+  await page.getByTestId("categoria-saude").click();
   await page.getByTestId("ramo-clinica-odontologica").click();
-  await expect(page.getByTestId("seletor-de-ramo")).toContainText("Clínica odontológica");
+  await expect(page.getByTestId("ramo-clinica-odontologica")).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
   await expect(page.getByTestId("aviso-de-ramo-regulado")).toBeVisible();
   await page.screenshot({ path: path.join(EVIDENCIA, "01-negocio.png"), fullPage: true });
   await page.getByTestId("continuar").click();

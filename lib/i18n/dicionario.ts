@@ -15275,8 +15275,9 @@ export const DICIONARIO: Traducoes = {
   "O agente espera o cliente falar primeiro.": { es: "El agente espera a que el cliente hable primero." },
   "É só a frase de abertura. A resposta de verdade você vê no teste, logo depois de criar o agente.": { es: "Es solo la frase de apertura. La respuesta real la ves en la prueba, justo después de crear el agente." },
   "Prefere ser guiado? Abrir o assistente": { es: "¿Prefieres que te guiemos? Abrir el asistente" },
-  "Escolha o tipo de negócio…": { es: "Elige el tipo de negocio…" },
   "Buscar o tipo de negócio": { es: "Buscar el tipo de negocio" },
+  "Categorias de negócio": { es: "Categorías de negocio" },
+  "Resultados da busca": { es: "Resultados de la búsqueda" },
 };
 
 /**

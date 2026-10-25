@@ -18,6 +18,7 @@ vi.mock("@/app/app/ai/agents/[id]/_actions", () => ({
 
 import { AssistenteDeAgente } from "@/app/app/ai/agents/new/_assistente/AssistenteDeAgente";
 import { sugestaoDe } from "@/lib/ai/agents/assistente/compor";
+import { ramoPorId } from "@/lib/ai/agents/assistente/ramos";
 import { CHAVE_DO_ASSISTENTE, estadoInicial } from "@/lib/ai/agents/assistente/estado";
 import type { PadroesDeIa } from "@/lib/ai/agents/padroes-de-ia";
 
@@ -59,9 +60,10 @@ beforeEach(() => {
 });
 afterEach(() => cleanup());
 
-/** Abre o menu do tipo de negócio e clica no tipo pedido. */
+/** Abre a categoria do tipo de negócio e clica no tipo pedido. */
 async function escolher(usuario: ReturnType<typeof userEvent.setup>, ramoId: string) {
-  await usuario.click(screen.getByTestId("seletor-de-ramo"));
+  const grupo = ramoPorId(ramoId)!.grupo;
+  await usuario.click(screen.getByTestId(`categoria-${grupo}`));
   await usuario.click(await screen.findByTestId(`ramo-${ramoId}`));
 }
 
@@ -70,29 +72,42 @@ async function ate(estacao: number, usuario: ReturnType<typeof userEvent.setup>)
 }
 
 describe("assistente de criação de agente", () => {
-  it("a estação 1 mostra um menu fechado; ao abrir, lista os grupos com busca por digitação", async () => {
+  it("a estação 1 mostra as categorias e os tipos da categoria aberta, sem menu escondido", async () => {
     const u = userEvent.setup();
     montar();
-    // Fechado: uma linha, sem a lista de 36 tipos na tela.
-    expect(screen.getByTestId("seletor-de-ramo")).toHaveTextContent("Escolha o tipo de negócio");
-    expect(screen.queryByTestId("lista-de-ramos")).not.toBeInTheDocument();
+    // À vista desde o início: 9 categorias + Outro, e os tipos da primeira categoria.
+    expect(screen.getAllByRole("tab")).toHaveLength(10);
+    expect(screen.getByTestId("lista-de-ramos")).toBeInTheDocument();
+    expect(screen.getByTestId("ramo-clinica-medica")).toBeInTheDocument();
     expect(screen.queryByTestId("ramo-advocacia")).not.toBeInTheDocument();
 
-    await u.click(screen.getByTestId("seletor-de-ramo"));
-    expect(await screen.findByText("Saúde e bem-estar")).toBeInTheDocument();
+    // Trocar de categoria mostra os tipos dela.
+    await u.click(screen.getByTestId("categoria-servicos"));
     expect(screen.getByTestId("ramo-advocacia")).toBeInTheDocument();
-    await u.type(screen.getByLabelText("Buscar o tipo de negócio"), "odonto");
-    expect(screen.getByTestId("ramo-clinica-odontologica")).toBeInTheDocument();
-    expect(screen.queryByTestId("ramo-advocacia")).not.toBeInTheDocument();
-    expect(screen.getByTestId("ramo-outro")).toBeInTheDocument();
+    expect(screen.queryByTestId("ramo-clinica-medica")).not.toBeInTheDocument();
   });
 
-  it("escolher um tipo fecha o menu e o botão passa a mostrar o escolhido", async () => {
+  it("a busca atravessa as categorias; sem resultado, aponta para Outro", async () => {
+    const u = userEvent.setup();
+    montar();
+    await u.type(screen.getByLabelText("Buscar o tipo de negócio"), "odonto");
+    expect(screen.getByTestId("ramo-clinica-odontologica")).toBeInTheDocument();
+    expect(screen.queryByTestId("ramo-clinica-medica")).not.toBeInTheDocument();
+    await u.clear(screen.getByLabelText("Buscar o tipo de negócio"));
+    await u.type(screen.getByLabelText("Buscar o tipo de negócio"), "zzzz");
+    expect(screen.getByText(/Nenhum tipo de negócio com esse nome/)).toBeInTheDocument();
+  });
+
+  it("escolher um tipo o marca e 'Outro' volta ao neutro", async () => {
     const u = userEvent.setup();
     montar();
     await escolher(u, "advocacia");
-    expect(screen.queryByTestId("lista-de-ramos")).not.toBeInTheDocument();
-    expect(screen.getByTestId("seletor-de-ramo")).toHaveTextContent("Advocacia");
+    expect(screen.getByTestId("ramo-advocacia")).toHaveAttribute("aria-checked", "true");
+    await u.click(screen.getByTestId("ramo-outro"));
+    expect(screen.getByTestId("ramo-outro")).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText(/palavras neutras/)).toBeInTheDocument();
+    await u.click(screen.getByTestId("continuar"));
+    expect(screen.getByTestId("modelo-atendimento")).toHaveAttribute("aria-checked", "true");
   });
 
   it("escolher um ramo e continuar leva à estação 2 com o modelo recomendado e o motivo", async () => {

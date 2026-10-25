@@ -155,7 +155,7 @@ export function AssistenteDeAgente({ padroes, funilPadraoId, capacidades, idioma
 
       <LinhaDasEstacoes atual={estado.estacao} />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <section className="space-y-6 rounded-xl border border-border bg-surface p-5 shadow-xs">
           {estado.estacao === 1 ? <EstacaoNegocio {...props} /> : null}
           {estado.estacao === 2 ? <EstacaoModelo {...props} /> : null}

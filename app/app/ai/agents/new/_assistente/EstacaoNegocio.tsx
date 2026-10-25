@@ -35,7 +35,7 @@ export function EstacaoNegocio({ estado, idioma, mudar }: Props) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="assistente-ramo">{t("Tipo de negócio")}</Label>
+        <p className="text-sm leading-none font-medium">{t("Tipo de negócio")}</p>
         <SeletorDeRamo
           escolhido={estado.respostas.ramoId}
           idioma={idioma}
