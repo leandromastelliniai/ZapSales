@@ -34,6 +34,8 @@ import {
 } from "@/lib/ai/agents/perfil";
 import { REGISTRO_DE_IDIOMAS } from "@/lib/i18n/registro";
 
+import { ExemplosDoCampo } from "./guia/ExemplosDoCampo";
+
 /** O perfil como o formulário o segura: texto vazio é "não preenchido". */
 export interface PerfilDoFormulario {
   persona: string;
@@ -85,6 +87,11 @@ interface Props {
   semTitulo?: boolean;
   /** Mensagem de erro por campo do perfil (já traduzida). */
   erros?: Partial<Record<keyof PerfilDoFormulario, string>>;
+  /**
+   * Ligado, cada campo de texto (quem é, objetivo, boas-vindas) oferece "Ver exemplos" no
+   * idioma dado. Sem isto, a tela é a de sempre: o editor liga; outros usos não precisam.
+   */
+  idiomaDosExemplos?: IdiomaDoAgente;
 }
 
 export function PerfilGuiado({
@@ -94,6 +101,7 @@ export function PerfilGuiado({
   disabled,
   erros,
   semTitulo = false,
+  idiomaDosExemplos,
 }: Props) {
   const t = useT();
 
@@ -144,6 +152,15 @@ export function PerfilGuiado({
           limite={LIMITES_DO_PERFIL.persona}
           erro={erros?.persona}
         />
+        {idiomaDosExemplos ? (
+          <ExemplosDoCampo
+            campo="persona"
+            idioma={idiomaDosExemplos}
+            valor={value.persona}
+            onAplicar={(texto) => onChange({ persona: texto })}
+            disabled={disabled}
+          />
+        ) : null}
       </div>
 
       <div className="space-y-1">
@@ -196,6 +213,15 @@ export function PerfilGuiado({
           limite={LIMITES_DO_PERFIL.objetivo}
           erro={erros?.objetivo}
         />
+        {idiomaDosExemplos ? (
+          <ExemplosDoCampo
+            campo="objetivo"
+            idioma={idiomaDosExemplos}
+            valor={value.objetivo}
+            onAplicar={(texto) => onChange({ objetivo: texto })}
+            disabled={disabled}
+          />
+        ) : null}
       </div>
 
       <div className="space-y-1">
@@ -219,6 +245,15 @@ export function PerfilGuiado({
           limite={LIMITES_DO_PERFIL.boasVindas}
           erro={erros?.boasVindas}
         />
+        {idiomaDosExemplos ? (
+          <ExemplosDoCampo
+            campo="boasVindas"
+            idioma={idiomaDosExemplos}
+            valor={value.boasVindas}
+            onAplicar={(texto) => onChange({ boasVindas: texto })}
+            disabled={disabled}
+          />
+        ) : null}
       </div>
 
       <div className="space-y-1">

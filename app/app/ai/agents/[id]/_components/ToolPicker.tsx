@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { apiClient } from "@/lib/api/client";
 import { useT } from "@/hooks/i18n/useT";
 import { FerramentasExternasDoSeletor } from "./FerramentasExternasDoSeletor";
+import { SeloRecomendado } from "./guia/FaixaRecomendada";
 import {
   PACOTES,
   riscoMeta,
@@ -229,6 +230,19 @@ export function ToolPicker({ value: valorSalvo, onChange, disabled, ocultar, ext
     [catalogo],
   );
 
+  /**
+   * Os pacotes que a casa recomenda, com o motivo (o guia do editor). "Atender" e "Passar
+   * para um humano" valem para qualquer agente; "Vender" só para quem vende ou agenda, e a
+   * frase diz isso: a tela não sabe o negócio, então não finge decidir por quem configura.
+   */
+  const motivoDaRecomendacao: Partial<Record<ToolBundle, string>> = {
+    atender: t("Sem este pacote o agente não lê o histórico e pede que o cliente repita tudo."),
+    escalar: t("Quando não souber, ele passa para uma pessoa em vez de arriscar uma resposta errada."),
+    vender: t(
+      "Se este agente vende ou agenda: sem este pacote o cliente conversa e ninguém da equipe vê que ele existe.",
+    ),
+  };
+
   const qtdExternas = externas?.value.length ?? 0;
   const vagas = vagasRestantes(value, qtdExternas);
   const cheio = vagas <= 0;
@@ -372,8 +386,14 @@ export function ToolPicker({ value: valorSalvo, onChange, disabled, ocultar, ext
                         {t("parcial")}
                       </Badge>
                     ) : null}
+                    {motivoDaRecomendacao[pacote.id] ? <SeloRecomendado /> : null}
                   </div>
                   <p className="text-xs text-muted-foreground">{t(pacote.explicacao)}</p>
+                  {motivoDaRecomendacao[pacote.id] ? (
+                    <p className="text-xs text-ia" data-testid={`motivo-${pacote.id}`}>
+                      {motivoDaRecomendacao[pacote.id]}
+                    </p>
+                  ) : null}
                   <p className="text-xs text-muted-foreground" data-testid={`contagem-${pacote.id}`}>
                     {textoDaContagem(total, ligadas, t)}
                   </p>

@@ -47,6 +47,16 @@ import {
   WhatsappLogo,
 } from "@/lib/ui/icons";
 import { PassagemParaHumano } from "@/components/icons/produto";
+import {
+  estadoDasSecoes,
+  forcaDoAgente,
+  type EstadoDaSecao,
+  type FatosDoAgente,
+} from "@/lib/ai/agents/guia-do-editor";
+import { FaixaRecomendada } from "./guia/FaixaRecomendada";
+import { ForcaDoAgenteFaixa } from "./guia/ForcaDoAgente";
+import { PreviaDaResposta } from "./guia/PreviaDaResposta";
+import { MarcaDaSecao, SeloDaSecao } from "./guia/SeloDaSecao";
 import { apiClient } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { sugerirIcone, type IconeDoAgente } from "@/lib/ai/agents/icone-do-agente";
@@ -601,12 +611,15 @@ function SecaoDoAgente({
   Icone,
   titulo,
   explicacao,
+  estado,
   children,
 }: {
   id: IdDaSecao;
   Icone: Icon;
   titulo: string;
   explicacao: string;
+  /** Pronto / Revisar / Opcional (o guia do editor); sem ele, o cabeçalho não leva selo. */
+  estado?: EstadoDaSecao;
   children: React.ReactNode;
 }) {
   return (
@@ -626,6 +639,7 @@ function SecaoDoAgente({
           </h2>
           <p className="max-w-[65ch] text-sm text-muted-foreground">{explicacao}</p>
         </div>
+        {estado ? <SeloDaSecao estado={estado} className="ml-auto" /> : null}
       </header>
       <div className="space-y-5 p-5">{children}</div>
     </section>
@@ -891,6 +905,40 @@ export function AgentForm(props: Props) {
       inteligencia: form.model || t("Escolha o modelo"),
     };
   })();
+
+  /** Os fatos do formulário que o guia lê (ver `lib/ai/agents/guia-do-editor.ts`). */
+  const fatosDoGuia: FatosDoAgente = {
+    nome: form.name,
+    temPerfil:
+      form.profile_tone !== "" &&
+      (form.profile_persona.trim() !== "" || form.profile_objective.trim() !== ""),
+    // O texto padrão que um agente novo traz não é uma personalidade escrita por alguém.
+    temInstrucoes:
+      form.system_prompt.trim() !== "" &&
+      form.system_prompt.trim() !==
+        t("Você é um atendente. Responda de forma educada e clara, em pt-BR.").trim(),
+    temBoasVindas: form.profile_welcome.trim() !== "",
+    materiais: form.knowledge_source_ids.length,
+    acoes: form.tool_ids.length + form.external_tool_ids.length,
+    numeroEscolhido: form.channel_session_id !== "",
+    chamaPessoa: form.handoff_tool_enabled,
+    followupLigado: form.followup.enabled,
+    modeloEscolhido: form.model.trim() !== "",
+  };
+  const forca = forcaDoAgente(fatosDoGuia);
+  // Campo com erro de validação na parte pede revisão, mesmo que o conteúdo esteja preenchido.
+  const estadoDaSecao = Object.fromEntries(
+    Object.entries(estadoDasSecoes(fatosDoGuia)).map(([id, estado]) => [
+      id,
+      errosPorSecao[id as IdDaSecao] ? "revisar" : estado,
+    ]),
+  ) as Record<IdDaSecao, EstadoDaSecao>;
+
+  /** "Ir para lá" da força: as partes moram no papel "conversa", que precisa estar aberto. */
+  function irParaSecao(id: IdDaSecao) {
+    setPapel("conversa");
+    requestAnimationFrame(() => rolarPara(id));
+  }
 
   /**
    * A dica do botão "Publicar" — uma frase, vinda de UM motivo.
@@ -1171,6 +1219,8 @@ export function AgentForm(props: Props) {
         ) : null}
       </div>
 
+      <ForcaDoAgenteFaixa forca={forca} onIrPara={irParaSecao} />
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
         {/*
           NAVEGAÇÃO POR PAPEL (spec 16 §6), agora com o índice das seções. Um form
@@ -1229,7 +1279,10 @@ export function AgentForm(props: Props) {
                             )}
                           >
                             <span className="flex items-center justify-between gap-2 text-sm">
-                              <span className="truncate">{t(secao.indice)}</span>
+                              <span className="flex min-w-0 items-center gap-1.5">
+                                <MarcaDaSecao estado={estadoDaSecao[secao.id]} />
+                                <span className="truncate">{t(secao.indice)}</span>
+                              </span>
                               {errosPorSecao[secao.id] ? (
                                 <span
                                   className="size-2 shrink-0 rounded-full bg-error"
@@ -1321,6 +1374,7 @@ export function AgentForm(props: Props) {
           <div className={papel === "conversa" ? "space-y-5" : "hidden"}>
             <SecaoDoAgente
               id="quem"
+              estado={estadoDaSecao.quem}
               Icone={IdentificationCard}
               titulo={t("Quem é este agente")}
               explicacao={t("Como a sua equipe reconhece este agente nas listas e na Inbox. O cliente não vê esta parte.")}
@@ -1389,12 +1443,16 @@ export function AgentForm(props: Props) {
 
             <SecaoDoAgente
               id="personalidade"
+              estado={estadoDaSecao.personalidade}
               Icone={Smiley}
               titulo={t("Como ele se apresenta")}
               explicacao={t("Muda o jeito como ele fala com o seu cliente: quem ele diz ser, o tom e sobre o que aceita conversar.")}
             >
               <PerfilGuiado
                 semTitulo
+                idiomaDosExemplos={
+                  form.profile_language !== "" ? form.profile_language : idiomaDoModelo
+                }
                 value={perfilDoFormulario(form)}
                 onChange={(parte) =>
                   patch({
@@ -1520,10 +1578,20 @@ export function AgentForm(props: Props) {
 
             <SecaoDoAgente
               id="respostas"
+              estado={estadoDaSecao.respostas}
               Icone={ChatsCircle}
               titulo={t("Jeito de responder")}
               explicacao={t("O formato das mensagens que chegam ao cliente: um texto único ou várias mensagens curtas, e se ele também responde em áudio.")}
             >
+              {!form.split_messages ? (
+                <FaixaRecomendada testId="recomendado-respostas">
+                  {t(
+                    "mensagens curtas, de 1 a 3 frases. Motivo: no celular, texto longo é lido pela metade, e o cliente responde mais rápido quando a mensagem cabe na tela.",
+                  )}
+                </FaixaRecomendada>
+              ) : null}
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+              <div className="min-w-0 space-y-5">
               <Subsecao titulo={t("Estilo de resposta")}>
                 <div className="flex items-center gap-2">
                   <Switch
@@ -1579,14 +1647,35 @@ export function AgentForm(props: Props) {
                   riscoDeBanimento={channelSession?.riscoDeBanimento === true}
                 />
               </Subsecao>
+              </div>
+              <div className="min-w-0 lg:sticky lg:top-44 lg:self-start">
+                <PreviaDaResposta
+                  nomeDoAgente={form.name}
+                  tom={form.profile_tone}
+                  dividir={form.split_messages}
+                  maxChars={form.split_max_chars}
+                  audio={form.audio_reply_enabled}
+                  onUsarTom={(tom) => patch({ profile_tone: tom })}
+                  disabled={disabled}
+                />
+              </div>
+              </div>
             </SecaoDoAgente>
 
             <SecaoDoAgente
               id="conhecimento"
+              estado={estadoDaSecao.conhecimento}
               Icone={BookOpen}
               titulo={t("O que ele consulta antes de responder")}
               explicacao={t("Marque o material do seu negócio que este assistente pode ler. Ele procura ali antes de responder, em vez de improvisar — e cita de onde tirou.")}
             >
+              {form.knowledge_source_ids.length === 0 ? (
+                <FaixaRecomendada testId="recomendado-conhecimento">
+                  {t(
+                    "ligue ao menos um material, como a tabela de preços, os horários e as regras da casa. Motivo: sem material o agente improvisa, e é assim que nasce a resposta errada.",
+                  )}
+                </FaixaRecomendada>
+              ) : null}
               <BasesDoAgente
                 semTitulo
                 materiais={materiais}
@@ -1598,6 +1687,7 @@ export function AgentForm(props: Props) {
 
             <SecaoDoAgente
               id="capacidades"
+              estado={estadoDaSecao.capacidades}
               Icone={PuzzlePiece}
               titulo={t("O que o agente pode fazer")}
               explicacao={t("Ligue por jornada de trabalho. O agente só consegue fazer o que estiver ligado aqui — e o que estiver ligado, ele fará sozinho durante o atendimento.")}
@@ -1618,6 +1708,7 @@ export function AgentForm(props: Props) {
 
             <SecaoDoAgente
               id="onde"
+              estado={estadoDaSecao.onde}
               Icone={WhatsappLogo}
               titulo={t("Onde e quando ele atende")}
               explicacao={t("Por qual número de WhatsApp ele responde e em que situações ele entra na conversa sozinho.")}
@@ -1708,10 +1799,18 @@ export function AgentForm(props: Props) {
 
             <SecaoDoAgente
               id="pessoas"
+              estado={estadoDaSecao.pessoas}
               Icone={PassagemParaHumano}
               titulo={t("Passar para uma pessoa")}
               explicacao={t("Quando ele chama alguém da equipe, e como vocês assumem ou devolvem a conversa.")}
             >
+              {!form.handoff_tool_enabled ? (
+                <FaixaRecomendada testId="recomendado-pessoas">
+                  {t(
+                    "deixe ligado. Motivo: quando o agente não souber, ele passa para a equipe em vez de arriscar uma resposta errada ao seu cliente.",
+                  )}
+                </FaixaRecomendada>
+              ) : null}
               <Subsecao>
                 <div className="flex items-center gap-2">
                   <Switch
@@ -1761,6 +1860,7 @@ export function AgentForm(props: Props) {
 
             <SecaoDoAgente
               id="vendas"
+              estado={estadoDaSecao.vendas}
               Icone={HandCoins}
               titulo={t("Propostas e retornos")}
               explicacao={t("Se ele pode montar um orçamento quando o cliente pede, e se volta a procurar quem parou de responder.")}
@@ -1839,6 +1939,7 @@ export function AgentForm(props: Props) {
 
             <SecaoDoAgente
               id="inteligencia"
+              estado={estadoDaSecao.inteligencia}
               Icone={Brain}
               titulo={t("Inteligência e limites")}
               explicacao={t("Qual inteligência artificial escreve as respostas, com qual chave, e até onde ele pode ir em cada atendimento. Se não sabe o que mudar aqui, deixe como está.")}

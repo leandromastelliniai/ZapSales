@@ -1056,3 +1056,24 @@
     animation: none;
   }
 }
+
+/* A prévia de "Jeito de responder": a bolha que mudou brilha UMA vez (a remontagem por
+   `key` recomeça a animação) e volta ao fundo normal. Nunca em laço. */
+@keyframes zapsales-previa-realce {
+  from {
+    background-color: color-mix(in srgb, var(--color-ia) 22%, var(--color-surface));
+  }
+  to {
+    background-color: var(--color-surface);
+  }
+}
+
+.realce-da-previa {
+  animation: zapsales-previa-realce var(--duration-slow) var(--ease-out) 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .realce-da-previa {
+    animation: none;
+  }
+}
