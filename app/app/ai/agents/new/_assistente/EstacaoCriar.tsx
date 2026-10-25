@@ -7,6 +7,13 @@
  */
 import Link from "next/link";
 
+import {
+  ICONE_DA_ESTACAO,
+  ICONE_DO_MODELO,
+  ICONE_DO_TOM,
+  ICONE_DE_OUTRO,
+  ICONE_POR_RAMO,
+} from "@/components/ai/icones-do-assistente";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,16 +76,26 @@ export function EstacaoCriar({ estado, idioma, agente, padroes, criando, mudar, 
         data-testid="resumo-do-agente"
       >
         {[
-          [
-            t("Negócio"),
-            [ramo ? ramo.nome[idioma] : t("Outro"), r.negocio.trim()].filter(Boolean).join(" · "),
-          ],
-          [t("O que faz"), modelo.titulo],
-          [t("Como fala"), t(NOME_DO_TOM[r.tom])],
-          [t("Na prática"), fraseDoQueFaz(r.modeloId, idioma)],
-        ].map(([rotulo, valor]) => (
+          {
+            rotulo: t("Negócio"),
+            valor: [ramo ? ramo.nome[idioma] : t("Outro"), r.negocio.trim()]
+              .filter(Boolean)
+              .join(" · "),
+            Icone: ramo ? ICONE_POR_RAMO[ramo.id]! : ICONE_DE_OUTRO,
+          },
+          { rotulo: t("O que faz"), valor: modelo.titulo, Icone: ICONE_DO_MODELO[r.modeloId]! },
+          { rotulo: t("Como fala"), valor: t(NOME_DO_TOM[r.tom]), Icone: ICONE_DO_TOM[r.tom]! },
+          {
+            rotulo: t("Na prática"),
+            valor: fraseDoQueFaz(r.modeloId, idioma),
+            Icone: ICONE_DA_ESTACAO[2]!,
+          },
+        ].map(({ rotulo, valor, Icone }) => (
           <div key={rotulo} className="flex flex-wrap gap-x-4 gap-y-0.5 px-3 py-2">
-            <dt className="w-32 shrink-0 text-muted-foreground">{rotulo}</dt>
+            <dt className="flex w-32 shrink-0 items-center gap-2 text-muted-foreground">
+              <Icone size={16} aria-hidden className="shrink-0" />
+              {rotulo}
+            </dt>
             <dd className="min-w-0 flex-1">{valor}</dd>
           </div>
         ))}

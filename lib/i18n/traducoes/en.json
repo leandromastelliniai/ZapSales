@@ -10136,5 +10136,8 @@
   "Como a conversa começa": "How the conversation starts",
   "O agente espera o cliente falar primeiro.": "The agent waits for the customer to speak first.",
   "É só a frase de abertura. A resposta de verdade você vê no teste, logo depois de criar o agente.": "It's only the opening line. You'll see the real answer in the test, right after creating the agent.",
-  "Prefere ser guiado? Abrir o assistente": "Prefer a guided setup? Open the assistant"
+  "Prefere ser guiado? Abrir o assistente": "Prefer a guided setup? Open the assistant",
+  "Buscar o tipo de negócio": "Search the business type",
+  "Categorias de negócio": "Business categories",
+  "Resultados da busca": "Search results"
 }

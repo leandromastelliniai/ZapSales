@@ -9,6 +9,7 @@
  * formulário é o `AgentForm`. O texto do card vem do próprio modelo, no idioma
  * da tela, e não de `t()`: o modelo já é traduzido por inteiro lá.
  */
+import { ICONE_DO_MODELO } from "@/components/ai/icones-do-assistente";
 import { Card } from "@/components/ui/card";
 import { useT } from "@/hooks/i18n/useT";
 import { MODELOS_DE_AGENTE, type IdDoModelo } from "@/lib/ai/agents/modelos";
@@ -54,7 +55,19 @@ export function ModelosDoAgente({ idioma, escolhido, onEscolher, disabled }: Pro
                   : "rounded-md border border-border px-3 py-2 text-left hover:border-foreground/50"
               }
             >
-              <span className="block text-sm font-medium">{c.titulo}</span>
+              <span className="flex items-center gap-2 text-sm font-medium">
+                {(() => {
+                  const Icone = ICONE_DO_MODELO[m.id]!;
+                  return (
+                    <Icone
+                      size={18}
+                      aria-hidden
+                      className={marcado ? "shrink-0 text-ia" : "shrink-0 text-muted-foreground"}
+                    />
+                  );
+                })()}
+                {c.titulo}
+              </span>
               <span className="block text-xs text-muted-foreground">{c.descricao}</span>
             </button>
           );

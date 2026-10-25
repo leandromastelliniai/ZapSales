@@ -5,6 +5,7 @@
  * as futuras vazadas. Texto de apoio "Passo X de 5" sempre visível: no celular os
  * nomes das estações somem e é ele que diz onde a pessoa está.
  */
+import { ICONE_DA_ESTACAO } from "@/components/ai/icones-do-assistente";
 import { useT } from "@/hooks/i18n/useT";
 import { ESTACOES, type Estacao } from "@/lib/ai/agents/assistente/estado";
 import { cn } from "@/lib/utils";
@@ -23,7 +24,13 @@ export function LinhaDasEstacoes({ atual }: { atual: Estacao }) {
     <nav aria-label={t("Passos para criar o agente")} className="space-y-2">
       <p className="text-sm text-muted-foreground" data-testid="passo-atual">
         {t("Passo")} {atual} {t("de")} {ESTACOES.length} ·{" "}
-        <span className="font-medium text-foreground">{t(NOMES[atual])}</span>
+        <span className="inline-flex items-center gap-1.5 align-bottom font-medium text-foreground">
+          {(() => {
+            const Icone = ICONE_DA_ESTACAO[atual]!;
+            return <Icone size={16} aria-hidden className="text-ia" />;
+          })()}
+          {t(NOMES[atual])}
+        </span>
       </p>
       <ol className="flex items-center">
         {ESTACOES.map((n, i) => {
@@ -49,10 +56,14 @@ export function LinhaDasEstacoes({ atual }: { atual: Estacao }) {
                 />
                 <span
                   className={cn(
-                    "hidden text-sm whitespace-nowrap lg:inline",
+                    "hidden items-center gap-1.5 text-sm whitespace-nowrap lg:inline-flex",
                     agora ? "font-medium text-ia" : "text-muted-foreground",
                   )}
                 >
+                  {(() => {
+                    const Icone = ICONE_DA_ESTACAO[n]!;
+                    return <Icone size={16} aria-hidden className="shrink-0" />;
+                  })()}
                   {t(NOMES[n])}
                 </span>
               </span>
