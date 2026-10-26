@@ -14,8 +14,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { waitConfigSchema } from "@/lib/followup/graph-schema";
 import { MODOS_DE_ESPERA, opcoes } from "@/lib/followup/vocabulario";
+import { FaixaRecomendada } from "@/components/guia/FaixaRecomendada";
 import { useT } from "@/hooks/i18n/useT";
+import { esperasDeExemplo } from "@/lib/followup/modelos/esperas";
 
+import { AjudaDeDuracao } from "../AjudaDeDuracao";
 import { msToMin, minToMs, type ConfigOf } from "./shared";
 
 export function WaitForm({
@@ -99,6 +102,19 @@ export function WaitForm({
               commit({ mode, durationMin: v, minMin, maxMin, guidance });
             }}
           />
+          <AjudaDeDuracao
+            minutos={durationMin}
+            exemplos={esperasDeExemplo()}
+            onEscolher={(min) => {
+              setDurationMin(min);
+              commit({ mode, durationMin: min, minMin, maxMin, guidance });
+            }}
+          />
+          <FaixaRecomendada testId="recomendado-espera">
+            {t(
+              "o ritmo do assunto: horas quando é urgente (uma falta de hoje), dias numa retomada, semanas numa decisão grande. Motivo: cobrar rápido demais é o jeito mais rápido de virar bloqueio no WhatsApp; os atalhos abaixo são os tempos que os modelos prontos usam.",
+            )}
+          </FaixaRecomendada>
         </div>
       ) : (
         <>
@@ -116,6 +132,7 @@ export function WaitForm({
                   commit({ mode, durationMin, minMin: v, maxMin, guidance });
                 }}
               />
+              <AjudaDeDuracao minutos={minMin} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="wait-max">{t("Máximo (min)")}</Label>
@@ -130,6 +147,7 @@ export function WaitForm({
                   commit({ mode, durationMin, minMin, maxMin: v, guidance });
                 }}
               />
+              <AjudaDeDuracao minutos={maxMin} />
             </div>
           </div>
           <div className="space-y-2">

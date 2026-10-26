@@ -1,0 +1,210 @@
+{
+  "desktop-claro-normal": {
+    "sobraHorizontal": 0,
+    "resumo_quando": "Quando começa1 dia sem o cliente responder",
+    "resumo_envia": "O que envia3 mensagens",
+    "resumo_acompanha": "Acompanha por12 dias",
+    "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
+    "vaiDisparar": "ok",
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
+    "conferenciasAbertas": true,
+    "equivale": "= 2 dias",
+    "chips": 4,
+    "alturaDoChip": 36,
+    "recomendado": "Recomendado: o ritmo do assunto: horas quando é urgente (uma",
+    "valorDepois": "43200",
+    "equivaleDepois": "= 30 dias",
+    "cartaoDepois": "Espera 2 dias30 dias",
+    "alvoClicado": "duracao-exemplo-43200",
+    "gatilhoEquivale": "= 30 dias",
+    "errosDeConsole": []
+  },
+  "desktop-claro-ia": {
+    "sobraHorizontal": 0,
+    "resumo_quando": "Quando começa1 dia sem o cliente responder",
+    "resumo_envia": "O que envia3 mensagens",
+    "resumo_acompanha": "Acompanha por12 dias",
+    "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
+    "vaiDisparar": "atencao",
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
+    "conferenciasAbertas": true,
+    "errosDeConsole": []
+  },
+  "desktop-claro-agente": {
+    "sobraHorizontal": 0,
+    "resumo_quando": "Quando começa1 dia sem o cliente responder",
+    "resumo_envia": "O que envia3 mensagens",
+    "resumo_acompanha": "Acompanha por12 dias",
+    "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
+    "vaiDisparar": "ok",
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
+    "conferenciasAbertas": true,
+    "errosDeConsole": []
+  },
+  "desktop-claro-vazio": {
+    "sobraHorizontal": 0,
+    "resumo_quando": "Quando começa1 dia sem o cliente responder",
+    "resumo_envia": "O que envianenhuma mensagem ainda",
+    "resumo_acompanha": "Acompanha por—",
+    "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
+    "vaiDisparar": "atencao",
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
+    "conferenciasAbertas": true,
+    "errosDeConsole": []
+  },
+  "desktop-escuro-normal": {
+    "sobraHorizontal": 0,
+    "resumo_quando": "Quando começa1 dia sem o cliente responder",
+    "resumo_envia": "O que envia3 mensagens",
+    "resumo_acompanha": "Acompanha por12 dias",
+    "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
+    "vaiDisparar": "ok",
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
+    "conferenciasAbertas": true,
+    "equivale": "= 2 dias",
+    "chips": 4,
+    "alturaDoChip": 36,
+    "recomendado": "Recomendado: o ritmo do assunto: horas quando é urgente (uma",
+    "valorDepois": "43200",
+    "equivaleDepois": "= 30 dias",
+    "cartaoDepois": "Espera 2 dias30 dias",
+    "alvoClicado": "duracao-exemplo-43200",
+    "gatilhoEquivale": "= 30 dias",
+    "errosDeConsole": []
+  },
+  "desktop-escuro-ia": {
+    "sobraHorizontal": 0,
+    "resumo_quando": "Quando começa1 dia sem o cliente responder",
+    "resumo_envia": "O que envia3 mensagens",
+    "resumo_acompanha": "Acompanha por12 dias",
+    "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
+    "vaiDisparar": "atencao",
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
+    "conferenciasAbertas": true,
+    "errosDeConsole": []
+  },
+  "celular-claro-normal": {
+    "sobraHorizontal": 0,
+    "resumo_quando": "Quando começa1 dia sem o cliente responder",
+    "resumo_envia": "O que envia3 mensagens",
+    "resumo_acompanha": "Acompanha por12 dias",
+    "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
+    "vaiDisparar": "ok",
+    "alturaDaFaixa": 229,
+    "canvasAntes": [
+      510,
+      335
+    ],
+    "canvasDepois": [
+      510,
+      335
+    ],
+    "conferenciasAbertas": true,
+    "errosDeConsole": []
+  },
+  "celular-claro-ia": {
+    "sobraHorizontal": 0,
+    "resumo_quando": "Quando começa1 dia sem o cliente responder",
+    "resumo_envia": "O que envia3 mensagens",
+    "resumo_acompanha": "Acompanha por12 dias",
+    "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
+    "vaiDisparar": "atencao",
+    "alturaDaFaixa": 229,
+    "canvasAntes": [
+      510,
+      335
+    ],
+    "canvasDepois": [
+      510,
+      335
+    ],
+    "conferenciasAbertas": true,
+    "errosDeConsole": []
+  },
+  "celular-escuro-normal": {
+    "sobraHorizontal": 0,
+    "resumo_quando": "Quando começa1 dia sem o cliente responder",
+    "resumo_envia": "O que envia3 mensagens",
+    "resumo_acompanha": "Acompanha por12 dias",
+    "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
+    "vaiDisparar": "ok",
+    "alturaDaFaixa": 229,
+    "canvasAntes": [
+      510,
+      335
+    ],
+    "canvasDepois": [
+      510,
+      335
+    ],
+    "conferenciasAbertas": true,
+    "errosDeConsole": []
+  },
+  "celular-escuro-ia": {
+    "sobraHorizontal": 0,
+    "resumo_quando": "Quando começa1 dia sem o cliente responder",
+    "resumo_envia": "O que envia3 mensagens",
+    "resumo_acompanha": "Acompanha por12 dias",
+    "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
+    "vaiDisparar": "atencao",
+    "alturaDaFaixa": 229,
+    "canvasAntes": [
+      510,
+      335
+    ],
+    "canvasDepois": [
+      510,
+      335
+    ],
+    "conferenciasAbertas": true,
+    "errosDeConsole": []
+  }
+}

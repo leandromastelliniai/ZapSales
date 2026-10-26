@@ -31,6 +31,10 @@ import {
   type UnidadeDeLimiar,
 } from "@/lib/followup/gap-de-retorno";
 import { MAX_PAUSA_DE_REENTRADA_MINUTES } from "@/lib/followup/pausa-de-reentrada";
+import { descreverMinutos } from "@/lib/followup/duracao";
+import { silenciosDeExemplo } from "@/lib/followup/modelos/esperas";
+
+import { AjudaDeDuracao } from "./AjudaDeDuracao";
 
 /**
  * Controle de `trigger_config` do pointer (Task 8.5) — como o fluxo começa.
@@ -235,7 +239,11 @@ function summaryLabel(
     const pausa = params?.reentry_pause_minutes;
     const teto = params?.max_silence_minutes;
     const detalhe = [
-      typeof minutes === "number" ? (typeof teto === "number" && teto > 0 ? `${minutes}–${teto} min` : `${minutes} min`) : null,
+      typeof minutes === "number"
+        ? typeof teto === "number" && teto > 0
+          ? `${descreverMinutos(minutes, t)}–${descreverMinutos(teto, t)}`
+          : descreverMinutos(minutes, t)
+        : null,
       typeof pausa === "number" && pausa > 0
         ? params?.reentry_pause_basis === "ultimo_envio"
           ? `${t("no máximo 1× a cada")} ${Math.round((pausa / 60) * 10) / 10} h`
@@ -560,6 +568,12 @@ export function TriggerConfigControl({ flowId, triggerConfig }: Props) {
                 {thresholdInvalid && !tetoInvalid && !pausaInvalid && (
                   <p className="text-xs text-error-fg">{t("Mínimo de")} {MIN_THRESHOLD_MINUTES} {t("minutos.")}</p>
                 )}
+                <AjudaDeDuracao
+                  minutos={form.thresholdMinutes}
+                  exemplos={silenciosDeExemplo()}
+                  rotuloDosExemplos={t("Nos modelos prontos:")}
+                  onEscolher={(min) => setForm((f) => ({ ...f, thresholdMinutes: min }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="trigger-max-silence">{t("Silêncio máximo, em minutos (opcional)")}</Label>
@@ -576,6 +590,7 @@ export function TriggerConfigControl({ flowId, triggerConfig }: Props) {
                 {tetoInvalid && (
                   <p className="text-xs text-error-fg">{t("Precisa ser maior que o mínimo e no máximo 10080 (7 dias).")}</p>
                 )}
+                <AjudaDeDuracao minutos={form.maxSilenceMinutes} />
                 <p className="text-xs text-muted-foreground">
                   {t(
                     "Com um máximo, o fluxo só começa enquanto o silêncio for recente — por exemplo, entre 10 e 60 minutos depois da última mensagem do cliente. Quem está calado há mais tempo fica de fora. 0 = sem máximo.",
@@ -606,6 +621,7 @@ export function TriggerConfigControl({ flowId, triggerConfig }: Props) {
                 {pausaInvalid && (
                   <p className="text-xs text-error-fg">{t("Use de 0 a 2160 horas (90 dias).")}</p>
                 )}
+                <AjudaDeDuracao minutos={Math.round(form.reentryPauseHours * 60)} />
                 <p className="text-xs text-muted-foreground">
                   {t(
                     "Vale para quem já passou por este fluxo e respondeu ou chegou ao fim: ele só recomeça depois deste tempo sem o cliente escrever. Quem nunca passou por ele entra no tempo de silêncio de sempre. 0 = sem pausa.",

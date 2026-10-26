@@ -1,8 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 
+import { createSupabaseFollowupGateDb } from "@/lib/followup/agent-followup-gate";
 import { rascunhoDoFluxo } from "@/lib/followup/rascunho";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { FollowupFlowDetailRow } from "@/hooks/followup/useFollowupFlow";
 import { FlowBuilder } from "./_components/FlowBuilder";
@@ -61,9 +63,28 @@ export default async function FollowupFlowBuilderPage({
     previous_version_id: versionRows?.[1]?.id ?? null,
   };
 
+  // Quem arma este fluxo: os agentes PUBLICADOS da organização com follow-up ligado que o têm em
+  // `flow_pointer_ids` (o mesmo gate que o motor usa para disparar). A faixa "Vai disparar?" os
+  // cita. A organização vem da sessão, nunca de parâmetro; falhou a leitura, a lista vem vazia e
+  // o resto da tela segue.
+  const agentesQueArmam = await agentesQueArmamOFluxo(activeOrg.orgId, id);
+
   return (
     <div className="flex h-full flex-col">
-      <FlowBuilder flowId={id} initialData={flow} />
+      <FlowBuilder flowId={id} initialData={flow} agentesQueArmam={agentesQueArmam} />
     </div>
   );
+}
+
+async function agentesQueArmamOFluxo(orgId: string, pointerId: string): Promise<Array<{ id: string; name: string }>> {
+  try {
+    const admin = createAdminClient();
+    const habilitados = await createSupabaseFollowupGateDb(admin).loadEnabledPublishedFollowupAgents(orgId);
+    const ids = habilitados.filter((a) => a.pointerIds.includes(pointerId)).map((a) => a.agentId);
+    if (ids.length === 0) return [];
+    const { data } = await admin.from("ai_agents").select("id, name").eq("organization_id", orgId).in("id", ids);
+    return ((data ?? []) as Array<{ id: string; name: string }>).map((a) => ({ id: a.id, name: a.name }));
+  } catch {
+    return [];
+  }
 }

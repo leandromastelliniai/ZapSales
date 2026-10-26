@@ -50,6 +50,7 @@ import { EdgeConfigPanel } from "./EdgeConfigPanel";
 import { EtapasDoFluxoProvider, useEtapasDoFluxo } from "./EtapasDoFluxo";
 import { NodePalette } from "./NodePalette";
 import { PublishBar } from "./PublishBar";
+import { ResumoDoFluxo } from "./ResumoDoFluxo";
 import { NODE_VISUALS, configPadraoDaAcao } from "./nodes/nodeVisuals";
 import { TriggerNode } from "./nodes/TriggerNode";
 import { WaitNode } from "./nodes/WaitNode";
@@ -96,9 +97,10 @@ const nodeTypes: NodeTypes = {
 interface Props {
   flowId: string;
   initialData: FollowupFlowDetailRow;
+  agentesQueArmam?: Array<{ id: string; name: string }>;
 }
 
-function FlowCanvasInner({ flowId, initialData }: Props) {
+function FlowCanvasInner({ flowId, initialData, agentesQueArmam = [] }: Props) {
   const t = useT();
   const { nomes } = useEtapasDoFluxo();
   const { data: flow } = useFollowupFlow(flowId, { initialData });
@@ -342,6 +344,16 @@ function FlowCanvasInner({ flowId, initialData }: Props) {
           onPublishSuccess={clearNodeErrors}
           onAutoFit={onAutoFit}
           canAutoFit={nodes.length > 0}
+        />
+      )}
+      {/* O roteiro de atendimento não tem gatilho de relógio nem política de handoff: a faixa é do follow-up. */}
+      {flow && flow.surface !== "atendimento" && (
+        <ResumoDoFluxo
+          grafo={liveGraph}
+          triggerConfig={flow.trigger_config}
+          handoff={flow.handoff_policy}
+          status={flow.status}
+          agentesQueArmam={agentesQueArmam}
         />
       )}
       <div className="flex flex-1 overflow-hidden">
