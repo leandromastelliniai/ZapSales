@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 
 import { Bell, Play, Clock, GitBranch, Brain, ChatCircle, ArrowsClockwise, PaperPlaneTilt, Flag, Question, PuzzlePiece, Funnel, Tag } from "@/lib/ui/icons";
 import type { FlowNode, NodeType } from "@/lib/followup/graph-schema";
+import { descreverMs } from "@/lib/followup/duracao";
 import { RESULTADOS_DO_FIM } from "@/lib/followup/vocabulario";
 import { NOS_DA_SUPERFICIE } from "@/lib/followup/validate-publish";
 
@@ -208,11 +209,6 @@ export const NODE_VISUAL_LIST = NOS_DA_SUPERFICIE.followup.map((tipo) => NODE_VI
 
 type ConfigOf<T extends NodeType> = Extract<FlowNode, { type: T }>["config"];
 
-/** "15 min", com espaço — o mesmo formato do card de espera, que dizia "5 min" enquanto este dizia "15min". */
-function minutos(ms: number): string {
-  return `${Math.round(ms / 60_000)} min`;
-}
-
 /**
  * One-line summary of a node's config — shown as the card subtitle. Takes the
  * RF node's own `type`/`data.config` pair (not a reconstructed `FlowNode`)
@@ -233,8 +229,8 @@ export function describeNodeConfig(
     case "wait": {
       const c = config as ConfigOf<"wait">;
       return c.mode === "fixed"
-        ? minutos(c.duration_ms)
-        : `${Math.round(c.min_ms / 60_000)}–${minutos(c.max_ms)} ${t("(adaptativo)")}`;
+        ? descreverMs(c.duration_ms, t)
+        : `${descreverMs(c.min_ms, t)}–${descreverMs(c.max_ms, t)} ${t("(adaptativo)")}`;
     }
     case "condition": {
       const c = config as ConfigOf<"condition">;
@@ -250,11 +246,11 @@ export function describeNodeConfig(
     // O card dizia o número com dois nomes na mesma tela.
     case "ai_classify": {
       const c = config as ConfigOf<"ai_classify">;
-      return `${c.classes.length} ${c.classes.length === 1 ? t("classe · espera") : t("classes · espera")} ${minutos(c.grace_timeout_ms)}`;
+      return `${c.classes.length} ${c.classes.length === 1 ? t("classe · espera") : t("classes · espera")} ${descreverMs(c.grace_timeout_ms, t)}`;
     }
     case "match_reply": {
       const c = config as ConfigOf<"match_reply">;
-      return `${c.branches.length} ${c.branches.length === 1 ? t("regra · espera") : t("regras · espera")} ${minutos(c.grace_timeout_ms)}${
+      return `${c.branches.length} ${c.branches.length === 1 ? t("regra · espera") : t("regras · espera")} ${descreverMs(c.grace_timeout_ms, t)}${
         c.save_to
           ? ` · ${t("grava resposta")}${c.if_exists === "skip" ? ` · ${t("pula se já existir")}` : c.if_exists === "confirm" ? ` · ${t("confirma se já existir")}` : ""}`
           : ""

@@ -67,6 +67,8 @@ migrar (plano, pacote X1).
 | `FaixaRecomendada` / `SeloRecomendado` | `components/guia/FaixaRecomendada.tsx` | a recomendação da casa com o motivo escrito, em violeta (a cor da IA) |
 | `PreviaDaResposta` | `app/app/ai/agents/[id]/_components/guia/` | conversa de exemplo ao lado de "Jeito de responder" que muda com o formato e o tom; simulação, não chama a IA |
 | `QuemRecebeAgora` | `app/app/settings/atendimento/_quem-recebe-agora.tsx` | faixa no topo da Distribuição de atendimento: quantos podem receber agora, o próximo da vez e a fila, com as regras do próprio roteamento (`lib/routing/situacao-da-distribuicao.ts`); avisa quando ninguém pode |
+| `ResumoDoFluxo` | `app/app/ai/followups/[id]/_components/ResumoDoFluxo.tsx` | faixa entre a barra de publicar e o canvas do construtor de follow-up: quando começa, o que envia, por quanto tempo acompanha, quando para, e "Vai disparar?" (conferências do publicar e do agente), lidos do próprio fluxo (`lib/followup/resumo-do-fluxo.ts`) |
+| `AjudaDeDuracao` | `app/app/ai/followups/[id]/_components/AjudaDeDuracao.tsx` | embaixo de um campo de tempo em minutos: o equivalente ("= 1 dia") e atalhos com os tempos que os modelos prontos usam (`lib/followup/modelos/esperas.ts`) |
 | `AvatarDoContato` | `components/inbox/visual/AvatarDoContato.tsx` | foto ou iniciais, com selo de canal e de quem atende |
 | `LinhaDoFunil` | `components/inbox/visual/LinhaDoFunil.tsx` | etapas passadas cheias, a atual maior, as futuras vazadas |
 | `NavHub` | `components/shell/NavHub.tsx` | páginas de área (CRM, IA, Análise, Configurações) como lista em painel |

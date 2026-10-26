@@ -12,7 +12,7 @@ const ajuda: AjudaDaPagina = {
     passos: [
       "Para começar mais fácil, use Começar de um modelo: são fluxos com os textos já escritos. Instalar não manda mensagem para ninguém, o fluxo nasce como rascunho.",
       "Novo fluxo cria um fluxo do zero, também como rascunho. Os dois botões só aparecem para gestores e administradores.",
-      "Clique num cartão para abrir o editor, revisar os textos e usar Publicar.",
+      "Clique num cartão para abrir o editor, revisar os textos e usar Publicar. No topo do editor, a faixa O que este fluxo faz resume quando ele começa, o que envia, por quanto tempo acompanha e quando para, e Vai disparar? confere se ele vai funcionar (por exemplo, se um agente publicado o usa).",
       "Depois de publicar, ligue o fluxo no seu agente (Agentes › Follow-up). Sem um agente publicado ligando o fluxo, o disparo automático não acontece.",
       "Na aba Fila, cada linha mostra o contato, o fluxo, o Próximo disparo e o status. Gestores e administradores podem Cancelar um item.",
     ],
@@ -29,7 +29,7 @@ const ajuda: AjudaDaPagina = {
     passos: [
       "Para empezar más fácil, usa Empezar desde un modelo: son flujos con los textos ya escritos. Instalar no envía mensajes a nadie, el flujo nace como borrador.",
       "Nuevo flujo crea un flujo desde cero, también como borrador. Los dos botones solo aparecen para gestores y administradores.",
-      "Haz clic en una tarjeta para abrir el editor, revisar los textos y usar Publicar.",
+      "Haz clic en una tarjeta para abrir el editor, revisar los textos y usar Publicar. Arriba del editor, la franja Qué hace este flujo resume cuándo empieza, qué envía, por cuánto tiempo acompaña y cuándo se detiene, y ¿Se va a disparar? verifica si va a funcionar (por ejemplo, si un agente publicado lo usa).",
       "Después de publicar, conecta el flujo a tu agente (Agentes › Follow-up). Sin un agente publicado que arme el flujo, el envío automático no ocurre.",
       "En la segunda pestaña (la cola), cada fila muestra el contacto, el flujo, el Próximo disparo y el estado. Gestores y administradores pueden Cancelar un elemento.",
     ],
@@ -46,7 +46,7 @@ const ajuda: AjudaDaPagina = {
     passos: [
       "To start easier, use Start from a template: these are flows with the texts already written. Installing does not send a message to anyone, the flow starts as a draft.",
       "New flow creates a flow from scratch, also as a draft. Both buttons only appear for managers and administrators.",
-      "Click a card to open the editor, review the texts and use Publish.",
+      "Click a card to open the editor, review the texts and use Publish. At the top of the editor, the What this flow does strip sums up when it starts, what it sends, how long it follows up and when it stops, and Will it fire? checks that it will work (for example, whether a published agent uses it).",
       "After publishing, turn the flow on in your agent (Agents › Follow-up). Without a published agent arming the flow, the automatic send does not happen.",
       "On the second tab (the queue), each row shows the contact, the flow, the Next send and the status. Managers and administrators can Cancel an item.",
     ],
