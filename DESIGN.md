@@ -63,9 +63,10 @@ migrar (plano, pacote X1).
 | `Selo` | `components/ui/selo.tsx` | etiqueta de estado, com a cor do significado |
 | `AssistenteDeAgente` | `app/app/ai/agents/new/_assistente/` | criação guiada do agente em cinco estações (a Linha do Funil aplicada a um passo a passo), com prévia fixa que usa `.aura-ia` |
 | `ForcaDoAgenteFaixa` | `app/app/ai/agents/[id]/_components/guia/` | no topo do editor completo: porcentagem de prontidão (régua em `lib/ai/agents/guia-do-editor.ts`), o próximo passo que mais ajuda e o botão que leva à parte certa |
-| `SeloDaSecao` / `MarcaDaSecao` | `app/app/ai/agents/[id]/_components/guia/` | estado de cada parte do editor (Pronto, Revisar, Opcional) em palavra e ícone, nunca só em cor |
-| `FaixaRecomendada` | `app/app/ai/agents/[id]/_components/guia/` | a recomendação da casa com o motivo escrito, em violeta (a cor da IA) |
+| `SeloDaSecao` / `MarcaDaSecao` | `components/guia/SeloDaSecao.tsx` | estado de cada parte do editor (Pronto, Revisar, Opcional) em palavra e ícone, nunca só em cor |
+| `FaixaRecomendada` / `SeloRecomendado` | `components/guia/FaixaRecomendada.tsx` | a recomendação da casa com o motivo escrito, em violeta (a cor da IA) |
 | `PreviaDaResposta` | `app/app/ai/agents/[id]/_components/guia/` | conversa de exemplo ao lado de "Jeito de responder" que muda com o formato e o tom; simulação, não chama a IA |
+| `QuemRecebeAgora` | `app/app/settings/atendimento/_quem-recebe-agora.tsx` | faixa no topo da Distribuição de atendimento: quantos podem receber agora, o próximo da vez e a fila, com as regras do próprio roteamento (`lib/routing/situacao-da-distribuicao.ts`); avisa quando ninguém pode |
 | `AvatarDoContato` | `components/inbox/visual/AvatarDoContato.tsx` | foto ou iniciais, com selo de canal e de quem atende |
 | `LinhaDoFunil` | `components/inbox/visual/LinhaDoFunil.tsx` | etapas passadas cheias, a atual maior, as futuras vazadas |
 | `NavHub` | `components/shell/NavHub.tsx` | páginas de área (CRM, IA, Análise, Configurações) como lista em painel |

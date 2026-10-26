@@ -23,7 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { apiClient } from "@/lib/api/client";
 import { useT } from "@/hooks/i18n/useT";
 import { FerramentasExternasDoSeletor } from "./FerramentasExternasDoSeletor";
-import { SeloRecomendado } from "./guia/FaixaRecomendada";
+import { SeloRecomendado } from "@/components/guia/FaixaRecomendada";
 import {
   PACOTES,
   riscoMeta,

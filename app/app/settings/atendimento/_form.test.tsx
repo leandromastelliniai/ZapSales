@@ -13,6 +13,7 @@ import { AtendimentoForm, type AtendimentoConfig } from "./_form";
  */
 
 vi.mock("@/hooks/i18n/useT", () => ({ useT: () => (s: string) => s }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const fetcher = vi.fn();
