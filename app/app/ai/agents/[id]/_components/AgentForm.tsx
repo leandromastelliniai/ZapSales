@@ -53,10 +53,10 @@ import {
   type EstadoDaSecao,
   type FatosDoAgente,
 } from "@/lib/ai/agents/guia-do-editor";
-import { FaixaRecomendada } from "./guia/FaixaRecomendada";
+import { FaixaRecomendada } from "@/components/guia/FaixaRecomendada";
 import { ForcaDoAgenteFaixa } from "./guia/ForcaDoAgente";
 import { PreviaDaResposta } from "./guia/PreviaDaResposta";
-import { MarcaDaSecao, SeloDaSecao } from "./guia/SeloDaSecao";
+import { MarcaDaSecao, SeloDaSecao } from "@/components/guia/SeloDaSecao";
 import { apiClient } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { sugerirIcone, type IconeDoAgente } from "@/lib/ai/agents/icone-do-agente";

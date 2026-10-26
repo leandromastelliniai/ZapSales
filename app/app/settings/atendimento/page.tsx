@@ -26,10 +26,13 @@ import { DEFAULT_VISIBILITY_MODE, ROLE_RANK, type VisibilityMode } from "@/lib/a
 import { routingConfigSchema } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { loadChannelRoutingSettings } from "@/lib/routing/channel-policies";
+import { recomendacaoDeDistribuicao } from "@/lib/routing/recomendacao-de-distribuicao";
+import { situacaoDaDistribuicao } from "@/lib/routing/situacao-da-distribuicao";
 import { configAssinatura } from "@/lib/messaging/assinatura";
-import { AssinaturaForm } from "./_assinatura-form";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ChannelRoutingForm } from "./_channels-form";
 import { AtendimentoForm } from "./_form";
+import { QuemRecebeAgora } from "./_quem-recebe-agora";
 import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
@@ -61,8 +64,20 @@ export default async function AtendimentoSettingsPage() {
   const assinatura = configAssinatura(settings);
   const assinaturaInicial = { humanos: assinatura.humanos, ia: assinatura.ia, nome_ia: assinatura.nomeIa };
 
+  // "Quem recebe agora": o que o roteamento entregaria neste instante, com as regras do próprio
+  // roteamento. O cliente admin entra só aqui, com a organização da sessão (nunca do corpo), e a
+  // leitura nunca derruba a tela: falhou, a faixa some e o resto segue.
+  const situacao = await situacaoDaDistribuicao(
+    createAdminClient(),
+    activeOrg.orgId,
+    channels.members,
+    routing.mode,
+    new Date(),
+  );
+  const recomendacao = { ...recomendacaoDeDistribuicao(channels.members.length), total: channels.members.length };
+
   return (
-    <CorpoDaPagina className="overflow-y-auto">
+    <CorpoDaPagina largura="formulario" className="overflow-y-auto">
       <CabecalhoDePagina
         titulo={traduzir("Distribuição de atendimento", idioma)}
         descricao={traduzir(
@@ -72,11 +87,15 @@ export default async function AtendimentoSettingsPage() {
         ajuda={<ComoFunciona chave="distribuicao-de-atendimento" pagina={traduzir("Distribuição de atendimento", idioma)} />}
       />
 
+      {situacao ? <QuemRecebeAgora situacao={situacao} modo={routing.mode} /> : null}
+
       <AtendimentoForm
         initial={{ ...routing, visibility_mode: settings.visibility_mode ?? DEFAULT_VISIBILITY_MODE }}
+        assinatura={assinaturaInicial}
+        recomendacao={recomendacao}
+        ninguemDisponivel={situacao ? situacao.disponiveis === 0 : false}
+        responsaveis={<ChannelRoutingForm initial={channels} />}
       />
-      <ChannelRoutingForm initial={channels} />
-      <AssinaturaForm initial={assinaturaInicial} />
     </CorpoDaPagina>
   );
 }

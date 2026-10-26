@@ -213,4 +213,5 @@ export {
   Dog,
   Plant,
   ShoppingBag,
+  Hourglass,
 } from "@phosphor-icons/react/dist/ssr";
