@@ -130,8 +130,8 @@ describe("'Vai disparar?'", () => {
     expect(item).toHaveAttribute("data-estado", "atencao");
     expect(item).toHaveTextContent("Nenhum agente publicado usa este fluxo");
     expect(within(item).getByRole("link", { name: "Escolher o agente" })).toHaveAttribute("href", "/app/ai/agents");
-    // Com atenção pendente, as conferências já vêm abertas.
-    expect(screen.getByTestId("vai-disparar")).toHaveAttribute("open");
+    // O estado fica à vista no botão, e o detalhe abre só por clique: nunca empurra o canvas.
+    expect(screen.getByTestId("vai-disparar")).not.toHaveAttribute("open");
   });
 
   it("o mesmo fluxo com um agente publicado usando: tudo certo, e o agente é citado", () => {

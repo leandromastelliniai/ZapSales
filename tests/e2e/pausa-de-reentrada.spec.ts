@@ -47,7 +47,7 @@ test.describe("Pausa de reentrada do gatilho de silêncio", () => {
 
     const botao = page.getByTestId("trigger-config-button");
     await expect(botao).toBeVisible({ timeout: 60_000 });
-    await expect(botao).toHaveText(/Silêncio \(60 min\)/);
+    await expect(botao).toHaveText(/Silêncio \(1 hora\)/);
 
     await botao.click();
     const painel = page.getByTestId("trigger-config-panel");
@@ -104,7 +104,7 @@ test.describe("Pausa de reentrada do gatilho de silêncio", () => {
     await expect(painel.getByTestId("trigger-config-save")).toBeEnabled();
     await captura(page, "silencio-01-teto-de-60");
     await painel.getByTestId("trigger-config-save").click();
-    await expect(botao).toHaveText(/10–60 min/, { timeout: 30_000 });
+    await expect(botao).toHaveText(/10 min–1 hora/, { timeout: 30_000 });
     await expect
       .poll(async () => (await gatilhoGravado()).params)
       .toMatchObject({ threshold_minutes: 10, max_silence_minutes: 60 });

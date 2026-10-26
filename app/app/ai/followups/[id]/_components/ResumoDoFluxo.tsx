@@ -114,80 +114,83 @@ export function ResumoDoFluxo({ grafo, triggerConfig, handoff, status, agentesQu
     <section
       aria-label={t("O que este fluxo faz")}
       data-testid="resumo-do-fluxo"
-      className="border-b border-border bg-surface"
+      className="relative z-20 border-b border-border bg-surface"
     >
-      <dl className="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-px bg-border lg:grid-cols-[1fr_1fr_1fr_1.5fr_auto]">
         {celulas.map((c) => (
-          <div
-            key={c.id}
-            data-testid={`resumo-${c.id}`}
-            className="bg-surface px-4 py-2.5"
-          >
+          <div key={c.id} data-testid={`resumo-${c.id}`} className="bg-surface px-4 py-2.5">
             <dt className="text-[11px] text-muted-foreground">{c.titulo}</dt>
             <dd className={cn("text-sm font-medium", c.destaque && "text-warning-fg")}>{c.texto}</dd>
           </div>
         ))}
-      </dl>
 
-      <details data-testid="vai-disparar" open={comAtencao > 0} className="group border-t border-border">
-        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-2 text-sm [&::-webkit-details-marker]:hidden">
-          <span className="font-medium">{t("Vai disparar?")}</span>
-          {comAtencao === 0 ? (
-            <span
-              data-testid="vai-disparar-estado"
-              data-estado="ok"
-              className="inline-flex items-center gap-1 rounded-full bg-success-bg px-2.5 py-0.5 text-xs font-medium text-success-fg"
-            >
-              <CheckCircle size={12} weight="bold" aria-hidden />
-              {t("Tudo certo")}
-            </span>
-          ) : (
-            <span
-              data-testid="vai-disparar-estado"
-              data-estado="atencao"
-              className="inline-flex items-center gap-1 rounded-full bg-warning-bg px-2.5 py-0.5 text-xs font-medium text-warning-fg"
-            >
-              <Warning size={12} weight="bold" aria-hidden />
-              {comAtencao === 1 ? t("1 pede atenção") : `${comAtencao} ${t("pedem atenção")}`}
-            </span>
-          )}
-          <span className="ml-auto text-xs text-muted-foreground group-open:hidden">{t("ver as conferências")}</span>
-        </summary>
-        <ul className="space-y-1.5 px-4 pb-3">
-          {conferencias.map((c) => (
-            <li
-              key={c.id}
-              data-testid={`conferencia-${c.id}`}
-              data-estado={c.estado}
-              className="flex items-start gap-2 text-sm"
-            >
-              {c.estado === "ok" ? (
-                <CheckCircle size={16} weight="fill" aria-hidden className="mt-0.5 shrink-0 text-success" />
-              ) : c.estado === "atencao" ? (
-                <Warning size={16} weight="fill" aria-hidden className="mt-0.5 shrink-0 text-warning" />
+        {/*
+          "Vai disparar?" é uma célula da mesma faixa, e as conferências abrem como PAINEL SOBREPOSTO
+          (`absolute`), nunca empurrando o canvas: o construtor depende de a área do desenho não
+          mudar de altura quando alguém abre ou fecha uma conferência. O estado (verde ou âmbar)
+          fica sempre à vista no botão; o detalhe só abre por clique.
+        */}
+        <div className="relative col-span-2 bg-surface lg:col-span-1">
+          <details data-testid="vai-disparar" className="group">
+            <summary className="flex h-full min-h-[3.25rem] cursor-pointer list-none flex-col justify-center px-4 py-2 [&::-webkit-details-marker]:hidden">
+              <span className="text-[11px] text-muted-foreground">{t("Vai disparar?")}</span>
+              {comAtencao === 0 ? (
+                <span
+                  data-testid="vai-disparar-estado"
+                  data-estado="ok"
+                  className="inline-flex w-fit items-center gap-1 text-sm font-medium text-success-fg"
+                >
+                  <CheckCircle size={14} weight="bold" aria-hidden />
+                  {t("Tudo certo")}
+                </span>
               ) : (
-                <Info size={16} aria-hidden className="mt-0.5 shrink-0 text-muted-foreground" />
+                <span
+                  data-testid="vai-disparar-estado"
+                  data-estado="atencao"
+                  className="inline-flex w-fit items-center gap-1 text-sm font-medium text-warning-fg"
+                >
+                  <Warning size={14} weight="bold" aria-hidden />
+                  {comAtencao === 1 ? t("1 pede atenção") : `${comAtencao} ${t("pedem atenção")}`}
+                </span>
               )}
-              <div className="min-w-0">
-                <p>{textoDaConferencia(c)}</p>
-                {c.id === "validacao" && c.estado === "atencao" ? (
-                  <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-xs text-muted-foreground">
-                    {c.detalhes.slice(0, 3).map((d) => (
-                      <li key={d}>{d}</li>
-                    ))}
-                    {c.detalhes.length > 3 ? <li>… {c.detalhes.length - 3} {t("a mais")}</li> : null}
-                  </ul>
-                ) : null}
-                {c.id === "agente" && c.motivo === "sem_agente" ? (
-                  <Link href="/app/ai/agents" className="text-xs font-medium text-ia underline-offset-2 hover:underline">
-                    {t("Escolher o agente")}
-                  </Link>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </details>
+            </summary>
+            <ul className="absolute top-full right-0 z-30 w-[min(36rem,calc(100vw-1rem))] space-y-2 rounded-b-xl border border-border bg-surface p-4 shadow-lg">
+              {conferencias.map((c) => (
+                <li
+                  key={c.id}
+                  data-testid={`conferencia-${c.id}`}
+                  data-estado={c.estado}
+                  className="flex items-start gap-2 text-sm"
+                >
+                  {c.estado === "ok" ? (
+                    <CheckCircle size={16} weight="fill" aria-hidden className="mt-0.5 shrink-0 text-success" />
+                  ) : c.estado === "atencao" ? (
+                    <Warning size={16} weight="fill" aria-hidden className="mt-0.5 shrink-0 text-warning" />
+                  ) : (
+                    <Info size={16} aria-hidden className="mt-0.5 shrink-0 text-muted-foreground" />
+                  )}
+                  <div className="min-w-0">
+                    <p>{textoDaConferencia(c)}</p>
+                    {c.id === "validacao" && c.estado === "atencao" ? (
+                      <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-xs text-muted-foreground">
+                        {c.detalhes.slice(0, 3).map((d) => (
+                          <li key={d}>{d}</li>
+                        ))}
+                        {c.detalhes.length > 3 ? <li>… {c.detalhes.length - 3} {t("a mais")}</li> : null}
+                      </ul>
+                    ) : null}
+                    {c.id === "agente" && c.motivo === "sem_agente" ? (
+                      <Link href="/app/ai/agents" className="text-xs font-medium text-ia underline-offset-2 hover:underline">
+                        {t("Escolher o agente")}
+                      </Link>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+      </dl>
     </section>
   );
 }

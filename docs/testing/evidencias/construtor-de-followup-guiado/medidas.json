@@ -6,9 +6,16 @@
     "resumo_acompanha": "Acompanha por12 dias",
     "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
     "vaiDisparar": "ok",
-    "conferenciasAbertas": false,
-    "alturaDaFaixa": 115,
-    "conferenciasDepois": true,
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
+    "conferenciasAbertas": true,
     "equivale": "= 2 dias",
     "chips": 4,
     "alturaDoChip": 36,
@@ -27,8 +34,16 @@
     "resumo_acompanha": "Acompanha por12 dias",
     "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
     "vaiDisparar": "atencao",
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
     "conferenciasAbertas": true,
-    "alturaDaFaixa": 219,
     "errosDeConsole": []
   },
   "desktop-claro-agente": {
@@ -38,8 +53,16 @@
     "resumo_acompanha": "Acompanha por12 dias",
     "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
     "vaiDisparar": "ok",
-    "conferenciasAbertas": false,
-    "alturaDaFaixa": 115,
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
+    "conferenciasAbertas": true,
     "errosDeConsole": []
   },
   "desktop-claro-vazio": {
@@ -49,8 +72,16 @@
     "resumo_acompanha": "Acompanha por—",
     "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
     "vaiDisparar": "atencao",
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
     "conferenciasAbertas": true,
-    "alturaDaFaixa": 217,
     "errosDeConsole": []
   },
   "desktop-escuro-normal": {
@@ -60,9 +91,16 @@
     "resumo_acompanha": "Acompanha por12 dias",
     "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
     "vaiDisparar": "ok",
-    "conferenciasAbertas": false,
-    "alturaDaFaixa": 115,
-    "conferenciasDepois": true,
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
+    "conferenciasAbertas": true,
     "equivale": "= 2 dias",
     "chips": 4,
     "alturaDoChip": 36,
@@ -81,8 +119,16 @@
     "resumo_acompanha": "Acompanha por12 dias",
     "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
     "vaiDisparar": "atencao",
+    "alturaDaFaixa": 58,
+    "canvasAntes": [
+      119,
+      782
+    ],
+    "canvasDepois": [
+      119,
+      782
+    ],
     "conferenciasAbertas": true,
-    "alturaDaFaixa": 219,
     "errosDeConsole": []
   },
   "celular-claro-normal": {
@@ -92,8 +138,16 @@
     "resumo_acompanha": "Acompanha por12 dias",
     "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
     "vaiDisparar": "ok",
-    "conferenciasAbertas": false,
-    "alturaDaFaixa": 212,
+    "alturaDaFaixa": 229,
+    "canvasAntes": [
+      510,
+      335
+    ],
+    "canvasDepois": [
+      510,
+      335
+    ],
+    "conferenciasAbertas": true,
     "errosDeConsole": []
   },
   "celular-claro-ia": {
@@ -103,8 +157,16 @@
     "resumo_acompanha": "Acompanha por12 dias",
     "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
     "vaiDisparar": "atencao",
+    "alturaDaFaixa": 229,
+    "canvasAntes": [
+      510,
+      335
+    ],
+    "canvasDepois": [
+      510,
+      335
+    ],
     "conferenciasAbertas": true,
-    "alturaDaFaixa": 376,
     "errosDeConsole": []
   },
   "celular-escuro-normal": {
@@ -114,8 +176,16 @@
     "resumo_acompanha": "Acompanha por12 dias",
     "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
     "vaiDisparar": "ok",
-    "conferenciasAbertas": false,
-    "alturaDaFaixa": 212,
+    "alturaDaFaixa": 229,
+    "canvasAntes": [
+      510,
+      335
+    ],
+    "canvasDepois": [
+      510,
+      335
+    ],
+    "conferenciasAbertas": true,
     "errosDeConsole": []
   },
   "celular-escuro-ia": {
@@ -125,8 +195,16 @@
     "resumo_acompanha": "Acompanha por12 dias",
     "resumo_para": "Para quandoo cliente responde ou uma pessoa assume (o fluxo pausa)",
     "vaiDisparar": "atencao",
+    "alturaDaFaixa": 229,
+    "canvasAntes": [
+      510,
+      335
+    ],
+    "canvasDepois": [
+      510,
+      335
+    ],
     "conferenciasAbertas": true,
-    "alturaDaFaixa": 376,
     "errosDeConsole": []
   }
 }
