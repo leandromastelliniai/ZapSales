@@ -17,12 +17,14 @@ import {
 } from "@/components/ui/select";
 import { updatePipelineConfig } from "@/app/actions/settings/updatePipelineConfig";
 import type { PipelineConfigPatch } from "@/lib/schemas/settings";
+import { EXEMPLOS_DE_VOCABULARIO, exemploTraduzido, type Vocabulario } from "@/lib/funil/resumo-do-funil";
 import { camposDoFunil } from "@/lib/leads/campos-do-funil";
 import { modoDeReabertura } from "@/lib/leads/reabertura";
 import { CATEGORIAS_DE_PERDA } from "@/lib/schemas/leads";
 import { customFieldSchema, type CustomFieldDef } from "@/lib/schemas/settings";
 import { Plus, Trash } from "@/lib/ui/icons";
 import { AgentMappingSection, ancoraDoMapeamento } from "./_mapping";
+import { ResumoDoFunil } from "./_resumo";
 import { StagesSection, ancoraDasEtapas } from "./_stages";
 
 export interface PipelineRow {
@@ -147,6 +149,21 @@ function readCategorias(settings: Record<string, unknown> | null): Record<string
 }
 
 
+/**
+ * As quatro palavras do vocabulário, com o nome que o banco usa (`lead`, `deal`, `won`, `lost`) só
+ * como chave: a tela fala na língua de quem configura e diz ONDE a palavra aparece.
+ */
+const CAMPOS_DO_VOCABULARIO: readonly {
+  id: keyof Vocabulario;
+  rotulo: string;
+  ajuda: string;
+}[] = [
+  { id: "lead", rotulo: "Como você chama o contato", ajuda: "Quem entra no funil. Ex.: Cliente, Paciente." },
+  { id: "deal", rotulo: "Como você chama o negócio", ajuda: "O que anda pelas etapas. Ex.: Pedido, Consulta." },
+  { id: "won", rotulo: "Quando fecha", ajuda: "O nome de quando dá certo. Ex.: Pago, Fechado." },
+  { id: "lost", rotulo: "Quando perde", ajuda: "O nome de quando não dá. Ex.: Cancelado, Perdido." },
+];
+
 function readWonReasons(settings: Record<string, unknown> | null): string[] {
   const r = (settings as { won_reasons?: unknown } | null)?.won_reasons;
   return Array.isArray(r) ? r.filter((v): v is string => typeof v === "string") : [];
@@ -193,6 +210,7 @@ export function PipelinesClient({
               depois se decide o que o assistente faz com ele. Invertido, a
               primeira coisa que o dono da clínica vê é um mapeamento sobre
               colunas de e-commerce que ele nem sabia que dava para trocar. */}
+          <ResumoDoFunil pipelineId={p.id} vocabulario={p.vocabulary} />
           <StagesSection pipelineId={p.id} ancoraMapeamento={ancoraDoMapeamento(p.id)} />
           <div className="border-t border-border pt-6">
             <AgentMappingSection pipelineId={p.id} ancoraEtapas={ancoraDasEtapas(p.id)} />
@@ -213,10 +231,12 @@ function PipelineEditor({
 }) {
   const t = useT();
   const v = pipeline.vocabulary ?? {};
-  const [lead, setLead] = useState(v.lead ?? "Lead");
-  const [deal, setDeal] = useState(v.deal ?? "Deal");
-  const [won, setWon] = useState(v.won ?? "Ganho");
-  const [lost, setLost] = useState(v.lost ?? "Perdido");
+  const [palavras, setPalavras] = useState<Vocabulario>({
+    lead: v.lead ?? "Lead",
+    deal: v.deal ?? "Deal",
+    won: v.won ?? "Ganho",
+    lost: v.lost ?? "Perdido",
+  });
   const [reasonsText, setReasonsText] = useState(readLostReasons(pipeline.settings).join(", "));
   const [wonReasonsText, setWonReasonsText] = useState(readWonReasons(pipeline.settings).join(", "));
   const [categorias, setCategorias] = useState<Record<string, string>>(() =>
@@ -281,7 +301,7 @@ function PipelineEditor({
       .filter((s2) => s2.length > 0);
 
     const patch: PipelineConfigPatch = {
-      vocabulary: { lead, deal, won, lost },
+      vocabulary: { ...palavras },
       fields: ok,
       lost_reasons: motivosComCategoria,
       won_reasons: wonReasons,
@@ -305,22 +325,44 @@ function PipelineEditor({
     <div className="space-y-4 border-t border-border pt-6">
       <h3 className="text-sm font-semibold">{t("Vocabulário e campos")}</h3>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div className="space-y-1">
-          <Label className="text-xs">Lead</Label>
-          <Input value={lead} onChange={(e) => setLead(e.target.value)} />
+      <div className="space-y-2">
+        <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
+          {t(
+            "Como você chama as coisas no seu negócio. Estes nomes aparecem no quadro e nos relatórios no lugar dos nomes padrão.",
+          )}
+        </p>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {CAMPOS_DO_VOCABULARIO.map((c) => (
+            <div key={c.id} className="space-y-1">
+              <Label htmlFor={`vocabulario-${pipeline.id}-${c.id}`} className="text-xs">
+                {t(c.rotulo)}
+              </Label>
+              <Input
+                id={`vocabulario-${pipeline.id}-${c.id}`}
+                value={palavras[c.id]}
+                onChange={(e) => setPalavras((atual) => ({ ...atual, [c.id]: e.target.value }))}
+              />
+              <p className="text-[11px] text-muted-foreground">{t(c.ajuda)}</p>
+            </div>
+          ))}
         </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Deal</Label>
-          <Input value={deal} onChange={(e) => setDeal(e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Won</Label>
-          <Input value={won} onChange={(e) => setWon(e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Lost</Label>
-          <Input value={lost} onChange={(e) => setLost(e.target.value)} />
+        <div className="flex flex-wrap items-center gap-2" data-testid="exemplos-de-vocabulario">
+          <span className="text-xs text-muted-foreground">{t("Quer um exemplo?")}</span>
+          {EXEMPLOS_DE_VOCABULARIO.map((ex) => {
+            const { rotulo, palavras: doExemplo } = exemploTraduzido(ex, t);
+            return (
+              <Button
+                key={ex.id}
+                type="button"
+                variant="outline"
+                size="sm"
+                data-testid={`exemplo-de-vocabulario-${ex.id}`}
+                onClick={() => setPalavras(doExemplo)}
+              >
+                {rotulo}
+              </Button>
+            );
+          })}
         </div>
       </div>
 
