@@ -2,6 +2,7 @@
 
 <h2 id="visao-geral">Para que serve</h2>
 <p>O ZapSales usa inteligência artificial em <strong>muitos lugares diferentes</strong> — hoje, 32 “pontos”: responder o cliente, medir o clima da conversa, escolher qual agente atende, resumir conversas longas, ouvir áudios e assim por diante. Em <span class="ui">Provedores</span> você vê <strong>qual modelo está atendendo cada ponto</strong> e pode trocar, de uma vez só ou ponto a ponto.</p>
+<p>No alto, a faixa <strong>Sua IA</strong> resume o que importa: quem conversa com o cliente (modelo e provedor), de onde vem a chave (<em>Da empresa</em>, <em>Da instalação</em> ou <em>Falta</em>), em quantas partes o modelo padrão vale e quantos dos três ajudantes opcionais estão em uso. <strong>Está tudo certo?</strong> pede atenção quando não há chave para o provedor do padrão — sem ela o agente não responde ninguém — ou quando alguma parte do sistema traz um aviso; os ajudantes desligados aparecem só como informação, porque são opcionais. A página tem duas partes: <strong>A IA que conversa</strong> (modelo padrão e os grupos de pontos) e <strong>Ajudantes opcionais</strong> (Jev, resposta em áudio e Mapas). No cartão do modelo padrão, uma <strong>recomendação</strong> com o motivo: sem chave, cadastrar a da IA principal; com chave, deixar o padrão como está e só mudar uma parte quando houver razão (custo, privacidade ou modelo próprio). A recomendação nunca troca nada sozinha nem sugere um modelo específico.</p>
 <figure class="print">
   <img src="img/ia-provedores.png" alt="Tela Provedores de IA com o modelo padrão, o cartão do Jev e a primeira seção de pontos, numerada de 1 a 9" loading="lazy">
   <figcaption>Provedores de IA: modelo padrão, Jev e os pontos agrupados por papel.</figcaption>
@@ -10,7 +11,7 @@
   <li><strong>Modelo padrão.</strong> Vale em todo ponto que você não configurou individualmente (“hoje, 17 de 32”). Trocar aqui muda todos de uma vez.</li>
   <li><strong>Provedor e modelo</strong> do padrão. Se o catálogo do provedor ainda não foi baixado, o modelo vira um campo de texto.</li>
   <li><strong>Salvar padrão.</strong> Só Administrador.</li>
-  <li><strong>Jev — decisões rápidas.</strong> Veja <a href="#provedores--jev">abaixo</a>.</li>
+  <li><strong>Jev — decisões rápidas.</strong> Veja <a href="#provedores--jev">abaixo</a>. (Hoje o cartão fica em <em>Ajudantes opcionais</em>, depois dos grupos de pontos.)</li>
   <li><strong>Situação do Jev.</strong> <em>Desligado, Observando, Decidindo, Decidindo sozinho, Parado</em> ou <em>Em pausa</em>.</li>
   <li><strong>Aviso de saúde e LGPD.</strong> Sempre visível. Se a sua empresa é da área da saúde, as mensagens que o Jev lê podem conter dado sensível: confira o contrato da TypeSafe antes de ligar.</li>
   <li><strong>Colar a chave.</strong> Abre a janela de Credenciais já no provedor do Jev. Ao lado, <em>Pegar a chave na TypeSafe</em> leva ao site.</li>
@@ -51,7 +52,7 @@
 <aside class="nota perigo"><strong>Ligar o Jev envia mensagens reais de clientes para uma empresa nos Estados Unidos.</strong><p>Cada mensagem que o cliente manda vai, uma de cada vez e sem o resto da conversa, para a TypeSafe AI avaliar. O sistema apaga CPF, telefone e e-mail do texto antes de enviar. Com o Jev desligado, nada é enviado. É preciso concordar expressamente na primeira vez, e só o Administrador liga.</p></aside>
 
 <h2 id="mapas">Mapas (Google)</h2>
-<p>No fim da tela há o cartão <strong>“Mapas (Google)”</strong>. Quando o cliente manda a <em>localização</em> pelo WhatsApp, o sistema pode consultar o Google para o agente ler a rua e a cidade aproximadas, em vez de só as coordenadas. Sem chave, nada muda.</p>
+<p>Em <em>Ajudantes opcionais</em>, depois do Jev e da resposta em áudio, há o cartão <strong>“Mapas (Google)”</strong>. Quando o cliente manda a <em>localização</em> pelo WhatsApp, o sistema pode consultar o Google para o agente ler a rua e a cidade aproximadas, em vez de só as coordenadas. Sem chave, nada muda.</p>
 <ul>
   <li>Cole a <strong>chave da Geocoding API</strong> e clique em <span class="ui">Salvar chave</span>. Crie a chave no Google Cloud com a Geocoding API habilitada e restrinja-a a essa API e ao endereço IP do servidor.</li>
   <li><span class="ui">Testar</span> usa a chave digitada ou a gravada e <strong>chama o Google de verdade</strong>; o resultado diz se funcionou (e o endereço devolvido) ou explica o problema (API desativada, chave recusada, cota, sem resultado, rede).</li>

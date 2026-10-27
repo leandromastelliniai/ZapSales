@@ -1,0 +1,254 @@
+{
+  "desktop-claro-semchave": {
+    "temaAplicado": "light",
+    "faixa": {
+      "conversa": "Quem conversa com o clienteClaude Sonnet 5Anthropic (Claude)",
+      "chave": "Chave da IAFaltaO agente não responde ninguém sem ela",
+      "padrao": "O padrão vale em7 de 9 partesTrocar o padrão muda todas de uma vez",
+      "opcionais": "Ajudantes opcionais0 de 3 em usoJev desligado · Resposta em áudio desligada · Mapas sem chave",
+      "estado": "1 pede atenção"
+    },
+    "abertura": "Provedores de IASeu sistema usa inteligência artificial em 9 lugares — cada um é uma tarefa, como responder o cliente, entender um áudio ou buscar no seu material. Aqui você vê qual IA cuida de cada uma e troca, se quiser.",
+    "recomendacao": "Recomendado: cadastrar a chave da Anthropic (Claude). Motivo: é com ela que o agente conversa com o cliente; sem chave, ele não responde ninguém. Cadastrar uma chave",
+    "secoes": [
+      "A IA que conversa",
+      "Ajudantes opcionais"
+    ],
+    "ordem": [
+      "secao-da-pagina",
+      "cartao-do-padrao",
+      "papel-atender",
+      "secao-da-pagina",
+      "cartao-do-jev",
+      "cartao-de-resposta-em-audio",
+      "cartao-de-mapas"
+    ],
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 130,
+    "alturaDaPagina": 3231,
+    "conferencias": [
+      "atencao: Não há chave para Anthropic (Claude), nem da empresa nem da instalação: o agente não consegue responder ninguém. Cadastrar uma chave",
+      "ok: Nenhuma parte do sistema pede atenção.",
+      "info: O Jev está desligado. É opcional: serve para decisões rápidas, como perceber um cliente irritado.",
+      "info: A resposta em áudio está desligada. É opcional: o agente entende o áudio do cliente de qualquer jeito.",
+      "info: Sem chave de Mapas, o pino de localização não vira rua e cidade. É opcional."
+    ],
+    "errosDeConsole": []
+  },
+  "desktop-claro-avisos": {
+    "temaAplicado": "light",
+    "faixa": {
+      "conversa": "Quem conversa com o clienteClaude Sonnet 5Anthropic (Claude)",
+      "chave": "Chave da IADa empresaChave da loja ••c0de",
+      "padrao": "O padrão vale em7 de 9 partesTrocar o padrão muda todas de uma vez",
+      "opcionais": "Ajudantes opcionais0 de 3 em usoJev desligado · Resposta em áudio desligada · Mapas sem chave",
+      "estado": "1 pede atenção"
+    },
+    "abertura": "Provedores de IASeu sistema usa inteligência artificial em 9 lugares — cada um é uma tarefa, como responder o cliente, entender um áudio ou buscar no seu material. Aqui você vê qual IA cuida de cada uma e troca, se quiser.",
+    "recomendacao": "Recomendado: deixar o padrão como está. Motivo: ele vale para 7 de 9 partes do sistema, então trocar aqui muda todas de uma vez. Mude uma parte isolada só quando tiver uma razão, como custo, privacidade ou um modelo próprio.",
+    "secoes": [
+      "A IA que conversa",
+      "Ajudantes opcionais"
+    ],
+    "ordem": [
+      "secao-da-pagina",
+      "cartao-do-padrao",
+      "papel-atender",
+      "secao-da-pagina",
+      "cartao-do-jev",
+      "cartao-de-resposta-em-audio",
+      "cartao-de-mapas"
+    ],
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 130,
+    "alturaDaPagina": 3307,
+    "conferencias": [
+      "ok: A chave da empresa para Anthropic (Claude) está cadastrada.",
+      "atencao: 2 partes do sistema pedem atenção: abra a configuração avançada dos grupos que estão marcados.",
+      "info: O Jev está desligado. É opcional: serve para decisões rápidas, como perceber um cliente irritado.",
+      "info: A resposta em áudio está desligada. É opcional: o agente entende o áudio do cliente de qualquer jeito.",
+      "info: Sem chave de Mapas, o pino de localização não vira rua e cidade. É opcional."
+    ],
+    "errosDeConsole": []
+  },
+  "desktop-claro-pronto": {
+    "temaAplicado": "light",
+    "faixa": {
+      "conversa": "Quem conversa com o clienteClaude Sonnet 5Anthropic (Claude)",
+      "chave": "Chave da IADa empresaChave da loja ••c0de",
+      "padrao": "O padrão vale em7 de 9 partesTrocar o padrão muda todas de uma vez",
+      "opcionais": "Ajudantes opcionais3 de 3 em usoJev ligado · Resposta em áudio ligada · Mapas com chave",
+      "estado": "Tudo certo"
+    },
+    "abertura": "Provedores de IASeu sistema usa inteligência artificial em 9 lugares — cada um é uma tarefa, como responder o cliente, entender um áudio ou buscar no seu material. Aqui você vê qual IA cuida de cada uma e troca, se quiser.",
+    "recomendacao": "Recomendado: deixar o padrão como está. Motivo: ele vale para 7 de 9 partes do sistema, então trocar aqui muda todas de uma vez. Mude uma parte isolada só quando tiver uma razão, como custo, privacidade ou um modelo próprio.",
+    "secoes": [
+      "A IA que conversa",
+      "Ajudantes opcionais"
+    ],
+    "ordem": [
+      "secao-da-pagina",
+      "cartao-do-padrao",
+      "papel-atender",
+      "secao-da-pagina",
+      "cartao-do-jev",
+      "cartao-de-resposta-em-audio",
+      "cartao-de-mapas"
+    ],
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 130,
+    "alturaDaPagina": 3442,
+    "conferencias": [
+      "ok: A chave da empresa para Anthropic (Claude) está cadastrada.",
+      "ok: Nenhuma parte do sistema pede atenção.",
+      "ok: O Jev está ligado: decide coisas pequenas e rápidas, junto com a IA principal.",
+      "ok: A resposta em áudio está ligada.",
+      "ok: A chave de Mapas está cadastrada: o pino de localização do WhatsApp vira rua e cidade."
+    ],
+    "errosDeConsole": []
+  },
+  "desktop-escuro-semchave": {
+    "temaAplicado": "dark",
+    "faixa": {
+      "conversa": "Quem conversa com o clienteClaude Sonnet 5Anthropic (Claude)",
+      "chave": "Chave da IAFaltaO agente não responde ninguém sem ela",
+      "padrao": "O padrão vale em7 de 9 partesTrocar o padrão muda todas de uma vez",
+      "opcionais": "Ajudantes opcionais0 de 3 em usoJev desligado · Resposta em áudio desligada · Mapas sem chave",
+      "estado": "1 pede atenção"
+    },
+    "abertura": "Provedores de IASeu sistema usa inteligência artificial em 9 lugares — cada um é uma tarefa, como responder o cliente, entender um áudio ou buscar no seu material. Aqui você vê qual IA cuida de cada uma e troca, se quiser.",
+    "recomendacao": "Recomendado: cadastrar a chave da Anthropic (Claude). Motivo: é com ela que o agente conversa com o cliente; sem chave, ele não responde ninguém. Cadastrar uma chave",
+    "secoes": [
+      "A IA que conversa",
+      "Ajudantes opcionais"
+    ],
+    "ordem": [
+      "secao-da-pagina",
+      "cartao-do-padrao",
+      "papel-atender",
+      "secao-da-pagina",
+      "cartao-do-jev",
+      "cartao-de-resposta-em-audio",
+      "cartao-de-mapas"
+    ],
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 130,
+    "alturaDaPagina": 3231,
+    "conferencias": [
+      "atencao: Não há chave para Anthropic (Claude), nem da empresa nem da instalação: o agente não consegue responder ninguém. Cadastrar uma chave",
+      "ok: Nenhuma parte do sistema pede atenção.",
+      "info: O Jev está desligado. É opcional: serve para decisões rápidas, como perceber um cliente irritado.",
+      "info: A resposta em áudio está desligada. É opcional: o agente entende o áudio do cliente de qualquer jeito.",
+      "info: Sem chave de Mapas, o pino de localização não vira rua e cidade. É opcional."
+    ],
+    "errosDeConsole": []
+  },
+  "celular-claro-semchave": {
+    "temaAplicado": "light",
+    "faixa": {
+      "conversa": "Quem conversa com o clienteClaude Sonnet 5Anthropic (Claude)",
+      "chave": "Chave da IAFaltaO agente não responde ninguém sem ela",
+      "padrao": "O padrão vale em7 de 9 partesTrocar o padrão muda todas de uma vez",
+      "opcionais": "Ajudantes opcionais0 de 3 em usoJev desligado · Resposta em áudio desligada · Mapas sem chave",
+      "estado": "1 pede atenção"
+    },
+    "abertura": "Provedores de IASeu sistema usa inteligência artificial em 9 lugares — cada um é uma tarefa, como responder o cliente, entender um áudio ou buscar no seu material. Aqui você vê qual IA cuida de cada uma e troca, se quiser.",
+    "recomendacao": "Recomendado: cadastrar a chave da Anthropic (Claude). Motivo: é com ela que o agente conversa com o cliente; sem chave, ele não responde ninguém. Cadastrar uma chave",
+    "secoes": [
+      "A IA que conversa",
+      "Ajudantes opcionais"
+    ],
+    "ordem": [
+      "secao-da-pagina",
+      "cartao-do-padrao",
+      "papel-atender",
+      "secao-da-pagina",
+      "cartao-do-jev",
+      "cartao-de-resposta-em-audio",
+      "cartao-de-mapas"
+    ],
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 288,
+    "alturaDaPagina": 4876,
+    "conferencias": [
+      "atencao: Não há chave para Anthropic (Claude), nem da empresa nem da instalação: o agente não consegue responder ninguém. Cadastrar uma chave",
+      "ok: Nenhuma parte do sistema pede atenção.",
+      "info: O Jev está desligado. É opcional: serve para decisões rápidas, como perceber um cliente irritado.",
+      "info: A resposta em áudio está desligada. É opcional: o agente entende o áudio do cliente de qualquer jeito.",
+      "info: Sem chave de Mapas, o pino de localização não vira rua e cidade. É opcional."
+    ],
+    "errosDeConsole": []
+  },
+  "celular-claro-pronto": {
+    "temaAplicado": "light",
+    "faixa": {
+      "conversa": "Quem conversa com o clienteClaude Sonnet 5Anthropic (Claude)",
+      "chave": "Chave da IADa empresaChave da loja ••c0de",
+      "padrao": "O padrão vale em7 de 9 partesTrocar o padrão muda todas de uma vez",
+      "opcionais": "Ajudantes opcionais3 de 3 em usoJev ligado · Resposta em áudio ligada · Mapas com chave",
+      "estado": "Tudo certo"
+    },
+    "abertura": "Provedores de IASeu sistema usa inteligência artificial em 9 lugares — cada um é uma tarefa, como responder o cliente, entender um áudio ou buscar no seu material. Aqui você vê qual IA cuida de cada uma e troca, se quiser.",
+    "recomendacao": "Recomendado: deixar o padrão como está. Motivo: ele vale para 7 de 9 partes do sistema, então trocar aqui muda todas de uma vez. Mude uma parte isolada só quando tiver uma razão, como custo, privacidade ou um modelo próprio.",
+    "secoes": [
+      "A IA que conversa",
+      "Ajudantes opcionais"
+    ],
+    "ordem": [
+      "secao-da-pagina",
+      "cartao-do-padrao",
+      "papel-atender",
+      "secao-da-pagina",
+      "cartao-do-jev",
+      "cartao-de-resposta-em-audio",
+      "cartao-de-mapas"
+    ],
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 256,
+    "alturaDaPagina": 5479,
+    "conferencias": [
+      "ok: A chave da empresa para Anthropic (Claude) está cadastrada.",
+      "ok: Nenhuma parte do sistema pede atenção.",
+      "ok: O Jev está ligado: decide coisas pequenas e rápidas, junto com a IA principal.",
+      "ok: A resposta em áudio está ligada.",
+      "ok: A chave de Mapas está cadastrada: o pino de localização do WhatsApp vira rua e cidade."
+    ],
+    "errosDeConsole": []
+  },
+  "celular-escuro-semchave": {
+    "temaAplicado": "dark",
+    "faixa": {
+      "conversa": "Quem conversa com o clienteClaude Sonnet 5Anthropic (Claude)",
+      "chave": "Chave da IAFaltaO agente não responde ninguém sem ela",
+      "padrao": "O padrão vale em7 de 9 partesTrocar o padrão muda todas de uma vez",
+      "opcionais": "Ajudantes opcionais0 de 3 em usoJev desligado · Resposta em áudio desligada · Mapas sem chave",
+      "estado": "1 pede atenção"
+    },
+    "abertura": "Provedores de IASeu sistema usa inteligência artificial em 9 lugares — cada um é uma tarefa, como responder o cliente, entender um áudio ou buscar no seu material. Aqui você vê qual IA cuida de cada uma e troca, se quiser.",
+    "recomendacao": "Recomendado: cadastrar a chave da Anthropic (Claude). Motivo: é com ela que o agente conversa com o cliente; sem chave, ele não responde ninguém. Cadastrar uma chave",
+    "secoes": [
+      "A IA que conversa",
+      "Ajudantes opcionais"
+    ],
+    "ordem": [
+      "secao-da-pagina",
+      "cartao-do-padrao",
+      "papel-atender",
+      "secao-da-pagina",
+      "cartao-do-jev",
+      "cartao-de-resposta-em-audio",
+      "cartao-de-mapas"
+    ],
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 288,
+    "alturaDaPagina": 4876,
+    "conferencias": [
+      "atencao: Não há chave para Anthropic (Claude), nem da empresa nem da instalação: o agente não consegue responder ninguém. Cadastrar uma chave",
+      "ok: Nenhuma parte do sistema pede atenção.",
+      "info: O Jev está desligado. É opcional: serve para decisões rápidas, como perceber um cliente irritado.",
+      "info: A resposta em áudio está desligada. É opcional: o agente entende o áudio do cliente de qualquer jeito.",
+      "info: Sem chave de Mapas, o pino de localização não vira rua e cidade. É opcional."
+    ],
+    "errosDeConsole": []
+  }
+}

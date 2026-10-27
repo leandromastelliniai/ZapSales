@@ -42,11 +42,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FaixaRecomendada } from "@/components/guia/FaixaRecomendada";
+import { ResumoDaIAFaixa } from "@/components/ia/ResumoDaIA";
 import { useT } from "@/hooks/i18n/useT";
+import { recomendarParaOPadrao, resumoDaIA, type RecomendacaoDoPadrao } from "@/lib/ia/resumo-da-ia";
 
 import { CartaoDeMapas } from "./CartaoDeMapas";
 import { CartaoDeRespostaEmAudio } from "./CartaoDeRespostaEmAudio";
 import { CartaoDoJev, jevNoPonto, useDadosDoJev, type DadosDoJev } from "./CartaoDoJev";
+import { useAjudantesOpcionais } from "./useAjudantesOpcionais";
 
 interface Ponto {
   id: string;
@@ -111,6 +115,7 @@ export function PainelDeProvedores() {
   const [erro, setErro] = useState<string | null>(null);
   const [avancado, setAvancado] = useState<Record<string, boolean>>({});
   const jev = useDadosDoJev();
+  const ajudantes = useAjudantesOpcionais();
 
   const carregar = useCallback(async () => {
     // O try/catch não é zelo genérico: sem ele, qualquer exceção (rede caindo,
@@ -183,7 +188,27 @@ export function PainelDeProvedores() {
     return <div className="p-6 text-sm text-muted-foreground">{t("Carregando…")}</div>;
   }
 
-  const semChave = dados.credenciais.length === 0;
+  const ligadoDoJev = jev.dados?.config?.ligado;
+  const resumo = resumoDaIA({
+    pontos: dados.pontos.map((p) => ({ origem: p.efetivo.origem, avisos: p.avisos })),
+    provedorDoPadrao: dados.padrao.provider,
+    credenciais: dados.credenciais,
+    instalacaoTemChave: dados.instalacaoTemChave,
+    jev: typeof ligadoDoJev === "boolean" ? (ligadoDoJev ? "ligado" : "desligado") : "desconhecido",
+    audio: ajudantes.audio,
+    mapas: ajudantes.mapas,
+  });
+  const rotuloDoProvedor = t(
+    dados.provedores.find((p) => p.id === dados.padrao.provider)?.rotulo ?? dados.padrao.provider,
+  );
+  const modeloAchado = dados.modelos.find(
+    (m) => m.provider === dados.padrao.provider && m.model_id === dados.padrao.defaultModel,
+  );
+  const modeloDoPadrao = dados.padrao.defaultModel
+    ? modeloAchado
+      ? modeloAchado.display_name
+      : dados.padrao.defaultModel
+    : null;
 
   return (
     <CorpoDaPagina className="gap-0" data-testid="painel-de-provedores">
@@ -193,29 +218,27 @@ export function PainelDeProvedores() {
           descricao={
             <>
               {t("Seu sistema usa inteligência artificial em")} {dados.pontos.length}{" "}
-              {t("lugares diferentes. Aqui você vê qual está atendendo cada um — e troca, se quiser.")}
+              {t(
+                "lugares — cada um é uma tarefa, como responder o cliente, entender um áudio ou buscar no seu material. Aqui você vê qual IA cuida de cada uma e troca, se quiser.",
+              )}
             </>
           }
         />
       </div>
 
-      {semChave && (
-        <Card className="mb-6 border-warning/40 bg-warning-bg p-4" data-testid="aviso-sem-chave">
-          <p className="text-sm">
-            {t("Você ainda não cadastrou a chave da sua IA principal, a que conversa com os clientes.")}{" "}
-            {/* Só é verdade quando a instalação tem chave; sem ela, a frase
-                contradizia o cartão do Jev logo abaixo. */}
-            {dados.instalacaoTemChave && t("Enquanto isso, o atendimento usa a chave que veio na instalação.")}{" "}
-            <Link className="underline underline-offset-4" href="/app/ai/credentials">
-              {t("Cadastrar uma chave")}
-            </Link>
-          </p>
-        </Card>
-      )}
+      <ResumoDaIAFaixa resumo={resumo} rotuloDoProvedor={rotuloDoProvedor} nomeDoModelo={modeloDoPadrao} />
 
-      <CartaoDoPadrao dados={dados} aoSalvar={carregar} />
+      <SecaoDaPagina
+        titulo={t("A IA que conversa")}
+        descricao={t("Quem atende o cliente e qual IA trabalha em cada parte do sistema.")}
+      />
 
-      <CartaoDoJev dados={jev.dados} erro={jev.erro} recarregar={jev.recarregar} />
+      <CartaoDoPadrao
+        dados={dados}
+        aoSalvar={carregar}
+        rotuloDoProvedor={rotuloDoProvedor}
+        recomendacao={recomendarParaOPadrao(resumo)}
+      />
 
       <div className="space-y-8">
         {porPapel.map(({ papel, info, pontos }) => (
@@ -256,14 +279,51 @@ export function PainelDeProvedores() {
         ))}
       </div>
 
-      <CartaoDeMapas />
+      <SecaoDaPagina
+        className="mt-12"
+        titulo={t("Ajudantes opcionais")}
+        descricao={t(
+          "Nada aqui é obrigatório: o atendimento funciona sem eles. Ligue só o que fizer sentido para o seu negócio.",
+        )}
+      />
+
+      <CartaoDoJev dados={jev.dados} erro={jev.erro} recarregar={jev.recarregar} />
       <CartaoDeRespostaEmAudio />
+      <CartaoDeMapas />
     </CorpoDaPagina>
   );
 }
 
+/** O título de um dos dois blocos da página: o que é obrigatório e o que é opcional. */
+function SecaoDaPagina({
+  titulo,
+  descricao,
+  className,
+}: {
+  titulo: string;
+  descricao: string;
+  className?: string;
+}) {
+  return (
+    <div className={`mb-4 border-b border-border pb-2 ${className ?? "mt-2"}`} data-testid="secao-da-pagina">
+      <h2 className="text-xl font-semibold">{titulo}</h2>
+      <p className="text-sm text-muted-foreground">{descricao}</p>
+    </div>
+  );
+}
+
 /** O que o grupo usa hoje, sem obrigar a abrir ponto a ponto. */
-function CartaoDoPadrao({ dados, aoSalvar }: { dados: Dados; aoSalvar: () => Promise<void> }) {
+function CartaoDoPadrao({
+  dados,
+  aoSalvar,
+  rotuloDoProvedor,
+  recomendacao,
+}: {
+  dados: Dados;
+  aoSalvar: () => Promise<void>;
+  rotuloDoProvedor: string;
+  recomendacao: RecomendacaoDoPadrao;
+}) {
   const t = useT();
   const [provider, setProvider] = useState(dados.padrao.provider);
   const [modelId, setModelId] = useState(dados.padrao.defaultModel ?? "");
@@ -320,6 +380,27 @@ function CartaoDoPadrao({ dados, aoSalvar }: { dados: Dados; aoSalvar: () => Pro
         {t("Vale em todo ponto que você não configurou individualmente — hoje,")} {herdam.length}{" "}
         {t("de")} {dados.pontos.length}. {t("Trocar aqui muda todos eles de uma vez.")}
       </p>
+
+      <FaixaRecomendada testId="recomendacao-do-padrao" className="mt-3">
+        {recomendacao.tipo === "cadastrar_chave" ? (
+          <>
+            {t("cadastrar a chave da")} {rotuloDoProvedor}.{" "}
+            <strong className="font-semibold">{t("Motivo:")}</strong>{" "}
+            {t("é com ela que o agente conversa com o cliente; sem chave, ele não responde ninguém.")}{" "}
+            <Link className="underline underline-offset-4" href="/app/ai/credentials">
+              {t("Cadastrar uma chave")}
+            </Link>
+          </>
+        ) : (
+          <>
+            {t("deixar o padrão como está.")} <strong className="font-semibold">{t("Motivo:")}</strong>{" "}
+            {t("ele vale para")} {recomendacao.herdam} {t("de")} {recomendacao.total}{" "}
+            {t(
+              "partes do sistema, então trocar aqui muda todas de uma vez. Mude uma parte isolada só quando tiver uma razão, como custo, privacidade ou um modelo próprio.",
+            )}
+          </>
+        )}
+      </FaixaRecomendada>
 
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <div className="min-w-48">

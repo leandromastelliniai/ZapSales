@@ -92,7 +92,7 @@ function montar() {
 }
 
 describe("PainelDeProvedores — o Jev no painel", () => {
-  it("o cartão do Jev vem logo abaixo do Modelo padrão", async () => {
+  it("o cartão do Jev vem depois do Modelo padrão, entre os ajudantes opcionais", async () => {
     montar();
     const jevCartao = await screen.findByTestId("cartao-do-jev");
     const padrao = screen.getByTestId("cartao-do-padrao");
