@@ -185,6 +185,7 @@ export function NovaCampanha() {
   const canalEscolhido = (canais.data ?? []).find((c) => c.id === canal);
 
   const conferencias = prontidaoDoDisparo({
+    temNome: nome.trim() !== "",
     temNumero: canal !== "",
     temCriterio,
     elegiveis,
@@ -251,9 +252,7 @@ export function NovaCampanha() {
   }
 
   return (
-    // `h-auto`: o corpo acompanha o conteúdo, e é isso que deixa a faixa do topo colada ao rolar
-    // (um `sticky` só gruda dentro da altura do pai, e o `h-full` do corpo é a altura de uma tela).
-    <CorpoDaPagina largura="formulario" className="h-auto">
+    <CorpoDaPagina largura="formulario">
       <CabecalhoDePagina
         titulo={t("Nova campanha")}
         descricao={t("Isto cria um rascunho. Nada é enviado antes de você preparar a lista e iniciar.")}

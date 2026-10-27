@@ -214,6 +214,7 @@ export function avisosDeRitmo(input: {
 export type EstadoDaConferencia = "ok" | "atencao" | "info";
 
 export type IdDaConferencia =
+  | "nome"
   | "numero"
   | "publico"
   | "mensagem"
@@ -233,6 +234,8 @@ export interface Conferencia {
 }
 
 export interface EntradaDaProntidao {
+  /** O nome da campanha está preenchido? Sem ele o Salvar fica cinza, como o número. */
+  temNome: boolean;
   temNumero: boolean;
   temCriterio: boolean;
   /** `null` = a contagem ainda não rodou (ou está rodando). */
@@ -257,6 +260,12 @@ export interface EntradaDaProntidao {
  */
 export function prontidaoDoDisparo(e: EntradaDaProntidao): Conferencia[] {
   const lista: Conferencia[] = [];
+
+  lista.push(
+    e.temNome
+      ? { id: "nome", estado: "ok", motivo: "preenchido" }
+      : { id: "nome", estado: "atencao", motivo: "falta_nome" },
+  );
 
   lista.push(
     e.temNumero

@@ -8,9 +8,10 @@
  * estimativa de custo da Meta e o ritmo efetivo do número. Nada é gravado; a faixa acompanha o
  * formulário a cada edição.
  *
- * Em tela larga a faixa fica colada no topo ao rolar: o formulário tem cinco blocos e as respostas
- * mudam com o último campo mexido, no fim da página. No celular ela rola junto (empilhada, ocuparia
- * um quinto da tela).
+ * A faixa NÃO é `sticky` de propósito: no casco real do app o `<main>` tem `overflow-auto` sem altura
+ * fixa, quem rola é a janela, e um `sticky` ali nunca gruda (medido em produção em 26/10/2026 — a
+ * vitrine local, com um contêiner de altura fixa, tinha mostrado o contrário). Quem quiser colá-la
+ * de novo precisa antes mexer no casco, que serve a todas as telas.
  *
  * ⚠️ Esta faixa NUNCA escreve "podem receber": o botão "Ver quantas pessoas" tem a sua própria
  * frase com essas palavras ao lado, e a spec `disparo-em-massa-csv` a localiza por texto, exigindo
@@ -114,7 +115,7 @@ export function ResumoDoDisparo({
     <section
       aria-label={t("O que este disparo faz")}
       data-testid="resumo-do-disparo"
-      className="z-20 rounded-xl border border-border bg-surface shadow-sm lg:sticky lg:top-0"
+      className="rounded-xl border border-border bg-surface shadow-sm"
     >
       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-t-xl bg-border lg:grid-cols-4">
         {celulas.map((c) => (
@@ -208,6 +209,10 @@ function quemLimita(q: QuemLimita, t: (s: string) => string): string {
 
 function textoDaConferencia(c: Conferencia, t: (s: string) => string): string {
   switch (`${c.id}:${c.motivo}`) {
+    case "nome:preenchido":
+      return t("Campanha com nome.");
+    case "nome:falta_nome":
+      return t("Dê um nome à campanha.");
     case "numero:escolhido":
       return t("Número escolhido.");
     case "numero:falta_escolher":
