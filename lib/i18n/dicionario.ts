@@ -15501,16 +15501,12 @@ export const DICIONARIO: Traducoes = {
   "O que anda pelas etapas. Ex.: Pedido, Consulta.": { es: "Lo que avanza por las etapas. Ej.: Pedido, Consulta." },
   "O nome de quando dá certo. Ex.: Pago, Fechado.": { es: "El nombre de cuando sale bien. Ej.: Pagado, Cerrado." },
   "O nome de quando não dá. Ex.: Cancelado, Perdido.": { es: "El nombre de cuando no sale. Ej.: Cancelado, Perdido." },
-  "Pedido": { es: "Pedido" },
-  "Pago": { es: "Pagado" },
-  "Paciente": { es: "Paciente" },
-  "Tratamento": { es: "Tratamiento" },
-  "Fechado": { es: "Cerrado" },
-  "Clínica": { es: "Clínica" },
-  "Serviços": { es: "Servicios" },
   "Etapas do quadro": { es: "Etapas del tablero" },
   "aberta": { es: "abierta" },
   "abertas": { es: "abiertas" },
+  "Loja: Cliente · Pedido · Pago · Cancelado": { es: "Tienda: Cliente · Pedido · Pagado · Cancelado" },
+  "Clínica: Paciente · Tratamento · Fechado · Perdido": { es: "Clínica: Paciente · Tratamiento · Cerrado · Perdido" },
+  "Serviços: Cliente · Orçamento · Fechado · Perdido": { es: "Servicios: Cliente · Presupuesto · Cerrado · Perdido" },
 };
 
 /**

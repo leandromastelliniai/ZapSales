@@ -10,6 +10,8 @@ import { describe, expect, it } from "vitest";
 import {
   contarAtencaoDoFunil,
   EXEMPLOS_DE_VOCABULARIO,
+  exemploTraduzido,
+  rotuloDoExemplo,
   resumoDoFunil,
   sugerirMapeamento,
   vocabularioLido,
@@ -133,5 +135,27 @@ describe("vocabulário", () => {
       for (const k of ["lead", "deal", "won", "lost"] as const) expect(ex[k].trim()).not.toBe("");
     }
     expect(new Set(EXEMPLOS_DE_VOCABULARIO.map((e) => e.id)).size).toBe(EXEMPLOS_DE_VOCABULARIO.length);
+  });
+});
+
+describe("exemplos de vocabulário — a frase inteira é a chave de tradução", () => {
+  const loja = EXEMPLOS_DE_VOCABULARIO[0]!;
+
+  it("sem tradução, devolve o português", () => {
+    const r = exemploTraduzido(loja, (t) => t);
+    expect(r.rotulo).toBe("Loja: Cliente · Pedido · Pago · Cancelado");
+    expect(r.palavras).toEqual({ lead: "Cliente", deal: "Pedido", won: "Pago", lost: "Cancelado" });
+  });
+
+  it("traduzida a frase, o rótulo e as quatro palavras saem da MESMA tradução", () => {
+    const r = exemploTraduzido(loja, () => "Store: Customer · Order · Paid · Canceled");
+    expect(r.rotulo).toBe("Store: Customer · Order · Paid · Canceled");
+    expect(r.palavras).toEqual({ lead: "Customer", deal: "Order", won: "Paid", lost: "Canceled" });
+  });
+
+  it("tradução torta (sem as quatro palavras) cai no português em vez de gravar lixo", () => {
+    const r = exemploTraduzido(loja, () => "Store");
+    expect(r.palavras.lead).toBe("Cliente");
+    expect(r.rotulo).toBe(rotuloDoExemplo(loja));
   });
 });

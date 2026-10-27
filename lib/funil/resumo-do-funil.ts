@@ -146,3 +146,26 @@ export function vocabularioLido(bruto: Record<string, string> | null): Partial<V
   }
   return Object.keys(saida).length > 0 ? saida : null;
 }
+
+/**
+ * O exemplo como UMA frase — e é a frase inteira que se traduz, nunca a palavra solta.
+ *
+ * Traduzir "Pago" ou "Fechado" sozinhos põe essas palavras no dicionário global, e o e2e de
+ * espanhol passa a acusar toda tela que mostra uma etapa chamada "Pago" (dado do usuário, não
+ * texto do produto) como português sem tradução. A frase composta não coincide com dado nenhum.
+ */
+export function rotuloDoExemplo(ex: ExemploDeVocabulario): string {
+  return `${ex.negocio}: ${ex.lead} · ${ex.deal} · ${ex.won} · ${ex.lost}`;
+}
+
+/** O rótulo e as quatro palavras já no idioma da tela; se a tradução vier torta, cai no português. */
+export function exemploTraduzido(
+  ex: ExemploDeVocabulario,
+  t: (texto: string) => string,
+): { rotulo: string; palavras: Vocabulario } {
+  const rotulo = t(rotuloDoExemplo(ex));
+  const [, resto = ""] = rotulo.split(": ");
+  const [lead, deal, won, lost] = resto.split(" · ");
+  if (lead && deal && won && lost) return { rotulo, palavras: { lead, deal, won, lost } };
+  return { rotulo: rotuloDoExemplo(ex), palavras: { lead: ex.lead, deal: ex.deal, won: ex.won, lost: ex.lost } };
+}

@@ -10363,14 +10363,10 @@
   "O que anda pelas etapas. Ex.: Pedido, Consulta.": "What moves through the stages. E.g.: Order, Appointment.",
   "O nome de quando dá certo. Ex.: Pago, Fechado.": "The name for when it works out. E.g.: Paid, Closed.",
   "O nome de quando não dá. Ex.: Cancelado, Perdido.": "The name for when it doesn't. E.g.: Canceled, Lost.",
-  "Pedido": "Order",
-  "Pago": "Paid",
-  "Paciente": "Patient",
-  "Tratamento": "Treatment",
-  "Fechado": "Closed",
-  "Clínica": "Clinic",
-  "Serviços": "Services",
   "Etapas do quadro": "Board stages",
   "aberta": "open",
-  "abertas": "open"
+  "abertas": "open",
+  "Loja: Cliente · Pedido · Pago · Cancelado": "Store: Customer · Order · Paid · Canceled",
+  "Clínica: Paciente · Tratamento · Fechado · Perdido": "Clinic: Patient · Treatment · Closed · Lost",
+  "Serviços: Cliente · Orçamento · Fechado · Perdido": "Services: Customer · Quote · Closed · Lost"
 }

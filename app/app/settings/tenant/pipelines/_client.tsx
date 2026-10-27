@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { updatePipelineConfig } from "@/app/actions/settings/updatePipelineConfig";
 import type { PipelineConfigPatch } from "@/lib/schemas/settings";
-import { EXEMPLOS_DE_VOCABULARIO, type Vocabulario } from "@/lib/funil/resumo-do-funil";
+import { EXEMPLOS_DE_VOCABULARIO, exemploTraduzido, type Vocabulario } from "@/lib/funil/resumo-do-funil";
 import { camposDoFunil } from "@/lib/leads/campos-do-funil";
 import { modoDeReabertura } from "@/lib/leads/reabertura";
 import { CATEGORIAS_DE_PERDA } from "@/lib/schemas/leads";
@@ -348,25 +348,21 @@ function PipelineEditor({
         </div>
         <div className="flex flex-wrap items-center gap-2" data-testid="exemplos-de-vocabulario">
           <span className="text-xs text-muted-foreground">{t("Quer um exemplo?")}</span>
-          {EXEMPLOS_DE_VOCABULARIO.map((ex) => (
-            <Button
-              key={ex.id}
-              type="button"
-              variant="outline"
-              size="sm"
-              data-testid={`exemplo-de-vocabulario-${ex.id}`}
-              onClick={() =>
-                setPalavras({
-                  lead: t(ex.lead),
-                  deal: t(ex.deal),
-                  won: t(ex.won),
-                  lost: t(ex.lost),
-                })
-              }
-            >
-              {t(ex.negocio)}: {t(ex.lead)} · {t(ex.deal)} · {t(ex.won)} · {t(ex.lost)}
-            </Button>
-          ))}
+          {EXEMPLOS_DE_VOCABULARIO.map((ex) => {
+            const { rotulo, palavras: doExemplo } = exemploTraduzido(ex, t);
+            return (
+              <Button
+                key={ex.id}
+                type="button"
+                variant="outline"
+                size="sm"
+                data-testid={`exemplo-de-vocabulario-${ex.id}`}
+                onClick={() => setPalavras(doExemplo)}
+              >
+                {rotulo}
+              </Button>
+            );
+          })}
         </div>
       </div>
 
