@@ -18,8 +18,10 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { GuiaDoRitmo } from "@/components/campanhas/GuiaDoRitmo";
+import { ResumoDoDisparo } from "@/components/campanhas/ResumoDoDisparo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -36,6 +38,16 @@ import { useCriarCampanha, useModelosDaCampanha, usePreviaDaAudiencia } from "@/
 import { centavosDoTexto } from "@/lib/custo/formato";
 import { channelLabel, useChannelSessions } from "@/hooks/channels/useChannelSessions";
 import { useT } from "@/hooks/i18n/useT";
+import { usePacingKnobs } from "@/hooks/channels/usePacingKnobs";
+import {
+  avisosDeRitmo,
+  diaDaSemanaNoFuso,
+  estimarDuracao,
+  prontidaoDoDisparo,
+  recomendarRitmo,
+  ritmoDoNumero,
+  type RitmoDigitado,
+} from "@/lib/campanhas/resumo-do-disparo";
 import {
   useAgentesPublicados,
   useEtapas,
@@ -140,6 +152,76 @@ export function NovaCampanha() {
     (baseLegal !== "legitimate_interest" || liaRef.trim() !== "") &&
     !(precisaDeAgente(quemAssume, botoes) && !agente);
 
+  // ─── O resumo do disparo ───
+  // O que a faixa do topo mostra e o que o bloco do ritmo ensina nasce do mesmo lugar: a prévia do
+  // público, o ritmo efetivo do número (a mesma leitura da ficha Anti-ban) e o que foi digitado.
+  const pacing = usePacingKnobs();
+  const itemDoNumero = (pacing.data?.items ?? []).find((i) => i.channel_session.id === canal);
+  const numero = itemDoNumero ? ritmoDoNumero(itemDoNumero) : null;
+  const fusoDoNumero = itemDoNumero?.effective.timezone ?? null;
+
+  const ritmoDigitado: RitmoDigitado = {
+    intervaloSegundos: numeroOuNulo(intervalo),
+    janelaInicioHora: numeroOuNulo(janelaInicio),
+    janelaFimHora: numeroOuNulo(janelaFim),
+    tetoDiario: numeroOuNulo(tetoDiario),
+    tetoHorario: numeroOuNulo(tetoHorario),
+  };
+  const tetoDeGastoCents = oficial ? centavosDoTexto(tetoGasto) : null;
+  const elegiveis = previa.data?.elegiveis ?? null;
+
+  const duracao =
+    numero === null
+      ? null
+      : estimarDuracao({
+          destinatarios: elegiveis ?? 0,
+          oficial,
+          ritmo: ritmoDigitado,
+          numero,
+          diaDaSemanaHoje: diaDaSemanaNoFuso(new Date(), fusoDoNumero ?? "America/Sao_Paulo"),
+        });
+  const avisos = numero === null ? [] : avisosDeRitmo({ oficial, ritmo: ritmoDigitado, numero });
+  const recomendacao = numero === null ? null : recomendarRitmo({ oficial, temTetoDeGasto: tetoDeGastoCents !== null, numero });
+  const canalEscolhido = (canais.data ?? []).find((c) => c.id === canal);
+
+  const conferencias = prontidaoDoDisparo({
+    temNumero: canal !== "",
+    temCriterio,
+    elegiveis,
+    oficial,
+    mensagemCompleta: oficial ? mapaCompleto(modelo, mapa, slotAutomatico) && !problemaDoAtendimento : texto.trim() !== "",
+    temModelo: modeloId !== "",
+    baseLegalSemReferencia: baseLegal === "legitimate_interest" && liaRef.trim() === "",
+    respostaPedeAgenteSemAgente: precisaDeAgente(quemAssume, botoes) && !agente,
+    avisos,
+    custoEstimadoCents: previa.data?.estimativa?.total_cents ?? null,
+    tetoDeGastoCents,
+  });
+
+  // O que a prévia recebe: o mesmo para o botão "Ver quantas pessoas" e para a contagem automática.
+  const corpoDaPrevia =
+    oficial && modeloId
+      ? {
+          audience_filter: filtro,
+          message_body: "",
+          meta_template_id: modeloId,
+          template_variables: mapaDoModelo(modelo, mapa),
+          ...(atendimento ? { numero_de_atendimento_id: atendimento } : {}),
+        }
+      : { audience_filter: filtro, message_body: texto };
+
+  // A contagem se refaz sozinha, um instante depois de mexer no público, na mensagem ou no número:
+  // o número que o operador precisa ver antes de salvar é "quantas pessoas isto pega", e depender
+  // de apertar um botão para isso deixava a faixa do topo sempre desatualizada.
+  const { mutate: contar, reset: zerarPrevia } = previa;
+  const chaveDaPrevia = JSON.stringify(corpoDaPrevia);
+  useEffect(() => {
+    zerarPrevia();
+    if (!temCriterio) return;
+    const espera = setTimeout(() => contar(JSON.parse(chaveDaPrevia) as typeof corpoDaPrevia), 700);
+    return () => clearTimeout(espera);
+  }, [chaveDaPrevia, temCriterio, contar, zerarPrevia]);
+
   async function salvar() {
     const criada = await criar.mutateAsync({
       name: nome.trim(),
@@ -169,10 +251,25 @@ export function NovaCampanha() {
   }
 
   return (
-    <CorpoDaPagina largura="formulario">
+    // `h-auto`: o corpo acompanha o conteúdo, e é isso que deixa a faixa do topo colada ao rolar
+    // (um `sticky` só gruda dentro da altura do pai, e o `h-full` do corpo é a altura de uma tela).
+    <CorpoDaPagina largura="formulario" className="h-auto">
       <CabecalhoDePagina
         titulo={t("Nova campanha")}
         descricao={t("Isto cria um rascunho. Nada é enviado antes de você preparar a lista e iniciar.")}
+      />
+
+      <ResumoDoDisparo
+        canalNome={canalEscolhido ? channelLabel(canalEscolhido, t) : null}
+        oficial={oficial}
+        temCriterio={temCriterio}
+        contando={previa.isPending}
+        elegiveis={elegiveis}
+        excluidos={previa.data?.excluidos ?? 0}
+        duracao={duracao}
+        custoCents={previa.data?.estimativa?.total_cents ?? null}
+        tetoDeGastoCents={tetoDeGastoCents}
+        conferencias={conferencias}
       />
 
       <Card className="space-y-4 p-4">
@@ -251,6 +348,11 @@ export function NovaCampanha() {
           <p className="text-sm text-muted-foreground">
             {t(
               "Quem recebe pode perguntar por que recebeu, e a resposta precisa existir antes do envio.",
+            )}
+          </p>
+          <p className="text-sm text-muted-foreground" data-testid="ajuda-base-legal">
+            {t(
+              "Consentimento: a pessoa pediu para receber (preencheu um formulário, marcou uma caixa ou escreveu pedindo). Interesse legítimo: você já tem relação com ela, como cliente, e a mensagem é esperada; exige registrar uma avaliação (LIA). Na dúvida, escolha consentimento.",
             )}
           </p>
           <label className="flex items-center gap-2 text-sm">
@@ -380,19 +482,7 @@ export function NovaCampanha() {
             type="button"
             variant="outline"
             disabled={!temCriterio || previa.isPending}
-            onClick={() =>
-              previa.mutate(
-                oficial && modeloId
-                  ? {
-                      audience_filter: filtro,
-                      message_body: "",
-                      meta_template_id: modeloId,
-                      template_variables: mapaDoModelo(modelo, mapa),
-                      ...(atendimento ? { numero_de_atendimento_id: atendimento } : {}),
-                    }
-                  : { audience_filter: filtro, message_body: texto },
-              )
-            }
+            onClick={() => previa.mutate(corpoDaPrevia)}
           >
             {previa.isPending ? t("Contando…") : t("Ver quantas pessoas")}
           </Button>
@@ -564,6 +654,7 @@ export function NovaCampanha() {
             "Em branco, vale o ritmo do número (Conexões › Proteção de envio). O que você puser aqui só pode deixar mais devagar.",
           )}
         </p>
+        <GuiaDoRitmo oficial={oficial} numero={numero} recomendacao={recomendacao} avisos={avisos} />
         <div className="grid gap-4 sm:grid-cols-2">
           {!oficial && (
             <div className="space-y-2">
@@ -633,6 +724,13 @@ export function NovaCampanha() {
       </div>
     </CorpoDaPagina>
   );
+}
+
+/** Campo numérico em branco ou inválido = `null` (herda o número). */
+function numeroOuNulo(bruto: string): number | null {
+  if (bruto.trim() === "") return null;
+  const n = Number(bruto);
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 function listar(bruto: string): string[] {

@@ -1,0 +1,223 @@
+{
+  "desktop-claro-qr-novo": {
+    "temaAplicado": "light",
+    "vazio": {
+      "quem": "Quem recebeEscolha o público",
+      "onde": "Por ondeEscolha o número",
+      "vai": "3 pedem atenção"
+    },
+    "sobraHorizontal": 0,
+    "preenchido": {
+      "quem": "Quem recebe312 pessoas18 ficam de fora",
+      "onde": "Por ondeLojaQR code · texto livre",
+      "tempo": "Quanto tempo7 diasAté 20 por dia · limitado pelo aquecimento do número",
+      "custo": "Quanto custaSem tarifa da MetaNúmero de QR code não paga por mensagem",
+      "vai": "Tudo certo"
+    },
+    "alturaDaFaixa": 130,
+    "faixaAoRolar": {
+      "topo": 0,
+      "visivel": true
+    },
+    "guiaDoRitmo": {
+      "numeroFaz": "Sem mexer em nada, o número já faz isto: intervalo mínimo entre mensagens 1,2 s · horário de envio 7h–22h · domingo liberado · aquecimento hoje: 20 por dia · limite do número: 150 por dia.",
+      "recomendado": "Recomendado: deixe o ritmo em branco. O número é novo e o aquecimento já limita a 20 por dia (sobe para 50 em 2 dias). Motivo: número novo que dispara muito para quem nunca falou com você é o jeito mais rápido de ser banido, e número banido não volta."
+    },
+    "avisoDoTeto": "O limite do número é 150 por dia: um Máximo por dia maior que isso não faz a campanha mandar mais.",
+    "conferencias": [
+      "ok: Número escolhido.",
+      "ok: 312 pessoas entram na lista.",
+      "ok: Mensagem pronta.",
+      "info: Número de QR code: ao iniciar, você vai precisar aceitar o aviso de risco de banimento."
+    ],
+    "baseLegal": "Consentimento: a pessoa pediu para receber (preencheu um formulário, marcou uma caixa ou escreveu pedindo). Interesse legítimo: você já tem relação com ela, como cliente, e a mensagem é esperada; exige registrar uma avaliação (LIA). Na dúvida, escolha consentimento.",
+    "errosDeConsole": []
+  },
+  "desktop-claro-qr-formado": {
+    "temaAplicado": "light",
+    "vazio": {
+      "quem": "Quem recebeEscolha o público",
+      "onde": "Por ondeEscolha o número",
+      "vai": "3 pedem atenção"
+    },
+    "sobraHorizontal": 0,
+    "preenchido": {
+      "quem": "Quem recebe312 pessoas18 ficam de fora",
+      "onde": "Por ondeLojaQR code · texto livre",
+      "tempo": "Quanto tempo1 diaAté 1000 por dia · limitado pelo limite do número",
+      "custo": "Quanto custaSem tarifa da MetaNúmero de QR code não paga por mensagem",
+      "vai": "Tudo certo"
+    },
+    "alturaDaFaixa": 130,
+    "faixaAoRolar": {
+      "topo": 0,
+      "visivel": true
+    },
+    "guiaDoRitmo": {
+      "numeroFaz": "Sem mexer em nada, o número já faz isto: intervalo mínimo entre mensagens 1,2 s · horário de envio 7h–22h · domingo liberado · limite do número: 1000 por dia.",
+      "recomendado": "Recomendado: deixe em branco para usar o ritmo do número. Se a lista é de gente que nunca falou com você, ponha um Máximo por dia baixo. Motivo: lista fria disparada de uma vez é o padrão que o WhatsApp bane."
+    },
+    "avisoDoTeto": "O limite do número é 1000 por dia: um Máximo por dia maior que isso não faz a campanha mandar mais.",
+    "conferencias": [
+      "ok: Número escolhido.",
+      "ok: 312 pessoas entram na lista.",
+      "ok: Mensagem pronta.",
+      "info: Número de QR code: ao iniciar, você vai precisar aceitar o aviso de risco de banimento."
+    ],
+    "errosDeConsole": []
+  },
+  "desktop-claro-oficial": {
+    "temaAplicado": "light",
+    "vazio": {
+      "quem": "Quem recebeEscolha o público",
+      "onde": "Por ondeEscolha o número",
+      "vai": "3 pedem atenção"
+    },
+    "sobraHorizontal": 0,
+    "preenchido": {
+      "quem": "Quem recebe312 pessoas18 ficam de fora",
+      "onde": "Por ondeLoja (oficial)API Oficial · modelo aprovado",
+      "tempo": "Quanto tempoNo mesmo diaDentro do horário de envio · o limite da Meta pode estender",
+      "custo": "Quanto custaR$ 100,37Sem teto de gasto",
+      "vai": "Tudo certo"
+    },
+    "alturaDaFaixa": 130,
+    "faixaAoRolar": {
+      "topo": 0,
+      "visivel": true
+    },
+    "guiaDoRitmo": {
+      "numeroFaz": "Sem mexer em nada, o número já faz isto: horário de envio 7h–22h · domingo liberado.",
+      "recomendado": "Recomendado: defina um teto de gasto, logo abaixo. Na API Oficial a Meta cobra por mensagem, e o teto pausa a campanha sozinho ao chegar nele, em vez de você descobrir o valor na fatura."
+    },
+    "conferencias": [
+      "ok: Número escolhido.",
+      "ok: 312 pessoas entram na lista.",
+      "ok: Mensagem pronta.",
+      "info: Sem teto de gasto: a campanha não pausa por custo."
+    ],
+    "errosDeConsole": []
+  },
+  "desktop-escuro-qr-novo": {
+    "temaAplicado": "dark",
+    "vazio": {
+      "quem": "Quem recebeEscolha o público",
+      "onde": "Por ondeEscolha o número",
+      "vai": "3 pedem atenção"
+    },
+    "sobraHorizontal": 0,
+    "preenchido": {
+      "quem": "Quem recebe312 pessoas18 ficam de fora",
+      "onde": "Por ondeLojaQR code · texto livre",
+      "tempo": "Quanto tempo7 diasAté 20 por dia · limitado pelo aquecimento do número",
+      "custo": "Quanto custaSem tarifa da MetaNúmero de QR code não paga por mensagem",
+      "vai": "Tudo certo"
+    },
+    "alturaDaFaixa": 130,
+    "faixaAoRolar": {
+      "topo": 0,
+      "visivel": true
+    },
+    "guiaDoRitmo": {
+      "numeroFaz": "Sem mexer em nada, o número já faz isto: intervalo mínimo entre mensagens 1,2 s · horário de envio 7h–22h · domingo liberado · aquecimento hoje: 20 por dia · limite do número: 150 por dia.",
+      "recomendado": "Recomendado: deixe o ritmo em branco. O número é novo e o aquecimento já limita a 20 por dia (sobe para 50 em 2 dias). Motivo: número novo que dispara muito para quem nunca falou com você é o jeito mais rápido de ser banido, e número banido não volta."
+    },
+    "avisoDoTeto": "O limite do número é 150 por dia: um Máximo por dia maior que isso não faz a campanha mandar mais.",
+    "conferencias": [
+      "ok: Número escolhido.",
+      "ok: 312 pessoas entram na lista.",
+      "ok: Mensagem pronta.",
+      "info: Número de QR code: ao iniciar, você vai precisar aceitar o aviso de risco de banimento."
+    ],
+    "errosDeConsole": []
+  },
+  "celular-claro-qr-novo": {
+    "temaAplicado": "light",
+    "vazio": {
+      "quem": "Quem recebeEscolha o público",
+      "onde": "Por ondeEscolha o número",
+      "vai": "3 pedem atenção"
+    },
+    "sobraHorizontal": 0,
+    "preenchido": {
+      "quem": "Quem recebe312 pessoas18 ficam de fora",
+      "onde": "Por ondeLojaQR code · texto livre",
+      "tempo": "Quanto tempo7 diasAté 20 por dia · limitado pelo aquecimento do número",
+      "custo": "Quanto custaSem tarifa da MetaNúmero de QR code não paga por mensagem",
+      "vai": "Tudo certo"
+    },
+    "alturaDaFaixa": 220,
+    "faixaAoRolar": "rola junto (celular)",
+    "guiaDoRitmo": {
+      "numeroFaz": "Sem mexer em nada, o número já faz isto: intervalo mínimo entre mensagens 1,2 s · horário de envio 7h–22h · domingo liberado · aquecimento hoje: 20 por dia · limite do número: 150 por dia.",
+      "recomendado": "Recomendado: deixe o ritmo em branco. O número é novo e o aquecimento já limita a 20 por dia (sobe para 50 em 2 dias). Motivo: número novo que dispara muito para quem nunca falou com você é o jeito mais rápido de ser banido, e número banido não volta."
+    },
+    "avisoDoTeto": "O limite do número é 150 por dia: um Máximo por dia maior que isso não faz a campanha mandar mais.",
+    "conferencias": [
+      "ok: Número escolhido.",
+      "ok: 312 pessoas entram na lista.",
+      "ok: Mensagem pronta.",
+      "info: Número de QR code: ao iniciar, você vai precisar aceitar o aviso de risco de banimento."
+    ],
+    "errosDeConsole": []
+  },
+  "celular-claro-oficial": {
+    "temaAplicado": "light",
+    "vazio": {
+      "quem": "Quem recebeEscolha o público",
+      "onde": "Por ondeEscolha o número",
+      "vai": "3 pedem atenção"
+    },
+    "sobraHorizontal": 0,
+    "preenchido": {
+      "quem": "Quem recebe312 pessoas18 ficam de fora",
+      "onde": "Por ondeLoja (oficial)API Oficial · modelo aprovado",
+      "tempo": "Quanto tempoNo mesmo diaDentro do horário de envio · o limite da Meta pode estender",
+      "custo": "Quanto custaR$ 100,37Sem teto de gasto",
+      "vai": "Tudo certo"
+    },
+    "alturaDaFaixa": 236,
+    "faixaAoRolar": "rola junto (celular)",
+    "guiaDoRitmo": {
+      "numeroFaz": "Sem mexer em nada, o número já faz isto: horário de envio 7h–22h · domingo liberado.",
+      "recomendado": "Recomendado: defina um teto de gasto, logo abaixo. Na API Oficial a Meta cobra por mensagem, e o teto pausa a campanha sozinho ao chegar nele, em vez de você descobrir o valor na fatura."
+    },
+    "conferencias": [
+      "ok: Número escolhido.",
+      "ok: 312 pessoas entram na lista.",
+      "ok: Mensagem pronta.",
+      "info: Sem teto de gasto: a campanha não pausa por custo."
+    ],
+    "errosDeConsole": []
+  },
+  "celular-escuro-qr-novo": {
+    "temaAplicado": "dark",
+    "vazio": {
+      "quem": "Quem recebeEscolha o público",
+      "onde": "Por ondeEscolha o número",
+      "vai": "3 pedem atenção"
+    },
+    "sobraHorizontal": 0,
+    "preenchido": {
+      "quem": "Quem recebe312 pessoas18 ficam de fora",
+      "onde": "Por ondeLojaQR code · texto livre",
+      "tempo": "Quanto tempo7 diasAté 20 por dia · limitado pelo aquecimento do número",
+      "custo": "Quanto custaSem tarifa da MetaNúmero de QR code não paga por mensagem",
+      "vai": "Tudo certo"
+    },
+    "alturaDaFaixa": 220,
+    "faixaAoRolar": "rola junto (celular)",
+    "guiaDoRitmo": {
+      "numeroFaz": "Sem mexer em nada, o número já faz isto: intervalo mínimo entre mensagens 1,2 s · horário de envio 7h–22h · domingo liberado · aquecimento hoje: 20 por dia · limite do número: 150 por dia.",
+      "recomendado": "Recomendado: deixe o ritmo em branco. O número é novo e o aquecimento já limita a 20 por dia (sobe para 50 em 2 dias). Motivo: número novo que dispara muito para quem nunca falou com você é o jeito mais rápido de ser banido, e número banido não volta."
+    },
+    "avisoDoTeto": "O limite do número é 150 por dia: um Máximo por dia maior que isso não faz a campanha mandar mais.",
+    "conferencias": [
+      "ok: Número escolhido.",
+      "ok: 312 pessoas entram na lista.",
+      "ok: Mensagem pronta.",
+      "info: Número de QR code: ao iniciar, você vai precisar aceitar o aviso de risco de banimento."
+    ],
+    "errosDeConsole": []
+  }
+}
