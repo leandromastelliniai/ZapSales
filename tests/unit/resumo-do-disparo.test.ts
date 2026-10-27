@@ -253,6 +253,7 @@ describe("avisosDeRitmo", () => {
 
 describe("prontidaoDoDisparo", () => {
   const PRONTA: EntradaDaProntidao = {
+    temNome: true,
     temNumero: true,
     temCriterio: true,
     elegiveis: 312,
@@ -276,16 +277,23 @@ describe("prontidaoDoDisparo", () => {
   it("formulário vazio: diz POR QUE o salvar está cinza", () => {
     const c = prontidaoDoDisparo({
       ...PRONTA,
+      temNome: false,
       temNumero: false,
       temCriterio: false,
       elegiveis: null,
       mensagemCompleta: false,
     });
     expect(c.filter((x) => x.estado === "atencao").map((x) => `${x.id}:${x.motivo}`)).toEqual([
+      "nome:falta_nome",
       "numero:falta_escolher",
       "publico:sem_criterio",
       "mensagem:texto_vazio",
     ]);
+  });
+
+  it("só falta o nome: a conferência diz isso e não 'tudo certo' com o Salvar cinza", () => {
+    const c = prontidaoDoDisparo({ ...PRONTA, temNome: false });
+    expect(c.filter((x) => x.estado === "atencao").map((x) => `${x.id}:${x.motivo}`)).toEqual(["nome:falta_nome"]);
   });
 
   it("critério sem contagem ainda é informação, não alarme", () => {

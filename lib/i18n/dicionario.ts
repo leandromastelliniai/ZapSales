@@ -15431,6 +15431,8 @@ export const DICIONARIO: Traducoes = {
   "limitado pelo aquecimento do número": { es: "limitado por el calentamiento del número" },
   "limitado pelo intervalo entre mensagens": { es: "limitado por el intervalo entre mensajes" },
   "Número escolhido.": { es: "Número elegido." },
+  "Campanha com nome.": { es: "Campaña con nombre." },
+  "Dê um nome à campanha.": { es: "Ponle un nombre a la campaña." },
   "Escolha o número que vai enviar.": { es: "Elige el número que enviará." },
   "Escolha pelo menos um critério de público ou suba uma lista de contatos.": { es: "Elige al menos un criterio de público o sube una lista de contactos." },
   "Ainda não sei quantas pessoas entram.": { es: "Aún no sé cuántas personas entran." },

@@ -224,9 +224,30 @@ describe("Nova campanha", () => {
     await montar();
     expect(screen.getByTestId("resumo-disparo-quem")).toHaveTextContent("Escolha o público");
     expect(screen.getByTestId("resumo-disparo-onde")).toHaveTextContent("Escolha o número");
-    expect(screen.getByTestId("vai-disparar-estado")).toHaveTextContent("3 pedem atenção");
+    expect(screen.getByTestId("vai-disparar-estado")).toHaveTextContent("4 pedem atenção");
     act(() => void vi.advanceTimersByTime(2_000));
     expect(chamadasDaPrevia).toHaveLength(0);
+  });
+
+  it("só falta o nome: Vai disparar? diz isso, em vez de 'tudo certo' com o Salvar cinza", async () => {
+    await montar();
+    fireEvent.change(screen.getByLabelText("Enviar pelo número"), { target: { value: "c1" } });
+    fireEvent.change(screen.getByLabelText("Com alguma destas etiquetas"), { target: { value: "vip" } });
+    fireEvent.change(screen.getByLabelText("Texto da mensagem"), { target: { value: "Oi!" } });
+    act(() => void vi.advanceTimersByTime(700));
+    expect(screen.getByTestId("vai-disparar-estado")).toHaveTextContent("1 pede atenção");
+    fireEvent.click(screen.getByTestId("vai-disparar-botao"));
+    expect(screen.getByTestId("conferencia-disparo-nome")).toHaveTextContent("Dê um nome à campanha.");
+    expect(screen.getByRole("button", { name: "Salvar rascunho" })).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Nome da campanha"), { target: { value: "Teste VIPs" } });
+    expect(screen.getByTestId("vai-disparar-estado")).toHaveAttribute("data-estado", "ok");
+    expect(screen.getByRole("button", { name: "Salvar rascunho" })).toBeEnabled();
+  });
+
+  it("a faixa rola junto com a página: no casco real um sticky nunca gruda (medido em produção)", async () => {
+    await montar();
+    expect(screen.getByTestId("resumo-do-disparo").className).not.toMatch(/sticky/);
   });
 
   it("mexer no público conta sozinho, uma vez, depois de uma pausa na digitação", async () => {
