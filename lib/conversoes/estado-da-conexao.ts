@@ -78,10 +78,13 @@ export async function lerEstadoDaConexao(
  * ido e não foi. Sem esse filtro na origem, a tela mostraria toda venda orgânica
  * como pendência e ninguém leria a lista duas vezes.
  */
+/** Quantas pendências a tela lista. A faixa do topo usa o mesmo número para dizer "ou mais". */
+export const LIMITE_DAS_PENDENCIAS = 20;
+
 export async function lerPendencias(
   admin: SupabaseClient,
   organizationId: string,
-  limite = 20,
+  limite = LIMITE_DAS_PENDENCIAS,
 ): Promise<PendenciaDeEnvio[]> {
   const { data } = await admin
     .from("ad_conversion_dispatches")

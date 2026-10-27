@@ -1,0 +1,184 @@
+{
+  "desktop-claro-nada": {
+    "temaAplicado": "light",
+    "faixa": {
+      "meta": "Meta AdsNão conectadaOpcional: só para quem anuncia",
+      "google": "Google AdsIndisponívelFalta configurar na instalação",
+      "enviadas": "Enviadas0aceitas pela plataforma",
+      "pendentes": "Não reportadas0Nenhuma pendência",
+      "estado": "Tudo certo"
+    },
+    "recomendacao": "Recomendado: conectar a plataforma em que você anuncia. Motivo: é a volta da venda para o anúncio que ensina a plataforma a procurar mais gente parecida com quem comprou.",
+    "titulos": [
+      "Mandar as vendas de volta",
+      "Conferir o que não foi enviado",
+      "Saber de onde veio o cliente"
+    ],
+    "formularioDaMeta": "Meta AdsDevolve à Meta as vendas que vieram de anúncio. Você precisa de dois dados que ficam no gerenciador de anúncios dela.",
+    "sobraHorizontal": 0,
+    "alturaDaPagina": 1659,
+    "conferencias": [
+      "info: A Meta não está conectada. É opcional: serve para quem paga anúncio e quer devolver as vendas a ele.",
+      "info: O Google Ads ainda não está disponível nesta instalação: quem instalou o sistema precisa configurar as credenciais dele.",
+      "info: Sem plataforma conectada não há o que reportar.",
+      "info: A captura de origem do site está desligada. É opcional: sem ela, quem chega pelo site entra sem origem."
+    ],
+    "errosDeConsole": []
+  },
+  "desktop-claro-teste": {
+    "temaAplicado": "light",
+    "faixa": {
+      "meta": "Meta AdsEm testeVendas marcadas como teste",
+      "google": "Google AdsNão conectadaOpcional: só para quem anuncia",
+      "enviadas": "Enviadas42aceitas pela plataforma",
+      "pendentes": "Não reportadas3vendas que o anúncio ainda não recebeu",
+      "estado": "2 pedem atenção"
+    },
+    "recomendacao": "Recomendado: apagar o código de teste da Meta quando terminar de conferir. Motivo: enquanto ele estiver preenchido, as vendas vão marcadas como teste e não contam para a otimização.",
+    "titulos": [
+      "Mandar as vendas de volta",
+      "Conferir o que não foi enviado",
+      "Saber de onde veio o cliente"
+    ],
+    "formularioDaMeta": "Meta AdsDevolve à Meta as vendas que vieram de anúncio. Você precisa de dois dados que ficam no gerenciador de anúncios dela.",
+    "sobraHorizontal": 0,
+    "alturaDaPagina": 1659,
+    "conferencias": [
+      "atencao: A Meta está em modo de teste: as vendas vão marcadas como teste e não contam para a otimização. Apague o código de teste quando terminar de conferir.",
+      "info: O Google Ads não está conectado. É opcional: serve para quem paga anúncio no Google.",
+      "atencao: 3 vendas de anúncio não foram reportadas: confira a lista logo abaixo e reprocesse depois de corrigir.",
+      "info: A captura de origem do site está desligada. É opcional: sem ela, quem chega pelo site entra sem origem."
+    ],
+    "errosDeConsole": []
+  },
+  "desktop-claro-pronto": {
+    "temaAplicado": "light",
+    "faixa": {
+      "meta": "Meta AdsEnviandoAs vendas voltam para o anúncio",
+      "google": "Google AdsNão conectadaOpcional: só para quem anuncia",
+      "enviadas": "Enviadas42aceitas pela plataforma",
+      "pendentes": "Não reportadas0Nenhuma pendência",
+      "estado": "Tudo certo"
+    },
+    "recomendacao": null,
+    "titulos": [
+      "Mandar as vendas de volta",
+      "Conferir o que não foi enviado",
+      "Saber de onde veio o cliente"
+    ],
+    "formularioDaMeta": "Meta AdsDevolve à Meta as vendas que vieram de anúncio. Você precisa de dois dados que ficam no gerenciador de anúncios dela.",
+    "sobraHorizontal": 0,
+    "alturaDaPagina": 1593,
+    "conferencias": [
+      "ok: A Meta está recebendo as vendas que vieram de anúncio.",
+      "info: O Google Ads não está conectado. É opcional: serve para quem paga anúncio no Google.",
+      "ok: Nenhuma venda de anúncio ficou sem ser reportada.",
+      "ok: A captura de origem do site está ligada: quem chega pelo site entra no CRM com a origem."
+    ],
+    "errosDeConsole": []
+  },
+  "desktop-escuro-teste": {
+    "temaAplicado": "dark",
+    "faixa": {
+      "meta": "Meta AdsEm testeVendas marcadas como teste",
+      "google": "Google AdsNão conectadaOpcional: só para quem anuncia",
+      "enviadas": "Enviadas42aceitas pela plataforma",
+      "pendentes": "Não reportadas3vendas que o anúncio ainda não recebeu",
+      "estado": "2 pedem atenção"
+    },
+    "recomendacao": "Recomendado: apagar o código de teste da Meta quando terminar de conferir. Motivo: enquanto ele estiver preenchido, as vendas vão marcadas como teste e não contam para a otimização.",
+    "titulos": [
+      "Mandar as vendas de volta",
+      "Conferir o que não foi enviado",
+      "Saber de onde veio o cliente"
+    ],
+    "formularioDaMeta": "Meta AdsDevolve à Meta as vendas que vieram de anúncio. Você precisa de dois dados que ficam no gerenciador de anúncios dela.",
+    "sobraHorizontal": 0,
+    "alturaDaPagina": 1659,
+    "conferencias": [
+      "atencao: A Meta está em modo de teste: as vendas vão marcadas como teste e não contam para a otimização. Apague o código de teste quando terminar de conferir.",
+      "info: O Google Ads não está conectado. É opcional: serve para quem paga anúncio no Google.",
+      "atencao: 3 vendas de anúncio não foram reportadas: confira a lista logo abaixo e reprocesse depois de corrigir.",
+      "info: A captura de origem do site está desligada. É opcional: sem ela, quem chega pelo site entra sem origem."
+    ],
+    "errosDeConsole": []
+  },
+  "celular-claro-nada": {
+    "temaAplicado": "light",
+    "faixa": {
+      "meta": "Meta AdsNão conectadaOpcional: só para quem anuncia",
+      "google": "Google AdsIndisponívelFalta configurar na instalação",
+      "enviadas": "Enviadas0aceitas pela plataforma",
+      "pendentes": "Não reportadas0Nenhuma pendência",
+      "estado": "Tudo certo"
+    },
+    "recomendacao": "Recomendado: conectar a plataforma em que você anuncia. Motivo: é a volta da venda para o anúncio que ensina a plataforma a procurar mais gente parecida com quem comprou.",
+    "titulos": [
+      "Mandar as vendas de volta",
+      "Conferir o que não foi enviado",
+      "Saber de onde veio o cliente"
+    ],
+    "formularioDaMeta": "Meta AdsDevolve à Meta as vendas que vieram de anúncio. Você precisa de dois dados que ficam no gerenciador de anúncios dela.",
+    "sobraHorizontal": 0,
+    "alturaDaPagina": 2447,
+    "conferencias": [
+      "info: A Meta não está conectada. É opcional: serve para quem paga anúncio e quer devolver as vendas a ele.",
+      "info: O Google Ads ainda não está disponível nesta instalação: quem instalou o sistema precisa configurar as credenciais dele.",
+      "info: Sem plataforma conectada não há o que reportar.",
+      "info: A captura de origem do site está desligada. É opcional: sem ela, quem chega pelo site entra sem origem."
+    ],
+    "errosDeConsole": []
+  },
+  "celular-claro-teste": {
+    "temaAplicado": "light",
+    "faixa": {
+      "meta": "Meta AdsEm testeVendas marcadas como teste",
+      "google": "Google AdsNão conectadaOpcional: só para quem anuncia",
+      "enviadas": "Enviadas42aceitas pela plataforma",
+      "pendentes": "Não reportadas3vendas que o anúncio ainda não recebeu",
+      "estado": "2 pedem atenção"
+    },
+    "recomendacao": "Recomendado: apagar o código de teste da Meta quando terminar de conferir. Motivo: enquanto ele estiver preenchido, as vendas vão marcadas como teste e não contam para a otimização.",
+    "titulos": [
+      "Mandar as vendas de volta",
+      "Conferir o que não foi enviado",
+      "Saber de onde veio o cliente"
+    ],
+    "formularioDaMeta": "Meta AdsDevolve à Meta as vendas que vieram de anúncio. Você precisa de dois dados que ficam no gerenciador de anúncios dela.",
+    "sobraHorizontal": 0,
+    "alturaDaPagina": 2423,
+    "conferencias": [
+      "atencao: A Meta está em modo de teste: as vendas vão marcadas como teste e não contam para a otimização. Apague o código de teste quando terminar de conferir.",
+      "info: O Google Ads não está conectado. É opcional: serve para quem paga anúncio no Google.",
+      "atencao: 3 vendas de anúncio não foram reportadas: confira a lista logo abaixo e reprocesse depois de corrigir.",
+      "info: A captura de origem do site está desligada. É opcional: sem ela, quem chega pelo site entra sem origem."
+    ],
+    "errosDeConsole": []
+  },
+  "celular-escuro-nada": {
+    "temaAplicado": "dark",
+    "faixa": {
+      "meta": "Meta AdsNão conectadaOpcional: só para quem anuncia",
+      "google": "Google AdsIndisponívelFalta configurar na instalação",
+      "enviadas": "Enviadas0aceitas pela plataforma",
+      "pendentes": "Não reportadas0Nenhuma pendência",
+      "estado": "Tudo certo"
+    },
+    "recomendacao": "Recomendado: conectar a plataforma em que você anuncia. Motivo: é a volta da venda para o anúncio que ensina a plataforma a procurar mais gente parecida com quem comprou.",
+    "titulos": [
+      "Mandar as vendas de volta",
+      "Conferir o que não foi enviado",
+      "Saber de onde veio o cliente"
+    ],
+    "formularioDaMeta": "Meta AdsDevolve à Meta as vendas que vieram de anúncio. Você precisa de dois dados que ficam no gerenciador de anúncios dela.",
+    "sobraHorizontal": 0,
+    "alturaDaPagina": 2447,
+    "conferencias": [
+      "info: A Meta não está conectada. É opcional: serve para quem paga anúncio e quer devolver as vendas a ele.",
+      "info: O Google Ads ainda não está disponível nesta instalação: quem instalou o sistema precisa configurar as credenciais dele.",
+      "info: Sem plataforma conectada não há o que reportar.",
+      "info: A captura de origem do site está desligada. É opcional: sem ela, quem chega pelo site entra sem origem."
+    ],
+    "errosDeConsole": []
+  }
+}

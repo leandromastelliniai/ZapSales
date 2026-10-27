@@ -100,6 +100,13 @@ export function FormularioDeConversoes({
   return (
     <Card className="p-6">
       <form onSubmit={salvar} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-1">
+          <h3 className="font-medium">Meta Ads</h3>
+          <p className="text-sm text-muted-foreground">
+            {t("Devolve à Meta as vendas que vieram de anúncio. Você precisa de dois dados que ficam no gerenciador de anúncios dela.")}
+          </p>
+        </div>
+
         <div className="flex flex-col gap-2">
           <Label htmlFor="dataset_id">{t("Identificador do destino de conversões")}</Label>
           <Input
