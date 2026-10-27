@@ -271,7 +271,14 @@ export default async function ConversoesPage({
 
       <ResumoDasConversoesFaixa resumo={resumo} recomendacao={recomendarParaConversoes(resumo, capturaLigada)} />
 
-      <nav className="flex gap-1 overflow-x-auto border-b" aria-label={t("Seções de conversões")}>
+      {/* `overflow-x-auto` faz o navegador tratar o eixo vertical como `auto` também, e a aba ativa
+            (`-mb-px`) vaza 1 px para baixo — o que mostrava uma barra de rolagem vertical minúscula
+            no canto da barra (medido em produção: scrollHeight 38 contra clientHeight 37). O
+            `overflow-y-hidden` tira a barra, e o `pb-px` dá a esse 1 px um lugar para cair sem corte. */}
+      <nav
+        className="flex gap-1 overflow-x-auto overflow-y-hidden border-b pb-px"
+        aria-label={t("Seções de conversões")}
+      >
         {(
           [
             ["configuracao", t("Configuração")],
