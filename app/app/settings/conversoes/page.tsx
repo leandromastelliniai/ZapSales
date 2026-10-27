@@ -1,6 +1,12 @@
 import { CabecalhoDePagina } from "@/components/shell/CabecalhoDePagina";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { LinksRastreaveis } from "./_linksRastreaveis";
+import { ResumoDasConversoesFaixa } from "@/components/conversoes/ResumoDasConversoes";
+import { TituloDeSecao } from "@/components/guia/TituloDeSecao";
+import {
+  recomendarParaConversoes,
+  resumoDasConversoes,
+} from "@/lib/conversoes/resumo-das-conversoes";
 import { listarLinks, metricasLinks } from "@/lib/plataformas-de-anuncio/rastreio/links";
 /**
  * Configurações → Conversões. Onde o dono do tráfego conecta a conta de anúncios
@@ -40,6 +46,7 @@ import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK } from "@/lib/auth/types";
 import {
   contaEnviadas,
+  LIMITE_DAS_PENDENCIAS,
   lerEstadoDaConexao,
   lerPendencias,
   MOTIVO_LEGIVEL,
@@ -220,6 +227,25 @@ export default async function ConversoesPage({
   const idioma = user.idioma;
   const t = (texto: string) => traduzir(texto, idioma);
 
+  // O retrato do topo: lê só o que esta página já carregou para si, e nunca grava nada.
+  const capturaLigada = Boolean(estadoDaCaptura?.habilitada || capturaGoogle?.habilitada);
+  const resumo = resumoDasConversoes({
+    meta: {
+      conectada: estado.conectada,
+      habilitada: estado.habilitada,
+      emTeste: Boolean(estado.testEventCode),
+    },
+    google: {
+      instalacaoConfigurada: googleAdsEstaConfigurado(estadoGoogle.api),
+      conectado: estadoGoogle.temRefreshToken && Boolean(estadoGoogle.customerId),
+      habilitado: estadoGoogle.habilitada,
+    },
+    enviadas,
+    pendentes: pendencias.length,
+    pendentesAlemDoTeto: pendencias.length >= LIMITE_DAS_PENDENCIAS,
+    capturaLigada,
+  });
+
   /**
    * O exemplo do link é GERADO aqui, e não escrito à mão.
    *
@@ -243,7 +269,9 @@ export default async function ConversoesPage({
           )}
       />
 
-      <nav className="flex gap-1 border-b" aria-label={t("Seções de conversões")}>
+      <ResumoDasConversoesFaixa resumo={resumo} recomendacao={recomendarParaConversoes(resumo, capturaLigada)} />
+
+      <nav className="flex gap-1 overflow-x-auto border-b" aria-label={t("Seções de conversões")}>
         {(
           [
             ["configuracao", t("Configuração")],
@@ -258,8 +286,8 @@ export default async function ConversoesPage({
             aria-current={aba === chave ? "page" : undefined}
             className={
               aba === chave
-                ? "-mb-px border-b-2 border-primary px-3 py-2 text-sm font-medium"
-                : "px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                ? "-mb-px shrink-0 whitespace-nowrap border-b-2 border-primary px-3 py-2 text-sm font-medium"
+                : "shrink-0 whitespace-nowrap px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
             }
           >
             {rotulo}
@@ -313,22 +341,12 @@ export default async function ConversoesPage({
             </div>
           )}
 
-          {estado.conectada && !estado.habilitada && (
-            <div className="rounded-md border border-warning/40 bg-warning-bg p-4 text-sm">
-              {t(
-                "O envio está pausado. As vendas continuam sendo registradas aqui, mas não vão para a plataforma enquanto isto estiver desligado.",
-              )}
-            </div>
-          )}
-
-          {estado.testEventCode && (
-            <div className="rounded-md border border-info/40 bg-info-bg p-4 text-sm">
-              {t(
-                "Modo de teste ligado: as vendas vão marcadas como teste e não contam para a otimização. Apague o código de teste quando terminar de conferir.",
-              )}
-            </div>
-          )}
-
+          <TituloDeSecao
+            titulo={t("Mandar as vendas de volta")}
+            descricao={t(
+              "Conecte a plataforma em que você anuncia: cada venda fechada volta para o anúncio que trouxe o cliente.",
+            )}
+          />
           <FormularioDeConversoes estado={estado} idioma={idioma} />
           {estado.conectada && (
             <IdentidadeDaConversao
@@ -361,16 +379,13 @@ export default async function ConversoesPage({
             />
           )}
 
-          {slug && (
-            <FormularioDeCapturaDeUtm
-              plataforma="google"
-              estado={capturaGoogle}
-              idioma={idioma}
-              slug={slug}
-              numerosConectados={numerosConectados}
-            />
-          )}
-
+          <TituloDeSecao
+            className="mt-4"
+            titulo={t("Conferir o que não foi enviado")}
+            descricao={t(
+              "As vendas de anúncio que a plataforma não recebeu, com o motivo e o botão para tentar de novo.",
+            )}
+          />
           <p className="text-sm text-muted-foreground">
             {t(
               "Aceite da API não confirma atribuição ao anúncio. Confira os diagnósticos no gerenciador da plataforma. Depois de corrigir uma pendência, use o botão de reprocessamento.",
@@ -459,6 +474,24 @@ export default async function ConversoesPage({
               </div>
             )}
           </section>
+
+          <TituloDeSecao
+            className="mt-4"
+            titulo={t("Saber de onde veio o cliente")}
+            descricao={t(
+              "Quem chega pelo site entra no CRM já com a origem da campanha. O endereço de captura é o caminho mais simples; o script e o código no link são as alternativas.",
+            )}
+          />
+
+          {slug && (
+            <FormularioDeCapturaDeUtm
+              plataforma="google"
+              estado={capturaGoogle}
+              idioma={idioma}
+              slug={slug}
+              numerosConectados={numerosConectados}
+            />
+          )}
 
           {/*
         Condição 3 da decisão da #924: "quem opera encontra a explicação de como
