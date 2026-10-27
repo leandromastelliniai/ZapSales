@@ -17,7 +17,9 @@ import {
   type EtapaDoFunil,
   type MapaDoAgente,
 } from "@/hooks/pipelines/useAgentMapping";
+import { FaixaRecomendada } from "@/components/guia/FaixaRecomendada";
 import { LEAD_STAGES, type LeadStage } from "@/lib/agent-engine/agent/lead-state";
+import { sugerirMapeamento } from "@/lib/funil/resumo-do-funil";
 import { ApiError } from "@/lib/api/types";
 import { ROTULO_DO_PASSO } from "@/lib/leads/agent-mapping";
 import { ArrowRight, Warning } from "@/lib/ui/icons";
@@ -229,6 +231,18 @@ export function AgentMappingSection({
     );
   }
 
+  // A sugestão só PREENCHE o rascunho — como se a pessoa tivesse escolhido —, e quem grava continua
+  // sendo «Salvar estas escolhas». Nunca sobrescreve passo que já tem etapa.
+  const sugestao = sugerirMapeamento(etapas, rascunho);
+  function usarSugestao() {
+    setErro(null);
+    setRascunho((atual) =>
+      atual
+        ? { ...atual, ...Object.fromEntries(sugestao.map((s) => [s.passo, s.etapa.id])) }
+        : atual,
+    );
+  }
+
   function enviar() {
     if (!rascunho) return;
     setErro(null);
@@ -261,6 +275,31 @@ export function AgentMappingSection({
           )}
         </p>
       </div>
+
+      {sugestao.length > 0 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center" data-testid="sugestao-do-mapeamento">
+          <FaixaRecomendada testId="recomendacao-do-mapeamento" className="min-w-0 sm:flex-1">
+            {t("levar")}{" "}
+            {sugestao
+              .map((s) => `«${t(ROTULO_DO_PASSO[s.passo])}» ${t("para")} «${s.etapa.name}»`)
+              .join(` ${t("e")} `)}
+            . <strong className="font-semibold">{t("Motivo:")}</strong>{" "}
+            {t(
+              "sem isso, o card de quem fecha ou desiste fica parado no meio do funil, e o quadro mostra como aberto um negócio que já terminou.",
+            )}
+          </FaixaRecomendada>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="self-start sm:self-auto"
+            onClick={usarSugestao}
+            data-testid="usar-sugestao-do-mapeamento"
+          >
+            {t("Usar a sugestão")}
+          </Button>
+        </div>
+      )}
 
       <ul className="flex flex-col divide-y divide-border rounded-md border border-border">
         {LEAD_STAGES.map((passo) => {

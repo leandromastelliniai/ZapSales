@@ -1,0 +1,293 @@
+{
+  "desktop-claro-pedidos": {
+    "temaAplicado": "light",
+    "faixa": {
+      "etapas": "Etapas do quadro8 etapas6 abertas · 1 de fechamento · 1 de perda",
+      "fechamento": "O cliente fecha emPago",
+      "perda": "O cliente desiste emCancelado",
+      "agente": "O agente move o card0 de 7 passosHoje o card fica onde entrou",
+      "vocabulario": "Você chama de:Contato Cliente · Negócio Pedido · Fecha Pago · Perde Cancelado",
+      "estado": "Tudo certo"
+    },
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 147,
+    "conferencias": [
+      "ok: O funil tem etapas abertas para receber cliente.",
+      "ok: O cliente fecha em «Pago».",
+      "ok: O cliente desiste em «Cancelado».",
+      "info: O agente não move o card em nenhum passo: ele atende, mas o card fica onde entrou. Se for de propósito, tudo bem."
+    ],
+    "sugestao": "Recomendado: levar «Ganho» para «Pago» e «Perdido» para «Cancelado». Motivo: sem isso, o card de quem fecha ou desiste fica parado no meio do funil, e o quadro mostra como aberto um negócio que já terminou.",
+    "depoisDeUsar": {
+      "ganho": "Pago",
+      "perdido": "Cancelado",
+      "meio": "Não mover o card",
+      "salvarLiberado": true,
+      "sugestaoSumiu": true
+    },
+    "vocabulario": {
+      "rotulos": [
+        "Como você chama o contato",
+        "Como você chama o negócio",
+        "Quando fecha",
+        "Quando perde"
+      ],
+      "valores": [
+        "Cliente",
+        "Pedido",
+        "Pago",
+        "Cancelado"
+      ],
+      "depoisDoExemplo": [
+        "Paciente",
+        "Tratamento",
+        "Fechado",
+        "Perdido"
+      ]
+    },
+    "errosDeConsole": []
+  },
+  "desktop-claro-incompleto": {
+    "temaAplicado": "light",
+    "faixa": {
+      "etapas": "Etapas do quadro2 etapas2 abertas · 0 de fechamento · 0 de perda",
+      "fechamento": "O cliente fecha emNenhuma",
+      "perda": "O cliente desiste emNenhuma",
+      "agente": "O agente move o card0 de 7 passosHoje o card fica onde entrou",
+      "vocabulario": null,
+      "estado": "2 pedem atenção"
+    },
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 114,
+    "conferencias": [
+      "ok: O funil tem etapas abertas para receber cliente.",
+      "atencao: Nenhuma etapa marca o fechamento: o card de quem fecha nunca chega ao fim do funil.",
+      "atencao: Nenhuma etapa marca a perda: não há para onde levar quem desiste.",
+      "info: O agente não move o card em nenhum passo: ele atende, mas o card fica onde entrou. Se for de propósito, tudo bem."
+    ],
+    "sugestao": null,
+    "vocabulario": {
+      "rotulos": [
+        "Como você chama o contato",
+        "Como você chama o negócio",
+        "Quando fecha",
+        "Quando perde"
+      ],
+      "valores": [
+        "Lead",
+        "Deal",
+        "Ganho",
+        "Perdido"
+      ],
+      "depoisDoExemplo": [
+        "Paciente",
+        "Tratamento",
+        "Fechado",
+        "Perdido"
+      ]
+    },
+    "errosDeConsole": []
+  },
+  "desktop-claro-pronto": {
+    "temaAplicado": "light",
+    "faixa": {
+      "etapas": "Etapas do quadro8 etapas6 abertas · 1 de fechamento · 1 de perda",
+      "fechamento": "O cliente fecha emPago",
+      "perda": "O cliente desiste emCancelado",
+      "agente": "O agente move o card4 de 7 passos",
+      "vocabulario": "Você chama de:Contato Cliente · Negócio Pedido · Fecha Pago · Perde Cancelado",
+      "estado": "Tudo certo"
+    },
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 147,
+    "conferencias": [
+      "ok: O funil tem etapas abertas para receber cliente.",
+      "ok: O cliente fecha em «Pago».",
+      "ok: O cliente desiste em «Cancelado».",
+      "ok: O agente já move o card em alguns passos do atendimento."
+    ],
+    "sugestao": null,
+    "vocabulario": {
+      "rotulos": [
+        "Como você chama o contato",
+        "Como você chama o negócio",
+        "Quando fecha",
+        "Quando perde"
+      ],
+      "valores": [
+        "Cliente",
+        "Pedido",
+        "Pago",
+        "Cancelado"
+      ]
+    },
+    "errosDeConsole": []
+  },
+  "desktop-escuro-pedidos": {
+    "temaAplicado": "dark",
+    "faixa": {
+      "etapas": "Etapas do quadro8 etapas6 abertas · 1 de fechamento · 1 de perda",
+      "fechamento": "O cliente fecha emPago",
+      "perda": "O cliente desiste emCancelado",
+      "agente": "O agente move o card0 de 7 passosHoje o card fica onde entrou",
+      "vocabulario": "Você chama de:Contato Cliente · Negócio Pedido · Fecha Pago · Perde Cancelado",
+      "estado": "Tudo certo"
+    },
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 147,
+    "conferencias": [
+      "ok: O funil tem etapas abertas para receber cliente.",
+      "ok: O cliente fecha em «Pago».",
+      "ok: O cliente desiste em «Cancelado».",
+      "info: O agente não move o card em nenhum passo: ele atende, mas o card fica onde entrou. Se for de propósito, tudo bem."
+    ],
+    "sugestao": "Recomendado: levar «Ganho» para «Pago» e «Perdido» para «Cancelado». Motivo: sem isso, o card de quem fecha ou desiste fica parado no meio do funil, e o quadro mostra como aberto um negócio que já terminou.",
+    "depoisDeUsar": {
+      "ganho": "Pago",
+      "perdido": "Cancelado",
+      "meio": "Não mover o card",
+      "salvarLiberado": true,
+      "sugestaoSumiu": true
+    },
+    "vocabulario": {
+      "rotulos": [
+        "Como você chama o contato",
+        "Como você chama o negócio",
+        "Quando fecha",
+        "Quando perde"
+      ],
+      "valores": [
+        "Cliente",
+        "Pedido",
+        "Pago",
+        "Cancelado"
+      ]
+    },
+    "errosDeConsole": []
+  },
+  "celular-claro-pedidos": {
+    "temaAplicado": "light",
+    "faixa": {
+      "etapas": "Etapas do quadro8 etapas6 abertas · 1 de fechamento · 1 de perda",
+      "fechamento": "O cliente fecha emPago",
+      "perda": "O cliente desiste emCancelado",
+      "agente": "O agente move o card0 de 7 passosHoje o card fica onde entrou",
+      "vocabulario": "Você chama de:Contato Cliente · Negócio Pedido · Fecha Pago · Perde Cancelado",
+      "estado": "Tudo certo"
+    },
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 305,
+    "conferencias": [
+      "ok: O funil tem etapas abertas para receber cliente.",
+      "ok: O cliente fecha em «Pago».",
+      "ok: O cliente desiste em «Cancelado».",
+      "info: O agente não move o card em nenhum passo: ele atende, mas o card fica onde entrou. Se for de propósito, tudo bem."
+    ],
+    "sugestao": "Recomendado: levar «Ganho» para «Pago» e «Perdido» para «Cancelado». Motivo: sem isso, o card de quem fecha ou desiste fica parado no meio do funil, e o quadro mostra como aberto um negócio que já terminou.",
+    "depoisDeUsar": {
+      "ganho": "Pago",
+      "perdido": "Cancelado",
+      "meio": "Não mover o card",
+      "salvarLiberado": true,
+      "sugestaoSumiu": true
+    },
+    "vocabulario": {
+      "rotulos": [
+        "Como você chama o contato",
+        "Como você chama o negócio",
+        "Quando fecha",
+        "Quando perde"
+      ],
+      "valores": [
+        "Cliente",
+        "Pedido",
+        "Pago",
+        "Cancelado"
+      ]
+    },
+    "errosDeConsole": []
+  },
+  "celular-claro-incompleto": {
+    "temaAplicado": "light",
+    "faixa": {
+      "etapas": "Etapas do quadro2 etapas2 abertas · 0 de fechamento · 0 de perda",
+      "fechamento": "O cliente fecha emNenhuma",
+      "perda": "O cliente desiste emNenhuma",
+      "agente": "O agente move o card0 de 7 passosHoje o card fica onde entrou",
+      "vocabulario": null,
+      "estado": "2 pedem atenção"
+    },
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 256,
+    "conferencias": [
+      "ok: O funil tem etapas abertas para receber cliente.",
+      "atencao: Nenhuma etapa marca o fechamento: o card de quem fecha nunca chega ao fim do funil.",
+      "atencao: Nenhuma etapa marca a perda: não há para onde levar quem desiste.",
+      "info: O agente não move o card em nenhum passo: ele atende, mas o card fica onde entrou. Se for de propósito, tudo bem."
+    ],
+    "sugestao": null,
+    "vocabulario": {
+      "rotulos": [
+        "Como você chama o contato",
+        "Como você chama o negócio",
+        "Quando fecha",
+        "Quando perde"
+      ],
+      "valores": [
+        "Lead",
+        "Deal",
+        "Ganho",
+        "Perdido"
+      ],
+      "depoisDoExemplo": [
+        "Paciente",
+        "Tratamento",
+        "Fechado",
+        "Perdido"
+      ]
+    },
+    "errosDeConsole": []
+  },
+  "celular-escuro-pedidos": {
+    "temaAplicado": "dark",
+    "faixa": {
+      "etapas": "Etapas do quadro8 etapas6 abertas · 1 de fechamento · 1 de perda",
+      "fechamento": "O cliente fecha emPago",
+      "perda": "O cliente desiste emCancelado",
+      "agente": "O agente move o card0 de 7 passosHoje o card fica onde entrou",
+      "vocabulario": "Você chama de:Contato Cliente · Negócio Pedido · Fecha Pago · Perde Cancelado",
+      "estado": "Tudo certo"
+    },
+    "sobraHorizontal": 0,
+    "alturaDaFaixa": 305,
+    "conferencias": [
+      "ok: O funil tem etapas abertas para receber cliente.",
+      "ok: O cliente fecha em «Pago».",
+      "ok: O cliente desiste em «Cancelado».",
+      "info: O agente não move o card em nenhum passo: ele atende, mas o card fica onde entrou. Se for de propósito, tudo bem."
+    ],
+    "sugestao": "Recomendado: levar «Ganho» para «Pago» e «Perdido» para «Cancelado». Motivo: sem isso, o card de quem fecha ou desiste fica parado no meio do funil, e o quadro mostra como aberto um negócio que já terminou.",
+    "depoisDeUsar": {
+      "ganho": "Pago",
+      "perdido": "Cancelado",
+      "meio": "Não mover o card",
+      "salvarLiberado": true,
+      "sugestaoSumiu": true
+    },
+    "vocabulario": {
+      "rotulos": [
+        "Como você chama o contato",
+        "Como você chama o negócio",
+        "Quando fecha",
+        "Quando perde"
+      ],
+      "valores": [
+        "Cliente",
+        "Pedido",
+        "Pago",
+        "Cancelado"
+      ]
+    },
+    "errosDeConsole": []
+  }
+}

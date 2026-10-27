@@ -6,7 +6,7 @@
 <aside class="nota info"><strong>Onde fica a porta.</strong><p>“Etapas do funil” não está no menu lateral. Abra por <span class="ui">Ver tudo em CRM</span> (seção “Preparar a venda”) ou pela busca <kbd>⌘K</kbd>. Quem não é Gerente é levado à página “sem permissão”.</p></aside>
 
 <h2 id="etapas">As etapas de um funil</h2>
-<p>A tela mostra um cartão por funil (os arquivados não aparecem). Cada cartão tem três blocos: <strong>Etapas deste funil</strong>, <strong>Para onde o card vai em cada passo</strong> e, só para Administrador, <strong>Vocabulário e campos</strong>.</p>
+<p>A tela mostra um cartão por funil (os arquivados não aparecem). No alto de cada cartão, a faixa <strong>Seu funil</strong> resume o quadro — quantas etapas existem e quantas estão abertas, onde o cliente fecha, onde desiste, em quantos dos sete passos o agente move o card e como você chama as coisas — e o <strong>Está tudo certo?</strong> avisa quando falta a etapa de fechamento ou a de perda (o agente sem mover nenhum passo aparece só como informação, porque “não mover” é uma escolha válida). Abaixo da faixa vêm três blocos: <strong>Etapas deste funil</strong>, <strong>Para onde o card vai em cada passo</strong> e, só para Administrador, <strong>Vocabulário e campos</strong>. A faixa só lê o que está gravado: não grava nada.</p>
 <figure class="print">
   <img src="img/etapas-funil.png" alt="Tela Etapas do funil com o funil Pedidos e as primeiras colunas, com nome, chance, ordem, papel, arquivar, janela de esfriando e aviso na Central, numerada de 1 a 10" loading="lazy">
   <figcaption>As etapas do funil “Pedidos”: cada coluna do quadro é uma linha.</figcaption>
@@ -54,6 +54,7 @@
 </ol>
 <ul>
   <li>Deixar um passo em <em>“Não mover o card”</em> é uma escolha válida: o card fica onde está e o agente segue trabalhando.</li>
+  <li><strong>Recomendado:</strong> quando <em>Ganho</em> e <em>Perdido</em> ainda estão em “Não mover o card” e o funil tem a etapa de fechamento e a de perda, a tela recomenda levar um para a etapa de fechamento e o outro para a de perda, com o motivo (sem isso o card de quem fecha ou desiste fica parado no meio do funil). <span class="ui">Usar a sugestão</span> só preenche as escolhas na tela — nada é gravado até <span class="ui">Salvar estas escolhas</span>. A recomendação nunca troca uma escolha que você já fez e não chuta os cinco passos do meio, que dependem do desenho do seu quadro.</li>
   <li>Uma etapa só pode servir a <strong>um</strong> passo: as já usadas somem das outras listas.</li>
   <li><strong>Efeito real:</strong> a partir daqui o agente de IA <strong>passa a mover os cartões sozinho</strong>. O clique não manda mensagem ao cliente por si.</li>
 </ul>
@@ -63,7 +64,7 @@
 <table class="tabela">
   <thead><tr><th>Item</th><th>O que faz</th></tr></thead>
   <tbody>
-    <tr><td><strong>Lead · Deal · Won · Lost</strong></td><td>Quatro campos (os rótulos aparecem em inglês) que definem as palavras do funil: o que é um <em>lead</em>, um <em>negócio</em>, <em>ganho</em> e <em>perdido</em>. Numa loja virtual, por exemplo: Cliente, Pedido, Pago, Cancelado. De 1 a 40 caracteres. Hoje essas palavras só aparecem na barra de seleção em lote do quadro (“1 Cliente selecionado”).</td></tr>
+    <tr><td><strong>Como você chama o contato · Como você chama o negócio · Quando fecha · Quando perde</strong></td><td>Quatro campos, cada um com uma linha dizendo onde a palavra aparece, que definem as palavras do funil: o contato que entra, o negócio que anda pelas etapas, o nome de quando fecha e o de quando perde. Numa loja virtual, por exemplo: Cliente, Pedido, Pago, Cancelado. Os botões de <em>Quer um exemplo?</em> (Loja, Clínica, Serviços) preenchem os quatro campos de uma vez — só o botão <span class="ui">Salvar vocabulário e campos</span> grava. De 1 a 40 caracteres. Hoje essas palavras só aparecem na barra de seleção em lote do quadro (“1 Cliente selecionado”).</td></tr>
     <tr><td><strong>Motivos de perda</strong></td><td>Separados por vírgula (até 50). Cada um pode ter uma categoria (<em>Cliente, Concorrência, Mérito, Nós, Ausência</em> ou <em>Sem categoria</em>), usada no relatório de perdas. Os motivos cadastrados <strong>substituem</strong> a lista padrão na janela “Marcar como perdido”. Um motivo não pode conter vírgula.</td></tr>
     <tr><td><strong>Motivos de ganho</strong></td><td>Sem lista, o motivo de ganho é texto livre; com lista, só o que está nela é aceito. A caixa <em>“Exigir motivo de ganho ao fechar como ganho”</em> torna o motivo obrigatório (o menu do cartão “Marcar como ganho” <em>não pergunta</em> e será recusado).</td></tr>
     <tr><td><strong>Negócio encerrado que volta abre um negócio novo</strong></td><td>Desligado, arrastar um negócio perdido ou ganho para uma etapa aberta <em>reabre o mesmo negócio</em>. Ligado, o encerrado fica como está e o quadro oferece criar uma nova tentativa com o mesmo contato.</td></tr>

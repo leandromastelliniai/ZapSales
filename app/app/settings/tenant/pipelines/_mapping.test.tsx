@@ -324,3 +324,54 @@ describe("AgentMappingSection — o que a tela oferece e envia", () => {
     expect(screen.getByTestId("salvar-mapeamento")).toBeDisabled();
   });
 });
+
+
+describe("AgentMappingSection — a sugestão com o motivo", () => {
+  it("recomenda Ganho → «Pago» e Perdido → «Cancelado», e diz o motivo", async () => {
+    montar();
+    const faixa = await screen.findByTestId("recomendacao-do-mapeamento");
+    expect(faixa).toHaveTextContent("Recomendado:");
+    expect(faixa).toHaveTextContent("levar «Ganho» para «Pago» e «Perdido» para «Cancelado»");
+    expect(faixa).toHaveTextContent("Motivo:");
+  });
+
+  it("«Usar a sugestão» só PREENCHE a tela: nada é gravado até o Salvar", async () => {
+    const user = userEvent.setup();
+    montar();
+    await screen.findByTestId("etapa-won");
+
+    await user.click(screen.getByTestId("usar-sugestao-do-mapeamento"));
+
+    expect(screen.getByTestId("etapa-won")).toHaveTextContent("Pago");
+    expect(screen.getByTestId("etapa-lost")).toHaveTextContent("Cancelado");
+    // Os cinco do meio seguem em «não mover»: a casa não chuta o desenho do quadro.
+    expect(screen.getByTestId("etapa-qualifying")).toHaveTextContent("Não mover o card");
+    expect(apiClient.put).not.toHaveBeenCalled();
+    // Já preenchido, a recomendação some e o Salvar libera.
+    expect(screen.queryByTestId("sugestao-do-mapeamento")).not.toBeInTheDocument();
+    expect(screen.getByTestId("salvar-mapeamento")).toBeEnabled();
+
+    vi.mocked(apiClient.put).mockResolvedValue({ data: estado({ won: "e3", lost: "e4" }) });
+    await user.click(screen.getByTestId("salvar-mapeamento"));
+    await waitFor(() => expect(apiClient.put).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(apiClient.put).mock.calls[0]![1]).toEqual({
+      mapeamento: { ...VAZIO, won: "e3", lost: "e4" },
+    });
+  });
+
+  it("não aparece quando Ganho e Perdido já têm etapa — nunca sobrescreve a escolha do dono", async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: estado({ won: "e3", lost: "e4" }) });
+    montar();
+    await screen.findByTestId("etapa-won");
+    expect(screen.queryByTestId("sugestao-do-mapeamento")).not.toBeInTheDocument();
+  });
+
+  it("não aparece num funil sem etapa de fechamento nem de perda", async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({
+      data: { etapas: ETAPAS.slice(0, 2), mapeamento: VAZIO },
+    });
+    montar();
+    await screen.findByTestId("passo-won");
+    expect(screen.queryByTestId("sugestao-do-mapeamento")).not.toBeInTheDocument();
+  });
+});

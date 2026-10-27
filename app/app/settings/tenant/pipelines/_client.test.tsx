@@ -33,6 +33,7 @@ vi.mock("./_mapping", () => ({
   AgentMappingSection: () => null,
   ancoraDoMapeamento: () => "mapeamento",
 }));
+vi.mock("./_resumo", () => ({ ResumoDoFunil: () => null }));
 
 // Polyfills que o Radix Select exige e o jsdom não tem.
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
@@ -341,5 +342,53 @@ describe("retomada de negócio encerrado (#1538)", () => {
     salvar();
 
     expect(vi.mocked(updatePipelineConfig).mock.calls.at(-1)![1].reabertura).toBe("mesmo_registro");
+  });
+});
+
+
+describe("o vocabulário do funil, em português", () => {
+  it("diz onde cada palavra aparece, em vez de Lead / Deal / Won / Lost", () => {
+    render(<PipelinesClient pipelines={[FUNIL]} podeEditarConfig />);
+
+    expect(screen.getByLabelText("Como você chama o contato")).toHaveValue("Paciente");
+    expect(screen.getByLabelText("Como você chama o negócio")).toHaveValue("Tratamento");
+    expect(screen.getByLabelText("Quando fecha")).toHaveValue("Fechado");
+    expect(screen.getByLabelText("Quando perde")).toHaveValue("Perdido");
+    for (const cru of ["Lead", "Deal", "Won", "Lost"]) {
+      expect(screen.queryByText(cru, { selector: "label" })).not.toBeInTheDocument();
+    }
+  });
+
+  it("o exemplo preenche as quatro caixas, mas só o Salvar grava", () => {
+    vi.mocked(updatePipelineConfig).mockClear();
+    render(<PipelinesClient pipelines={[FUNIL]} podeEditarConfig />);
+
+    fireEvent.click(screen.getByTestId("exemplo-de-vocabulario-loja"));
+
+    expect(screen.getByLabelText("Como você chama o contato")).toHaveValue("Cliente");
+    expect(screen.getByLabelText("Como você chama o negócio")).toHaveValue("Pedido");
+    expect(screen.getByLabelText("Quando fecha")).toHaveValue("Pago");
+    expect(screen.getByLabelText("Quando perde")).toHaveValue("Cancelado");
+    expect(updatePipelineConfig).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Salvar vocabulário e campos" }));
+    expect(updatePipelineConfig).toHaveBeenCalledTimes(1);
+    const patch = vi.mocked(updatePipelineConfig).mock.calls[0]![1];
+    expect(patch.vocabulary).toEqual({ lead: "Cliente", deal: "Pedido", won: "Pago", lost: "Cancelado" });
+  });
+
+  it("editar uma palavra à mão grava a palavra, e as outras três ficam como estavam", () => {
+    vi.mocked(updatePipelineConfig).mockClear();
+    render(<PipelinesClient pipelines={[FUNIL]} podeEditarConfig />);
+
+    fireEvent.change(screen.getByLabelText("Quando fecha"), { target: { value: "Compareceu" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar vocabulário e campos" }));
+
+    expect(vi.mocked(updatePipelineConfig).mock.calls[0]![1].vocabulary).toEqual({
+      lead: "Paciente",
+      deal: "Tratamento",
+      won: "Compareceu",
+      lost: "Perdido",
+    });
   });
 });
