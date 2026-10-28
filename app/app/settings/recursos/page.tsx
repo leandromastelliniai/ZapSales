@@ -18,6 +18,7 @@ import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
 import { LinhaDoRecurso } from "@/components/recursos-opcionais/LinhaDoRecurso";
+import { ResumoDosRecursosFaixa } from "@/components/recursos-opcionais/ResumoDosRecursos";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ROLE_RANK, type Role } from "@/lib/auth/types";
 import { traduzir } from "@/lib/i18n/dicionario";
@@ -29,6 +30,7 @@ import {
   type RecursoOpcional,
 } from "@/lib/recursos-opcionais/catalogo";
 import { fontesDaEmpresa } from "@/lib/recursos-opcionais/estado";
+import { repartirPorAssunto, resumoDosRecursos } from "@/lib/recursos-opcionais/resumo-dos-recursos";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -78,6 +80,16 @@ export default async function RecursosOpcionaisPage() {
     );
   };
 
+  // A faixa do alto conta exatamente o que a página mostra: módulos, recursos da empresa e de cada agente.
+  const resumo = resumoDosRecursos(
+    [...modulos, ...daEmpresa, ...deCadaAgente].map((r) => ({
+      id: r.id,
+      estado: estadoDoRecurso(r, fontes),
+      dependeDoServidor: semModulo(r),
+    })),
+  );
+  const blocosDaEmpresa = repartirPorAssunto(daEmpresa);
+
   return (
     <CorpoDaPagina className="gap-8 overflow-y-auto">
       <CabecalhoDePagina
@@ -88,9 +100,35 @@ export default async function RecursosOpcionaisPage() {
           )}
       />
 
+      <ResumoDosRecursosFaixa resumo={resumo} />
+
+      <section className="space-y-6" aria-labelledby="recursos-empresa">
+        <h2 id="recursos-empresa" className="border-b border-border pb-2 text-xl font-semibold">
+          {traduzir("Da sua empresa", idioma)}
+        </h2>
+        {blocosDaEmpresa.map((bloco) => (
+          <div key={bloco.id} className="space-y-3" data-testid={`recursos-bloco-${bloco.id}`}>
+            <h3 className="text-base font-semibold">{traduzir(bloco.titulo, idioma)}</h3>
+            <ul className="space-y-3">{bloco.recursos.map(linha)}</ul>
+          </div>
+        ))}
+      </section>
+
+      <section className="space-y-3" aria-labelledby="recursos-agente">
+        <div className="space-y-1 border-b border-border pb-2">
+          <h2 id="recursos-agente" className="text-xl font-semibold">
+            {traduzir("Em cada agente", idioma)}
+          </h2>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            {traduzir("Estes se ligam em cada agente, em Agente de IA › Agentes.", idioma)}
+          </p>
+        </div>
+        <ul className="space-y-3">{deCadaAgente.map(linha)}</ul>
+      </section>
+
       <section className="space-y-3" aria-labelledby="recursos-modulos">
-        <div className="space-y-1">
-          <h2 id="recursos-modulos" className="text-lg font-semibold">
+        <div className="space-y-1 border-b border-border pb-2">
+          <h2 id="recursos-modulos" className="text-xl font-semibold">
             {traduzir("Módulos desta instalação", idioma)}
           </h2>
           <p className="max-w-2xl text-sm text-muted-foreground">
@@ -122,29 +160,11 @@ export default async function RecursosOpcionaisPage() {
                     : null
                 }
                 idioma={idioma}
+                semMeta
               />
             );
           })}
         </ul>
-      </section>
-
-      <section className="space-y-3" aria-labelledby="recursos-empresa">
-        <h2 id="recursos-empresa" className="text-lg font-semibold">
-          {traduzir("Da sua empresa", idioma)}
-        </h2>
-        <ul className="space-y-3">{daEmpresa.map(linha)}</ul>
-      </section>
-
-      <section className="space-y-3" aria-labelledby="recursos-agente">
-        <div className="space-y-1">
-          <h2 id="recursos-agente" className="text-lg font-semibold">
-            {traduzir("Em cada agente", idioma)}
-          </h2>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            {traduzir("Estes se ligam em cada agente, em Agente de IA › Agentes.", idioma)}
-          </p>
-        </div>
-        <ul className="space-y-3">{deCadaAgente.map(linha)}</ul>
       </section>
     </CorpoDaPagina>
   );

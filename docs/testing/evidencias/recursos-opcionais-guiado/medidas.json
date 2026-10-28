@@ -1,0 +1,492 @@
+[
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "padrao",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 4637,
+    "celulas": [
+      "Ligados134 recursos no total",
+      "Desligados9a empresa pode ligar",
+      "Você confere na tela dele17use o botão Ajustar",
+      "Dependem do servidor7peça a quem administra"
+    ],
+    "estaCerto": "Tudo certo",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "falha",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 4637,
+    "celulas": [
+      "Ligados034 recursos no total",
+      "Desligados0a empresa pode ligar",
+      "Você confere na tela dele3418 não consegui ler agora",
+      "Dependem do servidor0peça a quem administra"
+    ],
+    "estaCerto": "1 pede atenção",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "tudo",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 4637,
+    "celulas": [
+      "Ligados1234 recursos no total",
+      "Desligados4a empresa pode ligar",
+      "Você confere na tela dele18use o botão Ajustar",
+      "Dependem do servidor0peça a quem administra"
+    ],
+    "estaCerto": "Tudo certo",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "padrao",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 4637,
+    "celulas": [
+      "Ligados134 recursos no total",
+      "Desligados9a empresa pode ligar",
+      "Você confere na tela dele17use o botão Ajustar",
+      "Dependem do servidor7peça a quem administra"
+    ],
+    "estaCerto": "Tudo certo",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "falha",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 4637,
+    "celulas": [
+      "Ligados034 recursos no total",
+      "Desligados0a empresa pode ligar",
+      "Você confere na tela dele3418 não consegui ler agora",
+      "Dependem do servidor0peça a quem administra"
+    ],
+    "estaCerto": "1 pede atenção",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "tudo",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 4637,
+    "celulas": [
+      "Ligados1234 recursos no total",
+      "Desligados4a empresa pode ligar",
+      "Você confere na tela dele18use o botão Ajustar",
+      "Dependem do servidor0peça a quem administra"
+    ],
+    "estaCerto": "Tudo certo",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "padrao",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 7733,
+    "celulas": [
+      "Ligados134 recursos no total",
+      "Desligados9a empresa pode ligar",
+      "Você confere na tela dele17use o botão Ajustar",
+      "Dependem do servidor7peça a quem administra"
+    ],
+    "estaCerto": "Tudo certo",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "falha",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 7785,
+    "celulas": [
+      "Ligados034 recursos no total",
+      "Desligados0a empresa pode ligar",
+      "Você confere na tela dele3418 não consegui ler agora",
+      "Dependem do servidor0peça a quem administra"
+    ],
+    "estaCerto": "1 pede atenção",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "tudo",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 7859,
+    "celulas": [
+      "Ligados1234 recursos no total",
+      "Desligados4a empresa pode ligar",
+      "Você confere na tela dele18use o botão Ajustar",
+      "Dependem do servidor0peça a quem administra"
+    ],
+    "estaCerto": "Tudo certo",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "padrao",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 7733,
+    "celulas": [
+      "Ligados134 recursos no total",
+      "Desligados9a empresa pode ligar",
+      "Você confere na tela dele17use o botão Ajustar",
+      "Dependem do servidor7peça a quem administra"
+    ],
+    "estaCerto": "Tudo certo",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "falha",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 7785,
+    "celulas": [
+      "Ligados034 recursos no total",
+      "Desligados0a empresa pode ligar",
+      "Você confere na tela dele3418 não consegui ler agora",
+      "Dependem do servidor0peça a quem administra"
+    ],
+    "estaCerto": "1 pede atenção",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "tudo",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 7859,
+    "celulas": [
+      "Ligados1234 recursos no total",
+      "Desligados4a empresa pode ligar",
+      "Você confere na tela dele18use o botão Ajustar",
+      "Dependem do servidor0peça a quem administra"
+    ],
+    "estaCerto": "Tudo certo",
+    "h2": [
+      "Da sua empresa",
+      "Em cada agente",
+      "Módulos desta instalação"
+    ],
+    "h3": [
+      "Atendimento e equipe",
+      "Funil e agenda",
+      "Vendas e anúncios",
+      "IA e conhecimento",
+      "Voz e telefonia",
+      "Segurança e menus"
+    ],
+    "itens": 34,
+    "blocos": [
+      8,
+      5,
+      3,
+      6,
+      2,
+      3
+    ]
+  },
+  {
+    "idioma": "es",
+    "h3": [
+      "Atención y equipo",
+      "Embudo y agenda",
+      "Ventas y anuncios",
+      "IA y conocimiento",
+      "Voz y telefonía",
+      "Seguridad y menús"
+    ],
+    "celulas": [
+      "Activados134 recursos en total",
+      "Desactivados9la empresa puede activarlos",
+      "Lo verificas en su pantalla17usa el botón Ajustar",
+      "Dependen del servidor7pídelo a quien administra"
+    ]
+  },
+  {
+    "idioma": "en",
+    "h3": [
+      "Support and team",
+      "Pipeline and calendar",
+      "Sales and ads",
+      "AI and knowledge",
+      "Voice and telephony",
+      "Security and menus"
+    ],
+    "celulas": [
+      "Turned on134 features in total",
+      "Turned off9your company can turn on",
+      "Check on its own screen17use the Adjust button",
+      "Depend on the server7ask whoever runs the server"
+    ]
+  }
+]
