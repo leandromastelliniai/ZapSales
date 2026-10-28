@@ -29,6 +29,7 @@ export function LinhaDoRecurso({
   rotuloDoEstado,
   ajustar,
   idioma,
+  semMeta = false,
 }: {
   recurso: RecursoOpcional;
   estado: EstadoDoRecurso;
@@ -37,6 +38,8 @@ export function LinhaDoRecurso({
   /** `null` = sem botão (não há tela, ou quem vê não pode abri-la). */
   ajustar: string | null;
   idioma: Idioma;
+  /** Esconde "quem decide · padrão" quando a seção já diz (ex.: módulos do servidor). */
+  semMeta?: boolean;
 }) {
   return (
     <li
@@ -49,10 +52,12 @@ export function LinhaDoRecurso({
         {recurso.comoLigar && (
           <p className="text-sm text-muted-foreground">{traduzir(recurso.comoLigar, idioma)}</p>
         )}
-        <p className="text-xs text-muted-foreground">
-          {traduzir(ROTULO_DE_QUEM_DECIDE[recurso.quemDecide], idioma)} ·{" "}
-          {traduzir(ROTULO_DO_PADRAO[recurso.padrao], idioma)}
-        </p>
+        {!semMeta && (
+          <p className="text-xs text-muted-foreground">
+            {traduzir(ROTULO_DE_QUEM_DECIDE[recurso.quemDecide], idioma)} ·{" "}
+            {traduzir(ROTULO_DO_PADRAO[recurso.padrao], idioma)}
+          </p>
+        )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Badge variant={VARIANTE[estado]}>{rotuloDoEstado}</Badge>
