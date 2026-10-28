@@ -8,6 +8,7 @@ import { ROLE_RANK } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/server";
 import { BudgetCard } from "@/components/ai/BudgetCard";
 import { CartaoDeUsoDaVoz } from "@/components/ai/CartaoDeUsoDaVoz";
+import { ResumoDoUso } from "@/components/ai/ResumoDoUso";
 import { lerConfigDeAudio } from "@/lib/ai/resposta-em-audio/config";
 import { resumoDoUsoDaVoz } from "@/lib/ai/resposta-em-audio/uso";
 import { getBudgetStatus } from "@/lib/ai/budget/check";
@@ -79,6 +80,7 @@ export default async function AiUsagePage({ searchParams }: PageProps) {
             idioma,
           )}
       />
+      <ResumoDoUso initialData={budget} isAdmin={isAdmin} />
       <BudgetCard initialData={budget} isAdmin={isAdmin} />
       <CartaoDeUsoDaVoz config={configDaVoz} uso={usoDaVoz} idioma={idioma} />
       <UsageDashboardClient agents={agents} initial={initial} />
