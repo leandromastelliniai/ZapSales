@@ -3,6 +3,8 @@ import { ComoFunciona } from "@/components/shell/ComoFunciona";
 import { CorpoDaPagina } from "@/components/shell/CorpoDaPagina";
 import { redirect } from "next/navigation";
 
+import { lerJornadaDoBanco } from "@/lib/agenda/jornada";
+import type { HorariosDoResponsavel } from "@/lib/agenda/resumo-dos-tipos";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { ROLE_RANK } from "@/lib/auth/types";
@@ -94,6 +96,37 @@ export default async function TiposDeAgendamentoPage() {
   // declarada, e o fallback abaixo volta ao rótulo de hoje. Degrada, não some.
   const nomes = await nomesDosAtendentes((pessoas ?? []).map((p) => String(p.user_id)));
 
+  // OS HORÁRIOS PUBLICADOS DE QUEM ATENDE cada tipo ativo — a base do "Pronto para marcar".
+  //
+  // Mesma leitura que `lib/agenda/consulta.ts` faz antes de oferecer horário (`lerJornadaDoBanco`),
+  // pela sessão: a policy de leitura de `attendant_availability` é de membro da organização.
+  // ⚠️ Falha de leitura NÃO vira "não publicou": todos os responsáveis ficam `nao_lido`, e a tela
+  // diz que não conseguiu ler (ver `lib/agenda/resumo-dos-tipos.ts`).
+  const donosDosTipos = [
+    ...new Set(
+      (tipos ?? [])
+        .filter((tipo) => tipo.is_active && tipo.default_owner_user_id)
+        .map((tipo) => String(tipo.default_owner_user_id)),
+    ),
+  ];
+  const horarios: Record<string, HorariosDoResponsavel> = {};
+  if (donosDosTipos.length > 0) {
+    const { data: disponibilidades, error: erroHorarios } = await supabase
+      .from("attendant_availability")
+      .select("user_id, schedule")
+      .eq("organization_id", activeOrg.orgId)
+      .in("user_id", donosDosTipos);
+    const porDono = new Map((disponibilidades ?? []).map((d) => [String(d.user_id), d.schedule]));
+    for (const dono of donosDosTipos) {
+      if (erroHorarios) {
+        horarios[dono] = "nao_lido";
+        continue;
+      }
+      const leitura = lerJornadaDoBanco(porDono.get(dono));
+      horarios[dono] = leitura.ok && leitura.publicouHorarios ? "publicado" : "nao_publicado";
+    }
+  }
+
   return (
     <CorpoDaPagina>
       <CabecalhoDePagina
@@ -104,6 +137,7 @@ export default async function TiposDeAgendamentoPage() {
       <TiposDeAgendamentoClient
         tiposIniciais={(tipos ?? []) as TipoRow[]}
         erroDeLeitura={erroTipos ? erroTipos.message : null}
+        horarios={horarios}
         pessoas={(pessoas ?? []).map((p) => ({
           id: String(p.user_id),
           papel: String(p.role),

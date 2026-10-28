@@ -1,0 +1,576 @@
+[
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "nova",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 1584,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Tipos ativos3nenhum desativado",
+      "Prontos para marcar0/3têm responsável e horários",
+      "Pedem ajuste3faltam responsável ou horários",
+      "Avisam o cliente0/3lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 148,
+      "lista": 400,
+      "regras": 606
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "mista",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 1650,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Tipos ativos31 desativado",
+      "Prontos para marcar1/3têm responsável e horários",
+      "Pedem ajuste2faltam responsável ou horários",
+      "Avisam o cliente1/3lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "2 pedem atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 148,
+      "lista": 400,
+      "regras": 672
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "falha",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 1518,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Tipos ativos2nenhum desativado",
+      "Prontos para marcar0/2têm responsável e horários",
+      "Pedem ajuste22 não consegui ler agora",
+      "Avisam o cliente0/2lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 148,
+      "lista": 400,
+      "regras": 540
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "tudo",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 1444,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Tipos ativos2nenhum desativado",
+      "Prontos para marcar2/2têm responsável e horários",
+      "Pedem ajuste0nada a ajustar",
+      "Avisam o cliente2/2lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null,
+    "topos": {
+      "faixa": 148,
+      "lista": 326,
+      "regras": 466
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "nova",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 1584,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Tipos ativos3nenhum desativado",
+      "Prontos para marcar0/3têm responsável e horários",
+      "Pedem ajuste3faltam responsável ou horários",
+      "Avisam o cliente0/3lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 148,
+      "lista": 400,
+      "regras": 606
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "mista",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 1650,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Tipos ativos31 desativado",
+      "Prontos para marcar1/3têm responsável e horários",
+      "Pedem ajuste2faltam responsável ou horários",
+      "Avisam o cliente1/3lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "2 pedem atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 148,
+      "lista": 400,
+      "regras": 672
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "falha",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 1518,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Tipos ativos2nenhum desativado",
+      "Prontos para marcar0/2têm responsável e horários",
+      "Pedem ajuste22 não consegui ler agora",
+      "Avisam o cliente0/2lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 148,
+      "lista": 400,
+      "regras": 540
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "tudo",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "alturaDaPagina": 1444,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Tipos ativos2nenhum desativado",
+      "Prontos para marcar2/2têm responsável e horários",
+      "Pedem ajuste0nada a ajustar",
+      "Avisam o cliente2/2lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null,
+    "topos": {
+      "faixa": 148,
+      "lista": 326,
+      "regras": 466
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "nova",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 3015,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Tipos ativos3nenhum desativado",
+      "Prontos para marcar0/3têm responsável e horários",
+      "Pedem ajuste3faltam responsável ou horários",
+      "Avisam o cliente0/3lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 168,
+      "lista": 657.5,
+      "regras": 1063
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "mista",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 3172,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Tipos ativos31 desativado",
+      "Prontos para marcar1/3têm responsável e horários",
+      "Pedem ajuste2faltam responsável ou horários",
+      "Avisam o cliente1/3lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "2 pedem atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 168,
+      "lista": 657.5,
+      "regras": 1219.5
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "falha",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 2883,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Tipos ativos2nenhum desativado",
+      "Prontos para marcar0/2têm responsável e horários",
+      "Pedem ajuste22 não consegui ler agora",
+      "Avisam o cliente0/2lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 168,
+      "lista": 657.5,
+      "regras": 930.5
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "tudo",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 2757,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Tipos ativos2nenhum desativado",
+      "Prontos para marcar2/2têm responsável e horários",
+      "Pedem ajuste0nada a ajustar",
+      "Avisam o cliente2/2lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null,
+    "topos": {
+      "faixa": 168,
+      "lista": 483.5,
+      "regras": 804.5
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "nova",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 3015,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Tipos ativos3nenhum desativado",
+      "Prontos para marcar0/3têm responsável e horários",
+      "Pedem ajuste3faltam responsável ou horários",
+      "Avisam o cliente0/3lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 168,
+      "lista": 657.5,
+      "regras": 1063
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "mista",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 3172,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Tipos ativos31 desativado",
+      "Prontos para marcar1/3têm responsável e horários",
+      "Pedem ajuste2faltam responsável ou horários",
+      "Avisam o cliente1/3lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "2 pedem atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 168,
+      "lista": 657.5,
+      "regras": 1219.5
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "falha",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 2883,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Tipos ativos2nenhum desativado",
+      "Prontos para marcar0/2têm responsável e horários",
+      "Pedem ajuste22 não consegui ler agora",
+      "Avisam o cliente0/2lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": "Recomendado: ligue o aviso ao cliente nos tipos em que ele marca horário com você (Editar › Avisar o cliente antes do compromisso). Motivo: o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou remarcar a tempo.",
+    "topos": {
+      "faixa": 168,
+      "lista": 657.5,
+      "regras": 930.5
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "tudo",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    ],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "alturaDaPagina": 2757,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Tipos ativos2nenhum desativado",
+      "Prontos para marcar2/2têm responsável e horários",
+      "Pedem ajuste0nada a ajustar",
+      "Avisam o cliente2/2lembrete pelo WhatsApp"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null,
+    "topos": {
+      "faixa": 168,
+      "lista": 483.5,
+      "regras": 804.5
+    },
+    "h2": [
+      "Regras da agenda",
+      "Confirmação de presença",
+      "Clientes pela agenda",
+      "Agenda dos colegas",
+      "Dias fora da rotina"
+    ]
+  },
+  {
+    "idioma": "es",
+    "celulas": [
+      "Tipos activos31 desactivado",
+      "Listos para agendar1/3tienen responsable y horarios",
+      "Piden ajuste2falta responsable u horarios",
+      "Avisan al cliente1/3recordatorio por WhatsApp"
+    ],
+    "conferencias": [
+      "3 tipos están activos y aparecen para agendar.",
+      "1 tipo activo no tiene responsable, y sin responsable no hay horario que ofrecer. Use Editar en el tipo y elija quién atiende.",
+      "El responsable de 1 tipo activo no tiene horarios de atención publicados, así que no se ofrece ningún horario. Abrir Equipo › Atención",
+      "2 tipos activos no avisan al cliente antes de la hora. Es su elección: el aviso se activa en Editar, en cada tipo."
+    ],
+    "recomendacao": "Recomendado: activa el aviso al cliente en los tipos en que agenda con usted (Editar › Avisar al cliente antes de la cita). Motivo: el recordatorio sale solo por WhatsApp y ayuda al cliente a recordar la hora o a reagendar a tiempo.",
+    "h2": [
+      "Reglas de la agenda",
+      "Confirmación de asistencia",
+      "Clientes por la agenda",
+      "Agenda de los colegas",
+      "Días fuera de la rutina"
+    ]
+  },
+  {
+    "idioma": "en",
+    "celulas": [
+      "Active types31 deactivated",
+      "Ready to book1/3have an owner and hours",
+      "Need adjusting2owner or hours missing",
+      "Remind the customer1/3reminder by WhatsApp"
+    ],
+    "conferencias": [
+      "3 types are active and show up for booking.",
+      "1 active type has no owner, and without an owner there is no time to offer. Use Edit on the type and choose who attends.",
+      "The owner of 1 active type has no published service hours, so no time is offered. Open Team › Support",
+      "2 active types don't remind the customer before the time. Your choice: the reminder is turned on in Edit, on each type."
+    ],
+    "recomendacao": "Recommended: turn on the customer reminder for the types where they book with you (Edit › Remind the customer before the appointment). Reason: the reminder goes out by itself on WhatsApp and helps the customer remember the time or reschedule in advance.",
+    "h2": [
+      "Calendar rules",
+      "Attendance confirmation",
+      "Clients by calendar",
+      "Colleagues' calendar",
+      "Days outside the routine"
+    ]
+  }
+]
