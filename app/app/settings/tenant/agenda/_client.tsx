@@ -4,8 +4,12 @@ import { PrazosDePresenca } from "@/components/agenda/PrazosDePresenca";
 import { AgendaDosColegas } from "@/components/agenda/AgendaDosColegas";
 import { ClientePelaAgenda } from "@/components/agenda/ClientePelaAgenda";
 import { DiasBloqueados } from "@/components/agenda/DiasBloqueados";
+import { ResumoDosTiposFaixa } from "@/components/agenda/ResumoDosTipos";
 
 import { useT } from "@/hooks/i18n/useT";
+import { resumoDosTipos, situacaoDoTipo, type HorariosDoResponsavel } from "@/lib/agenda/resumo-dos-tipos";
+import { CheckCircle } from "@/lib/ui/icons";
+import Link from "next/link";
 import { parseReaisToCents } from "@/lib/money";
 
 import * as React from "react";
@@ -308,6 +312,7 @@ export function TiposDeAgendamentoClient({
   usuarioAtualId,
   podeConfigurarGoogle,
   erroDeLeitura = null,
+  horarios = {},
   clientePelaAgendaLigado,
   podeLigarClientePelaAgenda,
   colegasPodemMexerNaAgendaLigado,
@@ -320,6 +325,8 @@ export function TiposDeAgendamentoClient({
   podeConfigurarGoogle: boolean;
   /** Mensagem do banco quando a consulta FALHOU. `null` = a consulta rodou. */
   erroDeLeitura?: string | null;
+  /** Se o responsável de cada tipo publicou horários, por `user_id`. Ausente = a leitura não alcançou. */
+  horarios?: Record<string, HorariosDoResponsavel>;
   /** `organizations.settings.crm.cliente_pela_agenda`, lido pela página. */
   clientePelaAgendaLigado: boolean;
   podeLigarClientePelaAgenda: boolean;
@@ -355,6 +362,8 @@ export function TiposDeAgendamentoClient({
   const [salvando, setSalvando] = React.useState(false);
   const [editandoId, setEditandoId] = React.useState<string | null>(null);
 
+  const resumo = resumoDosTipos(tiposIniciais, horarios);
+
   async function comErro(acao: () => Promise<unknown>, mensagem: string) {
     setSalvando(true);
     try {
@@ -373,21 +382,9 @@ export function TiposDeAgendamentoClient({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4" data-testid="tipos-de-agendamento-config">
-      {podeConfigurarGoogle && <AgendasConectadas />}
-      <PrazosDePresenca podeEditar={podeEditar}/>
-      <ClientePelaAgenda
-        ligadoInicial={clientePelaAgendaLigado}
-        podeLigar={podeLigarClientePelaAgenda}
-      />
-      {/* A opção da issue #978 fica ao lado das outras regras de comportamento
-          da agenda: é a mesma pergunta ("como a agenda se comporta nesta
-          empresa?"), e separá-la noutra tela esconderia de quem configura que
-          ela existe. */}
-      <AgendaDosColegas
-        ligadoInicial={colegasPodemMexerNaAgendaLigado}
-        podeMudar={podeMudarAgendaDosColegas}
-      />
-      <DiasBloqueados podeEditar={podeEditar}/>
+      {/* A faixa NÃO aparece quando a leitura falhou: sem a lista, "0 tipos ativos" seria
+          afirmação sobre dados que a tela não viu (ver `erro-ao-ler-tipos` abaixo). */}
+      {erroDeLeitura ? null : <ResumoDosTiposFaixa resumo={resumo} />}
       {podeEditar ? (
         <div>
           {criando ? (
@@ -583,6 +580,41 @@ export function TiposDeAgendamentoClient({
                   </span>
                 )
               ) : null}
+              {/* A situação de quem já tem responsável. O texto do ramo "sem responsável"
+                  fica no aviso acima — contrato de `agenda-tipos-de-agendamento.spec.ts`. */}
+              {(() => {
+                const situacao = situacaoDoTipo(tipo, horarios);
+                if (situacao === "pronto") {
+                  return (
+                    <span
+                      data-testid={`pronto-${tipo.id}`}
+                      className="inline-flex items-center gap-1 text-xs text-success-fg"
+                    >
+                      <CheckCircle size={13} weight="fill" aria-hidden />
+                      {t("Pronto para marcar")}
+                    </span>
+                  );
+                }
+                if (situacao === "sem_horarios") {
+                  return (
+                    <Link
+                      href="/app/team?aba=atendimento"
+                      data-testid={`sem-horarios-${tipo.id}`}
+                      className="text-xs text-warning underline underline-offset-2"
+                    >
+                      {t("responsável sem horários publicados — publicar")}
+                    </Link>
+                  );
+                }
+                if (situacao === "horarios_nao_lidos") {
+                  return (
+                    <span data-testid={`horarios-nao-lidos-${tipo.id}`} className="text-xs text-text-muted">
+                      {t("não consegui ler os horários do responsável")}
+                    </span>
+                  );
+                }
+                return null;
+              })()}
               {tipo.reminder_enabled ? (
                 // O estado tem de aparecer SEM abrir o formulário: um aviso que
                 // sai sozinho para o telefone do cliente é a última coisa que
@@ -788,6 +820,34 @@ export function TiposDeAgendamentoClient({
           </li>
         ))}
       </ul>
+
+      {/* As regras que valem para a agenda INTEIRA, e não para um tipo só. Ficavam em cima da
+          lista e empurravam os tipos — o que dá nome à tela — para o fim da página. */}
+      <section aria-labelledby="regras-da-agenda-titulo" data-testid="regras-da-agenda" className="grid gap-4 pt-2">
+        <div>
+          <h2 id="regras-da-agenda-titulo" className="text-xl font-semibold text-text">
+            {t("Regras da agenda")}
+          </h2>
+          <p className="mt-1 text-sm text-text-muted">
+            {t("Valem para a agenda inteira, não para um tipo só: agendas Google, presença, clientes, colegas e dias fechados.")}
+          </p>
+        </div>
+        {podeConfigurarGoogle && <AgendasConectadas />}
+        <PrazosDePresenca podeEditar={podeEditar} />
+        <ClientePelaAgenda
+          ligadoInicial={clientePelaAgendaLigado}
+          podeLigar={podeLigarClientePelaAgenda}
+        />
+        {/* A opção da issue #978 fica ao lado das outras regras de comportamento
+            da agenda: é a mesma pergunta ("como a agenda se comporta nesta
+            empresa?"), e separá-la noutra tela esconderia de quem configura que
+            ela existe. */}
+        <AgendaDosColegas
+          ligadoInicial={colegasPodemMexerNaAgendaLigado}
+          podeMudar={podeMudarAgendaDosColegas}
+        />
+        <DiasBloqueados podeEditar={podeEditar} />
+      </section>
     </div>
   );
 }
