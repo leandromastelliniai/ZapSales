@@ -17,7 +17,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EvolutionGaps } from "@/components/ai/EvolutionGaps";
+import { EvolutionGaps, montaLacunas } from "@/components/ai/EvolutionGaps";
+import { ResumoDaEvolucaoFaixa } from "@/components/ai/ResumoDaEvolucao";
+import { resumoDaEvolucao } from "@/lib/ai/evolution/resumo-da-evolucao";
 import { EvolutionTimeline } from "@/components/ai/EvolutionTimeline";
 import { useEvolution } from "@/hooks/ai/useEvolution";
 import type { EvolutionPayload } from "@/lib/ai/evolution/aggregate";
@@ -147,7 +149,8 @@ function Bloco({
   testId: string;
 }) {
   return (
-    <section className="flex flex-col gap-3" data-testid={testId}>
+    // `id` = o testid, para a faixa do alto poder levar direto a "O que está travando" (`#bloco-travando`).
+    <section id={testId} className="flex flex-col gap-3 scroll-mt-4" data-testid={testId}>
       <div>
         <h2 className="text-lg font-semibold tracking-tight">{titulo}</h2>
         <p className="text-sm text-text-muted">{descricao}</p>
@@ -411,9 +414,17 @@ function Conteudo({ payload }: { payload: NonNullable<ReturnType<typeof useEvolu
   // com a evidência de uma. Ver o comentário em EvolutionGaps.
   const buscas = soma(activity.series.knowledge_searches);
   const decisoes = soma(activity.series.router_decisions);
+  const resumo = resumoDaEvolucao({
+    aprendeu: learned.memory_entries + learned.proposals_applied + learned.skills_installed,
+    usos: soma(activity.series.skill_activations) + buscas + decisoes,
+    fechados: outcome.won,
+    perdidos: outcome.lost,
+    travas: montaLacunas(gaps).length,
+  });
 
   return (
     <>
+      <ResumoDaEvolucaoFaixa resumo={resumo} />
       <Bloco
         testId="bloco-aprendeu"
         titulo={t("O que seu agente aprendeu")}

@@ -1,0 +1,542 @@
+[
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "uso-normal",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Gasto do mêsUS$ 12,50valores em dólar",
+      "Limite do mêsUS$ 50,0025% usado",
+      "Proteção de gastoAvisaao passar de 80%",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "uso-perto-do-limite",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Gasto do mêsUS$ 43,00valores em dólar",
+      "Limite do mêsUS$ 50,0086% usado",
+      "Proteção de gastoAvisaao passar de 80%",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "uso-sem-limite",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Gasto do mêsUS$ 0,00valores em dólar",
+      "Limite do mêssem limitea IA não para por gasto",
+      "Proteção de gastoNenhumanão há limite definido",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": "Recomendado: defina um limite mensal em Editar limite. Motivo: sem limite a IA continua respondendo mesmo se o gasto disparar; com ele você é avisado ao passar do ponto escolhido e, se quiser, a IA para."
+  },
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "uso-parada-e-medicao",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Gasto do mêsUS$ 52,00o gasto real é maior que este",
+      "Limite do mêsUS$ 50,00104% usado",
+      "Proteção de gastoPara a IAao chegar no limite",
+      "Medição do gastoIncompletafalta o preço de um modelo"
+    ],
+    "estaCerto": "3 pedem atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "evolucao-normal",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "O agente aprendeu5regras, melhorias e habilidades",
+      "O agente usou142habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos3 / 1pelo agente, neste período",
+      "Está travando0nenhuma lacuna neste período"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "evolucao-travando",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "O agente aprendeu2regras, melhorias e habilidades",
+      "O agente usou38habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos0 / 0pelo agente, neste período",
+      "Está travando2veja o que fazer no fim da página"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "desktop",
+    "tema": "claro",
+    "caso": "evolucao-periodo-vazio",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "O agente aprendeu0regras, melhorias e habilidades",
+      "O agente usou0habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos0 / 0pelo agente, neste período",
+      "Está travando0nenhuma lacuna neste período"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "uso-normal",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Gasto do mêsUS$ 12,50valores em dólar",
+      "Limite do mêsUS$ 50,0025% usado",
+      "Proteção de gastoAvisaao passar de 80%",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "uso-perto-do-limite",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Gasto do mêsUS$ 43,00valores em dólar",
+      "Limite do mêsUS$ 50,0086% usado",
+      "Proteção de gastoAvisaao passar de 80%",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "uso-sem-limite",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Gasto do mêsUS$ 0,00valores em dólar",
+      "Limite do mêssem limitea IA não para por gasto",
+      "Proteção de gastoNenhumanão há limite definido",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": "Recomendado: defina um limite mensal em Editar limite. Motivo: sem limite a IA continua respondendo mesmo se o gasto disparar; com ele você é avisado ao passar do ponto escolhido e, se quiser, a IA para."
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "uso-parada-e-medicao",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Gasto do mêsUS$ 52,00o gasto real é maior que este",
+      "Limite do mêsUS$ 50,00104% usado",
+      "Proteção de gastoPara a IAao chegar no limite",
+      "Medição do gastoIncompletafalta o preço de um modelo"
+    ],
+    "estaCerto": "3 pedem atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "evolucao-normal",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "O agente aprendeu5regras, melhorias e habilidades",
+      "O agente usou142habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos3 / 1pelo agente, neste período",
+      "Está travando0nenhuma lacuna neste período"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "evolucao-travando",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "O agente aprendeu2regras, melhorias e habilidades",
+      "O agente usou38habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos0 / 0pelo agente, neste período",
+      "Está travando2veja o que fazer no fim da página"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "desktop",
+    "tema": "escuro",
+    "caso": "evolucao-periodo-vazio",
+    "erros": [],
+    "larguraDoDocumento": 1440,
+    "larguraDaJanela": 1440,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "O agente aprendeu0regras, melhorias e habilidades",
+      "O agente usou0habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos0 / 0pelo agente, neste período",
+      "Está travando0nenhuma lacuna neste período"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "uso-normal",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Gasto do mêsUS$ 12,50valores em dólar",
+      "Limite do mêsUS$ 50,0025% usado",
+      "Proteção de gastoAvisaao passar de 80%",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "uso-perto-do-limite",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Gasto do mêsUS$ 43,00valores em dólar",
+      "Limite do mêsUS$ 50,0086% usado",
+      "Proteção de gastoAvisaao passar de 80%",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "uso-sem-limite",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Gasto do mêsUS$ 0,00valores em dólar",
+      "Limite do mêssem limitea IA não para por gasto",
+      "Proteção de gastoNenhumanão há limite definido",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": "Recomendado: defina um limite mensal em Editar limite. Motivo: sem limite a IA continua respondendo mesmo se o gasto disparar; com ele você é avisado ao passar do ponto escolhido e, se quiser, a IA para."
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "uso-parada-e-medicao",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "Gasto do mêsUS$ 52,00o gasto real é maior que este",
+      "Limite do mêsUS$ 50,00104% usado",
+      "Proteção de gastoPara a IAao chegar no limite",
+      "Medição do gastoIncompletafalta o preço de um modelo"
+    ],
+    "estaCerto": "3 pedem atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "evolucao-normal",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "O agente aprendeu5regras, melhorias e habilidades",
+      "O agente usou142habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos3 / 1pelo agente, neste período",
+      "Está travando0nenhuma lacuna neste período"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "evolucao-travando",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "O agente aprendeu2regras, melhorias e habilidades",
+      "O agente usou38habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos0 / 0pelo agente, neste período",
+      "Está travando2veja o que fazer no fim da página"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "claro",
+    "caso": "evolucao-periodo-vazio",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(245, 246, 250)",
+    "celulas": [
+      "O agente aprendeu0regras, melhorias e habilidades",
+      "O agente usou0habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos0 / 0pelo agente, neste período",
+      "Está travando0nenhuma lacuna neste período"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "uso-normal",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Gasto do mêsUS$ 12,50valores em dólar",
+      "Limite do mêsUS$ 50,0025% usado",
+      "Proteção de gastoAvisaao passar de 80%",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "uso-perto-do-limite",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Gasto do mêsUS$ 43,00valores em dólar",
+      "Limite do mêsUS$ 50,0086% usado",
+      "Proteção de gastoAvisaao passar de 80%",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "uso-sem-limite",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Gasto do mêsUS$ 0,00valores em dólar",
+      "Limite do mêssem limitea IA não para por gasto",
+      "Proteção de gastoNenhumanão há limite definido",
+      "Medição do gastoCompletatodo o gasto teve preço"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": "Recomendado: defina um limite mensal em Editar limite. Motivo: sem limite a IA continua respondendo mesmo se o gasto disparar; com ele você é avisado ao passar do ponto escolhido e, se quiser, a IA para."
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "uso-parada-e-medicao",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "Gasto do mêsUS$ 52,00o gasto real é maior que este",
+      "Limite do mêsUS$ 50,00104% usado",
+      "Proteção de gastoPara a IAao chegar no limite",
+      "Medição do gastoIncompletafalta o preço de um modelo"
+    ],
+    "estaCerto": "3 pedem atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "evolucao-normal",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "O agente aprendeu5regras, melhorias e habilidades",
+      "O agente usou142habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos3 / 1pelo agente, neste período",
+      "Está travando0nenhuma lacuna neste período"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "evolucao-travando",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "O agente aprendeu2regras, melhorias e habilidades",
+      "O agente usou38habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos0 / 0pelo agente, neste período",
+      "Está travando2veja o que fazer no fim da página"
+    ],
+    "estaCerto": "1 pede atenção",
+    "recomendacao": null
+  },
+  {
+    "tela": "celular",
+    "tema": "escuro",
+    "caso": "evolucao-periodo-vazio",
+    "erros": [],
+    "larguraDoDocumento": 390,
+    "larguraDaJanela": 390,
+    "fundo": "rgb(21, 26, 46)",
+    "celulas": [
+      "O agente aprendeu0regras, melhorias e habilidades",
+      "O agente usou0habilidades, consultas e encaminhamentos",
+      "Fechados / perdidos0 / 0pelo agente, neste período",
+      "Está travando0nenhuma lacuna neste período"
+    ],
+    "estaCerto": "Tudo certo",
+    "recomendacao": null
+  },
+  {
+    "idioma": "es",
+    "tela": "uso",
+    "celulas": [
+      "Gasto del mesUS$ 52,00el gasto real es mayor que esteLímite del mesUS$ 50,00104% usadoProtección de gastoDetiene la IAal llegar al límiteMedición del gastoIncompletafalta el precio de un modelo¿Está todo en orden?3 piden atenciónocultarLa IA está detenida por gasto: llegó al límite del mes, y las conversaciones en curso pasaron a la cola de atención humana. Un administrador puede aumentar el límite en Editar límite.El gasto pasó del límite del mes: 104%.Parte del gasto no entra en la cuenta: el producto aún no conoce el precio de un modelo en uso, así que el número es menor que el real. Sigue también el gasto en el panel de tu proveedor de IA.",
+      "Gasto del mesUS$ 52,00el gasto real es mayor que este",
+      "Límite del mesUS$ 50,00104% usado",
+      "Protección de gastoDetiene la IAal llegar al límite",
+      "Medición del gastoIncompletafalta el precio de un modelo"
+    ],
+    "conferencias": [
+      "La IA está detenida por gasto: llegó al límite del mes, y las conversaciones en curso pasaron a la cola de atención humana. Un administrador puede aumentar el límite en Editar límite.",
+      "El gasto pasó del límite del mes: 104%.",
+      "Parte del gasto no entra en la cuenta: el producto aún no conoce el precio de un modelo en uso, así que el número es menor que el real. Sigue también el gasto en el panel de tu proveedor de IA."
+    ]
+  },
+  {
+    "idioma": "es",
+    "tela": "evolucao",
+    "celulas": [
+      "El agente aprendió2reglas, mejoras y habilidadesEl agente usó38habilidades, consultas y derivacionesCerrados / perdidos0 / 0por el agente, en este períodoEstá frenando2vea qué hacer al final de la página¿Está todo en orden?1 pide atenciónocultar2 brechas están limitando al agente. Qué hacer está en Lo que está frenando, al final de la página. Ver lo que está frenandoEl agente aprendió 2 cosas nuevas en este período.El agente usó sus recursos 38 veces en este período.",
+      "El agente aprendió2reglas, mejoras y habilidades",
+      "El agente usó38habilidades, consultas y derivaciones",
+      "Cerrados / perdidos0 / 0por el agente, en este período",
+      "Está frenando2vea qué hacer al final de la página"
+    ],
+    "conferencias": [
+      "2 brechas están limitando al agente. Qué hacer está en Lo que está frenando, al final de la página. Ver lo que está frenando",
+      "El agente aprendió 2 cosas nuevas en este período.",
+      "El agente usó sus recursos 38 veces en este período."
+    ]
+  },
+  {
+    "idioma": "en",
+    "tela": "uso",
+    "celulas": [
+      "Spend this monthUS$ 52,00the real spend is higher than thisMonthly limitUS$ 50,00104% usedSpend protectionStops the AIwhen it reaches the limitSpend measurementIncompletea model's price is missingIs everything right?3 need attentionhideThe AI is stopped for spend: it reached the monthly limit, and the conversations in progress went to the human support queue. An administrator can raise the limit in Edit limit.Spend went over the monthly limit: 104%.Part of the spend isn't counted: the product doesn't know the price of a model in use yet, so the number is lower than the real one. Also track it in your AI provider's dashboard.",
+      "Spend this monthUS$ 52,00the real spend is higher than this",
+      "Monthly limitUS$ 50,00104% used",
+      "Spend protectionStops the AIwhen it reaches the limit",
+      "Spend measurementIncompletea model's price is missing"
+    ],
+    "conferencias": [
+      "The AI is stopped for spend: it reached the monthly limit, and the conversations in progress went to the human support queue. An administrator can raise the limit in Edit limit.",
+      "Spend went over the monthly limit: 104%.",
+      "Part of the spend isn't counted: the product doesn't know the price of a model in use yet, so the number is lower than the real one. Also track it in your AI provider's dashboard."
+    ]
+  },
+  {
+    "idioma": "en",
+    "tela": "evolucao",
+    "celulas": [
+      "The agent learned2rules, improvements and skillsThe agent used38skills, lookups and routingsWon / lost0 / 0by the agent, in this periodHolding it back2see what to do at the end of the pageIs everything right?1 needs attentionhide2 gaps are limiting the agent. What to do is in What's holding it back, at the end of the page. See what's holding it backThe agent learned 2 new things in this period.The agent used its features 38 times in this period.",
+      "The agent learned2rules, improvements and skills",
+      "The agent used38skills, lookups and routings",
+      "Won / lost0 / 0by the agent, in this period",
+      "Holding it back2see what to do at the end of the page"
+    ],
+    "conferencias": [
+      "2 gaps are limiting the agent. What to do is in What's holding it back, at the end of the page. See what's holding it back",
+      "The agent learned 2 new things in this period.",
+      "The agent used its features 38 times in this period."
+    ]
+  }
+]
