@@ -6,22 +6,31 @@
 <aside class="nota atencao"><strong>Esta página foi fotografada sem nenhuma conexão salva.</strong><p>Para não enviar nada de verdade a uma plataforma de anúncios, a conta de demonstração <strong>não tem token nem conexão</strong>. As telas abaixo estão no estado inicial; o restante foi descrito a partir do código.</p></aside>
 <p>No alto da página, acima das abas, a faixa <strong>Suas conversões</strong> resume o estado: <em>Meta Ads</em> e <em>Google Ads</em> (<em>Enviando</em>, <em>Em teste</em>, <em>Pausada</em>, <em>Não conectada</em> ou, só no Google, <em>Indisponível</em> quando a instalação ainda não tem as credenciais), quantas vendas a plataforma já aceitou (<em>Enviadas</em>) e quantas <em>Não reportadas</em> (a contagem para em 20: “20+” quer dizer 20 ou mais). <strong>Está tudo certo?</strong> pede atenção só para fato — plataforma conectada e pausada, código de teste ligado e venda pendente; plataforma não conectada e captura de origem desligada aparecem só como informação, porque são opcionais. Abaixo da faixa, uma <strong>recomendação</strong> com o motivo, uma de cada vez: conectar a plataforma em que você anuncia, apagar o código de teste, religar o envio, conferir as pendências ou ligar o endereço de captura. Ela nunca grava nada sozinha.</p>
 <p>A página tem <strong>quatro abas</strong>: <em>Configuração</em> (padrão), <em>Histórico de envios</em>, <em>Diagnóstico</em> e <em>Links rastreáveis</em>.</p>
+<figure class="print">
+  <img src="img/conversoes-config.png" alt="Alto da tela Conversões, com a faixa Suas conversões, a linha Está tudo certo?, a recomendação, as quatro abas e o título Mandar as vendas de volta, numerada de 1 a 5" loading="lazy">
+  <figcaption>O alto de Conversões, antes de conectar a Meta.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>A faixa Suas conversões.</strong> Quatro números: o estado da <em>Meta Ads</em> (aqui, <em>Não conectada</em>), o estado do <em>Google Ads</em> (aqui, <em>Indisponível</em>, porque a instalação ainda não tem as credenciais do Google), <em>Enviadas</em> e <em>Não reportadas</em>.</li>
+  <li><strong>Está tudo certo?</strong> Aqui diz <em>Tudo certo</em>: plataforma não conectada é só informação, porque conectar é opcional. <em>ver as conferências</em> mostra o que foi conferido.</li>
+  <li><strong>A recomendação.</strong> Uma sugestão por vez, com o motivo. Aqui: conectar a plataforma em que você anuncia. Ela nunca grava nada sozinha.</li>
+  <li><strong>As quatro abas.</strong> <em>Configuração</em> (a aberta), <em>Histórico de envios</em>, <em>Diagnóstico</em> e <em>Links rastreáveis</em>.</li>
+  <li><strong>Mandar as vendas de volta.</strong> O primeiro bloco da aba Configuração, com o formulário da Meta.</li>
+</ol>
 
 <h2 id="configuracao">Aba Configuração</h2>
 <figure class="print">
-  <img src="img/conversoes-config.png" alt="Aba Configuração de Conversões com as quatro abas e o formulário de conexão com a Meta, numerada de 1 a 9" loading="lazy">
-  <figcaption>A aba Configuração, antes de conectar a Meta.</figcaption>
+  <img src="img/conversoes-formulario.png" alt="Formulário Meta Ads da aba Configuração de Conversões, com os campos de identificador, token e código de teste, o interruptor de reportar vendas, o botão Salvar conexão e o cartão do Google Ads, numerada de 1 a 7" loading="lazy">
+  <figcaption>O formulário de conexão com a Meta, antes de conectar.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Configuração.</strong> A aba padrão.</li>
-  <li><strong>Histórico de envios.</strong></li>
-  <li><strong>Diagnóstico.</strong></li>
-  <li><strong>Links rastreáveis.</strong></li>
+  <li><strong>Meta Ads.</strong> O cartão da conexão com a Meta.</li>
   <li><strong>Identificador do destino de conversões.</strong> Só números, de 5 a 64 dígitos. É a “fonte de dados” (dataset/pixel) do gerenciador de anúncios que recebe as conversões.</li>
   <li><strong>Token de acesso.</strong> De 20 a 1.000 caracteres. Fica guardado criptografado e <strong>nunca volta para a tela</strong>.</li>
   <li><strong>Código de teste (opcional).</strong> Enquanto preenchido, as vendas vão marcadas como teste e <strong>não contam para a otimização</strong>. Apague quando terminar de conferir.</li>
   <li><strong>Reportar vendas automaticamente.</strong> “Desligar pausa o envio e mantém a credencial gravada.”</li>
   <li><strong>Salvar conexão.</strong> Só habilita com identificador e token. Sucesso: “Conexão salva.”.</li>
+  <li><strong>Google Ads.</strong> Sem as credenciais do Google na instalação, o cartão explica que não está disponível e que não é nada que você tenha feito.</li>
 </ol>
 <aside class="nota atencao"><strong>Numa primeira conexão, o interruptor nasce desligado.</strong><p>Ligue “Reportar vendas automaticamente” <em>antes</em> de salvar, senão a conexão fica gravada e pausada — a faixa <em>Suas conversões</em> passa a mostrar a Meta como <em>Pausada</em> e recomenda religar. Não existe botão de remover a conexão da Meta: só pausar. Com código de teste, a faixa mostra a Meta como <em>Em teste</em> e recomenda apagar o código quando terminar de conferir.</p></aside>
 <p>Os blocos da aba têm título: <strong>Mandar as vendas de volta</strong> (Meta, Google e as regras por etapa), <strong>Conferir o que não foi enviado</strong> (a lista de vendas não reportadas) e <strong>Saber de onde veio o cliente</strong> (captura de origem do Google, script do site e o formulário de captura da Meta). O formulário da conexão com a Meta agora abre com o nome <em>Meta Ads</em>.</p>

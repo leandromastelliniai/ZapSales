@@ -4,20 +4,19 @@
 <p>O ZapSales usa inteligência artificial em <strong>muitos lugares diferentes</strong> — hoje, 32 “pontos”: responder o cliente, medir o clima da conversa, escolher qual agente atende, resumir conversas longas, ouvir áudios e assim por diante. Em <span class="ui">Provedores</span> você vê <strong>qual modelo está atendendo cada ponto</strong> e pode trocar, de uma vez só ou ponto a ponto.</p>
 <p>No alto, a faixa <strong>Sua IA</strong> resume o que importa: quem conversa com o cliente (modelo e provedor), de onde vem a chave (<em>Da empresa</em>, <em>Da instalação</em> ou <em>Falta</em>), em quantas partes o modelo padrão vale e quantos dos três ajudantes opcionais estão em uso. <strong>Está tudo certo?</strong> pede atenção quando não há chave para o provedor do padrão — sem ela o agente não responde ninguém — ou quando alguma parte do sistema traz um aviso; os ajudantes desligados aparecem só como informação, porque são opcionais. A página tem duas partes: <strong>A IA que conversa</strong> (modelo padrão e os grupos de pontos) e <strong>Ajudantes opcionais</strong> (Jev, resposta em áudio e Mapas). No cartão do modelo padrão, uma <strong>recomendação</strong> com o motivo: sem chave, cadastrar a da IA principal; com chave, deixar o padrão como está e só mudar uma parte quando houver razão (custo, privacidade ou modelo próprio). A recomendação nunca troca nada sozinha nem sugere um modelo específico.</p>
 <figure class="print">
-  <img src="img/ia-provedores.png" alt="Tela Provedores de IA com o modelo padrão, o cartão do Jev e a primeira seção de pontos, numerada de 1 a 9" loading="lazy">
-  <figcaption>Provedores de IA: modelo padrão, Jev e os pontos agrupados por papel.</figcaption>
+  <img src="img/ia-provedores.png" alt="Alto da tela Provedores de IA, com a faixa Sua IA, a linha Está tudo certo?, a seção A IA que conversa e o cartão do modelo padrão com a recomendação, numerada de 1 a 7" loading="lazy">
+  <figcaption>O alto de Provedores de IA: a faixa de resumo e o modelo padrão.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Modelo padrão.</strong> Vale em todo ponto que você não configurou individualmente (“hoje, 17 de 32”). Trocar aqui muda todos de uma vez.</li>
+  <li><strong>A faixa de resumo.</strong> Quatro números: <em>Quem conversa com o cliente</em> (modelo e provedor), <em>Chave da IA</em> (<em>Da empresa</em>, <em>Da instalação</em> ou <em>Falta</em>), <em>O padrão vale em</em> (quantas das 32 partes seguem o padrão) e <em>Ajudantes opcionais</em> (quantos dos três estão em uso).</li>
+  <li><strong>Está tudo certo?</strong> Aqui pede atenção, porque falta a chave do provedor do padrão. Abra <em>ver as conferências</em> para ler o motivo.</li>
+  <li><strong>A IA que conversa.</strong> A primeira das duas partes da página. A segunda, <em>Ajudantes opcionais</em>, fica mais abaixo.</li>
+  <li><strong>Modelo padrão.</strong> Vale em todo ponto que você não configurou individualmente (aqui, “31 de 32”). Trocar aqui muda todos de uma vez.</li>
+  <li><strong>A recomendação.</strong> Uma sugestão com o motivo (aqui: cadastrar a chave da IA principal). Ela nunca troca nada sozinha.</li>
   <li><strong>Provedor e modelo</strong> do padrão. Se o catálogo do provedor ainda não foi baixado, o modelo vira um campo de texto.</li>
   <li><strong>Salvar padrão.</strong> Só Administrador.</li>
-  <li><strong>Jev — decisões rápidas.</strong> Veja <a href="#provedores--jev">abaixo</a>. (Hoje o cartão fica em <em>Ajudantes opcionais</em>, depois dos grupos de pontos.)</li>
-  <li><strong>Situação do Jev.</strong> <em>Desligado, Observando, Decidindo, Decidindo sozinho, Parado</em> ou <em>Em pausa</em>.</li>
-  <li><strong>Aviso de saúde e LGPD.</strong> Sempre visível. Se a sua empresa é da área da saúde, as mensagens que o Jev lê podem conter dado sensível: confira o contrato da TypeSafe antes de ligar.</li>
-  <li><strong>Colar a chave.</strong> Abre a janela de Credenciais já no provedor do Jev. Ao lado, <em>Pegar a chave na TypeSafe</em> leva ao site.</li>
-  <li><strong>Seção de pontos.</strong> Os 32 pontos são agrupados por papel (veja abaixo). Cada seção mostra “Usando: …” com os modelos em uso.</li>
-  <li><strong>Configuração avançada.</strong> Abre os cartões de cada ponto da seção, para trocar o modelo individualmente.</li>
 </ol>
+<p>Abaixo do modelo padrão vêm as seções de <strong>pontos</strong>, agrupadas por papel (veja <a href="#provedores--pontos">Os pontos de IA, por papel</a>). Cada seção mostra “Usando: …” com os modelos em uso e um botão <span class="ui">Configuração avançada</span>, que abre os cartões de cada ponto para trocar o modelo individualmente.</p>
 
 <h2 id="padrao">O modelo padrão</h2>
 <p>Escolha o <strong>provedor</strong> e o <strong>modelo</strong> e clique em <span class="ui">Salvar padrão</span>. O sistema avisa quando o provedor não tem chave utilizável. Três pontos precisam de um modelo <em>especialista</em> (preparar material, buscar no material, ouvir áudio) e <strong>não seguem</strong> o padrão: eles são configurados um a um.</p>
@@ -43,6 +42,17 @@
 
 <h2 id="jev">O Jev — decisões rápidas</h2>
 <p>O <strong>Jev</strong> é uma segunda IA, da empresa TypeSafe AI, que <strong>não conversa com o cliente</strong>. Ele toma decisões pequenas, baratas e muito rápidas (geralmente em menos de um segundo), ao lado da IA principal. São seis <strong>tarefas</strong>: <em>medir o clima da conversa, perceber tentativa de manipulação, escolher qual agente atende, perceber pedido para falar com uma pessoa, perceber pedido para parar de receber mensagens</em> e <em>ler a resposta ao follow-up</em>.</p>
+<figure class="print">
+  <img src="img/ia-provedores-ajudantes.png" alt="Seção Ajudantes opcionais da tela Provedores de IA, com o cartão do Jev desligado, o aviso de saúde e LGPD e o botão Colar a chave, numerada de 1 a 5" loading="lazy">
+  <figcaption>Ajudantes opcionais: o cartão do Jev, ainda desligado.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Ajudantes opcionais.</strong> A segunda parte da página: o Jev, a resposta em áudio e os Mapas. Nada ali é obrigatório.</li>
+  <li><strong>Jev — decisões rápidas.</strong> O cartão do Jev.</li>
+  <li><strong>Situação do Jev.</strong> <em>Desligado, Observando, Decidindo, Decidindo sozinho, Parado</em> ou <em>Em pausa</em>.</li>
+  <li><strong>Aviso de saúde e LGPD.</strong> Sempre visível. Se a sua empresa é da área da saúde, as mensagens que o Jev lê podem conter dado sensível: confira o contrato da TypeSafe antes de ligar.</li>
+  <li><strong>Colar a chave.</strong> Abre a janela de Credenciais já no provedor do Jev. Ao lado, <em>Pegar a chave na TypeSafe</em> leva ao site.</li>
+</ol>
 <ol class="passos">
   <li>Crie uma conta na TypeSafe AI e coloque crédito (cada mensagem medida custa uma fração de centavo de dólar, cobrada lá). Pegue a chave, que começa com <code>apikey_</code>.</li>
   <li>Clique em <span class="ui">Colar a chave</span> e salve (Administrador). Quando o sistema confere a chave, aparece “✓ Chave conferida com a TypeSafe”.</li>

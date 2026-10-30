@@ -2197,14 +2197,17 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <aside class="nota info"><strong>Onde fica a porta.</strong><p>“Etapas do funil” não está no menu lateral. Abra por <span class="ui">Ver tudo em CRM</span> (seção “Preparar a venda”) ou pela busca <kbd>⌘K</kbd>. Quem não é Gerente é levado à página “sem permissão”.</p></aside>
 
 <h2 id="etapas-do-funil--etapas">As etapas de um funil</h2>
-<p>A tela mostra um cartão por funil (os arquivados não aparecem). Cada cartão tem três blocos: <strong>Etapas deste funil</strong>, <strong>Para onde o card vai em cada passo</strong> e, só para Administrador, <strong>Vocabulário e campos</strong>.</p>
+<p>A tela mostra um cartão por funil (os arquivados não aparecem). No alto de cada cartão, a faixa <strong>Seu funil</strong> resume o quadro — quantas etapas existem e quantas estão abertas, onde o cliente fecha, onde desiste, em quantos dos sete passos o agente move o card e como você chama as coisas — e o <strong>Está tudo certo?</strong> avisa quando falta a etapa de fechamento ou a de perda (o agente sem mover nenhum passo aparece só como informação, porque “não mover” é uma escolha válida). Abaixo da faixa vêm três blocos: <strong>Etapas deste funil</strong>, <strong>Para onde o card vai em cada passo</strong> e, só para Administrador, <strong>Vocabulário e campos</strong>. A faixa só lê o que está gravado: não grava nada.</p>
 <figure class="print">
-  <img src="img/etapas-funil.png" alt="Tela Etapas do funil com o funil Pedidos e as primeiras colunas, com nome, chance, ordem, papel, arquivar, janela de esfriando e aviso na Central, numerada de 1 a 10" loading="lazy">
-  <figcaption>As etapas do funil “Pedidos”: cada coluna do quadro é uma linha.</figcaption>
+  <img src="img/etapas-funil.png" alt="Tela Etapas do funil com o funil Pedidos, a faixa Seu funil, a linha Está tudo certo? e a primeira coluna, com nome, chance, ordem, papel, arquivar, janela de esfriando e aviso na Central, numerada de 1 a 12" loading="lazy">
+  <figcaption>O funil “Pedidos”: a faixa de resumo e a primeira coluna do quadro.</figcaption>
 </figure>
 <ol class="legenda">
   <li><strong>Como funciona.</strong> Painel de ajuda.</li>
   <li><strong>O funil.</strong> Nome e endereço interno (“/pedidos”).</li>
+  <li><strong>A faixa de resumo.</strong> Quatro números: <em>Etapas do quadro</em> (aqui, 8: 6 abertas, 1 de fechamento e 1 de perda), <em>O cliente fecha em</em>, <em>O cliente desiste em</em> e <em>O agente move o card</em> (aqui, “2 de 7 passos”).</li>
+  <li><strong>Você chama de.</strong> As palavras do funil: neste exemplo, contato é <em>Cliente</em>, negócio é <em>Pedido</em>, fechar é <em>Pago</em> e perder é <em>Cancelado</em>.</li>
+  <li><strong>Está tudo certo?</strong> Diz <em>Tudo certo</em> ou avisa quando falta a etapa de fechamento ou a de perda. <em>ver as conferências</em> abre a lista.</li>
   <li><strong>Nome da coluna.</strong> Clique e escreva para renomear. Grava ao apertar <kbd>Enter</kbd> ou ao sair do campo; <kbd>Esc</kbd> descarta. Até 80 caracteres; o nome não pode repetir o de outra etapa viva do mesmo funil.</li>
   <li><strong>Chance de fechamento (0 a 100).</strong> Quanto você acredita que um negócio nessa etapa fecha. Alimenta a previsão “ponderada” no topo das colunas do quadro. Vazio = sem calibração. Nas etapas de ganho e perda o campo fica apagado (valem 100 e 0).</li>
   <li><strong>Ordem.</strong> As setas ▲ ▼ movem a coluna uma posição.</li>
@@ -2212,9 +2215,9 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <li><strong>Arquivar.</strong> Tira a coluna do quadro. Veja <a href="#etapas-do-funil--arquivar">abaixo</a>.</li>
   <li><strong>Janela de esfriando.</strong> Em dias e horas (de 1 hora a 8.760). Depois desse tempo sem atividade o negócio passa a contar como “esfriando” no <a href="#radar">Radar</a>. Vazio = 24 horas (e crítico em 72).</li>
   <li><strong>Avisar a equipe na Central quando um negócio entrar aqui.</strong> Desligado por padrão. Ligado, cada negócio que chega à etapa abre um aviso na Central.</li>
-  <li><strong>“O assistente usa esta etapa para …”.</strong> Aparece quando um passo do agente aponta para essa etapa; o link “Mudar isso” leva ao mapeamento.</li>
 </ol>
 <ul>
+  <li>Quando um passo do agente aponta para a etapa, a linha dela mostra “O assistente usa esta etapa para …”, com o link “Mudar isso”, que leva ao mapeamento.</li>
   <li>Se a última mudança de uma etapa foi feita pelo assistente ou automaticamente, aparece um selo “alterado pelo assistente há … — ver o que mudou” (leva à <a href="#auditoria">Auditoria</a>). Mudanças feitas por pessoas não mostram selo.</li>
   <li>Para criar uma etapa nova use <span class="ui">Acrescentar etapa ao fim</span>: escreva o nome e clique em <span class="ui">Criar</span> (ou <kbd>Enter</kbd>). Ela entra no fim do funil e não mexe em nenhum negócio.</li>
   <li>Cada mudança fica na auditoria (<code>pipeline.stage_created</code>, <code>pipeline.stage_updated</code>…). Nada aqui manda mensagem a clientes.</li>
@@ -2232,19 +2235,20 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 
 <h2 id="etapas-do-funil--mapeamento">Para onde o card vai em cada passo</h2>
 <figure class="print">
-  <img src="img/etapas-funil-mapa.png" alt="Bloco Para onde o card vai em cada passo, com os sete passos do atendimento e o seletor de etapa de cada um, e o começo do bloco Vocabulário e campos, numerado de 1 a 6" loading="lazy">
-  <figcaption>O mapeamento do agente e o início de “Vocabulário e campos”.</figcaption>
+  <img src="img/etapas-funil-mapa.png" alt="Bloco Para onde o card vai em cada passo, com os sete passos do atendimento e o seletor de etapa de cada um e o botão Salvar estas escolhas, numerado de 1 a 6" loading="lazy">
+  <figcaption>O mapeamento do agente: um seletor para cada passo do atendimento.</figcaption>
 </figure>
 <ol class="legenda">
   <li><strong>O bloco.</strong> “Quando o agente avança no atendimento, o card do cliente pode andar sozinho no seu funil. Escolha para qual etapa ele vai em cada momento.”</li>
   <li><strong>Um passo.</strong> Sete linhas fixas, cada uma com o seu seletor: <em>Novo lead</em> (a pessoa acabou de chamar e ninguém respondeu ainda), <em>Primeiro contato</em> (o agente já respondeu pela primeira vez), <em>Em qualificação</em>, <em>Qualificado</em>, <em>Em negociação</em> (preço, proposta ou agendamento), <em>Ganho</em> e <em>Perdido</em>.</li>
-  <li><strong>Ganho e Perdido.</strong> “Ganho” só oferece etapas de fechamento; “Perdido”, só etapas de perda.</li>
+  <li><strong>O seletor de etapa.</strong> Em <em>Não mover o card</em> o card fica onde está; escolhida uma etapa, o card vai para ela quando o agente chega naquele passo.</li>
+  <li><strong>Ganho.</strong> Só oferece etapas de fechamento (aqui, “Pago”).</li>
+  <li><strong>Perdido.</strong> Só oferece etapas de perda (aqui, “Cancelado”).</li>
   <li><strong>Salvar estas escolhas.</strong> Grava (“Escolhas salvas.”). Fica apagado sem mudança.</li>
-  <li><strong>Vocabulário e campos.</strong> Só para Administrador.</li>
-  <li><strong>Motivos de perda e de ganho.</strong> Listas separadas por vírgula.</li>
 </ol>
 <ul>
   <li>Deixar um passo em <em>“Não mover o card”</em> é uma escolha válida: o card fica onde está e o agente segue trabalhando.</li>
+  <li><strong>Recomendado:</strong> quando <em>Ganho</em> e <em>Perdido</em> ainda estão em “Não mover o card” e o funil tem a etapa de fechamento e a de perda, a tela recomenda levar um para a etapa de fechamento e o outro para a de perda, com o motivo (sem isso o card de quem fecha ou desiste fica parado no meio do funil). <span class="ui">Usar a sugestão</span> só preenche as escolhas na tela — nada é gravado até <span class="ui">Salvar estas escolhas</span>. A recomendação nunca troca uma escolha que você já fez e não chuta os cinco passos do meio, que dependem do desenho do seu quadro.</li>
   <li>Uma etapa só pode servir a <strong>um</strong> passo: as já usadas somem das outras listas.</li>
   <li><strong>Efeito real:</strong> a partir daqui o agente de IA <strong>passa a mover os cartões sozinho</strong>. O clique não manda mensagem ao cliente por si.</li>
 </ul>
@@ -2254,7 +2258,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <table class="tabela">
   <thead><tr><th>Item</th><th>O que faz</th></tr></thead>
   <tbody>
-    <tr><td><strong>Lead · Deal · Won · Lost</strong></td><td>Quatro campos (os rótulos aparecem em inglês) que definem as palavras do funil: o que é um <em>lead</em>, um <em>negócio</em>, <em>ganho</em> e <em>perdido</em>. Numa loja virtual, por exemplo: Cliente, Pedido, Pago, Cancelado. De 1 a 40 caracteres. Hoje essas palavras só aparecem na barra de seleção em lote do quadro (“1 Cliente selecionado”).</td></tr>
+    <tr><td><strong>Como você chama o contato · Como você chama o negócio · Quando fecha · Quando perde</strong></td><td>Quatro campos, cada um com uma linha dizendo onde a palavra aparece, que definem as palavras do funil: o contato que entra, o negócio que anda pelas etapas, o nome de quando fecha e o de quando perde. Numa loja virtual, por exemplo: Cliente, Pedido, Pago, Cancelado. Os botões de <em>Quer um exemplo?</em> (Loja, Clínica, Serviços) preenchem os quatro campos de uma vez — só o botão <span class="ui">Salvar vocabulário e campos</span> grava. De 1 a 40 caracteres. Hoje essas palavras só aparecem na barra de seleção em lote do quadro (“1 Cliente selecionado”).</td></tr>
     <tr><td><strong>Motivos de perda</strong></td><td>Separados por vírgula (até 50). Cada um pode ter uma categoria (<em>Cliente, Concorrência, Mérito, Nós, Ausência</em> ou <em>Sem categoria</em>), usada no relatório de perdas. Os motivos cadastrados <strong>substituem</strong> a lista padrão na janela “Marcar como perdido”. Um motivo não pode conter vírgula.</td></tr>
     <tr><td><strong>Motivos de ganho</strong></td><td>Sem lista, o motivo de ganho é texto livre; com lista, só o que está nela é aceito. A caixa <em>“Exigir motivo de ganho ao fechar como ganho”</em> torna o motivo obrigatório (o menu do cartão “Marcar como ganho” <em>não pergunta</em> e será recusado).</td></tr>
     <tr><td><strong>Negócio encerrado que volta abre um negócio novo</strong></td><td>Desligado, arrastar um negócio perdido ou ganho para uma etapa aberta <em>reabre o mesmo negócio</em>. Ligado, o encerrado fica como está e o quadro oferece criar uma nova tentativa com o mesmo contato.</td></tr>
@@ -4020,21 +4024,21 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <div class="conteudo-pagina">
 <h2 id="provedores--visao-geral">Para que serve</h2>
 <p>O ZapSales usa inteligência artificial em <strong>muitos lugares diferentes</strong> — hoje, 32 “pontos”: responder o cliente, medir o clima da conversa, escolher qual agente atende, resumir conversas longas, ouvir áudios e assim por diante. Em <span class="ui">Provedores</span> você vê <strong>qual modelo está atendendo cada ponto</strong> e pode trocar, de uma vez só ou ponto a ponto.</p>
+<p>No alto, a faixa <strong>Sua IA</strong> resume o que importa: quem conversa com o cliente (modelo e provedor), de onde vem a chave (<em>Da empresa</em>, <em>Da instalação</em> ou <em>Falta</em>), em quantas partes o modelo padrão vale e quantos dos três ajudantes opcionais estão em uso. <strong>Está tudo certo?</strong> pede atenção quando não há chave para o provedor do padrão — sem ela o agente não responde ninguém — ou quando alguma parte do sistema traz um aviso; os ajudantes desligados aparecem só como informação, porque são opcionais. A página tem duas partes: <strong>A IA que conversa</strong> (modelo padrão e os grupos de pontos) e <strong>Ajudantes opcionais</strong> (Jev, resposta em áudio e Mapas). No cartão do modelo padrão, uma <strong>recomendação</strong> com o motivo: sem chave, cadastrar a da IA principal; com chave, deixar o padrão como está e só mudar uma parte quando houver razão (custo, privacidade ou modelo próprio). A recomendação nunca troca nada sozinha nem sugere um modelo específico.</p>
 <figure class="print">
-  <img src="img/ia-provedores.png" alt="Tela Provedores de IA com o modelo padrão, o cartão do Jev e a primeira seção de pontos, numerada de 1 a 9" loading="lazy">
-  <figcaption>Provedores de IA: modelo padrão, Jev e os pontos agrupados por papel.</figcaption>
+  <img src="img/ia-provedores.png" alt="Alto da tela Provedores de IA, com a faixa Sua IA, a linha Está tudo certo?, a seção A IA que conversa e o cartão do modelo padrão com a recomendação, numerada de 1 a 7" loading="lazy">
+  <figcaption>O alto de Provedores de IA: a faixa de resumo e o modelo padrão.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Modelo padrão.</strong> Vale em todo ponto que você não configurou individualmente (“hoje, 17 de 32”). Trocar aqui muda todos de uma vez.</li>
+  <li><strong>A faixa de resumo.</strong> Quatro números: <em>Quem conversa com o cliente</em> (modelo e provedor), <em>Chave da IA</em> (<em>Da empresa</em>, <em>Da instalação</em> ou <em>Falta</em>), <em>O padrão vale em</em> (quantas das 32 partes seguem o padrão) e <em>Ajudantes opcionais</em> (quantos dos três estão em uso).</li>
+  <li><strong>Está tudo certo?</strong> Aqui pede atenção, porque falta a chave do provedor do padrão. Abra <em>ver as conferências</em> para ler o motivo.</li>
+  <li><strong>A IA que conversa.</strong> A primeira das duas partes da página. A segunda, <em>Ajudantes opcionais</em>, fica mais abaixo.</li>
+  <li><strong>Modelo padrão.</strong> Vale em todo ponto que você não configurou individualmente (aqui, “31 de 32”). Trocar aqui muda todos de uma vez.</li>
+  <li><strong>A recomendação.</strong> Uma sugestão com o motivo (aqui: cadastrar a chave da IA principal). Ela nunca troca nada sozinha.</li>
   <li><strong>Provedor e modelo</strong> do padrão. Se o catálogo do provedor ainda não foi baixado, o modelo vira um campo de texto.</li>
   <li><strong>Salvar padrão.</strong> Só Administrador.</li>
-  <li><strong>Jev — decisões rápidas.</strong> Veja <a href="#provedores--jev">abaixo</a>.</li>
-  <li><strong>Situação do Jev.</strong> <em>Desligado, Observando, Decidindo, Decidindo sozinho, Parado</em> ou <em>Em pausa</em>.</li>
-  <li><strong>Aviso de saúde e LGPD.</strong> Sempre visível. Se a sua empresa é da área da saúde, as mensagens que o Jev lê podem conter dado sensível: confira o contrato da TypeSafe antes de ligar.</li>
-  <li><strong>Colar a chave.</strong> Abre a janela de Credenciais já no provedor do Jev. Ao lado, <em>Pegar a chave na TypeSafe</em> leva ao site.</li>
-  <li><strong>Seção de pontos.</strong> Os 32 pontos são agrupados por papel (veja abaixo). Cada seção mostra “Usando: …” com os modelos em uso.</li>
-  <li><strong>Configuração avançada.</strong> Abre os cartões de cada ponto da seção, para trocar o modelo individualmente.</li>
 </ol>
+<p>Abaixo do modelo padrão vêm as seções de <strong>pontos</strong>, agrupadas por papel (veja <a href="#provedores--pontos">Os pontos de IA, por papel</a>). Cada seção mostra “Usando: …” com os modelos em uso e um botão <span class="ui">Configuração avançada</span>, que abre os cartões de cada ponto para trocar o modelo individualmente.</p>
 
 <h2 id="provedores--padrao">O modelo padrão</h2>
 <p>Escolha o <strong>provedor</strong> e o <strong>modelo</strong> e clique em <span class="ui">Salvar padrão</span>. O sistema avisa quando o provedor não tem chave utilizável. Três pontos precisam de um modelo <em>especialista</em> (preparar material, buscar no material, ouvir áudio) e <strong>não seguem</strong> o padrão: eles são configurados um a um.</p>
@@ -4060,6 +4064,17 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 
 <h2 id="provedores--jev">O Jev — decisões rápidas</h2>
 <p>O <strong>Jev</strong> é uma segunda IA, da empresa TypeSafe AI, que <strong>não conversa com o cliente</strong>. Ele toma decisões pequenas, baratas e muito rápidas (geralmente em menos de um segundo), ao lado da IA principal. São seis <strong>tarefas</strong>: <em>medir o clima da conversa, perceber tentativa de manipulação, escolher qual agente atende, perceber pedido para falar com uma pessoa, perceber pedido para parar de receber mensagens</em> e <em>ler a resposta ao follow-up</em>.</p>
+<figure class="print">
+  <img src="img/ia-provedores-ajudantes.png" alt="Seção Ajudantes opcionais da tela Provedores de IA, com o cartão do Jev desligado, o aviso de saúde e LGPD e o botão Colar a chave, numerada de 1 a 5" loading="lazy">
+  <figcaption>Ajudantes opcionais: o cartão do Jev, ainda desligado.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Ajudantes opcionais.</strong> A segunda parte da página: o Jev, a resposta em áudio e os Mapas. Nada ali é obrigatório.</li>
+  <li><strong>Jev — decisões rápidas.</strong> O cartão do Jev.</li>
+  <li><strong>Situação do Jev.</strong> <em>Desligado, Observando, Decidindo, Decidindo sozinho, Parado</em> ou <em>Em pausa</em>.</li>
+  <li><strong>Aviso de saúde e LGPD.</strong> Sempre visível. Se a sua empresa é da área da saúde, as mensagens que o Jev lê podem conter dado sensível: confira o contrato da TypeSafe antes de ligar.</li>
+  <li><strong>Colar a chave.</strong> Abre a janela de Credenciais já no provedor do Jev. Ao lado, <em>Pegar a chave na TypeSafe</em> leva ao site.</li>
+</ol>
 <ol class="passos">
   <li>Crie uma conta na TypeSafe AI e coloque crédito (cada mensagem medida custa uma fração de centavo de dólar, cobrada lá). Pegue a chave, que começa com <code>apikey_</code>.</li>
   <li>Clique em <span class="ui">Colar a chave</span> e salve (Administrador). Quando o sistema confere a chave, aparece “✓ Chave conferida com a TypeSafe”.</li>
@@ -4069,7 +4084,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <aside class="nota perigo"><strong>Ligar o Jev envia mensagens reais de clientes para uma empresa nos Estados Unidos.</strong><p>Cada mensagem que o cliente manda vai, uma de cada vez e sem o resto da conversa, para a TypeSafe AI avaliar. O sistema apaga CPF, telefone e e-mail do texto antes de enviar. Com o Jev desligado, nada é enviado. É preciso concordar expressamente na primeira vez, e só o Administrador liga.</p></aside>
 
 <h2 id="provedores--mapas">Mapas (Google)</h2>
-<p>No fim da tela há o cartão <strong>“Mapas (Google)”</strong>. Quando o cliente manda a <em>localização</em> pelo WhatsApp, o sistema pode consultar o Google para o agente ler a rua e a cidade aproximadas, em vez de só as coordenadas. Sem chave, nada muda.</p>
+<p>Em <em>Ajudantes opcionais</em>, depois do Jev e da resposta em áudio, há o cartão <strong>“Mapas (Google)”</strong>. Quando o cliente manda a <em>localização</em> pelo WhatsApp, o sistema pode consultar o Google para o agente ler a rua e a cidade aproximadas, em vez de só as coordenadas. Sem chave, nada muda.</p>
 <ul>
   <li>Cole a <strong>chave da Geocoding API</strong> e clique em <span class="ui">Salvar chave</span>. Crie a chave no Google Cloud com a Geocoding API habilitada e restrinja-a a essa API e ao endereço IP do servidor.</li>
   <li><span class="ui">Testar</span> usa a chave digitada ou a gravada e <strong>chama o Google de verdade</strong>; o resultado diz se funcionou (e o endereço devolvido) ou explica o problema (API desativada, chave recusada, cota, sem resultado, rede).</li>
@@ -4547,6 +4562,13 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <h2 id="uso-ia--visao-geral">Para que serve</h2>
 <p>Esta tela (“Uso de IA”) mostra, para os <strong>últimos 30 dias</strong>, o que a inteligência artificial custa e como ela se comporta. Também é onde se define o <strong>orçamento mensal</strong>: um teto de gasto que pode apenas <em>avisar</em> ou <em>parar a IA</em> quando for atingido.</p>
 <aside class="nota info"><strong>Tudo está em dólar.</strong><p>Os provedores de IA cobram em dólar, e a tela mostra assim (US$), inclusive o orçamento.</p></aside>
+<h2 id="uso-ia--resumo">O resumo no alto da tela</h2>
+<p>A tela abre com a faixa <strong>Seu uso de IA</strong>, com quatro respostas sobre o <strong>mês corrente</strong>: o <strong>gasto do mês</strong>, o <strong>limite do mês</strong>, a <strong>proteção de gasto</strong> e a <strong>medição do gasto</strong>. Os números são os mesmos do cartão de orçamento logo abaixo, e a faixa acompanha quando o administrador edita o limite.</p>
+<ul>
+  <li><strong>Proteção de gasto</strong> diz o que de fato vai acontecer: <em>Nenhuma</em> (sem limite), <em>Só acompanha</em>, <em>Avisa</em> ao passar de N% ou <em>Para a IA</em> ao chegar no limite. Se quem administra a instalação desligou a proteção, ou a deixou só avisando, a faixa mostra isso, porque vale por cima do que foi escolhido aqui.</li>
+  <li><strong>Medição do gasto</strong> é <em>Completa</em> quando todo o gasto do mês teve o preço calculado. É <em>Incompleta</em> quando o produto não sabe o preço de um modelo em uso: o gasto mostrado é menor que o real.</li>
+</ul>
+<p><strong>Está tudo certo?</strong> abre as conferências. Pedem atenção a IA parada por gasto, o gasto acima do ponto de aviso (o percentual que a própria empresa escolheu) ou do limite, e a medição incompleta. Não ter limite é uma escolha e aparece como informação. Se não houver limite e você for administrador, a faixa traz uma única <strong>recomendação</strong>, com o motivo: sem limite a IA continua respondendo mesmo se o gasto disparar. Quem não é administrador vê só o aviso de que o limite é definido por um administrador. A faixa só lê: nada é alterado sozinho.</p>
 <figure class="print">
   <img src="img/ia-uso.png" alt="Tela Uso de IA com o cartão de orçamento mensal, os filtros, os quatro quadros de números e os gráficos, numerados de 1 a 12" loading="lazy">
   <figcaption>Uso de IA numa organização de demonstração.</figcaption>
@@ -5456,6 +5478,10 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <p>É o relatório de “o meu agente está melhorando?”. Em quatro blocos ele responde: <strong>o que o agente aprendeu</strong> no período, <strong>o que fez</strong> com isso, <strong>o que mudou</strong> nos seus negócios e <strong>o que ainda o impede</strong> de render mais. É só leitura: não altera nada, não gasta IA e não envia mensagem.</p>
 <p>Todos os números valem <strong>só para o período escolhido</strong> (por padrão, os últimos 30 dias; no máximo, 90). Para comparar um mês com o outro, mude as datas.</p>
 
+<h2 id="evolucao-ia--resumo">O resumo no alto da tela</h2>
+<p>Antes dos quatro blocos há a faixa <strong>Sua evolução no período</strong>, com quatro números do intervalo escolhido: o que o agente <strong>aprendeu</strong> (regras, melhorias e habilidades), o que ele <strong>usou</strong> (habilidades, consultas aos materiais e encaminhamentos), quantos negócios ele <strong>fechou e perdeu</strong> e o que <strong>está travando</strong>. Ela existe para o que pede ação — as travas, no último bloco — aparecer sem precisar rolar a página.</p>
+<p><strong>Está tudo certo?</strong> pede atenção quando há lacunas, e então leva direto ao bloco <em>O que está travando</em>. Período em que o agente não aprendeu nem usou nada aparece como informação, nunca como erro. “Nenhuma lacuna” quer dizer só que a tela não encontrou nenhuma no que consegue medir; não é um elogio. A faixa só lê e não recomenda nada: o bloco de baixo já diz, linha a linha, o que fazer.</p>
+
 <h2 id="evolucao-ia--aprendeu">1. O que o seu agente aprendeu</h2>
 <figure class="print">
   <img src="img/ia-evolucao-aprendeu.png" alt="Parte superior da Evolução da IA: período analisado, três cartões de aprendizado e a linha do tempo, numerados de 1 a 6" loading="lazy">
@@ -5957,17 +5983,19 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
   <div class="conteudo-pagina">
 <h2 id="recursos-opcionais--visao-geral">Para que serve</h2>
 <p>Muitas coisas no ZapSales se ligam e desligam — cada uma na sua tela. Esta página junta todas num <strong>índice só de leitura</strong>: diz se está ligada, quem decide e <strong>onde</strong> se ajusta. Nada se liga aqui: o botão <span class="ui">Ajustar</span> leva até a tela de cada recurso.</p>
+<p>No alto da página, a faixa <strong>Seus recursos opcionais</strong> resume o mapa em quatro números: <em>Ligados</em>, <em>Desligados</em> (os que a sua empresa pode ligar), <em>Você confere na tela dele</em> (os que mostram o estado só na tela deles, mais os que não deu para ler agora) e <em>Dependem do servidor</em> (os que exigem um módulo que quem administra o servidor não ligou). Cada recurso cai em um só desses grupos, então os quatro números somam o total. A faixa <strong>não chuta</strong>: o que “varia em cada item” ou diz “veja na tela dele” nunca é contado como ligado nem como desligado.</p>
+<p><strong>Está tudo certo?</strong> só pede atenção para o que a empresa pode resolver: <em>não consegui ler o estado</em> de algum recurso. Recurso que depende do servidor aparece só como informação, porque a empresa não consegue ligar o módulo — o passo é pedir a quem administra o servidor. A faixa não faz recomendação: esta tela é um mapa e não opina sobre o que a sua empresa deve ligar.</p>
 <figure class="print">
-  <img src="img/recursos-opcionais.png" alt="Tela Recursos opcionais com a seção Módulos desta instalação e a seção Da sua empresa, numerada de 1 a 6" loading="lazy">
-  <figcaption>A tela Recursos opcionais.</figcaption>
+  <img src="img/recursos-opcionais.png" alt="Alto da tela Recursos opcionais, com a faixa de quatro números, a linha Está tudo certo?, o título Da sua empresa e o primeiro recurso da lista, numerada de 1 a 6" loading="lazy">
+  <figcaption>O alto da tela Recursos opcionais: a faixa de resumo e o começo da lista.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Módulos desta instalação.</strong> O que existe neste servidor.</li>
-  <li><strong>Disponível nesta instalação.</strong> O selo do módulo (verde).</li>
-  <li><strong>Ajustar.</strong> Leva à porta do módulo.</li>
-  <li><strong>Da sua empresa.</strong> O que a empresa decide.</li>
-  <li><strong>Desligado.</strong> O selo de um recurso desligado.</li>
-  <li><strong>Varia em cada item.</strong> (azul) O estado depende de cada funil, número ou agente.</li>
+  <li><strong>A faixa de resumo.</strong> Quatro números — <em>Ligados</em>, <em>Desligados</em>, <em>Você confere na tela dele</em> e <em>Dependem do servidor</em>. Eles somam o total de recursos (neste exemplo, 1 + 9 + 17 + 7 = 34).</li>
+  <li><strong>Está tudo certo?</strong> Diz <em>Tudo certo</em> ou quantas coisas pedem a sua atenção.</li>
+  <li><strong>ver as conferências.</strong> Abre a lista do que foi conferido, uma linha por conferência.</li>
+  <li><strong>Da sua empresa.</strong> O que a empresa decide, em blocos por assunto. O primeiro é <em>Atendimento e equipe</em>; os módulos do servidor ficam no fim da página.</li>
+  <li><strong>Desligado.</strong> O selo de estado de um recurso.</li>
+  <li><strong>Ajustar.</strong> Leva à tela onde aquele recurso se liga ou desliga.</li>
 </ol>
 <p>Cada linha mostra o <strong>nome</strong>, <strong>o que faz</strong>, uma linha pequena “<em>quem decide</em> · <em>padrão</em>” (“Quem administra o servidor”, “Administrador da empresa” ou “Gerente ou administrador”; “Padrão: ligado / desligado / varia”), o <strong>selo de estado</strong> e o botão <span class="ui">Ajustar</span>. O botão só aparece quando a tela de destino aceita o seu papel.</p>
 
@@ -5984,7 +6012,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 </table>
 
 <h2 id="recursos-opcionais--modulos">Módulos desta instalação</h2>
-<p>Cinco módulos opcionais do servidor. Quem os liga é o <strong>dono da instalação</strong> (painel de administração, “Recursos opcionais”). Desligados, somem de todas as empresas.</p>
+<p>Cinco módulos opcionais do servidor. Quem os liga é o <strong>dono da instalação</strong> (painel de administração, “Recursos opcionais”). Desligados, somem de todas as empresas. Esta seção fica no <strong>fim da página</strong>, depois do que a empresa decide, porque a empresa não liga módulo nenhum daqui: só pede.</p>
 <ul>
   <li><strong>Banco de dados externo</strong> — o agente consulta o banco de outro sistema. Veja <a href="#dados-externos">Dados externos</a>.</li>
   <li><strong>Fluxos de atendimento</strong> — a IA conduz um roteiro de perguntas e grava as respostas na ficha do cliente. Veja <a href="#fluxos-de-atendimento">Fluxos de atendimento</a>.</li>
@@ -5994,7 +6022,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 </ul>
 
 <h2 id="recursos-opcionais--da-empresa">Da sua empresa</h2>
-<p>Vinte e cinco recursos que a empresa decide. Resumo, com onde se ajusta:</p>
+<p>Os recursos que a empresa decide, em seis blocos com título: <strong>Atendimento e equipe</strong>, <strong>Funil e agenda</strong>, <strong>Vendas e anúncios</strong>, <strong>IA e conhecimento</strong>, <strong>Voz e telefonia</strong> e <strong>Segurança e menus</strong>. A tabela abaixo é o resumo, com onde se ajusta:</p>
 <table class="tabela">
   <thead><tr><th>Recurso</th><th>O que faz</th><th>Quem decide · padrão</th><th>Onde ajustar</th></tr></thead>
   <tbody>
@@ -6090,9 +6118,21 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <p>Toda organização nova já nasce com três tipos: <strong>Consulta</strong>, <strong>Reunião</strong> e <strong>Atendimento</strong>, de 30 minutos cada. Eles vêm <em>sem responsável</em> — e um tipo sem responsável <strong>não aparece para marcar</strong>.</p>
 <aside class="nota atencao"><strong>Sem responsável, não há horário.</strong><p>Escolha, em cada tipo, <em>Quem atende</em>. Essa pessoa também precisa ter publicado a jornada de atendimento (os dias e as horas em que atende), em <em>Equipe › Atendimento</em>. Sem as duas coisas a Agenda avisa “A jornada de atendimento ainda não foi publicada”.</p></aside>
 
+<h2 id="tipos-de-agendamento--resumo">O resumo no alto da tela</h2>
+<p>A tela abre com a faixa <strong>Seus tipos de agendamento</strong>, que responde quatro perguntas antes da lista:</p>
+<ul>
+  <li><strong>Tipos ativos</strong> — quantos aparecem para marcar, e quantos estão desativados.</li>
+  <li><strong>Prontos para marcar</strong> — quantos dos ativos têm <em>responsável</em> e esse responsável tem <em>horários de atendimento publicados</em>. É a mesma pergunta que a Agenda faz antes de oferecer um horário. A conta não vê dias fechados nem intervalos entre horários: “pronto” não promete que haja vaga.</li>
+  <li><strong>Pedem ajuste</strong> — os que não têm responsável ou cujo responsável ainda não publicou horários. Se a leitura dos horários falhar, o tipo não conta como pronto nem como “sem horários”: aparece como “não consegui ler agora”.</li>
+  <li><strong>Avisam o cliente</strong> — quantos tipos ativos têm o lembrete pelo WhatsApp ligado.</li>
+</ul>
+<p>Logo abaixo, <strong>Está tudo certo?</strong> abre as conferências, uma a uma, com o motivo em palavras: tem tipo ativo? todos têm responsável? todos têm horários publicados (com o link <em>Abrir Equipe › Atendimento</em>)? e o aviso ao cliente. Só pedem atenção o que a empresa pode resolver; o aviso ao cliente é escolha sua e aparece como informação. Cada tipo da lista também mostra a sua situação: <em>Pronto para marcar</em>, <em>responsável sem horários publicados — publicar</em> (um link para Equipe › Atendimento) ou <em>sem responsável — definir quem atende</em>.</p>
+<p>Há uma única <strong>recomendação</strong>, em violeta e com o motivo: ligar o aviso ao cliente nos tipos que ainda não avisam, porque o lembrete sai sozinho pelo WhatsApp e ajuda o cliente a lembrar do horário ou a remarcar a tempo. Ela some quando todo tipo ativo já avisa. Nada é ligado sozinho: a faixa só lê.</p>
+<p>As cinco seções de regras (agendas Google, confirmação de presença, clientes pela agenda, agenda dos colegas e dias fora da rotina) ficam <strong>abaixo da lista</strong>, sob o título <strong>Regras da agenda</strong>: valem para a agenda inteira, não para um tipo só.</p>
+
 <figure class="print">
   <img src="img/tipos-de-agendamento.png" alt="Tela Tipos de agendamento com as seções Suas agendas Google, Confirmação de presença, Clientes pela agenda, Agenda dos colegas, Dias fora da rotina e a lista de tipos, numerada de 1 a 9" loading="lazy">
-  <figcaption>Tipos de agendamento: cinco seções de regras e, no fim, a lista de tipos.</figcaption>
+  <figcaption>Tipos de agendamento (imagem anterior ao resumo no alto): hoje a faixa e a lista de tipos vêm primeiro, e as cinco seções de regras ficam abaixo, em <strong>Regras da agenda</strong>.</figcaption>
 </figure>
 <ol class="legenda">
   <li><strong>Suas agendas Google.</strong> Só para quem tem conta do Google conectada. Para cada conta, escolha quais agendas contam como “ocupado” e em qual delas os novos compromissos são publicados. Sem conexão, a seção só mostra o link <em>Conecte sua conta pela Agenda</em>. Veja <a href="#tipos-de-agendamento--google">abaixo</a>.</li>
@@ -6382,25 +6422,36 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <p>Quando um negócio que <strong>veio de um anúncio</strong> é marcado como <strong>ganho</strong>, esta função avisa a plataforma que trouxe o cliente (Meta ou Google Ads) <strong>qual foi o valor da venda</strong>. É esse retorno que ensina o anúncio a procurar mais gente parecida com quem comprou. Também é onde você marca a <strong>origem de quem chega pelo site</strong>.</p>
 <aside class="nota perigo"><strong>Isto escreve na sua conta de anúncios e pode distorcer a otimização.</strong><p>O evento de compra real ensina o otimizador da Meta (e do Google). Enviar valor errado ou eventos falsos prejudica quem paga a mídia. <strong>Não há como apagar do lado da Meta um evento já enviado</strong> — trate como irreversível. Não gasta verba diretamente e não manda mensagem a clientes. Use o <em>código de teste</em> enquanto conferir.</p></aside>
 <aside class="nota atencao"><strong>Esta página foi fotografada sem nenhuma conexão salva.</strong><p>Para não enviar nada de verdade a uma plataforma de anúncios, a conta de demonstração <strong>não tem token nem conexão</strong>. As telas abaixo estão no estado inicial; o restante foi descrito a partir do código.</p></aside>
+<p>No alto da página, acima das abas, a faixa <strong>Suas conversões</strong> resume o estado: <em>Meta Ads</em> e <em>Google Ads</em> (<em>Enviando</em>, <em>Em teste</em>, <em>Pausada</em>, <em>Não conectada</em> ou, só no Google, <em>Indisponível</em> quando a instalação ainda não tem as credenciais), quantas vendas a plataforma já aceitou (<em>Enviadas</em>) e quantas <em>Não reportadas</em> (a contagem para em 20: “20+” quer dizer 20 ou mais). <strong>Está tudo certo?</strong> pede atenção só para fato — plataforma conectada e pausada, código de teste ligado e venda pendente; plataforma não conectada e captura de origem desligada aparecem só como informação, porque são opcionais. Abaixo da faixa, uma <strong>recomendação</strong> com o motivo, uma de cada vez: conectar a plataforma em que você anuncia, apagar o código de teste, religar o envio, conferir as pendências ou ligar o endereço de captura. Ela nunca grava nada sozinha.</p>
 <p>A página tem <strong>quatro abas</strong>: <em>Configuração</em> (padrão), <em>Histórico de envios</em>, <em>Diagnóstico</em> e <em>Links rastreáveis</em>.</p>
+<figure class="print">
+  <img src="img/conversoes-config.png" alt="Alto da tela Conversões, com a faixa Suas conversões, a linha Está tudo certo?, a recomendação, as quatro abas e o título Mandar as vendas de volta, numerada de 1 a 5" loading="lazy">
+  <figcaption>O alto de Conversões, antes de conectar a Meta.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>A faixa Suas conversões.</strong> Quatro números: o estado da <em>Meta Ads</em> (aqui, <em>Não conectada</em>), o estado do <em>Google Ads</em> (aqui, <em>Indisponível</em>, porque a instalação ainda não tem as credenciais do Google), <em>Enviadas</em> e <em>Não reportadas</em>.</li>
+  <li><strong>Está tudo certo?</strong> Aqui diz <em>Tudo certo</em>: plataforma não conectada é só informação, porque conectar é opcional. <em>ver as conferências</em> mostra o que foi conferido.</li>
+  <li><strong>A recomendação.</strong> Uma sugestão por vez, com o motivo. Aqui: conectar a plataforma em que você anuncia. Ela nunca grava nada sozinha.</li>
+  <li><strong>As quatro abas.</strong> <em>Configuração</em> (a aberta), <em>Histórico de envios</em>, <em>Diagnóstico</em> e <em>Links rastreáveis</em>.</li>
+  <li><strong>Mandar as vendas de volta.</strong> O primeiro bloco da aba Configuração, com o formulário da Meta.</li>
+</ol>
 
 <h2 id="conversoes--configuracao">Aba Configuração</h2>
 <figure class="print">
-  <img src="img/conversoes-config.png" alt="Aba Configuração de Conversões com as quatro abas e o formulário de conexão com a Meta, numerada de 1 a 9" loading="lazy">
-  <figcaption>A aba Configuração, antes de conectar a Meta.</figcaption>
+  <img src="img/conversoes-formulario.png" alt="Formulário Meta Ads da aba Configuração de Conversões, com os campos de identificador, token e código de teste, o interruptor de reportar vendas, o botão Salvar conexão e o cartão do Google Ads, numerada de 1 a 7" loading="lazy">
+  <figcaption>O formulário de conexão com a Meta, antes de conectar.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Configuração.</strong> A aba padrão.</li>
-  <li><strong>Histórico de envios.</strong></li>
-  <li><strong>Diagnóstico.</strong></li>
-  <li><strong>Links rastreáveis.</strong></li>
+  <li><strong>Meta Ads.</strong> O cartão da conexão com a Meta.</li>
   <li><strong>Identificador do destino de conversões.</strong> Só números, de 5 a 64 dígitos. É a “fonte de dados” (dataset/pixel) do gerenciador de anúncios que recebe as conversões.</li>
   <li><strong>Token de acesso.</strong> De 20 a 1.000 caracteres. Fica guardado criptografado e <strong>nunca volta para a tela</strong>.</li>
   <li><strong>Código de teste (opcional).</strong> Enquanto preenchido, as vendas vão marcadas como teste e <strong>não contam para a otimização</strong>. Apague quando terminar de conferir.</li>
   <li><strong>Reportar vendas automaticamente.</strong> “Desligar pausa o envio e mantém a credencial gravada.”</li>
   <li><strong>Salvar conexão.</strong> Só habilita com identificador e token. Sucesso: “Conexão salva.”.</li>
+  <li><strong>Google Ads.</strong> Sem as credenciais do Google na instalação, o cartão explica que não está disponível e que não é nada que você tenha feito.</li>
 </ol>
-<aside class="nota atencao"><strong>Numa primeira conexão, o interruptor nasce desligado.</strong><p>Ligue “Reportar vendas automaticamente” <em>antes</em> de salvar, senão a conexão fica gravada e pausada (“O envio está pausado. As vendas continuam sendo registradas aqui, mas não vão para a plataforma…”). Não existe botão de remover a conexão da Meta: só pausar. Com código de teste, aparece o aviso “Modo de teste ligado…”.</p></aside>
+<aside class="nota atencao"><strong>Numa primeira conexão, o interruptor nasce desligado.</strong><p>Ligue “Reportar vendas automaticamente” <em>antes</em> de salvar, senão a conexão fica gravada e pausada — a faixa <em>Suas conversões</em> passa a mostrar a Meta como <em>Pausada</em> e recomenda religar. Não existe botão de remover a conexão da Meta: só pausar. Com código de teste, a faixa mostra a Meta como <em>Em teste</em> e recomenda apagar o código quando terminar de conferir.</p></aside>
+<p>Os blocos da aba têm título: <strong>Mandar as vendas de volta</strong> (Meta, Google e as regras por etapa), <strong>Conferir o que não foi enviado</strong> (a lista de vendas não reportadas) e <strong>Saber de onde veio o cliente</strong> (captura de origem do Google, script do site e o formulário de captura da Meta). O formulário da conexão com a Meta agora abre com o nome <em>Meta Ads</em>.</p>
 <h3>O que mais aparece nesta aba</h3>
 <ul>
   <li><strong>Página e conta do WhatsApp Business</strong> (só com a conexão Meta feita): para vendas de anúncio “clique-para-WhatsApp”, a Meta exige o ID da <em>Página</em> ou o da <em>conta do WhatsApp Business</em> (um ou outro, 5 a 64 dígitos). Sem nenhum, ela recusa a venda.</li>
@@ -7831,7 +7882,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <aside class="nota atencao"><strong>Instalar é para sempre.</strong><p>Cria as tabelas do módulo no banco compartilhado (um banco só, esquema <code>public</code>), de forma idempotente, e fica na auditoria (<code>modulo.instalado</code>). <strong>A tela não desinstala nem suspende</strong>; considere a ação irreversível pela interface. Depois de instalado, cada empresa vê a porta do módulo (veja <a href="#honorarios">Honorários</a>). <em>Esta instalação não foi acionada nas capturas.</em> Quem não é o dono do servidor recebe: “Só o administrador da instalação pode gerenciar os pacotes disponíveis.”</p></aside>
   </div>
 </article>
-    <footer class="rodape"><div class="rodape-marca"><svg class="simbolo" viewBox="0 0 216 216" aria-hidden="true"><use href="#lg-simbolo"/></svg><strong>ZapSales</strong><span>by</span><svg class="fut" viewBox="0 0 654 115" role="img" aria-label="Futuristas"><use href="#lg-futuristas" width="654" height="115"/></svg></div>Manual do ZapSales · gerado em 18 de outubro de 2026 a partir do código na revisão <code>410a39f</code>. Os prints vêm de uma organização de demonstração, com dados fictícios.</footer>
+    <footer class="rodape"><div class="rodape-marca"><svg class="simbolo" viewBox="0 0 216 216" aria-hidden="true"><use href="#lg-simbolo"/></svg><strong>ZapSales</strong><span>by</span><svg class="fut" viewBox="0 0 654 115" role="img" aria-label="Futuristas"><use href="#lg-futuristas" width="654" height="115"/></svg></div>Manual do ZapSales · gerado em 30 de outubro de 2026 a partir do código na revisão <code>8c1c2df</code>. Os prints vêm de uma organização de demonstração, com dados fictícios.</footer>
   </main>
   <aside class="nesta-pagina" id="toc-local" aria-label="Nesta página"></aside>
 </div>
