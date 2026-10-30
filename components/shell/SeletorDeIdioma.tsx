@@ -86,7 +86,10 @@ export function SeletorDeIdioma() {
           variant="ghost"
           size="icon"
           disabled={salvando}
-          aria-label={`${t("Idioma")}: ${emVigor.nomeNativo}`}
+          // O texto visível é só a sigla ("PT"). WCAG 2.5.3 (rótulo no nome): o nome
+          // acessível tem de CONTER o que se vê, senão quem aciona por voz ("clicar
+          // em PT") ou por leitor de tela não acha o botão. Axe 4.14 passou a cobrar.
+          aria-label={`${emVigor.rotuloCurto} — ${t("Idioma")}: ${emVigor.nomeNativo}`}
           data-testid="seletor-de-idioma"
         >
           <span className="text-xs font-semibold tabular-nums">
