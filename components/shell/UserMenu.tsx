@@ -36,7 +36,16 @@ export function UserMenu() {
       <ThemeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="rounded-full" aria-label={t("Menu do usuário")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            // O texto visível são as iniciais do avatar; o nome acessível as inclui
+            // (WCAG 2.5.3, rótulo no nome — o axe 4.14 passou a cobrar). As iniciais
+            // vão soltas, antes do texto: medido com o axe 4.14 num Chrome real, entre
+            // parênteses ("Menu do usuário (EA)") ainda reprova.
+            aria-label={`${initials(user.full_name, user.email)} — ${t("Menu do usuário")}`}
+          >
             <Avatar className="h-8 w-8">
               {user.avatar_url && <AvatarImage src={user.avatar_url} alt="" />}
               <AvatarFallback>{initials(user.full_name, user.email)}</AvatarFallback>
