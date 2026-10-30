@@ -11,23 +11,26 @@
 </ul>
 <p><strong>Está tudo certo?</strong> abre as conferências. Pedem atenção a IA parada por gasto, o gasto acima do ponto de aviso (o percentual que a própria empresa escolheu) ou do limite, e a medição incompleta. Não ter limite é uma escolha e aparece como informação. Se não houver limite e você for administrador, a faixa traz uma única <strong>recomendação</strong>, com o motivo: sem limite a IA continua respondendo mesmo se o gasto disparar. Quem não é administrador vê só o aviso de que o limite é definido por um administrador. A faixa só lê: nada é alterado sozinho.</p>
 <figure class="print">
-  <img src="img/ia-uso.png" alt="Tela Uso de IA com o cartão de orçamento mensal, os filtros, os quatro quadros de números e os gráficos, numerados de 1 a 12" loading="lazy">
-  <figcaption>Uso de IA numa organização de demonstração.</figcaption>
+  <img src="img/ia-uso.png" alt="Alto da tela Uso de IA, com a faixa de resumo, a linha Está tudo certo?, o cartão de orçamento mensal, os filtros e os quatro quadros de números, numerada de 1 a 11" loading="lazy">
+  <figcaption>O alto de Uso de IA, numa organização que ainda não gastou nada.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Orçamento mensal de IA.</strong> O gasto do mês corrente, com a barra de progresso. Fica azul, amarela ao passar do percentual de aviso e vermelha ao chegar a 100%.</li>
+  <li><strong>A faixa de resumo.</strong> Quatro respostas sobre o mês: <em>Gasto do mês</em>, <em>Limite do mês</em>, <em>Proteção de gasto</em> (aqui, <em>Só acompanha</em>) e <em>Medição do gasto</em> (aqui, <em>Completa</em>).</li>
+  <li><strong>Está tudo certo?</strong> Aqui diz <em>Tudo certo</em>. <em>ver as conferências</em> abre a lista.</li>
+  <li><strong>Orçamento mensal de IA.</strong> O gasto do mês corrente, com a barra de progresso. Fica azul, amarela ao passar do percentual de aviso e vermelha ao chegar a 100%. Mostra “US$ 0,00 gastos de US$ 50,00”, mais o percentual do limite e a frase do que acontece ao chegar nele.</li>
   <li><strong>Editar limite.</strong> Só para Administrador. Veja <a href="#uso-ia--orcamento">Definir o orçamento</a>.</li>
-  <li><strong>Faixa amarela de aviso.</strong> Aparece quando algo torna o número menos confiável. Aqui: o produto ainda não sabe o preço do modelo em uso, então o gasto mostrado é <em>menor que o real</em> e a parada no limite pode não acontecer. Enquanto isso, acompanhe o gasto no painel do provedor.</li>
-  <li><strong>Gasto do mês.</strong> “US$ 1,60 gastos de US$ 5,00”, mais o percentual do limite e a frase do que acontece ao chegar nele.</li>
   <li><strong>Filtro Agente.</strong> Todos, ou um agente específico.</li>
   <li><strong>Filtro Tipo de uso.</strong> Veja o aviso abaixo.</li>
   <li><strong>De / Até.</strong> Mudam o período (por padrão, 30 dias; no máximo, 90). Os filtros ficam no endereço da página.</li>
   <li><strong>Custo no período.</strong></li>
   <li><strong>Atendimentos com IA.</strong> Na verdade, o número de <em>chamadas</em> à IA (inclusive as que falharam), não de conversas: um atendimento gera várias.</li>
   <li><strong>Passaram para uma pessoa.</strong> A proporção entre as vezes que a IA passou o atendimento para uma pessoa e as mensagens recebidas. Quanto mais alto, mais a IA precisou de ajuda.</li>
-  <li><strong>Tempo de resposta.</strong> O pior caso comum (p95), com a mediana: “a maioria responde em 4,2 s; este é o pior caso comum”.</li>
-  <li><strong>Gráficos.</strong> Quatro linhas por dia: quanto gastou (US$), volume de texto processado, tempo de resposta (a mediana e o pior caso comum) e quanto foi para uma pessoa (%).</li>
+  <li><strong>Tempo de resposta.</strong> O pior caso comum (p95), com a mediana: “a maioria responde em N s; este é o pior caso comum”.</li>
 </ol>
+<ul>
+  <li><strong>Faixa amarela de aviso.</strong> Aparece, acima dos filtros, quando algo torna o número menos confiável — por exemplo, quando o produto ainda não sabe o preço do modelo em uso: o gasto mostrado é <em>menor que o real</em> e a parada no limite pode não acontecer. Enquanto isso, acompanhe o gasto no painel do provedor.</li>
+  <li><strong>Gráficos.</strong> Abaixo dos quadros, quatro gráficos por dia: quanto gastou (US$), volume de texto processado, tempo de resposta (a mediana e o pior caso comum) e quanto foi para uma pessoa (%).</li>
+</ul>
 <aside class="nota atencao"><strong>O filtro “Tipo de uso” usa nomes técnicos antigos.</strong><p>Ele oferece nomes como <code>bot_respond</code> ou <code>sentiment_classify</code> e não inclui o tipo principal (a resposta ao cliente). Filtrar por um tipo que não tem registros mostra “Sem dados”. Se um filtro devolver vazio, volte para “Todas”.</p></aside>
 
 <h2 id="orcamento">Definir o orçamento</h2>

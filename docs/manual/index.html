@@ -4570,23 +4570,26 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 </ul>
 <p><strong>Está tudo certo?</strong> abre as conferências. Pedem atenção a IA parada por gasto, o gasto acima do ponto de aviso (o percentual que a própria empresa escolheu) ou do limite, e a medição incompleta. Não ter limite é uma escolha e aparece como informação. Se não houver limite e você for administrador, a faixa traz uma única <strong>recomendação</strong>, com o motivo: sem limite a IA continua respondendo mesmo se o gasto disparar. Quem não é administrador vê só o aviso de que o limite é definido por um administrador. A faixa só lê: nada é alterado sozinho.</p>
 <figure class="print">
-  <img src="img/ia-uso.png" alt="Tela Uso de IA com o cartão de orçamento mensal, os filtros, os quatro quadros de números e os gráficos, numerados de 1 a 12" loading="lazy">
-  <figcaption>Uso de IA numa organização de demonstração.</figcaption>
+  <img src="img/ia-uso.png" alt="Alto da tela Uso de IA, com a faixa de resumo, a linha Está tudo certo?, o cartão de orçamento mensal, os filtros e os quatro quadros de números, numerada de 1 a 11" loading="lazy">
+  <figcaption>O alto de Uso de IA, numa organização que ainda não gastou nada.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Orçamento mensal de IA.</strong> O gasto do mês corrente, com a barra de progresso. Fica azul, amarela ao passar do percentual de aviso e vermelha ao chegar a 100%.</li>
+  <li><strong>A faixa de resumo.</strong> Quatro respostas sobre o mês: <em>Gasto do mês</em>, <em>Limite do mês</em>, <em>Proteção de gasto</em> (aqui, <em>Só acompanha</em>) e <em>Medição do gasto</em> (aqui, <em>Completa</em>).</li>
+  <li><strong>Está tudo certo?</strong> Aqui diz <em>Tudo certo</em>. <em>ver as conferências</em> abre a lista.</li>
+  <li><strong>Orçamento mensal de IA.</strong> O gasto do mês corrente, com a barra de progresso. Fica azul, amarela ao passar do percentual de aviso e vermelha ao chegar a 100%. Mostra “US$ 0,00 gastos de US$ 50,00”, mais o percentual do limite e a frase do que acontece ao chegar nele.</li>
   <li><strong>Editar limite.</strong> Só para Administrador. Veja <a href="#uso-ia--orcamento">Definir o orçamento</a>.</li>
-  <li><strong>Faixa amarela de aviso.</strong> Aparece quando algo torna o número menos confiável. Aqui: o produto ainda não sabe o preço do modelo em uso, então o gasto mostrado é <em>menor que o real</em> e a parada no limite pode não acontecer. Enquanto isso, acompanhe o gasto no painel do provedor.</li>
-  <li><strong>Gasto do mês.</strong> “US$ 1,60 gastos de US$ 5,00”, mais o percentual do limite e a frase do que acontece ao chegar nele.</li>
   <li><strong>Filtro Agente.</strong> Todos, ou um agente específico.</li>
   <li><strong>Filtro Tipo de uso.</strong> Veja o aviso abaixo.</li>
   <li><strong>De / Até.</strong> Mudam o período (por padrão, 30 dias; no máximo, 90). Os filtros ficam no endereço da página.</li>
   <li><strong>Custo no período.</strong></li>
   <li><strong>Atendimentos com IA.</strong> Na verdade, o número de <em>chamadas</em> à IA (inclusive as que falharam), não de conversas: um atendimento gera várias.</li>
   <li><strong>Passaram para uma pessoa.</strong> A proporção entre as vezes que a IA passou o atendimento para uma pessoa e as mensagens recebidas. Quanto mais alto, mais a IA precisou de ajuda.</li>
-  <li><strong>Tempo de resposta.</strong> O pior caso comum (p95), com a mediana: “a maioria responde em 4,2 s; este é o pior caso comum”.</li>
-  <li><strong>Gráficos.</strong> Quatro linhas por dia: quanto gastou (US$), volume de texto processado, tempo de resposta (a mediana e o pior caso comum) e quanto foi para uma pessoa (%).</li>
+  <li><strong>Tempo de resposta.</strong> O pior caso comum (p95), com a mediana: “a maioria responde em N s; este é o pior caso comum”.</li>
 </ol>
+<ul>
+  <li><strong>Faixa amarela de aviso.</strong> Aparece, acima dos filtros, quando algo torna o número menos confiável — por exemplo, quando o produto ainda não sabe o preço do modelo em uso: o gasto mostrado é <em>menor que o real</em> e a parada no limite pode não acontecer. Enquanto isso, acompanhe o gasto no painel do provedor.</li>
+  <li><strong>Gráficos.</strong> Abaixo dos quadros, quatro gráficos por dia: quanto gastou (US$), volume de texto processado, tempo de resposta (a mediana e o pior caso comum) e quanto foi para uma pessoa (%).</li>
+</ul>
 <aside class="nota atencao"><strong>O filtro “Tipo de uso” usa nomes técnicos antigos.</strong><p>Ele oferece nomes como <code>bot_respond</code> ou <code>sentiment_classify</code> e não inclui o tipo principal (a resposta ao cliente). Filtrar por um tipo que não tem registros mostra “Sem dados”. Se um filtro devolver vazio, volte para “Todas”.</p></aside>
 
 <h2 id="uso-ia--orcamento">Definir o orçamento</h2>
@@ -5484,12 +5487,14 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 
 <h2 id="evolucao-ia--aprendeu">1. O que o seu agente aprendeu</h2>
 <figure class="print">
-  <img src="img/ia-evolucao-aprendeu.png" alt="Parte superior da Evolução da IA: período analisado, três cartões de aprendizado e a linha do tempo, numerados de 1 a 6" loading="lazy">
-  <figcaption>O período analisado e o bloco “O que seu agente aprendeu”.</figcaption>
+  <img src="img/ia-evolucao-aprendeu.png" alt="Parte superior da Evolução da IA: período analisado, faixa de resumo com a linha Está tudo certo?, três cartões de aprendizado e a linha do tempo, numerados de 1 a 8" loading="lazy">
+  <figcaption>O período analisado, a faixa de resumo e o bloco “O que seu agente aprendeu”.</figcaption>
 </figure>
 <ol class="legenda">
   <li><strong>Período analisado.</strong> Define o intervalo de todos os números abaixo.</li>
   <li><strong>De / Até.</strong> As datas do período.</li>
+  <li><strong>A faixa de resumo.</strong> Quatro números do período: <em>O agente aprendeu</em>, <em>O agente usou</em>, <em>Fechados / perdidos</em> e <em>Está travando</em> (aqui, 1).</li>
+  <li><strong>Está tudo certo?</strong> Aqui pede atenção, porque há uma lacuna, e leva ao bloco <em>O que está travando</em>. <em>ver as conferências</em> abre a lista.</li>
   <li><strong>Regras que você ensinou.</strong> Quantas instruções foram publicadas na <a href="#memoria">Memória da IA</a> (conta também os aprendizados, de qualquer situação, criados no período).</li>
   <li><strong>Melhorias que você aprovou.</strong> Sugestões que o sistema tirou dos próprios atendimentos e que você revisou e aceitou.</li>
   <li><strong>Habilidades instaladas.</strong> <a href="#skills">Skills</a> instaladas ou atualizadas no período.</li>
@@ -6131,20 +6136,36 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <p>As cinco seções de regras (agendas Google, confirmação de presença, clientes pela agenda, agenda dos colegas e dias fora da rotina) ficam <strong>abaixo da lista</strong>, sob o título <strong>Regras da agenda</strong>: valem para a agenda inteira, não para um tipo só.</p>
 
 <figure class="print">
-  <img src="img/tipos-de-agendamento.png" alt="Tela Tipos de agendamento com as seções Suas agendas Google, Confirmação de presença, Clientes pela agenda, Agenda dos colegas, Dias fora da rotina e a lista de tipos, numerada de 1 a 9" loading="lazy">
-  <figcaption>Tipos de agendamento (imagem anterior ao resumo no alto): hoje a faixa e a lista de tipos vêm primeiro, e as cinco seções de regras ficam abaixo, em <strong>Regras da agenda</strong>.</figcaption>
+  <img src="img/tipos-de-agendamento.png" alt="Alto da tela Tipos de agendamento, com a faixa de resumo, a linha Está tudo certo?, a recomendação, o botão Novo tipo de agendamento, a lista de tipos e o título Regras da agenda, numerada de 1 a 10" loading="lazy">
+  <figcaption>O alto de Tipos de agendamento: a faixa de resumo e a lista de tipos.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Suas agendas Google.</strong> Só para quem tem conta do Google conectada. Para cada conta, escolha quais agendas contam como “ocupado” e em qual delas os novos compromissos são publicados. Sem conexão, a seção só mostra o link <em>Conecte sua conta pela Agenda</em>. Veja <a href="#tipos-de-agendamento--google">abaixo</a>.</li>
-  <li><strong>Confirmação de presença.</strong> Três prazos, em minutos. Veja <a href="#tipos-de-agendamento--presenca">abaixo</a>.</li>
-  <li><strong>Clientes pela agenda.</strong> Um interruptor, desligado por padrão: “Quem tem horário marcado vira cliente”.</li>
-  <li><strong>Agenda dos colegas.</strong> Um interruptor, ligado por padrão: “Atendentes podem mexer na agenda dos colegas”.</li>
-  <li><strong>Dias fora da rotina.</strong> Feche um dia (feriado, férias) ou abra um dia que a jornada semanal não cobre.</li>
+  <li><strong>Como funciona.</strong> Painel de ajuda.</li>
+  <li><strong>A faixa de resumo.</strong> Quatro números: <em>Tipos ativos</em>, <em>Prontos para marcar</em>, <em>Pedem ajuste</em> e <em>Avisam o cliente</em>. Neste exemplo, os três tipos que toda organização nova traz estão ativos, nenhum está pronto e os três pedem ajuste.</li>
+  <li><strong>Está tudo certo?</strong> Aqui pede atenção: os responsáveis ainda não publicaram horários de atendimento. <em>ver as conferências</em> abre a lista, com o atalho <em>Abrir Equipe › Atendimento</em>.</li>
+  <li><strong>A recomendação.</strong> Uma só, com o motivo: ligar o aviso ao cliente. Ela some quando todo tipo ativo já avisa.</li>
   <li><strong>Novo tipo de agendamento.</strong> Abre o formulário de criação.</li>
-  <li><strong>A lista de tipos.</strong> Cada linha mostra o nome, o selo da categoria, a duração e o local.</li>
+  <li><strong>Um tipo da lista.</strong> Cada linha mostra o nome, o selo da categoria, a duração, o local e a situação do tipo.</li>
+  <li><strong>A situação do tipo.</strong> Aqui, “responsável sem horários publicados — publicar”, um link para Equipe › Atendimento.</li>
   <li><strong>Editar.</strong> Abre o formulário de edição dentro da própria linha.</li>
   <li><strong>Desativar.</strong> Tira o tipo da tela de marcar sem apagá-lo. Um tipo desativado vira <em>Reativar</em>.</li>
+  <li><strong>Regras da agenda.</strong> As regras que valem para a agenda inteira ficam abaixo da lista.</li>
 </ol>
+<figure class="print">
+  <img src="img/tipos-de-agendamento-regras.png" alt="Seção Regras da agenda da tela Tipos de agendamento, com os cartões Suas agendas Google e Confirmação de presença, numerada de 1 a 3" loading="lazy">
+  <figcaption>As Regras da agenda: as duas primeiras seções.</figcaption>
+</figure>
+<ol class="legenda">
+  <li><strong>Regras da agenda.</strong> Valem para a agenda inteira, não para um tipo só.</li>
+  <li><strong>Suas agendas Google.</strong> Só para quem tem conta do Google conectada. Para cada conta, escolha quais agendas contam como “ocupado” e em qual delas os novos compromissos são publicados. Sem conexão, a seção só mostra o link <em>Conecte sua conta pela Agenda</em>. Veja <a href="#tipos-de-agendamento--google">abaixo</a>.</li>
+  <li><strong>Confirmação de presença.</strong> Três prazos, em minutos, e o botão <span class="ui">Salvar prazos</span>. Veja <a href="#tipos-de-agendamento--presenca">abaixo</a>.</li>
+</ol>
+<p>Mais abaixo, na mesma área, ficam as outras três regras:</p>
+<ul>
+  <li><strong>Clientes pela agenda.</strong> Um interruptor, desligado por padrão: “Quem tem horário marcado vira cliente”. Veja <a href="#tipos-de-agendamento--clientes">abaixo</a>.</li>
+  <li><strong>Agenda dos colegas.</strong> Um interruptor, ligado por padrão: “Atendentes podem mexer na agenda dos colegas”. Veja <a href="#tipos-de-agendamento--colegas">abaixo</a>.</li>
+  <li><strong>Dias fora da rotina.</strong> Feche um dia (feriado, férias) ou abra um dia que a jornada semanal não cobre. Veja <a href="#tipos-de-agendamento--dias">abaixo</a>.</li>
+</ul>
 
 <h2 id="tipos-de-agendamento--tipos">Criar e editar um tipo</h2>
 <figure class="print">
@@ -7882,7 +7903,7 @@ table.tabela{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:.9
 <aside class="nota atencao"><strong>Instalar é para sempre.</strong><p>Cria as tabelas do módulo no banco compartilhado (um banco só, esquema <code>public</code>), de forma idempotente, e fica na auditoria (<code>modulo.instalado</code>). <strong>A tela não desinstala nem suspende</strong>; considere a ação irreversível pela interface. Depois de instalado, cada empresa vê a porta do módulo (veja <a href="#honorarios">Honorários</a>). <em>Esta instalação não foi acionada nas capturas.</em> Quem não é o dono do servidor recebe: “Só o administrador da instalação pode gerenciar os pacotes disponíveis.”</p></aside>
   </div>
 </article>
-    <footer class="rodape"><div class="rodape-marca"><svg class="simbolo" viewBox="0 0 216 216" aria-hidden="true"><use href="#lg-simbolo"/></svg><strong>ZapSales</strong><span>by</span><svg class="fut" viewBox="0 0 654 115" role="img" aria-label="Futuristas"><use href="#lg-futuristas" width="654" height="115"/></svg></div>Manual do ZapSales · gerado em 30 de outubro de 2026 a partir do código na revisão <code>8c1c2df</code>. Os prints vêm de uma organização de demonstração, com dados fictícios.</footer>
+    <footer class="rodape"><div class="rodape-marca"><svg class="simbolo" viewBox="0 0 216 216" aria-hidden="true"><use href="#lg-simbolo"/></svg><strong>ZapSales</strong><span>by</span><svg class="fut" viewBox="0 0 654 115" role="img" aria-label="Futuristas"><use href="#lg-futuristas" width="654" height="115"/></svg></div>Manual do ZapSales · gerado em 30 de outubro de 2026 a partir do código na revisão <code>4176e0a</code>. Os prints vêm de uma organização de demonstração, com dados fictícios.</footer>
   </main>
   <aside class="nesta-pagina" id="toc-local" aria-label="Nesta página"></aside>
 </div>
