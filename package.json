@@ -120,7 +120,7 @@
     "@types/react-dom": "^19.3.0",
     "@types/web-push": "^3.6.4",
     "@types/ws": "^8.18.2",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^10.13.0",
     "eslint-config-next": "^16.4.3",
     "jsdom": "30.1.3",
@@ -132,7 +132,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.2",
     "vite": "^8.3.4",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   },
   "packageManager": "pnpm@9.15.9",
   "//jsdom": "Fixado em 30.0.1 de propósito (sem ^). O jsdom 30.1 guarda a implementação do Blob num campo privado (#impl), e o ambiente jsdom do vitest (makeCompatBlob) lê o Blob pela 1ª símbolo da instância: com 30.1.x, URL.createObjectURL(file) e FormData/Request com File lançam `Cannot read properties of undefined (reading '_buffer')` — 4 casos da suíte (composer-attach x2, composer-colar-imagem, upload-templates-media-security). Upstream: vitest-dev/vitest#11336, aberta e sem conserto em nenhuma release (5.0.2 ainda quebra). Tire o pin quando o vitest instalado trouxer o conserto; o sinal é esses 4 casos verdes com jsdom 30.1+. Rastreio: leandromastelliniai/ZapSales#1745.",
@@ -145,7 +145,8 @@
       "js-yaml": "^4.3.2",
       "brace-expansion@1": "^1.1.18",
       "path-to-regexp@6": "^6.3.0",
-      "fast-uri": "^3.1.7",
+      "fast-uri": "^3.1.9",
+      "body-parser": "^2.4.0",
       "qs": "^6.16.0",
       "browserslist": "^4.28.8"
     },
