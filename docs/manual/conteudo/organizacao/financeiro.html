@@ -33,14 +33,14 @@
 <h2 id="comissao">Comissão</h2>
 <p>“Quanto cada pessoa recebe por atendimento. Sem regra, a comissão é zero.” <strong>A regra mais específica vence:</strong> pessoa e serviço vence pessoa, que vence serviço. <em>Não é o maior percentual que ganha.</em></p>
 <ul>
-  <li><strong>Pessoa</strong> (“Qualquer pessoa” ou um membro que não seja Somente leitura), <strong>Serviço</strong> (“Qualquer serviço” ou um tipo da Agenda) e <strong>Percentual</strong> (de 0 a 100, aceita vírgula).</li>
+  <li><strong>Pessoa</strong> (“Qualquer pessoa” ou um membro que não seja Somente leitura), <strong>Serviço</strong> (“Qualquer serviço” ou um tipo da Agenda) e <strong>Percentual</strong> (de 0 a 100, aceita vírgula), e o botão <span class="ui">Adicionar regra</span>.</li>
   <li>É preciso escolher <strong>ao menos uma pessoa ou um serviço</strong> (“Escolha ao menos uma pessoa ou um serviço.”). A combinação pessoa + serviço não pode repetir.</li>
   <li>O botão <span class="ui">×</span> (“Remover regra”) tira a regra. Sem nenhuma, a tela diz “Todo item entra com zero.”.</li>
 </ul>
 <aside class="nota atencao"><strong>No teste, o seletor “Pessoa” só ofereceu “Qualquer pessoa”.</strong><p>Pela leitura do código, a lista de pessoas e a regra podem aparecer sem o nome (a regra vira “alguém”). Se o seu seletor também vier sem nomes, use a regra por <em>serviço</em>. E lembre: a tela de Comandas só aplica comissão por serviço (veja <a href="#comandas--finalizar">Comandas</a>).</p></aside>
 
 <h2 id="todo-mes">Todo mês (lançamentos recorrentes)</h2>
-<p>“Aluguel, internet, contador. O sistema abre a conta no dia certo.” Informe: <strong>Nome do lançamento</strong>, <strong>Entrada ou saída</strong> (padrão Saída), <strong>Conta</strong>, <strong>Valor</strong> (maior que zero) e <strong>Dia do mês</strong> (1 a 31, padrão 5). Em dia acima de 28, a dica avisa que nos meses mais curtos cai no último dia.</p>
+<p>“Aluguel, internet, contador. O sistema abre a conta no dia certo.” Informe: <strong>Nome do lançamento</strong>, <strong>Entrada ou saída</strong> (padrão Saída), <strong>Conta</strong>, <strong>Valor</strong> (maior que zero) e <strong>Dia do mês</strong> (1 a 31, padrão 5). O botão é <span class="ui">Adicionar</span>. Em dia acima de 28, a dica avisa que nos meses mais curtos cai no último dia.</p>
 <ul>
   <li>O lançamento <strong>nasce como conta a pagar, nunca como paga</strong>: “o sistema sabe que vence, não sabe se você pagou”. Ele aparece em <a href="#faturamento">Faturamento</a> como <em>pendente</em>.</li>
   <li>Uma tarefa diária do servidor cria, no dia certo, o lançamento do mês. É idempotente: não duplica.</li>

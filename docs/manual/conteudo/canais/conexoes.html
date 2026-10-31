@@ -42,7 +42,7 @@
 </table>
 <ul>
   <li>Uma <strong>bolinha</strong> ao lado de “Conexões” no menu mostra a saúde geral: vermelha pulsando (“Uma conexão caiu”), amarela (“Conectando…”), verde (“Todas as conexões ativas”) ou cinza.</li>
-  <li>Uma <strong>faixa vermelha</strong> aparece em todas as telas quando um número está desconectado: “WhatsApp [apelido] está desconectado — nenhuma mensagem entra nem sai.”, com o botão <em>Escanear o QR</em> ou <em>Ver conexões</em>. Quem não é administrador vê “Peça a quem administra para revisar a conexão do WhatsApp.”.</li>
+  <li>Uma <strong>faixa vermelha</strong> aparece em todas as telas quando um número está desconectado: “WhatsApp [apelido] está desconectado — nenhuma mensagem entra nem sai.”, (com mais de um número caído, “N conexões de WhatsApp estão desconectadas — nenhuma mensagem entra nem sai.”), com o botão <em>Escanear o QR</em> ou <em>Ver conexões</em>. Quem não é administrador vê “Peça a quem administra para revisar a conexão do WhatsApp.”.</li>
   <li>Quando um número cai, a <a href="#alertas">Central de avisos</a> recebe um aviso crítico, que se resolve sozinho quando ele volta a “Conectado”.</li>
   <li>Em segundo plano, um vigia confere os números a cada 5 minutos e um reconciliador do servidor corrige o estado a cada 60 segundos (religando sessões “Parado”, mas nunca “Caiu” nem “Escaneie o QR”). <strong>Um número que não existe no servidor de WhatsApp é gravado como “Parado”</strong>: foi o que aconteceu com o número de demonstração.</li>
 </ul>
@@ -121,7 +121,7 @@
 </ul>
 
 <h2 id="grupos">Grupos</h2>
-<p>O painel “Grupos” diz: “Grupos ligados aparecem no chat para os atendentes responderem. A IA nunca responde em grupo.” Tem busca (“Buscar grupo”), contador (“N de M ligados”), um interruptor por grupo e os botões <em>Ligar todos</em> / <em>Desligar todos</em> (com confirmação, um grupo por vez).</p>
+<p>O painel “Grupos” diz: “Grupos ligados aparecem no chat para os atendentes responderem. A IA nunca responde em grupo.” Tem <span class="ui">Atualizar lista</span> (lê de novo os grupos do WhatsApp), busca (“Buscar grupo”), contador (“N de M ligados”), um interruptor por grupo e os botões <em>Ligar todos</em> / <em>Desligar todos</em> (com confirmação, um grupo por vez). Com algo escrito na busca, o botão passa a dizer <em>Ligar os N do filtro</em> e liga só os grupos que a busca mostra; antes de ligar todos, a tela avisa que grupos pessoais e de família também vão aparecer no chat.</p>
 <ul>
   <li><strong>Só entram no sistema os grupos ligados.</strong> Ligar o <em>primeiro</em> grupo muda o filtro do WhatsApp (todos os grupos passam a chegar, e o sistema descarta os não ligados); desligar o último volta a ignorar.</li>
   <li>A mudança de filtro <strong>reinicia a sessão do WhatsApp por alguns segundos</strong>.</li>

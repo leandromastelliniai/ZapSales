@@ -18,9 +18,9 @@
   <li><strong>Ticket médio.</strong> O faturado dividido pelo número de comandas finalizadas.</li>
   <li><strong>Linha-resumo.</strong> “4 comanda(s) finalizada(s), 1 estornada(s) · R$ 1.187,00 faturado”. Faturado é a soma das comandas finalizadas no período, <em>inclusive as estornadas</em>.</li>
   <li><strong>O aviso.</strong> “O faturado soma comandas; o que entrou soma lançamentos pagos. Os dois não precisam bater.”</li>
-  <li><strong>Por forma de pagamento.</strong> Forma, quantidade de comandas, valor e porcentagem do faturado, do maior para o menor.</li>
-  <li><strong>Serviços que mais faturaram.</strong> Top 10 por valor, pela descrição congelada na venda.</li>
-  <li><strong>Clientes que mais gastaram.</strong> Top 10, só de comandas com cliente.</li>
+  <li><strong>Por forma de pagamento.</strong> Forma, quantidade de comandas, valor e porcentagem do faturado, do maior para o menor. Sem comanda no período: “Nenhuma comanda no período.”.</li>
+  <li><strong>Serviços que mais faturaram.</strong> Top 10 por valor, pela descrição congelada na venda. Sem itens: “Nenhum item no período.”.</li>
+  <li><strong>Clientes que mais gastaram.</strong> Top 10, só de comandas com cliente. Sem nenhum: “Nenhum cliente no período.”.</li>
   <li><strong>Comissão por pessoa.</strong> Itens com comissão e o valor, sem as estornadas. Sem nenhuma: “Nenhuma comissão no período.”.</li>
   <li><strong>Lançamentos do período.</strong> O formulário de lançar e a lista (veja abaixo).</li>
 </ol>
@@ -45,7 +45,7 @@
 <ul>
   <li>O botão só habilita com descrição, valor legível e conta escolhida. Sem nenhuma conta cadastrada o botão nunca habilita: cadastre em <a href="#financeiro">Financeiro</a>.</li>
   <li>Depois de lançar, só a descrição e o valor são limpos.</li>
-  <li>A lista mostra até 500 lançamentos do período, pagos e pendentes, com a data, a descrição, o valor (com “+” ou “−”) e a situação (<em>pago</em> ou <em>pendente</em>). A etiqueta <em>“de comanda”</em> aparece em <strong>qualquer lançamento que não é manual</strong> — comanda, estorno <em>e lançamento recorrente</em> (esse último não vem de comanda; o rótulo é impreciso).</li>
+  <li>Sem nenhum: “Nenhum lançamento no período.”. A lista mostra até 500 lançamentos do período, pagos e pendentes, com a data, a descrição, o valor (com “+” ou “−”) e a situação (<em>pago</em> ou <em>pendente</em>). A etiqueta <em>“de comanda”</em> aparece em <strong>qualquer lançamento que não é manual</strong> — comanda, estorno <em>e lançamento recorrente</em> (esse último não vem de comanda; o rótulo é impreciso).</li>
   <li><strong>Pagar</strong> (só em pendente): marca como pago agora, sem confirmação. Não muda a data do lançamento: um lançamento do mês passado pago hoje continua contando no mês passado. Depois de pago, valor, conta, tipo e data ficam <strong>imutáveis</strong>.</li>
   <li><strong>×</strong> (só em pendente e manual): apaga na hora, sem confirmação. Lançamento pago não se apaga (“registre um lançamento contrário”), e o de comanda se desfaz estornando a comanda.</li>
 </ul>

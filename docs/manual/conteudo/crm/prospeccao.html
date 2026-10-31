@@ -38,7 +38,7 @@
 </ol>
 
 <h3>A chave da Apify</h3>
-<p>O cartão pede a <strong>Chave da Apify</strong> (campo de senha, no mínimo 10 caracteres). A chave é <strong>validada com a Apify</strong> e guardada <strong>cifrada</strong> no servidor. Cada busca tem o seu limite de gasto. O aviso “Chave de busca salva.” confirma.</p>
+<p>O cartão pede a <strong>Chave da Apify</strong> (campo de senha, no mínimo 10 caracteres). A chave é <strong>validada com a Apify</strong> e guardada <strong>cifrada</strong> no servidor. Cada busca tem o seu limite de gasto. Clique em <span class="ui">Salvar chave</span>; o aviso “Chave de busca salva.” confirma.</p>
 
 <h2 id="busca">1. Encontrar empresas</h2>
 <ol class="passos">
@@ -47,14 +47,14 @@
   <li>Deixe marcado <em>“Enriquecer com e-mails comerciais e redes encontradas no site”</em> se quiser, além do telefone, e-mails e redes das empresas.</li>
   <li>Clique em <span class="ui">Buscar empresas</span>. A tela avisa “Solicitação registrada. Acompanhe o estado da busca nesta tela.”.</li>
 </ol>
-<p>Os resultados chegam sozinhos e viram a lista de empresas da campanha. O telefone é normalizado <strong>só para números brasileiros</strong> (10 ou 11 dígitos); empresa sem telefone brasileiro válido nunca é abordada. Empresas já encontradas antes não voltam como novas; elas contam em “N resultados repetidos ou indisponíveis foram desconsiderados”. O estado da busca pode ser <em>Iniciando busca, Em andamento, Busca concluída, Revisar falha</em> ou <em>Busca sem confirmação</em> (a busca ficou mais de 2 minutos sem resposta: confira no painel da Apify antes de repetir, para não pagar duas vezes).</p>
+<p>Enquanto não há nenhuma campanha, a área da direita mostra “Sua próxima conversa começa aqui”. Os resultados chegam sozinhos e viram a lista de empresas da campanha (a tela se atualiza a cada 10 segundos). O telefone é normalizado <strong>só para números brasileiros</strong> (10 ou 11 dígitos); empresa sem telefone brasileiro válido nunca é abordada. Empresas já encontradas antes não voltam como novas; elas contam em “N resultados repetidos ou indisponíveis foram desconsiderados”. O estado da busca pode ser <em>Iniciando busca, Em andamento, Busca concluída, Revisar falha</em> ou <em>Busca sem confirmação</em> (a busca ficou mais de 2 minutos sem resposta: confira no painel da Apify antes de repetir, para não pagar duas vezes).</p>
 
 <h2 id="abordagem">2. Preparar a abordagem</h2>
 <p>Este cartão só aparece numa campanha em rascunho, com busca concluída e ao menos uma empresa. Há dois modos.</p>
 <h3 id="conversa">Modo conversa</h3>
 <p>O assistente pergunta “O que você oferece e o que quer descobrir na conversa com essas empresas?”. Você responde e ele monta o agente. As abas são <em>Configurar conversando</em> e <em>Testar como cliente</em>. Quando as seis definições estão preenchidas aparece <span class="ui">Publicar e usar agente</span>.</p>
 <ul>
-  <li><strong>Testar como cliente:</strong> escreva como um cliente. O teste usa um rascunho pausado e <strong>consome créditos de IA</strong>, mas <strong>não envia mensagem aos seus contatos</strong>. Cada teste avalia uma mensagem; ações sobre contatos e envios não são executadas.</li>
+  <li><strong>Testar como cliente:</strong> escreva como um cliente (campo “Mensagem do cliente para o teste”, até 4.000 caracteres) e clique em <span class="ui">Testar resposta</span>. O teste usa um rascunho pausado e <strong>consome créditos de IA</strong>, mas <strong>não envia mensagem aos seus contatos</strong>. Cada teste avalia uma mensagem; ações sobre contatos e envios não são executadas.</li>
   <li><strong>Manter a continuidade do agente neste canal</strong> (opcional): o mesmo agente continua as conversas desse canal, salvo mudança de assunto ou transferência.</li>
   <li><strong>Publicar e usar agente</strong> cria e publica um agente comercial. Ao publicar, o agente passa a poder atender mensagens recebidas naquele canal — mas <strong>a prospecção só começa quando você iniciar a campanha</strong>.</li>
 </ul>
@@ -92,7 +92,7 @@
   <li><strong>Empresa.</strong> Nome, categoria e telefone (ou “Sem telefone”).</li>
   <li><strong>Informações.</strong> Endereço, site, nota e avaliações e e-mails.</li>
   <li><strong>Progresso.</strong> O estado de cada empresa.</li>
-  <li><strong>Conversa.</strong> O link <em>Abrir no Inbox</em>, quando já existe conversa.</li>
+  <li><strong>Conversa.</strong> O link <em>Abrir no Inbox</em>, quando já existe conversa. Quando a empresa já recebeu mensagem, a coluna Progresso também mostra “Mensagem: [estado do envio]”.</li>
   <li><strong>Revisar falha.</strong> Houve erro nessa empresa; a mensagem aparece embaixo.</li>
   <li><strong>Encontrado.</strong> Ainda não está na fila.</li>
 </ol>
@@ -108,7 +108,7 @@
   <li>Antes de cada envio o sistema confere de novo: campanha rodando, contato não bloqueado, sem pedido de parar, sem atendente humano e sem mensagem anterior.</li>
   <li>Empresas desmarcadas, sem telefone ou que já são seus contatos ficam como <em>Não abordado</em>.</li>
 </ul>
-<aside class="nota perigo"><strong>Iniciar abordagens manda mensagens reais a empresas que nunca falaram com você. Não dá para desfazer um envio.</strong><p>Revise o texto de oferta, o ritmo, a base legal e a lista de empresas marcadas antes de clicar. Use <span class="ui">Pausar abordagens</span> para parar a fila (uma mensagem já em transmissão pode concluir). Para retomar, use <span class="ui">Retomar fila</span>. Com a campanha pausada, <span class="ui">Editar ritmo</span> ajusta o máximo em 24 horas e o intervalo mínimo.</p></aside>
+<aside class="nota perigo"><strong>Iniciar abordagens manda mensagens reais a empresas que nunca falaram com você. Não dá para desfazer um envio.</strong><p>Revise o texto de oferta, o ritmo, a base legal e a lista de empresas marcadas antes de clicar. Use <span class="ui">Pausar abordagens</span> para parar a fila (uma mensagem já em transmissão pode concluir). Para retomar, use <span class="ui">Retomar fila</span>. Com a campanha pausada, <span class="ui">Editar ritmo</span> abre os campos de máximo em 24 horas (1 a 50) e de intervalo mínimo (5 a 1.440 minutos); <span class="ui">Salvar ritmo</span> grava (“Ritmo atualizado. A campanha continua pausada.”) e o próximo envio, ao retomar, já usa o ritmo novo.</p></aside>
 
 <h2 id="papeis">Quem pode o quê</h2>
 <p>Só o <strong>Administrador</strong> abre a tela. Chamadas por token de API só podem configurar, buscar e pausar: <strong>iniciar e retomar exigem a tela</strong>, para o envio ficar sob controle de uma pessoa. Tudo fica registrado na auditoria (<code>prospecting.changed</code>, <code>prospecting.approach_sent</code>) e sessões de suporte temporário não gravam nada.</p>

@@ -96,7 +96,7 @@
 <p>O botão <span class="ui">Enviar ao cliente</span> (Gerente ou acima) primeiro salva o que estiver na tela. O sistema recusa se: não há itens (“A proposta não tem itens.”), há item sem preço, não há modelo confirmado, faltam campos do documento, não existe conversa com o contato, está fora do horário de envio do número ou o limite diário foi atingido. Se passar:</p>
 <ol class="passos">
   <li>Aloca o <strong>número</strong> da proposta (contador por organização e ano; o número fica reservado mesmo se o envio falhar).</li>
-  <li>Gera o <strong>PDF</strong> com a marca da empresa e o guarda num armazenamento privado.</li>
+  <li>Gera o <strong>PDF</strong> com a marca da empresa e o guarda num armazenamento privado. As imagens do documento (o logo e as fotos dos produtos do catálogo) são baixadas pelo próprio ZapSales, só em PNG ou JPEG, até 2 MB e em até 5 segundos; a imagem que não puder ser usada <strong>fica de fora, e a proposta continua sendo gerada e enviada</strong>.</li>
   <li><strong>Manda o PDF como documento no WhatsApp</strong>, na conversa que originou a proposta ou, na falta dela, na conversa mais recente do contato — respeitando a janela de envio, o limite diário e o espaçamento anti-banimento.</li>
   <li>Marca como <strong>Enviada</strong>, congela o modelo e o texto usados, <strong>atualiza o valor do negócio</strong> para o total da proposta, registra na linha do tempo e <strong>agenda um retorno automático</strong> (padrão: 3 dias depois, nunca depois da validade).</li>
   <li>Se é a v2, a v1 vira <em>Substituída</em>.</li>

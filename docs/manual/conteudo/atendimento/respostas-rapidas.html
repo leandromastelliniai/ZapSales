@@ -28,20 +28,22 @@
   <li><strong>Título.</strong> Obrigatório, de 1 a 80 caracteres (exemplo: “Saudação inicial”). É o que você procura depois.</li>
   <li><strong>Mensagem.</strong> O texto que será colocado no campo de resposta, de 1 a 4.096 caracteres. Use <code>{{primeiro_nome}}</code> e <code>{{nome}}</code> para personalizar: o Inbox troca pelo nome do contato.</li>
   <li><strong>Atalho (opcional).</strong> Uma palavra curta, até 40 caracteres (por exemplo “oi” ou “pix”). Dá para chamar a resposta digitando <kbd>/</kbd> e o atalho.</li>
-  <li><strong>Compartilhar com a equipe.</strong> Só aparece para Gerente ou acima. Depois de criada, a resposta <strong>não pode</strong> passar de pessoal para compartilhada nem o contrário.</li>
+  <li><strong>Compartilhar com a equipe.</strong> Só aparece para Gerente ou acima. Depois de criada, a resposta <strong>não pode</strong> passar de pessoal para compartilhada nem o contrário: ao editar, o interruptor continua visível, mas travado.</li>
   <li><strong>Criar template</strong> (na edição, <strong>Salvar</strong>). Grava e mostra “Template criado.”.</li>
 </ol>
 <ul>
   <li>Os marcadores <code>{{nome}}</code> e <code>{{primeiro_nome}}</code> são os <strong>únicos</strong> trocados. Se o contato não tem nome, o texto sai como está escrito.</li>
   <li>O atalho não precisa ser único.</li>
-  <li>Excluir mostra “Excluir este template?” — “Essa ação não pode ser desfeita.”.</li>
+  <li>Ao editar, a janela se chama “Editar template” e, ao salvar, mostra “Template atualizado.”.</li>
+  <li>Excluir mostra “Excluir este template?” — “Essa ação não pode ser desfeita.” — e, depois de confirmar, “Template excluído.”.</li>
+  <li>Um link do tipo <code>/app/templates?modelo=…</code> (o que uma integração devolve para indicar “use este modelo”) abre direto a janela de edição daquela resposta, mas só para quem pode editá-la. Quem só pode usar (por exemplo, um Atendente diante de uma resposta compartilhada) fica na lista, onde a resposta está visível.</li>
 </ul>
 
 <h2 id="usar">Usar no Inbox</h2>
 <ol class="passos">
   <li>Abra uma conversa no <a href="#inbox">Inbox</a>.</li>
   <li>No campo de resposta, digite <kbd>/</kbd>. Abre o menu “Templates de script”.</li>
-  <li>Continue digitando para filtrar pelo título ou pelo atalho (não importa se maiúscula ou minúscula) e escolha uma.</li>
+  <li>Continue digitando para filtrar: aparecem as respostas cujo título <strong>ou</strong> atalho <strong>contêm</strong> o que você digitou (não importa se maiúscula ou minúscula). Escolha uma. Se nenhuma servir, o menu diz “Nenhum template. Crie em Configurações.” — a tela certa para criar é esta, <em>Respostas rápidas</em>.</li>
   <li>O texto entra no campo, já com o nome do cliente no lugar dos marcadores. <strong>Ele não é enviado sozinho</strong>: revise e envie quando quiser.</li>
 </ol>
 <aside class="nota dica"><strong>O menu só abre no começo.</strong><p>O “/” precisa ser o primeiro caractere do campo e não pode ter espaço depois dele.</p></aside>

@@ -3,7 +3,7 @@
 <h2 id="visao-geral">Para que serve</h2>
 <p>Um <strong>follow-up</strong> é uma sequência automática de retomadas: o cliente sumiu, e o sistema, depois de um tempo, manda uma mensagem para saber se ainda dá para ajudar. Você desenha a sequência uma vez (esperar, mandar, entender a resposta, encerrar) e ela roda sozinha para cada cliente que se encaixar no <strong>gatilho</strong>.</p>
 <p>A tela tem duas abas: <strong>Fluxos</strong> (os roteiros que você montou) e <strong>Fila</strong> (as pessoas que estão sendo acompanhadas agora).</p>
-<aside class="nota atencao"><strong>Publicar não basta: o agente precisa “armar” o fluxo.</strong><p>As mensagens só saem quando o fluxo está <em>Ativo</em> <strong>e</strong> um agente publicado, com follow-up habilitado, o tem marcado na lista de fluxos (no editor do <a href="#agentes">Agente</a>, cartão “Follow-up”). Sem isso, o gatilho não dispara.</p></aside>
+<aside class="nota atencao"><strong>Publicar não basta: o agente precisa “armar” o fluxo.</strong><p>Para um fluxo que usa IA, as mensagens só saem quando ele está <em>Ativo</em> <strong>e</strong> um agente publicado, com follow-up habilitado, o tem marcado na lista de fluxos (no editor do <a href="#agentes">Agente</a>, na seção “Propostas e retornos”, em “Follow-up”). Sem isso, o gatilho automático não dispara. Usam IA as caixas <em>Classificar (IA)</em>, <em>Mensagem escrita pela IA</em> e a espera <em>“A IA escolhe a hora”</em>; um fluxo só de texto fixo não depende de agente. Dentro do editor, a linha <a href="#followups--faixa">“Vai disparar?”</a> confere isso por você.</p></aside>
 
 <h2 id="fluxos">A aba Fluxos</h2>
 <figure class="print">
@@ -22,11 +22,12 @@
   <li><strong>Duplicar.</strong> Cria uma cópia “<em>nome</em> (cópia)”, sempre como <strong>rascunho</strong>, sem vínculo com nenhum agente (é preciso armar de novo).</li>
   <li><strong>Excluir.</strong> Apaga o fluxo <strong>e as inscrições e versões dele</strong>. Não dá para desfazer; os clientes em andamento deixam de ser acompanhados.</li>
 </ol>
+<p><strong>O que mudou na lista.</strong> Os fluxos agora aparecem em <strong>linhas dentro de um painel</strong>, e não mais em cartões: cada linha tem o nome (clique para abrir), a situação, e, abaixo, três informações em frases — <em>Versão publicada</em> (ou <em>Sem versão publicada</em>), o que acontece quando uma pessoa assume a conversa (<em>Pausa quando uma pessoa assume</em>, <em>Cancela quando uma pessoa assume</em> ou <em>Segue mesmo quando uma pessoa assume</em>) e <em>Atualizado em</em> a data. <span class="ui">Renomear</span>, <span class="ui">Duplicar</span> e <span class="ui">Excluir</span> ficam na ponta direita da linha.</p>
 <h3>Criar um fluxo</h3>
 <ol class="passos">
   <li>Clique em <span class="ui">Novo fluxo</span> e dê um nome (até 80 caracteres), como <em>“Recuperação de carrinho abandonado”</em>.</li>
   <li>Clique em <span class="ui">Criar fluxo</span>. O fluxo nasce como <strong>rascunho</strong> e aparece na lista.</li>
-  <li>Abra-o e monte o desenho no <a href="#followups--editor">editor</a>. Quando estiver pronto, <strong>Publique</strong> e depois arme o fluxo no seu agente.</li>
+  <li>Abra-o e monte o desenho no <a href="#followups--editor">editor</a>. Quando estiver pronto, <strong>Publique</strong> e, se o fluxo usa IA, arme-o no seu agente.</li>
 </ol>
 <h3>Modelos prontos</h3>
 <figure class="print media">
@@ -62,24 +63,43 @@
 <p>A fila mostra 20 por vez, ordenada por <em>próximo disparo</em> (o mais próximo primeiro), com o botão <span class="ui">Carregar mais</span>. Promessas só aparecem quando não há filtro de status nem de fluxo. Na coluna “Nó atual”, o sistema mostra o <em>identificador</em> do passo (como <code>espera-1</code>) em vez do nome.</p>
 
 <h2 id="editor">O editor do fluxo</h2>
-<p>Clique no cartão de um fluxo. O editor ocupa a tela inteira: uma <strong>barra de comandos</strong> no alto, a <strong>paleta de caixas</strong> à esquerda e a <strong>área de desenho</strong>, onde cada passo é uma caixa ligada às outras por setas.</p>
+<p>Clique no nome de um fluxo na lista. O editor ocupa a tela inteira: uma <strong>barra de comandos</strong> no alto, a <a href="#followups--faixa">faixa “O que este fluxo faz”</a>, a <strong>paleta de caixas</strong> à esquerda e a <strong>área de desenho</strong>, onde cada passo é uma caixa ligada às outras por setas.</p>
 <figure class="print">
-  <img src="img/ia-followups-editor.png" alt="Editor do fluxo com a barra de comandos, a paleta de caixas e o desenho de quatro caixas ligadas, numerado de 1 a 11" loading="lazy">
+  <img src="img/ia-followups-editor.png" alt="Editor do fluxo com a barra de comandos, a faixa que resume o fluxo, a paleta de caixas e o desenho de quatro caixas ligadas, numerado de 1 a 13" loading="lazy">
   <figcaption>O editor de um fluxo simples: Início → Espera 1 dia → Retoma a conversa → Fim.</figcaption>
 </figure>
 <ol class="legenda">
   <li><strong>Nome do fluxo.</strong> O lápis ao lado renomeia.</li>
   <li><strong>Situação:</strong> Rascunho, Ativo ou Desativado. Um selo <em>“Alterações não salvas”</em> aparece quando o desenho difere do salvo.</li>
-  <li><strong>Gatilho.</strong> O botão-resumo (“Gatilho: Silêncio (1440 min)”) abre o painel que define <em>o que faz o fluxo começar</em>.</li>
+  <li><strong>Gatilho.</strong> O botão-resumo (“Gatilho: Silêncio (1 dia)”) abre o painel que define <em>o que faz o fluxo começar</em>.</li>
   <li><strong>Política de handoff.</strong> O que fazer quando uma pessoa assume a conversa: <em>Pausar durante handoff</em> (padrão), <em>Cancelar durante handoff</em> ou <em>Permitir durante handoff</em>. Grava na hora.</li>
-  <li><strong>Salvar.</strong> Grava só o <em>rascunho</em>: nada muda para os clientes.</li>
+  <li><strong>Salvar.</strong> Grava só o <em>rascunho</em>: nada muda para os clientes. Fica apagado enquanto não há alteração.</li>
   <li><strong>Publicar.</strong> Salva, <em>valida</em> e cria a versão nova, tornando o fluxo ativo.</li>
   <li><strong>Desativar.</strong> Muda a situação para Desativado.</li>
   <li><strong>Rollback.</strong> Volta para a versão publicada anterior (só se houver mais de uma). Não reativa um fluxo desativado.</li>
   <li><strong>Organizar.</strong> Arruma as caixas automaticamente.</li>
-  <li><strong>Adicionar nó.</strong> A paleta. Clique, ou arraste a caixa para a área de desenho.</li>
+  <li><strong>Excluir.</strong> Apaga o fluxo, as inscrições e as versões dele. Não dá para desfazer.</li>
+  <li><strong>A faixa que resume o fluxo.</strong> <em>Quando começa</em>, <em>O que envia</em>, <em>Acompanha por</em> e <em>Para quando</em>, em frases lidas do desenho, e o botão <em>Vai disparar?</em> (aqui, <em>Tudo certo</em>). Veja a explicação logo abaixo.</li>
+  <li><strong>Adicionar nó.</strong> A paleta (<em>Gatilho, Aguardar, Condição, Classificar (IA), Resposta (texto), Repetir, Ação, Lembrete interno, Mover lead no funil, Editar tag do lead</em> e outras). Clique, ou arraste a caixa para a área de desenho.</li>
   <li><strong>Uma caixa.</strong> Tem ícone, título e uma linha de resumo. Clique para abrir o painel de configuração dela, à direita.</li>
 </ol>
+<h3 id="faixa">A faixa “O que este fluxo faz” e “Vai disparar?”</h3>
+<p>Entre a barra de comandos e o desenho há uma faixa que <strong>resume o fluxo em frases</strong>, lidas do próprio desenho e atualizadas a cada edição (nada é gravado por ela). Ela aparece no print acima, no item 11. Ela traz quatro respostas:</p>
+<ul>
+  <li><strong>Quando começa</strong> — o gatilho em palavras, como “1 dia sem o cliente responder”, “o negócio entra numa etapa do funil” ou “uma falta é confirmada pela equipe”.</li>
+  <li><strong>O que envia</strong> — quantas mensagens o cliente recebe no pior caso (se ninguém responder). Fica em destaque amarelo quando o fluxo ainda não envia nenhuma.</li>
+  <li><strong>Acompanha por</strong> — por quanto tempo o fluxo acompanha o cliente. Quando há uma caixa <em>Repetir</em>, aparece “depende das repetições”.</li>
+  <li><strong>Para quando</strong> — o que interrompe o fluxo antes do fim: “o cliente responde” e/ou “uma pessoa assume (o fluxo pausa)” ou “(o fluxo cancela)”; se nada interrompe, “só no fim do fluxo”.</li>
+</ul>
+<p>Ao lado fica o botão <strong>Vai disparar?</strong>, que mostra <em>Tudo certo</em> (verde) ou <em>1 pede atenção</em> / <em>N pedem atenção</em> (âmbar). Clique nele para abrir, <strong>por cima do desenho</strong>, a lista de conferências:</p>
+<ul>
+  <li><strong>O desenho passa na conferência do Publicar</strong> — ou diz quantos problemas há para corrigir antes de publicar, com os três primeiros.</li>
+  <li><strong>Existe agente para armar o fluxo?</strong> — só aparece para gatilhos automáticos (silêncio, etapa do funil, falta confirmada, agente pediu ajuda, cliente voltou, lead criado). Diz “Não precisa de agente: as mensagens são texto fixo”, cita o agente publicado que usa o fluxo, ou avisa que nenhum agente publicado o usa e que o fluxo pede IA, com o link <span class="ui">Escolher o agente</span>.</li>
+  <li><strong>Situação</strong> — “Está no ar”, “Está desativado: nada dispara” ou “Ainda é rascunho: nada dispara até publicar”.</li>
+</ul>
+<p>A faixa só aparece nos fluxos de follow-up (não nos roteiros de <a href="#fluxos-de-atendimento">Fluxos de atendimento</a>).</p>
+<h3>Tempos em dias e horas</h3>
+<p>Os campos de tempo continuam em <strong>minutos</strong>, mas a tela agora faz a conta por você. Abaixo do campo aparece o equivalente (“= 1 dia”, “= 2 horas”) sempre que o valor fecha em horas ou dias, e o resumo do gatilho e das caixas também fala assim (“Silêncio (1 dia)”, em vez de “1440 min”). Na caixa <em>Aguardar</em> de tempo fixo e no silêncio do gatilho há ainda <strong>atalhos de um clique</strong> (“Nos modelos prontos:”) com os tempos que os modelos prontos usam, cada um com o nome da jornada (por exemplo, “1 dia · Consulta”). Um atalho só preenche o campo; você pode digitar outro valor. Na espera fixa há também uma recomendação em caixa: o ritmo do assunto — horas quando é urgente (uma falta de hoje), dias numa retomada, semanas numa decisão grande — porque cobrar rápido demais é o jeito mais rápido de virar bloqueio no WhatsApp.</p>
 <h3>As caixas disponíveis</h3>
 <table class="tabela">
   <thead><tr><th>Caixa</th><th>O que faz</th></tr></thead>

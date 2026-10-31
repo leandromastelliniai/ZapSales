@@ -1,0 +1,116 @@
+<!--meta {"id":"guia-primeira-semana","grupo":"guias","titulo":"Sua primeira semana com o ZapSales","ordem":1,"resumo":"Um roteiro de sete dias, do primeiro login até a equipe atendendo clientes de verdade: número conectado, equipe convidada, contatos e funil no lugar, agente de IA em teste e cópia de segurança ligada.","palavras":["primeira semana","começar","roteiro","passo a passo","primeiros passos","implantação","colocar para funcionar","checklist","do zero","instalar e usar","equipe atendendo"],"onde":"Guia: passa por várias telas (Conexões, Equipe, Contatos, Funis, Agentes, Distribuição) e pelo terminal da VPS","quem":"Administrador (o guia indica onde basta ser Gerente)","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Este guia leva você <strong>do primeiro login até a equipe atendendo clientes de verdade</strong>, num ritmo de sete dias. Cada dia tem poucos passos, e cada passo aponta para a página do manual que explica a tela com prints. Você não precisa seguir um dia por semana: se der, junte dois dias. O que importa é a <strong>ordem</strong>, porque cada coisa depende da anterior (sem número conectado, o agente não tem por onde atender; sem equipe, ninguém recebe a conversa).</p>
+<table class="tabela">
+  <thead><tr><th>Dia</th><th>Objetivo</th><th>Quando pronto, você tem</th></tr></thead>
+  <tbody>
+    <tr><td><a href="#guia-primeira-semana--dia1">1</a></td><td>Instalar e fazer os primeiros passos</td><td>O sistema no ar e a sua empresa criada</td></tr>
+    <tr><td><a href="#guia-primeira-semana--dia2">2</a></td><td>Conectar o número de WhatsApp</td><td>Mensagens entrando no Inbox</td></tr>
+    <tr><td><a href="#guia-primeira-semana--dia3">3</a></td><td>Convidar a equipe e decidir quem recebe cada conversa</td><td>Pessoas com o papel certo e a distribuição definida</td></tr>
+    <tr><td><a href="#guia-primeira-semana--dia4">4</a></td><td>Trazer os contatos e conferir o funil</td><td>Clientes cadastrados e etapas com o nome do seu negócio</td></tr>
+    <tr><td><a href="#guia-primeira-semana--dia5">5</a></td><td>Preparar o agente de IA</td><td>Chave de IA, materiais e um agente publicado em modo Assistido</td></tr>
+    <tr><td><a href="#guia-primeira-semana--dia6">6</a></td><td>Acompanhar o agente e abrir para o público</td><td>O atendimento real começando, com uma pessoa aprovando</td></tr>
+    <tr><td><a href="#guia-primeira-semana--dia7">7</a></td><td>Cópia de segurança e limite de gasto</td><td>Dados protegidos e a conta de IA sob controle</td></tr>
+  </tbody>
+</table>
+<aside class="nota info"><strong>Precisa de quem?</strong><p>O dia 1 pede quem administra o servidor (a VPS). Do dia 2 em diante, a maior parte pede o papel de <strong>Administrador</strong> da empresa (conectar número, convidar equipe, criar o agente). Distribuição, funis e conhecimento abrem para <strong>Gerente</strong>. Os papéis estão em <a href="#conceitos--papeis">Conceitos básicos</a>.</p></aside>
+
+<h2 id="dia1">Dia 1 — Instalar e fazer os primeiros passos</h2>
+<ol class="passos">
+  <li>Instale o ZapSales na sua VPS seguindo <a href="#instalar-na-vps">Instalar o ZapSales numa VPS</a>: prepare a VPS, o domínio e as portas, rode o comando e responda às cinco perguntas. Conte com 30 a 60 minutos.</li>
+  <li>Depois do ▶ Pronto, leia o primeiro acesso (<a href="#instalar-na-vps--primeiro-acesso">O primeiro acesso</a>) e guarde a senha num cofre de senhas. A página avisa que o sistema ainda não tem tela para trocar a senha, então escolha-a com cuidado.</li>
+  <li>Confirme que o endereço responde (<a href="#instalar-na-vps--conferir">Conferir que está no ar</a>): tem de redirecionar para o login.</li>
+  <li>Entre no sistema. Enquanto os primeiros passos não terminam, qualquer tela leva de volta a eles. Percorra os seis passos de <a href="#onboarding">Primeiros passos (onboarding)</a>: o seu negócio, o telefone, o treino do funcionário de IA, o funil, o teste e a equipe. Só o primeiro passo não pode ser pulado.</li>
+</ol>
+<aside class="nota dica"><strong>Pode pular o que ainda não está pronto.</strong><p>Todos os passos do onboarding, menos o primeiro, têm <span class="ui">Pular por enquanto</span>. Este guia refaz cada um deles com calma nos dias seguintes, então não há perda em pular o telefone, a chave de IA ou a equipe agora.</p></aside>
+
+<h2 id="dia2">Dia 2 — Conectar o número de WhatsApp</h2>
+<p>Um número pode ser ligado de dois jeitos, e as regras mudam (explicado em <a href="#conceitos--canal-oficial-qr">Dois jeitos de conectar o WhatsApp</a>):</p>
+<table class="tabela">
+  <thead><tr><th></th><th>QR code</th><th>API Oficial (Meta)</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Como liga</strong></td><td>Você lê um QR com o celular, como no WhatsApp Web.</td><td>O número é cadastrado na Meta, com credenciais.</td></tr>
+    <tr><td><strong>Bom para</strong></td><td>Atendimento do dia a dia.</td><td>Campanhas em massa (é o caminho recomendado para elas).</td></tr>
+    <tr><td><strong>Cuidado</strong></td><td>O WhatsApp pode banir número com atividade automática fora do padrão.</td><td>Passadas 24 horas do último contato do cliente, só sai mensagem por modelo aprovado.</td></tr>
+  </tbody>
+</table>
+<ol class="passos">
+  <li>Abra <a href="#conexoes">Conexões</a> (só o Administrador abre). Para QR, siga <a href="#conexoes--conectar">Conectar um número por QR</a>: <span class="ui">Conectar novo WhatsApp</span>, leia o QR em <em>WhatsApp → Aparelhos conectados → Conectar um aparelho</em> e espere o “Conectado!”.</li>
+  <li>Para a API Oficial, siga o assistente de <a href="#conexoes--oficial">Aba API Oficial (Meta)</a>. Ele testa a credencial antes de gravar qualquer coisa.</li>
+  <li>Confira o selo do número: <strong>Conectado</strong> (verde) é o único que deixa mensagens entrarem e saírem. Se aparecer “Parado” ou “Caiu”, veja <a href="#conexoes--reconectar">Reconectar e “Gerar novo QR”</a>.</li>
+  <li>Peça a alguém de fora para mandar uma mensagem ao número. Ela tem de aparecer no <a href="#inbox">Inbox</a>.</li>
+</ol>
+<aside class="nota info"><strong>O número novo começa em modo de teste.</strong><p>“Novos canais começam em modo de teste, sem respostas automáticas até você autorizar números ou liberar o público.” Isso protege você enquanto o agente ainda não está pronto. Você abre o público no <a href="#guia-primeira-semana--dia6">dia 6</a>, em <a href="#conexoes--ia">Acesso da IA</a>. As mensagens continuam chegando ao Inbox, e a equipe pode responder à mão.</p></aside>
+<aside class="nota perigo"><strong>Número de QR novo: vá devagar.</strong><p>Número recém-conectado é <em>aquecido</em>: nos primeiros dias o teto de envios é baixo (até 20 por dia) e sobe com a idade do número. Não tente forçar volume logo no começo, porque “pular o aquecimento num número novo é o caminho mais rápido para o bloqueio”. A tabela completa está em <a href="#conexoes--protecao">Proteção de envio</a>.</p></aside>
+
+<h2 id="dia3">Dia 3 — Convidar a equipe e decidir quem recebe cada conversa</h2>
+<ol class="passos">
+  <li>Escolha o papel de cada pessoa (Somente leitura, Atendente, Gerente ou Administrador) com a tabela de <a href="#conceitos--papeis">Papéis</a>. Quem vai só atender precisa de <strong>Atendente</strong>.</li>
+  <li>Em <a href="#equipe--convidar">Convidar membros</a>, cole até 20 e-mails, escolha o papel e clique em <span class="ui">Enviar convites</span>. O convite vale 24 horas.</li>
+  <li>Se a instalação ainda não envia e-mail, a coluna <em>E-mail enviado</em> mostra “Não saiu”: use <span class="ui">Copiar link</span> e mande o link por outro meio (veja <a href="#equipe--convites">Convites enviados</a>). O convite é do e-mail: se a pessoa entrar com outro, o aceite é recusado.</li>
+  <li>Na aba <em>Atendimento</em> de <a href="#equipe--atendimento">Equipe</a>, confira para cada atendente o plantão (<em>Disponível</em>), a capacidade e o horário. Sem horário publicado, a Agenda não oferece nenhum horário para marcar com a pessoa.</li>
+  <li>Abra <a href="#distribuicao">Distribuição de atendimento</a> (Gerente ou acima) e escolha como o cliente novo é entregue. A página traz uma recomendação pelo tamanho da equipe (<a href="#distribuicao--quem-recebe">Quem recebe o cliente novo</a>). Olhe a faixa <em>Quem recebe agora</em> no alto: numa instalação nova, ninguém tem plantão configurado, e ligar o rodízio sem conferir isso deixava o cliente parado na fila.</li>
+</ol>
+<aside class="nota atencao"><strong>Cuidado com a combinação “Só os seus” + “Cada um pega”.</strong><p>Nessa combinação ninguém enxerga a fila para pegar uma conversa, e nenhum cliente é atendido. A tela avisa e manda ligar o rodízio. Veja <a href="#distribuicao--visibilidade">O que cada atendente enxerga</a>.</p></aside>
+
+<h2 id="dia4">Dia 4 — Trazer os contatos e conferir o funil</h2>
+<ol class="passos">
+  <li>Se você já tem uma lista de clientes numa planilha, traga-a: em <a href="#contatos--importar">Importar uma planilha de contatos</a> (botão <span class="ui">Importar CSV</span>) ou, para já colocar as pessoas num funil, em <a href="#funis--importar">Importar uma planilha</a> nos Funis. O sistema pede telefone com código do país.</li>
+  <li>Confira o resultado: o resumo mostra quantas linhas foram lidas, quantas entraram, quantas já existiam e quantas deram erro. Quem já existe não é duplicado.</li>
+  <li>Abra <a href="#funis">Funis</a> e veja o quadro: cada coluna é uma etapa e cada cartão é um cliente. O funil criado no onboarding já existe. O <em>funil padrão</em> recebe todo contato novo enquanto nenhuma outra regra mandar para outro funil.</li>
+  <li>Em <a href="#etapas-do-funil">Etapas do funil</a> (Gerente ou acima), ajuste os nomes das colunas ao seu negócio. Todo funil precisa de exatamente uma etapa de fechamento (a venda) e uma de perda. Em <a href="#etapas-do-funil--mapeamento">Para onde o card vai em cada passo</a> você decide para onde o agente de IA leva o cartão em cada fase do atendimento.</li>
+</ol>
+<aside class="nota atencao"><strong>Importar não manda mensagem.</strong><p>A importação só cadastra as pessoas. Mas, antes de usar a lista numa campanha, leia <a href="#guia-campanha-com-seguranca">Lançar uma campanha em massa com segurança</a>: quem recebe precisa ter uma base legal (consentimento ou interesse legítimo).</p></aside>
+
+<h2 id="dia5">Dia 5 — Preparar o agente de IA</h2>
+<p>O <strong>agente de IA</strong> é o atendente automático: lê as mensagens, responde e pode mover o cartão no funil. Antes de colocá-lo para falar com clientes, ele precisa de três coisas (resumo em <a href="#agentes">Agentes</a>): uma chave de IA, um número conectado (dia 2) e papel de Administrador.</p>
+<ol class="passos">
+  <li>Cadastre a chave de IA em <a href="#credenciais">Credenciais</a>. A conta no provedor (Anthropic, OpenAI, Google…) é sua, e a cobrança vai para o seu cartão. A chave aparece como <em>Validada</em> quando o provedor a aceita.</li>
+  <li>Ensine o negócio ao agente em <a href="#conhecimento">Conhecimento</a>: prazos, política de troca, formas de pagamento, as respostas que se repetem. Para preparar os materiais o sistema também precisa de uma chave de busca, explicada em <a href="#conhecimento--chave">A chave de preparação</a>. Se o seu site já tem essas respostas, veja <a href="#agente-treino-por-site">Treinar o agente com o seu site</a>.</li>
+  <li>Crie o agente pelo assistente de <a href="#agentes--novo">Agentes</a> (ou reaproveite o que o onboarding criou). Ele nasce como rascunho e <strong>não atende ninguém</strong>.</li>
+  <li><strong>Coloque o agente em modo Assistido antes de publicar.</strong> No quadro <em>Como ele atende agora</em>, escolha <em>Assistido: revisar antes de enviar</em>: a IA escreve a resposta dentro da conversa e espera, e só vai ao cliente depois que alguém da equipe aprovar. A troca grava na hora. Veja <a href="#agentes--editor">O editor do agente</a>.</li>
+  <li>Teste na aba <em>Teste</em>, com as situações difíceis: cliente bravo, pergunta fora do assunto, pedido de desconto, pedido para falar com uma pessoa. Passo a passo em <a href="#agente-teste-e-correcao">Testar o agente em várias trocas e corrigir respostas</a>. Nada é enviado pelo WhatsApp.</li>
+  <li>Publique (<a href="#agentes--publicar">Salvar e publicar</a>). O botão só fica ativo com o número em “Conectado”; quando falta algo, o motivo aparece escrito logo abaixo.</li>
+</ol>
+<aside class="nota perigo"><strong>Um agente novo nasce em Automático.</strong><p>O modo padrão de um agente é <em>Automático</em> (conferido no código: nada o põe em Assistido na criação). Se você publicar sem trocar para Assistido e abrir o número ao público, ele responde sozinho a clientes reais. Por isso o passo de trocar o modo vem <em>antes</em> do de publicar.</p></aside>
+<aside class="nota atencao"><strong>O teste gasta crédito de IA de verdade.</strong><p>Cada resposta do teste é uma chamada real ao provedor e entra no seu orçamento de IA. Os centavos por troca somam se você testar muito. O limite de gasto se define no <a href="#guia-primeira-semana--dia7">dia 7</a>.</p></aside>
+
+<h2 id="dia6">Dia 6 — Acompanhar o agente e abrir para o público</h2>
+<ol class="passos">
+  <li>Em <a href="#conexoes--ia">Acesso da IA</a>, comece com <em>Ativar modo de teste</em> e a lista de números autorizados: coloque o seu telefone e o de quem vai testar, e converse pelo WhatsApp de verdade. Os testes são mensagens reais, com os custos normais de uso.</li>
+  <li>Abra o <a href="#inbox">Inbox</a>. Em modo Assistido, a resposta do agente espera dentro da conversa até alguém aprovar. Leia, ajuste se precisar e aprove. Para entender quem está atendendo cada conversa, veja <a href="#inbox--faixa">Quem atende cada conversa</a>.</li>
+  <li>Quando uma pessoa <strong>assume</strong> a conversa, o atendimento automático para nela (<a href="#inbox--botoes">botões da conversa</a>). Use <span class="ui">Devolver ao automático</span> quando terminar.</li>
+  <li>Releia as conversas reais dos primeiros dias em <a href="#execucoes">Execuções</a>: é a primeira tela a abrir quando o agente erra ou para de responder. Se algo saiu errado, o guia <a href="#guia-o-agente-errou">O agente de IA errou. E agora?</a> mostra o caminho.</li>
+  <li>Só depois de alguns dias de respostas boas, use <span class="ui">Liberar atendimento ao público</span> (pede confirmação). Se quiser, troque o agente de <em>Assistido</em> para <em>Automático</em> mais tarde, quando confiar nele. A página <a href="#agentes--cuidados">Agentes</a> recomenda deixar o modo assistido nos primeiros dias.</li>
+</ol>
+<aside class="nota atencao"><strong>Liberar o público é o ponto sem volta de verdade.</strong><p>Depois de liberar, “a IA poderá atender qualquer pessoa que enviar mensagem neste canal”. Mensagem que o agente enviar a um cliente não tem como ser desfeita.</p></aside>
+
+<h2 id="dia7">Dia 7 — Cópia de segurança e limite de gasto</h2>
+<ol class="passos">
+  <li>A instalação já agenda a <strong>cópia diária</strong> do banco, mas ela fica na própria VPS: protege de erro, <em>não</em> de perder a máquina. Ligue a cópia semanal <strong>fora do servidor</strong> (Cloudflare R2) seguindo <a href="#backup-e-restauracao--r2">Ligar a cópia fora do servidor</a>.</li>
+  <li>Guarde a senha de criptografia da cópia fora da VPS, no seu gerenciador de senhas. Sem ela, a cópia semanal não abre.</li>
+  <li>Rode o primeiro <a href="#backup-e-restauracao--ensaio">ensaio de restauração</a> e depois a <a href="#backup-e-restauracao--rotina">rotina simples</a> da página (conferir toda semana, ensaiar todo mês).</li>
+  <li>Em <a href="#uso-ia--orcamento">Uso e orçamento</a> (Gerente ou acima vê; só o Administrador edita o limite), defina o teto mensal de gasto com IA e escolha se ele só avisa ou para a IA ao chegar nele. Sem limite, a IA continua respondendo mesmo se o gasto disparar.</li>
+</ol>
+<aside class="nota perigo"><strong>Cópia que nunca foi testada não é garantia.</strong><p>O ensaio não toca no que está no ar. A página de backup avisa que a troca de máquina completa (modo desastre numa VPS nova) ainda não foi executada de ponta a ponta, então não dispense o ensaio.</p></aside>
+
+<h2 id="depois">Depois da primeira semana</h2>
+<ul>
+  <li>Quando for falar com muita gente de uma vez: <a href="#guia-campanha-com-seguranca">Lançar uma campanha em massa com segurança</a>.</li>
+  <li>Quando um cliente pedir para apagar os dados dele: <a href="#guia-pedido-lgpd">Um cliente pediu para apagar os dados dele (LGPD)</a>.</li>
+  <li>Quando quiser que o site e os anúncios alimentem o funil: <a href="#guia-site-e-anuncio-no-funil">Trazer contatos do seu site e dos seus anúncios para o funil</a>.</li>
+  <li>Mapa do que existe em cada menu: <a href="#navegacao">Navegando pelo sistema</a>.</li>
+</ul>
+
+<h2 id="se-algo-der-errado">Se algo der errado</h2>
+<table class="tabela">
+  <thead><tr><th>Situação</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td>A instalação parou com um ✖ vermelho</td><td>Rodar o comando de novo é seguro. As mensagens mais comuns (DNS, certificado, memória, portas) estão em <a href="#instalar-na-vps--problemas">Se algo der errado</a>, na página de instalação.</td></tr>
+    <tr><td>O número aparece “Parado” ou “Caiu”, ou uma faixa vermelha avisa que o WhatsApp está desconectado</td><td><a href="#conexoes--reconectar">Reconectar</a> primeiro; só use “Gerar novo QR” se o modo suave falhar, porque ele desloga o aparelho.</td></tr>
+    <tr><td>O convite não chegou por e-mail</td><td>A instalação não tem e-mail configurado ou o envio falhou. Use <span class="ui">Copiar link</span> em <a href="#equipe--convites">Convites enviados</a>, e veja <a href="#admin-cadastro">Cadastro e e-mail da instalação</a> para ligar o envio.</td></tr>
+    <tr><td>Os clientes escrevem e ninguém responde</td><td>Confira a faixa <em>Quem recebe agora</em> em <a href="#distribuicao--quem-recebe-agora">Distribuição</a> (ninguém com plantão deixa o cliente na fila) e o modo de teste do número em <a href="#conexoes--ia">Acesso da IA</a>.</td></tr>
+    <tr><td>O agente não responde ou deu erro de chave</td><td>Abra <a href="#execucoes--erros">Execuções</a>: cada falha vem com “o que fazer” (chave recusada, saldo, modelo inexistente).</td></tr>
+  </tbody>
+</table>

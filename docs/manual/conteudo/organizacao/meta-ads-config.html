@@ -8,10 +8,11 @@
 </figure>
 <ol class="legenda">
   <li><strong>O aviso.</strong> “O token precisa da permissão ads_read. Gere-o no Meta for Developers, na sua conta de aplicativo, e cole abaixo — ele fica guardado criptografado e nunca é mostrado de volta.”</li>
-  <li><strong>Token de acesso.</strong> Campo de senha (de 20 a 1.000 caracteres). Ajuda: “Precisa da permissão ads_read.”. Já conectada: “Guardado — preencha só para trocar”.</li>
+  <li><strong>Token de acesso.</strong> Campo de senha (de 20 a 1.000 caracteres). Ajuda: “Precisa da permissão ads_read.”. Já conectada: o campo mostra “Guardado — preencha só para trocar” e a ajuda passa a dizer “Já existe um token guardado. Deixe em branco para mantê-lo, ou cole um novo para substituir.”</li>
   <li><strong>Conta padrão (opcional).</strong> No formato <code>act_123456789012345</code>. É a conta que a tela Meta Ads abre; em branco, abre a primeira conta ativa que o token alcançar. Para trocar só a conta padrão, deixe o token em branco: o guardado é mantido.</li>
-  <li><strong>Salvar.</strong> Numa primeira conexão fica apagado até o token ter 20 caracteres (“Cole o token para poder salvar.”). Sucesso: “Conexão salva.”.</li>
+  <li><strong>Salvar.</strong> (“Salvando…” enquanto grava.) Numa primeira conexão fica apagado até o token ter 20 caracteres (“Cole o token para poder salvar.”). Sucesso: “Conexão salva.”.</li>
 </ol>
+<p>Logo abaixo do título, a tela explica: “Conecte um token de acesso para o sistema ler o desempenho das suas campanhas e mostrá-lo em Análise › Meta Ads…”. Depois de conectada, uma linha lembra: “Para trocar apenas a conta padrão, deixe o campo do token em branco — o token guardado é mantido.”. O campo da conta padrão só aceita o formato <code>act_</code> seguido de números (outro formato dá “Confira os campos: algum valor não está no formato esperado.”). Outras recusas: “Só um administrador da organização pode mudar esta conexão.” e “Sua sessão expirou. Entre de novo.”.</p>
 <ul>
   <li>Quando conectada aparece também <span class="ui">Desconectar</span>: “apaga o token guardado. A tela de Meta Ads volta a pedir uma conexão, e nenhum dado histórico é perdido — nada é armazenado aqui.” Aviso: “Conta desconectada.”.</li>
   <li><strong>Salvar não chama a Meta.</strong> O token é guardado <em>criptografado</em> e só é testado quando alguém abre a tela Meta Ads: um token errado “salva e só falha depois”. Desconectar não revoga o token na Meta (quem o gerou precisa revogar lá).</li>

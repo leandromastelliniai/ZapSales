@@ -53,15 +53,16 @@
 <aside class="nota atencao"><strong>A tela não tem botão para agendar.</strong><p>“Agendada” só existe quando a campanha é agendada por integração (API). Pela tela, uma campanha pronta é iniciada na hora.</p></aside>
 
 <h2 id="nova">Criar uma campanha</h2>
-<p>A tela <strong>Nova campanha</strong> é um formulário de uma página só, com cinco cartões. <em>“Isto cria um rascunho. Nada é enviado antes de você preparar a lista e iniciar.”</em></p>
+<p>A tela <strong>Nova campanha</strong> é um formulário de uma página só, com uma <a href="#disparo-em-massa--faixa">faixa de resumo</a> no alto e cinco cartões. <em>“Isto cria um rascunho. Nada é enviado antes de você preparar a lista e iniciar.”</em></p>
 <figure class="print">
-  <img src="img/campanhas-nova.png" alt="Formulário Nova campanha completo, com os cartões Informações, Público, Mensagem, Quem responder e Ritmo desta campanha, numerado de 1 a 21" loading="lazy">
-  <figcaption>O formulário de nova campanha, de cima a baixo.</figcaption>
+  <img src="img/campanhas-nova.png" alt="Formulário Nova campanha completo, com os cartões Informações, Público, Mensagem, Quem responder e Ritmo desta campanha, e a faixa de resumo no alto, numerado de 1 a 22" loading="lazy">
+  <figcaption>O formulário de nova campanha, de cima a baixo, ainda vazio.</figcaption>
 </figure>
 <ol class="legenda">
+  <li><strong>A faixa de resumo.</strong> Quatro células — <em>Quem recebe</em>, <em>Por onde</em>, <em>Quanto tempo</em> e <em>Quanto custa</em> — e, embaixo, a linha <em>Vai disparar?</em> com as conferências. Aqui diz “4 pedem atenção”, porque o formulário ainda está vazio. Veja <a href="#disparo-em-massa--faixa">A faixa de resumo e o “Vai disparar?”</a>.</li>
   <li><strong>Nome da campanha.</strong> Obrigatório (até 160 caracteres). Só você vê.</li>
   <li><strong>Enviar pelo número.</strong> Obrigatório. Lista todos os números da organização. Trocar de número <strong>zera</strong> o modelo e as variáveis escolhidos. Sem nenhum número aparece “Nenhum número conectado. Conecte um em Conexões antes de criar a campanha.”.</li>
-  <li><strong>Base legal do envio.</strong> Obrigatória. <em>Consentimento</em> (estas pessoas pediram para receber) ou <em>Interesse legítimo</em>, que exige a <em>referência da avaliação (LIA)</em> registrada. Quem recebe pode perguntar por que recebeu, e a resposta precisa existir antes do envio.</li>
+  <li><strong>Base legal do envio.</strong> Obrigatória. <em>Consentimento</em> (estas pessoas pediram para receber) ou <em>Interesse legítimo</em>, que exige a <em>referência da avaliação (LIA)</em> registrada. Quem recebe pode perguntar por que recebeu, e a resposta precisa existir antes do envio. Um texto logo abaixo dá o exemplo: consentimento é quando a pessoa pediu para receber (preencheu um formulário, marcou uma caixa ou escreveu pedindo); interesse legítimo é quando você já tem relação com ela, como cliente, e a mensagem é esperada. Na dúvida, escolha consentimento.</li>
   <li><strong>Subir uma lista de contatos (CSV).</strong> Veja <a href="#disparo-em-massa--csv">abaixo</a>.</li>
   <li><strong>Baixar planilha modelo.</strong> Baixa o arquivo <code>lista-para-disparo.csv</code>, já com as colunas e três linhas de exemplo.</li>
   <li><strong>Enviar lista.</strong> Lê o arquivo escolhido e cria os contatos.</li>
@@ -70,18 +71,37 @@
   <li><strong>Sem falar com a gente há (dias).</strong> Quem está parado há pelo menos esse número de dias. Quem nunca interagiu <em>entra</em>.</li>
   <li><strong>Com negócio no funil / Na etapa.</strong> Filtra por quem tem negócio num funil (e, opcionalmente, numa etapa).</li>
   <li><strong>Máximo de contatos nesta campanha.</strong> De 1 a 5.000 (padrão 100). Vale só para o recorte por critérios; a planilha entra <em>além</em> dele.</li>
-  <li><strong>Ver quantas pessoas.</strong> Faz a conta sem gravar nada: “<em>N</em> podem receber · <em>M</em> ficam de fora”, com o motivo de cada exclusão. Fica apagado sem critério. Em campanha oficial com modelo mostra também o <strong>custo estimado</strong> pela tabela da Meta.</li>
+  <li><strong>Ver quantas pessoas.</strong> Faz a conta sem gravar nada: “<em>N</em> podem receber · <em>M</em> ficam de fora”, com o motivo de cada exclusão. Fica apagado sem critério. A conta também se refaz <strong>sozinha</strong>, um instante depois de você mexer no público, na mensagem ou no número, e alimenta a faixa do alto; o botão continua para quem quiser contar na hora. Em campanha oficial com modelo mostra também o <strong>custo estimado</strong> pela tabela da Meta.</li>
   <li><strong>Texto da mensagem</strong> (número de QR code). Obrigatório, até 4.096 caracteres. “Escreva como você falaria com uma pessoa só.”.</li>
   <li><strong>Variáveis.</strong> Os botões <code>{{nome}}</code>, <code>{{primeiro_nome}}</code> e <code>{{saudacao}}</code> acrescentam o marcador ao fim do texto. Quem não tiver o dado que a mensagem usa <strong>fica de fora</strong>, com o motivo — “mensagem com buraco não sai”. Variável desconhecida (por exemplo <code>{{xyz}}</code>) <strong>vai literal</strong> para o cliente.</li>
   <li><strong>Vira card no funil / Na etapa.</strong> Para onde vai quem responder. Em branco, o card nasce no funil do número.</li>
   <li><strong>Quem atende a resposta.</strong> O agente de IA que conversa com quem responde (só agentes publicados). Em branco, o agente publicado no número.</li>
   <li><strong>Quem assume a resposta.</strong> <em>O agente de IA</em> (padrão), <em>A fila de atendentes</em> (a IA fica calada) ou <em>A IA, e depois um atendente</em> (exige escolher o agente).</li>
   <li><strong>O que a campanha oferece.</strong> Até 2.000 caracteres (“avaliação por R$ 99 até sexta-feira…”). O agente recebe isto junto com o nome da campanha e a mensagem que a pessoa leu.</li>
-  <li><strong>Ritmo desta campanha.</strong> Intervalo mínimo, máximo por dia e por hora, e a janela (a partir das… / parar às…). Em branco vale o ritmo do número; o que você puser <strong>só pode deixar mais devagar</strong>. Informe início e fim juntos. Em campanha oficial aparece também o <em>teto de gasto da Meta</em>.</li>
+  <li><strong>Ritmo desta campanha.</strong> Intervalo mínimo, máximo por dia e por hora, e a janela (a partir das… / parar às…). Em branco vale o ritmo do número; o que você puser <strong>só pode deixar mais devagar</strong>. Informe início e fim juntos. Em campanha oficial aparece também o <em>teto de gasto da Meta</em>. Antes dos campos há um <a href="#disparo-em-massa--guia-ritmo">guia do ritmo</a>.</li>
   <li><strong>Cancelar.</strong> Volta à lista sem criar nada.</li>
   <li><strong>Salvar rascunho.</strong> Cria a campanha em <em>Rascunho</em> e abre o detalhe. Só habilita quando o essencial está preenchido.</li>
 </ol>
 <p>O botão <span class="ui">Salvar rascunho</span> só habilita com: nome, número, um critério ou lista subida, texto (ou modelo, no número oficial) e, quando a base é interesse legítimo, a referência LIA. Não existe “todos os contatos”: o público sempre exige um recorte.</p>
+<p>Quando a organização tem mais de um número, o cartão <em>Informações</em> mostra também <strong>Falar também por estes números</strong>: marque outros números para a campanha <strong>revezar</strong> entre eles, usando a cada envio o que tem mais folga no teto do dia (quem já conversa com você por um deles recebe por esse mesmo). Se marcar, o intervalo e os tetos da campanha somam todos os números: para o rodízio aumentar o volume, deixe o ritmo da campanha em branco.</p>
+
+<h3 id="faixa">A faixa de resumo e o “Vai disparar?”</h3>
+<p>No alto da tela, antes dos cartões, uma faixa responde quatro perguntas e <strong>se atualiza a cada edição</strong>, sem gravar nada. Ela rola junto com a página (não fica colada no topo).</p>
+<table class="tabela">
+  <thead><tr><th>Célula</th><th>O que mostra</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Quem recebe</strong></td><td>Quantas pessoas entram (“<em>N</em> pessoas”, com “<em>M</em> ficam de fora”). Antes de escolher um critério diz “Escolha o público”; enquanto conta, “Contando…”.</td></tr>
+    <tr><td><strong>Por onde</strong></td><td>O número escolhido e o modo: “QR code · texto livre” ou “API Oficial · modelo aprovado”.</td></tr>
+    <tr><td><strong>Quanto tempo</strong></td><td>Uma estimativa de dias para enviar a todos, calculada com as regras do próprio envio: o ritmo do número, a janela de horário, o domingo e o aquecimento de número novo, que sobe com os dias. Diz o que limita (“limitado pelo aquecimento do número”, “pelo teto por hora”…). Na API Oficial pode dizer “No mesmo dia”, lembrando que o limite da Meta pode estender. Se o horário digitado não fecha, mostra “O horário de envio não fecha”.</td></tr>
+    <tr><td><strong>Quanto custa</strong></td><td>Número de QR code: “Sem tarifa da Meta”. API Oficial: o custo estimado pela tabela da Meta, com o teto de gasto ao lado (ou “Sem teto de gasto”). Aparece depois de contar o público.</td></tr>
+  </tbody>
+</table>
+<p>Embaixo da faixa fica a linha <span class="ui">Vai disparar?</span>, que diz <strong>“Tudo certo”</strong> ou “<em>N</em> pede(m) atenção”. Clique nela (<span class="ui">ver as conferências</span>) para abrir a lista de conferências, cada uma com a frase do que falta: dar um nome à campanha, escolher o número, escolher o público (ou avisar que nenhuma pessoa entra com aquele recorte), escrever o texto ou escolher o modelo e dizer de onde vem cada variável, informar a referência LIA, escolher o agente quando a resposta pede um, o horário que não fecha e, na API Oficial, se a estimativa passa do teto de gasto. Número de QR code ainda mostra o lembrete de que, ao iniciar, será preciso aceitar o aviso de risco de banimento.</p>
+<aside class="nota info"><strong>A faixa orienta, mas não é o botão Salvar.</strong><p>O <span class="ui">Salvar rascunho</span> segue as regras descritas acima. “Nenhuma pessoa entra” e “a estimativa passa do teto de gasto” aparecem como atenção, mas não impedem de salvar: o rascunho existe para ser ajustado depois.</p></aside>
+
+<h3 id="guia-ritmo">O guia do ritmo</h3>
+<p>No cartão <em>Ritmo desta campanha</em>, acima dos campos, a tela diz primeiro <strong>“Sem mexer em nada, o número já faz isto”</strong>: o intervalo mínimo entre mensagens, o horário de envio, se o domingo está liberado, o aquecimento de hoje (número novo) e o limite diário do número. Em seguida vem uma <strong>recomendação, sempre com o motivo</strong>: em número novo, deixar o ritmo em branco; em número já formado, deixar em branco e, se a lista é de gente que nunca falou com você, pôr um “Máximo por dia” baixo; na API Oficial, deixar em branco e definir um teto de gasto. Se o que você digitar não muda nada (um teto acima do limite do número, ou um intervalo menor que o do número), a tela avisa em amarelo. Os campos e os rótulos continuam os mesmos.</p>
+
 <aside class="nota info"><strong>Quem já está em outra campanha não entra.</strong><p>Quem está numa campanha “viva” (rascunho, pronta, agendada, enviando ou pausada) fica de fora desta, com o motivo “Já está em outra campanha ainda não concluída”. Um <em>rascunho esquecido</em> também segura a pessoa. Concluída ou cancelada, não.</p></aside>
 
 <h3>Quem fica de fora da lista</h3>

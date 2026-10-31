@@ -3,15 +3,18 @@
 <h2 id="visao-geral">Para que serve</h2>
 <p>Troca o <strong>nome</strong>, a <strong>cor</strong> e o <strong>logo</strong> que a sua empresa mostra a <em>quem trabalha dentro do sistema</em>. Vale <strong>só para esta empresa</strong>; a marca da instalação (que pinta a tela de entrada e os e-mails) é outra, do dono do servidor.</p>
 <figure class="print">
-  <img src="img/marca.png" alt="Tela Marca com o nome, a cor, o logo, de onde vem cada coisa e o que isto ainda não muda, numerada de 1 a 7" loading="lazy">
-  <figcaption>A tela Marca, sem nada definido pela empresa.</figcaption>
+  <img src="img/marca.png" alt="Tela Marca com o nome, a cor com a escala de tons, os dois logos, de onde vem cada coisa e o que isto ainda não muda, numerada de 1 a 10" loading="lazy">
+  <figcaption>A tela Marca, com uma cor de exemplo digitada (ainda não salva) para mostrar a escala de tons. Sem cor, a escala não aparece.</figcaption>
 </figure>
 <ol class="legenda">
   <li><strong>Como sua empresa aparece.</strong> O cartão de campos.</li>
-  <li><strong>Nome da sua empresa.</strong> Até 120 caracteres. Aparece no menu lateral. Em branco usa o nome padrão (“ZapSales”).</li>
-  <li><strong>Cor da sua marca.</strong> Um seletor de cor mais o código (<code>#7a5cd6</code>). Em branco volta à cor do sistema. Abaixo o sistema monta uma <em>escala de tons</em> e mostra o tom que irá nos botões no modo claro e no escuro; “No modo escuro o sistema usa naturalmente um tom mais claro da escala.”</li>
-  <li><strong>Logo.</strong> PNG ou JPG de até <strong>512 KB</strong>, de preferência com fundo transparente. <strong>SVG não é aceito</strong> (poderia executar código). O envio é <em>imediato</em>: não passa pelo botão Salvar. Há também “Logo para o tema escuro (opcional)”, com prévias em “Aparência clara” e “Aparência escura”, e botões <span class="ui">Remover</span> e <span class="ui">Remover logo escuro</span>. A tela tenta reduzir imagens grandes sozinha antes de recusar.</li>
-  <li><strong>De onde vem cada coisa.</strong> Para Nome, Cor e Logo diz a origem: “você definiu aqui”, “é o padrão do sistema” ou “veio de quem instalou o sistema”.</li>
+  <li><strong>Nome da sua empresa.</strong> Até 120 caracteres. Aparece no menu lateral. Em branco, usa o nome que valeria sem esta personalização (o que quem instalou o sistema definiu ou, na falta disso, o nome padrão); o campo já mostra esse nome como sugestão.</li>
+  <li><strong>O código da cor.</strong> O texto da cor, como <code>#2f6fed</code>. Em branco volta à cor do sistema.</li>
+  <li><strong>Escolher a cor visualmente.</strong> O quadrado de cor ao lado do código abre um seletor de cor; o que você escolher aparece no código.</li>
+  <li><strong>A escala de tons.</strong> Assim que há uma cor, o sistema monta uma <em>escala de tons</em> e escolhe dentro dela o tom que vai nos botões. Três amostras dizem qual é qual: “Sua cor”, “Botões no modo claro” e “Botões no modo escuro”. Quando a sua cor não cabe na escala, aparece a nota “fora da escala — fica só no logo”. E a frase “No modo escuro o sistema usa naturalmente um tom mais claro da escala, para a cor não se perder no fundo escuro.”</li>
+  <li><strong>Logo.</strong> PNG ou JPG de até <strong>512 KB</strong>, de preferência com fundo transparente. <strong>SVG não é aceito</strong> (poderia executar código). O envio é <em>imediato</em>: não passa pelo botão Salvar. Depois de enviado aparece o botão <span class="ui">Remover</span>. A tela tenta reduzir imagens grandes sozinha antes de recusar.</li>
+  <li><strong>Logo para o tema escuro (opcional).</strong> Uma versão legível sobre fundo escuro, que aparece sem moldura branca; sem ela, o logo padrão mantém a proteção de contraste. As prévias “Aparência clara” e “Aparência escura” mostram como o logo fica nos dois temas, e depois do envio há o botão <span class="ui">Remover logo escuro</span>.</li>
+  <li><strong>De onde vem cada coisa.</strong> Para Nome, Cor e Logo diz a origem: “você definiu aqui”, “é o padrão do sistema” ou “veio de quem instalou o sistema”. Embaixo, o lembrete de que no modo claro os botões usam um tom mais escuro que a sua cor, para o texto continuar legível, e a sua cor original continua no logo e nos destaques.</li>
   <li><strong>O que isto ainda não muda.</strong> Veja abaixo.</li>
   <li><strong>Salvar.</strong> “Marca salva.”</li>
 </ol>
@@ -26,5 +29,6 @@
   <li>Os e-mails (convite da equipe, pedidos de LGPD) <em>já saem</em> com o nome da empresa.</li>
   <li>O relatório de LGPD entregue ao cliente traz a <strong>razão social</strong>, não o nome da marca: é a empresa que responde legalmente pelos dados. Confira o campo “Razão social” em <a href="#dados-da-empresa">Organização</a>.</li>
   <li>O aplicativo de verificação em duas etapas registra o nome do sistema.</li>
+  <li>O logo que você sobe aqui aparece no menu lateral, para quem trabalha nesta empresa; a tela de entrada continua com o logo de quem instalou o sistema.</li>
 </ul>
-<p>Erros possíveis: “Use um código de cor como #7a5cd6.”, “Só quem administra esta empresa pode mudar a marca.”, “Você não tem permissão para trocar este logo.”, “Muitas trocas seguidas. Tente de novo em alguns minutos.”. Quem tem o fator de duas etapas precisa tê-lo provado na sessão para salvar e para enviar o logo.</p>
+<p>Erros possíveis: “Use um código de cor como #7a5cd6.”, “Só quem administra esta empresa pode mudar a marca.”, “Você não tem permissão para trocar este logo.”, “Muitas trocas seguidas. Tente de novo em alguns minutos.”, “Algum campo não está no formato esperado.”, “Sua sessão expirou. Entre de novo para salvar.” e “A alteração não chegou ao banco — nada foi mudado. Tente de novo.”. Se o fator de duas etapas não foi provado na sessão: “Confirme o código do seu aplicativo de duas etapas e tente de novo.”. Quem tem o fator de duas etapas precisa tê-lo provado na sessão para salvar e para enviar o logo.</p>

@@ -9,7 +9,7 @@
 <ol class="legenda">
   <li><strong>Título.</strong> “Consumo de mensagens, conversas e AI por tenant”.</li>
   <li><strong>Período.</strong> “Últimos 30 dias” (padrão), “Últimos 7 dias” ou “Últimos 90 dias”.</li>
-  <li><strong>Gráficos.</strong> “Mensagens / dia”, “Custo AI / dia” e “AI Tokens / dia”. Sem dados: “Sem dados no período”.</li>
+  <li><strong>Gráficos.</strong> “Mensagens / dia”, “Custo AI / dia” e “AI Tokens / dia”. Sem dados: “Sem dados no período” nos gráficos e “Não há dados de uso no período selecionado.” na tabela. Se a leitura falhar: “Erro ao carregar dados de uso. Tente recarregar.”.</li>
   <li><strong>Uso por tenant.</strong> A tabela: Tenant, Agente, Mensagens, Conversas, Invoc. AI, Tokens e Custo AI (do maior custo para o menor).</li>
   <li><strong>Custo AI.</strong> A última coluna.</li>
   <li><strong>Exportar CSV.</strong> Baixa <code>usage-&lt;periodo&gt;.csv</code> com os dados de <em>todas</em> as empresas (gerado no navegador).</li>
@@ -30,7 +30,7 @@
   <li><strong>Status.</strong> <em>Ativo</em> ou <em>Revogado</em> (vínculo retirado).</li>
   <li><strong>Ver.</strong></li>
 </ol>
-<p>É <strong>uma linha por vínculo</strong> entre pessoa e empresa (quem trabalha em duas empresas aparece duas vezes). 30 por página. O detalhe mostra o cartão “Informações do usuário” (e-mail confirmado, último acesso, criado em, <em>MFA</em> Ativo/Inativo, telefone), “Memberships” (empresa, papel, aceito em, status) e “Audit recente” (últimas 50 ações). <strong>Não há</strong> ação de redefinir senha, banir, revogar ou apagar usuário aqui.</p>
+<p>É <strong>uma linha por vínculo</strong> entre pessoa e empresa (quem trabalha em duas empresas aparece duas vezes). 30 por página (com <span class="ui">Carregar mais</span>); com os filtros sem resultado a tela sugere “Ajuste os filtros para refinar a busca.”. O detalhe mostra o cartão “Informações do usuário” (e-mail confirmado, último acesso, criado em, <em>MFA</em> Ativo/Inativo, telefone), “Memberships” (empresa, papel, aceito em, status) e “Audit recente” (últimas 50 ações). <strong>Não há</strong> ação de redefinir senha, banir, revogar ou apagar usuário aqui.</p>
 
 <figure class="print media">
   <img src="img/admin-user-detalhe.png" alt="Detalhe de um usuário com informações, memberships e a auditoria recente, numerado de 1 a 3" loading="lazy">
@@ -64,12 +64,12 @@
 <ol class="legenda">
   <li><strong>Buscar mensagem…</strong> Busca só na <em>prévia da última mensagem</em>, não em todo o histórico.</li>
   <li><strong>Status.</strong> “Todos”, “Pendente”, “Aberto” ou “Resolvido”.</li>
-  <li><strong>Selecione uma conversa.</strong> “Modo somente-leitura. Use “Impersonate” para responder como atendente do tenant.”</li>
+  <li><strong>Selecione uma conversa.</strong> “Modo somente-leitura. Para responder como atendente, abra a organização e use “Acompanhar organização”.”</li>
 </ol>
 <ul>
-  <li>Cada item mostra o contato (ou o telefone, ou “Sem nome”), a hora, o selo da empresa, a prévia e o contador de não lidas. Atualiza em tempo real.</li>
+  <li>Cada item mostra o contato (ou o telefone, ou “Sem nome”), a hora, o selo da empresa, a prévia e o contador de não lidas. Atualiza em tempo real; a lista traz o botão <span class="ui">Carregar mais</span> e, sem resultado, “Nenhuma conversa encontrada.”.</li>
   <li>Aberta a conversa, aparecem as últimas 50 mensagens (todas as de saída rotuladas “Atendente”), o status em inglês cru (<code>pending</code>, <code>open</code>, <code>resolved</code>, <code>closed</code>) e, ao lado, os cartões “Contato” (telefone completo, e-mail parcialmente mascarado, selo “Bloqueado”) e “Tenant” (<span class="ui">Abrir tenant</span>).</li>
-  <li>O rodapé diz “Use “Impersonate” (em breve, S-11.07) para responder” — texto desatualizado: o <a href="#admin-tenants">acompanhamento</a> já existe.</li>
+  <li>No lugar da caixa de resposta, o rodapé fica travado, com um cadeado: “Modo somente-leitura. Para responder, use “Acompanhar organização” na página da organização.” O <a href="#admin-tenants--acompanhar">acompanhamento</a> é o único caminho para responder.</li>
   <li>Cada abertura grava auditoria (<code>platform_admin.conversation_viewed</code>, <code>platform_admin.inbox_listed</code>).</li>
 </ul>
 <aside class="nota atencao"><strong>Dado sensível.</strong><p>Esta tela expõe <em>mensagens reais</em> de clientes finais de todas as empresas, com o telefone completo. Use só para suporte e nunca tire print sem esconder o conteúdo.</p></aside>

@@ -5,7 +5,7 @@
 <p>O título da tela é <em>“O que o agente sabe”</em>. Cada agente escolhe, na tela dele, quais materiais pode ler; a biblioteca em si é <strong>da organização</strong>.</p>
 <figure class="print">
   <img src="img/ia-conhecimento.png" alt="Tela O que o agente sabe, com o aviso de chave, o estado da base e três cartões de material, numerados de 1 a 14" loading="lazy">
-  <figcaption>A biblioteca de conhecimento, com três materiais: um que o agente já sabe, um que não entrou e um de perguntas e respostas.</figcaption>
+  <figcaption>A biblioteca de conhecimento, com três materiais: um que não entrou (a tabela de preços), um de perguntas e respostas e um documento, os dois últimos já sabidos pelo agente. A faixa do alto mostra o caso em que a chave de preparação deixou de servir.</figcaption>
 </figure>
 <ol class="legenda">
   <li><strong>Como funciona.</strong> Painel de ajuda da tela.</li>
@@ -21,8 +21,9 @@
   <li><strong>Ver o que ele aprendeu.</strong> Mostra os trechos que o agente consegue encontrar (só aparece quando já há trechos).</li>
   <li><strong>Editar conteúdo.</strong> Só nos materiais de <em>Perguntas e respostas</em>.</li>
   <li><strong>Arquivar.</strong> Tira o material de circulação.</li>
-  <li><strong>Arquivados.</strong> A seção recolhível com o que foi arquivado.</li>
+  <li><strong>Arquivados.</strong> A seção recolhível no pé da lista (“1 arquivado”) com o que foi arquivado.</li>
 </ol>
+<p><strong>O que mudou no desenho.</strong> Os materiais agora aparecem em <strong>linhas dentro de um painel</strong>, uma embaixo da outra, e não em cartões lado a lado como no print acima. Em cada linha ficam o nome, o tipo e o selo de situação, depois <em>Preparado</em>, <em>Trechos que o agente encontra</em> e <em>Consultado por</em>, e os botões (<span class="ui">Ver o que ele aprendeu</span>, <span class="ui">Preparar de novo</span>, <span class="ui">Editar conteúdo</span>, <span class="ui">Arquivar</span>) na ponta direita. Os nomes e a função são os mesmos descritos na legenda.</p>
 
 <h2 id="chave">A chave de preparação</h2>
 <p>Para o agente conseguir <em>procurar</em> num material, o sistema precisa antes “prepará-lo”: dividir o texto em pedaços e transformá-los em números que permitem a busca por significado (isso se chama <em>embedding</em>). Esse trabalho é feito por um provedor de IA externo — <strong>OpenAI</strong> (ou OpenRouter) ou <strong>Google</strong> — e exige uma <strong>chave de acesso</strong> à conta dele. A faixa no alto da tela tem quatro estados:</p>

@@ -1,7 +1,7 @@
 <!--meta {"id":"dados-da-empresa","grupo":"organizacao","titulo":"Organização","ordem":9,"resumo":"O cadastro da empresa (nome, razão social, CNPJ, encarregado de LGPD, fuso, idioma, moeda, país, retenção de mídia), o menu lateral da empresa e a Zona de perigo que apaga os dados de atendimento.","palavras":["organização","empresa","cnpj","razão social","dpo","encarregado","lgpd","fuso horário","idioma","moeda","país","retenção de mídia","menu lateral","interface","zona de perigo","apagar dados","recomeçar testes"],"onde":"Configurações › Sua empresa › Organização","quem":"Administrador","rotas":["/app/settings/tenant"]} -->
 
 <h2 id="visao-geral">Para que serve</h2>
-<p>É o <strong>cadastro da empresa</strong> dentro do sistema, mais duas coisas poderosas: escolher quais áreas do menu a empresa mostra e <strong>apagar de uma vez os dados de atendimento</strong> (para recomeçar os testes). Só o Administrador abre.</p>
+<p>É o <strong>cadastro da empresa</strong> dentro do sistema, mais duas coisas poderosas: escolher quais áreas do menu a empresa mostra e <strong>apagar de uma vez os dados de atendimento</strong> (para recomeçar os testes). Só o Administrador abre (o administrador da plataforma também, fora do modo de suporte temporário).</p>
 <figure class="print">
   <img src="img/organizacao.png" alt="Tela Organização com o formulário da empresa, o cartão Menu lateral e a Zona de perigo2" loading="lazy">
   <figcaption>A tela Organização inteira.</figcaption>
@@ -13,7 +13,7 @@
   <li><strong>DPO email.</strong> O e-mail do “encarregado de dados” da LGPD (opcional). É para ele que vai o alerta de prazo dos pedidos de titulares.</li>
   <li><strong>Fuso horário.</strong> O padrão da empresa (mesma lista do Perfil). Usado, por exemplo, como fuso inicial dos horários de atendimento.</li>
   <li><strong>Idioma.</strong> Português (BR), Español ou English. É o idioma padrão da empresa; a preferência pessoal do <a href="#config-perfil">Perfil</a> tem prioridade.</li>
-  <li><strong>Moeda.</strong> AOA, BRL, EUR, MXN ou USD. “Vale para todo preço do catálogo. Produto já cadastrado guarda a moeda com que nasceu.”</li>
+  <li><strong>Moeda.</strong> AOA, BRL, EUR, MXN ou USD (cada opção aparece com o símbolo, como “BRL · R$”). “Vale para todo preço do catálogo. Produto já cadastrado guarda a moeda com que nasceu.”</li>
   <li><strong>País.</strong> Hoje só “Brasil”: de onde saem o documento do contato, a lei citada no documento de acesso e o prazo em dias úteis. Só aparecem países com a lei já revisada.</li>
   <li><strong>Retenção de mídia (dias).</strong> De 30 a 3650 (padrão 365). Veja o aviso abaixo.</li>
   <li><strong>URL política de privacidade.</strong> Opcional, até 2048 caracteres.</li>
@@ -21,8 +21,8 @@
   <li><strong>Zona de perigo.</strong> O cartão vermelho.</li>
 </ol>
 <ul>
-  <li>O botão <span class="ui">Salvar</span> (do formulário, depois da URL da política) avisa “Organização atualizada.”. Vale para a empresa toda e fica na <a href="#auditoria">Auditoria</a> (<code>org.updated</code>, com a lista de campos).</li>
-  <li>O texto de ajuda da tela diz “Dados da empresa, retenção de mídia, DPO. Admin only.” — o “Admin only” é o texto literal, em inglês.</li>
+  <li>O botão <span class="ui">Salvar</span> (do formulário, depois da URL da política) avisa “Organização atualizada.”. Se algum campo estiver fora do formato, o aviso é “Dados inválidos.”; se o servidor recusar, “Erro: …” com o motivo. Vale para a empresa toda e fica na <a href="#auditoria">Auditoria</a> (<code>org.updated</code>, com a lista de campos).</li>
+  <li>O texto de ajuda da tela diz “Dados da empresa, retenção de mídia, DPO. Só administradores.”</li>
   <li><strong>Esta tela não tem “janela de envio” nem fuso de disparo.</strong> Isso é por número, em <a href="#conexoes">Conexões</a>.</li>
 </ul>
 <aside class="nota atencao"><strong>Retenção de mídia apaga arquivos de verdade.</strong><p>Uma rotina diária enfileira para remoção os arquivos (áudios, imagens, documentos) de mensagens <em>mais antigas que N dias</em>, mais os arquivos órfãos. Depois disso, as mídias antigas <strong>somem da conversa</strong>. Use um prazo que combine com a sua necessidade de histórico.</p></aside>
@@ -35,7 +35,7 @@
 <ul>
   <li><strong>Continuam de pé:</strong> a equipe e os convites, as configurações, os funis e etapas, os agentes de IA, os canais de WhatsApp conectados, as chaves de API, a auditoria (que não se apaga) e os pedidos de LGPD.</li>
   <li>Em cascata vão embora também notas, atividades, follow-ups e os PDFs de propostas.</li>
-  <li>O botão vermelho <span class="ui">Apagar todos os dados de atendimento</span> abre a janela “Apagar todos os dados de atendimento?”: “Esta ação é irreversível…”. Você precisa <strong>digitar o nome de exibição</strong> exatamente como está gravado (espaços nas pontas são ignorados) para liberar o botão <span class="ui">Apagar de vez</span>. Se você tem o fator de duas etapas, ele deve ter sido provado na sessão.</li>
+  <li>O botão vermelho <span class="ui">Apagar todos os dados de atendimento</span> abre a janela “Apagar todos os dados de atendimento?”: “Esta ação é irreversível…”. Você precisa <strong>digitar o nome de exibição</strong> exatamente como está gravado (espaços nas pontas são ignorados) para liberar o botão <span class="ui">Apagar de vez</span>. Se você tem o fator de duas etapas, ele deve ter sido provado na sessão. Os erros possíveis aparecem em aviso: “O nome digitado não confere com o nome da organização.”, “Só quem administra esta empresa pode apagar os dados.”, “Confirme o código do seu aplicativo de duas etapas e tente de novo.”, “Sua sessão expirou. Entre de novo para continuar.” e “Não consegui apagar os dados agora.”.</li>
   <li>No fim: “Dados apagados: N mensagens, N conversas, N negócios, N contatos.”. Fica na auditoria como <code>org.dados_operacionais_apagados</code>, com as contagens.</li>
 </ul>
 <aside class="nota atencao"><strong>Não há volta.</strong><p>Em produção, esta é uma ação destrutiva. Se você já está atendendo clientes de verdade, <em>não use</em>. Faça uma cópia de segurança antes (veja o guia de backup do servidor).</p></aside>

@@ -16,7 +16,7 @@
   <li><strong>Users.</strong> Pessoas vinculadas (e, ao lado, o número de conversas).</li>
   <li><strong>Ver.</strong> Abre a ficha.</li>
 </ol>
-<p>30 por página; <span class="ui">Carregar mais</span> traz o resto. Sem resultado: “Nenhum tenant encontrado — Ajuste os filtros ou crie um novo tenant.”. A consulta é auditada (<code>platform_admin.tenants_listed</code>).</p>
+<p>Entre o <em>Conversas</em> e o <span class="ui">Ver</span> há ainda a coluna <em>Criado em</em> (a data de criação da empresa). 30 por página; <span class="ui">Carregar mais</span> traz o resto. Sem resultado: “Nenhum tenant encontrado — Ajuste os filtros ou crie um novo tenant.”. A consulta é auditada (<code>platform_admin.tenants_listed</code>).</p>
 
 <h2 id="novo">Novo tenant</h2>
 <figure class="print">
@@ -31,18 +31,18 @@
   <li><strong>Plano.</strong> Standard (padrão), Pro ou Enterprise — hoje só um rótulo informativo (não confirmado se libera ou limita algo).</li>
   <li><strong>E-mail do responsável.</strong> Obrigatório. A pessoa que vai administrar a empresa.</li>
   <li><strong>Interface.</strong> O mesmo editor de áreas visíveis do responsável (padrão: completa; deve restar ao menos uma área).</li>
-  <li><strong>Criar organização.</strong> “Criando…”.</li>
+  <li><strong>Criar organização.</strong> “Criando…”. Ao lado fica o botão <span class="ui">Cancelar</span>, que volta à tela anterior. O botão de criar fica desabilitado se o editor de interface ficar sem nenhuma área visível para o administrador.</li>
 </ol>
 <ul>
   <li><strong>Você entra como Administrador da empresa nova.</strong> Quando o responsável é outra pessoa, o seu vínculo é “provisório” até a passagem de bastão.</li>
-  <li>Se o e-mail do responsável é <em>outro</em>, o sistema gera um <strong>convite de administrador</strong> (válido por tempo limitado) e tenta enviar por e-mail; sem e-mail configurado, a tela mostra o <em>Link do convite</em> com o botão <span class="ui">Copiar convite</span> (“O envio por e-mail não foi confirmado. Copie o link e compartilhe com o responsável.”). Se o e-mail é o seu, não há convite.</li>
+  <li>Se o e-mail do responsável é <em>outro</em>, o sistema gera um <strong>convite de administrador</strong> (válido por tempo limitado) e tenta enviar por e-mail; sem e-mail configurado, a tela mostra o <em>Link do convite</em> com o botão <span class="ui">Copiar convite</span> (“O envio por e-mail não foi confirmado. Copie o link e compartilhe com o responsável.”); quando o envio deu certo a tela diz “Convite enviado por e-mail.” e, nos dois casos, mostra o link e “Válido até <em>data e hora</em>”, com a dica “Se o convite vencer, abra Equipe na organização para gerar outro.”. Se o e-mail é o seu, não há convite.</li>
   <li>Termina em “Organização criada — Você já é administrador de &lt;nome&gt;.” com os botões <span class="ui">Voltar ao aplicativo</span> e <span class="ui">Ver organização</span>.</li>
   <li>É idempotente (repetir o mesmo envio não duplica) e fica na auditoria como <code>tenant.created_by_platform_admin</code>. <strong>Não existe botão de apagar empresa</strong> no painel: só suspender (ou redigir por LGPD). A empresa nova nasce <em>ativa</em> mas aparece como “Onboarding” até o responsável concluir os primeiros passos.</li>
   <li>Esta tela <em>não foi enviada</em> nas capturas.</li>
 </ul>
 
 <h2 id="ficha">A ficha da empresa</h2>
-<p>Clicar em <span class="ui">Ver</span> abre a ficha, com o nome, o slug, o selo de status (aqui sempre o status “cru”: nunca mostra “Onboarding”) e quatro abas: <strong>Visão Geral</strong>, <strong>Saúde</strong>, <strong>Agente</strong> e duas desativadas, <em>Equipe</em> e <em>Uso</em> (“em breve”).</p>
+<p>Clicar em <span class="ui">Ver</span> abre a ficha (no alto, o link <span class="ui">Tenants</span> volta à lista), com o nome, o slug, o selo de status (aqui sempre o status “cru”: nunca mostra “Onboarding”) e cinco abas: <strong>Visão Geral</strong>, <strong>Saúde</strong> e <strong>Agente</strong>, mais duas desativadas, <em>Equipe</em> e <em>Uso</em> (marcadas “em breve”).</p>
 <figure class="print">
   <img src="img/admin-tenant-geral.png" alt="Ficha de uma empresa com informações, volumes, integrações, compliance e os botões de ação, numerada de 1 a 7" loading="lazy">
   <figcaption>A aba Visão Geral da ficha.</figcaption>
@@ -53,7 +53,7 @@
   <li><strong>Informações.</strong> Plano, razão social, CNPJ (completo), “Onboarding concluído” (data e hora), “Criado em” e, se houver, “Suspenso em”.</li>
   <li><strong>Volumes.</strong> Totais da empresa: Usuários, Conversas, Mensagens, Leads e Pedidos. Em “Integrações”: quantas sessões de WhatsApp existem (de qualquer status).</li>
   <li><strong>Compliance &amp; IA.</strong> “Solicitações LGPD pendentes” (destaque se &gt; 0) e “Invocações IA (30d)”.</li>
-  <li><strong>Acompanhar organização.</strong> Veja abaixo.</li>
+  <li><strong>Acompanhar organização.</strong> Veja abaixo. Ele fica no cartão “Ações”, ao lado das informações.</li>
   <li><strong>Suspender tenant.</strong> Vermelho; só se a empresa está ativa. Se está suspensa aparece <span class="ui">Reativar tenant</span>; se redigida, só “Tenant redigido — ações de gestão não disponíveis.”.</li>
 </ol>
 <h3 id="saude">Aba Saúde</h3>
@@ -67,6 +67,7 @@
   <li><strong>Orçamento IA.</strong> “N% usado”, consumido, orçamento (ou “Ilimitado”) e o limite (“Não aplicado”, “Só avisa” ou “Para a IA no limite”). Aqui o gasto é o <em>do mês</em>. A partir de 80% é Atenção; 100% só é Crítico quando a empresa escolheu parar a IA.</li>
   <li><strong>Audit Lag.</strong> Tempo desde o último evento de auditoria da empresa. Acima de 2 minutos é Atenção e acima de 10 minutos, Crítico.</li>
 </ol>
+<p>O cartão <em>Audit Lag</em> traz o tempo em destaque (“45s”, “3min”, “2h”) e, embaixo, “Último evento” (data e hora) e “Lag”; sem nenhum evento, mostra “—” e fica em <em>Atenção</em>. No cartão de orçamento, sem teto definido aparece “Sem orçamento” e, no lugar do orçamento, “Ilimitado”.</p>
 <p><strong>Armadilha:</strong> uma empresa parada, sem nenhuma atividade, aparece com “Audit Lag” <em>Crítico</em> só por não ter evento recente — não é falha real.</p>
 <h3 id="agente">Aba Agente</h3>
 <figure class="print media">
@@ -76,6 +77,7 @@
 <p>Lista os agentes de IA da empresa, só para leitura: nome, “Ativo/Inativo”, <em>Tipo</em>, <em>Versão publicada</em> (<code>vN · provedor · modelo</code> ou “Nenhum agente publicado”) e <em>Publicado em</em>. Vazio: “Nenhum agente publicado”.</p>
 
 <h2 id="suspender">Suspender e reativar</h2>
+<p>Com a empresa suspensa, a aba Visão Geral ganha no topo uma faixa amarela: “Tenant suspenso há N dias. Sem razão registrada.”. A faixa informa há quanto tempo, mas, pelo que o código mostra, <strong>não exibe o motivo digitado</strong> na suspensão (ele fica só na auditoria).</p>
 <figure class="print media">
   <img src="img/admin-suspender.png" alt="Janela Suspender tenant com o campo do motivo e o botão Confirmar suspensão" loading="lazy">
   <figcaption>A janela “Suspender tenant” (cancelada nesta captura).</figcaption>
@@ -91,7 +93,7 @@
   <img src="img/admin-acompanhar.png" alt="Janela Iniciar acompanhamento com a caixa Somente leitura e o botão Confirmar e entrar" loading="lazy">
   <figcaption>A janela “Iniciar acompanhamento?”.</figcaption>
 </figure>
-<p>Permite entrar na empresa de um cliente <strong>por até 1 hora</strong>, com a sua identidade, para ajudar ou diagnosticar — com tudo registrado. A janela diz: “Acompanhe &lt;nome&gt; com sua identidade de administrador. As ações pelo aplicativo serão registradas em seu nome. O acesso dura até uma hora.” A caixa <strong>Somente leitura</strong> escolhe o modo: marcada, você vira <code>viewer</code> da empresa e qualquer gravação é barrada (“Este acompanhamento permite somente leitura.”); desmarcada, vira <code>admin</code> ( “Edição permitida”). Quem tem o escopo <code>support_readonly</code> entra <em>sempre</em> somente leitura.</p>
+<p>Permite entrar na empresa de um cliente <strong>por até 1 hora</strong>, com a sua identidade, para ajudar ou diagnosticar — com tudo registrado. A janela diz: “Acompanhe &lt;nome&gt; com sua identidade de administrador. As ações pelo aplicativo serão registradas em seu nome. O acesso dura até uma hora.” A caixa <strong>Somente leitura</strong> escolhe o modo (ela vem <em>desmarcada</em>): marcada, você vira <code>viewer</code> da empresa e qualquer gravação é barrada (“Este acompanhamento permite somente leitura.”); desmarcada, vira <code>admin</code> ( “Edição permitida”). Quem tem o escopo <code>support_readonly</code> entra <em>sempre</em> somente leitura.</p>
 <figure class="print">
   <img src="img/admin-acompanhamento.png" alt="Faixa amarela no topo do aplicativo dizendo Suporte à organização, Somente leitura, com o botão Sair do acompanhamento, numerada de 1 a 2" loading="lazy">
   <figcaption>O que o dono vê durante o acompanhamento.</figcaption>

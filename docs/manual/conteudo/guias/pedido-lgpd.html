@@ -1,0 +1,94 @@
+<!--meta {"id":"guia-pedido-lgpd","grupo":"guias","titulo":"Um cliente pediu para apagar os dados dele (LGPD)","ordem":3,"resumo":"O caminho completo quando um cliente exerce o direito da LGPD: confirmar o pedido, respeitar os prazos, olhar o que existe sobre a pessoa, aprovar ou anonimizar, e saber o que é preservado e por que não tem volta.","palavras":["lgpd","apagar dados","excluir dados","direito do titular","anonimizar","anonimização","pedido do cliente","cópia dos dados","exportar dados","prazo","sla","dpo","privacidade","esquecimento"],"onde":"Guia: passa por Contatos (ficha › aba LGPD) e Configurações › Dados e acesso › LGPD","quem":"Administrador (a aba LGPD da ficha e a tela de Solicitações só abrem para ele)","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>A LGPD (Lei Geral de Proteção de Dados) dá a cada pessoa o direito de pedir uma <strong>cópia dos dados</strong> que você guarda sobre ela ou a <strong>anonimização</strong> deles, e a empresa tem <strong>prazo</strong> para responder. No ZapSales, “apagar os dados” de um cliente significa <strong>anonimizar o contato</strong>: o nome vira “Cliente Anonimizado #número”, os dados pessoais são removidos e o histórico de atendimento é preservado sem identificar ninguém.</p>
+<aside class="nota perigo"><strong>Anonimizar não tem volta.</strong><p>Depois de feita, não há como recuperar os dados da pessoa, e reverter dá erro (<code>lgpd_anonymization_irreversible</code>). O próprio sistema diz na tela: use somente após confirmação formal do titular ou ordem judicial. Só siga adiante com o pedido confirmado.</p></aside>
+<p>Só o <strong>Administrador</strong> faz isto. As duas telas envolvidas são a <em>ficha do contato</em> (<a href="#contatos--lgpd">Contatos › LGPD</a>) e a fila de <a href="#lgpd">LGPD (Solicitações)</a>.</p>
+
+<h2 id="decidir">1. Entenda o que a pessoa pediu</h2>
+<table class="tabela">
+  <thead><tr><th>A pessoa quer…</th><th>O que é no sistema</th><th>Onde se faz</th></tr></thead>
+  <tbody>
+    <tr><td>Saber o que você guarda sobre ela (uma cópia dos dados)</td><td>Pedido de dados, com prazo de 7 dias úteis</td><td>Fila de <a href="#lgpd">LGPD (Solicitações)</a>: pré-visualizar e aprovar</td></tr>
+    <tr><td>Que seus dados sejam apagados</td><td>Anonimização do contato, com prazo de 15 dias úteis</td><td>Ficha do contato (aba LGPD) ou fila de Solicitações</td></tr>
+    <tr><td>Só parar de receber mensagens</td><td><strong>Não é LGPD</strong>: é opt-out</td><td>O contato é bloqueado; veja <a href="#conceitos--parar">PARAR: quando a pessoa pede para sair</a></td></tr>
+  </tbody>
+</table>
+<aside class="nota atencao"><strong>Quem só quer parar de receber não precisa ser anonimizado.</strong><p>Quando o cliente escreve algo como PARAR ou “não quero mais receber”, o sistema bloqueia o contato sozinho, e nenhum envio (do agente ou de campanhas) sai mais para ele. Anonimizar por engano uma pessoa que só queria silêncio apaga o que não precisava ser apagado, e sem volta.</p></aside>
+
+<h2 id="receber">2. Receba e registre o pedido</h2>
+<ol class="passos">
+  <li><strong>Anote o pedido fora do sistema</strong>: quem pediu, por qual meio (e-mail, WhatsApp, carta) e em que dia. A data do pedido é o começo da contagem do prazo.</li>
+  <li>Confirme que quem pede é o titular dos dados (ou que há ordem judicial). O sistema só pede, na ficha, uma justificativa com no mínimo 10 caracteres, e o exemplo dado é “Solicitação formal do titular por e-mail em tal data”: guarde o registro que prova isso.</li>
+  <li>Se a empresa tem um encarregado de dados (DPO), confira se o e-mail dele está cadastrado em <a href="#dados-da-empresa">Configurações › Organização</a> (campo <em>DPO email</em>). É para ele que vai o alerta diário de prazo dos pedidos da fila.</li>
+</ol>
+<aside class="nota info"><strong>A tela de Solicitações não cria pedidos.</strong><p>Ela só acompanha e aprova pedidos que já estão na fila. A página <a href="#lgpd">LGPD (Solicitações)</a> avisa que não foi confirmado como os pedidos nascem em produção. Por isso, o caminho que sempre existe para anonimizar uma pessoa é o da <strong>ficha do contato</strong>.</p></aside>
+
+<h2 id="prazos">3. Respeite os prazos</h2>
+<ul>
+  <li>Pedido de <strong>dados</strong>: <strong>7 dias úteis</strong>. Pedido de <strong>anonimização</strong>: <strong>15 dias úteis</strong>. Fim de semana e feriados do país da organização (hoje, o Brasil) não contam.</li>
+  <li>Na lista, a coluna <em>SLA</em> mostra <strong>OK</strong>, <strong>Alerta</strong> (passou metade do prazo), <strong>Crítico</strong> (restam 0 ou 1 dia) ou <strong>Vencido</strong>. Uma faixa vermelha ou amarela no alto avisa quando há pedido crítico ou em alerta.</li>
+  <li>Uma rotina diária alerta pedidos de dados com 5 dias ou mais e anonimizações com 10 dias ou mais, por e-mail ao DPO cadastrado (veja <a href="#lgpd--alertas">Alertas de prazo</a>).</li>
+  <li>Pedido <em>Concluído</em> deixa de correr contra o prazo; pedido <em>Falhou</em> continua com o selo, porque não foi atendido. Detalhes em <a href="#lgpd--lista">A lista de solicitações</a>.</li>
+</ul>
+
+<h2 id="olhar">4. Veja o que existe sobre a pessoa</h2>
+<ol class="passos">
+  <li>Abra <a href="#contatos">Contatos</a>, ache a pessoa e abra a ficha. Confira nome, telefone e e-mail para ter certeza de que é a pessoa certa (pode haver homônimos).</li>
+  <li>Se o pedido está na fila de Solicitações, abra o pedido e clique em <span class="ui">Pré-visualizar dados</span>. A janela mostra, só para leitura, o cartão do contato com nome, e-mail e telefone mascarados, e sete contadores: conversas, mensagens, leads, pedidos, atividades, entradas de auditoria e consentimentos. Não grava nada (<a href="#lgpd--previa">Pré-visualizar dados</a>).</li>
+  <li>Se há algo que a empresa precisa guardar por outro motivo legal, decida isso <strong>antes</strong> de anonimizar. O sistema não tem como desfazer.</li>
+</ol>
+
+<h2 id="executar">5. Anonimize (ou aprove)</h2>
+<h3 id="pela-ficha">Pela ficha do contato</h3>
+<ol class="passos">
+  <li>Na ficha, abra a aba <span class="ui">LGPD</span> (só o Administrador a vê).</li>
+  <li>Clique em <span class="ui">Anonimizar contato</span>.</li>
+  <li>Escreva a <strong>justificativa</strong> (mínimo 10 caracteres). Ela fica registrada. Clique em <span class="ui">Continuar</span>.</li>
+  <li>Digite a palavra <code>ANONIMIZAR</code> no campo de confirmação e clique em <span class="ui">Anonimizar permanentemente</span>. <span class="ui">Voltar</span> volta ao passo anterior.</li>
+</ol>
+<p>Depois disso, o contato aparece como <em>Anonimizado</em>, a edição fica bloqueada e a aba LGPD informa o dia e a hora em que aconteceu.</p>
+<h3 id="pela-fila">Pela fila de Solicitações</h3>
+<ol class="passos">
+  <li>Abra o pedido pelo botão <span class="ui">Ver</span> (<a href="#lgpd--detalhe">O detalhe de uma solicitação</a>). Só pedidos com status <em>Recebido</em> podem ser aprovados.</li>
+  <li>Clique no botão de aprovar, que muda conforme o tipo (“Aprovar export”, “Aprovar anonimização” ou “Aprovar anonimização (tenant)”).</li>
+  <li>Preencha a <strong>Justificativa</strong> (de 10 a 500 caracteres) e clique em <span class="ui">Confirmar aprovação</span>. O pedido passa a <em>Processando</em>, e um processo em segundo plano exporta ou anonimiza (<a href="#lgpd--aprovar">Aprovar</a>).</li>
+  <li>Acompanhe a linha do tempo do prazo e a trilha de auditoria do pedido, no próprio detalhe. Num pedido de dados já concluído, aparece <span class="ui">Baixar PDF</span> (endereço assinado que vale 72 horas).</li>
+</ol>
+<aside class="nota perigo"><strong>Cuidado com “Aprovar anonimização (tenant)”.</strong><p>Esse tipo afeta <strong>todos</strong> os contatos da organização, não um só. Leia o texto da janela antes de confirmar.</p></aside>
+<aside class="nota atencao"><strong>Não há envio automático da cópia ao titular por esta tela.</strong><p>A página de Solicitações avisa que não foi confirmado se algum processo manda o PDF por e-mail. Baixe o relatório e entregue à pessoa pelo meio que combinar com ela.</p></aside>
+
+<h2 id="preservado">6. O que é apagado e o que é preservado</h2>
+<table class="tabela">
+  <thead><tr><th>Apagado ou anonimizado</th><th>Preservado</th></tr></thead>
+  <tbody>
+    <tr><td>O nome (vira “Cliente Anonimizado #N”) e os demais dados pessoais do contato</td><td>O histórico de atendimento, sem identificar ninguém</td></tr>
+    <tr><td>Conversas, mensagens (com a mídia removida) e atividades, anonimizadas</td><td>As datas e horas (os timestamps)</td></tr>
+    <tr><td>A pessoa deixa de poder ser editada e entra em campanhas só como excluída (“Contato anonimizado (LGPD)”)</td><td>O registro na Auditoria da aprovação e da justificativa</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>Excluir não é anonimizar.</strong> A lixeira da lista de Contatos tira a pessoa e a conversa do sistema. A anonimização preserva o histórico sem identificar ninguém, que é o que a LGPD pede quando a pessoa solicita a remoção. Se o pedido veio de um titular, use a anonimização (<a href="#contatos--excluir">Excluir um contato</a>).</li>
+  <li>Se a pessoa chegou por um formulário do seu site, o histórico de captações guarda nome, telefone, e-mail e o formulário inteiro. A página de <a href="#webhooks--leads">Leads recebidos</a> informa que a anonimização do contato alcança as linhas ligadas a ele.</li>
+  <li>Arquivos de mídia de mensagens antigas também são removidos por uma rotina de retenção, que se ajusta em <a href="#dados-da-empresa">Organização</a>. Isso é uma regra geral da empresa, não substitui o pedido do titular.</li>
+</ul>
+
+<h2 id="conferir">7. Confira e responda à pessoa</h2>
+<ol class="passos">
+  <li>Reabra a ficha: deve estar como <em>Anonimizado</em>, com a data e hora na aba LGPD.</li>
+  <li>Se o pedido estava na fila, confira que o status mudou para <em>Concluído</em> e que as colunas <em>Vence</em> e <em>SLA</em> mostram “—”.</li>
+  <li>Abra a <a href="#auditoria">Auditoria</a> para ver o registro (a aprovação grava <code>lgpd.manually_approved</code>, com a sua justificativa). Quem enxerga as linhas da Auditoria é, na prática, o Administrador.</li>
+  <li>Responda ao titular, dentro do prazo, dizendo o que foi feito. Esse aviso a pessoa recebe de você, fora do sistema.</li>
+</ol>
+
+<h2 id="se-algo-der-errado">Se algo der errado</h2>
+<table class="tabela">
+  <thead><tr><th>Situação</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td>Não vejo a aba LGPD na ficha, ou a tela de Solicitações me leva de volta ao início</td><td>Elas só abrem para o <strong>Administrador</strong>. Peça a quem administra a empresa (<a href="#equipe">Equipe</a> mostra os papéis).</td></tr>
+    <tr><td>A prévia mostra “Falha ao carregar prévia.”</td><td>Era um defeito de versões antigas, quando o módulo Honorários não estava instalado. A atualização corrige; veja o aviso em <a href="#lgpd--previa">Pré-visualizar dados</a> e <a href="#atualizacao">Atualização do sistema</a>.</td></tr>
+    <tr><td>O pedido está Vencido ou Crítico</td><td>Atenda primeiro os que têm a faixa vermelha. Confira se o DPO email está cadastrado, para o alerta diário chegar a alguém.</td></tr>
+    <tr><td>Anonimizei a pessoa errada</td><td>Não há como reverter. Confira a identidade na ficha (nome, telefone, e-mail) <em>antes</em> do último clique. O que dá para fazer é cadastrar o contato de novo, como pessoa nova.</td></tr>
+    <tr><td>O contato continua recebendo mensagens</td><td>Contato anonimizado fica fora de campanhas. Se é mesmo um pedido de parar, veja <a href="#conceitos--parar">PARAR</a> e o bloqueio do contato em <a href="#contatos">Contatos</a>.</td></tr>
+  </tbody>
+</table>

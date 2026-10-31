@@ -18,7 +18,7 @@
 </ol>
 
 <h2 id="categorias">As seis categorias</h2>
-<p>“Nova mensagem”, “Lead atribuído a você”, “Lead ganho”, “Lead perdido”, “Você foi mencionado” e “Ligação recebida”. Cada uma tem um interruptor em <em>In-app</em> e outro em <em>Push</em>; de fábrica os dois estão <strong>ligados</strong> em todas.</p>
+<p>“Nova mensagem”, “Lead atribuído a você”, “Lead ganho”, “Lead perdido”, “Você foi mencionado” e “Ligação recebida”. Cada uma tem um interruptor em <em>In-app</em> e outro em <em>Push</em>; de fábrica os dois estão <strong>ligados</strong> em todas (exceto o Push de “Nova mensagem”, que já nasce desligado se você tinha desligado os alertas de mensagem do navegador antes).</p>
 <ul>
   <li><strong>Ligar o Push pela primeira vez</strong> faz o navegador pedir permissão. Se você negar, o interruptor Push fica travado e a linha “Nova mensagem” mostra “O navegador bloqueou as notificações. Libere-as nas configurações do site e recarregue.”. Navegadores sem suporte também travam.</li>
   <li>O texto da tela diz “cinco categorias”, mas a tabela tem <strong>seis</strong>.</li>
@@ -32,7 +32,7 @@
 <p>Duas linhas — <em>Etapa que avisa</em> e <em>Precisa de uma pessoa</em> — mostram “Som do sistema” ou “Som personalizado”. Os botões:</p>
 <ul>
   <li><span class="ui">Ouvir</span> — todos tocam o som para testar.</li>
-  <li><span class="ui">Trocar som</span> — só o Gerente ou acima. Envia um arquivo MP3, OGG ou WAV de até 1 MB (o tipo é conferido pelo conteúdo, não só pela extensão). “Som salvo.”</li>
-  <li><span class="ui">Usar o do sistema</span> — volta ao bipe do produto (aparece só quando há som personalizado). “Voltou ao som do sistema.”</li>
+  <li><span class="ui">Trocar som</span> — só o Gerente ou acima (para os demais o botão nem aparece). Envia um arquivo MP3, OGG ou WAV de até 1 MB (o tipo é conferido pelo conteúdo, não só pela extensão). aviso “Som salvo”</li>
+  <li><span class="ui">Usar o do sistema</span> — volta ao bipe do produto (aparece só quando há som personalizado). aviso “Voltou ao som do sistema”</li>
 </ul>
 <p>O som vale para a <strong>empresa inteira</strong> e fica na <a href="#auditoria">Auditoria</a> (<code>settings.notification_sound_updated</code> e <code>…_removed</code>).</p>

@@ -19,7 +19,7 @@
   <li><strong>Interruptor Ativa.</strong> Desligado, nenhum agente usa a ferramenta.</li>
   <li><strong>Testar de verdade, Editar, Gerar nova chave e Apagar.</strong></li>
 </ol>
-<p>Sem nenhuma ferramenta, a tela mostra “Nenhuma ferramenta cadastrada ainda.”.</p>
+<p>Sem nenhuma ferramenta, a tela mostra “Nenhuma ferramenta cadastrada ainda.” e um cartão “O agente ainda não consulta nenhum sistema”, que explica o que cadastrar. Com ferramentas, o topo traz a contagem (“N ferramentas”) e cada cartão mostra, além do nome e dos selos, a instrução “quando usar”, o servidor de destino (só o endereço, sem o caminho), o número de campos e os quatro últimos caracteres da chave (“chave …62af”). O interruptor liga e desliga na hora (“Ferramenta ativada.” / “Ferramenta desativada.”). <span class="ui">Gerar nova chave</span> não pede confirmação: abre direto a janela com a chave nova.</p>
 
 <h2 id="cadastrar">Cadastrar uma consulta</h2>
 <figure class="print">
@@ -80,7 +80,7 @@
 <p>Cadastrar não basta: cada agente escolhe quais ferramentas usa.</p>
 <ol class="passos">
   <li>Abra <span class="ui">Agente de IA › Agentes</span> e o agente que vai usar a ferramenta.</li>
-  <li>No seletor de capacidades, marque a ferramenta no grupo <strong>Ferramentas externas</strong>.</li>
+  <li>Na aba <strong>Configuração</strong>, vá à seção <span class="ui">O que ele faz</span> (título <em>O que o agente pode fazer</em>) e, no seletor de capacidades, marque a ferramenta no grupo <strong>Ferramentas externas</strong>. Elas contam no mesmo teto de 27 capacidades.</li>
   <li>Salve e <a href="#agentes--publicar">publique</a> a versão. A escolha faz parte da versão, então só vale depois de publicar.</li>
 </ol>
 <p>Se a ferramenta estiver desativada, o seletor diz “Desativada: o agente não a usa até alguém reativar em Ferramentas externas.”. Cada agente aceita no máximo <strong>27 capacidades</strong>, somando as do sistema e as externas. Agentes no papel de <em>operador</em> não recebem ferramentas externas.</p>
@@ -98,6 +98,7 @@
 
 <h2 id="editar-apagar">Editar e apagar</h2>
 <ul>
+  <li>Ao salvar com algo errado, a janela mostra a primeira correção necessária em texto vermelho, por exemplo “Dê um nome à ferramenta (ao menos 3 letras).” ou “Informe um endereço completo que comece com https:// e sem usuário e senha.”. Nomes de campos repetidos dão “Dois campos têm o mesmo nome.”.</li>
   <li><strong>Editar</strong> muda nome, instrução, endereço e campos. Renomear não muda a identificação interna da ferramenta.</li>
   <li><strong>Apagar</strong> pede confirmação (“Apagar esta ferramenta?”). Se alguma versão de agente (publicada ou rascunho) já usa a ferramenta, o sistema não deixa apagar, porque o histórico precisa dela: “Desative em vez de apagar.”.</li>
 </ul>

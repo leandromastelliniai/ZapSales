@@ -26,7 +26,7 @@
   <figcaption>A tela API Oficial (Meta), ainda não configurada.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Chave secreta do aplicativo.</strong> Fica no painel da Meta, em Configurações do app › Básico (32 caracteres). Guardada cifrada. “Nunca configurado por aqui.” enquanto vazia.</li>
+  <li><strong>Chave secreta do aplicativo.</strong> Fica no painel da Meta, em Configurações do app › Básico (32 caracteres). Guardada cifrada. “Nunca configurado por aqui.” enquanto vazia. O botão <span class="ui">Salvar</span> só habilita com pelo menos 16 caracteres digitados; com uma chave já salva, o campo mostra “(já cadastrada)” e a dica “Deixe em branco para mantê-la, ou digite uma nova para substituir.”.</li>
   <li><strong>Token de verificação.</strong> Ainda não existe: “Ele é criado pelo sistema na primeira vez que você salva a chave secreta — ninguém precisa inventar nada.”</li>
   <li><strong>Gerar token / Gerar novo token.</strong> O botão só aparece depois que a chave secreta foi salva.</li>
   <li><strong>Conectar com Facebook (Embedded Signup).</strong> “Desligado. Ligue só depois que o seu app for aprovado como Tech Provider pela Meta — antes disso o login da Meta não conclui.”</li>
@@ -36,7 +36,7 @@
 <ul>
   <li>O token aparece <strong>uma única vez</strong> depois de gerado, com <span class="ui">Copiar</span> e o aviso “Copie agora… Se perder, é só gerar outro aqui.”. No painel da Meta ele vai em WhatsApp › Configuração › Webhook › “Verificar token”; a “URL de callback” é de cada número e aparece em Conexões › API Oficial (Meta) (link “Abrir Conexões em outra aba”).</li>
   <li><strong>Gerar novo token</strong> invalida o atual na hora (“Gerar um novo token de verificação?”). As mensagens continuam chegando (são conferidas pela chave secreta); o que muda é que a Meta só confirma o endereço do webhook de novo depois que você colar o token novo.</li>
-  <li><strong>Ligar o Embedded Signup</strong> exige a chave secreta já cadastrada (“Cadastre a chave secreta do aplicativo acima antes de ligar.”). Ligado, as empresas veem o botão “Conectar com Facebook” em Conexões › API Oficial.</li>
-  <li><strong>Trocar a chave secreta</strong> afeta a conferência de assinatura das mensagens de <em>todos</em> os números. Erros: “A chave parece incompleta. Copie de novo do painel da Meta — ela tem 32 caracteres.”</li>
+  <li><strong>Ligar o Embedded Signup</strong> exige os dois IDs preenchidos (“Preencha o ID do app e o ID da configuração antes de ligar.”) e a chave secreta já cadastrada (“Cadastre a chave secreta do aplicativo acima antes de ligar.”). O botão se chama <span class="ui">Ligar</span>; com o recurso ligado ele vira <span class="ui">Salvar</span> e aparece ao lado o botão <span class="ui">Desligar</span> (avisos “Conectar com Facebook ligado.” / “desligado.”). Os IDs só aceitam números (“Os IDs da Meta têm só números. Confira o que foi colado.”). Ligado, as empresas veem o botão “Conectar com Facebook” em Conexões › API Oficial.</li>
+  <li><strong>Trocar a chave secreta</strong> afeta a conferência de assinatura das mensagens de <em>todos</em> os números. Se a leitura do que está gravado falhar, um aviso no topo pede para recarregar a página antes de trocar qualquer coisa. Erros: “A chave parece incompleta. Copie de novo do painel da Meta — ela tem 32 caracteres.”</li>
   <li>Auditoria: <code>platform_meta_app.updated</code>, <code>…verify_token_rotated</code> e <code>…embedded_signup_updated</code>. Os preços das mensagens estão em <a href="#admin-destinos--precos">Preços da Meta</a>.</li>
 </ul>

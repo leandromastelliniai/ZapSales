@@ -5,6 +5,11 @@
     "descricao": "Como usar este manual e as ideias que valem para o sistema inteiro."
   },
   {
+    "id": "guias",
+    "titulo": "Guias por objetivo",
+    "descricao": "Receitas para fazer uma coisa do começo ao fim, passando pelas telas certas."
+  },
+  {
     "id": "atendimento",
     "titulo": "Atendimento",
     "descricao": "Conversar com clientes pelo WhatsApp."
@@ -38,6 +43,11 @@
     "id": "entrada",
     "titulo": "Entrar e começar",
     "descricao": "Login, cadastro, convite, os primeiros passos (onboarding), páginas legais e telas de aviso."
+  },
+  {
+    "id": "servidor",
+    "titulo": "Instalar e manter o servidor",
+    "descricao": "Para quem instala e cuida da VPS onde o ZapSales roda: instalação, atualização, cópias de segurança e restauração."
   },
   {
     "id": "admin",

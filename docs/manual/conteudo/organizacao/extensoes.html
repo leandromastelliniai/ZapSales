@@ -30,7 +30,7 @@
   <li><strong>Ativa no CRM</strong> — “Os guias aparecem no hub do CRM.” Desativar preserva a configuração.</li>
   <li><strong>Densidade dos cards</strong> — Confortável ou Compacta.</li>
   <li><strong>Mostrar descrição nos cards.</strong></li>
-  <li><span class="ui">Abrir guia</span> (se ativa) e <span class="ui">Salvar configuração</span> (só habilita quando algo mudou).</li>
+  <li><span class="ui">Abrir guia</span> (se ativa; desativada, o texto é “Ative para abrir o guia.”) e <span class="ui">Salvar configuração</span> (só habilita quando algo mudou).</li>
 </ul>
 <p>Quem não é Administrador vê “Este guia está pronto para uso.” / “Peça a um administrador da organização para ativar este guia.”. Em modo suporte ninguém configura.</p>
 <aside class="nota atencao"><strong>Limite de 8 extensões ativas por empresa.</strong><p>“O limite de extensões ativas foi atingido. Desative uma antes de ativar outra.”</p></aside>
@@ -41,8 +41,8 @@
 <h2 id="dono">O que só o dono do servidor faz</h2>
 <ul>
   <li><strong>Admitir catálogo.</strong> Um arquivo JSON de até 512 KiB (“Escolher arquivo JSON” e “Admitir catálogo”). A tela avisa: o arquivo não comprova quem o publicou — confirme a fonte antes. Registra quem admitiu, quando, a origem e a revisão.</li>
-  <li><strong>Instalar versão revisada / Atualizar / Trocar / Reinstalar</strong> na aba Catálogo (baixa o pacote do endereço do catálogo e confere sua impressão digital).</li>
-  <li>No cartão instalado, o bloco <strong>“Em todas as organizações”</strong>: <em>Desfazer a última troca (volta para X)</em> e <em>Remover da instalação</em> (“Não há desfazer: para reinstalar, o catálogo precisa estar no ar e listar a versão, e cada organização ativa de novo.”). Remover é lógico e preserva dados.</li>
+  <li><strong>Instalar versão revisada / Atualizar / Trocar / Reinstalar</strong> na aba Catálogo (baixa o pacote do endereço do catálogo e confere sua impressão digital). Cada cartão do catálogo mostra Identidade, Origem revisada, Publicado por, “O que ela abre” e as etiquetas; quando o texto do pacote só existe em português, aparece “Texto disponível em português.”. Atualizar, trocar e reinstalar pedem uma confirmação (“Atualizar … para a versão …?”) que avisa que a versão é substituída em <em>todas</em> as organizações. Ao concluir, o aviso diz o que acontece: após instalar “Agora um administrador da organização pode ativá-la”; após reinstalar, “Cada organização precisa ativá-la de novo”; após atualizar ou trocar, as organizações que a usavam continuam com ela ativa.</li>
+  <li>No cartão instalado, o bloco <strong>“Em todas as organizações”</strong>: <em>Desfazer a última troca (volta para X)</em> e <em>Remover da instalação</em> (“Não há desfazer: para reinstalar, o catálogo precisa estar no ar e listar a versão, e cada organização ativa de novo.”). Os dois pedem confirmação (“Voltar … para a versão …?” e “Remover … de todas as organizações?”, com o botão <span class="ui">Remover de todas</span>). Remover é lógico e preserva dados.</li>
   <li><strong>Atividade recente:</strong> um histórico compartilhado entre abas das operações (admissão, instalação, atualização, troca, remoção, configuração). Toda operação é um recibo que não duplica, com saída pela tela.</li>
 </ul>
 <h3 id="oficiais">Os pacotes oficiais</h3>
