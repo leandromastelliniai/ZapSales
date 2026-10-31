@@ -21,7 +21,7 @@
   <li><strong>Desativar.</strong> Tira o produto da oferta do agente sem apagá-lo.</li>
   <li><strong>Reativar.</strong> No produto desativado (nome riscado e cinza), devolve-o ao catálogo.</li>
 </ol>
-<p>Custo, categoria e descrição <strong>não aparecem</strong> na lista. Para quem não é Gerente, a tela mostra o catálogo sem nenhum botão.</p>
+<p>Sem produto nenhum (ou quando a busca não acha nada), a tela mostra “Nenhum produto cadastrado ainda” e a dica “Enquanto o catálogo estiver vazio, o atendente responde que não encontrou o produto — mesmo que a loja tenha.”. Ao clicar em <span class="ui">Desativar</span> ou <span class="ui">Reativar</span>, um aviso rápido confirma (“Produto desativado” / “Produto reativado”). Custo, categoria e descrição <strong>não aparecem</strong> na lista. Para quem não é Gerente, a tela mostra o catálogo sem nenhum botão.</p>
 
 <h2 id="novo">Cadastrar um produto</h2>
 <figure class="print">
@@ -48,7 +48,7 @@
 <p>O botão <span class="ui">Fotos (N)</span> abre um painel: <em>“A primeira foto é a capa. O atendente de IA manda as fotos nesta ordem quando apresenta o produto.”</em></p>
 <ul>
   <li><strong>Adicionar foto:</strong> JPG ou PNG, até 5 MB, <strong>no máximo 5 fotos</strong> por produto. O formato é conferido pelo conteúdo do arquivo, não pela extensão.</li>
-  <li><strong>← e →</strong> mudam a ordem; <strong>✕</strong> remove a foto. <strong>Remover apaga o arquivo de verdade</strong> do armazenamento.</li>
+  <li><strong>← e →</strong> mudam a ordem; <strong>✕</strong> remove a foto. <strong>Remover apaga o arquivo de verdade</strong> do armazenamento. Cada ação mostra um aviso rápido: “Foto adicionada”, “Ordem das fotos salva” ou “Foto removida”. O botão <span class="ui">Adicionar foto</span> fica apagado quando já há 5 fotos, e a primeira foto não tem o ←, nem a última o →. A foto de capa também aparece em miniatura na linha do produto.</li>
   <li>As fotos ficam num armazenamento privado do sistema; a tela mostra links temporários de 1 hora (por isso, às vezes, “Sem prévia”).</li>
   <li>As fotos só podem ser adicionadas <em>depois</em> de salvar o produto (a ajuda da tela fala em “até cinco fotos” no cadastro, mas é pelo botão da linha).</li>
 </ul>

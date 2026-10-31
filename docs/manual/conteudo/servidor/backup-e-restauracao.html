@@ -1,0 +1,75 @@
+<!--meta {"id":"backup-e-restauracao","grupo":"servidor","titulo":"Cópias de segurança e restauração","ordem":2,"resumo":"Como o ZapSales guarda cópias do seu banco e dos seus arquivos, como mandar uma cópia para fora do servidor (Cloudflare R2), como testar a restauração todo mês e o que fazer se a VPS for perdida.","palavras":["backup","cópia de segurança","restaurar","restauração","r2","cloudflare","restic","dump","diário","semanal","desastre","ensaio","backup.sh","restaurar.sh","env","senha do restic","perder o servidor"],"onde":"Fora do sistema: no terminal do servidor (VPS)","quem":"Quem administra o servidor (dono da VPS)","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Se o servidor quebrar, for apagado por engano ou deixar de existir, <strong>os seus clientes, conversas, negócios e arquivos só voltam se houver uma cópia</strong>. A instalação do ZapSales já agenda as cópias sozinha. Esta página explica o que é guardado, onde, por quanto tempo, e como <em>conferir</em> que a cópia realmente serve — uma cópia que nunca foi testada não é garantia.</p>
+<aside class="nota atencao"><strong>A cópia diária fica na própria VPS.</strong><p>Ela protege contra <em>erro</em> (apagar algo sem querer, uma atualização que deu errado), mas <strong>não protege contra perder a máquina</strong>. Para isso existe a cópia semanal <em>fora</em> do servidor, descrita abaixo — que você precisa ligar uma vez.</p></aside>
+
+<h2 id="camadas">As duas camadas de cópia</h2>
+<table class="tabela">
+<thead><tr><th>Camada</th><th>Quando</th><th>O que guarda</th><th>Onde fica</th><th>Por quanto tempo</th></tr></thead>
+<tbody>
+<tr><td><strong>Cópia diária</strong></td><td>Todo dia às 03:15 (hora da VPS)</td><td>O banco de dados inteiro, mais a contagem de linhas que ele contém (usada para conferir a restauração)</td><td>No próprio servidor, em <code>/var/backups/zapsales/db/</code></td><td>30 dias</td></tr>
+<tr><td><strong>Cópia semanal</strong></td><td>Todo domingo às 04:30</td><td>Uma cópia nova do banco, as mídias (imagens, áudios e arquivos), as sessões do WhatsApp, as mídias do WhatsApp e o arquivo <code>.env</code></td><td>Fora do servidor, no <strong>Cloudflare R2</strong>, criptografada</td><td>8 semanais e 6 mensais</td></tr>
+</tbody>
+</table>
+<p>As duas são agendadas pela instalação em <code>/etc/cron.d/zapsales</code>. O registro de cada rodada fica em <code>/var/log/zapsales/backup.log</code>.</p>
+
+<h3 id="por-que-env">Por que o arquivo .env entra na cópia</h3>
+<p>O <code>.env</code> guarda as <strong>chaves que trancam dados dentro do banco</strong>: CPF, chaves de IA e credenciais de integrações. Um banco restaurado <em>sem</em> o <code>.env</code> que o acompanhava volta com essas informações ilegíveis. Por isso a cópia semanal é criptografada inteira, e por isso você precisa guardar a senha dela (veja abaixo).</p>
+
+<h2 id="comandos">Os comandos do dia a dia</h2>
+<p>Todos rodam no terminal do servidor, com <code>sudo</code>, a partir de <code>/opt/zapsales</code>:</p>
+<table class="tabela">
+<thead><tr><th>Comando</th><th>O que faz</th></tr></thead>
+<tbody>
+<tr><td><code>kit/backup.sh status</code></td><td>Mostra os últimos dumps, a última cópia semanal e se o R2 está configurado. <strong>É o primeiro a rodar</strong> para saber se está tudo certo.</td></tr>
+<tr><td><code>kit/backup.sh diario</code></td><td>Faz a cópia diária agora.</td></tr>
+<tr><td><code>kit/backup.sh semanal</code></td><td>Faz a cópia semanal para o R2 agora.</td></tr>
+<tr><td><code>kit/backup.sh listar</code></td><td>Lista as cópias guardadas no R2.</td></tr>
+<tr><td><code>kit/backup.sh configurar-r2</code></td><td>Grava as credenciais do R2 (uma vez só).</td></tr>
+</tbody>
+</table>
+
+<h2 id="r2">Ligar a cópia fora do servidor (Cloudflare R2)</h2>
+<p>O R2 é o armazenamento da Cloudflare. Você faz isto <strong>uma vez</strong>:</p>
+<ol>
+<li>No painel da Cloudflare: <strong>R2 › Create bucket</strong> (por exemplo, <code>zapsales-backup</code>).</li>
+<li><strong>R2 › Manage API tokens › Create API token</strong>, com a permissão <em>Object Read &amp; Write</em>, restrita a esse bucket. Anote o <em>Access Key ID</em>, o <em>Secret Access Key</em> e o <em>Account ID</em> (que aparece na URL e na página do R2).</li>
+<li>No servidor, rode <code>sudo /opt/zapsales/kit/backup.sh configurar-r2</code>. Ele pergunta os quatro valores (conta, bucket, chave de acesso e chave secreta), gera a senha de criptografia, grava tudo em <code>/etc/zapsales/backup.env</code> (que só o <code>root</code> lê) e prepara o repositório.</li>
+<li><strong>Guarde a senha de criptografia fora do servidor</strong>, no seu gerenciador de senhas: <code>sudo grep RESTIC_PASSWORD /etc/zapsales/backup.env</code>.</li>
+</ol>
+<aside class="nota perigo"><strong>Sem a senha do restic, a cópia não abre.</strong><p>Se você perder a VPS e não tiver essa senha guardada em outro lugar, a cópia semanal fica <strong>impossível de abrir</strong>. Ela não existe em nenhum outro lugar além do arquivo <code>/etc/zapsales/backup.env</code> do próprio servidor. Guarde-a hoje, antes de precisar.</p></aside>
+
+<h2 id="ensaio">Testar a restauração todo mês (o “ensaio”)</h2>
+<p>O ensaio <strong>não toca no que está no ar</strong>. Rode:</p>
+<p><code>sudo /opt/zapsales/kit/restaurar.sh ensaio</code></p>
+<p>Ele baixa a cópia semanal mais recente do R2 e monta um <strong>ambiente separado</strong> na mesma VPS (outro projeto do Compose chamado <code>zapsales-ensaio</code>, outros volumes, outra porta interna — a padrão é a 18088 — e sem entrada no proxy). Ele:</p>
+<ol>
+<li>sobe um banco novo, aplica a estrutura do sistema e restaura os dados;</li>
+<li>devolve as mídias;</li>
+<li>sobe <strong>só</strong> o aplicativo e o proxy — <em>nunca</em> o worker, o agendador ou o WhatsApp, porque com o banco restaurado eles repetiriam campanhas e follow-ups para clientes reais, e o WhatsApp disputaria o número com o de produção;</li>
+<li>confere a contagem de linhas de cada tabela importante (usuários, organizações, contatos, conversas, mensagens, negócios, arquivos) contra a contagem gravada dentro da própria cópia;</li>
+<li>prova que o aplicativo abre (código 307) e que o login responde. Com as variáveis <code>ZAPSALES_TESTE_EMAIL</code> e <code>ZAPSALES_TESTE_SENHA</code>, entra de verdade com uma conta.</li>
+</ol>
+<p>Para ver o ensaio no navegador, abra um túnel pelo seu computador (<code>ssh -L 18088:127.0.0.1:18088 root@IP-DA-VPS</code>) e acesse <code>http://localhost:18088</code>. <strong>Ao terminar, remova o ensaio</strong>:</p>
+<p><code>sudo /opt/zapsales/kit/restaurar.sh ensaio --remover</code></p>
+
+<h2 id="desastre">Se a VPS foi perdida (desastre)</h2>
+<p>Numa VPS <strong>nova</strong>, com o código em <code>/opt/zapsales</code> e o endereço (DNS) já apontando para ela. O kit instala o Docker se faltar e, numa VPS nova sem nada nas portas 80 e 443, sobe o próprio proxy com HTTPS (veja <a href="#instalar-na-vps">Instalar o ZapSales numa VPS</a>). Os dois comandos:</p>
+<ol>
+<li>Informar as credenciais do R2 e a <strong>mesma senha de criptografia</strong> guardada: <code>sudo RESTIC_PASSWORD='&lt;a senha guardada&gt;' /opt/zapsales/kit/backup.sh configurar-r2</code></li>
+<li>Restaurar tudo: <code>sudo /opt/zapsales/kit/restaurar.sh desastre</code></li>
+</ol>
+<p>O modo desastre restaura na pasta do kit (o <code>.env</code> original, com o mesmo domínio), devolve o banco, as mídias <strong>e</strong> as sessões do WhatsApp, confere as contagens e chama o instalador, que configura o proxy e os backups. Ele <strong>se recusa a rodar onde já existe um <code>.env</code></strong> — numa instalação viva, use o ensaio.</p>
+<aside class="nota atencao"><strong>Este caminho ainda não foi executado de ponta a ponta.</strong><p>Segundo o próprio projeto, o ensaio exercita a mesma restauração de banco e de mídias, mas a <em>troca de máquina</em> (o modo desastre numa VPS nova) ainda não foi testada inteira. Faça o ensaio regularmente e não confie só nesta etapa. Se a instalação perdida era do tipo “convivendo com outros apps”, o <code>.env</code> do backup traz esse modo: suba antes o Caddy ou o Nginx do sistema na VPS nova, ou rode o passo final com <code>ZAPSALES_MODO=limpa</code> para o ZapSales ficar com as portas.</p></aside>
+
+<h2 id="so-banco">Só o banco, a partir de uma cópia diária</h2>
+<p>As cópias diárias <strong>não saem da VPS</strong>; servem para <em>voltar o banco no tempo</em> (um erro de operação), não para perder a máquina. O caminho é o mesmo do ensaio: um banco novo, a estrutura e os dados da cópia. Faça antes um ensaio com a cópia do R2 para conferir o procedimento.</p>
+
+<h2 id="rotina">Uma rotina simples</h2>
+<ul>
+<li><strong>Uma vez:</strong> ligar o R2 e guardar a senha de criptografia fora do servidor.</li>
+<li><strong>Toda semana:</strong> rodar <code>sudo /opt/zapsales/kit/backup.sh status</code> e conferir que a última cópia semanal é recente.</li>
+<li><strong>Todo mês:</strong> fazer o ensaio de restauração e remover o ambiente depois.</li>
+<li><strong>Antes de qualquer coisa que apague dados</strong> (como <code>docker compose down -v</code>): conferir que existe uma cópia boa.</li>
+</ul>

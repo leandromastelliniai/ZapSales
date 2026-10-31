@@ -20,8 +20,8 @@
   <li>No cartão <strong>Servidores MCP externos</strong> (selo <em>Desligado</em>), leia e marque o aceite: <em>“Entendo que, ao ligar, o agente pode enviar aos servidores que eu cadastrar os dados que ele preencher ao usar uma ferramenta, e que o que eles responderem é tratado como informação, nunca como ordem.”</em></li>
   <li>Clique em <span class="ui">Ligar servidores MCP</span>. A tela confirma “Servidores MCP ligados.”.</li>
 </ol>
-<p>Se você desligar depois (<span class="ui">Desligar</span>), nada é apagado: servidores, credenciais e ferramentas escolhidas ficam guardados. Mas um pedido de aprovação que esteja esperando não poderá ser executado até você ligar de novo (ele ainda pode ser recusado).</p>
-<p>Um gerente que abre a aba vê apenas o aviso de que os servidores MCP são cadastrados e escolhidos por um administrador.</p>
+<p>Se você desligar depois (<span class="ui">Desligar</span>, que pede a confirmação “Desligar os servidores MCP?”), nada é apagado: servidores, credenciais e ferramentas escolhidas ficam guardados. Mas um pedido de aprovação que esteja esperando não poderá ser executado até você ligar de novo (ele ainda pode ser recusado).</p>
+<p>Quem não é administrador só vê um aviso: com o recurso desligado, “Só um administrador da organização pode ligar este recurso.”; com ele ligado, “Os servidores MCP são cadastrados e escolhidos por um administrador. As ferramentas já escolhidas aparecem na tela do agente, no grupo «Ferramentas externas».”.</p>
 
 <h2 id="cadastrar">Adicionar um servidor</h2>
 <figure class="print media">
@@ -39,6 +39,7 @@
   <li>Preencha os campos e clique em <span class="ui">Cadastrar e testar</span> (vira “Conectando…”).</li>
   <li>O ZapSales conecta ao servidor e lê o cardápio. Se der certo: <em>“Conectou. N ferramenta(s) oferecida(s) pelo servidor.”</em> e o botão <span class="ui">Escolher ferramentas</span>.</li>
 </ol>
+<p>Depois do teste, a janela oferece <span class="ui">Concluir</span> ou <span class="ui">Escolher ferramentas</span>. Na lista, cada servidor mostra um selo de conexão (<em>Conectou</em>, <em>Não conectou</em> ou <em>Ainda não testado</em>), o endereço, o nome e a versão que o servidor informa, se há credencial (“credencial …xxxx” ou “sem credencial”) e quantas ferramentas foram escolhidas. Há um interruptor <em>Ativo/Desativado</em> e os botões <span class="ui">Testar conexão</span>, <span class="ui">Escolher ferramentas</span>, <span class="ui">Editar</span> e <span class="ui">Apagar</span> (este com confirmação). Cada ferramenta já escolhida aparece embaixo do servidor, com seus selos (efeito, <em>Pede aprovação</em> ou <em>Executa direto</em>), o botão <span class="ui">Testar de verdade</span> e um interruptor próprio para desativá-la.</p>
 <p>Se a conexão falhar, o servidor <strong>fica salvo</strong> e a tela diz “O servidor foi salvo, mas a conexão não deu certo.”, com a causa. Use <span class="ui">Editar</span> para corrigir e <span class="ui">Testar conexão</span> para tentar de novo. As causas mais comuns:</p>
 <table class="tabela">
   <thead><tr><th>Mensagem</th><th>O que verificar</th></tr></thead>
@@ -66,7 +67,7 @@
   <li><strong>Salvar escolha (N).</strong> Grava; N é quantas ferramentas estão marcadas.</li>
 </ol>
 <ol class="passos">
-  <li>No cartão do servidor, clique em <span class="ui">Escolher ferramentas</span>. A janela consulta o servidor ao vivo (“Conectando ao servidor e lendo as ferramentas…”). Acima de 8 ferramentas há o campo <span class="ui">Buscar ferramenta…</span>.</li>
+  <li>No cartão do servidor, clique em <span class="ui">Escolher ferramentas</span>. A janela consulta o servidor ao vivo (“Conectando ao servidor e lendo as ferramentas…”). Acima de 8 ferramentas há o campo <span class="ui">Buscar ferramenta…</span>. Se o servidor devolver uma lista maior do que a tela consegue mostrar, ela avisa “a lista é maior do que a mostrada”; se a leitura falhar, há os botões <span class="ui">Tentar de novo</span> e <span class="ui">Fechar</span>. Uma ferramenta que o próprio servidor declara como só de leitura leva o selo “O servidor diz: só lê” (lembrando: é só uma dica).</li>
   <li>Marque as ferramentas desejadas. Para cada uma, confirme <strong>O que ela faz no outro sistema</strong>.</li>
   <li>Deixe <span class="ui">Pedir aprovação</span> marcada, a menos que você tenha certeza.</li>
   <li>Clique em <span class="ui">Salvar escolha</span>. A tela confirma “Escolha salva.”.</li>

@@ -15,7 +15,7 @@
   <li><strong>Actor.</strong> Veja a armadilha abaixo.</li>
   <li><strong>Ver.</strong> Abre o detalhe.</li>
 </ol>
-<p>As colunas são <em>Quando</em> (relativo, “há 3 horas”), <em>Action</em>, <em>Tenant</em> (selo com o slug), <em>Actor</em>, <em>Recurso</em> (tipo + 8 caracteres do id) e <em>Ver</em>. 50 por página, mais novos primeiro. Vazio: “Nenhum evento encontrado”. <strong>Armadilha:</strong> a coluna Actor mostra o UUID inteiro, não o e-mail mascarado; só o detalhe mostra o e-mail mascarado.</p>
+<p>As colunas são <em>Quando</em> (relativo, “há 3 horas”), <em>Action</em>, <em>Tenant</em> (selo com o slug), <em>Actor</em>, <em>Recurso</em> (tipo + 8 caracteres do id) e <em>Ver</em>. 50 por página, mais novos primeiro; havendo mais, aparece o botão <span class="ui">Carregar mais</span> no fim da lista. Vazio: “Nenhum evento encontrado” (“Ajuste os filtros para ver entradas do audit log.”). <strong>Armadilha:</strong> a coluna Actor mostra o UUID inteiro, não o e-mail mascarado; só o detalhe mostra o e-mail mascarado.</p>
 <figure class="print">
   <img src="img/admin-audit-detalhe.png" alt="Detalhe de uma entrada de auditoria com metadata, request ID, ator, tenant e recurso, numerado de 1 a 4" loading="lazy">
   <figcaption>O detalhe de uma entrada.</figcaption>
@@ -24,7 +24,7 @@
   <li><strong>Metadata.</strong> O JSON bruto do que mudou (nunca contém segredos).</li>
   <li><strong>Request ID.</strong> Com Resource Type, Resource ID, “Bypassed RLS” (Sim/Não), Actor IP e User Agent.</li>
   <li><strong>Actor.</strong> User ID e e-mail <em>mascarado</em> (<code>m****@dominio</code>).</li>
-  <li><strong>Tenant.</strong> Nome, slug, status e o botão <span class="ui">Ver tenant</span>. O selo amarelo <strong>Platform Admin</strong> no alto indica ação feita como administrador da plataforma. Há ainda o cartão <em>Recurso</em> com <span class="ui">Abrir recurso</span> (só para conversas e organizações).</li>
+  <li><strong>Tenant.</strong> Nome, slug, status e o botão <span class="ui">Ver tenant</span>. O selo amarelo <strong>Platform Admin</strong> no alto indica ação feita como administrador da plataforma. Há ainda o cartão <em>Recurso</em> com <span class="ui">Abrir recurso</span> (só para conversas e organizações). No alto, o link <span class="ui">Audit Log</span> volta à lista; se a entrada não existir, a tela diz “Entrada de audit não encontrada.”.</li>
 </ol>
 <p>A própria consulta deste painel é auditada (por isso, na captura, as últimas linhas são as aberturas de ficha e de saúde).</p>
 
@@ -43,7 +43,7 @@
   <li><strong>Risco.</strong> O selo.</li>
   <li><strong>Ver.</strong> Abre o detalhe.</li>
 </ol>
-<p>Quando há pedido ativo vencido ou crítico, uma faixa vermelha avisa “N solicitação(ões) vencendo em menos de 24h ou já vencida(s) — ação imediata requerida.” com o link “Ver detalhes” (o filtro por esse link não é aplicado pela página). O filtro de risco age depois de buscar a página (50 itens), então pode mostrar menos itens que o esperado. O detalhe repete a linha do tempo do SLA, os “Detalhes” e a “Trilha de auditoria”, com a nota “Somente leitura — aprovação é feita pelo operador no contexto do tenant.”.</p>
+<p>Quando há pedido ativo vencido ou crítico, uma faixa vermelha avisa “N solicitação(ões) vencendo em menos de 24h ou já vencida(s) — ação imediata requerida.” com o link “Ver detalhes” (o filtro por esse link não é aplicado pela página). O filtro de risco age depois de buscar a página (50 itens), então pode mostrar menos itens que o esperado. O filtro de Status mostra “Revisão” para o pedido que aguarda aprovação, e a lista traz as colunas ID (<code>#</code> + 8 caracteres), Tipo, Tenant, Recebido em, Vence em, Risco, Status e Ver; quando um filtro está ativo aparece o selo “Limpar filtros ×”, e há <span class="ui">Carregar mais</span> a cada 50 pedidos. O detalhe (cabeçalho com status, tipo, selo “Urgente” quando o pedido é emergencial e a empresa) mostra a “Linha do tempo SLA” (marcos em D+0, D+5 e D+7 para pedido de dados; D+0, D+10 e D+15 para anonimização), os “Detalhes” (ID completo, tipo, status, origem, escopo, tentativas, empresa, contato, data de conclusão e o erro, se houve) e a “Trilha de auditoria”, com a nota “Somente leitura — aprovação é feita pelo operador no contexto do tenant.”.</p>
 
 <h2 id="incidentes">Incidentes</h2>
 <figure class="print media">
@@ -56,5 +56,5 @@
   <li><strong>Severidade.</strong> Todas, Crítico, Atenção ou Info.</li>
   <li><strong>Nenhum incidente encontrado.</strong></li>
 </ol>
-<p>Colunas: <em>Quando</em>, <em>Tipo</em>, <em>Tenant</em>, <em>Severidade</em>, <em>Status</em> (Aberto, Reconhecido, Resolvido) e <em>Ver</em>. O detalhe mostra o payload (JSON), a trilha de auditoria e, se resolvido, a nota de resolução. O botão <span class="ui">Resolver incidente</span> abre uma janela que pede a <strong>Nota de resolução</strong> (10 a 1000 caracteres: “Descreva a causa raiz e as ações tomadas…”) e avisa que “Esta ação é registrada no audit log e não pode ser desfeita.”. Marca o incidente como resolvido (<code>incident.resolved</code>); <strong>não há como reabrir</strong>.</p>
+<p>Quando há filtro de severidade ativo, aparece também o botão <span class="ui">Limpar filtros</span>; havendo mais de uma página, <span class="ui">Carregar mais</span>. Colunas: <em>Quando</em>, <em>Tipo</em>, <em>Tenant</em> (o nome da empresa),<em> Severidade</em>, <em>Status</em> (Aberto, Reconhecido, Resolvido) e <em>Ver</em>. O detalhe mostra o payload (JSON), a trilha de auditoria e, se resolvido, a nota de resolução. O botão <span class="ui">Resolver incidente</span> abre uma janela que pede a <strong>Nota de resolução</strong> (10 a 1000 caracteres: “Descreva a causa raiz e as ações tomadas…”) e avisa que “Esta ação é registrada no audit log e não pode ser desfeita.”. O botão de confirmar se chama <span class="ui">Confirmar resolução</span> e só habilita com 10 caracteres ou mais (abaixo disso aparece “Mínimo de 10 caracteres (n/10)”); o botão <span class="ui">Resolver incidente</span> some quando o incidente já está resolvido. Marca o incidente como resolvido (<code>incident.resolved</code>); <strong>não há como reabrir</strong>.</p>
 <aside class="nota atencao"><strong>Estado real desta tela.</strong><p>Não existe a ação “Reconhecer” (o status “Reconhecido” só aparece no filtro e no selo) e, no código lido, nada <em>cria</em> incidentes — só leitura e resolução. Numa instalação nova a lista tende a ficar vazia; não confirmado se algum processo externo insere linhas.</p></aside>

@@ -7,14 +7,14 @@
   <figcaption>O menu lateral (1 a 6) e a barra do topo (7 a 11), vistos na tela de Funis.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Nome do grupo do menu.</strong> O menu é dividido em grupos (Atendimento, CRM, Agente de IA, Canais, Análise). Clique no nome do grupo para recolher ou abrir a lista dele.</li>
-  <li><strong>Item do menu.</strong> Cada item leva a uma tela. O item da tela em que você está fica destacado em roxo. O número vermelho ao lado do <span class="ui">Inbox</span> é a quantidade de conversas esperando alguém atender.</li>
+  <li><strong>Nome do grupo do menu.</strong> O menu é dividido em grupos (Atendimento, CRM, Agente de IA, Canais e Análise; o grupo Organização fica no rodapé, como <em>Configurações</em>). Clique no nome do grupo para recolher ou abrir a lista dele.</li>
+  <li><strong>Item do menu.</strong> Cada item leva a uma tela. O item da tela em que você está fica destacado (na cor de destaque da marca; roxo no padrão). O número vermelho ao lado do <span class="ui">Inbox</span> é a quantidade de conversas esperando alguém atender.</li>
   <li><strong>“Ver tudo em…”.</strong> O menu mostra só o que se usa todo dia. Esse item abre uma página com <em>todas</em> as telas do grupo, organizadas por tarefa.</li>
   <li><strong>Bolinha vermelha.</strong> Aviso de saúde. Em <span class="ui">Conexões</span> ela acende quando há um problema com o número de WhatsApp — por exemplo, quando ainda não há nenhum conectado.</li>
   <li><strong>Configurações.</strong> Sempre fixo no rodapé do menu. Reúne a sua conta, a equipe e as regras da empresa.</li>
   <li><strong>Recolher.</strong> Encolhe o menu para mostrar só os ícones e dar mais espaço ao conteúdo. Clique de novo para abrir.</li>
   <li><strong>Busca ⌘K.</strong> Abre a busca de telas (veja abaixo).</li>
-  <li><strong>Sino: Central de avisos.</strong> Leva à tela <span class="ui">Alertas</span>: o que a IA encontrou e precisa de uma decisão sua. Um número aparece no sino quando há avisos em aberto.</li>
+  <li><strong>Sino: Central de avisos.</strong> Leva à tela <span class="ui">Alertas</span>: o que a IA encontrou e precisa de uma decisão sua. Um número aparece no sino quando há avisos em aberto (99+ quando passam de 99). Se a empresa escondeu a tela Alertas do menu, o sino também some.</li>
   <li><strong>Idioma.</strong> Troca o idioma do sistema para você: português, espanhol ou inglês (o chinês ainda está em construção e não aparece na lista). Veja <a href="#navegacao--topo">os detalhes do topo</a>.</li>
   <li><strong>Tema.</strong> Alterna entre claro, escuro e o que o seu computador estiver usando. Atalho: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd> (no Mac, <kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd>).</li>
   <li><strong>Menu do usuário.</strong> Seu nome e e-mail, e a opção <span class="ui">Sair</span>. Quem é dono do servidor vê também <span class="ui">Modo administrador</span>, que leva ao painel de configuração da instalação.</li>
@@ -37,12 +37,13 @@
   <figcaption>Buscando “disparo”: o resultado destacado abre a tela de Disparo em massa.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Campo de busca.</strong> Digite parte do nome da tela ou do que ela faz. A busca ignora acentos e maiúsculas.</li>
+  <li><strong>Campo de busca.</strong> Digite parte do nome da tela ou do que ela faz (o campo sugere “nome, objetivo ou função”, por exemplo leads, agenda, prompt, whatsapp). A busca ignora acentos e maiúsculas. Com o campo vazio e “Todas” marcado, a janela mostra o catálogo inteiro, em blocos por grupo, cada um com a contagem de “ferramentas”; ao digitar ou escolher um grupo, vira uma lista.</li>
   <li><strong>Limpar.</strong> Apaga o que foi digitado.</li>
-  <li><strong>Grupos.</strong> Filtram os resultados por grupo do menu. O número entre parênteses é quantas telas há em cada um.</li>
+  <li><strong>Grupos.</strong> A primeira opção é “Todas”; as demais filtram por grupo do menu. O número entre parênteses é quantas telas você tem acesso em cada um (depende do seu papel e do que está ligado).</li>
   <li><strong>Resultado.</strong> Mostra o nome da tela, o grupo e uma frase explicando para que ela serve. O primeiro já vem selecionado.</li>
   <li><strong>Dica de teclado.</strong> <kbd>↑</kbd> <kbd>↓</kbd> escolhem, <kbd>Enter</kbd> abre, <kbd>Esc</kbd> fecha.</li>
 </ol>
+<p>Se nada combinar, a janela diz “Nada encontrado para …” e sugere outro termo ou “Todas”.</p>
 <aside class="nota atencao"><strong>A busca ⌘K procura telas, não pessoas.</strong><p>Ela não acha contatos, conversas nem cartões. Para achar uma pessoa, use a busca da tela <a href="#contatos">Contatos</a> ou a do <a href="#inbox">Inbox</a>. E ela procura no nome e na descrição da tela: digite <em>disparo</em> ou <em>mensagem em massa</em> para chegar ao disparo em massa.</p></aside>
 
 <h2 id="como-funciona">O botão “Como funciona”</h2>
@@ -62,6 +63,7 @@
   <li><strong>Seletor de organização.</strong> Um botão com o nome da empresa aparece ao lado da busca <em>somente</em> para quem tem acesso a duas ou mais organizações (e para o dono do servidor, com o item <span class="ui">Gerenciar organizações</span>). Escolher outra recarrega o sistema no Inbox daquela empresa. Só funciona para organizações onde o seu convite foi aceito e não foi revogado, e pede a verificação em duas etapas se você a tem. Fica registrado na <a href="#auditoria">Auditoria</a>.</li>
   <li><strong>Idioma (PT / ES / EN).</strong> Grava a <em>sua</em> preferência pessoal — a mesma do campo “Idioma” do <a href="#config-perfil">Perfil</a> — e recarrega a página inteira. Não muda o idioma da empresa nem o que os colegas veem.</li>
   <li><strong>Tema.</strong> Claro → escuro → igual ao computador. A escolha fica salva só neste navegador.</li>
+  <li><strong>Versão do sistema.</strong> No pé do menu lateral aparece a “versão” instalada. Para o dono do servidor, quando há atualização, vira o aviso “Nova versão” com um ponto pulsante, que leva à tela de <a href="#atualizacao">atualização do sistema</a>.</li>
   <li><strong>Menu do usuário.</strong> Não tem “Perfil” nem “Configurações”: o Perfil está em Configurações › Sua conta, e Configurações fica no rodapé do menu lateral. <span class="ui">Sair</span> encerra só este navegador (para sair de todos, use a <a href="#config-seguranca">Segurança</a>).</li>
 </ul>
 

@@ -1,0 +1,106 @@
+<!--meta {"id":"guia-campanha-com-seguranca","grupo":"guias","titulo":"Lançar uma campanha em massa com segurança","ordem":2,"resumo":"Do número escolhido ao último envio: base legal, público, painel Vai disparar?, ritmo e janela de horário, proteção contra banimento, o que acontece com quem responde ou pede para parar e quanto custa.","palavras":["campanha","disparo em massa","envio em massa","lista de transmissão","banimento","bloqueio do número","api oficial","base legal","consentimento","interesse legítimo","vai disparar","ritmo","janela de horário","opt-out","parar","custo","teto de gasto"],"onde":"Guia: passa por Conexões, Contatos, CRM › Disparo em massa e Inbox","quem":"Gerente ou acima para a campanha; Administrador para o número (Conexões)","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Disparo em massa é mandar a mesma mensagem para muita gente de uma vez: uma promoção, um aviso, a reativação de quem sumiu. É a coisa mais arriscada que o sistema faz, porque <strong>mensagens reais saem para muitas pessoas, e o que já saiu não volta</strong>. Este guia mostra a ordem segura, e cada passo aponta para a página que detalha a tela: <a href="#disparo-em-massa">Disparo em massa</a>.</p>
+<aside class="nota perigo"><strong>Dois riscos de verdade.</strong><ul><li><strong>Banimento do número.</strong> Em número de QR code, o WhatsApp pode banir quem manda mensagem em massa, principalmente para quem nunca falou com você, e “um número banido não volta”.</li><li><strong>Mensagem enviada não tem volta.</strong> Criar a campanha e preparar a lista não enviam nada. O envio só começa em <span class="ui">Iniciar envio</span>. Cancelar impede quem ainda não recebeu, mas o que já saiu continua enviado.</li></ul></aside>
+<p>A ordem do guia: <a href="#guia-campanha-com-seguranca--canal">1. escolher o canal</a>, <a href="#guia-campanha-com-seguranca--legal">2. base legal</a>, <a href="#guia-campanha-com-seguranca--publico">3. público</a>, <a href="#guia-campanha-com-seguranca--mensagem">4. mensagem</a>, <a href="#guia-campanha-com-seguranca--ritmo">5. ritmo e horário</a>, <a href="#guia-campanha-com-seguranca--resposta">6. quem responde</a>, <a href="#guia-campanha-com-seguranca--custo">7. custo</a>, <a href="#guia-campanha-com-seguranca--lancar">8. testar e lançar</a>.</p>
+
+<h2 id="canal">1. Escolha o canal</h2>
+<p>O número escolhido define o modo da campanha (a tabela completa está em <a href="#disparo-em-massa--visao-geral">Dois modos, decididos pelo número escolhido</a>):</p>
+<table class="tabela">
+  <thead><tr><th></th><th>Número de QR code</th><th>Número da API Oficial da Meta</th></tr></thead>
+  <tbody>
+    <tr><td><strong>O que se envia</strong></td><td>Texto livre, com <code>{{nome}}</code>, <code>{{primeiro_nome}}</code> e <code>{{saudacao}}</code>.</td><td>Um modelo aprovado pela Meta.</td></tr>
+    <tr><td><strong>Ritmo</strong></td><td>No máximo 1 mensagem por minuto por campanha, pelo motor anti-banimento.</td><td>Em lotes de até 50 por rodada, sem o intervalo anti-banimento.</td></tr>
+    <tr><td><strong>Risco</strong></td><td>Banimento do número. É preciso aceitar um aviso de risco antes de iniciar.</td><td>Sem risco de banimento do mesmo tipo, mas a Meta cobra por mensagem de modelo.</td></tr>
+  </tbody>
+</table>
+<ol class="passos">
+  <li><strong>Prefira a API Oficial para volume.</strong> É o caminho recomendado para campanhas (<a href="#conceitos--canal-oficial-qr">Dois jeitos de conectar o WhatsApp</a>). Para conectá-la, veja <a href="#conexoes--oficial">Aba API Oficial (Meta)</a>. Em <a href="#conexoes--oficial">Uso do número</a>, declare se ele é de Atendimento, Campanha ou Ambos.</li>
+  <li>Na API Oficial, a campanha só dispara com um <strong>modelo aprovado</strong>; sem ele a campanha é recusada. Crie e acompanhe os modelos em <a href="#modelos-da-meta">Modelos de mensagem da Meta</a> e sincronize em <a href="#conexoes">Conexões</a>.</li>
+  <li>Se só tem número de QR, ele precisa estar <em>Conectado</em>. Número novo é aquecido: o teto sobe com a idade do número (a tabela está em <a href="#conexoes--protecao">Proteção de envio</a>). Evite fazer a primeira campanha logo depois de conectar.</li>
+</ol>
+
+<h2 id="legal">2. Defina a base legal</h2>
+<p>A tela <span class="ui">Nova campanha</span> exige a <strong>base legal do envio</strong>. Quem recebe pode perguntar por que recebeu, e a resposta precisa existir antes do envio.</p>
+<ul>
+  <li><strong>Consentimento:</strong> a pessoa pediu para receber (preencheu um formulário, marcou uma caixa ou escreveu pedindo).</li>
+  <li><strong>Interesse legítimo:</strong> você já tem relação com ela, como cliente, e a mensagem é esperada. Exige a <em>referência da avaliação (LIA)</em> registrada.</li>
+  <li>Na dúvida, a própria tela manda escolher <strong>consentimento</strong>.</li>
+</ul>
+
+<h2 id="publico">3. Escolha quem recebe</h2>
+<p>Não existe “todos os contatos”: o público sempre exige um recorte. Você pode combinar etiquetas (com ou sem), tempo sem falar com a gente, funil e etapa, e um máximo de contatos (de 1 a 5.000, padrão 100). Também pode subir uma planilha CSV (<a href="#disparo-em-massa--csv">Subir uma planilha CSV</a>): quem está nela entra em <a href="#contatos">Contatos</a> e recebe a campanha.</p>
+<ol class="passos">
+  <li>Comece <strong>pequeno</strong>: a página recomenda um recorte de 10 a 20 pessoas na primeira campanha.</li>
+  <li>Clique em <span class="ui">Ver quantas pessoas</span> (a conta também se refaz sozinha). Ela mostra “N podem receber · M ficam de fora”, com o motivo de cada exclusão.</li>
+  <li>Se subir CSV, respeite os limites: arquivo <strong>.csv</strong> de até 5 MB e 500 linhas por arquivo, escrevendo o telefone com o código do país. No Excel, deixe a coluna telefone como Texto.</li>
+</ol>
+<p>O sistema <strong>tira sozinho</strong> da lista (os motivos estão em <a href="#disparo-em-massa--nova">Quem fica de fora da lista</a>):</p>
+<ul>
+  <li>quem pediu para não receber mensagens (contato bloqueado) e quem recusou contato comercial;</li>
+  <li>contatos anonimizados pela LGPD;</li>
+  <li>quem está em outra campanha ainda não concluída (um rascunho esquecido também segura a pessoa);</li>
+  <li>quem está na <em>lista de exclusão</em> (veja <a href="#disparo-em-massa--config">Configuração de campanhas</a>, onde o telefone precisa ser escrito com DDI e DDD);</li>
+  <li>telefone ausente ou fora do formato, telefone repetido e quem não tem um dado que a mensagem usa.</li>
+</ul>
+<aside class="nota atencao"><strong>Subir o CSV cria contatos de verdade na hora.</strong><p>Isso acontece <em>antes</em> de salvar o rascunho. Mesmo que você cancele a campanha, os contatos novos ficam em Contatos. A planilha <strong>não fura o opt-out</strong>: quem já pediu para parar continua de fora.</p></aside>
+
+<h2 id="mensagem">4. Escreva a mensagem</h2>
+<ul>
+  <li><strong>Número de QR:</strong> um texto de até 4.096 caracteres, escrito “como você falaria com uma pessoa só”. Quem não tiver o dado que a mensagem usa fica de fora (“mensagem com buraco não sai”). Uma variável desconhecida, como <code>{{xyz}}</code>, vai literal para o cliente.</li>
+  <li><strong>API Oficial:</strong> escolha um modelo aprovado e diga de onde vem cada variável. Veja <a href="#disparo-em-massa--nova">Número da API Oficial: o modelo aprovado</a>.</li>
+</ul>
+
+<h2 id="ritmo">5. Ritmo e janela de horário</h2>
+<p>No cartão <em>Ritmo desta campanha</em>, a tela diz primeiro o que o número já faz sozinho (intervalo, horário, domingo, aquecimento e limite diário) e dá uma recomendação com o motivo. Leia o <a href="#disparo-em-massa--guia-ritmo">guia do ritmo</a>.</p>
+<ul>
+  <li><strong>Em branco vale o ritmo do número</strong>; o que você pôr na campanha <strong>só pode deixar mais devagar</strong>.</li>
+  <li>A <strong>janela de disparo</strong> é por padrão das 7h às 22h, com domingo liberado. Fora dela o envio fica agendado para a próxima abertura. Ela se ajusta por número, em <a href="#conexoes--protecao">Conexões › Proteção de envio</a> (a visão geral está em <a href="#conceitos--protecao-de-envio">Proteção de envio e aquecimento</a>).</li>
+  <li>Em número formado, se a lista é de gente que nunca falou com você, a recomendação da tela é pôr um “Máximo por dia” baixo.</li>
+  <li>O ritmo se ajusta mesmo com a campanha enviando (<span class="ui">Salvar ritmo</span>).</li>
+</ul>
+<aside class="nota atencao"><strong>Os “padrões de ritmo” da Configuração não são a proteção.</strong><p>A página de Disparo em massa avisa que o intervalo, a janela e os tetos gravados em <em>Configuração de campanhas</em> não têm efeito comprovado nas campanhas novas. Defina o ritmo <strong>dentro de cada campanha</strong> e a proteção <strong>no número</strong>, em Conexões.</p></aside>
+
+<h2 id="resposta">6. O que acontece com quem responde, e com quem pede para parar</h2>
+<ol class="passos">
+  <li>Em <em>Quem responder</em>, escolha o funil e a etapa onde nasce o card de quem responder (em branco, ele nasce no funil do número) e o agente de IA que conversa com essa pessoa (em branco, o agente publicado no número).</li>
+  <li>Em <em>Quem assume a resposta</em>, escolha entre <em>O agente de IA</em> (padrão), <em>A fila de atendentes</em> (a IA fica calada) ou <em>A IA, e depois um atendente</em>.</li>
+  <li>Em <em>O que a campanha oferece</em>, escreva a oferta (até 2.000 caracteres): o agente recebe isto junto com o nome da campanha e a mensagem que a pessoa leu, e por isso responde com o contexto certo.</li>
+</ol>
+<p>Quem responde cai no funil e no agente certos, e no <a href="#inbox">Inbox</a> a conversa mostra “Respondendo à campanha [nome]” (link visível para Gerente ou acima). Uma resposta só conta como resposta à campanha até o prazo definido em <a href="#disparo-em-massa--config">Configuração</a> (72 horas por padrão).</p>
+<p><strong>Quem pede para parar.</strong> Se a pessoa escreve uma palavra isolada como PARAR, ou frases como “não quero mais receber”, “parar de me mandar” ou “sair da lista”, o sistema bloqueia o contato e nenhum envio sai mais para ele, nem do agente nem de campanhas. Palavra solta no meio de uma frase não bloqueia. Veja <a href="#conceitos--parar">PARAR: quando a pessoa pede para sair</a>. Esses vetos são conferidos de novo <strong>na hora de cada envio</strong>: quem pediu para parar entre “Preparar” e o envio é pulado. Só uma pessoa desbloqueia, em <a href="#contatos">Contatos</a>.</p>
+<aside class="nota atencao"><strong>Respostas dão trabalho.</strong><p>Se o agente atende quem respondeu, cada conversa gasta IA. Com <em>A fila de atendentes</em>, a equipe precisa estar de plantão (veja <a href="#distribuicao">Distribuição de atendimento</a>) para não deixar a resposta parada na fila.</p></aside>
+
+<h2 id="custo">7. Saiba quanto custa</h2>
+<ul>
+  <li><strong>Número de QR:</strong> a faixa de resumo diz “Sem tarifa da Meta”. Mesmo assim existe o risco de banimento, e o agente que atender as respostas gasta IA na sua conta.</li>
+  <li><strong>API Oficial:</strong> a faixa mostra o custo estimado pela tabela da Meta, com o teto de gasto ao lado. A Meta cobra por mensagem de modelo. Defina o <em>teto de gasto da campanha</em> (ao chegar nele, ela pausa sozinha e diz por quê) e, em <a href="#disparo-em-massa--config">Configuração</a>, o teto mensal da empresa.</li>
+  <li>No detalhe da campanha oficial, o cartão <em>Custo</em> mostra o custo da Meta (parte estimado até a Meta confirmar), o custo de IA do atendimento a quem recebeu, o total e o custo por lead que respondeu.</li>
+  <li>Para o gasto geral de IA e o limite mensal, veja <a href="#uso-ia">Uso e orçamento</a>.</li>
+</ul>
+
+<h2 id="lancar">8. Teste e lance</h2>
+<p>Ao criar, a faixa do alto traz <strong>Quem recebe</strong>, <strong>Por onde</strong>, <strong>Quanto tempo</strong> e <strong>Quanto custa</strong>, e a linha <span class="ui">Vai disparar?</span> diz “Tudo certo” ou “N pede(m) atenção”. Clique em <span class="ui">ver as conferências</span> para ver o que falta. A faixa orienta, mas não é o botão Salvar: “nenhuma pessoa entra” e “passa do teto de gasto” aparecem como atenção sem impedir de salvar o rascunho (<a href="#disparo-em-massa--faixa">A faixa de resumo e o “Vai disparar?”</a>).</p>
+<ol class="passos">
+  <li>Em <span class="ui">Nova campanha</span>, preencha e clique em <span class="ui">Salvar rascunho</span>. Nada é enviado.</li>
+  <li>No <a href="#disparo-em-massa--detalhe">detalhe</a>, clique em <span class="ui">Preparar lista</span>. Ela congela um destinatário por pessoa; confira quem ficou fora e por quê.</li>
+  <li>Use <span class="ui">Enviar teste</span> para mandar a campanha a <strong>você mesmo</strong>. O teste é uma mensagem de verdade: gasta o ritmo do número e, na API Oficial, a Meta cobra. Confira o resultado no Inbox.</li>
+  <li>Clique em <span class="ui">Iniciar envio</span> e confirme. Em número de QR, antes aparece o aviso de risco de banimento, e só segue quem marca “Entendi o risco…” e clica em <span class="ui">Aceitar o risco e continuar</span>.</li>
+  <li>Acompanhe o detalhe: enviadas, entregues, responderam, quem falhou e quem pediu para parar. A tela se atualiza sozinha a cada 10 segundos. Uma campanha pode parecer “Enviando” sem andar quando o número está fora da janela ou no limite do aquecimento; isso é espera, não falha.</li>
+  <li>Se algo parecer errado, use <span class="ui">Pausar</span> (sem confirmação; a mensagem que já estava saindo não é desfeita) e depois <span class="ui">Retomar</span> ou <span class="ui">Cancelar campanha</span>.</li>
+</ol>
+<aside class="nota atencao"><strong>Depois de “Pronta para iniciar”, não há como editar o texto nem o público.</strong><p>Não existe botão para voltar a campanha a rascunho. Para mudar algo, use <span class="ui">Duplicar</span> e prepare a cópia (<a href="#disparo-em-massa--editar">Editar uma campanha</a>). A cópia não herda o aceite do risco.</p></aside>
+<aside class="nota info"><strong>Pausas automáticas.</strong><p>O sistema pausa sozinho quando a qualidade do número fica vermelha, quando o modelo é rejeitado, pausado ou desativado, quando o risco de banimento não foi aceito e quando o teto de gasto é atingido. Cada pausa vem com o motivo escrito. Detalhes em <a href="#disparo-em-massa--detalhe">O detalhe</a>.</p></aside>
+
+<h2 id="se-algo-der-errado">Se algo der errado</h2>
+<table class="tabela">
+  <thead><tr><th>Situação</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td>Muita gente ficou fora da lista</td><td>Cada contato mostra o motivo na lista de destinatários (filtro <em>Fora da lista</em>). Veja a tabela de motivos em <a href="#disparo-em-massa--nova">Quem fica de fora da lista</a>; “Já está em outra campanha” costuma ser um rascunho esquecido.</td></tr>
+    <tr><td>A campanha pausou sozinha</td><td>O cartão <em>Pausada automaticamente</em> explica o motivo. Teto de gasto: aumente o teto e retome. Qualidade vermelha ou modelo reprovado: retomar é recusado até resolver. Veja <a href="#modelos-da-meta">Modelos de mensagem da Meta</a> e a saúde do número em <a href="#conexoes--oficial">Conexões</a>.</td></tr>
+    <tr><td>Aparece “Enviando”, mas nada sai</td><td>Confira se o número está <em>Conectado</em>, se é horário da janela de envio e se o aquecimento não chegou ao limite do dia (<a href="#conexoes--protecao">Proteção de envio</a>).</td></tr>
+    <tr><td>Alguém respondeu pedindo para parar e continuou recebendo</td><td>O bloqueio automático só vale para pedido claro (palavra isolada ou frase de cessação). Em caso duvidoso, o agente para e chama uma pessoa. Bloqueie o contato e leia <a href="#conceitos--parar">PARAR</a>.</td></tr>
+    <tr><td>O número foi banido</td><td>Um número banido não volta. Para as próximas campanhas, use a API Oficial (<a href="#conexoes--oficial">Aba API Oficial</a>) e comece com listas pequenas.</td></tr>
+  </tbody>
+</table>

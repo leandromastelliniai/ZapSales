@@ -10,13 +10,13 @@
   <figcaption>A aba Teste com uma conversa de várias trocas.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>A versão testada.</strong> Um selo mostra “v(número) (rascunho)” ou “(publicada)”. O teste usa o <em>rascunho</em> mais recente; se não houver, a versão publicada. Assim você testa antes de publicar.</li>
-  <li><strong>Reiniciar conversa.</strong> Esvazia a conversa na tela e recomeça do zero.</li>
+  <li><strong>A versão testada</strong> (rótulo “Versão alvo”, com o modelo ao lado). Um selo mostra “v(número) (rascunho)” ou “(publicada)”. O teste usa o <em>rascunho</em> mais recente; se não houver, a versão publicada. Assim você testa antes de publicar.</li>
+  <li><strong>Reiniciar conversa.</strong> Esvazia a conversa na tela e recomeça do zero. Fica apagado enquanto não há conversa nem texto digitado.</li>
   <li><strong>A conversa.</strong> Suas mensagens e as respostas do agente, em ordem.</li>
   <li><strong>Custo, tokens e latência</strong> de cada resposta.</li>
   <li><strong>Ferramentas que o agente chamou.</strong></li>
   <li><strong>Corrigir esta resposta.</strong> Veja <a href="#agente-teste-e-correcao--corrigir">abaixo</a>.</li>
-  <li><strong>Mensagem do cliente.</strong> Onde você escreve. <kbd>Enter</kbd> envia; <kbd>Shift</kbd>+<kbd>Enter</kbd> quebra a linha.</li>
+  <li><strong>Mensagem do cliente (sample).</strong> Onde você escreve (a dica da caixa é “Oi, quanto custa X?”). <kbd>Enter</kbd> envia; <kbd>Shift</kbd>+<kbd>Enter</kbd> quebra a linha.</li>
 </ol>
 <ol class="passos">
   <li>Abra <span class="ui">Agente de IA › Agentes</span> e entre no agente. A aba <strong>Teste</strong> só liga depois que existe ao menos uma versão salva. (Quem cria o agente pelo assistente e clica em <span class="ui">Criar e testar</span> já cai direto nesta aba.)</li>
@@ -33,8 +33,13 @@
   <li><strong>Ferramentas que o agente chamou:</strong> o que ele quis fazer além de responder. <strong>No teste, ações que alteram algo não são executadas</strong>, só mostradas; consultas a sistemas externos aparecem como “seria feita”, com os selos <em>altera dados</em> e <em>pediria aprovação</em> quando for o caso. Veja <a href="#agente-ferramenta-webhook">Ferramentas externas</a>.</li>
   <li><strong>Verificações da resposta</strong> e um resumo “O teste não consegue verificar tudo (N verificações ficam de fora)”. Algumas conferências só acontecem no envio real; elas estão descritas na aba “Confere antes de enviar” do agente.</li>
 </ul>
+<ul>
+  <li>Se o agente tem a <em>resposta em áudio</em> ligada, aparece a caixa <span class="ui">Simular que o cliente mandou esta mensagem como um áudio</span> (vale só para a mensagem nova) e, sob a resposta, uma frase diz se ela “SAIRIA em áudio (nota de voz)” ou “sairia em TEXTO”, com o motivo.</li>
+  <li>As verificações dizem “A resposta não usa palavras internas do sistema.” ou, quando acha algo, “Esta resposta usa palavras que o cliente não deveria ver.”, com os termos encontrados (em produção a resposta seria barrada e reescrita).</li>
+  <li>Com o provedor de teste controlado (usado em demonstrações), a tela avisa que o motor e as verificações são os mesmos, mas não há chamada a uma IA externa.</li>
+</ul>
 <p>Se o agente decidir não responder naquela troca, a tela diz “O agente não gerou uma resposta para enviar nesta troca.”.</p>
-<aside class="nota atencao"><strong>Limites do teste.</strong><ul><li>Cerca de <strong>20 trocas</strong> por conversa; a tela não avisa antes de chegar ao limite — se precisar de mais, use <span class="ui">Reiniciar conversa</span>.</li><li>Cada mensagem tem até <strong>4.000 caracteres</strong>.</li><li>A conversa de teste <strong>não é guardada</strong>: se você recarregar a página ou trocar de versão, ela some.</li><li>Se uma troca falhar (por exemplo, por erro de chave), ela não entra na conversa e o texto continua na caixa para você tentar de novo. A mensagem típica é “Não foi possível executar o teste. Confira modelo, credencial e materiais do agente.”.</li><li>Se o orçamento de IA do mês estiver no modo <em>parar ao chegar no limite</em> e já tiver estourado, o teste é recusado. Ajuste em <a href="#uso-ia">Uso de IA</a>.</li></ul></aside>
+<aside class="nota atencao"><strong>Limites do teste.</strong><ul><li>Cerca de <strong>20 trocas</strong> por conversa; a tela não avisa antes de chegar ao limite — se precisar de mais, use <span class="ui">Reiniciar conversa</span>.</li><li>Cada mensagem tem até <strong>4.000 caracteres</strong>.</li><li>A conversa de teste <strong>não é guardada</strong>: se você recarregar a página ou trocar de versão, ela some.</li><li>Se uma troca falhar (por exemplo, por erro de chave), ela não entra na conversa e o texto continua na caixa para você tentar de novo. A mensagem típica é “Não foi possível executar o teste. Confira modelo, credencial e materiais do agente.”; enviar a caixa vazia dá “Informe uma mensagem de teste.”.</li><li>Se o orçamento de IA do mês estiver no modo <em>parar ao chegar no limite</em> e já tiver estourado, o teste é recusado. Ajuste em <a href="#uso-ia">Uso de IA</a>.</li></ul></aside>
 
 <h2 id="corrigir">Corrigir uma resposta</h2>
 <p>Quando o agente respondeu de um jeito que você não quer, escreva o que ele deveria ter dito. O sistema não muda o agente na hora: ele cria uma <strong>proposta</strong> para você aprovar.</p>
@@ -53,7 +58,7 @@
   <li>Em <strong>O que o agente deveria ter dito?</strong>, escreva a resposta que você esperava (até 1.500 caracteres).</li>
   <li>Clique em <span class="ui">Enviar como proposta</span>. A tela confirma: “Proposta criada. Ela aparece na aba Propostas e só muda o agente depois que você aprovar.”</li>
   <li>Abra a aba <strong>Propostas</strong>. O item é do tipo <em>Correção de resposta</em>, com o selo <em>pendente</em>.</li>
-  <li>Expanda <span class="ui">Ver a conversa de origem</span> se quiser rever o que foi dito, e clique em <span class="ui">Aplicar como versão nova</span> para aprovar.</li>
+  <li>Expanda <span class="ui">Ver a conversa de origem (da aba Teste)</span> se quiser rever o que foi dito, e clique em <span class="ui">Aplicar como versão nova</span> para aprovar.</li>
 </ol>
 <figure class="print">
   <img src="img/ia-agente-proposta-correcao.png" alt="Aba Propostas com uma proposta pendente do tipo Correção de resposta, a frase que entrará nas instruções e o botão Aplicar como versão nova" loading="lazy">
@@ -64,7 +69,7 @@
   <li><strong>Tipo e idade.</strong> “Correção de resposta · proposta em 33 segundos”.</li>
   <li><strong>A frase que o sistema montou</strong> a partir da fala do cliente, da resposta do agente e da sua correção.</li>
   <li><strong>O aviso.</strong> “Se você aplicar, esta frase entra no fim das instruções do agente, numa versão nova. Enquanto não aplicar, o agente continua como está.”</li>
-  <li><strong>Ver a conversa de origem.</strong> Abre a conversa do teste que gerou a proposta.</li>
+  <li><strong>Ver a conversa de origem (da aba Teste).</strong> Abre a conversa do teste que gerou a proposta.</li>
   <li><strong>Aplicar como versão nova.</strong> Só Administrador. Publica na hora.</li>
 </ol>
 <p>Também dá para corrigir uma resposta de <strong>atendimento real</strong>: na aba <strong>Execuções</strong>, abra a execução e, na seção “Resposta enviada”, use o mesmo botão. Nesse caso a conversa de origem aparece com os dados pessoais mascarados. Execuções que não terminaram numa mensagem enviada dizem “Esta execução não terminou numa mensagem enviada pelo agente, então não há resposta para corrigir.”.</p>

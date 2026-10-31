@@ -26,12 +26,12 @@
   <li><strong>Marketing (R$)</strong> — e, ao lado, Utilidade, Autenticação e Atendimento. Aceita vírgula ou ponto; vazio = categoria fora da tabela. A semente do produto traz BR/55: Marketing 0,3217; Utilidade, Autenticação e Atendimento 0,035.</li>
   <li><strong>Acrescentar país.</strong> E, em cada linha, <span class="ui">Tirar</span>.</li>
   <li><strong>Cotação do dólar.</strong> “R$ por US$ 1”: o custo de IA é registrado em dólar e a Meta cobra em reais; esta cotação soma os dois no relatório da campanha. Em branco vale a referência do produto (R$ 5,4). Ela <em>não acompanha o câmbio do dia</em>.</li>
-  <li><strong>Salvar.</strong> “Preços salvos.”</li>
+  <li><strong>Salvar.</strong> “Preços salvos.” (o aviso some se você mexer em qualquer campo depois).</li>
 </ol>
 <ul>
   <li>Destinatário de país fora da tabela aparece <em>à parte</em> na estimativa, sem preço inventado.</li>
   <li><strong>Salva a tabela inteira:</strong> o que sumiu da tela sai do banco. Vale para todas as empresas, não muda o custo de mensagens que já saíram e <strong>não é cobrança</strong> — é só estimativa e teto.</li>
-  <li>Erros: “Preço que não entendi em &lt;país&gt; · &lt;categoria&gt;”, “O mesmo país aparece duas vezes. Deixe uma linha por país.”, “A cotação precisa ser um número maior que zero, ou ficar em branco.”. Auditoria: <code>platform.meta_pricing_updated</code>.</li>
+  <li>Se o formulário tiver país com mais ou menos de duas letras, prefixo não numérico ou moeda inválida, a mensagem é “Confira os campos: país com duas letras (BR), prefixo só com números (55) e moeda com três letras (BRL).”. Erros: “Preço que não entendi em &lt;país&gt; · &lt;categoria&gt;”, “O mesmo país aparece duas vezes. Deixe uma linha por país.”, “A cotação precisa ser um número maior que zero, ou ficar em branco.”. Auditoria: <code>platform.meta_pricing_updated</code>.</li>
 </ul>
 
 <h2 id="credenciais">Credenciais (“Configuração da instalação”)</h2>
@@ -47,7 +47,7 @@
   <li><strong>Origem.</strong> O selo de cada campo: “Definido aqui nesta tela”, “Vem do arquivo de instalação do servidor” ou “Não configurado”.</li>
   <li><strong>… · por quê?</strong> Nos campos de diagnóstico, abre a explicação de como trocar (no arquivo de instalação do servidor). Motivos: “Necessária para o sistema ligar”, “É a chave que protege as outras”, “Gravada quando o programa foi montado”, “Tem um par em outro programa do servidor”, “Lida por outro programa ao ligar”.</li>
   <li><strong>WhatsApp.</strong> “Senha de acesso ao WhatsApp” e “Senha de conferência das mensagens recebidas” (diagnóstico).</li>
-  <li><strong>Banco de dados.</strong> “Endereço do banco de dados” e “Senha administrativa do banco”. Seguem “Fila de tarefas” e “Inteligência artificial”.</li>
+  <li><strong>Banco de dados.</strong> “Endereço do banco de dados” e “Senha administrativa do banco”. Seguem “Fila de tarefas” (“Senha da fila de tarefas”) e “Inteligência artificial” (“Modo de distribuição das conversas da IA”), também só de diagnóstico. O grupo E-mail traz, embaixo do E-mail de suporte, o link “O serviço de envio de e-mail — próprio ou externo — fica em E-mail →”.</li>
 </ol>
 <ul>
   <li>Só <strong>4 chaves</strong> são editáveis pela tela: E-mail de suporte e DPO, aqui, e as duas do serviço externo de e-mail (chave e remetente), que moram na tela <a href="#admin-cadastro--email">E-mail</a>. O resto é diagnóstico: trocar segredos dos contêineres <em>exige editar o arquivo do servidor e reiniciar</em>.</li>

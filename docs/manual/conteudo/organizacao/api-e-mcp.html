@@ -1,0 +1,67 @@
+<!--meta {"id":"api-e-mcp","grupo":"organizacao","titulo":"API e MCP: ligar outros sistemas ao ZapSales","ordem":21,"resumo":"O que um programador (ou um agente de IA externo) precisa saber para usar uma chave de acesso: o endereço do MCP, como mandar a chave, que rotas da API aceitam chave e as regras de resposta, erro e limite de uso.","palavras":["api","mcp","integração","bearer","zps_","chave de acesso","token","endereço","/api/mcp","/api/v1","idempotência","idempotency-key","rate limit","429","json","agente externo","claude","conector"],"onde":"Documento de apoio à tela Configurações › Dados e acesso › API Tokens","quem":"Administrador cria a chave; quem integra (programador ou agente de IA) usa","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Em <a href="#api-tokens">API Tokens</a> o Administrador cria uma <strong>chave de acesso</strong>. Esta página mostra <strong>o que fazer com ela</strong>: como um outro sistema — o seu site, um ERP, uma automação, ou um agente de IA que não é o do ZapSales — conversa com o seu ZapSales. É um texto para <em>quem vai fazer a integração</em>; se você não programa, entregue esta página junto com a chave a quem vai.</p>
+<p>Há <strong>dois caminhos</strong>, e os dois usam a mesma chave:</p>
+<table class="tabela">
+<thead><tr><th>Caminho</th><th>Para quê</th><th>Endereço</th></tr></thead>
+<tbody>
+<tr><td><strong>MCP</strong></td><td>Deixar um <em>agente de IA</em> (como o Claude ou outro compatível) <strong>ler e agir no CRM</strong> como se fosse uma pessoa da equipe, usando as “ferramentas” do ZapSales (buscar contato, ver conversa, mover negócio, agendar…).</td><td><code>https://SEU-DOMINIO/api/mcp</code></td></tr>
+<tr><td><strong>API REST</strong></td><td>Um programa seu <strong>chamar rotas fixas</strong>: criar contato, enviar mensagem, ler um lead, marcar um horário…</td><td><code>https://SEU-DOMINIO/api/v1/…</code></td></tr>
+</tbody>
+</table>
+<aside class="nota atencao"><strong>Quem tem a chave age na sua empresa.</strong><p>Trate-a como uma senha: não a coloque em endereço de internet, em código público nem em mensagem de chat. Se vazar, <a href="#api-tokens">revogue</a> na hora e crie outra.</p></aside>
+
+<h2 id="chave">Como mandar a chave</h2>
+<p>A chave tem o formato <code>zps_&lt;8 caracteres&gt;_&lt;segredo&gt;</code> e vai <strong>sempre num cabeçalho</strong> da requisição:</p>
+<p><code>Authorization: Bearer zps_…</code></p>
+<p>Nunca na parte do endereço (depois do <code>?</code>): endereços ficam gravados em registros de servidores e vazariam a chave. O ZapSales guarda só uma impressão digital da chave, nunca o texto, e por isso o texto completo aparece <strong>uma única vez</strong>, na criação.</p>
+
+<h2 id="escopos">O que a chave pode fazer</h2>
+<p>O que a chave permite é decidido na criação, pelos <em>escopos</em> (veja a tabela em <a href="#api-tokens">API Tokens</a>). Dois escopos mandam no MCP:</p>
+<ul>
+<li><code>mcp:read</code> — o agente externo pode <strong>ler</strong> o CRM (ferramentas de consulta).</li>
+<li><code>mcp:write</code> — o agente externo pode <strong>agir</strong> (ferramentas que gravam ou enviam).</li>
+</ul>
+<p>Sem <code>role:manager</code>, a chave age com o papel de <strong>Atendente</strong>; com ele, vale como <strong>Gerente</strong> (necessário para criar e atribuir). Mesmo com a chave, <strong>o papel manda</strong>: uma ferramenta que exige Gerente não funciona numa chave de Atendente.</p>
+
+<h2 id="mcp">Ligar um agente de IA (MCP)</h2>
+<p>O MCP é um jeito padrão de dar “ferramentas” a um agente de IA. O ZapSales responde nele pelo endereço <code>https://SEU-DOMINIO/api/mcp</code>, pelo transporte <em>Streamable HTTP</em>, sem guardar sessão entre uma chamada e outra (cada requisição é independente). No cliente MCP do agente, cadastre:</p>
+<ol>
+<li>o <strong>endereço</strong> acima;</li>
+<li>o cabeçalho <code>Authorization: Bearer zps_…</code> com a chave que você criou (com <code>mcp:read</code>, e <code>mcp:write</code> se ele puder agir).</li>
+</ol>
+<p>As ferramentas que o agente enxerga dependem da chave e da empresa: o catálogo muda conforme o papel, os escopos e os módulos ligados na instalação (por exemplo, as ferramentas de Honorários ou de dados externos só existem onde esses recursos estão ligados). O agente as descobre sozinho, pedindo a lista ao próprio servidor MCP.</p>
+<aside class="nota info"><strong>Isto é diferente do agente do ZapSales.</strong><p>Aqui o agente <em>é de fora</em> e usa o ZapSales como ferramenta. O contrário — um agente <em>do ZapSales</em> que usa um servidor MCP de outra empresa — está em <a href="#agente-servidores-mcp">Servidores MCP</a>.</p></aside>
+<p>Se a empresa estiver <strong>suspensa</strong>, a chave ainda abre o endereço, mas o servidor só deixa responder o que é de <strong>privacidade (LGPD)</strong>: nunca se bloqueia o atendimento de um pedido do titular dos dados.</p>
+
+<h2 id="rest">Chamar a API REST</h2>
+<p>As rotas ficam em <code>https://SEU-DOMINIO/api/v1/…</code>. O programa que chama usa a chave no cabeçalho <code>Authorization</code>; as telas do sistema usam o login da pessoa. <strong>Nem toda rota aceita chave</strong>: a habilitação é feita rota por rota, conforme cada integração precisa, e a lista cresce com o tempo. Hoje aceitam chave, entre outras:</p>
+<ul>
+<li><strong>Mensagens e conversas:</strong> <code>/api/v1/messages</code> (enviar), rascunhos de conversa (<code>/api/v1/conversations/{id}/drafts</code>), envio de mídia em conversa e em nota, e abrir conversa com um contato (<code>/api/v1/conversations/open-with-contact</code>).</li>
+<li><strong>Contatos e negócios:</strong> <code>/api/v1/contacts</code> e <code>/api/v1/leads/{id}</code>.</li>
+<li><strong>Agenda:</strong> <code>/api/v1/agenda/agendamentos</code> e <code>/api/v1/agenda/tipos</code>.</li>
+<li><strong>Agentes e follow-ups:</strong> <code>/api/v1/ai/agents</code> (e suas versões) e <code>/api/v1/ai/followup-flows</code>.</li>
+<li><strong>Prospecção:</strong> <code>/api/v1/prospecting</code>.</li>
+</ul>
+<p>Uma rota que ainda não aceita chave responde “não autorizado”. Se a sua integração precisa de uma rota que falta, peça a quem mantém o sistema para habilitá-la: o projeto converte <strong>as rotas que cada integração precisar</strong>, em vez de criar uma API paralela para cada cliente — uma rota habilitada serve a todo mundo.</p>
+
+<h3 id="convencoes">As regras de toda resposta</h3>
+<table class="tabela">
+<thead><tr><th>Assunto</th><th>Como é</th></tr></thead>
+<tbody>
+<tr><td>Formato</td><td>JSON, com nomes em <code>snake_case</code> (palavras separadas por sublinhado), datas em ISO-8601 no horário UTC e identificadores no formato UUID.</td></tr>
+<tr><td>Sucesso</td><td><code>{ "data": …, "meta": { … } }</code>. Em listas, <code>meta</code> traz o cursor para a página seguinte e se há mais itens.</td></tr>
+<tr><td>Erro</td><td><code>{ "error": { "code": "…", "message": "…", "details": … } }</code>. O <code>code</code> é um nome estável que o seu programa pode testar.</td></tr>
+<tr><td>Dinheiro</td><td>Em <strong>centavos</strong> (um número inteiro), mais a moeda no padrão ISO-4217 (<code>BRL</code>, por exemplo). R$ 12,50 vira <code>1250</code>.</td></tr>
+<tr><td>Páginas</td><td>Por <strong>cursor</strong>: o <code>meta</code> devolve um texto opaco; mande-o de volta para pedir a página seguinte.</td></tr>
+<tr><td>Rastreio</td><td>Toda resposta traz o cabeçalho <code>X-Request-Id</code>. Guarde-o: é o número que a equipe técnica usa para achar a chamada na Auditoria.</td></tr>
+<tr><td>Limite de uso</td><td>Os cabeçalhos <code>X-RateLimit-*</code> dizem quantas chamadas restam. Ao estourar, a resposta é 429 com <code>Retry-After</code> (quantos segundos esperar).</td></tr>
+</tbody>
+</table>
+
+<h3 id="idempotencia">Repetir uma chamada sem duplicar (Idempotency-Key)</h3>
+<p>Redes falham, e o seu programa pode precisar repetir um pedido sem saber se o primeiro chegou. Para rotas que <strong>criam</strong> algo, mande um cabeçalho <code>Idempotency-Key</code> com um UUID novo por operação. Se o mesmo pedido chegar de novo com a mesma chave, o ZapSales devolve o resultado do primeiro em vez de criar de novo (o recibo vale 24 horas). Só algumas rotas de criação leem esse cabeçalho (entre elas o envio de mensagens e a criação de agendamentos); nas demais ele é ignorado.</p>
+
+<h2 id="auditoria">O que fica registrado</h2>
+<p>Criar e revogar chaves ficam na <a href="#auditoria">Auditoria</a>, e cada mudança feita por uma chave também é registrada, com o número do <code>X-Request-Id</code> da chamada.</p>

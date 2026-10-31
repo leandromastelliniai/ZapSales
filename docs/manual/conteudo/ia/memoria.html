@@ -10,7 +10,7 @@
 <ol class="legenda">
   <li><strong>Selo da versão.</strong> Mostra qual versão está valendo (<em>v3 ativa</em>) ou <em>“Nenhuma versão publicada ainda”</em>.</li>
   <li><strong>O documento.</strong> O texto-base que todo agente lê antes de responder. Escreva regras curtas e diretas, uma por linha.</li>
-  <li><strong>Contador de caracteres.</strong> O limite é de 50.000 caracteres.</li>
+  <li><strong>Contador de caracteres.</strong> Mostra só quantos caracteres o texto tem agora (“N caracteres”); a tela não exibe o limite. Ao publicar, o servidor recusa um texto com mais de 50.000 caracteres.</li>
   <li><strong>Publicar versão.</strong> Só funciona para Administrador, e só quando o texto mudou e não está vazio. Para os demais papéis o botão fica apagado, com o aviso <em>“Somente admins podem publicar uma nova versão.”</em></li>
   <li><strong>Histórico de versões.</strong> Cada publicação cria uma versão numerada (v1, v2, v3…). Clique numa para ver o texto dela.</li>
   <li><strong>Novo aprendizado.</strong> Abre o formulário para ensinar um fato ou uma correção pontual.</li>
@@ -21,7 +21,7 @@
 <h2 id="documento">O documento da organização</h2>
 <ol class="passos">
   <li>Edite o texto no quadro. O botão <span class="ui">Publicar versão</span> acende quando o texto muda.</li>
-  <li>Clique em <span class="ui">Publicar versão</span>. O sistema cria a próxima versão e passa a usá-la <strong>já no próximo atendimento</strong>, sem esperar.</li>
+  <li>Clique em <span class="ui">Publicar versão</span> (“Publicando…” enquanto grava). O sistema cria a próxima versão e passa a usá-la <strong>já no próximo atendimento</strong>, sem esperar.</li>
   <li>Para voltar a uma versão antiga, abra-a no <em>Histórico de versões</em> e clique em <span class="ui">Restaurar como nova versão</span>. Isso <strong>só carrega o texto no editor</strong>: nada muda até você clicar em <span class="ui">Publicar versão</span>.</li>
 </ol>
 <aside class="nota atencao"><strong>Quanto maior a memória, mais cada resposta custa.</strong><p>Este texto e todos os aprendizados ativos entram no “pensamento” de <em>todos</em> os agentes em <em>toda</em> resposta. Textos longos fazem cada atendimento gastar mais da sua conta de IA. Seja objetivo.</p></aside>
@@ -31,11 +31,12 @@
 <ol class="passos">
   <li>Clique em <span class="ui">+ Novo aprendizado</span>.</li>
   <li>Em <strong>Título</strong>, resuma (até 200 caracteres). Exemplo: <em>“Não oferecer frete grátis no primeiro contato”</em>.</li>
-  <li>Em <strong>O que o agente deve saber</strong>, descreva a regra em texto simples.</li>
+  <li>Em <strong>O que o agente deve saber</strong>, descreva a regra em texto simples (até 10.000 caracteres). Título e texto são obrigatórios.</li>
   <li>Clique em <span class="ui">Salvar aprendizado</span>. Ele vale imediatamente.</li>
 </ol>
 <ul>
   <li><strong>Arquivar</strong> um aprendizado o tira do que o agente lê (ele continua guardado). <strong>Reativar</strong> o traz de volta. Não existe exclusão.</li>
+  <li>A lista mostra, em cada aprendizado, o título, o selo de origem, a data e o texto. Enquanto não há nenhum, a tela diz “Nenhum aprendizado ainda…”; na visão de arquivados, “Nenhum aprendizado arquivado.”. O link muda para <em>Ver aprendizados ativos</em> quando você está na visão de arquivados.</li>
   <li>Os aprendizados que o sistema <em>sugere</em> aguardam sua revisão em outra tela (a aba de propostas de cada agente) e só aparecem aqui depois de aprovados.</li>
 </ul>
 <aside class="nota dica"><strong>Documento ou aprendizado?</strong><p>Use o <em>documento</em> para as regras permanentes e gerais (tom de voz, horário, o que nunca prometer). Use os <em>aprendizados</em> para correções pontuais que vão surgindo (“clientes de Pix preferem o link direto”). Assim, o documento continua curto.</p></aside>

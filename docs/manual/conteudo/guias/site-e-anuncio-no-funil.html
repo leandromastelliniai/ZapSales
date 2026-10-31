@@ -1,0 +1,97 @@
+<!--meta {"id":"guia-site-e-anuncio-no-funil","grupo":"guias","titulo":"Trazer contatos do seu site e dos seus anúncios para o funil","ordem":5,"resumo":"Como ligar formulários do site (webhook de entrada), a origem de quem chega por link ou anúncio, a leitura de desempenho do Meta Ads e o retorno das vendas à Meta, e o que cada um deixa no funil e no agente.","palavras":["site","landing page","formulário","webhook de entrada","captação de leads","anúncio","meta ads","facebook","instagram","conversões","utm","link rastreável","origem do contato","funil","elementor","zapier","n8n"],"onde":"Guia: passa por Canais › Webhooks, Configurações › Conversões, Configurações › Meta Ads e Análise › Meta Ads","quem":"Gerente para Webhooks e Análise › Meta Ads; Administrador para Conversões e Configurações › Meta Ads","rotas":[]} -->
+
+<h2 id="visao-geral">Para que serve</h2>
+<p>Quem preenche um formulário do seu site ou clica num anúncio é um cliente em potencial. Este guia mostra como fazer essas pessoas <strong>aparecerem como leads no funil</strong>, como saber <strong>de onde cada uma veio</strong> e como <strong>devolver ao anúncio as vendas que ele trouxe</strong>. São quatro peças, e dá para ligar uma de cada vez:</p>
+<table class="tabela">
+  <thead><tr><th>Peça</th><th>O que faz</th><th>Onde</th><th>Papel</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Webhook de entrada</strong></td><td>Cada formulário enviado vira um lead no funil.</td><td><a href="#webhooks">Canais › Webhooks</a></td><td>Gerente</td></tr>
+    <tr><td><strong>Origem e links rastreáveis</strong></td><td>Marca de onde veio quem chega pelo site, por anúncio ou por link.</td><td><a href="#conversoes">Configurações › Conversões</a></td><td>Administrador</td></tr>
+    <tr><td><strong>Meta Ads (leitura)</strong></td><td>Mostra quanto cada campanha de anúncio gastou e trouxe.</td><td><a href="#meta-ads-config">Configurações › Meta Ads</a> e <a href="#meta-ads">Análise › Meta Ads</a></td><td>Administrador conecta, Gerente vê</td></tr>
+    <tr><td><strong>Conversões (retorno das vendas)</strong></td><td>Avisa a Meta (ou o Google Ads) quando um negócio vindo de anúncio foi ganho.</td><td><a href="#conversoes">Configurações › Conversões</a></td><td>Administrador</td></tr>
+  </tbody>
+</table>
+
+<h2 id="funil">1. Prepare o funil que vai receber</h2>
+<p>O lead precisa de um funil e de uma etapa de entrada. Antes de ligar qualquer coisa:</p>
+<ol class="passos">
+  <li>Abra <a href="#funis">Funis</a> e confira o funil que vai receber os leads do site. O <em>funil padrão</em> recebe todo contato novo enquanto nenhuma outra regra mandar para outro funil.</li>
+  <li>Em <a href="#etapas-do-funil">Etapas do funil</a>, confira o nome das colunas e qual é a primeira etapa (a de entrada). Todo funil precisa de uma etapa de fechamento e uma de perda.</li>
+</ol>
+
+<h2 id="webhook">2. Receba os formulários do site (webhook de entrada)</h2>
+<p>Um <strong>webhook</strong> é um aviso automático entre sistemas (<a href="#conceitos--token-webhook-mcp">Token, webhook e MCP</a>). Aqui, o seu site “avisa” o ZapSales cada vez que alguém preenche um formulário. Você cria uma <em>fonte</em>, copia o endereço dela e cola no site.</p>
+<ol class="passos">
+  <li>Abra <a href="#webhooks--fontes">Canais › Webhooks</a>, aba <em>Receber dados</em>, e clique em <span class="ui">Criar primeira fonte</span> (depois, <span class="ui">Nova fonte</span>).</li>
+  <li>Dê um <strong>nome</strong> (por exemplo, “Landing page de Black Friday”), escolha o <strong>funil de entrada</strong> e o <strong>estágio de entrada</strong>. A <em>URL de obrigado</em> (para onde mandar a pessoa depois do envio) é opcional. A fonte nasce <strong>ativa</strong>.</li>
+  <li>No painel da fonte, copie o <strong>endereço</strong> ou o <strong>formulário pronto</strong> (um bloco de HTML com os campos <code>nome</code>, <code>telefone</code> e <code>email</code>) e cole no seu site.</li>
+  <li>Se o seu site usa uma ferramenta pronta, o painel traz instruções para Elementor Pro, JetFormBuilder, WordPress, Zapier/n8n e formulário próprio (<a href="#webhooks--fontes">O painel da fonte</a>).</li>
+  <li><strong>Ligue a assinatura (HMAC)</strong> se o endereço for ficar visível no site: “Sem assinatura, quem descobrir o endereço consegue criar leads.” Use <span class="ui">Gerar segredo</span> e guarde-o na hora, porque ele é mostrado uma única vez (<a href="#webhooks--assinatura">A assinatura (HMAC)</a>).</li>
+</ol>
+<aside class="nota atencao"><strong>“Enviar lead de teste” cria um lead de verdade.</strong><p>O botão faz um envio real com o nome “Lead de Teste” e o telefone <code>11999990000</code>: cria um <strong>contato e um lead</strong> no funil, na etapa da fonte. Apague-os depois, se não quiser mantê-los. Com a assinatura ligada o botão fica apagado: teste a partir do sistema que envia os dados.</p></aside>
+<aside class="nota atencao"><strong>É dado pessoal.</strong><p>O histórico guarda nome, telefone, e-mail e o formulário inteiro (até 60 campos). Deixe claro no formulário que a pessoa será contatada. Se ela pedir para apagar, veja <a href="#guia-pedido-lgpd">Um cliente pediu para apagar os dados dele (LGPD)</a>.</p></aside>
+
+<h2 id="conferir-form">3. Confira que os leads estão chegando</h2>
+<ol class="passos">
+  <li>Preencha o formulário do site como um cliente faria.</li>
+  <li>Abra a aba <a href="#webhooks--leads">Leads recebidos</a>. Ali fica o histórico de <em>cada formulário que chegou</em>, inclusive os recusados. O <em>Resultado</em> é <strong>Virou lead</strong>, <strong>Reenvio</strong> (o mesmo contato mandou de novo) ou <strong>Não entrou</strong>.</li>
+  <li>Clique numa linha para ver o painel da captação: o que o formulário trouxe, de onde veio (página, navegador e cada UTM recebido) e, se foi recusada, uma caixa vermelha com o motivo.</li>
+  <li>Use <span class="ui">Ver o lead no funil</span> para abrir o cartão em <a href="#funis">Funis</a>. O contato aparece em <a href="#contatos">Contatos</a>.</li>
+</ol>
+<p>Se o formulário trouxe um campo extra que o funil ainda não conhece, o painel oferece <span class="ui">Cadastrar como campo do lead</span> (exige Administrador).</p>
+
+<h2 id="origem">4. Saiba de onde cada pessoa veio</h2>
+<p>Em <a href="#conversoes">Configurações › Conversões</a> (Administrador), o bloco <strong>Saber de onde veio o cliente</strong> marca a origem de quem chega pelo site. A origem aparece na ficha do contato e no filtro “Site (landing page)” da lista de Contatos; quando a pessoa veio de um anúncio, a ficha mostra também a campanha, o conjunto e o anúncio (<a href="#contatos">Contatos</a>).</p>
+<ul>
+  <li><strong>Script para instalar no site.</strong> Marca a origem de quem chega pelo site. Só campos de campanha viajam — nunca nome, telefone, e-mail ou documento.</li>
+  <li><strong>Endereço de captura (sem script).</strong> Leva a pessoa ao WhatsApp com um código <code>[ref:…]</code> no texto da mensagem.</li>
+  <li><strong>Links rastreáveis.</strong> Na aba <a href="#conversoes--links">Links rastreáveis</a>, crie um link por campanha ou botão: nome, WhatsApp com código do país, mensagem inicial, onde será usado (Site, Anúncio ou Orgânico) e UTMs. O código liga o clique à mensagem enviada pelo visitante. Um link desativado não abre o WhatsApp.</li>
+</ul>
+<aside class="nota info"><strong>Os números de cliques não são pessoas.</strong><p>A tabela de links conta cliques, incluindo acessos repetidos; não representam pessoas únicas.</p></aside>
+
+<h2 id="meta-ads-leitura">5. Veja o desempenho dos anúncios (Meta Ads)</h2>
+<ol class="passos">
+  <li>Gere, no Meta for Developers, um token com a permissão <code>ads_read</code> (só leitura). Cole-o em <a href="#meta-ads-config">Configurações › Meta Ads</a> (Administrador). Ele fica guardado criptografado e nunca é mostrado de volta.</li>
+  <li>Abra <a href="#meta-ads">Análise › Meta Ads</a> (Gerente ou acima). Escolha a conta e o período e clique em <span class="ui">Atualizar</span>: os números vêm <em>ao vivo</em> da Meta, campanha por campanha, e nada fica guardado no ZapSales.</li>
+</ol>
+<aside class="nota dica"><strong>Essa conexão é só de leitura.</strong><p>Nada é criado, pausado ou alterado na sua conta de anúncios, e nenhuma verba é gasta. “Salvar” não consulta a Meta: um token errado salva e só falha quando alguém abre a tela de Análise.</p></aside>
+
+<h2 id="vendas">6. Devolva ao anúncio as vendas que ele trouxe (Conversões)</h2>
+<p>Quando um negócio que <strong>veio de um anúncio</strong> é marcado como <strong>ganho</strong>, o ZapSales pode avisar a plataforma qual foi o valor da venda. Isso ensina o anúncio a procurar gente parecida com quem comprou. A explicação completa está em <a href="#conversoes--conversoes--motor">O que acontece com a venda</a>.</p>
+<ol class="passos">
+  <li>Em <a href="#conversoes--configuracao">Conversões › Configuração</a>, preencha o formulário da Meta: o <strong>identificador do destino de conversões</strong>, o <strong>token de acesso</strong> (que não é o mesmo token do passo 5) e, para anúncios que abrem o WhatsApp, a Página ou a conta do WhatsApp Business.</li>
+  <li>Preencha o <strong>código de teste</strong>. Enquanto ele estiver preenchido, as vendas vão marcadas como teste e não contam para a otimização.</li>
+  <li>Ligue <em>Reportar vendas automaticamente</em> <strong>antes</strong> de clicar em <span class="ui">Salvar conexão</span>: numa primeira conexão o interruptor nasce desligado, e a conexão fica gravada e pausada.</li>
+  <li>Marque um negócio de teste como ganho, <strong>com valor</strong> (sem valor, nada é enviado) e acompanhe na aba <a href="#conversoes--historico">Histórico de envios</a>: cada linha mostra <strong>Entregue</strong>, <strong>Falhou</strong>, <strong>Aguardando</strong> ou <strong>Não enviado</strong>, com o motivo.</li>
+  <li>Quando tudo estiver certo, <strong>apague o código de teste</strong>.</li>
+</ol>
+<aside class="nota perigo"><strong>Isto escreve na sua conta de anúncios e não tem como apagar.</strong><p>Enviar valor errado ou eventos falsos prejudica a otimização de quem paga a mídia, e “não há como apagar do lado da Meta um evento já enviado”. Só vendas de quem veio de anúncio são enviadas (venda orgânica sai calada), e eventos com mais de 7 dias são recusados. Use o código de teste enquanto confere.</p></aside>
+
+<h2 id="resultado">7. O que cai no funil e no agente</h2>
+<table class="tabela">
+  <thead><tr><th>De onde veio</th><th>O que acontece no ZapSales</th></tr></thead>
+  <tbody>
+    <tr><td>Formulário do site (webhook)</td><td>Vira <strong>contato e lead</strong> no funil e na etapa da fonte. Origem: “Site (landing page)”. A página de Webhooks só descreve mensagem saindo por <strong>automação</strong> (veja abaixo).</td></tr>
+    <tr><td>Alguém manda mensagem ao seu número (inclusive vindo de um link ou anúncio)</td><td>O sistema cria o contato sozinho (origem “WhatsApp”) e a conversa vai para o <a href="#inbox">Inbox</a>. O agente atende conforme o modo e o acesso do número (<a href="#conexoes--ia">Acesso da IA</a>).</td></tr>
+    <tr><td>Quem veio de anúncio e vira venda ganha</td><td>Se a conexão de <a href="#conversoes">Conversões</a> está ligada e o negócio tem valor, a venda é devolvida à plataforma.</td></tr>
+  </tbody>
+</table>
+<p>Para que quem veio do formulário <strong>receba uma mensagem</strong>, crie uma <a href="#webhooks--automacoes">automação</a> na aba <em>Automações</em> do próprio Webhooks:</p>
+<ol class="passos">
+  <li>Em <em>QUANDO</em>, escolha “Quando entrar um contato novo (webhook)”.</li>
+  <li>Em <em>ENTÃO</em>, escolha a ação: <strong>Enviar mensagem no WhatsApp</strong>, <strong>Mensagem escrita pela IA</strong> (você escolhe um agente publicado e diz o que a IA deve fazer com os dados), <strong>Iniciar fluxo de mensagem</strong> (um <a href="#followups">follow-up</a> publicado) ou, se só quer avisar a equipe, <strong>Criar tarefa interna</strong> (não manda mensagem ao cliente).</li>
+  <li>A automação <strong>nasce pausada</strong>. Revise e ligue só quando estiver pronta. Depois, acompanhe na aba <a href="#webhooks--atividade">Atividade</a>.</li>
+</ol>
+<aside class="nota perigo"><strong>Mensagem automática para quem preencheu o formulário é mensagem real.</strong><p>As ações de WhatsApp e de IA mandam mensagem de verdade (a de IA também gasta IA). Elas respeitam a janela de envio e o limite diário do número, e pulam quem pediu para não receber, mas uma regra mal escrita fala com todo mundo que entrar. Teste com o seu próprio telefone antes de ligar.</p></aside>
+
+<h2 id="se-algo-der-errado">Se algo der errado</h2>
+<table class="tabela">
+  <thead><tr><th>Situação</th><th>O que fazer</th></tr></thead>
+  <tbody>
+    <tr><td>O formulário foi enviado e não aparece lead</td><td>Abra <a href="#webhooks--leads">Leads recebidos</a> e filtre por <em>Não entrou</em>: o motivo vem escrito (sem nome, telefone ou e-mail reconhecíveis, assinatura que não conferiu, funil ou etapa que já não existe). Confira também se a fonte está <em>Ativa</em>: pausada, quem envia recebe erro 404.</td></tr>
+    <tr><td>Chegam leads de gente desconhecida</td><td>O endereço vazou. Ligue ou troque a assinatura (<a href="#webhooks--assinatura">HMAC</a>) e, se preciso, exclua a fonte e crie outra. Leads já recebidos continuam no funil.</td></tr>
+    <tr><td>A tela de Meta Ads mostra “Nenhuma conta de anúncios conectada” ou um erro de token</td><td>Cole um token com <code>ads_read</code> em <a href="#meta-ads-config">Configurações › Meta Ads</a>. A tabela de erros em <a href="#meta-ads--filtros">Meta Ads</a> diz o que fazer em cada mensagem. Não confunda com o token de Conversões.</td></tr>
+    <tr><td>A Meta aparece como “Pausada” ou “Em teste” em Conversões</td><td>“Pausada”: o interruptor de reportar vendas está desligado. “Em teste”: há código de teste preenchido; apague-o quando terminar de conferir. A faixa <em>Suas conversões</em> traz uma recomendação com o motivo (<a href="#conversoes">Conversões</a>).</td></tr>
+    <tr><td>Uma venda ganha não foi enviada</td><td>Veja o motivo na aba Histórico de envios e use <span class="ui">Verificar ou tentar novamente</span>. As causas comuns: negócio sem valor, contato que não veio de anúncio, conexão desligada ou evento com mais de 7 dias (<a href="#conversoes--conversoes--motor">O que acontece com a venda</a>).</td></tr>
+  </tbody>
+</table>

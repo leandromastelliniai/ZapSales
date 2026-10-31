@@ -38,7 +38,7 @@
 <h2 id="exigir">Exigir da equipe</h2>
 <p>Ligue se a sua equipe mexe com dados de clientes. O padrão é <strong>não exigir</strong> de ninguém: a verificação é opcional até que um administrador decida. Duas políticas se <em>somam</em>: a da empresa (esta tela) e a do dono do servidor para o super-admin.</p>
 <ul>
-  <li>Salvar só habilita quando algo mudou: “A política de verificação foi salva.”. Nada mudou, nada é gravado.</li>
+  <li>Os dois campos (nível e dias) <strong>não salvam sozinhos</strong>: só o botão <span class="ui">Salvar</span> grava (assim a carência não reinicia a cada tecla). Ele só habilita quando algo mudou: “A política de verificação foi salva.”. Nada mudou, nada é gravado.</li>
   <li>Mudar a regra pede ter provado o código nesta sessão, se você tem o fator (“Confirme a verificação em duas etapas nesta sessão.”).</li>
   <li>Fica na <a href="#auditoria">Auditoria</a> (<code>security.mfa_exigida</code> / <code>security.mfa_dispensada</code>).</li>
 </ul>
@@ -46,7 +46,7 @@
 <h2 id="voz">Chamada de voz pelo WhatsApp</h2>
 <p>Cartão que liga ou desliga a chamada de voz da empresa. <strong>Leia antes de ligar:</strong> para chamar, o sistema conecta um <em>segundo aparelho</em> ao mesmo número de WhatsApp por um caminho que <strong>não é o oficial</strong>; o WhatsApp pode entender como uso indevido e <strong>bloquear a conta inteira</strong>, não só a chamada. Para ligar é preciso marcar “Eu li o aviso acima e aceito o risco de o WhatsApp bloquear esta conta.” e clicar em <span class="ui">Ligar chamada de voz</span>; para desligar, <span class="ui">Desligar e desconectar o aparelho</span>.</p>
 <ul>
-  <li>Só o Administrador liga e desliga; o Gerente vê o estado. Os demais não veem o painel.</li>
+  <li>O cartão mostra o estado em uma frase: “Ligada. Sua equipe pode ligar e receber chamadas pelo número conectado.” ou “Desligada. Ninguém consegue ligar nem receber chamadas por aqui.”. Quem não é Administrador vê “Só quem é administrador desta empresa pode mudar isto.”; o Gerente vê o estado e os demais não veem o painel. Ligada, o cartão mostra “Risco aceito em” com a data. Se o estado não puder ser lido: “Não consegui verificar se a chamada de voz está ligada nesta empresa. Recarregue a página…”. Avisos: “Chamada de voz ligada.” e “Chamada de voz desligada e aparelho desconectado.”.</li>
   <li>Quando o servidor <strong>não tem o serviço de chamadas instalado</strong> (o caso desta captura), aparece “Este servidor não tem a chamada de voz instalada. Quem cuida da instalação precisa ligá-la antes.”.</li>
   <li>Não foi ligada nas capturas.</li>
 </ul>

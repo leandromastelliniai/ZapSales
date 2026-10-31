@@ -18,10 +18,10 @@
   <li><strong>Juntar.</strong></li>
   <li><strong>Excluir.</strong></li>
 </ol>
-<p>As contagens são de <em>ocorrências</em>: uma etiqueta repetida na mesma linha conta duas vezes. A lista mostra no máximo as <strong>500 primeiras</strong>, em ordem alfabética, sem paginação. Vazio: “Nenhuma etiqueta nesta organização ainda. Elas aparecem aqui conforme os agentes, o Inbox e o funil usarem.”. Se a leitura falha, uma caixa vermelha diz “Não foi possível carregar as etiquetas agora. Recarregue a página.” — nunca uma lista vazia enganosa.</p>
+<p>As contagens são de <em>ocorrências</em>: uma etiqueta repetida na mesma linha conta duas vezes. A lista mostra no máximo as <strong>500 primeiras</strong>, em ordem alfabética, sem paginação. Quando a lista chega a 500, uma linha embaixo avisa: “Mostrando as 500 primeiras etiquetas em ordem alfabética. Se a que você procura não está aqui, arrume primeiro as que aparecem.”. A última coluna da tabela, “Ações”, reúne os quatro botões. Vazio: “Nenhuma etiqueta nesta organização ainda. Elas aparecem aqui conforme os agentes, o Inbox e o funil usarem.”. Se a leitura falha, uma caixa vermelha diz “Não foi possível carregar as etiquetas agora. Recarregue a página.” — nunca uma lista vazia enganosa.</p>
 
 <h2 id="operar">As quatro operações</h2>
-<p>Clicar num botão abre, <strong>embaixo da tabela</strong> (não é uma janela), um cartão com uma frase e os campos da operação. <span class="ui">Confirmar</span> aplica; <span class="ui">Cancelar</span> fecha.</p>
+<p>Clicar num botão abre, <strong>embaixo da tabela</strong> (não é uma janela), um cartão com uma frase e os campos da operação. <span class="ui">Confirmar</span> aplica; <span class="ui">Cancelar</span> fecha. Enquanto a operação roda, o botão mostra “Aplicando...”. Em <em>Renomear</em> e <em>Juntar</em>, o <span class="ui">Confirmar</span> só habilita depois de preencher o novo nome ou escolher a etiqueta de destino (“Escolha a etiqueta que fica”, uma lista com as demais etiquetas); em <em>Cor</em> e <em>Excluir</em> ele já vem habilitado.</p>
 <figure class="print">
   <img src="img/tags-cor.png" alt="Painel Cor da etiqueta aberto abaixo da tabela, com oito círculos de cor, o botão Sem cor e a prévia" loading="lazy">
   <figcaption>O painel de cor de “Cliente Novo”, aberto abaixo da tabela.</figcaption>
@@ -39,5 +39,6 @@
 <ul>
   <li>Todas as operações valem para a <strong>organização inteira, na hora</strong>. Não disparam eventos nem automações.</li>
   <li>Fica na <a href="#auditoria">Auditoria</a> como <code>tag_vocabulary.changed</code>. Quem tem o fator de duas etapas precisa tê-lo provado na sessão (“Confirme o segundo fator para mudar as etiquetas.”).</li>
-  <li>Mensagens possíveis de erro: “Só um gerente ou administrador da organização pode mudar as etiquetas.”, “Sua sessão expirou. Entre de novo.”, “Não foi possível concluir agora. Tente de novo.”</li>
+  <li>Ao trocar a cor aparece “Cor da etiqueta atualizada.”.</li>
+  <li>Mensagens possíveis de erro: “Só um gerente ou administrador da organização pode mudar as etiquetas.”, “Sua sessão expirou. Entre de novo.”, “Não foi possível concluir agora. Tente de novo.”, “Confira a etiqueta, o novo nome e a cor.” e, se a rede cair, “Não foi possível falar com o servidor. Recarregue a página e confira antes de tentar de novo.” (a operação pode ter sido aplicada mesmo assim).</li>
 </ul>

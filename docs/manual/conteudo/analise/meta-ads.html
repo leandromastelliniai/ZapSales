@@ -16,7 +16,7 @@
 
 <h2 id="filtros">Com a conta conectada</h2>
 <ul>
-  <li><strong>Conta de anúncios:</strong> as contas que o token alcança. Quando a conta não está normal, o nome ganha um sufixo (“— pendência de cobrança”, “— desativada”, “— em análise de risco”, “— aguardando pagamento”, “— encerrada”…). A tela escolhe, nesta ordem: a que você escolheu, a “conta padrão” salva, a primeira conta ativa e, por último, a primeira da lista.</li>
+  <li><strong>Conta de anúncios:</strong> as contas que o token alcança. Quando a conta não está normal, o nome ganha um sufixo (“— pendência de cobrança”, “— desativada”, “— em análise de risco”, “— aguardando pagamento”, “— em período de carência”, “— encerramento pendente”, “— encerrada”…). A tela escolhe, nesta ordem: a que você escolheu, a “conta padrão” salva, a primeira conta ativa e, por último, a primeira da lista.</li>
   <li><strong>Período:</strong> <em>Últimos 7 dias</em> (padrão), <em>14</em>, <em>30</em>, <em>90</em> ou <em>Personalizado</em> (com “De” e “Até”; “Até” no máximo ontem). O fim do período é <strong>sempre ontem</strong> (o dia de hoje está incompleto). As datas são calculadas em UTC: à noite no Brasil, o “ontem” pode ser o dia corrente.</li>
   <li><strong>Atualizar:</strong> relê a Meta (“Atualizando…”). Trocar a conta ou o período também relê sozinho.</li>
   <li>Rodapé da tabela: “Período: AAAA-MM-DD a AAAA-MM-DD · lido em [data e hora]”. Sem campanhas: “Nenhuma campanha neste período. Ou a conta ainda não tem campanhas, ou elas foram criadas depois da data escolhida.”.</li>
@@ -40,6 +40,7 @@
   </tbody>
 </table>
 <h3>Mensagens de erro</h3>
+<p>Toda mensagem aparece numa caixa vermelha e, embaixo dela, uma linha pequena com “Código: [código] · Requisição: [identificador]” — é o que você informa ao suporte para ele achar o registro no servidor.</p>
 <table class="tabela">
   <thead><tr><th>Mensagem</th><th>O que fazer</th></tr></thead>
   <tbody>
@@ -49,6 +50,8 @@
     <tr><td>“A plataforma recusou um campo desta consulta.”</td><td>Problema do sistema, não da conta: avise quem mantém a instalação.</td></tr>
     <tr><td>“A chave de criptografia da instalação não está disponível…”</td><td>Configuração do servidor.</td></tr>
     <tr><td>“Não consegui falar com a plataforma agora.”</td><td>Tente atualizar em instantes.</td></tr>
+    <tr><td>“Seu papel não permite ver os dados de anúncios.”</td><td>Peça a um Gerente ou Administrador.</td></tr>
+    <tr><td>“Não consegui carregar os dados agora.”</td><td>Qualquer outro erro: tente de novo e, se persistir, avise quem mantém a instalação.</td></tr>
   </tbody>
 </table>
 <p>Cada leitura gasta 2 chamadas na cota da Meta (campanhas e resultados), mais 1 para a lista de contas (guardada 5 minutos no navegador). Não há nova tentativa automática. O token vai no cabeçalho da requisição, nunca na endereço.</p>

@@ -20,7 +20,7 @@
   <li><strong>Ver.</strong> Abre o detalhe do pedido.</li>
 </ol>
 <p><strong>Pedido concluído não corre mais contra o prazo:</strong> na linha de um pedido com status <em>Concluído</em>, as colunas <em>Vence</em> e <em>SLA</em> mostram “—” (e ele não conta na faixa de SLA). Pedido <em>Falhou</em> segue com o selo de prazo, porque não foi atendido. (A primeira linha do print acima, concluída, ainda aparece como “Vencido”: foi tirada antes dessa mudança.)</p>
-<p>As colunas são <em>ID</em> (8 primeiros caracteres), <em>Tipo</em>, <em>Sujeito</em>, <em>Recebido</em> (“agora”, “12d atrás”), <em>Vence</em>, <em>SLA</em> e <em>Status</em>. A ordem é pelo prazo mais próximo. O botão <span class="ui">Limpar filtros</span> aparece quando algum filtro está ligado, e à direita fica o total. Vazio: “Nenhuma solicitação LGPD — Solicitações de dados e anonimizações aparecerão aqui.”.</p>
+<p>As colunas são <em>ID</em> (8 primeiros caracteres), <em>Tipo</em>, <em>Sujeito</em>, <em>Recebido</em> (“agora”, “12d atrás”), <em>Vence</em>, <em>SLA</em> e <em>Status</em>. A ordem é pelo prazo mais próximo. Os três filtros são seletores com a opção “Status: todos”, “Tipo: todos” e “SLA: todos”. O botão <span class="ui">Limpar filtros</span> aparece quando algum filtro está ligado, e à direita fica o total. Embaixo da tabela há <span class="ui">Anterior</span>, “Página N” e <span class="ui">Próxima</span>. Se a leitura falhar, a tabela mostra “Erro ao carregar solicitações.” com o botão <span class="ui">Tentar novamente</span>. Vazio: “Nenhuma solicitação LGPD — Solicitações de dados e anonimizações aparecerão aqui.”.</p>
 <table class="tabela">
   <thead><tr><th>Selo de SLA</th><th>Quando</th></tr></thead>
   <tbody>
@@ -44,7 +44,7 @@
   <li><strong>Pré-visualizar dados.</strong></li>
   <li><strong>Aprovar …</strong> Só aparece com status <em>Recebido</em>; o nome depende do tipo: “Aprovar export”, “Aprovar anonimização” ou “Aprovar anonimização (tenant)”.</li>
   <li><strong>Linha do tempo SLA.</strong> Barra de progresso (verde até 75%, âmbar a partir de 75%, vermelha a partir de 100%) e marcos: para pedido de dados, “D+0 Recebido”, “D+5 Revisão intermediária”, “D+7 Entrega ao titular”; para anonimização, “D+0 Recebido”, “D+10 Processamento”, “D+15 Anonimização concluída” (datas corridas).</li>
-  <li><strong>Detalhes.</strong> ID completo, tipo, status, origem (manual, api ou support), escopo (contato ou organização), tentativas, ID do contato e, se houve falha, uma caixa “Erro”.</li>
+  <li><strong>Detalhes.</strong> ID completo, tipo, status, origem (manual, api ou support), escopo (contato ou organização), tentativas, ID do contato (“Contact ID”), o ID do cliente externo (“External customer ID”, quando existe), “Concluído em” (quando já terminou) e, se houve falha, uma caixa “Erro”. No detalhe, o tipo de pedido de dados aparece como “Solicitação de dados” (na lista, “Solicitação dados”). Se o detalhe não carregar: “Falha ao carregar solicitação.”.</li>
   <li><strong>Trilha de auditoria.</strong> As linhas da <a href="#auditoria">Auditoria</a> ligadas ao pedido (até 50). Vazio: “Nenhuma entrada de auditoria registrada para esta solicitação.”</li>
 </ol>
 <p>Se o pedido de dados já foi concluído e tem PDF, uma faixa diz “Relatório de exportação disponível (expira em 72h).” com o botão <span class="ui">Baixar PDF</span> (um endereço assinado de 72 horas). <em>Não há envio automático ao titular por esta tela</em> (não confirmado se algum processo envia e-mail).</p>

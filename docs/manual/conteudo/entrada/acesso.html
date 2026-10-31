@@ -14,7 +14,7 @@
   <li><strong>Esqueci minha senha.</strong></li>
   <li><strong>Criar conta.</strong> Leva ao cadastro (“Não tem conta?”).</li>
 </ol>
-<p>Erros: “Email ou senha incorretos.”, “Muitas tentativas. Aguarde alguns minutos.”, “Dados inválidos. Confira os campos.”. <strong>Limite de segurança:</strong> 5 senhas erradas por e-mail em 5 minutos travam a conta pela janela, mesmo vindo de IPs diferentes (acertar na 3ª tentativa não custa nada), e há um teto por IP. Se a conta tem verificação em duas etapas, o próximo passo é a <a href="#entrada-acesso--mfa">tela do código</a>; senão o sistema vai para o endereço que você queria abrir ou para o início. A tela também pode mostrar faixas de aviso:</p>
+<p>Erros: “Email ou senha incorretos.”, “Muitas tentativas. Aguarde alguns minutos.”, “Dados inválidos. Confira os campos.”, “Erro inesperado. Tente novamente.”. Se o Google não responder: “Não foi possível falar com o Google agora. Tente novamente em instantes.”. <strong>Limite de segurança:</strong> 5 senhas erradas por e-mail em 5 minutos travam a conta pela janela, mesmo vindo de IPs diferentes (acertar na 3ª tentativa não custa nada), e há um teto por IP. Se a conta tem verificação em duas etapas, o próximo passo é a <a href="#entrada-acesso--mfa">tela do código</a>; senão o sistema vai para o endereço que você queria abrir ou para o início. A tela também pode mostrar faixas de aviso:</p>
 <figure class="print media">
   <img src="img/login-aviso.png" alt="Tela de login com a faixa de aviso Link inválido ou expirado" loading="lazy">
   <figcaption>Um aviso no alto da tela (aqui, “Link inválido ou expirado”).</figcaption>
@@ -27,6 +27,7 @@
     <tr><td>Convite que não vale mais</td><td>“Sua conta foi confirmada, mas o convite não vale mais — ele expirou ou foi emitido para outro e-mail. Peça um novo a quem te convidou…”</td></tr>
     <tr><td>Instalação só por convite</td><td>“Sua conta foi confirmada, mas esta instalação aceita cadastro apenas por convite — então não criamos uma empresa para você…”</td></tr>
     <tr><td>Falha ao preparar a empresa</td><td>“Sua conta foi confirmada, mas houve um erro ao preparar seu ambiente. Tente entrar novamente em instantes.”</td></tr>
+    <tr><td>Link do modelo de e-mail padrão</td><td>“Este link veio do modelo de e-mail padrão do Supabase, que não fecha o acesso nesta instalação — pedir outro link não resolve. Quem administra o sistema precisa configurar os modelos de e-mail…” — um problema de instalação, não da sua conta.</td></tr>
     <tr><td>Google falhou ou foi cancelado</td><td>“Não foi possível concluir a entrada com o Google…” / “A entrada com o Google foi cancelada antes de terminar. Nada mudou na sua conta.”</td></tr>
     <tr><td>Acesso retirado</td><td>“O acesso desta conta foi retirado por quem administra o sistema — então não criamos uma empresa nova para você…”</td></tr>
   </tbody>
@@ -89,7 +90,7 @@
   <img src="img/cadastro-convite-invalido.png" alt="Tela de cadastro com a faixa Esse convite expirou ou não é mais válido" loading="lazy">
   <figcaption>Cadastro aberto por um convite que não vale mais.</figcaption>
 </figure>
-<p>Convite vencido mostra “Esse convite expirou ou não é mais válido. Peça um novo a quem te convidou — criar uma conta agora abriria uma empresa nova, e não é isso que você quer.” Depois de enviar, sem sessão ativa, aparece “Confirme seu e-mail — Enviamos um link de confirmação para &lt;email&gt;.” O link do e-mail passa pela rota de confirmação (que não tem tela). Conta já existente com convite: “Você já tem uma conta com este e-mail — Entre com ela para aceitar o convite.” Limite: 20 cadastros por IP por hora. O e-mail de confirmação é enviado pelo servidor de login, não pelo servidor de e-mail do painel.</p>
+<p>Convite vencido mostra “Esse convite expirou ou não é mais válido. Peça um novo a quem te convidou — criar uma conta agora abriria uma empresa nova, e não é isso que você quer.” Depois de enviar, sem sessão ativa, aparece “Confirme seu e-mail — Enviamos um link de confirmação para &lt;email&gt;.” O link do e-mail passa pela rota de confirmação (que não tem tela). Conta já existente com convite: “Você já tem uma conta com este e-mail — Entre com ela para aceitar o convite — não é preciso criar outra.”, com o botão <span class="ui">Entrar e aceitar o convite</span>. Limite: 20 cadastros por IP por hora. O e-mail de confirmação é enviado pelo servidor de login, não pelo servidor de e-mail do painel.</p>
 
 <h2 id="get-started">Configure sua organização</h2>
 <p>Para quem confirmou a conta mas ficou <strong>sem empresa</strong> (falha ao preparar o ambiente ou modo com aprovação). Pede o <em>Nome da empresa</em> e o botão vira <span class="ui">Continuar para o onboarding</span> (modo aberto) ou <span class="ui">Enviar pedido</span> (com aprovação). Textos por estado: “Configure sua organização”, “Pedido enviado” (“Seu pedido… está com quem administra esta instalação. Quando ele for aprovado, é só entrar de novo.”) e “Pedido não aprovado”. A nota avisa: “Se você recebeu um convite, não crie uma organização nova. Use o link do convite…”. Limite de 3 tentativas por hora.</p>
@@ -104,7 +105,7 @@
   <li><strong>Convite inválido ou expirado</strong> — “Este link não é válido ou já passou da janela de 24h. Peça um novo convite ao admin do tenant.”</li>
   <li><strong>Você foi convidado</strong> (sem login) — “Para aceitar o convite como &lt;papel&gt;, faça login com o email &lt;email&gt;.”, com <span class="ui">Fazer login</span> e “Ainda não tenho conta”. O papel aparece em inglês cru (admin, manager, agent, viewer).</li>
   <li><strong>Email não corresponde</strong> — logado com outro e-mail: o convite é do e-mail dele. Botão <span class="ui">Sair</span>.</li>
-  <li><strong>Aceitar convite</strong> — logado com o e-mail certo: “Você foi convidado para entrar como &lt;papel&gt;.” e o botão <span class="ui">Aceitar convite</span>, que leva ao sistema. Falha: “Não foi possível aceitar este convite. Ele pode ter vencido ou seu acesso foi revogado.”</li>
+  <li><strong>Aceitar convite</strong> — logado com o e-mail certo: “Você foi convidado para entrar como &lt;papel&gt;. Confirme abaixo para ativar seu acesso.” e o botão <span class="ui">Aceitar convite</span>, que leva ao sistema. Falha: “Não foi possível aceitar este convite. Ele pode ter vencido ou seu acesso foi revogado.”</li>
   <li><strong>Muitas tentativas</strong> — limite de 60 aberturas por hora por IP.</li>
 </ul>
 <p>Quem foi revogado e recebe um convite novo consegue usar o link mesmo vendo a tela de “Acesso revogado”. Os convites são emitidos pela <a href="#equipe">Equipe</a>, pelo <a href="#onboarding">onboarding</a> e pelo <a href="#admin-tenants">cadastro de empresa do painel</a>.</p>

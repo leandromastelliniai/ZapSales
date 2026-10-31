@@ -11,8 +11,8 @@
   <tbody>
     <tr><td><strong>Somente leitura</strong></td><td>Vê as telas, mas não muda nada.</td></tr>
     <tr><td><strong>Atendente</strong></td><td>Atende: assume e responde conversas, cria e edita contatos e cartões do funil, move cartões, importa planilhas de cartões para um funil.</td></tr>
-    <tr><td><strong>Gerente</strong></td><td>Organiza o trabalho da equipe: cria e arquiva funis, faz disparo em massa, monta agentes de IA, organiza as etiquetas e a distribuição de atendimento.</td></tr>
-    <tr><td><strong>Administrador</strong></td><td>Cuida da empresa no sistema: conecta números de WhatsApp, convida a equipe, anonimiza contatos (LGPD), mexe em plano, marca e chaves de integração.</td></tr>
+    <tr><td><strong>Gerente</strong></td><td>Organiza o trabalho da equipe: cria e arquiva funis, faz disparo em massa, organiza as etiquetas e a distribuição de atendimento e acompanha os agentes de IA (a lista de agentes abre para o Gerente, mas só o Administrador cria e edita agentes).</td></tr>
+    <tr><td><strong>Administrador</strong></td><td>Cuida da empresa no sistema: conecta números de WhatsApp, convida a equipe, cria e edita agentes de IA, anonimiza contatos (LGPD), mexe em plano, marca e chaves de integração.</td></tr>
   </tbody>
 </table>
 <p>Em algumas telas, como a <a href="#equipe">Equipe</a>, o papel <em>Somente leitura</em> aparece com o nome <em>Visualizador</em>: é o mesmo papel.</p>
@@ -44,3 +44,46 @@
 
 <h2 id="lgpd">LGPD e anonimização</h2>
 <p>A LGPD é a lei brasileira de proteção de dados. O titular dos dados — a pessoa — pode pedir que você apague o que guarda sobre ela. No ZapSales isso se faz <strong>anonimizando</strong> o contato: o nome vira “Cliente Anonimizado #número” e os dados pessoais são removidos, mas o histórico de atendimento é preservado sem identificar ninguém. <strong>Não tem volta.</strong> Os detalhes estão em <a href="#contatos--lgpd">Contatos › LGPD</a>.</p>
+
+<h2 id="canal-oficial-qr">Dois jeitos de conectar o WhatsApp: QR code e API Oficial</h2>
+<p>Um número pode estar ligado ao ZapSales de duas formas, e as regras mudam:</p>
+<ul>
+<li><strong>Número por QR code</strong> (o do dia a dia): você escaneia um QR com o celular, como no WhatsApp Web. É prático para <em>atendimento</em>, mas o WhatsApp pode <strong>banir números com atividade automática fora do padrão</strong>. Por isso o sistema tem as proteções de envio (veja abaixo).</li>
+<li><strong>API Oficial (Meta)</strong>: o número é cadastrado direto na Meta, a dona do WhatsApp. É o caminho mais seguro para <em>campanhas em massa</em>, e é onde valem a janela de 24 horas e os modelos aprovados.</li>
+</ul>
+<p>Os dois aparecem em <a href="#conexoes">Conexões</a>. Quem responde a uma campanha cai no funil e no agente, não importa por qual dos dois chegou.</p>
+
+<h2 id="janela-24h">A janela de 24 horas e os modelos da Meta</h2>
+<p>Na <strong>API Oficial</strong>, você só pode escrever <strong>com texto livre</strong> enquanto o cliente escreveu para você nas <strong>últimas 24 horas</strong>. Passado esse prazo, só sai um <strong>modelo (template) aprovado pela Meta</strong> — se tentar texto livre, a plataforma recusa. O Inbox mostra quanto tempo falta para a janela fechar e, depois de fechada, há quanto tempo ela fechou. Os modelos são criados e acompanhados em <a href="#modelos-da-meta">Modelos de mensagem da Meta</a>. Nos números por QR essa regra não existe: o texto livre sai a qualquer hora.</p>
+
+<h2 id="parar">PARAR: quando a pessoa pede para sair</h2>
+<p>Se um cliente pede para não receber mais mensagens, o sistema <strong>bloqueia o contato</strong>, e a partir daí nenhum envio sai para ele (nem do agente, nem de campanhas). O bloqueio automático só acontece quando o pedido é claro: a mensagem inteira ser uma palavra como <em>PARAR</em>, ou frases como “não quero mais receber”, “parar de me mandar” ou “sair da lista”. A <strong>palavra solta no meio de uma frase não bloqueia</strong>: “tem como parar a dor?” ou “preciso sair mais cedo” são conversa normal, não pedido de descadastro. Nos casos duvidosos (“me deixa em paz”), o agente <em>para de responder e chama uma pessoa</em>. Contatos bloqueados ficam sinalizados em <a href="#contatos">Contatos</a>, e só uma pessoa pode desbloquear.</p>
+
+<h2 id="protecao-de-envio">Proteção de envio e aquecimento</h2>
+<p>Para reduzir o risco de bloqueio do número, o sistema limita <strong>quantas mensagens ele envia por dia</strong> e <strong>com que pressa</strong>. Número novo é <em>aquecido</em>: nos primeiros dias o teto é baixo (até 20 envios por dia) e vai subindo com a idade do número, até não haver limite de aquecimento depois de 31 dias. Há também uma <strong>janela de horário</strong> para disparos em massa e prospecção (por padrão, das 7h às 22h) e um <strong>ritmo mínimo entre envios</strong>. Tudo isso se ajusta, por número, em <a href="#conexoes">Conexões › Proteção de envio</a>; a tabela completa está lá.</p>
+
+<h2 id="jev">Jev</h2>
+<p>O <strong>Jev</strong> é um ajudante de decisões rápidas do sistema (por exemplo, medir o clima de uma conversa). Ele <strong>não conversa com o cliente</strong>: a chave dele serve só para essas decisões, e ele é opcional. Ele nunca bloqueia ninguém sozinho: no máximo abre um aviso na <a href="#alertas">Central de avisos</a>. Configure em <a href="#provedores">Provedores</a>.</p>
+
+<h2 id="caso-handoff">Caso e passar para uma pessoa (handoff)</h2>
+<p><strong>Passar para uma pessoa</strong> (em inglês, <em>handoff</em>) é o agente entregar a conversa à equipe, e o atendimento automático para nela. Um <strong>caso</strong> é diferente: é o <em>pedido interno</em> que o agente abre quando esbarra em algo que só uma pessoa resolve (como aprovar um desconto) — ele <strong>continua conversando</strong> com o cliente enquanto espera a decisão. Os casos ficam em <a href="#casos">Casos</a>.</p>
+
+<h2 id="skill-roteador-followup">Skill, roteador e follow-up</h2>
+<ul>
+<li><strong>Skill</strong>: uma habilidade especializada (como contornar objeção de preço ou marcar horário) que o agente só carrega quando a conversa pede. Veja <a href="#skills">Skills</a>.</li>
+<li><strong>Roteador</strong>: entende o que o cliente quer e entrega a conversa ao agente certo, num mesmo número de WhatsApp (quem quer comprar fala com o agente de vendas; quem já é cliente, com o suporte). Veja <a href="#roteadores">Roteadores</a>.</li>
+<li><strong>Follow-up</strong>: um fluxo automático para retomar quem esfriou — por silêncio, mudança de etapa ou resposta do contato —, sem ninguém precisar lembrar de mandar cada mensagem. Veja <a href="#followups">Follow-ups</a>.</li>
+</ul>
+
+<h2 id="token-webhook-mcp">Token, webhook e MCP</h2>
+<ul>
+<li><strong>Token (chave de acesso)</strong>: uma “senha” para <em>outro sistema</em> falar com o seu ZapSales, sem login de pessoa. Veja <a href="#api-tokens">API Tokens</a> e <a href="#api-e-mcp">API e MCP</a>.</li>
+<li><strong>Webhook</strong>: um aviso automático entre sistemas. De entrada, recebe contatos de fora (formulários, páginas de captura) como leads no funil; de saída, avisa outro sistema quando algo acontece. Veja <a href="#webhooks">Webhooks</a>.</li>
+<li><strong>MCP</strong>: um jeito padrão de dar “ferramentas” a um agente de IA. O ZapSales pode <em>oferecer</em> as dele a um agente de fora (<a href="#api-e-mcp">API e MCP</a>) ou <em>usar</em> as de outra empresa (<a href="#agente-servidores-mcp">Servidores MCP</a>).</li>
+</ul>
+
+<h2 id="modulo-extensao">Módulo e extensão</h2>
+<p>Um <strong>módulo</strong> (ou <em>recurso opcional</em>) é uma parte do produto que o <strong>dono do servidor</strong> liga ou desliga para a instalação inteira — por exemplo, Propostas, Honorários ou Fluxos de atendimento; sem ele, a tela nem aparece. Uma <strong>extensão</strong> é um guia instalado para orientar o trabalho no CRM: o dono do servidor decide o que existe, e a empresa decide se ativa. O sistema funciona inteiro sem nenhuma extensão. Veja <a href="#recursos-opcionais">Recursos opcionais</a> e <a href="#extensoes">Extensões</a>.</p>
+
+<h2 id="central-de-avisos">Central de avisos</h2>
+<p>É a tela do <strong>sino</strong> no topo: tudo o que o assistente precisou <em>escalar para a equipe</em> — conexões caídas, tarefas que falharam, atendimentos passados a humanos —, com um link para resolver cada coisa. Veja <a href="#alertas">Alertas</a>.</p>

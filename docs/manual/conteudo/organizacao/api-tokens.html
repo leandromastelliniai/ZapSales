@@ -15,7 +15,7 @@
   <li><strong>Expira.</strong> A data, ou “—” (não expira).</li>
   <li><strong>Revogar.</strong> Só nas chaves ativas, <strong>sem janela de confirmação</strong> (“Token revogado.”).</li>
 </ol>
-<p>Vazio: “Nenhum token criado ainda.”. A tabela não mostra o “último uso”, embora o sistema o guarde.</p>
+<p>Enquanto carrega, a tela diz “Carregando…”. Vazio: “Nenhum token criado ainda.”. A tabela não mostra o “último uso”, embora o sistema o guarde.</p>
 
 <h2 id="criar">Criar uma chave</h2>
 <figure class="print media">
@@ -29,6 +29,7 @@
   <li><strong>Expira em (dias) — opcional.</strong> De 1 a 365; em branco = nunca expira.</li>
   <li><strong>Criar.</strong></li>
 </ol>
+<p>A janela abre com o aviso “O plaintext será mostrado apenas uma vez.” (plaintext é o texto completo da chave) e tem também o botão <span class="ui">Cancelar</span>. Cada escopo é um botão com o código e a explicação ao lado; clique para marcar ou desmarcar.</p>
 <table class="tabela">
   <thead><tr><th>Escopo</th><th>O que permite</th></tr></thead>
   <tbody>
@@ -52,6 +53,7 @@
   <li><strong>Copiar para clipboard.</strong> “Token copiado.”</li>
   <li><strong>Aviso.</strong> “Salve este token agora — ele não será mostrado novamente.”</li>
 </ol>
+<p>O botão <span class="ui">Fechar</span> encerra a janela. Se o navegador não deixar copiar, aparece “Não foi possível copiar — selecione o token acima.”: nesse caso selecione o texto da chave à mão.</p>
 <ul>
   <li>O formato é <code>zps_&lt;8 caracteres&gt;_&lt;segredo&gt;</code>. O servidor guarda <strong>só uma impressão digital (hash SHA-256)</strong> e o prefixo; o texto completo nunca volta. Perdeu? Revogue e crie outra.</li>
   <li>A chave vai no cabeçalho <code>Authorization: Bearer zps_…</code>, <strong>nunca na URL</strong>.</li>
