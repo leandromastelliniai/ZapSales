@@ -17,7 +17,7 @@
   <li><strong>Site.</strong> O cartão do tipo: “Páginas do seu site (até 20). O agente lê o texto principal de cada uma e aprende com ele. Você refaz a leitura quando o site mudar.”</li>
   <li><strong>Nome do material.</strong> Um apelido seu, por exemplo <em>Site da loja</em> (mínimo de 2 caracteres).</li>
   <li><strong>Endereços das páginas (um por linha).</strong> Só endereços que começam com <code>https://</code>, até 20 páginas.</li>
-  <li><strong>Adicionar ao acervo.</strong> Grava o material e começa a ler.</li>
+  <li><strong>Adicionar ao acervo.</strong> Grava o material e começa a ler. Se a organização ainda não tem uma chave de embedding utilizável, a janela avisa em amarelo (“Sem uma chave de embedding, o material fica guardado e esperando — o agente só passa a conhecê-lo depois que a chave for cadastrada”) e a leitura começa quando a chave existir.</li>
 </ol>
 <ol class="passos">
   <li>Abra <span class="ui">Agente de IA › Conhecimento</span> (se não achar no menu lateral, use <span class="ui">Ver tudo em IA</span> ou a busca).</li>
@@ -44,15 +44,16 @@
 <h2 id="paginas">Acompanhar a leitura</h2>
 <p>A linha do material (cada material é uma linha da lista) mostra um globo, o nome, o tipo <em>Site</em>, o <strong>estado do material</strong> e quatro botões: <span class="ui">Ler o site de novo</span> (enquanto roda: “Lendo…”), <span class="ui">Ver as páginas</span>, <span class="ui">Ver o que ele aprendeu</span> (só quando já existem trechos) e <span class="ui">Arquivar</span>.</p>
 <figure class="print">
-  <img src="img/ia-conhecimento-site-paginas.png" alt="Janela Páginas do site com três páginas: uma lida, uma que não foi lida com o motivo e uma aguardando leitura" loading="lazy">
+  <img src="img/ia-conhecimento-site-paginas.png" alt="Janela Páginas do site com quatro páginas: duas lidas, uma que não foi lida com o motivo e uma aguardando leitura, numerada de 1 a 6" loading="lazy">
   <figcaption>“Ver as páginas”: o estado de cada endereço e o motivo quando a leitura falha.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Selo de página lida.</strong> Ao lado vem o título da página (no exemplo, <em>Example Domain</em>) e o endereço. Os selos possíveis são <em>Aguardando leitura</em>, <em>Lida</em> e <em>Não foi lida</em>.</li>
+  <li><strong>Selo de página lida.</strong> Ao lado vem o título da página (no exemplo, <em>Loja Aurora — Início</em>) e o endereço. Os selos possíveis são <em>Aguardando leitura</em>, <em>Lida</em> e <em>Não foi lida</em>.</li>
   <li><strong>Linha de detalhe.</strong> “Lida em (data e hora) · N trechos · Mudou em (data)”, ou “Ainda não lida”. Trecho é um pedaço de texto que o agente consegue consultar.</li>
   <li><strong>Selo “Não foi lida”.</strong> Logo abaixo, em vermelho, vem o motivo: aqui “O site respondeu 404.” (a página não existe).</li>
   <li><strong>Endereços das páginas.</strong> A lista editável. O botão <span class="ui">Salvar endereços</span> só liga depois que você muda algo.</li>
   <li><strong>Ler o site de novo.</strong> Fica desligado enquanto houver edição não salva.</li>
+  <li><strong>Selo “Aguardando leitura”.</strong> O endereço foi cadastrado, mas ainda ninguém pediu a leitura; a linha diz “Ainda não lida”. A leitura é sempre manual.</li>
 </ol>
 <h3 id="estados">O estado do material</h3>
 <table class="tabela">

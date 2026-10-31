@@ -50,13 +50,14 @@
 
 <h2 id="agente">2. Ligar em cada agente</h2>
 <figure class="print media">
-  <img src="img/ia-audio-agente.png" alt="Cartão Resposta em áudio no editor do agente com o interruptor Responder em áudio quando o cliente mandar áudio e a escolha de voz" loading="lazy">
-  <figcaption>O bloco no editor do agente, com a organização usando o provedor compatível com a OpenAI. (Hoje ele fica dentro da seção <em>Jeito de responder</em>, ao lado de uma prévia das mensagens; o conteúdo é o mesmo.)</figcaption>
+  <img src="img/ia-audio-agente.png" alt="Bloco Resposta em áudio no editor do agente, com o interruptor desligado e o aviso de que a resposta em áudio está desligada na organização, numerado de 1 a 4" loading="lazy">
+  <figcaption>O bloco no editor do agente (seção <em>Jeito de responder</em>), numa organização que ainda não ligou a resposta em áudio em <em>Provedores</em>.</figcaption>
 </figure>
 <ol class="legenda">
   <li><strong>Responder em áudio quando o cliente mandar áudio.</strong> O interruptor do agente (vem desligado).</li>
-  <li><strong>O provedor em uso e o limite:</strong> “Provedor de voz: Compatível com a OpenAI. Respostas com mais de 1000 caracteres saem como texto.”</li>
-  <li><strong>A voz.</strong> No provedor compatível com a OpenAI não há escolha por agente: “A voz e o modelo são os da organização, definidos em Provedores.”</li>
+  <li><strong>Como funciona.</strong> A resposta é escrita normalmente, passa por todas as conferências antes do envio e só então vira nota de voz. O texto fica sempre gravado na conversa, e, se a voz falhar, a resposta sai em texto.</li>
+  <li><strong>Aviso da organização.</strong> “A resposta em áudio está desligada na organização. Ela só passa a valer depois que um administrador a liga, com a chave de voz da empresa, em Provedores.” Com o provedor ligado, este aviso some e, no lugar, aparecem o provedor em uso e o limite (“Respostas com mais de 1000 caracteres saem como texto”).</li>
+  <li><strong>Abrir Provedores.</strong> Leva à tela onde o administrador liga a resposta em áudio.</li>
 </ol>
 <ol class="passos">
   <li>Abra o agente, aba <strong>Configuração</strong>, seção <strong>Jeito de responder</strong> (papel <em>Conversa com o cliente</em>), bloco <strong>Resposta em áudio</strong>.</li>

@@ -51,11 +51,11 @@
 
 <h3 id="previa">Pré-visualizar dados</h3>
 <figure class="print media">
-  <img src="img/lgpd-previa.png" alt="Janela Prévia de dados do titular exibindo a mensagem Falha ao carregar prévia" loading="lazy">
-  <figcaption>A prévia, que nesta instalação respondeu com erro (veja o aviso).</figcaption>
+  <img src="img/lgpd-previa.png" alt="Janela Prévia de dados do titular com o cartão do contato mascarado, os sete contadores, o botão Expandir amostra e o rodapé, numerada de 1 a 4" loading="lazy">
+  <figcaption>A prévia de um pedido de dados: 1, o cartão do contato (mascarado); 2, os sete contadores; 3, <em>Expandir amostra</em>; 4, o rodapé com a data e o aviso de que a PII está mascarada.</figcaption>
 </figure>
 <p>A janela <strong>“Prévia de dados do titular”</strong> mostra, <em>só para leitura</em>, o cartão do contato (nome, e-mail e telefone <strong>mascarados</strong>; “CPF: presente (valor ocultado)”), um aviso amarelo quando não há dado local, e sete contadores: <em>Conversas</em>, <em>Mensagens (total)</em>, <em>Leads</em>, <em>Pedidos</em>, <em>Atividades</em>, <em>Entradas de auditoria</em> e <em>Consentimentos</em>. O botão “Expandir amostra (10 itens por categoria)” mostra uma amostra em JSON (corpo das mensagens como “[masked]”). O rodapé diz “Gerado em … · PII mascarada · CPF não exibido”. Não grava nada.</p>
-<aside class="nota info"><strong>A “Falha ao carregar prévia.” do print já foi corrigida.</strong><p>Na instalação usada para tirar o print, a prévia respondeu com erro porque o coletor de dados da LGPD consultava a tabela do módulo <em>Honorários</em>, que não existe quando o módulo não está instalado. Isso foi corrigido: sem o módulo, o coletor simplesmente pula essa parte, e a prévia e a exportação de dados do titular funcionam. Se ainda aparecer “Falha ao carregar prévia.”, a instalação está numa versão anterior à correção — atualize.</p></aside>
+<aside class="nota info"><strong>Se aparecer “Falha ao carregar prévia.”</strong><p>Numa instalação de versão antiga a prévia dava esse erro quando o módulo <em>Honorários</em> não estava instalado: o coletor de dados da LGPD consultava a tabela desse módulo, que não existe sem ele. Isso foi corrigido — sem o módulo, o coletor pula essa parte, e a prévia e a exportação de dados do titular funcionam. Se o erro ainda aparecer, a instalação está numa versão anterior à correção: atualize.</p></aside>
 
 <h3 id="aprovar">Aprovar</h3>
 <figure class="print media">
