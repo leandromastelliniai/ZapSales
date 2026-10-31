@@ -8260,7 +8260,6 @@ export const DICIONARIO: Traducoes = {
   "Cole até 20 emails (um por linha) e escolha o papel compartilhado.": {
     es: "Pega hasta 20 correos (uno por línea) y elige el rol compartido.",
   },
-  Visualizador: { es: "Observador" },
   "ainda não informada pelo servidor": { es: "aún no informada por el servidor" },
   "Adicione ao menos um email.": { es: "Agrega al menos un correo." },
   "Máximo 20 emails por convite.": { es: "Máximo 20 correos por invitación." },
