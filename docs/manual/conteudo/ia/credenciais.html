@@ -19,6 +19,7 @@
   <li><strong>Excluir</strong> (lixeira). Fica <strong>travada</strong> enquanto a chave estiver em uso por qualquer versão de agente, inclusive no histórico.</li>
   <li><strong>Inválida.</strong> Mostra, em vermelho, o motivo (“O provedor recusou a chave. Confira se copiou inteira ou gere uma nova”) e o link <em>Onde pegar a chave</em>.</li>
 </ol>
+<p><strong>O que mudou no desenho.</strong> Cada provedor agora é um <strong>painel com o nome dele no alto</strong>, e cada chave é uma <strong>linha</strong> dentro dele (nome e final da chave, os números <em>Modelos</em> e <em>Em uso por</em>, e os botões na ponta), no lugar dos cartões lado a lado do print acima. A situação ganhou cores com significado fixo: <em>Validada</em> em verde, <em>Inválida</em> em vermelho, <em>Não validada</em> em âmbar (a validação não terminou: a linha pede para clicar em revalidar) e <em>Validando…</em> e <em>Inativa</em> em cinza. Na linha da chave do Jev, em vez de <em>Modelos</em> e <em>Em uso por</em>, aparece “Usada em:” com as tarefas que o Jev faz.</p>
 
 <h2 id="adicionar">Adicionar uma chave</h2>
 <figure class="print media">
@@ -36,7 +37,7 @@
 <p>O sistema <strong>guarda a chave cifrada</strong> e começa a <strong>validar em segundo plano</strong>, chamando o provedor para listar os modelos (isso usa a internet e costuma custar nada ou quase nada). Em cerca de 3 segundos o cartão muda para <em>Validada — N modelos disponíveis</em> ou para o erro. Para o provedor personalizado, o teste de conexão é feito <em>antes</em> de gravar; se falhar, nada é gravado.</p>
 <h3>Editar, revalidar e excluir</h3>
 <ul>
-  <li><strong>Editar:</strong> dá para mudar o nome e, se quiser, <strong>trocar a chave</strong> (campo “Nova chave”). Os agentes ligados continuam ligados: no próximo atendimento já usam a chave nova. Em branco, só o nome muda.</li>
+  <li><strong>Editar:</strong> dá para mudar o nome e, se quiser, <strong>trocar a chave</strong> (campo “Nova chave (opcional)”). Os agentes ligados continuam ligados: no próximo atendimento já usam a chave nova. Em branco, só o nome muda.</li>
   <li><strong>Revalidar:</strong> refaz o teste com o provedor.</li>
   <li><strong>Excluir:</strong> só depois que nenhuma versão de agente usa a chave. Como versões publicadas e substituídas não aceitam apontar para outra chave, o caminho para trocar é <strong>Editar</strong>, não excluir.</li>
 </ul>

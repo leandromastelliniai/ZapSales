@@ -29,6 +29,8 @@
     <tr><td>Um material que você enviou não entrou na base de conhecimento</td><td>Veja o motivo em <a href="#conhecimento">Conhecimento</a>.</td></tr>
     <tr><td>O gasto de IA passou do aviso que você definiu / O orçamento de IA foi atingido</td><td>Veja <a href="#uso-ia">Uso e orçamento</a>. No segundo caso, a IA parou de responder.</td></tr>
     <tr><td>Uma resposta ficou presa e não chegou ao cliente</td><td>Uma mensagem passou de 5 minutos “enviando” e foi marcada como falha. O sistema <strong>não reenvia sozinho</strong>, para evitar mensagem em dobro.</td></tr>
+    <tr><td>O agente quer executar uma ação num sistema externo e espera a sua aprovação</td><td>Um pedido de aprovação de uma <a href="#agente-ferramenta-webhook">ferramenta externa</a> que altera dados. O próprio aviso mostra os dados preenchidos e os botões <span class="ui">Aprovar e executar</span> e <span class="ui">Recusar</span>. Veja <a href="#agente-aprovacao-de-acoes">Ações que alteram dados, com a sua aprovação</a>.</td></tr>
+    <tr><td>O agente não conseguiu usar um sistema externo</td><td>A consulta ou a ação numa ferramenta externa falhou. O motivo vem no aviso.</td></tr>
     <tr><td>Um aviso de atendimento não chegou ao WhatsApp da equipe</td><td>Veja <a href="#aviso-whatsapp">Aviso no WhatsApp</a>.</td></tr>
     <tr><td>Uma proposta está pronta para revisão · Um modelo de mensagem mudou de situação · Alguém ligou e ninguém atendeu</td><td>Outros avisos de rotina.</td></tr>
   </tbody>
@@ -37,4 +39,4 @@
 
 <h2 id="cuidados">Cuidados</h2>
 <aside class="nota atencao"><strong>Marcar como resolvido não resolve o problema.</strong><p>O botão só tira o aviso da lista. A conexão continua caída, o caso continua aberto, o material continua sem entrar. Resolva a causa pelo link e só então marque.</p></aside>
-<aside class="nota info"><strong>Quem pode o quê.</strong><p>Ver, resolver e reabrir exige o papel de Atendente ou acima. O <em>link</em> de cada aviso depende do papel que a tela de destino exige: conexões, credenciais e agentes pedem Administrador; base de conhecimento, uso de IA, provedores e evolução pedem Gerente; conversas, casos e contatos pedem Atendente.</p></aside>
+<aside class="nota info"><strong>Quem pode o quê.</strong><p>Ver, resolver e reabrir exige o papel de Atendente ou acima. O <em>link</em> de cada aviso depende do papel que a tela de destino exige: conexões, credenciais e agentes pedem Administrador; base de conhecimento, uso de IA, provedores e evolução pedem Gerente; conversas, casos e contatos pedem Atendente. Já os botões <span class="ui">Aprovar e executar</span> e <span class="ui">Recusar</span> de um pedido de aprovação aparecem só para Gerente ou acima; o Atendente vê o pedido, mas não decide.</p></aside>

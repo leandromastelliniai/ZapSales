@@ -50,7 +50,7 @@
   <li><strong>Banco de dados.</strong> “Endereço do banco de dados” e “Senha administrativa do banco”. Seguem “Fila de tarefas” e “Inteligência artificial”.</li>
 </ol>
 <ul>
-  <li>Só <strong>3 chaves</strong> são editáveis pela tela (E-mail de suporte, DPO e as duas do serviço externo de e-mail, que vivem em E-mail). O resto é diagnóstico: trocar segredos dos contêineres <em>exige editar o arquivo do servidor e reiniciar</em>.</li>
+  <li>Só <strong>4 chaves</strong> são editáveis pela tela: E-mail de suporte e DPO, aqui, e as duas do serviço externo de e-mail (chave e remetente), que moram na tela <a href="#admin-cadastro--email">E-mail</a>. O resto é diagnóstico: trocar segredos dos contêineres <em>exige editar o arquivo do servidor e reiniciar</em>.</li>
   <li>Cada campo editável tem <span class="ui">Salvar</span> (“Pronto, já está valendo.”) e <span class="ui">Voltar ao padrão</span> (só se veio do banco; “Voltou para o valor do arquivo de instalação.”). A tela <strong>nunca mostra valores de segredo</strong>, só os 4 últimos caracteres.</li>
   <li>Erros: “Escreva um valor, ou use ‘Voltar ao padrão’ para limpar.”, “Esta instalação está sem a chave que protege segredos guardados, então nada foi salvo…”. Auditoria: <code>platform.config_changed</code> (com os últimos 4 dígitos, nunca o valor) e <code>platform.config_reset</code>.</li>
 </ul>

@@ -19,6 +19,7 @@
   <li><strong>SLA.</strong> O selo do prazo.</li>
   <li><strong>Ver.</strong> Abre o detalhe do pedido.</li>
 </ol>
+<p><strong>Pedido concluído não corre mais contra o prazo:</strong> na linha de um pedido com status <em>Concluído</em>, as colunas <em>Vence</em> e <em>SLA</em> mostram “—” (e ele não conta na faixa de SLA). Pedido <em>Falhou</em> segue com o selo de prazo, porque não foi atendido. (A primeira linha do print acima, concluída, ainda aparece como “Vencido”: foi tirada antes dessa mudança.)</p>
 <p>As colunas são <em>ID</em> (8 primeiros caracteres), <em>Tipo</em>, <em>Sujeito</em>, <em>Recebido</em> (“agora”, “12d atrás”), <em>Vence</em>, <em>SLA</em> e <em>Status</em>. A ordem é pelo prazo mais próximo. O botão <span class="ui">Limpar filtros</span> aparece quando algum filtro está ligado, e à direita fica o total. Vazio: “Nenhuma solicitação LGPD — Solicitações de dados e anonimizações aparecerão aqui.”.</p>
 <table class="tabela">
   <thead><tr><th>Selo de SLA</th><th>Quando</th></tr></thead>
@@ -30,7 +31,7 @@
   </tbody>
 </table>
 <p>Prazos: pedido de dados em <strong>7 dias úteis</strong>; anonimização em <strong>15 dias úteis</strong>. Fim de semana e feriados do país da organização (hoje, o Brasil) não contam, e o dia do prazo vai até 23:59.</p>
-<aside class="nota info"><strong>Dois detalhes que podem confundir.</strong><p>O selo de SLA é calculado pela data, mesmo para pedido <em>já concluído</em>: um pedido atendido no prazo ainda pode aparecer como “Vencido” se a data-limite já passou (nos dados de exemplo, a primeira linha). E o filtro de status “Revisão pendente” existe, mas o banco só guarda recebido, processando, concluído, falhou e expirado — esse filtro nunca encontra nada (deduzido do código).</p></aside>
+<aside class="nota info"><strong>Um detalhe que pode confundir.</strong><p>O filtro de status “Revisão pendente” existe, mas o banco só guarda recebido, processando, concluído, falhou e expirado — esse filtro nunca encontra nada (deduzido do código).</p></aside>
 
 <h2 id="detalhe">O detalhe de uma solicitação</h2>
 <figure class="print">
@@ -54,7 +55,7 @@
   <figcaption>A prévia, que nesta instalação respondeu com erro (veja o aviso).</figcaption>
 </figure>
 <p>A janela <strong>“Prévia de dados do titular”</strong> mostra, <em>só para leitura</em>, o cartão do contato (nome, e-mail e telefone <strong>mascarados</strong>; “CPF: presente (valor ocultado)”), um aviso amarelo quando não há dado local, e sete contadores: <em>Conversas</em>, <em>Mensagens (total)</em>, <em>Leads</em>, <em>Pedidos</em>, <em>Atividades</em>, <em>Entradas de auditoria</em> e <em>Consentimentos</em>. O botão “Expandir amostra (10 itens por categoria)” mostra uma amostra em JSON (corpo das mensagens como “[masked]”). O rodapé diz “Gerado em … · PII mascarada · CPF não exibido”. Não grava nada.</p>
-<aside class="nota atencao"><strong>Defeito encontrado na produção testada.</strong><p>Na instalação usada para este manual a prévia respondeu “Falha ao carregar prévia.” (erro 500 do servidor). A causa, no log, foi o coletor de dados da LGPD consultar a tabela do módulo <em>Honorários</em> (<code>honorarios_contratos</code>), que <strong>não existe</strong> quando o módulo não está instalado. A exportação de dados do titular usa o mesmo coletor e pode ter o mesmo problema. Foi comunicado ao dono do produto.</p></aside>
+<aside class="nota info"><strong>A “Falha ao carregar prévia.” do print já foi corrigida.</strong><p>Na instalação usada para tirar o print, a prévia respondeu com erro porque o coletor de dados da LGPD consultava a tabela do módulo <em>Honorários</em>, que não existe quando o módulo não está instalado. Isso foi corrigido: sem o módulo, o coletor simplesmente pula essa parte, e a prévia e a exportação de dados do titular funcionam. Se ainda aparecer “Falha ao carregar prévia.”, a instalação está numa versão anterior à correção — atualize.</p></aside>
 
 <h3 id="aprovar">Aprovar</h3>
 <figure class="print media">

@@ -20,8 +20,29 @@
   <li><strong>Responsáveis por número.</strong></li>
   <li><strong>Quem fala aparece na mensagem?</strong></li>
 </ol>
+<aside class="nota info"><strong>A tela foi reorganizada depois deste print.</strong><p>A ordem de cima para baixo, hoje, é: a faixa <em>Quem recebe agora</em>, as duas decisões (<em>Quem recebe o cliente novo</em> e <em>O que cada atendente enxerga</em>, num painel só), os <em>Responsáveis por número</em>, o bloco recolhido <em>Mais ajustes</em> e, grudada no pé da tela, a barra com o <span class="ui">Salvar</span>. Os textos e as opções descritos nesta página continuam valendo; o que mudou de lugar está explicado a seguir.</p></aside>
+
+<h2 id="quem-recebe-agora">Quem recebe agora</h2>
+<p>No alto da tela, uma faixa mostra <strong>o que a distribuição entregaria neste instante</strong>, com as mesmas regras que o sistema usa de verdade. Ela só lê: nada é alterado por ali.</p>
+<ul>
+  <li><strong>“N de M podem receber agora”.</strong> Quantas pessoas da equipe (Atendente, Gerente ou Administrador) estão elegíveis no momento: com plantão ligado, dentro do horário que definiram e com folga na quantidade de conversas que aguentam.</li>
+  <li><strong>Uma pílula por pessoa.</strong> Quem está elegível aparece normal; quem não está traz o motivo: <em>lotado</em>, <em>fora do horário</em> ou <em>sem plantão</em> (nunca configurou a disponibilidade ou está fora de plantão). No rodízio e em “menos conversas”, quem recebe o próximo cliente leva o destaque <em>próximo da vez</em>.</li>
+  <li><strong>A fila.</strong> “Nenhum cliente esperando na fila agora.” ou quantos esperam, com a espera média em minutos. Em “cada um pega”, a faixa lembra que ninguém recebe sozinho: o primeiro que clicar assume.</li>
+  <li>O link <span class="ui">Horários da equipe</span> leva à aba <em>Atendimento</em> de <a href="#equipe">Equipe</a>, onde cada pessoa define plantão, horário e capacidade.</li>
+</ul>
+<p>Quando <strong>ninguém</strong> pode receber, aparece um aviso amarelo — “Ninguém pode receber um cliente novo agora.” (ou “Ninguém da equipe pode receber atendimento ainda.”, se a equipe está vazia): os clientes novos ficam na fila e o agente de IA avisa que a equipe responde assim que possível. O botão <span class="ui">Definir os horários da equipe</span> abre a mesma aba. Numa instalação nova isso é o normal, porque ninguém configurou plantão ainda — e é por isso que ligar o rodízio sem conferir esta faixa deixava o cliente parado na fila. Se o sistema não conseguir ler esses dados, a faixa some e o resto da tela segue funcionando.</p>
 
 <h2 id="quem-recebe">Quem recebe o cliente novo</h2>
+<p>Cada uma das duas decisões da tela (esta e a de <a href="#distribuicao--visibilidade">O que cada atendente enxerga</a>) tem, no canto, um selo de estado: <strong>Pronto</strong> (verde) ou <strong>Revisar</strong> (amarelo). Esta decisão pede revisão quando o modo é automático e ninguém pode receber agora; a outra, quando a combinação é a “morta” descrita adiante. Cada decisão traz também uma linha <strong>Recomendado</strong> (violeta), que olha o tamanho da sua equipe e dá o motivo, e a opção sugerida ganha o selo <em>Recomendado</em>. A recomendação é só uma sugestão: nunca muda o que está salvo.</p>
+<table class="tabela">
+  <thead><tr><th>Equipe (quem pode atender)</th><th>Modo recomendado</th><th>Visibilidade recomendada</th></tr></thead>
+  <tbody>
+    <tr><td>1 pessoa ou nenhuma</td><td>Cada um pega o que quiser — com uma pessoa só não há o que distribuir.</td><td>Todos veem tudo</td></tr>
+    <tr><td>2 pessoas</td><td>Rodízio automático — ninguém escolhe, então ninguém fura a fila.</td><td>Todos veem tudo — numa equipe pequena as pessoas se ajudam.</td></tr>
+    <tr><td>De 3 a 6 pessoas</td><td>Rodízio automático</td><td>Os seus, mais os que ainda não têm dono — cada um foca na própria carteira e ainda vê quem acabou de chegar.</td></tr>
+    <tr><td>7 pessoas ou mais</td><td>Vai para quem tem menos conversas na mão — o rodízio puro deixa um com a carteira cheia enquanto outro está parado.</td><td>Os seus, mais os que ainda não têm dono</td></tr>
+  </tbody>
+</table>
 <table class="tabela">
   <thead><tr><th>Opção</th><th>O que faz</th></tr></thead>
   <tbody>
@@ -46,20 +67,22 @@
 <p>Isto muda a <strong>regra de leitura do banco de dados</strong>: o que o Atendente consegue ler de conversas e negócios passa a obedecer essa escolha, para toda a equipe, na hora e sem aviso.</p>
 
 <h2 id="ia-volta">Quando a IA volta a responder</h2>
+<p>Estes três ajustes, mais a assinatura das mensagens (mais abaixo), ficam dentro do bloco recolhido <strong>Mais ajustes</strong>. Fechado, ele mostra um contador: <em>valores padrão</em> ou quantos ajustes estão fora do padrão (“1 fora do padrão”, “N fora do padrão”), para que o que está ligado não fique escondido.</p>
 <ul>
   <li><strong>Quando a pessoa some, a IA volta?</strong> Quando alguém assume uma conversa, o agente de IA para de responder nela até ser devolvido. Marcando “Devolver ao agente sozinho depois de um tempo sem resposta da equipe” (padrão desligado; ao marcar, 60 min) você define em <em>Minutos sem resposta da equipe</em> (5 a 1440 = 24 h). O tempo conta a partir do último sinal de uma pessoa (assumir, responder pela tela ou pelo celular). Só devolve onde há agente publicado.</li>
   <li><strong>Resposta pelo celular.</strong> Quando alguém da equipe responde o cliente direto pelo celular, fora do sistema, a IA fica calada naquela conversa por <em>Minutos de silêncio da IA depois de uma resposta pelo celular</em> (5 a 1440, padrão 60). Cada nova resposta recomeça a contagem. Quem atende o dia inteiro pelo celular costuma preferir um prazo curto, como 15.</li>
   <li><strong>A conversa fica com quem atendeu</strong> (padrão desligado). Ligada: responder pelo Inbox numa conversa sem dono passa a assumi-la, e a IA fica calada até alguém devolver; e a conversa encerrada que recebe mensagem volta direto para o último atendente (se ainda é da equipe), sem passar pela distribuição. Desligada: responder pela tela cala a IA por alguns minutos e a conversa encerrada volta para a fila.</li>
 </ul>
-<p>O botão <span class="ui">Salvar</span> (“Há mudanças não salvas.” enquanto houver) avisa “Distribuição de atendimento salva.”. Fica na <a href="#auditoria">Auditoria</a> como <code>routing.config_changed</code>.</p>
+<h3 id="salvar">Salvar</h3>
+<p>Há <strong>um único botão</strong> <span class="ui">Salvar</span>, numa barra grudada no pé da tela, que grava de uma vez as duas decisões, os ajustes de “Mais ajustes” e a assinatura. Enquanto há mudança, a barra diz “Há mudanças não salvas.” e aparece o botão <span class="ui">Descartar alterações</span>, que volta ao que estava salvo; sem mudança, diz “Tudo salvo” e o <span class="ui">Salvar</span> fica desabilitado. Ao salvar, avisa “Distribuição de atendimento salva.” (e “Assinatura salva.”, se a assinatura mudou), e a faixa <em>Quem recebe agora</em> se atualiza. A distribuição fica na <a href="#auditoria">Auditoria</a> como <code>routing.config_changed</code>. Os <em>Responsáveis por número</em> <strong>não</strong> entram nesse botão: cada número tem o seu.</p>
 
 <h2 id="responsaveis">Responsáveis por número</h2>
-<p>A capacidade e o horário de cada pessoa valem para todos os números; aqui você diz <strong>quem pode receber conversas de cada número</strong> de WhatsApp. Cada canal mostra o estado: “Usa todos os atendentes elegíveis da organização.” (padrão), “Ninguém configurado — as conversas ficarão na fila.” ou “Somente as pessoas selecionadas recebem este número.”, com uma caixa por membro ativo. Os botões são <span class="ui">Salvar responsáveis</span> e <span class="ui">Voltar ao padrão da organização</span>. Sem canais, aparece “Conecte um número para escolher os responsáveis.” (link para <a href="#conexoes">Conexões</a>).</p>
+<p>Este bloco fica entre as duas decisões e o <em>Mais ajustes</em>. A capacidade e o horário de cada pessoa valem para todos os números; aqui você diz <strong>quem pode receber conversas de cada número</strong> de WhatsApp. Cada canal mostra o estado: “Usa todos os atendentes elegíveis da organização.” (padrão), “Ninguém configurado — as conversas ficarão na fila.” ou “Somente as pessoas selecionadas recebem este número.”, com uma caixa por membro ativo. Os botões são <span class="ui">Salvar responsáveis</span> e <span class="ui">Voltar ao padrão da organização</span>. Sem canais, aparece “Conecte um número para escolher os responsáveis.” (link para <a href="#conexoes">Conexões</a>).</p>
 
 <h2 id="assinatura">Quem fala aparece na mensagem?</h2>
 <p>Ligado, a mensagem que vai ao cliente ganha, <strong>em negrito na linha de cima</strong>, o nome de quem fala. O histórico do CRM guarda o texto como foi escrito. <strong>Campanhas, lembretes e integrações por chave não assinam.</strong></p>
 <ul>
   <li><strong>Assinar as mensagens dos atendentes.</strong> Cada um aparece pelo próprio nome, com iniciais maiúsculas.</li>
   <li><strong>Assinar as mensagens da IA.</strong> A IA aparece pelo <strong>Nome da IA</strong> (máx. 120; padrão “Assistente Virtual”; sem asteriscos nem quebra de linha), nunca pelo nome de um atendente.</li>
-  <li>Botão <span class="ui">Salvar assinatura</span> (“Assinatura salva.”). Tudo vem desligado de fábrica.</li>
+  <li>Não há botão próprio: a assinatura é gravada pelo <span class="ui">Salvar</span> da barra do pé da tela (“Assinatura salva.”). Tudo vem desligado de fábrica.</li>
 </ul>

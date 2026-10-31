@@ -16,7 +16,7 @@
   <li><strong>Users.</strong> Pessoas vinculadas (e, ao lado, o número de conversas).</li>
   <li><strong>Ver.</strong> Abre a ficha.</li>
 </ol>
-<p>30 por página; <span class="ui">Carregar mais</span> traz o resto. Sem resultado: “Nenhum tenant encontrado — Ajuste os filtros ou crie um novo tenant.”. A consulta é auditada (<code>platform_admin.tenants_listed</code>).</p>
+<p>Entre o <em>Conversas</em> e o <span class="ui">Ver</span> há ainda a coluna <em>Criado em</em> (a data de criação da empresa). 30 por página; <span class="ui">Carregar mais</span> traz o resto. Sem resultado: “Nenhum tenant encontrado — Ajuste os filtros ou crie um novo tenant.”. A consulta é auditada (<code>platform_admin.tenants_listed</code>).</p>
 
 <h2 id="novo">Novo tenant</h2>
 <figure class="print">
@@ -42,7 +42,7 @@
 </ul>
 
 <h2 id="ficha">A ficha da empresa</h2>
-<p>Clicar em <span class="ui">Ver</span> abre a ficha, com o nome, o slug, o selo de status (aqui sempre o status “cru”: nunca mostra “Onboarding”) e quatro abas: <strong>Visão Geral</strong>, <strong>Saúde</strong>, <strong>Agente</strong> e duas desativadas, <em>Equipe</em> e <em>Uso</em> (“em breve”).</p>
+<p>Clicar em <span class="ui">Ver</span> abre a ficha, com o nome, o slug, o selo de status (aqui sempre o status “cru”: nunca mostra “Onboarding”) e cinco abas: <strong>Visão Geral</strong>, <strong>Saúde</strong> e <strong>Agente</strong>, mais duas desativadas, <em>Equipe</em> e <em>Uso</em> (marcadas “em breve”).</p>
 <figure class="print">
   <img src="img/admin-tenant-geral.png" alt="Ficha de uma empresa com informações, volumes, integrações, compliance e os botões de ação, numerada de 1 a 7" loading="lazy">
   <figcaption>A aba Visão Geral da ficha.</figcaption>
@@ -91,7 +91,7 @@
   <img src="img/admin-acompanhar.png" alt="Janela Iniciar acompanhamento com a caixa Somente leitura e o botão Confirmar e entrar" loading="lazy">
   <figcaption>A janela “Iniciar acompanhamento?”.</figcaption>
 </figure>
-<p>Permite entrar na empresa de um cliente <strong>por até 1 hora</strong>, com a sua identidade, para ajudar ou diagnosticar — com tudo registrado. A janela diz: “Acompanhe &lt;nome&gt; com sua identidade de administrador. As ações pelo aplicativo serão registradas em seu nome. O acesso dura até uma hora.” A caixa <strong>Somente leitura</strong> escolhe o modo: marcada, você vira <code>viewer</code> da empresa e qualquer gravação é barrada (“Este acompanhamento permite somente leitura.”); desmarcada, vira <code>admin</code> ( “Edição permitida”). Quem tem o escopo <code>support_readonly</code> entra <em>sempre</em> somente leitura.</p>
+<p>Permite entrar na empresa de um cliente <strong>por até 1 hora</strong>, com a sua identidade, para ajudar ou diagnosticar — com tudo registrado. A janela diz: “Acompanhe &lt;nome&gt; com sua identidade de administrador. As ações pelo aplicativo serão registradas em seu nome. O acesso dura até uma hora.” A caixa <strong>Somente leitura</strong> escolhe o modo (ela vem <em>desmarcada</em>): marcada, você vira <code>viewer</code> da empresa e qualquer gravação é barrada (“Este acompanhamento permite somente leitura.”); desmarcada, vira <code>admin</code> ( “Edição permitida”). Quem tem o escopo <code>support_readonly</code> entra <em>sempre</em> somente leitura.</p>
 <figure class="print">
   <img src="img/admin-acompanhamento.png" alt="Faixa amarela no topo do aplicativo dizendo Suporte à organização, Somente leitura, com o botão Sair do acompanhamento, numerada de 1 a 2" loading="lazy">
   <figcaption>O que o dono vê durante o acompanhamento.</figcaption>

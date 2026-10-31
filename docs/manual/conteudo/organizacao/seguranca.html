@@ -4,15 +4,15 @@
 <p>Proteger a sua conta. A <strong>verificação em duas etapas</strong> (também chamada de MFA ou 2FA) faz o sistema pedir, além da senha, um <em>código de 6 dígitos que só existe no seu celular</em>. É o que impede que uma senha vazada vire um vazamento.</p>
 <aside class="nota info"><strong>Não existe troca de senha aqui.</strong><p>A senha só é redefinida pelo fluxo “esqueci a senha” da tela de entrada.</p></aside>
 <figure class="print">
-  <img src="img/seguranca.png" alt="Tela de Segurança com cinco cartões: verificação em duas etapas, exigir da equipe, códigos de recuperação, chamada de voz e sessões ativas0" loading="lazy">
+  <img src="img/seguranca.png" alt="Tela de Segurança com cinco cartões: verificação em duas etapas, exigir da equipe, códigos de recuperação, chamada de voz e sessões ativas" loading="lazy">
   <figcaption>A tela de Segurança vista por um Administrador, com a verificação ainda desativada.</figcaption>
 </figure>
 <ol class="legenda">
   <li><strong>Verificação em duas etapas.</strong> Com o selo <em>Ativada</em> ou <em>Desativada</em>.</li>
   <li><strong>Ativar.</strong> Abre o assistente de cadastro (abaixo). Se já está ativada, o botão vira <span class="ui">Desligar</span>.</li>
   <li><strong>Exigir da equipe.</strong> Só o Administrador vê este cartão.</li>
-  <li><strong>Nível mínimo.</strong> “Não exigir de ninguém” (o padrão), “Administrador”, “Gerente”, “Atendente” ou “Somente leitura”. O nível escolhido alcança <em>esse papel e todos os acima</em>.</li>
-  <li><strong>Dias de carência.</strong> De 0 a 30. Durante o prazo ninguém é bloqueado; depois dele a tela trava até a pessoa cadastrar o aplicativo. O prazo começa na mudança da regra ou na entrada da pessoa na empresa, o que for mais tarde.</li>
+  <li><strong>Nível mínimo.</strong> “Não exigir de ninguém” (o padrão), “Administrador”, “Gerente”, “Atendente” ou “Somente leitura”. O nível escolhido alcança <em>esse papel e todos os acima</em>. A lista está em ordem: Administrador, Gerente, Atendente, Somente leitura.</li>
+  <li><strong>Dias de carência.</strong> De 0 a 30 (o campo fica travado enquanto o nível é “Não exigir de ninguém”). Durante o prazo ninguém é bloqueado; depois dele a tela trava até a pessoa cadastrar o aplicativo. O prazo começa na mudança da regra ou na entrada da pessoa na empresa, o que for mais tarde.</li>
   <li><strong>Códigos de recuperação.</strong> “Use se perder acesso ao autenticador. Cada código é de uso único.”</li>
   <li><strong>Regenerar códigos de recuperação.</strong> Só com a verificação ativada (“Habilite MFA antes de gerar códigos.”).</li>
   <li><strong>Chamada de voz pelo WhatsApp.</strong> Veja abaixo.</li>
@@ -30,7 +30,8 @@
 <ul>
   <li>O assistente <strong>não tem botão de cancelar</strong>: se você fechar a aba antes de confirmar o código, nada é ativado.</li>
   <li>Quem <strong>já tem</strong> o fator precisa provar o código a cada entrada, qualquer que seja a regra da empresa.</li>
-  <li><strong>Desligar</strong> exige ter provado o código <em>nesta sessão</em> e é <strong>recusado</strong> quando a empresa (ou o dono do servidor) obriga você: “A verificação em duas etapas é obrigatória para você nesta empresa. Desligue a regra antes.” Pede confirmação (“Sua conta fica sem essa camada de proteção até você ativar de novo.”).</li>
+  <li><strong>Desligar</strong> pede confirmação (“Sua conta fica sem essa camada de proteção até você ativar de novo.”) e exige ter provado o código <em>nesta sessão</em>; sem isso o sistema recusa com “Entre de novo e informe o código de 6 dígitos antes de desligar a verificação.” Isso impede que alguém com a sua sessão aberta, mas sem o seu celular, desligue a proteção.</li>
+  <li>Quando a empresa (ou o dono do servidor) <strong>obriga</strong> você a ter a verificação, o botão <span class="ui">Desligar</span> <strong>nem aparece</strong>: o cartão diz “Ela é obrigatória para você nesta empresa, então não dá para desligar aqui. Um administrador pode mudar essa regra abaixo.”</li>
   <li><strong>Regenerar códigos</strong> invalida os antigos imediatamente (“Gerar novos códigos de recuperação?”) e mostra 10 novos no próprio cartão.</li>
 </ul>
 

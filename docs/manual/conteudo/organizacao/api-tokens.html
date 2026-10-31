@@ -59,4 +59,4 @@
   <li>No máximo <strong>50 chaves ativas</strong> por empresa (as revogadas e vencidas não contam): “Teto de tokens ativos por organização atingido: N de 50.”</li>
   <li>Criar e revogar ficam na <a href="#auditoria">Auditoria</a> (<code>token.created</code>, <code>token.revoked</code>). Não envia e-mail.</li>
 </ul>
-<aside class="nota info"><strong>Nem toda rota aceita chave.</strong><p>A habilitação é <em>por rota</em> (cerca de 20 rotas da API e o endereço do MCP). O sistema aceita qualquer texto como escopo, mas a tela só oferece estes 11. A expiração é só por data.</p></aside>
+<aside class="nota info"><strong>Nem toda rota aceita chave.</strong><p>A habilitação é <em>por rota</em> (só algumas rotas da API aceitam chave — como envio de mensagens, contatos, leads, agenda e configuração de agentes — além do endereço do MCP; novas rotas passam a aceitar conforme cada integração precisa). O sistema aceita qualquer texto como escopo, mas a tela só oferece estes 11. A expiração é só por data.</p></aside>

@@ -64,12 +64,12 @@
 <ol class="legenda">
   <li><strong>Buscar mensagem…</strong> Busca só na <em>prévia da última mensagem</em>, não em todo o histórico.</li>
   <li><strong>Status.</strong> “Todos”, “Pendente”, “Aberto” ou “Resolvido”.</li>
-  <li><strong>Selecione uma conversa.</strong> “Modo somente-leitura. Use “Impersonate” para responder como atendente do tenant.”</li>
+  <li><strong>Selecione uma conversa.</strong> “Modo somente-leitura. Para responder como atendente, abra a organização e use “Acompanhar organização”.”</li>
 </ol>
 <ul>
   <li>Cada item mostra o contato (ou o telefone, ou “Sem nome”), a hora, o selo da empresa, a prévia e o contador de não lidas. Atualiza em tempo real.</li>
   <li>Aberta a conversa, aparecem as últimas 50 mensagens (todas as de saída rotuladas “Atendente”), o status em inglês cru (<code>pending</code>, <code>open</code>, <code>resolved</code>, <code>closed</code>) e, ao lado, os cartões “Contato” (telefone completo, e-mail parcialmente mascarado, selo “Bloqueado”) e “Tenant” (<span class="ui">Abrir tenant</span>).</li>
-  <li>O rodapé diz “Use “Impersonate” (em breve, S-11.07) para responder” — texto desatualizado: o <a href="#admin-tenants">acompanhamento</a> já existe.</li>
+  <li>No lugar da caixa de resposta, o rodapé fica travado, com um cadeado: “Modo somente-leitura. Para responder, use “Acompanhar organização” na página da organização.” O <a href="#admin-tenants--acompanhar">acompanhamento</a> é o único caminho para responder.</li>
   <li>Cada abertura grava auditoria (<code>platform_admin.conversation_viewed</code>, <code>platform_admin.inbox_listed</code>).</li>
 </ul>
 <aside class="nota atencao"><strong>Dado sensível.</strong><p>Esta tela expõe <em>mensagens reais</em> de clientes finais de todas as empresas, com o telefone completo. Use só para suporte e nunca tire print sem esconder o conteúdo.</p></aside>

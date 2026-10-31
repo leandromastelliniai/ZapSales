@@ -2,7 +2,7 @@
 
 <h2 id="visao-geral">Para que serve</h2>
 <p>É onde você vê <strong>quem tem acesso</strong> à empresa, convida gente nova, decide o <strong>papel</strong> de cada um (o que a pessoa pode fazer), e organiza o atendimento: horários, capacidade e se cada atendente está disponível.</p>
-<aside class="nota info"><strong>Os quatro papéis — e por que aparecem em inglês.</strong><p>Do menor para o maior: <code>viewer</code> (Somente leitura), <code>agent</code> (Atendente), <code>manager</code> (Gerente) e <code>admin</code> (Administrador). <strong>Nesta tela, no convite e no e-mail do convite os papéis aparecem em inglês, “crus”</strong> (<code>viewer</code>, <code>agent</code>, <code>manager</code>, <code>admin</code>); só a tela de <a href="#config-seguranca">Segurança</a> usa os nomes em português. Existe ainda um papel interno, <code>ai_operator</code>, que é do agente de IA e nunca de uma pessoa.</p></aside>
+<aside class="nota info"><strong>Os quatro papéis — e onde ainda aparecem em inglês.</strong><p>Do menor para o maior: <code>viewer</code>, <code>agent</code>, <code>manager</code> e <code>admin</code>, que na tela de Equipe aparecem como <strong>Visualizador</strong>, <strong>Atendente</strong>, <strong>Gerente</strong> e <strong>Administrador</strong> (na lista de membros, na lista de convites e no seletor da página de convite). Ainda aparecem <strong>em inglês, “crus”</strong> (<code>viewer</code>, <code>agent</code>, <code>manager</code>, <code>admin</code>) o título da coluna <em>Role</em> da lista de convites, o <strong>e-mail do convite</strong> e a página de aceite do convite. A tela de <a href="#config-seguranca">Segurança</a> chama o papel mais baixo de “Somente leitura” — é o mesmo papel que a Equipe chama de Visualizador. Existe ainda um papel interno, <code>ai_operator</code>, que é do agente de IA e nunca de uma pessoa.</p></aside>
 <p>A página tem duas abas, <strong>Membros</strong> e <strong>Atendimento</strong>, e o botão <span class="ui">Convidar membros</span> (só o Administrador o vê). As abas têm endereço próprio: <code>/app/team?aba=membros</code> e <code>/app/team?aba=atendimento</code>.</p>
 
 <h2 id="membros">Aba Membros</h2>
@@ -14,7 +14,7 @@
   <li><strong>Convidar membros.</strong> Leva à página de convite. Só o Administrador.</li>
   <li><strong>Membros.</strong> A aba aberta.</li>
   <li><strong>Atendimento.</strong> A outra aba.</li>
-  <li><strong>Papel.</strong> O Administrador muda o papel de <em>outra</em> pessoa numa lista (grava na hora: “Papel atualizado.”). Para si mesmo e para os demais, é só um selo.</li>
+  <li><strong>Papel.</strong> (Hoje o papel aparece em português — Visualizador, Atendente, Gerente, Administrador —, e não em inglês como neste print.) O Administrador muda o papel de <em>outra</em> pessoa numa lista (grava na hora: “Papel atualizado.”). Para si mesmo e para os demais, é só um selo.</li>
   <li><strong>Interface.</strong> “Completa”, “Simplificada” ou “Personalizada”. O Administrador clica e abre a janela da interface.</li>
   <li><strong>Status.</strong> <em>Aceito</em> (já entrou), <em>Pendente</em> (vínculo sem aceite) ou <em>Revogado</em> (teve o acesso retirado).</li>
   <li><strong>Última atividade.</strong> Data e hora do último login, ou “—”.</li>
@@ -50,7 +50,7 @@
 </ul>
 
 <h3 id="convites">Convites enviados</h3>
-<p>A seção abaixo da tabela mostra cada convite: <em>E-mail</em>, <em>Role</em> (o título em inglês), <em>Interface</em>, <em>Status</em> (<strong>Pendente</strong>, <strong>Expirado</strong>, <strong>Aceito</strong> ou <strong>Revogado</strong>), <em>E-mail enviado</em>, <em>Enviado em</em> (com “reenviado N×”), <em>Expira em</em> e <em>Convidado por</em>.</p>
+<p>A seção abaixo da tabela mostra cada convite: <em>E-mail</em>, <em>Role</em> (o título da coluna continua em inglês, mas o papel aparece em português), <em>Interface</em>, <em>Status</em> (<strong>Pendente</strong>, <strong>Expirado</strong>, <strong>Aceito</strong> ou <strong>Revogado</strong>), <em>E-mail enviado</em>, <em>Enviado em</em> (com “reenviado N×”), <em>Expira em</em> e <em>Convidado por</em>.</p>
 <ul>
   <li><strong>“Não saiu”</strong> (em vermelho) com o botão <span class="ui">Copiar link</span>: a instalação não tem e-mail configurado ou o envio falhou. Copie o link e mande por outro meio.</li>
   <li>Em convites pendentes ou expirados, o Administrador tem o menu <strong>Reenviar</strong> (renova a validade e reenvia o e-mail), <strong>Copiar link</strong> e <strong>Revogar</strong> (o link deixa de funcionar: “Convite revogado.”).</li>
@@ -64,7 +64,7 @@
 </figure>
 <ol class="legenda">
   <li><strong>Emails.</strong> Cole até <strong>20</strong> e-mails, um por linha (também vale vírgula ou ponto e vírgula; repetidos são removidos).</li>
-  <li><strong>Role.</strong> O papel de <em>todos</em> os convidados deste envio: <code>agent</code> (padrão), <code>viewer</code>, <code>manager</code> ou <code>admin</code>.</li>
+  <li><strong>Role.</strong> O papel de <em>todos</em> os convidados deste envio: Atendente (padrão), Visualizador, Gerente ou Administrador. (Neste print o campo ainda se chama “Role” e mostra os nomes em inglês; hoje ele se chama “Papel” e mostra os nomes em português.)</li>
   <li><strong>Interface.</strong> O mesmo editor de interface; o convidado já nasce com o perfil escolhido.</li>
   <li><strong>Enviar convites.</strong> “N convite(s) enviado(s), M falha(s).”</li>
   <li><strong>Resultados.</strong> Depois do envio aparecem <em>Enviados</em> (“Email enviado.” ou “Resend não configurado — link copiável abaixo (DEV)”, com o link) e <em>Falhas</em>, como “Já é membro desta organização.”</li>
@@ -91,7 +91,7 @@
   <li><strong>Horário.</strong> Resumo (“Seg 08:00–18:00…”) ou “Não publicado”, e o relógio que abre a janela de horário.</li>
   <li><strong>Disponível.</strong> O interruptor.</li>
 </ol>
-<p>Só entram na lista membros ativos com papel <strong>Atendente ou superior</strong> (Gerente e Administrador entram; Somente leitura, não). Quem é menos que Gerente vê só um texto: “Só gerentes e administradores editam os horários de atendimento da equipe.”. A configuração de modo, tentativas e espera é a <strong>mesma</strong> da tela <a href="#distribuicao">Distribuição de atendimento</a>.</p>
+<p>Só entram na lista membros ativos com papel <strong>Atendente ou superior</strong> (Gerente e Administrador entram; Somente leitura, não). Quem é menos que Gerente vê só um texto: “Só gerentes e administradores editam os horários de atendimento da equipe. Para publicar os seus, peça a um gerente que abra esta aba e use o botão “Editar horário” ao lado do seu nome.”. A configuração de modo, tentativas e espera é a <strong>mesma</strong> da tela <a href="#distribuicao">Distribuição de atendimento</a>.</p>
 <aside class="nota atencao"><strong>“Sem horário” quer dizer coisas opostas.</strong><p>Para o <em>roteamento</em>, uma pessoa sem janelas aceita conversa a <strong>qualquer hora</strong>. Para a <a href="#agenda">Agenda</a>, sem janelas há <strong>zero horários</strong> para marcar com ela. Por isso o texto “Não publicado”. “De plantão” só vale quando a pessoa está <em>Disponível</em> <strong>e</strong> dentro da jornada; “Com a tela aberta” é outra coisa (o navegador dela mandou sinal nos últimos 3 minutos).</p></aside>
 <figure class="print media">
   <img src="img/equipe-horario.png" alt="Janela Horário de Marina Souza com o fuso e as janelas por dia da semana, numerada de 1 a 5" loading="lazy">
