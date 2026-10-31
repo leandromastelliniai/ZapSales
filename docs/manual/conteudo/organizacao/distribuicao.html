@@ -3,24 +3,19 @@
 <h2 id="visao-geral">Para que serve</h2>
 <p>Decide duas coisas que andam juntas: <strong>quem recebe</strong> cada cliente novo e <strong>o que cada atendente enxerga</strong>. Distribuir sem restringir deixa todo mundo vendo a carteira do colega; restringir sem distribuir deixa o funil de cada um vazio.</p>
 <figure class="print">
-  <img src="img/distribuicao.png" alt="Tela Distribuição de atendimento com os modos de distribuição, a visibilidade, a devolução à IA, o silêncio, a conversa que fica com quem atendeu, os responsáveis por número e a assinatura2" loading="lazy">
-  <figcaption>A tela inteira, de cima a baixo.</figcaption>
+  <img src="img/distribuicao.png" alt="Tela Distribuição de atendimento, de cima a baixo: a faixa Quem recebe agora, o aviso amarelo, a decisão Quem recebe o cliente novo com a linha Recomendado, a decisão O que cada atendente enxerga, os Responsáveis por número, o bloco Mais ajustes e a barra Salvar, numerados de 1 a 8" loading="lazy">
+  <figcaption>A tela inteira, de cima a baixo, numa organização com uma pessoa na equipe.</figcaption>
 </figure>
 <ol class="legenda">
-  <li><strong>Quem recebe o cliente novo.</strong> Vale para conversa que chega sem dono.</li>
-  <li><strong>Cada um pega o que quiser</strong> (<code>manual</code>, o padrão).</li>
-  <li><strong>Rodízio automático entre os atendentes</strong> (<code>round_robin</code>). A captura mostra este modo escolhido.</li>
-  <li><strong>Tentativas antes de desistir</strong> (aparecem nos modos automáticos).</li>
-  <li><strong>O que cada atendente enxerga.</strong></li>
-  <li><strong>Os seus, mais os que ainda não têm dono</strong> (o padrão do produto).</li>
-  <li><strong>Quando a pessoa some, a IA volta?</strong></li>
-  <li><strong>Quando alguém responde pelo celular, a IA espera quanto tempo?</strong></li>
-  <li><strong>Quando alguém responde, a conversa fica com essa pessoa?</strong></li>
-  <li><strong>Salvar.</strong> Um único botão para os cinco cartões de cima.</li>
-  <li><strong>Responsáveis por número.</strong></li>
-  <li><strong>Quem fala aparece na mensagem?</strong></li>
+  <li><strong>A faixa “Quem recebe agora”.</strong> Mostra quantas pessoas podem receber um cliente novo neste instante, uma pílula por pessoa e a fila. Só lê: nada é alterado ali. Veja <a href="#distribuicao--quem-recebe-agora">Quem recebe agora</a>.</li>
+  <li><strong>O aviso amarelo.</strong> Aparece quando ninguém pode receber agora; aqui, porque a única pessoa está sem plantão. O botão leva aos horários da equipe.</li>
+  <li><strong>Quem recebe o cliente novo.</strong> Vale para a conversa que chega sem dono. O selo <em>Pronto</em> (ou <em>Revisar</em>) diz se a decisão precisa de atenção.</li>
+  <li><strong>A recomendação.</strong> A linha <em>Recomendado</em> sugere o modo pelo tamanho da sua equipe e diz o motivo; aqui, com uma pessoa só, “cada um pega”. O modo sugerido também leva o selo <em>Recomendado</em>.</li>
+  <li><strong>O que cada atendente enxerga.</strong> A segunda decisão, com o próprio selo e a própria recomendação. Restringe só quem tem o papel Atendente.</li>
+  <li><strong>Responsáveis por número.</strong> Por número de WhatsApp, quem pode receber; <span class="ui">Voltar ao padrão da organização</span> desfaz a escolha daquele número.</li>
+  <li><strong>Mais ajustes.</strong> Bloco recolhido: quando a IA volta, o silêncio depois que alguém responde pelo celular, se a conversa fica com quem atendeu e a assinatura. O selo <em>valores padrão</em> avisa que nenhum deles foi mexido.</li>
+  <li><strong>A barra do Salvar.</strong> Um único botão para as duas decisões e para os ajustes. Fica no fim da tela: depois de mexer lá em cima, role até o fim para salvar. Diz <em>Tudo salvo</em> quando não há nada pendente.</li>
 </ol>
-<aside class="nota info"><strong>A tela foi reorganizada depois deste print.</strong><p>A ordem de cima para baixo, hoje, é: a faixa <em>Quem recebe agora</em>, as duas decisões (<em>Quem recebe o cliente novo</em> e <em>O que cada atendente enxerga</em>, num painel só), os <em>Responsáveis por número</em>, o bloco recolhido <em>Mais ajustes</em> e, grudada no pé da tela, a barra com o <span class="ui">Salvar</span>. Os textos e as opções descritos nesta página continuam valendo; o que mudou de lugar está explicado a seguir.</p></aside>
 
 <h2 id="quem-recebe-agora">Quem recebe agora</h2>
 <p>No alto da tela, uma faixa mostra <strong>o que a distribuição entregaria neste instante</strong>, com as mesmas regras que o sistema usa de verdade. Ela só lê: nada é alterado por ali.</p>
@@ -74,7 +69,7 @@
   <li><strong>A conversa fica com quem atendeu</strong> (padrão desligado). Ligada: responder pelo Inbox numa conversa sem dono passa a assumi-la, e a IA fica calada até alguém devolver; e a conversa encerrada que recebe mensagem volta direto para o último atendente (se ainda é da equipe), sem passar pela distribuição. Desligada: responder pela tela cala a IA por alguns minutos e a conversa encerrada volta para a fila.</li>
 </ul>
 <h3 id="salvar">Salvar</h3>
-<p>Há <strong>um único botão</strong> <span class="ui">Salvar</span>, numa barra grudada no pé da tela, que grava de uma vez as duas decisões, os ajustes de “Mais ajustes” e a assinatura. Enquanto há mudança, a barra diz “Há mudanças não salvas.” e aparece o botão <span class="ui">Descartar alterações</span>, que volta ao que estava salvo; sem mudança, diz “Tudo salvo” e o <span class="ui">Salvar</span> fica desabilitado. Ao salvar, avisa “Distribuição de atendimento salva.” (e “Assinatura salva.”, se a assinatura mudou), e a faixa <em>Quem recebe agora</em> se atualiza. A distribuição fica na <a href="#auditoria">Auditoria</a> como <code>routing.config_changed</code>. Os <em>Responsáveis por número</em> <strong>não</strong> entram nesse botão: cada número tem o seu.</p>
+<p>Há <strong>um único botão</strong> <span class="ui">Salvar</span>, numa barra no fim da tela, que grava de uma vez as duas decisões, os ajustes de “Mais ajustes” e a assinatura. Enquanto há mudança, a barra diz “Há mudanças não salvas.” e aparece o botão <span class="ui">Descartar alterações</span>, que volta ao que estava salvo; sem mudança, diz “Tudo salvo” e o <span class="ui">Salvar</span> fica desabilitado. Ao salvar, avisa “Distribuição de atendimento salva.” (e “Assinatura salva.”, se a assinatura mudou), e a faixa <em>Quem recebe agora</em> se atualiza. A distribuição fica na <a href="#auditoria">Auditoria</a> como <code>routing.config_changed</code>. Os <em>Responsáveis por número</em> <strong>não</strong> entram nesse botão: cada número tem o seu.</p>
 
 <h2 id="responsaveis">Responsáveis por número</h2>
 <p>Este bloco fica entre as duas decisões e o <em>Mais ajustes</em>. A capacidade e o horário de cada pessoa valem para todos os números; aqui você diz <strong>quem pode receber conversas de cada número</strong> de WhatsApp. Cada canal mostra o estado: “Usa todos os atendentes elegíveis da organização.” (padrão), “Ninguém configurado — as conversas ficarão na fila.” ou “Somente as pessoas selecionadas recebem este número.”, com uma caixa por membro ativo. Os botões são <span class="ui">Salvar responsáveis</span> e <span class="ui">Voltar ao padrão da organização</span>. Sem canais, aparece “Conecte um número para escolher os responsáveis.” (link para <a href="#conexoes">Conexões</a>).</p>
